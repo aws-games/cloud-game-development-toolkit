@@ -40,13 +40,13 @@ This project is under active development. As such, we have yet to solve for many
 
 ## Quick Start
 
-We recommend starting in the [samples](./examples/README.md) directory. This folder contains references for using Terraform to manage infrastructure-as-code, and demonstrates the usage of the **Cloud Game Development Toolkit** modules.
+We recommend starting in the [samples](./samples/README.md) directory. This folder contains references for using Terraform to manage infrastructure-as-code, and demonstrates the usage of the **Cloud Game Development Toolkit** modules.
 
 You will also need the following tools to take advantage of all the features in the **Toolkit**:
 - [Terraform CLI installation instructions](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [Packer CLI installation instructios](https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli)
 
-This repository is intended to be forked and customized to support your studio's needs. The reference architectures contained in the [samples](./examples/README.md) are a great starting point for those customizations. Check out the [README for our Perforce + Jenkins Pipeline](./examples/perforce-jenkins-pipeline/README.md) sample to get started.
+This repository is intended to be forked and customized to support your studio's needs. The reference architectures contained in the [samples](./samples/README.md) are a great starting point for those customizations. Check out the [README for our Perforce + Jenkins Pipeline](./samples/perforce-jenkins-pipeline/README.md) sample to get started.
 
 ## Governance
 
