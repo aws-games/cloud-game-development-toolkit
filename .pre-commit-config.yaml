@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: "v1.89.1"
+    hooks:
+      - id: terraform_docs
+        args:
+            - '--args=--lockfile=false'
+      - id: terraform_checkov
+        args:
+          # Ignore check for ebs volume encryption using CMK. Volumes are encrypted using default AWS key
+          - --args=--skip-check CKV_AWS_189
+          - --args=--skip-check CKV_AWS_91 # "Ensure the ELBv2 (Application/Network) has access logging enabled"
+          - --args=--skip-check CKV_AWS_150 # "Ensure that Load Balancer has deletion protection enabled"
+          - --args=--skip-check CKV_AWS_184 # "EFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
+          - --args=--skip-check CKV_AWS_203 # "FSx OpenZFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
+          - --args=--quiet
+          # Enables scans against Third-Party modules
+          - --args=--download-external-modules true
+      - id: terraform_validate
+      - id: terraform_fmt
+      - id: terraform_tflint
