@@ -42,7 +42,7 @@ This project is under active development. As such, we have yet to solve for many
 
 We recommend starting in the [samples](./samples/README.md) directory. This folder contains references for using Terraform to manage infrastructure-as-code, and demonstrates the usage of the **Cloud Game Development Toolkit** modules.
 
-You will also need the following tools to take advantage of all the features in the **Toolkit**:
+You will also need the following tools to take advantage of all the features in the **CGD Toolkit**:
 - [Terraform CLI installation instructions](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [Packer CLI installation instructios](https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli)
 
@@ -64,14 +64,8 @@ Modules also include the `name` and `project_prefix` (defaults to "cgd" for clou
 
 ## Security
 
-The default network security considerations for modules enable connection *between* provisioned resources, but not from the internet. This decision is deliberate to enable infrastructure engineers to decide how connectivity to provisioned resources should be managed. Do you use a VPN? Will you allow-list individual IP addresses?
-
-From an Identity and Access Management (IAM) standpoint there are best-practices in place to enable limited access between services and provisioned resources. Terraform Modules are subject to [Checkov](https://www.checkov.io/) static analysis before they are released through the **Cloud Game Development Toolkit**.
-
 If you think you’ve found a potential security issue, please do not post it in the Issues.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
 
 ## License
 
 This project is licensed under the MIT-0 License. See the [LICENSE](./LICENSE) file.
-
-> **Note**: _“The sample code; software libraries; command line tools; proofs of concept; templates; or other related technology (including any of the foregoing that are provided by our personnel) is provided to you as AWS Content under the AWS Customer Agreement, or the relevant written agreement between you and AWS (whichever applies). You should not use this AWS Content in your production accounts, or on production or other critical data. You are responsible for testing, securing, and optimizing the AWS Content, such as sample code, as appropriate for production grade use based on your specific quality control practices and standards. Deploying AWS Content may incur AWS charges for creating or using AWS chargeable resources, such as running Amazon EC2 instances or using Amazon S3 storage.”_

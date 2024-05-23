@@ -5,7 +5,7 @@ These modules simplify the deployment of common game development workloads on AW
 
 ## Contribution
 
-We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **Toolkit** is designed.
+We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed.
 
 Please follow these guidelines when developing a new module. These are also outlined in the pull-request template for Module additions.
 
@@ -40,8 +40,8 @@ We recommend outlining your module's assumptions and guarantees prior to impleme
 
 #### 4. Third Party Software
 
-The modules contained in the **Toolkit** are designed to simplify infrastructure deployments of common game development workload. Naturally, modules may deploy third party applications - in these situations we require that deployments depend on existing licenses and distribution channels.
+The modules contained in the **CGD Toolkit** are designed to simplify infrastructure deployments of common game development workload. Naturally, modules may deploy third party applications - in these situations we require that deployments depend on existing licenses and distribution channels.
 
-If your module relies on a container or image that is not distributed through the **Toolkit** we require a disclaimer and the usage of end-user credentials passed as a variable to the module. *This repository is not to be used to redistribute software that may be subject to licensing or contractual agreements*. 
+If your module relies on a container or image that is not distributed through the **CGD Toolkit** we require a disclaimer and the usage of end-user credentials passed as a variable to the module. *This repository is not to be used to redistribute software that may be subject to licensing or contractual agreements*. 
 
 If your module relies on a custom Amazon Machine Image (AMI) or container we ask that you provide a Packer template or Dockerfile in the [assets](../assets/README.md) directory and include instructions to create the image prior to infrastructure deployment.
