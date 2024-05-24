@@ -105,7 +105,7 @@ resource "aws_ecs_service" "jenkins_service" {
   cluster              = var.cluster_name != null ? data.aws_ecs_cluster.jenkins_cluster[0].arn : aws_ecs_cluster.jenkins_cluster[0].arn
   task_definition      = aws_ecs_task_definition.jenkins_task_definition.arn
   launch_type          = "FARGATE"
-  desired_count        = 1
+  desired_count        = var.jenkins_service_desired_container_count
   force_new_deployment = true
 
   load_balancer {

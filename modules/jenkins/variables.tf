@@ -71,6 +71,12 @@ variable "container_memory" {
   default     = 4096
 }
 
+variable "jenkins_service_desired_container_count" {
+  type        = number
+  description = "The desired number of containers running the Jenkins service."
+  default     = 1
+}
+
 # - Existing Cluster -
 variable "cluster_name" {
   type        = string

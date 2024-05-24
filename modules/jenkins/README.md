@@ -8,7 +8,7 @@ This module deploys the following resources:
 - An ECS service running the latest Jenkins container ([jenkins/jenkins:lts-jdk17](https://hub.docker.com/r/jenkins/jenkins)) available.
 - An Elastic File System (EFS) for the Jenkins service to use as a persistent datastore.
 - An Elastic Load Balancer (ELB) for TLS termination of the Jenkins service
-- Any number of configurable EC2 Autoscaling group to serve as a flexible pool of build nodes for the Jenkins service
+- A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
@@ -120,6 +120,7 @@ No modules.
 | <a name="input_jenkins_cloudwatch_log_retention_in_days"></a> [jenkins\_cloudwatch\_log\_retention\_in\_days](#input\_jenkins\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for Jenkins. | `string` | `365` | no |
 | <a name="input_jenkins_efs_performance_mode"></a> [jenkins\_efs\_performance\_mode](#input\_jenkins\_efs\_performance\_mode) | The performance mode of the EFS file system used by the Jenkins service. Defaults to general purpose. | `string` | `"generalPurpose"` | no |
 | <a name="input_jenkins_efs_throughput_mode"></a> [jenkins\_efs\_throughput\_mode](#input\_jenkins\_efs\_throughput\_mode) | The throughput mode of the EFS file system used by the Jenkins service. Defaults to bursting. | `string` | `"bursting"` | no |
+| <a name="input_jenkins_service_desired_container_count"></a> [jenkins\_service\_desired\_container\_count](#input\_jenkins\_service\_desired\_container\_count) | The desired number of containers running the Jenkins service. | `number` | `1` | no |
 | <a name="input_jenkins_service_subnets"></a> [jenkins\_service\_subnets](#input\_jenkins\_service\_subnets) | A list of subnets to deploy the Jenkins service into. Private subnets are recommended. | `list(string)` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Jenkins module resources. | `string` | `"jenkins"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
