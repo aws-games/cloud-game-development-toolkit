@@ -62,20 +62,6 @@ default = {
 
 Modules also include the `name` and `project_prefix` (defaults to "cgd" for cloud game development) variables that are collectively used to label provisioned resources. These can also be easily overwritten to match the naming and tagging conventions your organization follow.
 
-The **Toolkit** consists of four key components:
-
-1. **Assets**: Reusable Amazon Machine Image (AMI) templates written in [Packer](https://www.packer.io/) for Windows and Linux build machines as well as Perforce Helix Core and Helix Swarm workloads.
-
-2. **Modules**: Highly configurable and extensible [Terraform](https://www.terraform.io/) modules for simplified deployment of key game development infrastructure on AWS with best-practices by default.
-
-3. **Samples**: Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
-
-4. **Playbooks**: Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
-
-## Getting Started
-
-### **[📖 Documentation](https://aws-games.github.io/cloud-game-develelopment/getting-started/)** | **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-develelopment/contributing/)** | **[❔ Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)** | **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
-
 ## Security
 
 If you think you’ve found a potential security issue, please do not post it in the Issues.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
