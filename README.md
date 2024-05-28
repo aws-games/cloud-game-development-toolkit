@@ -24,4 +24,4 @@ If you think you’ve found a potential security issue, please do not post it in
 
 ## License
 
-This library is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
+This project is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
