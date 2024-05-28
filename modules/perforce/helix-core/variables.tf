@@ -4,7 +4,7 @@
 variable "name" {
   type        = string
   description = "The name attached to swarm module resources."
-  default     = "swarm"
+  default     = "helix-core"
 
   validation {
     condition     = length(var.name) > 1 && length(var.name) <= 50
@@ -29,7 +29,7 @@ variable "tags" {
   type = map(any)
   default = {
     "IAC_MANAGEMENT" = "CGD-Toolkit"
-    "IAC_MODULE"     = "swarm"
+    "IAC_MODULE"     = "helix-core"
     "IAC_PROVIDER"   = "Terraform"
   }
   description = "Tags to apply to resources."
@@ -40,12 +40,12 @@ variable "tags" {
 ########################################
 variable "instance_subnet_id" {
   type        = string
-  description = "The subnet where the Helix Swarm instance will be deployed."
+  description = "The subnet where the Helix Core instance will be deployed."
 }
 
 variable "existing_security_groups" {
   type        = list(string)
-  description = "A list of existing security group IDs to attach to the Helix Swarm load balancer."
+  description = "A list of existing security group IDs to attach to the Helix Core load balancer."
   default     = []
 }
 
@@ -117,3 +117,13 @@ variable "create_helix_core_default_role" {
   default     = true
 }
 
+variable "vpc_id" {
+  type        = string
+  description = "The VPC where Helix Core should be deployed"
+}
+
+variable "create_default_sg" {
+  type        = bool
+  description = "Whether to create a default security group for the Helix Core instance."
+  default     = true
+}
