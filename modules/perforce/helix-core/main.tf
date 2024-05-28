@@ -16,7 +16,7 @@ resource "aws_instance" "helix_core_instance" {
     /home/rocky/p4_configure.sh /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 ${var.server_type}
   EOT
 
-  vpc_security_group_ids = var.existing_security_groups
+  vpc_security_group_ids = concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id])
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -93,5 +93,21 @@ resource "aws_volume_attachment" "depot_attachment" {
   device_name = "/dev/sdh"
   volume_id   = aws_ebs_volume.depot.id
   instance_id = aws_instance.helix_core_instance.id
+}
+
+resource "aws_security_group" "helix_core_security_group" {
+  count       = var.create_default_sg ? 1 : 0
+  vpc_id      = var.vpc_id
+  name        = "${local.name_prefix}-instance"
+  description = "Security group for Helix Core machines."
+  tags        = local.tags
+}
+
+resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
+  count             = var.create_default_sg ? 1 : 0
+  security_group_id = aws_security_group.helix_core_security_group[0].id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = -1
+  description       = "Helix Core out to Internet"
 }
 
