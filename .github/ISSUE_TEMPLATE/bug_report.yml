@@ -43,3 +43,7 @@ body:
       value: latest
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
