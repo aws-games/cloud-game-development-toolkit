@@ -1,0 +1,79 @@
+site_name: Cloud Game Development Toolkit
+site_description: Cloud Game Development Toolkit
+site_author: Amazon Web Services
+repo_url: https://github.com/aws-games/cloud-game-development-toolkit
+site_url: https://aws-games.github.io/cloud-game-development-toolkit/
+
+theme:
+  name: material
+  font:
+    text: Roboto
+  
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  features:
+    - header.autohide
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.tabs
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+    - search.share
+    - emoji_index: twemoji
+  icon:
+    repo: fontawesome/brands/github
+    admonition:
+      info: octicons/info-16
+  
+markdown_extensions: 
+  - admonition
+  - pymdownx.snippets:
+      base_path: "."
+      check_paths: true
+      restrict_base_path: false
+  - toc:
+      permalink: true
+      toc_depth: 4
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Security: security.md
+  - Contributing: contributing.md
+  - Discussion: discussion.md
+  - Changelog: changelog.md
+
+plugins:
+  - search
+extra:
+  version:
+    provider: mike
+    default: latest
+
+copyright: Copyright &copy; 2024 Amazon Web Services

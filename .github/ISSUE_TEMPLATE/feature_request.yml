@@ -27,6 +27,5 @@ body:
     attributes:
       label: Alternative solutions
       description: Please describe what alternative solutions to this use case, if any
-      render: markdown
     validations:
       required: false
