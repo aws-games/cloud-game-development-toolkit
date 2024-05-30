@@ -4,11 +4,7 @@ on:
   schedule:
     - cron: '0 0 * * *'
   push:
-<<<<<<< HEAD
-    branches: [ "main", "ci/ossf-scanning**" ]
-=======
     branches: [ "main" ]
->>>>>>> parent of ed241eb (ci: setting ossf scorecard to run off feature branches for testing)
 permissions: read-all
 jobs:
   analysis:
