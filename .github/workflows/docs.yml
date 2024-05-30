@@ -1,17 +1,14 @@
-name: Build and Publish Docs
+name: Build Docs and Publish to gh-pages
 on:
   push:
     branches:
       - main
-      - docs/docs-ci**
     paths:
       - "docs/**"
       - "mkdocs.yml"
       - "CHANGELOG.md"
-      - ".github/workflows/docs.yml"
 permissions:
   contents: write
-
 jobs:
   publish_docs:
     runs-on: ubuntu-latest
