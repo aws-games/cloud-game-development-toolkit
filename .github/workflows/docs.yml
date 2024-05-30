@@ -8,15 +8,13 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "CHANGELOG.md"
-
- permissions:
+permissions:
   contents: write
   pages: write
 
 jobs:
   publish_docs:
     runs-on: ubuntu-latest
-    environment: "Docs"
     steps:
       - uses: actions/checkout@v4
       - name: Configure Git Credentials
