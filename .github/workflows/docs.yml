@@ -10,8 +10,6 @@ on:
       - "CHANGELOG.md"
 permissions:
   contents: write
-  pages: write
-
 jobs:
   publish_docs:
     runs-on: ubuntu-latest
