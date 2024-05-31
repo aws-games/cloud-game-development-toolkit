@@ -1,0 +1,1 @@
+--8<-- "playbooks/README.md"
