@@ -32,3 +32,4 @@ jobs:
       - name: Deploy Docs
         run: mike deploy $(git rev-parse --short HEAD) latest --push
         # - run: mkdocs gh-deploy --force
+
