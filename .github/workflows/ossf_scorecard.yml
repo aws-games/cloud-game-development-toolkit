@@ -5,6 +5,8 @@ on:
     - cron: '0 0 * * *'
   push:
     branches: [ "main" ]
+  pull_request: # Note: OSSF claims this trigger is experimental for now.
+    branches: [ "main" ]
 permissions: read-all
 jobs:
   analysis:
