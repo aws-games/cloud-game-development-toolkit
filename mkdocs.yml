@@ -64,6 +64,10 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Assets: assets.md
+  - Modules: modules.md
+  - Playbooks: playbooks.md
+  - Samples: samples.md
   - Security: security.md
   - Contributing: contributing.md
   - Discussion: discussion.md
