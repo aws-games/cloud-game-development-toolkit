@@ -53,3 +53,6 @@ terraform.rc
 
 # Other
 .DS_Store
+
+# Python
+*.venv

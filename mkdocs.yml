@@ -41,6 +41,7 @@ theme:
     - search.highlight
     - search.share
     - emoji_index: twemoji
+  custom_dir: docs/overrides
   icon:
     repo: fontawesome/brands/github
     admonition:
@@ -75,6 +76,7 @@ nav:
 
 plugins:
   - search
+  - git-revision-date
 extra:
   version:
     provider: mike
