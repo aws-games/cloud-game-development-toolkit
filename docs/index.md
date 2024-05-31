@@ -20,7 +20,7 @@ The **CGD Toolkit** consists of four key components:
 
     Reusable Amazon Machine Image (AMI) templates written in [Packer](https://www.packer.io/) for common game development workloads.
 
-    [:octicons-arrow-right-24: Learn about Assets](#)
+    [:octicons-arrow-right-24: Learn about Assets](./assets.md)
 
 -   __Modules__
 
@@ -28,7 +28,7 @@ The **CGD Toolkit** consists of four key components:
 
     Configurable [Terraform](https://www.terraform.io/) modules for simplified cloud deployment with best-practices by default.
 
-    [:octicons-arrow-right-24: Learn about Modules](#)
+    [:octicons-arrow-right-24: Learn about Modules](./modules.md)
 
 -   __Playbooks__
 
@@ -36,7 +36,7 @@ The **CGD Toolkit** consists of four key components:
 
     Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
 
-    [:octicons-arrow-right-24: Learn about Playbooks](#)
+    [:octicons-arrow-right-24: Learn about Playbooks](./playbooks.md)
 
 -   __Samples__
 
@@ -44,7 +44,7 @@ The **CGD Toolkit** consists of four key components:
 
     Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
 
-    [:octicons-arrow-right-24: Learn about Samples](#)
+    [:octicons-arrow-right-24: Learn about Samples](./samples.md)
 
 </div>
 
