@@ -32,8 +32,8 @@ resource "aws_vpc_security_group_ingress_rule" "swarm_service_inbound_alb" {
   security_group_id            = aws_security_group.swarm_service_sg.id
   description                  = "Allow inbound traffic from swarm ALB to service"
   referenced_security_group_id = aws_security_group.swarm_alb_sg.id
-  from_port                    = var.container_port
-  to_port                      = var.container_port
+  from_port                    = var.swarm_container_port
+  to_port                      = var.swarm_container_port
   ip_protocol                  = "tcp"
 }
 
@@ -54,8 +54,8 @@ resource "aws_vpc_security_group_egress_rule" "swarm_alb_outbound_service" {
   security_group_id            = aws_security_group.swarm_alb_sg.id
   description                  = "Allow outbound traffic from swarm ALB to swarm service"
   referenced_security_group_id = aws_security_group.swarm_service_sg.id
-  from_port                    = var.container_port
-  to_port                      = var.container_port
+  from_port                    = var.swarm_container_port
+  to_port                      = var.swarm_container_port
   ip_protocol                  = "tcp"
 }
 

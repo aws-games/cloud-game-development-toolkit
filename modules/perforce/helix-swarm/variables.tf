@@ -44,35 +44,108 @@ variable "vpc_id" {
 # ECS CONFIGURATION
 ########################################
 
-variable "container_name" {
+variable "swarm_container_name" {
   type        = string
   description = "The name of the swarm container."
   default     = "helix-swarm-container"
   nullable    = false
 }
 
-variable "container_port" {
+variable "swarm_container_port" {
   type        = number
   description = "The container port that swarm runs on."
   default     = 80
   nullable    = false
 }
 
-variable "container_cpu" {
+variable "swarm_container_cpu" {
   type        = number
   description = "The CPU allotment for the swarm container."
   default     = 1024
   nullable    = false
 }
 
-variable "container_memory" {
+variable "swarm_container_memory" {
   type        = number
-  description = "The memory allotment for the Helix Swarm container."
+  description = "The memory allotment for the swarm container."
+  default     = 2048
+}
+
+variable "p4d_port" {
+  type        = string
+  description = "The P4D_PORT environment variable where Swarm should look for Helix Core. Defaults to 'ssl:perforce:1666'"
+  default     = "ssl:perforce:1666"
+}
+
+variable "swarm_host" {
+  type        = string
+  description = "The hostname that Swarm should use for internal URLs."
+  default     = "helix-swarm"
+}
+
+variable "redis_container_cpu" {
+  type        = number
+  description = "CPU allotment for Helix Swarm Redis container."
+  default     = 1024
+}
+
+variable "redis_container_memory" {
+  type        = number
+  description = "Memory allotment for Helix Swarm Redis container."
+  default     = 2048
+}
+
+variable "existing_redis_host" {
+  type        = string
+  description = "The hostname where the Redis cache that Swarm should use is running."
+  default     = null
+}
+
+variable "redis_container_port" {
+  type        = number
+  description = "The port where the Redis cache that Swarm should use is running."
+  default     = 6379
+}
+
+variable "redis_image" {
+  type        = string
+  description = "The Redis image and version that Helix Swarm should use."
+  default     = "redis"
+}
+
+variable "redis_container_name" {
+  type        = string
+  description = "The name of the Redis container."
+  default     = "swarm-redis"
+}
+
+variable "enable_elasticache_serverless" {
+  type        = bool
+  description = "Flag to enable/disable Redis elasticache. Defaults to false."
+  default     = false
+}
+
+variable "enable_elastic_filesystem" {
+  type        = bool
+  description = "Flag to enable/disable elastic filesystem for persistent storage. Defaults to false."
+  default     = false
+}
+
+variable "task_cpu" {
+  type        = number
+  description = "The CPU allotment for the Helix Swarm task."
+  default     = 2048
+  nullable    = false
+}
+
+variable "task_memory" {
+  type        = number
+  description = "The memory allotment for the Helix Swarm task."
   default     = 4096
   nullable    = false
 }
 
-variable "desired_container_count" {
+variable "swarm_desired_container_count" {
   type        = number
   description = "The desired number of containers running the Helix Swarm service."
   default     = 1
@@ -177,20 +250,22 @@ variable "create_swarm_default_policy" {
   default     = true
 }
 
-variable "p4d_port" {
+variable "p4d_super_user_arn" {
   type        = string
-  description = "The P4D_PORT environment variable where Swarm should look for Helix Core. Defaults to 'ssl:perforce:1666'"
-  default     = "ssl:perforce:1666"
+  description = "The ARN of the parameter or secret where the p4d super user username is stored."
 }
 
-variable "enable_elasticache_serverless" {
-  type        = bool
-  description = "Flag to enable/disable Redis elasticache. Defaults to false."
-  default     = false
+variable "p4d_super_user_password_arn" {
+  type        = string
+  description = "The ARN of the parameter or secret where the p4d super user password is stored."
 }
 
-variable "enable_elastic_filesystem" {
-  type        = bool
-  description = "Flag to enable/disable elastic filesystem for persistent storage. Defaults to false."
-  default     = false
+variable "p4d_swarm_user_arn" {
+  type        = string
+  description = "The ARN of the parameter or secret where the swarm user username is stored."
+}
+
+variable "p4d_swarm_password_arn" {
+  type        = string
+  description = "The ARN of the parameter or secret where the swarm user password is stored."
 }

@@ -42,7 +42,7 @@ resource "aws_s3_bucket" "swarm_alb_access_logs_bucket" {
 
 resource "aws_lb_target_group" "swarm_alb_target_group" {
   name        = "${local.name_prefix}-tg"
-  port        = var.container_port
+  port        = var.swarm_container_port
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = var.vpc_id

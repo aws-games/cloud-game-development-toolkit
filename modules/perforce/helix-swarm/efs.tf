@@ -45,6 +45,25 @@ resource "aws_efs_access_point" "swarm_efs_access_point" {
   root_directory {
     path = local.helix_swarm_config_path
     creation_info {
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = 755
+    }
+  }
+  tags = local.tags
+}
+
+# Helix Swarm Redis data access point
+resource "aws_efs_access_point" "redis_efs_access_point" {
+  count          = var.enable_elastic_filesystem ? 1 : 0
+  file_system_id = aws_efs_file_system.swarm_efs_file_system[0].id
+  posix_user {
+    gid = 1001
+    uid = 1001
+  }
+  root_directory {
+    path = local.helix_swarm_redis_data_path
+    creation_info {
       owner_gid   = 1001
       owner_uid   = 1001
       permissions = 755
@@ -52,5 +71,6 @@ resource "aws_efs_access_point" "swarm_efs_access_point" {
   }
   tags = local.tags
 }
+
 
 
