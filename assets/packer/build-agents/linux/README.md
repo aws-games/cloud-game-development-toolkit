@@ -41,7 +41,7 @@ The Ubuntu Jammy 22.04 templates furthermore install various development librari
 
 The '[mold](https://github.com/rui314/mold)' linker is installed to enable faster linking.
 
-## FSx automounter service
+### FSx automounter service
 
 The FSx automounter systemd service is a service written in Python that automatically mounts FSx for OpenZFS volumes on instance bootup. The service uses resource tags on FSx volumes to determine if and where to mount volumes on.
 
@@ -51,7 +51,7 @@ You can use the following tags on FSx volumes:
 
 For example, if the FSx automounter service is running on an EC2 instance with Name tag 'ubuntu-builder', and an FSx volume has tag `automount-fsx-volume-on`=`al2023-builder ubuntu-builder` and tag `automount-fsx-volume-name`=`workspace`, then the automounter will automatically mount that volume on `/mnt/fsx_workspace`.
 
-Note that the automounter service makes use of the [ListTagsForResource](https://docs.aws.amazon.com/fsx/latest/APIReference/API_ListTagsForResource.html) FSx API call, which is rate-limited. If you intend to scale up hundreds of EC2 instances that are running this service, then consider hardcoding any FSx volume mount activities instead.
+Note that the automounter service makes use of the [ListTagsForResource](https://docs.aws.amazon.com/fsx/latest/APIReference/API_ListTagsForResource.html) FSx API call, which is rate-limited. If you intend to scale up hundreds of EC2 instances that are running this service, then we recommend [automatically mounting FSx volumes using `/etc/fstab`](https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/attach-linux-client.html).
 
 ### mount_ephemeral service
 
