@@ -216,7 +216,8 @@ variable "build_farm_fsx_openzfs_storage" {
       storage_capacity    = number
       throughput_capacity = number
       storage_type        = optional(string, "SSD") # "SSD", "HDD"
-      deployment_type     = optional(string, "MULTI_AZ_1")
+      deployment_type     = optional(string, "SINGLE_AZ_1")
+      route_table_ids     = optional(list(string), null)
     }
   ))
   description = "Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents."

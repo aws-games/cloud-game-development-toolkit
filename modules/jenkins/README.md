@@ -86,7 +86,6 @@ No modules.
 | [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
-| [aws_route_table.build_farm_route_table](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route_table) | data source |
 | [aws_vpc.build_farm_vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
 
 ## Inputs
@@ -95,7 +94,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_artifact_buckets"></a> [artifact\_buckets](#input\_artifact\_buckets) | List of Amazon S3 buckets you wish to create to store build farm artifacts. | <pre>map(<br>    object({<br>      name                 = string<br>      enable_force_destroy = optional(bool, true)<br>  }))</pre> | `null` | no |
 | <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object in this map corresponds to an ASG used by Jenkins as build agents. | <pre>map(object(<br>    {<br>      ami = string<br>      #TODO: Support mixed instances / spot with custom policies<br>      instance_type     = string<br>      ebs_optimized     = optional(bool, true)<br>      enable_monitoring = optional(bool, true)<br>    }<br>  ))</pre> | `{}` | no |
-| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "MULTI_AZ_1")<br>    }<br>  ))</pre> | `{}` | no |
+| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "SINGLE_AZ_1")<br>      route_table_ids     = optional(list(string), null)<br>    }<br>  ))</pre> | `{}` | no |
 | <a name="input_build_farm_subnets"></a> [build\_farm\_subnets](#input\_build\_farm\_subnets) | The subnets to deploy the build farms into. | `list(string)` | n/a | yes |
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Jenkins service load balancer. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The ARN of the cluster to deploy the Jenkins service into. Defaults to null and a cluster will be created. | `string` | `null` | no |
