@@ -43,11 +43,11 @@ def get_volumes_with_automount_tags(client):
 def mount_fsx_volumes(client):
     volumeInfos = get_volumes_with_automount_tags(client)
     for volumeInfo in volumeInfos:
-        # mount -t nfs -o noatime,nfsvers=4.2,sync,nconnect=16,rsize=1048576,wsize=1048576 $FSX_WORKSPACE_DNS:/fsx/ /mnt/nfs_workspace
+        # mount -t nfs -o noatime,nfsvers=4.2,sync,nconnect=16,rsize=1048576,wsize=1048576 $FSX_WORKSPACE_DNS:/fsx/ /mnt/fsx_workspace
         if volumeInfo['VolumeType'] == 'OPENZFS':
             try:
-                os.makedirs("/mnt/nfs_%s" % volumeInfo['Name'], exist_ok=True)
-                runCmd = ["mount", "-t", "nfs", "-o", "noatime,nfsvers=4.2,sync,nconnect=16,rsize=1048576,wsize=1048576", "%s:%s/" % (volumeInfo['DNS'], volumeInfo['VolumePath']), "/mnt/nfs_%s" % volumeInfo['Name']]
+                os.makedirs("/mnt/fsx_%s" % volumeInfo['Name'], exist_ok=True)
+                runCmd = ["mount", "-t", "nfs", "-o", "noatime,nfsvers=4.2,sync,nconnect=16,rsize=1048576,wsize=1048576", "%s:%s/" % (volumeInfo['DNS'], volumeInfo['VolumePath']), "/mnt/fsx_%s" % volumeInfo['Name']]
                 procinfo = subprocess.run(runCmd)
                 # throw an exception if the mount command failed
                 if procinfo.returncode != 0:

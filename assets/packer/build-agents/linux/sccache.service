@@ -8,7 +8,7 @@ Environment=SCCACHE_IDLE_TIMEOUT=0
 Environment=SCCACHE_NO_DAEMON=1
 Environment=SCCACHE_START_SERVER=1
 Environment=SCCACHE_LOG=debug
-Environment=SCCACHE_DIR=/mnt/nfs_cache/sccache
+Environment=SCCACHE_DIR=/mnt/fsx_cache/sccache
 ExecStart=/usr/bin/sccache
 
 [Install]
