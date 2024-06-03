@@ -1,7 +1,7 @@
 docs-build:
 	docker build -t squidfunk/mkdocs-material ./docs/
-	
-docs-build-run-docker:
+  
+docs-local-docker:
 	docker build -t squidfunk/mkdocs-material ./docs/
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material serve -a 0.0.0.0:8000
 
