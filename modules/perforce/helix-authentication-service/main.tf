@@ -54,6 +54,16 @@ resource "aws_ecs_task_definition" "HAS_task_definition" {
           protocol      = "tcp"
         }
       ]
+      environment = [
+        {
+          name  = "SVC_BASE_URL"
+          value = var.fqdn
+        },
+        {
+          name  = "ADMIN_ENABLED"
+          value = var.enable_web_based_administration ? "true" : "false"
+        }
+      ]
 
       logConfiguration = {
         logDriver = "awslogs"

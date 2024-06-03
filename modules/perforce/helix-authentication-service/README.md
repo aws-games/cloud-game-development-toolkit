@@ -70,8 +70,10 @@ No modules.
 | <a name="input_desired_container_count"></a> [desired\_container\_count](#input\_desired\_container\_count) | The desired number of containers running the Helix Authentication Service. | `number` | `1` | no |
 | <a name="input_enable_HAS_alb_access_logs"></a> [enable\_HAS\_alb\_access\_logs](#input\_enable\_HAS\_alb\_access\_logs) | Enables access logging for the Helix Authentication Service ALB. Defaults to false. | `bool` | `false` | no |
 | <a name="input_enable_HAS_alb_deletion_protection"></a> [enable\_HAS\_alb\_deletion\_protection](#input\_enable\_HAS\_alb\_deletion\_protection) | Enables deletion protection for the Helix Authentication Service ALB. Defaults to false. | `bool` | `false` | no |
+| <a name="input_enable_web_based_administration"></a> [enable\_web\_based\_administration](#input\_enable\_web\_based\_administration) | Flag for enabling web based administration of Helix Authentication Service. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Authentication Service load balancer. | `list(string)` | `[]` | no |
+| <a name="input_fqdn"></a> [fqdn](#input\_fqdn) | The fully qualified domain name of Helix Authentication Service. | `string` | `"localhost"` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the Helix Authentication Service load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to HAS module resources. | `string` | `"HAS"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
