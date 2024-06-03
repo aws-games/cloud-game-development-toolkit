@@ -1,4 +1,3 @@
-
 # If cluster name is not provided create a new cluster
 resource "aws_ecs_cluster" "swarm_cluster" {
   count = var.cluster_name != null ? 0 : 1

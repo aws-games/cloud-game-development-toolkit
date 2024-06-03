@@ -35,14 +35,26 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+########################################
+# NETWORKING
+########################################
+
 variable "vpc_id" {
   type        = string
   description = "The ID of the existing VPC you would like to deploy HAS into."
 }
 
 ########################################
-# ECS CONFIGURATION
+# ECS
 ########################################
+
+variable "cluster_name" {
+  type        = string
+  description = "The name of the cluster to deploy the Helix Authentication Service into. Defaults to null and a cluster will be created."
+  default     = null
+}
+
+# - Container Specs -
 
 variable "container_name" {
   type        = string
@@ -79,11 +91,18 @@ variable "desired_container_count" {
   nullable    = false
 }
 
-# - Existing Cluster -
-variable "cluster_name" {
+# - Environment Variables -
+
+variable "fqdn" {
   type        = string
-  description = "The name of the cluster to deploy the Helix Authentication Service into. Defaults to null and a cluster will be created."
-  default     = null
+  description = "The fully qualified domain name of Helix Authentication Service."
+  default     = "localhost"
+}
+
+variable "enable_web_based_administration" {
+  type        = bool
+  description = "Flag for enabling web based administration of Helix Authentication Service."
+  default     = false
 }
 
 # - Load Balancer -
