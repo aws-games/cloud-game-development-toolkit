@@ -7,6 +7,7 @@ on:
       - "docs/**"
       - "mkdocs.yml"
       - "CHANGELOG.md"
+      - "**/README.md"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 permissions:
@@ -17,21 +18,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install dependencies
-        run: make dev
       - name: Git client setup
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - name: Build docs website and API reference
-        run: mike set-default --push latest     
+      - name: Build docs
+        run: make docs-build     
       - name: Deploy Docs
-        run: mike deploy $(git rev-parse --short HEAD) latest --push
+        run: make docs-deploy
         # - run: mkdocs gh-deploy --force
 
