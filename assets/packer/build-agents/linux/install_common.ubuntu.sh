@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Install common tools on Ubuntu, architecture-independent.
-# These common tools are necessary for Jenkins Agents, and to install various other software.
+# These common tools are necessary for Jenkins Agents, and to build/install various other software.
 # Core common tools:
 #  git
 #  curl
 #  jq
 #  unzip
 #  AWS CLI
+#  AWS Systems Manager Agent
 #  Amazon Corretto
 #  mount.nfs
 #  python3
@@ -15,6 +16,9 @@
 #  python3-botocore
 #  boto3
 #  dos2unix
+#  clang
+#  scons
+#  cmake3
 
 cloud-init status --wait
 wget -O - https://apt.corretto.aws/corretto.key | sudo gpg --dearmor -o /usr/share/keyrings/corretto-keyring.gpg && \

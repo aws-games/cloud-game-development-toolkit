@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Install common tools on Amazon Linux 2023, architecture-independent.
-# These common tools are necessary for Jenkins Agents, and to install various other software.
+# These common tools are necessary for Jenkins Agents, and to build/install various other software.
 # Core common tools:
 #  git
 #  curl
 #  jq
 #  unzip
 #  AWS CLI
+#  AWS Systems Manager Agent
 #  Amazon Corretto
 #  mount.nfs (already installed on Amazon Linux)
 #  python3
@@ -15,6 +16,9 @@
 #  boto3
 #  botocore
 #  dos2unix
+#  clang
+#  scons
+#  cmake3
 
 cloud-init status --wait
 echo "Updating packages..."

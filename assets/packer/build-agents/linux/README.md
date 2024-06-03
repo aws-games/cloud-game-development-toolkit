@@ -22,20 +22,24 @@ The templates install various software packages:
 
 ### common tools
 
-Some common tools are installed to enable compiling software and performing various common tasks:
+Some common tools are installed to enable installing other software, performing maintenance tasks, and compile some C++ software:
 
 * git
 * curl
 * jq
 * unzip
 * dos2unix
-* AWS CLI v2
+* [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)
+* [AWS Systems Manager Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html)
 * [Amazon Corretto](https://aws.amazon.com/corretto/)
 * mount.nfs, to be able to mount FSx volumes over NFS
 * python3
 * python3 packages: 'pip', 'requests', 'boto3' and 'botocore'
-
-The Ubuntu Jammy 22.04 templates furthermore install various development libraries to allow compiling the Godot 4 game engine.
+* clang
+* cmake3
+* scons
+* Development libraries for compiling the [Amazon GameLift Server SDK for C++](https://aws.amazon.com/gamelift/)
+* Development libraries for compiling the Godot 4 game engine (if available in the OS's package manager)
 
 ### mold
 
