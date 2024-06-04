@@ -1,10 +1,5 @@
-.PHONY: help docs-build docs-local-docker docs-deploy
-
 .DEFAULT_GOAL := help
 
-###########################################################
-#                    ENVIRONMENT VARIABLES
-###########################################################
 ifeq ($(GITHUB_ACTIONS),true)
 	GIT_USER_NAME := github-actions[bot]
 	GIT_USER_EMAIL := "41898282+github-actions[bot]@users.noreply.github.com"
@@ -13,10 +8,6 @@ else
 	GIT_USER_EMAIL := $(shell git config user.email)
 endif
 
-###########################################################
-#                    COLOR CONFIGURATION
-# Check if the terminal supports color, define color codes
-###########################################################
 COLOR_SUPPORT := $(shell tput colors 2>/dev/null)
 # Define color codes if the terminal supports color
 ifdef COLOR_SUPPORT
@@ -28,35 +19,33 @@ ifdef COLOR_SUPPORT
   endif
 endif
 
-###########################################################
-#                    docs-build
-###########################################################
+
+.PHONY: docs-build
 docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
-	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
+	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
+		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
+		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
+		--build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) \
+		--no-cache
 
-###########################################################
-#                    docs-deploy
-###########################################################
+.PHONY: docs-deploy
 docs-deploy: ## Deploy the docs using 'mike'. Example: `make docs-deploy VERSION=1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
 	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) ${ALIAS}
 
-###########################################################
-#                    docs-local-docker
-###########################################################
+
+.PHONY: docs-local
 docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
   docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
 	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) latest
 
-###########################################################
-#                    help
-###########################################################
+.PHONY: help
 help: ## Display this help
 	@echo -e "Usage: make [TARGET]\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${CYAN}%-30s${RESET} %s\n", $$1, $$2}'

@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build and publish docs (i.e. 0.1.0-alpha.1, latest)"
+        description: "Version to build and publish docs (i.e. v0.1.0-alpha.1, v1.0.0)"
         required: true
         type: string
       alias:
