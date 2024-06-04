@@ -51,8 +51,8 @@ docs-deploy: ## Deploy the docs using 'mike'. Example: `make docs-deploy VERSION
 docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
-	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
-	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:$(VERSION) mkdocs serve --dev-addr=0.0.0.0:8000
+  docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
+	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) latest
 
 ###########################################################
 #                    help
