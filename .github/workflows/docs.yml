@@ -8,7 +8,7 @@
 #====================================================================================================
 name: Build Docs and Publish to gh-pages
 env:
-  VERSION: v.0.1.0-alpha.1
+  VERSION: v0.1.0-alpha.2
   ALIAS: latest
 on:
   push:
