@@ -7,6 +7,9 @@
 # 5. `make docs-deploy` is run inside Docker container to deploy the documentation to GitHub Pages.
 #====================================================================================================
 name: Build Docs and Publish to gh-pages
+env:
+  VERSION: v.0.1.0-alpha.1
+  ALIAS: latest
 on:
   push:
     branches:
@@ -53,8 +56,8 @@ jobs:
       - name: Set version
         run: |
           echo "Tag name from github.ref_name: ${{  github.ref_name }}"
-          echo "VERSION is: ${{ inputs.version }}"
-          echo "ALIAS is: ${{ inputs.alias }}"
+          echo "VERSION is: ${{ env.VERSION }}"
+          echo "ALIAS is: ${{ env.ALIAS }}}"
       - name: Build docs
         run: make docs-build VERSION="$VERSION"
       - name: Deploy Docs
