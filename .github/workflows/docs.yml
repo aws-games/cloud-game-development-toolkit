@@ -30,11 +30,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - name: Set version
         run: |
-          export RELEASE_TAG_VERSION=${{ github.event.release.tag_name }}
-          echo "RELEASE_TAG_VERSION=${RELEASE_TAG_VERSION:1}" >> $GITHUB_ENV
-      - name: Test
-        run: |
-          echo ${RELEASE_TAG_VERSION}
+          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
      # - name: Build docs
      #   run: make docs-build VERSION=$RELEASE_VERSION    
      # - name: Deploy Docs
