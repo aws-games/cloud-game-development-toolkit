@@ -81,5 +81,6 @@ extra:
   version:
     provider: mike
     default: latest
+    alias: true
 
 copyright: Copyright &copy; 2024 Amazon Web Services
