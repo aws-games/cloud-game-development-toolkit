@@ -30,5 +30,4 @@ jobs:
         run: make docs-build     
       - name: Deploy Docs
         run: make docs-deploy
-        # - run: mkdocs gh-deploy --force
 
