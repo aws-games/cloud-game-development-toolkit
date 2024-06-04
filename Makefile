@@ -4,7 +4,6 @@
 
 ###########################################################
 #                    ENVIRONMENT VARIABLES
-# Define the environment variables
 ###########################################################
 ifeq ($(GITHUB_ACTIONS),true)
 	GIT_USER_NAME := github-actions[bot]
@@ -31,27 +30,25 @@ endif
 
 ###########################################################
 #                    docs-build
-# Build the docs using docker
 ###########################################################
-docs-build: ## Build the docs using docker
+docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
 
 ###########################################################
 #                    docs-deploy
-# Deploy the docs using 'mike'
 ###########################################################
-docs-deploy: ## Deploy the docs using 'mike'
+docs-deploy: ## Deploy the docs using 'mike'. Example: `make docs-deploy VERSION=1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
+	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
-	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) latest
+	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) ${ALIAS}
 
 ###########################################################
 #                    docs-local-docker
-# Build and run the docs locally using docker and 'serve'
 ###########################################################
-docs-local-docker: ## Build and run the docs locally using docker and 'serve'
+docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
@@ -59,8 +56,7 @@ docs-local-docker: ## Build and run the docs locally using docker and 'serve'
 
 ###########################################################
 #                    help
-# Display this help
 ###########################################################
 help: ## Display this help
-	@echo -e "Usage: make [TARGET] VERSION=<version>\n"
+	@echo -e "Usage: make [TARGET]\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${CYAN}%-30s${RESET} %s\n", $$1, $$2}'
