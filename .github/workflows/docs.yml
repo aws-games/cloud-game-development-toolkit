@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build and publish docs (i.e. 0.1.0-alpha.1, latest)"
+        description: "Version to build and publish docs (i.e. v0.1.0-alpha.1, v1.0.0)"
         required: true
         type: string
       alias:
@@ -56,7 +56,7 @@ jobs:
           echo "VERSION is: ${{ inputs.version }}"
           echo "ALIAS is: ${{ inputs.alias }}"
       - name: Build docs
-        run: make docs-build VERSION=$RELEASE_VERSION
+        run: make docs-build VERSION="$VERSION"
       - name: Deploy Docs
-        run: make docs-deploy VERSION="$RELEASE_VERSION" ALIAS="$ALIAS"   
+        run: make docs-deploy VERSION="$VERSION" ALIAS="$ALIAS"   
 
