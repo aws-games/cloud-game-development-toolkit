@@ -10,16 +10,38 @@ on:
       - "**/README.md"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build and publish docs (i.e. 0.1.0-alpha.1, latest)"
+        required: true
+        type: string
+      alias:
+        description: "Alias to associate version (latest, stage)"
+        required: true
+        type: string
+      detached_mode:
+        description: "Whether it's running in git detached mode to ensure git is sync'd"
+        required: false
+        default: false
+        type: boolean
+      git_ref:
+        description: "Branch or commit ID to checkout from"
+        required: false
+        type: string
+        default: main
 permissions:
   contents: write
 jobs:
   publish_docs:
+    concurrency:
+      group: docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.git_ref }}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,7 +53,9 @@ jobs:
       - name: Set version
         run: |
           echo "Tag name from github.ref_name: ${{  github.ref_name }}"
-     # - name: Build docs
+          echo "VERSION is: ${{ inputs.version }}"
+          echo "ALIAS is: ${{ inputs.alias }}"
+      #- name: Build docs
      #   run: make docs-build VERSION=$RELEASE_VERSION    
      # - name: Deploy Docs
      #   run: make docs-deploy VERSION=$RELEASE_VERSION
