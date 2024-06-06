@@ -39,17 +39,7 @@ variable "ssh_interface" {
 
 variable "ami_prefix" {
   type    = string
-  default = "windows-builder"
-}
-
-variable "install_git" {
-  type = bool
-  default = true
-}
-
-variable "install_java" {
-  type = bool
-  default = true
+  default = "windows-server-2022"
 }
 
 variable "setup_jenkins_agent" {
@@ -62,13 +52,13 @@ variable "install_vs_tools" {
   default = true
 }
 
-variable "public_key_path" {
+variable "public_key" {
   type = string
 }
 
 variable "root_volume_size" {
   type = number
-  default = 256
+  default = 64
 }
 
 locals {
@@ -128,6 +118,9 @@ build {
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
+    environment_vars = [
+      "INSTALL_GIT=${var.install_git}"
+    ]
     script           = "./base_setup.ps1"
   }
 
@@ -151,9 +144,9 @@ build {
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
-    environment_vars = ["PUBKEY=${file("${var.public_key_path}")}"]
     inline = [
-      "powershell Add-Content -Force -Path $env:ProgramData/ssh/administrators_authorized_keys -Value '$Env:PUBKEY';icacls.exe \"\"$env:ProgramData/ssh/administrators_authorized_keys\"\" /inheritance:r /grant \"\"Administrators:F\"\" /grant \"\"SYSTEM:F\"\"",
+      "$authorizedKey = '${var.public_key}'",
+      "powershell Add-Content -Force -Path $env:ProgramData/ssh/administrators_authorized_keys -Value '$authorizedKey';icacls.exe \"\"$env:ProgramData/ssh/administrators_authorized_keys\"\" /inheritance:r /grant \"\"Administrators:F\"\" /grant \"\"SYSTEM:F\"\"",
       "Get-Disk | where partitionstyle -eq \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false"
     ]
   }
