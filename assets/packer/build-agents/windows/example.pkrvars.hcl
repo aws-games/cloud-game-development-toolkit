@@ -1,0 +1,5 @@
+region = "us-west-2"
+vpc_id = "PLACEHOLDER"
+subnet_id = "PLACEHOLDER"
+profile = "DEFAULT"
+public_key_path = "./PLACEHOLDER"
