@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "terraform"
+    directory: "/modules"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "terraform"
+    directory: "/samples"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "docker"
+    directory: "/docs"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "pip"
+    directory: "/docs"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    schedule:
+      interval: "daily"
