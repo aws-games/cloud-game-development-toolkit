@@ -1,0 +1,29 @@
+name: Release Drafter
+
+# PROCESS
+#
+# 1. Enumerate all PRs in merged state
+# 2. Filter out any PR labeled `skip-changelog`
+# 3. Updates or creates a new release in Draft mode
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create release in draft mode
+      pull-requests: write
+    steps:
+      - uses: release-drafter/release-drafter@3f0f87098bd6b5c5b9a36d49c41d998ea58f9348
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
