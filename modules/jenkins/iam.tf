@@ -71,15 +71,18 @@ data "aws_iam_policy_document" "jenkins_default_policy" {
     ]
   }
   # Secrets Manager
-  statement {
-    effect = "Allow"
-    actions = [
-      "secretsmanager:ListSecretVersionIds",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:GetResourcePolicy",
-      "secretsmanager:DescribeSecret"
-    ]
-    resources = var.jenkins_agent_secret_arns
+  dynamic "statement" {
+    for_each = length(var.jenkins_agent_secret_arns) > 0 ? [1] : []
+    content {
+      effect = "Allow"
+      actions = [
+        "secretsmanager:ListSecretVersionIds",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:DescribeSecret"
+      ]
+      resources = var.jenkins_agent_secret_arns
+    }
   }
   statement {
     effect = "Allow"

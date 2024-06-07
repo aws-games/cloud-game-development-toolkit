@@ -5,7 +5,7 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
   preferred_subnet_id = var.build_farm_subnets[0]
 
   subnet_ids      = var.build_farm_subnets
-  route_table_ids = data.aws_route_table.build_farm_route_table[*].id
+  route_table_ids = each.value.route_table_ids
 
   storage_capacity    = each.value.storage_capacity
   throughput_capacity = each.value.throughput_capacity

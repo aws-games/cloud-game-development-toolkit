@@ -11,8 +11,3 @@ data "aws_ecs_cluster" "jenkins_cluster" {
 data "aws_vpc" "build_farm_vpc" {
   id = var.vpc_id
 }
-
-data "aws_route_table" "build_farm_route_table" {
-  count     = length(var.build_farm_subnets)
-  subnet_id = var.build_farm_subnets[count.index]
-}
