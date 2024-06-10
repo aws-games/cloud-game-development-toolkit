@@ -21,8 +21,8 @@ endif
 
 
 .PHONY: docs-build
-docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=1.0.0`
-	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
+docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=v1.0.0`
+	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-build VERSION=v1.0.0'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
@@ -31,21 +31,37 @@ docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=1.
 		--no-cache
 
 .PHONY: docs-deploy
-docs-deploy: ## Deploy the docs using 'mike'. Example: `make docs-deploy VERSION=1.0.0 ALIAS=latest`
-	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
-	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
+docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-deploy VERSION=v1.0.0 ALIAS=latest`
+	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-deploy VERSION=v1.0.0'. Run 'make help' for usage. ${RESET}"; exit 1; fi
+	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'make docs-deploy VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
+	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
+		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
+		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
+		--build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) \
+		--no-cache
 	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) ${ALIAS}
 
 
 .PHONY: docs-local-docker
-docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=1.0.0`
-	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Run 'make help' for usage. ${RESET}"; exit 1; fi
+docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=v1.0.0`
+	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-local-docker VERSION=v1.0.0'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "Docs version is: ${GREEN}$(VERSION)${RESET}"
-	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . --build-arg GIT_USER_NAME="$(GIT_USER_NAME)" --build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" --build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) --no-cache
+	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
+		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
+		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
+		--build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) \
+		--no-cache
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:$(VERSION) mkdocs serve --dev-addr=0.0.0.0:8000
 
 .PHONY: help
 help: ## Display this help
 	@echo -e "Usage: make [TARGET]\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${CYAN}%-30s${RESET} %s\n", $$1, $$2}'
+
+.PHONY: changelog
+changelog: ## Generate CHANGELOG.md file
+	git fetch --tags origin
+	CURRENT_VERSION=$(shell git describe --abbrev=0 --tag) ;\
+	echo "[+] Pre-generating CHANGELOG for tag: $$CURRENT_VERSION" ;\
+	docker run -v "${PWD}":/workdir quay.io/git-chglog/git-chglog:latest > CHANGELOG.md
