@@ -3,7 +3,7 @@ title: Home
 description: Cloud Game Development Toolkit
 ---
 
-The Cloud Game Development Toolkit expedites studio setup through industry standard tools and with best practice infrastructure configuration from AWS.
+The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of templates and configurations for deploying game development infrastructure and tools on AWS.
 
 !!! info
     **This project is under active development** and we have yet to solve for many developer needs. If you would like to see something in this repository please create a <a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE" target="_blank">feature request</a> in the Issues tab, or raise a <a href="https://github.com/aws-games/cloud-game-development-toolkit/pulls/" target="_blank">pull request</a>. You'll find our contribution guidelines [here](./contributing.md).
