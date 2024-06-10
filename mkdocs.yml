@@ -3,6 +3,7 @@ site_description: Cloud Game Development Toolkit
 site_author: Amazon Web Services
 repo_url: https://github.com/aws-games/cloud-game-development-toolkit
 site_url: https://aws-games.github.io/cloud-game-development-toolkit/
+edit_uri: edit/main/docs/
 
 theme:
   name: material
@@ -27,7 +28,9 @@ theme:
         icon: material/lightbulb-outline
         name: Switch to light mode
   features:
-    - toc 
+    - toc:
+        permalink: true
+        sticky: true
     - header.autohide
     - navigation.sections
     - navigation.top
@@ -47,6 +50,8 @@ theme:
     repo: fontawesome/brands/github
     admonition:
       info: octicons/info-16
+  logo: media/logos/aws-logo-white.svg
+  favicon: media/logos/aws-logo-white.svg
   
 markdown_extensions: 
   - admonition
@@ -56,7 +61,7 @@ markdown_extensions:
       restrict_base_path: false
   - toc:
       permalink: true
-      toc_depth: 4
+      toc_depth: 5
   - attr_list
   - md_in_html
   - pymdownx.emoji:
