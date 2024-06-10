@@ -56,7 +56,7 @@ markdown_extensions:
       restrict_base_path: false
   - toc:
       permalink: true
-      toc_depth: 4
+      toc_depth: 5
   - attr_list
   - md_in_html
   - pymdownx.emoji:
