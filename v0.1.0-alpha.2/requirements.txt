@@ -1,4 +1,0 @@
-# Include required packages for mkdocs
-mkdocs-material==9.5.26
-mike==2.1.1
-mkdocs-git-revision-date-plugin==0.3.2
