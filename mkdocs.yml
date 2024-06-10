@@ -27,6 +27,7 @@ theme:
         icon: material/lightbulb-outline
         name: Switch to light mode
   features:
+    - toc 
     - header.autohide
     - navigation.sections
     - navigation.top
@@ -82,5 +83,7 @@ extra:
     provider: mike
     default: latest
     alias: true
+extra_css:
+  - stylesheets/extra.css
 
 copyright: Copyright &copy; 2024 Amazon Web Services

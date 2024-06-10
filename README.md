@@ -2,21 +2,26 @@
 
 [![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](LICENSE)
 
-The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of infrastructure as code templates and configurations for deploying common game development infrastructure and tools on AWS. 
+The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of templates and configurations for deploying game development infrastructure and tools on AWS. 
+
+The project is designed for piecemeal usage:
+
+- Already have a CI/CD pipeline deployed but need a build machine image? :white_check_mark:
+- Looking to migrate your Perforce server from on-premise to AWS? :white_check_mark:
+- Starting your new studio from the ground up and looking for pre-built templates to deploy common infrastructure? :white_check_mark:
 
 The **Toolkit** consists of four key components:
 
-1. **Assets**: Reusable Amazon Machine Image (AMI) templates written in [Packer](https://www.packer.io/) for Windows and Linux build machines as well as Perforce Helix Core and Helix Swarm workloads.
-
-2. **Modules**: Highly configurable and extensible [Terraform](https://www.terraform.io/) modules for simplified deployment of key game development infrastructure on AWS with best-practices by default.
-
-3. **Samples**: Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
-
-4. **Playbooks**: Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
+| Component | Description
+|-|-|
+|**Assets**| Reusable scripts, pipeline definitions, Dockerfiles, [Packer](https://www.packer.io/) templates, and other resources that might prove useful or are dependencies of any of the modules. 
+|**Modules**| Highly configurable and extensible [Terraform](https://www.terraform.io/) modules for simplified deployment of key game development infrastructure on AWS with best-practices by default.
+|**Samples**| Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
+|**Playbooks**| Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
 
 ## Getting Started
 
-### **[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/getting-started/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
+**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/getting-started/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
 
 ## Security
 
