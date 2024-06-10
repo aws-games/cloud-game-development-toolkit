@@ -21,7 +21,7 @@
         <link rel="next" href="../modules/">
       
       
-      <link rel="icon" href="images/favicon.png">
+      <link rel="icon" href="../media/logos/aws-logo-white.svg">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.26">
     
     
@@ -120,8 +120,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -443,8 +442,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <img src="../media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     Cloud Game Development Toolkit
@@ -577,11 +575,44 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unreal-engine-build-agent-linux" class="md-nav__link">
+  <a href="#packer-templates-for-unreal-engine-linux-build-agents" class="md-nav__link">
     <span class="md-ellipsis">
-      Unreal Engine Build Agent (Linux)
+      Packer templates for Unreal Engine Linux build agents
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Packer templates for Unreal Engine Linux build agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-packages-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software packages included
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processor-architectures-and-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processor architectures and naming conventions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -868,11 +899,44 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#unreal-engine-build-agent-linux" class="md-nav__link">
+  <a href="#packer-templates-for-unreal-engine-linux-build-agents" class="md-nav__link">
     <span class="md-ellipsis">
-      Unreal Engine Build Agent (Linux)
+      Packer templates for Unreal Engine Linux build agents
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Packer templates for Unreal Engine Linux build agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-packages-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      Software packages included
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processor-architectures-and-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processor architectures and naming conventions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1021,8 +1085,90 @@
 </tr>
 </tbody>
 </table>
-<h4 id="unreal-engine-build-agent-linux">Unreal Engine Build Agent (Linux)<a class="headerlink" href="#unreal-engine-build-agent-linux" title="Permanent link">&para;</a></h4>
-<p>Documentation for UE Build Agents for Linux</p>
+<!-- Linux Build Agents README #packer-templates-for-linux-build-agents -->
+<h4 id="packer-templates-for-unreal-engine-linux-build-agents">Packer templates for Unreal Engine Linux build agents<a class="headerlink" href="#packer-templates-for-unreal-engine-linux-build-agents" title="Permanent link">&para;</a></h4>
+<p>The following templates provide Unreal Engine Linux build agents:</p>
+<table>
+<thead>
+<tr>
+<th>Operating system</th>
+<th>CPU architecture</th>
+<th>file location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ubuntu Jammy 22.04</td>
+<td>x86_64 (a.k.a. amd64)</td>
+<td><a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl"><code>x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl</code></a></td>
+</tr>
+<tr>
+<td>Ubuntu Jammy 22.04</td>
+<td>aarch64 (a.k.a. arm64)</td>
+<td><a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl"><code>aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl</code></a></td>
+</tr>
+<tr>
+<td>Amazon Linux 2023</td>
+<td>x86_64 (a.k.a. amd64)</td>
+<td><a href="(https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/x86_64/amazon-linux-2023-x86_64.pkr.hcl)"><code>x86_64/amazon-linux-2023-x86_64.pkr.hcl</code></a></td>
+</tr>
+<tr>
+<td>Amazon Linux 2023</td>
+<td>aarch64 (a.k.a. arm64)</td>
+<td><a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/amazon-linux-2023-arm64.pkr.hcl"><code>aarch64/amazon-linux-2023-arm64.pkr.hcl</code></a></td>
+</tr>
+</tbody>
+</table>
+<h5 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Make a copy of <code>example.pkrvars.hcl</code> and adjust the input variables as needed</li>
+<li>Ensure you have active AWS credentials</li>
+<li>Invoke <code>packer build --var-file=&lt;your .pkrvars.hcl file&gt; &lt;path to .pkr.hcl file&gt;</code>, then wait for the build to complete.</li>
+</ol>
+<h5 id="software-packages-included">Software packages included<a class="headerlink" href="#software-packages-included" title="Permanent link">&para;</a></h5>
+<p>The templates install various software packages:</p>
+<p><strong>common tools</strong></p>
+<p>Some common tools are installed to enable installing other software, performing maintenance tasks, and compile some C++ software:</p>
+<ul>
+<li>git</li>
+<li>curl</li>
+<li>jq</li>
+<li>unzip</li>
+<li>dos2unix</li>
+<li><a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html">AWS CLI v2</a></li>
+<li><a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html">AWS Systems Manager Agent</a></li>
+<li><a href="https://aws.amazon.com/corretto/">Amazon Corretto</a></li>
+<li>mount.nfs, to be able to mount FSx volumes over NFS</li>
+<li>python3</li>
+<li>python3 packages: 'pip', 'requests', 'boto3' and 'botocore'</li>
+<li>clang</li>
+<li>cmake3</li>
+<li>scons</li>
+<li>Development libraries for compiling the <a href="https://aws.amazon.com/gamelift/">Amazon GameLift Server SDK for C++</a></li>
+<li>Development libraries for compiling the Godot 4 game engine (if available in the OS's package manager)</li>
+</ul>
+<p><strong>mold</strong></p>
+<p>The '<a href="https://github.com/rui314/mold">mold</a>' linker is installed to enable faster linking.</p>
+<p><strong>FSx automounter service</strong></p>
+<p>The FSx automounter systemd service is a service written in Python that automatically mounts FSx for OpenZFS volumes on instance bootup. The service uses resource tags on FSx volumes to determine if and where to mount volumes on.</p>
+<p>You can use the following tags on FSx volumes:
+* '<em>automount-fsx-volume-name</em>' tag: specifies the name of the local mount point. The mount point specified will be prefixed with 'fsx_' by the service.
+* '<em>automount-fsx-volume-on</em>' tag: This tag contains a space-delimited list of EC2 instance names on which the volume will be automatically mounted by this service (if it is running on that instance).</p>
+<p>For example, if the FSx automounter service is running on an EC2 instance with Name tag 'ubuntu-builder', and an FSx volume has tag <code>automount-fsx-volume-on</code>=<code>al2023-builder ubuntu-builder</code> and tag <code>automount-fsx-volume-name</code>=<code>workspace</code>, then the automounter will automatically mount that volume on <code>/mnt/fsx_workspace</code>.</p>
+<p>Note that the automounter service makes use of the <a href="https://docs.aws.amazon.com/fsx/latest/APIReference/API_ListTagsForResource.html">ListTagsForResource</a> FSx API call, which is rate-limited. If you intend to scale up hundreds of EC2 instances that are running this service, then we recommend <a href="https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/attach-linux-client.html">automatically mounting FSx volumes using <code>/etc/fstab</code></a>.</p>
+<p><strong>mount_ephemeral service</strong></p>
+<p>The mount_ephemeral service is a systemd service written as a simple bash script that mounts NVMe attached instance storage volume automatically as temporary storage. It does this by formatting <code>/dev/nvme1n1</code> as xfs and then mounting it on <code>/tmp</code>. This service runs on instance bootup.</p>
+<p><strong>create_swap service</strong></p>
+<p>The create_swap service is a systemd service written as a simple bash script that creates a 1GB swap file on <code>/swapfile</code>. This service runs on instance bootup.</p>
+<p><strong>sccache</strong></p>
+<p>'<a href="https://github.com/mozilla/sccache">sccache</a>' is installed to cache c/c++ compilation artefacts, which can speed up builds by avoiding unneeded work.</p>
+<p>sccache is installed as a <em>systemd service</em>, and configured to use <code>/mnt/fsx_cache/sccache</code> as its cache folder. The service expects this folder to be available or set up by another service.</p>
+<p><strong>octobuild</strong></p>
+<p>'<a href="https://github.com/octobuild/octobuild">Octobuild</a>' is installed to act as a compilation cache for Unreal Engine.</p>
+<p>Octobuild is configured (in <a href="octobuild.conf">octobuild.conf</a>) to use <code>/mnt/fsx_cache/octobuild_cache</code> as its cache folder, and expects this folder to be available or set up by another service.</p>
+<p>NOTE: Octobuild is not supported on aarch64, and therefore not installed there.</p>
+<h5 id="processor-architectures-and-naming-conventions">Processor architectures and naming conventions<a class="headerlink" href="#processor-architectures-and-naming-conventions" title="Permanent link">&para;</a></h5>
+<p>Within this folder, the processor architecture naming conventions as reported by <code>uname -m</code> are used, hence why there are scripts here with names containing "x86_64" or "aarch64". The packer template <code>.hcl</code> files are named following the naming conventions of the operating system that they are based on. Unfortunately, because some operating systems don't use the same terminology in their naming conventions throughout, this means that you'll see this lack of consistency here has well.</p>
 <h4 id="unreal-engine-build-agent-windows">Unreal Engine Build Agent (Windows)<a class="headerlink" href="#unreal-engine-build-agent-windows" title="Permanent link">&para;</a></h4>
 <p>Documentation for UE Build Agents for Windows</p>
 <!-- Perforce Helix Core README #perforce-helix-core-ami -->
@@ -1149,7 +1295,7 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc", "header.autohide", "navigation.sections", "navigation.top", "navigation.instant", "navigation.indexes", "navigation.tracking", "navigation.tabs", "content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", {"emoji_index": "twemoji"}], "search": "javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [{"toc": {"permalink": true, "sticky": true}}, "header.autohide", "navigation.sections", "navigation.top", "navigation.instant", "navigation.indexes", "navigation.tracking", "navigation.tabs", "content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", {"emoji_index": "twemoji"}], "search": "javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
     
     
       <script src="javascripts/bundle.ad660dcc.min.js"></script>
