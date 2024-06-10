@@ -40,6 +40,7 @@ docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-depl
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
 		--build-arg GITHUB_ACTIONS=$(GITHUB_ACTIONS) \
 		--no-cache
+	docker run -t docs:$(VERSION) mike set-default $(VERSION)
 	docker run -t docs:$(VERSION) mike deploy --push --update-aliases $(VERSION) ${ALIAS}
 
 
@@ -58,10 +59,3 @@ docs-local-docker: ## Build and run the docs locally using docker and 'serve'. E
 help: ## Display this help
 	@echo -e "Usage: make [TARGET]\n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${CYAN}%-30s${RESET} %s\n", $$1, $$2}'
-
-.PHONY: changelog
-changelog: ## Generate CHANGELOG.md file
-	git fetch --tags origin
-	CURRENT_VERSION=$(shell git describe --abbrev=0 --tag) ;\
-	echo "[+] Pre-generating CHANGELOG for tag: $$CURRENT_VERSION" ;\
-	docker run -v "${PWD}":/workdir quay.io/git-chglog/git-chglog:latest > CHANGELOG.md
