@@ -14,7 +14,6 @@ variable "region" {
 
 variable "profile" {
   type = string
-  default = "DEFAULT"
 }
 
 variable "vpc_id" {
