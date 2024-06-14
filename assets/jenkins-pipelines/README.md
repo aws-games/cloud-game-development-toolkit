@@ -1,0 +1,54 @@
+# Jenkins example pipelines
+
+This folder contains example Jenkins pipelines for building various pieces of software. To use them, create a new Jenkins pipeline project, and then copy-and-paste the contents of the files into the "Pipeline" section in the configuration page.
+
+You will likely need to change the pipelines slightly to suit your needs, for example to provide the correct FSx volume IDs or alter the agent node labels on which steps run.
+
+## `ue5_build_pipeline.groovy`
+
+This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to store _octobuild_ artefacts to speed up subsequent builds.
+
+Note that you need to run this on a build node with large /tmp space.
+
+The pipeline is divided in two stages:
+1. **Prepare** - Clones or pulls the Git repository to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
+2. **Build** - Builds Unreal Engine 5 from the snapshot location on x86_64 Linux. Because FSx for OpenZFS snapshots are read-only, on Linux a temporary [overlay file system](https://en.wikipedia.org/wiki/OverlayFS) is created.
+
+## `godot.groovy`
+
+This pipeline builds the Godot engine from its public Git repository, using an FSx volume as workspace cache and another FSx volume to store _sccache_ artefacts to speed up subsequent builds.
+
+The pipeline is divided in two stages:
+1. **Prepare** - Clones or pulls the Git repository to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
+2. **Build** - Builds Godot from the snapshot location on x86_64 Linux and arm64 Linux. Because FSx for OpenZFS snapshots are read-only, and Godot does not build from a read-only filesystem, on Linux a temporary [overlay file system](https://en.wikipedia.org/wiki/OverlayFS) is created.
+
+## `gamelift_sdk.groovy`
+
+This pipeline builds the [GameLift Server C++ SDK](https://aws.amazon.com/gamelift/getting-started-sdks/) in 8 different configurations. It uses an FSx volume as workspace cache and (optionally) another FSx volume to store _sccache_ artefacts to speed up subsequent builds.
+
+
+The build configurations are:
+|Operating sytem | CPU architecture | Build configuration |
+|---|---|---|
+|Ubuntu Jammy 22.04 | x86_64 | Standard build          |
+|Ubuntu Jammy 22.04 | x86_64 | Built for Unreal Engine |
+|Ubuntu Jammy 22.04 | arm64  | Standard build          |
+|Ubuntu Jammy 22.04 | arm64  | Built for Unreal Engine |
+|Amazon Linux 2023  | x86_64 | Standard build          |
+|Amazon Linux 2023  | x86_64 | Built for Unreal Engine |
+|Amazon Linux 2023  | arm64  | Standard build          |
+|Amazon Linux 2023  | arm64  | Built for Unreal Engine |
+
+The pipeline is divided in two stages:
+1. **Prepare** - Downloads the GameLift Server SDK .zip to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
+2. **Build** - Builds the SDK from the snapshot location on aforementioned operating systems and configurations.
+
+## `delete_oldest_snapshot.groovy`
+
+This pipeline deletes the oldest FSx snapshot that's older than 7 days. Use this to clean up automatically-created snapshots for workspace volumes that you no longer need.
+
+Note that this pipeline performs no logic to check whether a snapshot was created automatically, so do not run this pipeline against FSx volumes where you use snapshots for data backup purposes.
+
+## `multiplatform_build.groovy`
+
+This simple multi-stage pipeline demonstrates how to build for multiple platforms by runnin multiple stages, and how to paralellize steps in a single stage across different build nodes. It can be used to verify that build nodes for various platforms work correctly, and is a great starting point for creating new pipelines.
