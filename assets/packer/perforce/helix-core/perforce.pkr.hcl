@@ -12,11 +12,6 @@ locals {
   ami_prefix = "p4_rocky_linux"
 }
 
-variable "profile" {
-  type = string
-  default = "DEFAULT"
-}
-
 variable "region" {
   type = string
   default = "us-west-2"
@@ -32,8 +27,17 @@ variable "subnet_id" {
     default = null
 }
 
+variable "associate_public_ip_address" {
+  type = bool
+  default = true
+}
+
+variable "ssh_interface" {
+  type = string
+  default = "public_ip"
+}
+
 source "amazon-ebs" "rocky" {
-  profile = var.profile
   region = var.region
   ami_name      = "${local.ami_prefix}-${local.timestamp}"
   instance_type = "t3.medium"
@@ -41,7 +45,8 @@ source "amazon-ebs" "rocky" {
   vpc_id = var.vpc_id
   subnet_id = var.subnet_id
 
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
+  ssh_interface = var.ssh_interface
 
   source_ami_filter {
     filters = {
@@ -75,10 +80,23 @@ build {
       inline = ["chmod +x /home/rocky/p4_configure.sh"]
     }
 
+    # Install Amazon SSM Agent
     provisioner "shell" {
       inline = [
         "sudo dnf install -y https://s3.${var.region}.amazonaws.com/amazon-ssm-${var.region}/latest/linux_amd64/amazon-ssm-agent.rpm",
         "sudo systemctl enable amazon-ssm-agent"
+      ]
+    }
+
+    # Install AWS CLI
+    provisioner "shell" {
+      inline = [
+          <<-EOF
+          sudo dnf install -y unzip
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          EOF
       ]
     }
 }
