@@ -1,4 +1,7 @@
+##########################################
 # VPC
+##########################################
+
 resource "aws_vpc" "build_pipeline_vpc" {
   cidr_block = local.vpc_cidr_block
   tags = merge(local.tags,
@@ -9,7 +12,10 @@ resource "aws_vpc" "build_pipeline_vpc" {
   enable_dns_hostnames = true
 }
 
-# Public Subnets
+##########################################
+# Subnets
+##########################################
+
 resource "aws_subnet" "public_subnets" {
   count             = length(local.public_subnet_cidrs)
   vpc_id            = aws_vpc.build_pipeline_vpc.id
@@ -36,6 +42,10 @@ resource "aws_subnet" "private_subnets" {
   )
 }
 
+##########################################
+# Internet Gateway
+##########################################
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.build_pipeline_vpc.id
   tags = merge(local.tags,
@@ -44,6 +54,10 @@ resource "aws_internet_gateway" "igw" {
     }
   )
 }
+
+##########################################
+# Route Tables & NAT Gateway
+##########################################
 
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.build_pipeline_vpc.id
@@ -76,16 +90,6 @@ resource "aws_eip" "nat_gateway_eip" {
   )
 }
 
-resource "aws_nat_gateway" "nat_gateway" {
-  allocation_id = aws_eip.nat_gateway_eip.id
-  subnet_id     = aws_subnet.public_subnets[0].id
-  tags = merge(local.tags,
-    {
-      Name = "build-pipeline-nat"
-    }
-  )
-}
-
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.build_pipeline_vpc.id
 
@@ -106,4 +110,14 @@ resource "aws_route_table_association" "private_rt_asso" {
   count          = length(aws_subnet.private_subnets)
   route_table_id = aws_route_table.private_rt.id
   subnet_id      = aws_subnet.private_subnets[count.index].id
+}
+
+resource "aws_nat_gateway" "nat_gateway" {
+  allocation_id = aws_eip.nat_gateway_eip.id
+  subnet_id     = aws_subnet.public_subnets[0].id
+  tags = merge(local.tags,
+    {
+      Name = "build-pipeline-nat"
+    }
+  )
 }
