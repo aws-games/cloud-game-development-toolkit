@@ -1,0 +1,56 @@
+name: Nightly Packer Tests
+on:
+  schedule:
+    - cron:  '0 0 * * *'  # Run every day at midnight
+  workflow_dispatch: # Manually trigger the workflow
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+        with:
+          ref: main
+      - name: Install yq
+        run: |
+          sudo add-apt-repository ppa:rmescandon/yq
+          sudo apt update
+          sudo apt install yq -y
+      - name: Get Packer templates
+        id: packer-templates-matrix
+        working-directory: ./assets/packer/
+        run: |
+          templates=$(yq e '.packer_templates[].file_name' .config.yml -o=json)
+          echo "::set-output name=matrix::${packer-templates}"
+  packer-ci: # Run Packer validation and build for each template
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    needs: get-packer-templates
+    strategy:
+      matrix:
+        template: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+    environment: aws-ci
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+      with:
+        role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+    - name: Checkout code
+      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      with:
+        ref: main
+    - name: Packer Validate and Build
+      working-directory: ./assets/packer/.ci
+      run: docker build -t packer-ci -f Dockerfile ../ \
+          --build-arg AWS_REGION=$${{ env.AWS_REGION }} \
+          --build-arg AWS_VPC_ID=${{ secrets.AWS_VPC_ID_CI }} \
+          --build-arg AWS_SUBNET_ID=${{ secrets.AWS_SUBNET_ID_CI }} \
+          --build-arg PUBLIC_KEY=${{ secrets.PACKER_CI_PUBLIC_KEY }} \
+          --build-arg TEMPLATE=$${{ matrix.template }}
