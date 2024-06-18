@@ -182,3 +182,15 @@ variable "create_HAS_default_policy" {
   description = "Optional creation of Helix Authentication Service default IAM Policy. Default is set to true."
   default     = true
 }
+
+variable "has_admin_username_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the HAS Administrator username."
+  default     = null
+}
+
+variable "has_admin_password_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the HAS Administrator password."
+  default     = null
+}

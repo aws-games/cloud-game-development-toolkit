@@ -25,6 +25,24 @@ resource "aws_ecs_cluster_capacity_providers" "HAS_cluster_fargate_rpvodiers" {
   }
 }
 
+resource "awscc_secretsmanager_secret" "has_admin_password" {
+  count       = var.has_admin_password_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
+  name        = "hasAdminUserPassword"
+  description = "The password for the created HAS administrator."
+  generate_secret_string = {
+    exclude_numbers     = false
+    exclude_punctuation = true
+    include_space       = false
+  }
+}
+
+resource "awscc_secretsmanager_secret" "has_admin_username" {
+  count         = var.has_admin_username_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
+  name          = "hasAdminUsername"
+  secret_string = "perforce"
+}
+
+
 resource "aws_cloudwatch_log_group" "HAS_service_log_group" {
   #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
   name              = "${local.name_prefix}-log-group"
@@ -40,6 +58,10 @@ resource "aws_ecs_task_definition" "HAS_task_definition" {
   cpu                      = var.container_cpu
   memory                   = var.container_memory
 
+  volume {
+    name = "helix-auth-config"
+  }
+
   container_definitions = jsonencode([
     {
       name      = var.container_name,
@@ -54,7 +76,7 @@ resource "aws_ecs_task_definition" "HAS_task_definition" {
           protocol      = "tcp"
         }
       ]
-      environment = [
+      environment = concat([
         {
           name  = "SVC_BASE_URL"
           value = var.fqdn
@@ -62,9 +84,16 @@ resource "aws_ecs_task_definition" "HAS_task_definition" {
         {
           name  = "ADMIN_ENABLED"
           value = var.enable_web_based_administration ? "true" : "false"
-        }
-      ]
+        },
 
+        ],
+        var.enable_web_based_administration ? [
+          {
+            name  = "ADMIN_PASSWD_FILE",
+            value = "/var/has/password.txt"
+          }
+        ] : []
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -73,8 +102,49 @@ resource "aws_ecs_task_definition" "HAS_task_definition" {
           awslogs-stream-prefix = "HAS"
         }
       }
-
-      readonlyRootFilesystem = false
+      mountPoints = [
+        {
+          sourceVolume  = "helix-auth-config"
+          containerPath = "/var/has"
+        }
+      ],
+      dependsOn = [
+        {
+          containerName = "has-config"
+          condition     = "COMPLETE"
+        }
+      ]
+    },
+    {
+      name                     = "has-config"
+      image                    = "bash"
+      essential                = false
+      command                  = ["sh", "-c", "echo $ADMIN_PASSWD | tee /var/has/password.txt"]
+      readonly_root_filesystem = false
+      secrets = var.enable_web_based_administration ? [
+        {
+          name      = "ADMIN_USERNAME"
+          valueFrom = var.has_admin_username_secret_arn != null ? var.has_admin_username_secret_arn : awscc_secretsmanager_secret.has_admin_username[0].secret_id
+        },
+        {
+          name      = "ADMIN_PASSWD"
+          valueFrom = var.has_admin_password_secret_arn != null ? var.has_admin_username_secret_arn : awscc_secretsmanager_secret.has_admin_password[0].secret_id
+        },
+      ] : [],
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.HAS_service_log_group.name
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "HAS-config"
+        }
+      }
+      mountPoints = [
+        {
+          sourceVolume  = "helix-auth-config"
+          containerPath = "/var/has"
+        }
+      ],
     }
   ])
 
@@ -98,6 +168,8 @@ resource "aws_ecs_service" "HAS_service" {
   launch_type          = "FARGATE"
   desired_count        = var.desired_container_count
   force_new_deployment = true
+
+  enable_execute_command = true
 
   load_balancer {
     target_group_arn = aws_lb_target_group.HAS_alb_target_group.arn
