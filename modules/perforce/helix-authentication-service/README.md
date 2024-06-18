@@ -7,6 +7,7 @@
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.30 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >=3.6 |
 
 ## Providers
@@ -14,6 +15,7 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.30 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.2.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | >=3.6 |
 
 ## Modules
@@ -30,6 +32,7 @@ No modules.
 | [aws_ecs_service.HAS_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.HAS_task_definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_policy.HAS_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.HAS_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.HAS_default_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.HAS_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_lb.HAS_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
@@ -42,10 +45,13 @@ No modules.
 | [aws_vpc_security_group_egress_rule.HAS_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.HAS_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.HAS_service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [awscc_secretsmanager_secret.has_admin_password](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.has_admin_username](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [random_string.HAS](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [random_string.HAS_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_ecs_cluster.HAS_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster) | data source |
 | [aws_iam_policy_document.HAS_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.HAS_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
@@ -74,6 +80,8 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Authentication Service load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fqdn"></a> [fqdn](#input\_fqdn) | The fully qualified domain name of Helix Authentication Service. | `string` | `"localhost"` | no |
+| <a name="input_has_admin_password_secret_arn"></a> [has\_admin\_password\_secret\_arn](#input\_has\_admin\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the HAS Administrator password. | `string` | `null` | no |
+| <a name="input_has_admin_username_secret_arn"></a> [has\_admin\_username\_secret\_arn](#input\_has\_admin\_username\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the HAS Administrator username. | `string` | `null` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the Helix Authentication Service load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to HAS module resources. | `string` | `"HAS"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
