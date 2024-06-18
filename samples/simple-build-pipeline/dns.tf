@@ -1,15 +1,15 @@
 
 ##########################################
-# Jenkins Public DNS
+# Route53 Hosted Zone for FQDN
 ##########################################
 
-resource "aws_route53_zone" "jenkins_public_zone" {
-  name = "jenkins.${var.fully_qualified_domain_name}"
+resource "aws_route53_zone" "public_zone" {
+  name = var.fully_qualified_domain_name
 }
 
 resource "aws_route53_record" "jenkins" {
-  zone_id = aws_route53_zone.jenkins_public_zone.id
-  name    = aws_route53_zone.jenkins_public_zone.name
+  zone_id = aws_route53_zone.public_zone.id
+  name    = aws_route53_zone.public_zone.name
   type    = "A"
   alias {
     name                   = module.jenkins.jenkins_alb_dns_name
@@ -22,10 +22,6 @@ resource "aws_route53_record" "jenkins" {
 # Perforce Helix DNS
 ##########################################
 
-resource "aws_route53_zone" "helix_public_zone" {
-  name = "helix.perforce.${var.fully_qualified_domain_name}"
-}
-
 resource "aws_route53_zone" "helix_private_zone" {
   name = "helix.perforce.internal"
 
@@ -35,8 +31,8 @@ resource "aws_route53_zone" "helix_private_zone" {
 }
 
 resource "aws_route53_record" "helix_swarm" {
-  zone_id = aws_route53_zone.helix_public_zone.id
-  name    = "swarm.${aws_route53_zone.helix_public_zone.name}"
+  zone_id = aws_route53_zone.public_zone.id
+  name    = "swarm.helix.${aws_route53_zone.public_zone.name}"
   type    = "A"
   alias {
     name                   = module.perforce_helix_swarm.alb_dns_name
@@ -46,8 +42,8 @@ resource "aws_route53_record" "helix_swarm" {
 }
 
 resource "aws_route53_record" "helix_authentication_service" {
-  zone_id = aws_route53_zone.helix_public_zone.zone_id
-  name    = "auth.${aws_route53_zone.helix_public_zone.name}"
+  zone_id = aws_route53_zone.public_zone.zone_id
+  name    = "auth.helix.${aws_route53_zone.public_zone.name}"
   type    = "A"
   alias {
     name                   = module.perforce_helix_authentication_service.alb_dns_name
@@ -57,8 +53,8 @@ resource "aws_route53_record" "helix_authentication_service" {
 }
 
 resource "aws_route53_record" "perforce_helix_core" {
-  zone_id = aws_route53_zone.helix_public_zone.zone_id
-  name    = "core.${aws_route53_zone.helix_public_zone.name}"
+  zone_id = aws_route53_zone.public_zone.zone_id
+  name    = "core.helix.${aws_route53_zone.public_zone.name}"
   type    = "A"
   ttl     = 300
   records = [module.perforce_helix_core.helix_core_eip_public_ip]
@@ -77,11 +73,11 @@ resource "aws_route53_record" "perforce_helix_core_pvt" {
 ##########################################
 
 resource "aws_acm_certificate" "jenkins" {
-  domain_name       = aws_route53_zone.jenkins_public_zone.name
+  domain_name       = "jenkins.${var.fully_qualified_domain_name}"
   validation_method = "DNS"
 
   tags = {
-    Environment = "PG"
+    Environment = "dev"
   }
 
   lifecycle {
@@ -103,7 +99,7 @@ resource "aws_route53_record" "jenkins_cert" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.jenkins_public_zone.id
+  zone_id         = aws_route53_zone.public_zone.id
 }
 
 resource "aws_acm_certificate_validation" "jenkins" {
@@ -118,13 +114,13 @@ resource "aws_acm_certificate_validation" "jenkins" {
 ##########################################
 
 resource "aws_acm_certificate" "helix" {
-  domain_name               = aws_route53_zone.helix_public_zone.name
-  subject_alternative_names = ["*.${aws_route53_zone.helix_public_zone.name}"]
+  domain_name               = "helix.${var.fully_qualified_domain_name}"
+  subject_alternative_names = ["*.helix.${var.fully_qualified_domain_name}"]
 
   validation_method = "DNS"
 
   tags = {
-    Environment = "PG"
+    Environment = "dev"
   }
 
   lifecycle {
@@ -146,7 +142,7 @@ resource "aws_route53_record" "helix_cert" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.helix_public_zone.id
+  zone_id         = aws_route53_zone.public_zone.id
 }
 
 resource "aws_acm_certificate_validation" "helix" {

@@ -55,9 +55,9 @@ module "perforce_helix_authentication_service" {
   HAS_service_subnets = aws_subnet.private_subnets[*].id
   certificate_arn     = aws_acm_certificate.helix.arn
 
-  enable_web_based_administration = false
+  enable_web_based_administration = true
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate.helix]
+  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
 
 ##########################################
@@ -78,7 +78,7 @@ module "perforce_helix_swarm" {
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate.helix]
+  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
 
 resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_swarm" {
@@ -125,7 +125,7 @@ module "jenkins" {
     },
   }
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate.jenkins]
+  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.jenkins]
 }
 
 resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_build_farm" {
