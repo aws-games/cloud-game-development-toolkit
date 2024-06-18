@@ -21,7 +21,7 @@ The **Toolkit** consists of four key components:
 
 ## Getting Started
 
-**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/getting-started/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
+**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/latest/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
 
 ## Security
 
