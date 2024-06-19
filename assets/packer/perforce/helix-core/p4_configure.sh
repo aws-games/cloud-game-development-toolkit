@@ -31,6 +31,41 @@ resolve_aws_secret() {
   echo $result
 }
 
+# Setup Helix Authentication Extension
+setup_helix_auth() {
+  local p4port=$1
+  local super=$2
+  local super_password=$3
+  local service_url=$4
+  local default_protocol=$5
+  local name_identifier=$6
+  local user_identifier=$7
+
+  log_message "Starting Helix Authentication Extension setup."
+  log_message "configure-login-hook.sh will be run with the following parameters:"
+  log_message "p4port: $p4port"
+  log_message "super: $super"
+  log_message "superpassword: $super_password"
+  log_message "service-url: $service_url"
+  log_message "default-protocol: $default_protocol"
+  log_message "name_identifier: $name_identifier"
+  log_message "user_identifier: $user_identifier"
+
+  curl -L https://github.com/perforce/helix-authentication-extension/releases/download/2024.1/2024.1-signed.tar.gz | tar zx -C /tmp
+  chmod +x "/tmp/helix-authentication-extension/bin/configure-login-hook.sh"
+  sudo /tmp/helix-authentication-extension/bin/configure-login-hook.sh -n \
+    --p4port "$p4port" \
+    --super "$super" \
+    --superpassword "$super_password" \
+    --service-url "$service_url" \
+    --default-protocol "$default_protocol" \
+    --name-identifier "$name_identifier" \
+    --user-identifier "$user_identifier" \
+    --non-sso-users "$super" \
+    --enable-logging --debug --yes \
+    >> $LOG_FILE 2>> $LOG_FILE
+}
+
 
 # Function to create and mount XFS on EBS
 prepare_ebs_volume() {
@@ -159,6 +194,8 @@ if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" ) && \
 else
     log_message "One or more required paths are not valid EBS volumes or FSx mount points. No operations performed. Will continue with single disk setup"
 fi
+
+log_message "$0" "$@"
 
 log_message "Starting the configuration part after mounting was done later will configure the commit or replica depending on configuration."
 
@@ -318,13 +355,17 @@ else
     log_message "Created SiteTags file appended AWS Region of this instance"
 fi
 
-
+# Check if the HELIX_AUTH_SERVICE_URL is empty. if not, configure Helix Authentication Extension
+if [-z $8]; then
+  log_message "Helix Authentication Service URL was not provided. Skipping configuration."
+else
+  log_message "Configuring Helix Authentication Extension against $8"
+  HELIX_AUTH_SERVICE_URL=$8
+  setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
+fi
 
 # Create the flag file to prevent re-run
 touch "$FLAG_FILE"
-
-
-
 
 # Ending the script
 log_message "EC2 mount script finished."

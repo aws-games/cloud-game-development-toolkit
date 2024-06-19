@@ -39,7 +39,8 @@ resource "aws_instance" "helix_core_instance" {
       ${var.server_type} \
       ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
       ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
-      ${var.FQDN == null ? "" : var.FQDN}
+      ${var.FQDN == null ? "" : var.FQDN} \
+      ${var.helix_authentication_service_url == null ? "" : var.helix_authentication_service_url}
   EOT
 
   vpc_security_group_ids = concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id])
