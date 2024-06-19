@@ -66,6 +66,13 @@ build {
   sources = [
     "source.amazon-ebs.rocky"
   ]
+
+    provisioner "shell" {
+      inline = [
+        "sudo dnf install -y git"
+      ]
+    }
+
     provisioner "shell" {
       script = "p4_setup.sh"
       execute_command = "sudo sh {{.Path}}"

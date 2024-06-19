@@ -150,3 +150,9 @@ variable "helix_core_super_user_username_secret_arn" {
   description = "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."
   default     = null
 }
+
+variable "helix_authentication_service_url" {
+  type        = string
+  description = "The URL for the Helix Authentication Service."
+  default     = null
+}
