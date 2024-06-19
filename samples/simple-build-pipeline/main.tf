@@ -41,6 +41,26 @@ module "perforce_helix_core" {
   logs_volume_size     = 32
 
   FQDN = "core.helix.perforce.${var.fully_qualified_domain_name}"
+
+  helix_authentication_service_url = "https://${aws_route53_record.helix_authentication_service.name}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "helix_auth_inbound_core" {
+  security_group_id = module.perforce_helix_authentication_service.alb_security_group_id
+  ip_protocol       = "TCP"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
+  description       = "Enables Helix Core to access Helix Authentication Service"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "helix_swarm_inbound_core" {
+  security_group_id = module.perforce_helix_swarm.alb_security_group_id
+  ip_protocol       = "TCP"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
+  description       = "Enables Helix Core to access Helix Swarm"
 }
 
 ##########################################
@@ -48,14 +68,15 @@ module "perforce_helix_core" {
 ##########################################
 
 module "perforce_helix_authentication_service" {
-  source              = "../../modules/perforce/helix-authentication-service"
-  vpc_id              = aws_vpc.build_pipeline_vpc.id
-  cluster_name        = aws_ecs_cluster.build_pipeline_cluster.name
-  HAS_alb_subnets     = aws_subnet.public_subnets[*].id
-  HAS_service_subnets = aws_subnet.private_subnets[*].id
-  certificate_arn     = aws_acm_certificate.helix.arn
+  source                                   = "../../modules/perforce/helix-authentication-service"
+  vpc_id                                   = aws_vpc.build_pipeline_vpc.id
+  cluster_name                             = aws_ecs_cluster.build_pipeline_cluster.name
+  helix_authentication_service_alb_subnets = aws_subnet.public_subnets[*].id
+  helix_authentication_service_subnets     = aws_subnet.private_subnets[*].id
+  certificate_arn                          = aws_acm_certificate.helix.arn
 
   enable_web_based_administration = true
+  fqdn                            = "https://auth.helix.${var.fully_qualified_domain_name}"
 
   depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
@@ -77,6 +98,8 @@ module "perforce_helix_swarm" {
   p4d_super_user_password_arn = module.perforce_helix_core.helix_core_super_user_password_secret_arn
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
+
+  fqdn = "swarm.helix.${var.fully_qualified_domain_name}"
 
   depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
