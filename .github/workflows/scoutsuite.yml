@@ -47,7 +47,3 @@ jobs:
               id: plan
               working-directory: ${{ matrix.dir }}
               run: terraform plan -no-color
-
-            - name: Terraform Apply
-              id: apply
-              working-directory: ${{ matrix.dir }}
