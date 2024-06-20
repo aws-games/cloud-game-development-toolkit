@@ -1,0 +1,54 @@
+name: ScouteSuite
+on:
+    pull_request:
+        branches:
+            ["main"]
+    push:
+        branches:
+            ["main"]
+
+jobs:
+    Terraform:
+        strategy:
+            matrix: { dir: ["samples/simple-build-pipeline"] }
+        environment: aws-ci
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: us-east-1
+                ## the following creates an ARN based on the values entered into github secrets
+                role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+                role-session-name: CGDToolkitGitHubActions
+            
+            - name: Terraform fmt
+              id: fmt
+              working-directory: ${{ matrix.dir }}
+              run: terraform fmt -check
+              continue-on-error: true
+
+            - name: Terraform Init
+              id: init
+              working-directory: ${{ matrix.dir }}
+              run: terraform init
+
+            - name: Terraform Validate
+              id: validate
+              working-directory: ${{ matrix.dir }}
+              run: terraform validate -no-color
+            
+            - name: Terraform Plan
+              id: plan
+              working-directory: ${{ matrix.dir }}
+              run: terraform plan -no-color
+            
+            - run: echo ${{ steps.plan.outputs.stdout }}
+            - run: echo ${{ steps.plan.outputs.stderr }}
+            - run: echo ${{ steps.plan.outputs.exitcode }}
+            
