@@ -1,4 +1,4 @@
-name: ScouteSuite
+name: ScoutSuite
 on:
     pull_request:
         branches:
@@ -8,42 +8,180 @@ on:
             ["main"]
 
 jobs:
-    Terraform:
+    terraform-plan:
+        name: "Terraform Plan"
         strategy:
             matrix: { dir: ["samples/simple-build-pipeline"] }
         environment: aws-ci
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ matrix.dir }}
         permissions:
             id-token: write
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                aws-region: us-east-1
+                aws-region: ${{ vars.AWS_REGION }}
                 ## the following creates an ARN based on the values entered into github secrets
                 role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
                 role-session-name: CGDToolkitGitHubActions
-            
-            - name: Terraform fmt
-              id: fmt
-              working-directory: ${{ matrix.dir }}
-              run: terraform fmt -check
-              continue-on-error: true
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
 
             - name: Terraform Init
               id: init
-              working-directory: ${{ matrix.dir }}
               run: terraform init
+
+            - name: Terraform fmt
+              id: fmt
+              run: terraform fmt -check
+              continue-on-error: true
 
             - name: Terraform Validate
               id: validate
-              working-directory: ${{ matrix.dir }}
               run: terraform validate -no-color
             
             - name: Terraform Plan
               id: plan
-              working-directory: ${{ matrix.dir }}
-              run: terraform plan -no-color
+              run: |
+                terraform plan -detailed-exitcode -no-color -var="fully_qualified_domain_name=${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}" -out tf.plan
+            
+            - name: Publish Terraform Plan
+              if: steps.plan.outcome == 'success'
+              uses: actions/upload-artifact@v4
+              with:
+                name: tfplan
+                path: ${{matrix.dir}}/tf.plan
+
+    terraform-apply:
+        name: "Terraform Apply"
+        strategy:
+            matrix: { dir: ["samples/simple-build-pipeline"] }
+        defaults:
+            run:
+                working-directory: ${{ matrix.dir }}
+        runs-on: ubuntu-latest
+        needs: terraform-plan
+        environment: aws-ci
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ vars.AWS_REGION }}
+                ## the following creates an ARN based on the values entered into github secrets
+                role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+                role-session-name: CGDToolkitGitHubActions
+            
+            # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+            - name: Terraform Init
+              run: terraform init
+            
+            # Download saved plan from artifacts  
+            - name: Download Terraform Plan
+              uses: actions/download-artifact@v4
+              with:
+                name: tfplan
+                path: ${{matrix.dir}}
+            
+            # Terraform Apply
+            - name: Terraform Apply
+              id: apply
+              run: terraform apply -auto-approve tf.plan
+
+            - name: Publish Terraform State
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: tfstate
+                path: ${{matrix.dir}}/terraform.tfstate
+
+    scout-suite:
+        name: ScoutSuite
+        runs-on: ubuntu-latest
+        strategy:
+            matrix: { dir: ["samples/simple-build-pipeline"] }
+        environment: aws-ci
+        needs: terraform-apply
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ vars.AWS_REGION }}
+                ## the following creates an ARN based on the values entered into github secrets
+                role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+                role-session-name: CGDToolkitGitHubActions
+
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: "3.10"
+
+            - name: Install ScoutSuite
+              run: pip install scoutsuite
+
+            - name: Run Scout
+              run: python3 scout.py aws
+
+    terraform-destroy:
+        name: "Terraform Destroy"
+        if: ${{ always() && contains(needs.*.result, 'failure') }}
+        strategy:
+            matrix: { dir: ["samples/simple-build-pipeline"] }
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ${{ matrix.dir }}
+        needs: [scout-suite, terraform-apply]
+        environment: aws-ci
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ vars.AWS_REGION }}
+                ## the following creates an ARN based on the values entered into github secrets
+                role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+                role-session-name: CGDToolkitGitHubActions
+            
+            # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+            - name: Terraform Init
+              run: terraform init
+            
+            # Download saved plan from artifacts  
+            - name: Download Terraform State
+              uses: actions/download-artifact@v4
+              with:
+                name: tfstate
+                path: ${{matrix.dir}}
+
+            # Terraform Apply
+            - name: Terraform Destroy
+              run: terraform destroy -auto-approve -var="fully_qualified_domain_name=${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}"
+
