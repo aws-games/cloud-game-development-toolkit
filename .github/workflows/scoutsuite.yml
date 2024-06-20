@@ -47,8 +47,7 @@ jobs:
               id: plan
               working-directory: ${{ matrix.dir }}
               run: terraform plan -no-color
-            
-            - run: echo ${{ steps.plan.outputs.stdout }}
-            - run: echo ${{ steps.plan.outputs.stderr }}
-            - run: echo ${{ steps.plan.outputs.exitcode }}
-            
+
+            - name: Terraform Apply
+              id: apply
+              working-directory: ${{ matrix.dir }}
