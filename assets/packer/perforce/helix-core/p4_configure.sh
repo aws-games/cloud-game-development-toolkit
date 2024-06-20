@@ -42,14 +42,6 @@ setup_helix_auth() {
   local user_identifier=$7
 
   log_message "Starting Helix Authentication Extension setup."
-  log_message "configure-login-hook.sh will be run with the following parameters:"
-  log_message "p4port: $p4port"
-  log_message "super: $super"
-  log_message "superpassword: $super_password"
-  log_message "service-url: $service_url"
-  log_message "default-protocol: $default_protocol"
-  log_message "name_identifier: $name_identifier"
-  log_message "user_identifier: $user_identifier"
 
   curl -L https://github.com/perforce/helix-authentication-extension/releases/download/2024.1/2024.1-signed.tar.gz | tar zx -C /tmp
   chmod +x "/tmp/helix-authentication-extension/bin/configure-login-hook.sh"
@@ -297,7 +289,7 @@ systemctl start p4d_1
 wait_for_service "p4d_1"
 
 P4PORT=ssl:1666
-P4USER=perforce
+P4USER=$P4D_ADMIN_USERNAME
 
 #probably need to copy p4 binary to the /usr/bin or add to the path variable to avoid running with a full path adding:
 #permissions for lal users:
@@ -326,21 +318,21 @@ fi
 
 if [ -f "$SDP_Live_Checkpoint" ]; then
   chmod +x "$SDP_Live_Checkpoint"
-  sudo -u perforce "$SDP_Live_Checkpoint" 1
+  sudo -u "$P4USER" "$SDP_Live_Checkpoint" 1
 else
   echo "Setup script (SDP_Live_Checkpoint) not found."
 fi
 
 if [ -f "$SDP_Offline_Recreate" ]; then
   chmod +x "$SDP_Offline_Recreate"
-  sudo -u perforce "$SDP_Offline_Recreate" 1
+  sudo -u "$P4USER" "$SDP_Offline_Recreate" 1
 else
   echo "Setup script (SDP_Offline_Recreate) not found."
 fi
 
 # initialize crontab for user perforce
 
-sudo -u perforce crontab /p4/p4.crontab.1
+sudo -u "$P4USER" crontab /p4/p4.crontab.1
 
 # verify sdp installation should warn about missing license only:
 /hxdepots/p4/common/bin/verify_sdp.sh 1
