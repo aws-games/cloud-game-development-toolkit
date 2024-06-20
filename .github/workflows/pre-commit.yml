@@ -2,7 +2,10 @@ name: pre-commit
 
 on:
   pull_request:
+<<<<<<< HEAD
     branches: [main]
+=======
+>>>>>>> 3dcaf06 (adding pre-commit hooks for GH actions (#84))
   push:
     branches: [main]
 
@@ -12,5 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v3
+<<<<<<< HEAD
     - uses: bridgecrewio/checkov-action@master
+=======
+>>>>>>> 3dcaf06 (adding pre-commit hooks for GH actions (#84))
     - uses: pre-commit/action@v3.0.1
