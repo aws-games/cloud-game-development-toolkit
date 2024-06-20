@@ -25,4 +25,6 @@ variable "build_farm_fsx_openzfs_storage" {
     throughput_capacity = number
     storage_capacity    = number
   }))
+  description = "Each object corresponds to an OpenZFS filesystem that can be used for persistent build storage."
+  default     = {}
 }
