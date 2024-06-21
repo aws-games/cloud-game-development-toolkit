@@ -20,12 +20,12 @@ jobs:
       - name: Install yq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
       - name: Get Packer templates
         id: packer-templates-matrix
         working-directory: ./assets/packer/
         run: |
+          echo "$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
           echo "::set-output name=matrix::$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
   packer-ci: # Run Packer validation and build for each template
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
