@@ -10,8 +10,6 @@ jobs:
   get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
@@ -25,13 +23,16 @@ jobs:
         id: packer-templates-matrix
         working-directory: ./assets/packer/
         run: |
-          echo "$(yq e -j '.packer_templates[] | {"description": .description, "file_name": .file_name, "dir": .dir}' .config.yml)"
-          echo "::set-output name=matrix::$(yq e -j '.packer_templates[] | {"description": .description, "file_name": .file_name, "dir": .dir}' .config.yml)"
+          MATRIX_JSON=$(yq e -j '.packer_templates[] | {"description": .description, "file_name": .file_name, "dir": .dir}' .config.yml)
+          echo "::set-output name=matrix::${MATRIX_JSON}"
+    outputs:
+      matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
   packer-ci: # Run Packer validation and build for each template
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
-      matrix: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+      matrix: 
+        config: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
@@ -58,10 +59,10 @@ jobs:
         mv packer /usr/local/bin
         rm packer_${PACKER_VERSION}_linux_amd64.zip
     - name: Packer Validate and Build
-      working-directory: ./assets/packer/${{ matrix.dir }}
+      working-directory: ./assets/packer/${{ matrix.config.dir }}
       run: |
-        echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
-        cd ${{ matrix.dir }}
-        packer init ${{ matrix.file_name }}
-        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
-        #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
+        echo "Validating Packer template: ${{ matrix.config.description }} - ${{ matrix.config.file_name }}"
+        cd ${{ matrix.config.dir }}
+        packer init ${{ matrix.config.file_name }}
+        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.config.file_name }}"'
+        #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.config.file_name }}"'
