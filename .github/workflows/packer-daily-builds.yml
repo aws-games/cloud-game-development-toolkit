@@ -25,8 +25,8 @@ jobs:
         id: packer-templates-matrix
         working-directory: ./assets/packer/
         run: |
-          echo "$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
-          echo "::set-output name=matrix::$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
+          echo "$(yq e -j '.packer_templates[] | {"description": .description, "file_name": .file_name, "dir": .dir}' .config.yml)"
+          echo "::set-output name=matrix::$(yq e -j '.packer_templates[] | {"description": .description, "file_name": .file_name, "dir": .dir}' .config.yml)"
   packer-ci: # Run Packer validation and build for each template
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
