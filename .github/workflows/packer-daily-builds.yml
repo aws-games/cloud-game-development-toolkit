@@ -25,6 +25,7 @@ jobs:
         run: |
           MATRIX_JSON=$(yq e -j '.packer_templates[] | {"file_name": .file_name, "dir": .dir, "description": .description}' .config.yml | jq -s 'reduce .[] as $item ({}; . + {($item.file_name): $item})')
           echo "::set-output name=matrix::${MATRIX_JSON}"
+          echo "MATRIX_JSON: ${MATRIX_JSON}"
     outputs:
       matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
   packer-ci: # Run Packer validation and build for each template
@@ -32,7 +33,7 @@ jobs:
     needs: get-packer-templates
     strategy:
       matrix: 
-        config: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+        include: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
@@ -59,10 +60,10 @@ jobs:
         mv packer /usr/local/bin
         rm packer_${PACKER_VERSION}_linux_amd64.zip
     - name: Packer Validate and Build
-      working-directory: ./assets/packer/${{ matrix.config.dir }}
+      working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
-        echo "Validating Packer template: ${{ matrix.config.description }} - ${{ matrix.config.file_name }}"
-        cd ${{ matrix.config.dir }}
-        packer init ${{ matrix.config.file_name }}
-        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.config.file_name }}"'
-        #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.config.file_name }}"'
+        echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
+        cd ${{ matrix.dir }}
+        packer init ${{ matrix.file_name }}
+        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
+        #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
