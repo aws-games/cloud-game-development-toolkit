@@ -10,8 +10,6 @@ jobs:
   get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
@@ -19,19 +17,23 @@ jobs:
           ref: main
       - name: Install yq
         run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
       - name: Get Packer templates
         id: packer-templates-matrix
         working-directory: ./assets/packer/
         run: |
-          echo "::set-output name=matrix::$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
+          MATRIX_JSON=$(yq e -j '.packer_templates[] | {"file_name": .file_name, "dir": .dir, "description": .description}' .config.yml | jq -s 'reduce .[] as $item ({}; . + {($item.file_name): $item})' | jq -c '[.[]]')
+          echo "::set-output name=matrix::${MATRIX_JSON}"
+          echo "MATRIX_JSON: ${MATRIX_JSON}"
+    outputs:
+      matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
   packer-ci: # Run Packer validation and build for each template
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
-      matrix:
-        template: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+      matrix: 
+        include: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
@@ -48,7 +50,7 @@ jobs:
       run: |
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
-        ./aws/install
+        sudo ./aws/install --update
         aws --version
     - name: Install Packer
       run: |
@@ -61,7 +63,6 @@ jobs:
       working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
         echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
-        cd ${{ matrix.dir }}
         packer init ${{ matrix.file_name }}
         packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
         #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
