@@ -20,7 +20,6 @@ jobs:
       - name: Install yq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
       - name: Get Packer templates
         id: packer-templates-matrix
@@ -31,8 +30,7 @@ jobs:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
-      matrix:
-        template: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+      matrix: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
