@@ -1,6 +1,29 @@
-################################################################################
-# Instance
-################################################################################
+##########################################
+# Perforce Helix Core Super User
+##########################################
+
+resource "awscc_secretsmanager_secret" "helix_core_super_user_password" {
+  count       = var.helix_core_super_user_password_secret_arn == null ? 1 : 0
+  name        = "perforceHelixCoreSuperUserPassword"
+  description = "The password for the created Helix Core super user."
+  generate_secret_string = {
+    exclude_numbers     = false
+    exclude_punctuation = true
+    include_space       = false
+  }
+}
+
+resource "awscc_secretsmanager_secret" "helix_core_super_user_username" {
+  count         = var.helix_core_super_user_username_secret_arn == null ? 1 : 0
+  name          = "perforceHelixCoreSuperUserUsername"
+  secret_string = "perforce"
+}
+
+
+##########################################
+# Perforce Helix Core Instance
+##########################################
+
 resource "aws_instance" "helix_core_instance" {
   ami           = data.aws_ami.helix_core_ami.id
   instance_type = var.instance_type
@@ -12,8 +35,12 @@ resource "aws_instance" "helix_core_instance" {
 
   user_data = <<-EOT
     #!/bin/bash
-    sleep 30
-    /home/rocky/p4_configure.sh /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 ${var.server_type}
+    /home/rocky/p4_configure.sh /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 \
+      ${var.server_type} \
+      ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
+      ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
+      ${var.FQDN == null ? "" : var.FQDN} \
+      ${var.helix_authentication_service_url == null ? "" : var.helix_authentication_service_url}
   EOT
 
   vpc_security_group_ids = concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id])
@@ -37,18 +64,21 @@ resource "aws_instance" "helix_core_instance" {
   })
 }
 
-################################################################################
-# Elastic IP Address for Public Facing Instance
-################################################################################
+##########################################
+# EIP For Internet Access to Instance
+##########################################
+
 resource "aws_eip" "helix_core_eip" {
   count    = var.internal ? 0 : 1
   instance = aws_instance.helix_core_instance.id
   domain   = "vpc"
 }
 
-################################################################################
-# EBS Storage
-################################################################################
+##########################################
+# Storage Configuration
+##########################################
+
+// hxlogs
 resource "aws_ebs_volume" "logs" {
   availability_zone = local.helix_core_az
   size              = var.logs_volume_size
@@ -62,7 +92,6 @@ resource "aws_volume_attachment" "logs_attachment" {
   volume_id   = aws_ebs_volume.logs.id
   instance_id = aws_instance.helix_core_instance.id
 }
-
 
 // hxmetadata
 resource "aws_ebs_volume" "metadata" {
@@ -79,7 +108,6 @@ resource "aws_volume_attachment" "metadata_attachment" {
   instance_id = aws_instance.helix_core_instance.id
 }
 
-
 // hxdepot
 resource "aws_ebs_volume" "depot" {
   availability_zone = local.helix_core_az
@@ -94,6 +122,10 @@ resource "aws_volume_attachment" "depot_attachment" {
   volume_id   = aws_ebs_volume.depot.id
   instance_id = aws_instance.helix_core_instance.id
 }
+
+##########################################
+# Default SG for Internet Egress
+##########################################
 
 resource "aws_security_group" "helix_core_security_group" {
   count       = var.create_default_sg ? 1 : 0

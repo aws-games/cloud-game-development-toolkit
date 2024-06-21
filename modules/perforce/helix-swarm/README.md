@@ -31,7 +31,7 @@ No modules.
 | [aws_cloudwatch_log_group.swarm_redis_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_group.swarm_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_ecs_cluster.swarm_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_cluster_capacity_providers.swarm_cluster_fargate_rpvodiers](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers) | resource |
+| [aws_ecs_cluster_capacity_providers.swarm_cluster_fargate_providers](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers) | resource |
 | [aws_ecs_service.swarm_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.swarm_task_definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_efs_access_point.redis_efs_access_point](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point) | resource |
@@ -82,6 +82,7 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_redis_host"></a> [existing\_redis\_host](#input\_existing\_redis\_host) | The hostname where the Redis cache that Swarm should use is running. | `string` | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Swarm service load balancer. | `list(string)` | `[]` | no |
+| <a name="input_fqdn"></a> [fqdn](#input\_fqdn) | The fully qualified domain name that Swarm should use for internal URLs. | `string` | `null` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the Helix Swarm service load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to swarm module resources. | `string` | `"swarm"` | no |
 | <a name="input_p4d_port"></a> [p4d\_port](#input\_p4d\_port) | The P4D\_PORT environment variable where Swarm should look for Helix Core. Defaults to 'ssl:perforce:1666' | `string` | `"ssl:perforce:1666"` | no |
@@ -106,7 +107,6 @@ No modules.
 | <a name="input_swarm_desired_container_count"></a> [swarm\_desired\_container\_count](#input\_swarm\_desired\_container\_count) | The desired number of containers running the Helix Swarm service. | `number` | `1` | no |
 | <a name="input_swarm_efs_performance_mode"></a> [swarm\_efs\_performance\_mode](#input\_swarm\_efs\_performance\_mode) | The performance mode of the EFS file system used by the Helix Swarm service. Defaults to general purpose. | `string` | `"generalPurpose"` | no |
 | <a name="input_swarm_efs_throughput_mode"></a> [swarm\_efs\_throughput\_mode](#input\_swarm\_efs\_throughput\_mode) | The throughput mode of the EFS file system used by the Helix Swarm service. Defaults to bursting. | `string` | `"bursting"` | no |
-| <a name="input_swarm_host"></a> [swarm\_host](#input\_swarm\_host) | The hostname that Swarm should use for internal URLs. | `string` | `"helix-swarm"` | no |
 | <a name="input_swarm_service_subnets"></a> [swarm\_service\_subnets](#input\_swarm\_service\_subnets) | A list of subnets to deploy the Helix Swarm service into. Private subnets are recommended. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IAC_MANAGEMENT": "CGD-Toolkit",<br>  "IAC_MODULE": "swarm",<br>  "IAC_PROVIDER": "Terraform"<br>}</pre> | no |
 | <a name="input_task_cpu"></a> [task\_cpu](#input\_task\_cpu) | The CPU allotment for the Helix Swarm task. | `number` | `2048` | no |

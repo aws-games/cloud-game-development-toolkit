@@ -36,8 +36,19 @@ variable "tags" {
 }
 
 ########################################
-# NETWORKING AND SECURITY
+# Networking and Security
 ########################################
+variable "vpc_id" {
+  type        = string
+  description = "The VPC where Helix Core should be deployed"
+}
+
+variable "create_default_sg" {
+  type        = bool
+  description = "Whether to create a default security group for the Helix Core instance."
+  default     = true
+}
+
 variable "instance_subnet_id" {
   type        = string
   description = "The subnet where the Helix Core instance will be deployed."
@@ -53,6 +64,12 @@ variable "internal" {
   type        = bool
   description = "Set this flag to true if you do not want the Helix Core instance to have a public IP."
   default     = false
+}
+
+variable "FQDN" {
+  type        = string
+  description = "The FQDN that should be used to generate the self-signed SSL cert on the Helix Core instance."
+  default     = null
 }
 
 ########################################
@@ -103,7 +120,7 @@ variable "depot_volume_size" {
 
 
 ########################################
-# IAM CONFIGURATION
+# Helix Core Instance Roles
 ########################################
 variable "custom_helix_core_role" {
   type        = string
@@ -117,13 +134,25 @@ variable "create_helix_core_default_role" {
   default     = true
 }
 
-variable "vpc_id" {
+
+
+########################################
+# Super User Credentials
+########################################
+variable "helix_core_super_user_password_secret_arn" {
   type        = string
-  description = "The VPC where Helix Core should be deployed"
+  description = "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here."
+  default     = null
 }
 
-variable "create_default_sg" {
-  type        = bool
-  description = "Whether to create a default security group for the Helix Core instance."
-  default     = true
+variable "helix_core_super_user_username_secret_arn" {
+  type        = string
+  description = "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."
+  default     = null
+}
+
+variable "helix_authentication_service_url" {
+  type        = string
+  description = "The URL for the Helix Authentication Service."
+  default     = null
 }
