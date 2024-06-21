@@ -63,7 +63,6 @@ jobs:
       working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
         echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
-        cd ${{ matrix.dir }}
         packer init ${{ matrix.file_name }}
         packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
         #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
