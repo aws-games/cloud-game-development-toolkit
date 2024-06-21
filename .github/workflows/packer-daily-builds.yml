@@ -11,7 +11,7 @@ jobs:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.get-packer-templates.outputs.matrix }}
+      matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
     steps:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
