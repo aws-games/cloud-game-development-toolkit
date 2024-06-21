@@ -1,6 +1,20 @@
 # Packer template locations relative to ./packer directory
 packer_templates:
-  - file_name: './build-agents/linux/amazon-linux-2023-x86_64.pkr.hcl'             # Amazon Linux 2023 Jenkins Builder (x86)
-  - file_name: './build-agents/linux/amazon-linux-2023-arm64.pkr.hcl'              # Amazon Linux 2023 Jenkins Builder (ARM)
-  - file_name: './build-agents/linux/ubuntu-jammy-22.04-amd64-server.pkr.hcl'      # Ubuntu 22.04 LTS Jenkins Builder (x86)
-  - file_name: './build-agents/linux/ubuntu-jammy-22.04-arm64-server.pkr.hcl'      # Ubuntu 22.04 LTS Jenkins Builder (ARM)
+  - description: 'Amazon Linux 2023 Jenkins Builder (x86)'
+    file_name: 'amazon-linux-2023-x86_64.pkr.hcl'
+    dir: 'build-agents/linux'
+  - description: 'Amazon Linux 2023 Jenkins Builder (ARM)'
+    file_name: 'amazon-linux-2023-arm64.pkr.hcl'
+    dir: 'build-agents/linux'
+  - description: 'Ubuntu 22.04 LTS Jenkins Builder (x86)'
+    file_name: 'ubuntu-jammy-22.04-amd64-server.pkr.hcl'
+    dir: 'build-agents/linux'
+  - description: 'Ubuntu 22.04 LTS Jenkins Builder (ARM)'
+    file_name: 'ubuntu-jammy-22.04-arm64-server.pkr.hcl'
+    dir: 'build-agents/linux'
+  - description: 'Windows Server 2022 Jenkins Builder (x86)'
+    file_name: 'windows.pkr.hcl'
+    dir: 'build-agents/windows'
+  - description: 'Perforce Helix Core Server (x86)'
+    file_name: 'perforce.pkr.hcl'
+    dir: 'perforce/helix-core'
