@@ -31,8 +31,7 @@ jobs:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
-      matrix:
-        template: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+      matrix: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
