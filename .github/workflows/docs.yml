@@ -53,5 +53,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - name: Deploy Docs
-        run: make docs-deploy VERSION="$VERSION" ALIAS="$ALIAS"   
+        run: make docs-deploy VERSION="$VERSION" ALIAS="$ALIAS"
 

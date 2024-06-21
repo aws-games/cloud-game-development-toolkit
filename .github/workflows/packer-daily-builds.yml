@@ -1,0 +1,67 @@
+name: Packer Daily Builds
+on:
+  schedule:
+    - cron:  '0 0 * * *'  # Run every day at midnight
+  workflow_dispatch: # Manually trigger the workflow
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+        with:
+          ref: main
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          chmod +x /usr/bin/yq
+      - name: Get Packer templates
+        id: packer-templates-matrix
+        working-directory: ./assets/packer/
+        run: |
+          echo "::set-output name=matrix::$(yq -r '.packer_templates[] | {description: .description, file_name: .file_name, dir: .dir}' .config.yml | jq -c .)"
+  packer-ci: # Run Packer validation and build for each template
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    needs: get-packer-templates
+    strategy:
+      matrix:
+        template: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
+    environment: aws-ci
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+      with:
+        role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+        aws-region: ${{ vars.AWS_REGION }}
+    - name: Checkout code
+      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      with:
+        ref: main
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        ./aws/install
+        aws --version
+    - name: Install Packer
+      run: |
+        PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r -M '.current_version')
+        wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip
+        unzip packer_${PACKER_VERSION}_linux_amd64.zip
+        mv packer /usr/local/bin
+        rm packer_${PACKER_VERSION}_linux_amd64.zip
+    - name: Packer Validate and Build
+      working-directory: ./assets/packer/${{ matrix.dir }}
+      run: |
+        echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
+        cd ${{ matrix.dir }}
+        packer init ${{ matrix.file_name }}
+        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
+        #packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'template="${{ matrix.file_name }}"'
