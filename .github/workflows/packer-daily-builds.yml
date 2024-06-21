@@ -23,7 +23,7 @@ jobs:
         id: packer-templates-matrix
         working-directory: ./assets/packer/
         run: |
-          MATRIX_JSON=$(yq e -j '.packer_templates[] | {"file_name": .file_name, "dir": .dir, "description": .description}' .config.yml | jq -s 'reduce .[] as $item ({}; . + {($item.file_name): $item})')
+          MATRIX_JSON=$(yq e -j '.packer_templates[] | {"file_name": .file_name, "dir": .dir, "description": .description}' .config.yml | jq -s 'reduce .[] as $item ({}; . + {($item.file_name): $item})' | jq -c '[.[]]')
           echo "::set-output name=matrix::${MATRIX_JSON}"
           echo "MATRIX_JSON: ${MATRIX_JSON}"
     outputs:
