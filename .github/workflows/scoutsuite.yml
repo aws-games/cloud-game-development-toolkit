@@ -140,9 +140,15 @@ jobs:
             - name: Run Scout
               run: scout aws
 
+            - name: Publish Scout Report
+              uses: actions/upload-artifact@v4
+              with:
+                name: scout
+                path: scoutsuite-report
+
     terraform-destroy:
         name: "Terraform Destroy"
-        if: ${{ always() && contains(needs.*.result, 'failure') }}
+        if: always()
         strategy:
             matrix: { dir: ["samples/simple-build-pipeline"] }
         runs-on: ubuntu-latest
