@@ -8,7 +8,7 @@ data "aws_route53_zone" "public_zone" {
 
 resource "aws_route53_record" "jenkins" {
   zone_id = data.aws_route53_zone.public_zone.id
-  name    = data.aws_route53_zone.public_zone.name
+  name    = "jenkins.${data.aws_route53_zone.public_zone.name}"
   type    = "A"
   alias {
     name                   = module.jenkins.jenkins_alb_dns_name
