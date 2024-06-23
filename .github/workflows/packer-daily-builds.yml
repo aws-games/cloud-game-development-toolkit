@@ -42,6 +42,7 @@ jobs:
       with:
         role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
         aws-region: ${{ vars.AWS_REGION }}
+        role-session-name: CGDToolkitGitHubActions
     - name: Checkout code
       uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
       with:
@@ -52,6 +53,7 @@ jobs:
         unzip awscliv2.zip
         sudo ./aws/install --update
         aws --version
+        echo ${AWS_PROFILE_CI}
     - name: Install Packer
       run: |
         PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r -M '.current_version')
@@ -59,10 +61,13 @@ jobs:
         unzip packer_${PACKER_VERSION}_linux_amd64.zip
         mv packer /usr/local/bin
         rm packer_${PACKER_VERSION}_linux_amd64.zip
-    - name: Packer Validate and Build
+    - name: Packer Init and Validate
       working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
         echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
         packer init ${{ matrix.file_name }}
         packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}' ${{ matrix.file_name }}
+    - name: Packer Build
+      working-directory: ./assets/packer/${{ matrix.dir }}
+      run: |
         packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}' ${{ matrix.file_name }}
