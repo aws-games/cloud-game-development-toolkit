@@ -1,1 +1,1 @@
-# Jenkins Module
+--8<-- "modules/jenkins/README.md"

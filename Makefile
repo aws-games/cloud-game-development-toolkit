@@ -50,7 +50,7 @@ docs-local-docker: ## Build and run the docs locally using docker and 'serve'. E
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \ 
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)"
 		--no-cache
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:$(VERSION) mkdocs serve --dev-addr=0.0.0.0:8000
 
