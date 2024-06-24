@@ -69,7 +69,9 @@ jobs:
         region = "${{ vars.AWS_REGION }}"
         vpc_id = "${{ secrets.AWS_VPC_ID_CI }}"
         subnet_id = "${{ secrets.AWS_SUBNET_ID_CI }}"
-        public_key = "${{ secrets.PACKER_CI_PUBLIC_KEY }}"
+        public_key = <<PUBLIC_KEY
+        ${{ secrets.PACKER_CI_PUBLIC_KEY }}
+        PUBLIC_KEY
         profile = "${{ secrets.AWS_PROFILE_CI }}"
         EOF
         packer validate -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
