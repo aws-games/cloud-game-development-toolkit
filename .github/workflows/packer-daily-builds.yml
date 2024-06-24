@@ -72,7 +72,6 @@ jobs:
         public_key = "${{ secrets.PACKER_CI_PUBLIC_KEY }}"
         profile = "${{ secrets.AWS_PROFILE_CI }}"
         EOF
-        ${{ matrix.file_name }}
         packer validate -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
     - name: Packer Build
       working-directory: ./assets/packer/${{ matrix.dir }}
