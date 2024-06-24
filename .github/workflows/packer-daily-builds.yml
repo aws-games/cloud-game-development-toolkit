@@ -70,4 +70,5 @@ jobs:
     - name: Packer Build
       working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
-        packer build -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}' ${{ matrix.file_name }}
+        echo "AWS_PROFILE=${{ secrets.AWS_PROFILE_CI }}" >> $GITHUB_ENV
+        packer build -debug -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}' ${{ matrix.file_name }}
