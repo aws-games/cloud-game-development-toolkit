@@ -65,9 +65,17 @@ jobs:
       run: |
         echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
         packer init ${{ matrix.file_name }}
-        packer validate -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}"' ${{ matrix.file_name }}
+        cat > ci.pkrvars.hcl << EOF
+        region = "${{ vars.AWS_REGION }}"
+        vpc_id = "${{ secrets.AWS_VPC_ID_CI }}"
+        subnet_id = "${{ secrets.AWS_SUBNET_ID_CI }}"
+        public_key = "${{ secrets.PACKER_CI_PUBLIC_KEY }}"
+        profile = "${{ secrets.AWS_PROFILE_CI }}"
+        EOF
+        ${{ matrix.file_name }}
+        packer validate -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
     - name: Packer Build
       working-directory: ./assets/packer/${{ matrix.dir }}
       run: |
-        packer build -debug -var 'region="${{ vars.AWS_REGION }}"' -var 'vpc_id="${{ secrets.AWS_VPC_ID_CI }}"' -var 'subnet_id="${{ secrets.AWS_SUBNET_ID_CI }}"' -var 'public_key="${{ secrets.PACKER_CI_PUBLIC_KEY }}"' -var 'profile="${{ secrets.AWS_PROFILE_CI }}"' ${{ matrix.file_name }}
+        packer build -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
 
