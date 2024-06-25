@@ -3,8 +3,8 @@
 ########################################
 variable "name" {
   type        = string
-  description = "The name attached to HAS module resources."
-  default     = "HAS"
+  description = "The name attached to Helix Authentication Service module resources."
+  default     = "helix-auth-svc"
 
   validation {
     condition     = length(var.name) > 1 && length(var.name) <= 50
@@ -29,7 +29,7 @@ variable "tags" {
   type = map(any)
   default = {
     "IAC_MANAGEMENT" = "CGD-Toolkit"
-    "IAC_MODULE"     = "HAS"
+    "IAC_MODULE"     = "helix-authentication-service"
     "IAC_PROVIDER"   = "Terraform"
   }
   description = "Tags to apply to resources."
@@ -41,7 +41,7 @@ variable "tags" {
 
 variable "vpc_id" {
   type        = string
-  description = "The ID of the existing VPC you would like to deploy HAS into."
+  description = "The ID of the existing VPC you would like to deploy Helix Authentication Service into."
 }
 
 ########################################
@@ -106,36 +106,36 @@ variable "enable_web_based_administration" {
 }
 
 # - Load Balancer -
-variable "HAS_alb_subnets" {
+variable "helix_authentication_service_alb_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Helix Authentication Service load balancer into. Public subnets are recommended."
 }
 
-variable "enable_HAS_alb_access_logs" {
+variable "enable_helix_authentication_service_alb_access_logs" {
   type        = bool
   description = "Enables access logging for the Helix Authentication Service ALB. Defaults to false."
   default     = false
 }
 
-variable "HAS_alb_access_logs_bucket" {
+variable "helix_authentication_service_alb_access_logs_bucket" {
   type        = string
   description = "ID of the S3 bucket for Helix Authentication Service ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
   default     = null
 }
 
-variable "HAS_alb_access_logs_prefix" {
+variable "helix_authentication_service_alb_access_logs_prefix" {
   type        = string
   description = "Log prefix for Helix Authentication Service ALB access logs. If null the project prefix and module name are used."
   default     = null
 }
 
-variable "enable_HAS_alb_deletion_protection" {
+variable "enable_helix_authentication_service_alb_deletion_protection" {
   type        = bool
   description = "Enables deletion protection for the Helix Authentication Service ALB. Defaults to false."
   default     = false
 }
 
-variable "HAS_service_subnets" {
+variable "helix_authentication_service_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Helix Authentication Service into. Private subnets are recommended."
 }
@@ -158,27 +158,39 @@ variable "certificate_arn" {
 }
 
 # - Logging -
-variable "HAS_cloudwatch_log_retention_in_days" {
+variable "helix_authentication_service_cloudwatch_log_retention_in_days" {
   type        = string
   description = "The log retention in days of the cloudwatch log group for Helix Authentication Service."
   default     = 365
 }
 
 # - Security and Permissions -
-variable "custom_HAS_role" {
+variable "custom_helix_authentication_service_role" {
   type        = string
   description = "ARN of the custom IAM Role you wish to use with Helix Authentication Service."
   default     = null
 }
 
-variable "create_HAS_default_role" {
+variable "create_helix_authentication_service_default_role" {
   type        = bool
   description = "Optional creation of Helix Authentication Service default IAM Role. Default is set to true."
   default     = true
 }
 
-variable "create_HAS_default_policy" {
+variable "create_helix_authentication_service_default_policy" {
   type        = bool
   description = "Optional creation of Helix Authentication Service default IAM Policy. Default is set to true."
   default     = true
+}
+
+variable "helix_authentication_service_admin_username_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator username."
+  default     = null
+}
+
+variable "helix_authentication_service_admin_password_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator password."
+  default     = null
 }

@@ -40,7 +40,7 @@ docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-depl
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
 		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
 		--no-cache
-	docker run -t docs:$(VERSION) mike deploy $(VERSION) ${ALIAS} --update-aliases 
+	docker run -t docs:$(VERSION) mike deploy $(VERSION) ${ALIAS} --update-aliases
 	docker run -t docs:$(VERSION) mike set-default $(ALIAS) --push
 
 .PHONY: docs-local-docker

@@ -1,26 +1,7 @@
-variable "helix_authentication_service_certificate_arn" {
+variable "fully_qualified_domain_name" {
   type        = string
-  description = "The certificate used by the Helix Authentication Service"
-}
-
-variable "helix_swarm_certificate_arn" {
-  type        = string
-  description = "The certificate used by Helix Swarm"
-}
-
-variable "helix_swarm_environment_variables" {
-  type = object({
-    p4d_super_user_arn          = string
-    p4d_super_user_password_arn = string
-    p4d_swarm_user_arn          = string
-    p4d_swarm_password_arn      = string
-  })
-  description = "The required environment variables for Helix Swarm configuration."
-}
-
-variable "jenkins_certificate_arn" {
-  type        = string
-  description = "The certificate used by Jenkins"
+  description = "Provide the FQDN that should be used for routing."
+  default     = null
 }
 
 variable "jenkins_agent_secret_arns" {

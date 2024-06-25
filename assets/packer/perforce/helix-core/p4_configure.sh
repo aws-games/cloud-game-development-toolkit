@@ -25,6 +25,40 @@ is_fsx_mount() {
     return $?
 }
 
+# Function to resolve AWS secrets
+resolve_aws_secret() {
+  local result=$(aws secretsmanager get-secret-value --secret-id "$1" --query "SecretString" --output text)
+  echo $result
+}
+
+# Setup Helix Authentication Extension
+setup_helix_auth() {
+  local p4port=$1
+  local super=$2
+  local super_password=$3
+  local service_url=$4
+  local default_protocol=$5
+  local name_identifier=$6
+  local user_identifier=$7
+
+  log_message "Starting Helix Authentication Extension setup."
+
+  curl -L https://github.com/perforce/helix-authentication-extension/releases/download/2024.1/2024.1-signed.tar.gz | tar zx -C /tmp
+  chmod +x "/tmp/helix-authentication-extension/bin/configure-login-hook.sh"
+  sudo /tmp/helix-authentication-extension/bin/configure-login-hook.sh -n \
+    --p4port "$p4port" \
+    --super "$super" \
+    --superpassword "$super_password" \
+    --service-url "$service_url" \
+    --default-protocol "$default_protocol" \
+    --name-identifier "$name_identifier" \
+    --user-identifier "$user_identifier" \
+    --non-sso-users "$super" \
+    --enable-logging --debug --yes \
+    >> $LOG_FILE 2>> $LOG_FILE
+}
+
+
 # Function to create and mount XFS on EBS
 prepare_ebs_volume() {
     local ebs_volume=$1
@@ -72,16 +106,13 @@ prepare_site_tags() {
   log_message "Added $aws_info as a site tag"
 }
 
-
-
-
 # Starting the script
 log_message "Starting the p4 configure script."
 
-# Check if the script received three arguments
-if [ "$#" -ne 4 ]; then
-    log_message "Incorrect usage. Expected 4 arguments, got $#."
-    log_message "Usage: $0 <EBS path or FSx for hxlogs> <EBS path or FSx for hxmetadata> <EBS path or FSx for hxdepots> <p4d_master or p4d_replica>"
+# Check if the script received 7 arguments
+if [ "$#" < 6 || "$#" > 7 ]; then
+    log_message "Incorrect usage. Expected 6 or 7 arguments, got $#."
+    log_message "Usage: $0 <EBS path or FSx for hxlogs> <EBS path or FSx for hxmetadata> <EBS path or FSx for hxdepots> <p4d_master or p4d_replica> <p4d_super_user_username_secret_arn> <p4d_super_user_password_secret_arn> <FQDN (optional)>"
     exit 1
 fi
 
@@ -90,6 +121,12 @@ EBS_LOGS=$1
 EBS_METADATA=$2
 EBS_DEPOTS=$3
 P4D_TYPE=$4
+P4D_ADMIN_USERNAME_SECRET_ID=$5
+P4D_ADMIN_PASS_SECRET_ID=$6
+
+# Fetch credentials for admin user from secrets manager
+P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
+P4D_ADMIN_PASS=$(resolve_aws_secret $P4D_ADMIN_PASS_SECRET_ID)
 
 # Function to perform operations
 perform_operations() {
@@ -150,6 +187,8 @@ else
     log_message "One or more required paths are not valid EBS volumes or FSx mount points. No operations performed. Will continue with single disk setup"
 fi
 
+log_message "$0" "$@"
+
 log_message "Starting the configuration part after mounting was done later will configure the commit or replica depending on configuration."
 
 SDP_Setup_Script=/hxdepots/sdp/Server/Unix/setup/mkdirs.sh 
@@ -166,12 +205,23 @@ AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region --
 cd /hxdepots/sdp/Server/Unix/setup # need to cd other
 
 
+
 #update the mkdirs.cfg so it has proper hostname a private DNS form EC2 otherwise adding replica is not possible due to wrong P4TARGET settings.
 
 if [ ! -f "$SDP_Setup_Script_Config" ]; then
     log_message "Error: Configuration file not found at $SDP_Setup_Script_Config."
     exit 1
 fi
+
+# Update Perforce super user password in configuration
+sed -i "s/^P4ADMINPASS=.*/P4ADMINPASS=$P4D_ADMIN_PASS/" "$SDP_Setup_Script_Config"
+
+log_message "Updated P4ADMINPASS in $SDP_Setup_Script_Config."
+
+# Update Perforce super user password in configuration
+sed -i "s/^ADMINUSER=.*/ADMINUSER=$P4D_ADMIN_USERNAME/" "$SDP_Setup_Script_Config"
+
+log_message "Updated ADMINUSER in $SDP_Setup_Script_Config."
 
 # Check if p4d_master server and update sitetags
 
@@ -195,8 +245,13 @@ fi
 FILE_PATH="/p4/ssl/config.txt"
 
 # Retrieve the EC2 instance DNS name
-EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
-
+if [-z $7]; then
+  log_message "FQDN was not provided. Retrieving from EC2 metadata."
+  EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
+else
+  log_message "FQDN was provided: $7"
+  EC2_DNS_NAME=$7
+fi
 
 # Check if the DNS name was successfully retrieved
 if [ -z "$EC2_DNS_NAME" ]; then
@@ -234,7 +289,7 @@ systemctl start p4d_1
 wait_for_service "p4d_1"
 
 P4PORT=ssl:1666
-P4USER=perforce
+P4USER=$P4D_ADMIN_USERNAME
 
 #probably need to copy p4 binary to the /usr/bin or add to the path variable to avoid running with a full path adding:
 #permissions for lal users:
@@ -263,21 +318,21 @@ fi
 
 if [ -f "$SDP_Live_Checkpoint" ]; then
   chmod +x "$SDP_Live_Checkpoint"
-  sudo -u perforce "$SDP_Live_Checkpoint" 1
+  sudo -u "$P4USER" "$SDP_Live_Checkpoint" 1
 else
   echo "Setup script (SDP_Live_Checkpoint) not found."
 fi
 
 if [ -f "$SDP_Offline_Recreate" ]; then
   chmod +x "$SDP_Offline_Recreate"
-  sudo -u perforce "$SDP_Offline_Recreate" 1
+  sudo -u "$P4USER" "$SDP_Offline_Recreate" 1
 else
   echo "Setup script (SDP_Offline_Recreate) not found."
 fi
 
 # initialize crontab for user perforce
 
-sudo -u perforce crontab /p4/p4.crontab.1
+sudo -u "$P4USER" crontab /p4/p4.crontab.1
 
 # verify sdp installation should warn about missing license only:
 /hxdepots/p4/common/bin/verify_sdp.sh 1
@@ -292,13 +347,17 @@ else
     log_message "Created SiteTags file appended AWS Region of this instance"
 fi
 
-
+# Check if the HELIX_AUTH_SERVICE_URL is empty. if not, configure Helix Authentication Extension
+if [-z $8]; then
+  log_message "Helix Authentication Service URL was not provided. Skipping configuration."
+else
+  log_message "Configuring Helix Authentication Extension against $8"
+  HELIX_AUTH_SERVICE_URL=$8
+  setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
+fi
 
 # Create the flag file to prevent re-run
 touch "$FLAG_FILE"
-
-
-
 
 # Ending the script
 log_message "EC2 mount script finished."

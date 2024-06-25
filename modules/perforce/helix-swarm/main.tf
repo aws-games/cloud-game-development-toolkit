@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" "swarm_cluster" {
   tags = local.tags
 }
 
-resource "aws_ecs_cluster_capacity_providers" "swarm_cluster_fargate_rpvodiers" {
+resource "aws_ecs_cluster_capacity_providers" "swarm_cluster_fargate_providers" {
   count        = var.cluster_name != null ? 0 : 1
   cluster_name = aws_ecs_cluster.swarm_cluster[0].name
 
@@ -126,7 +126,7 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
           },
           {
             name  = "SWARM_HOST"
-            value = var.swarm_host
+            value = var.fqdn
           },
           {
             name  = "SWARM_REDIS"

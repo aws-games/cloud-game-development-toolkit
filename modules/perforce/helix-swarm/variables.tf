@@ -77,10 +77,10 @@ variable "p4d_port" {
   default     = "ssl:perforce:1666"
 }
 
-variable "swarm_host" {
+variable "fqdn" {
   type        = string
-  description = "The hostname that Swarm should use for internal URLs."
-  default     = "helix-swarm"
+  description = "The fully qualified domain name that Swarm should use for internal URLs."
+  default     = null
 }
 
 variable "redis_container_cpu" {
