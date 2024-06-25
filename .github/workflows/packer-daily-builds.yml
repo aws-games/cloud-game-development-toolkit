@@ -8,7 +8,6 @@ permissions:
   contents: read
 jobs:
   get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
-    if: github.repository == 'aws-games/cloud-game-development-toolkit'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -29,12 +28,10 @@ jobs:
     outputs:
       matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
   packer-ci: # Run Packer validation and build for each template
-    if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
       matrix: 
         include: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
-    environment: aws-ci
     runs-on: ubuntu-latest
     steps:
     - name: Configure AWS credentials
