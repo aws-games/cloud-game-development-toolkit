@@ -14,10 +14,9 @@ The **Toolkit** consists of four key components:
 
 | Component | Description
 |-|-|
-|**Assets**| Reusable scripts, pipeline definitions, Dockerfiles, [Packer](https://www.packer.io/) templates, and other resources that might prove useful or are dependencies of any of the modules. 
+|**Assets**| Reusable scripts, pipeline definitions, Dockerfiles, [Packer](https://www.packer.io/) templates, [Ansible](https://github.com/ansible/ansible) Playbooks to configure workloads after deployment, and other resources that might prove useful or are dependencies of any of the modules.
 |**Modules**| Highly configurable and extensible [Terraform](https://www.terraform.io/) modules for simplified deployment of key game development infrastructure on AWS with best-practices by default.
 |**Samples**| Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
-|**Playbooks**| Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
 
 ## Getting Started
 
