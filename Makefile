@@ -19,7 +19,6 @@ ifdef COLOR_SUPPORT
   endif
 endif
 
-
 .PHONY: docs-build
 docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=v1.0.0`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-build VERSION=v1.0.0'. Run 'make help' for usage. ${RESET}"; exit 1; fi
@@ -27,9 +26,9 @@ docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=v1
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" 
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
 		--no-cache
-
+	
 .PHONY: docs-deploy
 docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-deploy VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-deploy VERSION=v1.0.0'. Run 'make help' for usage. ${RESET}"; exit 1; fi
@@ -38,7 +37,7 @@ docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-depl
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" 
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
 		--no-cache
 	docker run -t docs:$(VERSION) mike deploy $(VERSION) ${ALIAS} --update-aliases
 	docker run -t docs:$(VERSION) mike set-default $(ALIAS) --push --allow-empty
@@ -50,7 +49,7 @@ docs-local-docker: ## Build and run the docs locally using docker and 'serve'. E
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)"
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
 		--no-cache
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:$(VERSION) mkdocs serve --dev-addr=0.0.0.0:8000
 
