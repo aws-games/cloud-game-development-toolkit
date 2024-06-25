@@ -11,7 +11,12 @@ This module deploys the following resources:
 - A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 
-<!-- BEGIN_TF_DOCS -->
+<<<<<<< HEAD
+=======
+![Jenkins Module Architecture](../../docs/media/Images/jenkins-module-architecture.jpg "Jenkins Module Architecture")
+
+>>>>>>> 36865d4 (Adds Jenkins architecture diagram)
+<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
 | Name | Version |
