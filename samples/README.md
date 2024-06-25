@@ -1,4 +1,4 @@
-# Cloud Game Development Toolkit Samples
+# Overview
 
 Samples represent a reference implementation that can be deployed to solve for a specific use-case or workload. These are Terraform configurations and integrations with other common AWS workloads and services. Each sample will provide its own documentation and instructions that follows the template below:
 
