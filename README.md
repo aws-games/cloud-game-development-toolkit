@@ -10,7 +10,7 @@ The project is designed for piecemeal usage:
 - Looking to migrate your Perforce server from on-premise to AWS? :white_check_mark:
 - Starting your new studio from the ground up and looking for pre-built templates to deploy common infrastructure? :white_check_mark:
 
-The **Toolkit** consists of four key components:
+The **Toolkit** consists of three key components:
 
 | Component | Description
 |-|-|
