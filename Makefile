@@ -41,7 +41,7 @@ docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-depl
 		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
 		--no-cache
 	docker run -t docs:$(VERSION) mike deploy $(VERSION) ${ALIAS} --update-aliases
-	docker run -t docs:$(VERSION) mike set-default $(ALIAS) --push
+	docker run -t docs:$(VERSION) mike set-default $(ALIAS) --push --allow-empty
 
 .PHONY: docs-local-docker
 docs-local-docker: ## Build and run the docs locally using docker and 'serve'. Example: `make docs-local-docker VERSION=v1.0.0`
