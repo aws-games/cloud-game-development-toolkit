@@ -27,7 +27,7 @@ docs-build: ## Build the docs using docker. Example: `make docs-build VERSION=v1
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" 
 		--no-cache
 
 .PHONY: docs-deploy
@@ -38,7 +38,7 @@ docs-deploy: ## Build and deploy the docs using 'mike'. Example: `make docs-depl
 	docker build -f ./docs/Dockerfile -t docs:$(VERSION) . \
 		--build-arg GIT_USER_NAME="$(GIT_USER_NAME)" \
 		--build-arg GIT_USER_EMAIL="$(GIT_USER_EMAIL)" \
-		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" \
+		--build-arg GITHUB_ACTIONS="$(GITHUB_ACTIONS)" 
 		--no-cache
 	docker run -t docs:$(VERSION) mike deploy $(VERSION) ${ALIAS} --update-aliases
 	docker run -t docs:$(VERSION) mike set-default $(ALIAS) --push --allow-empty
