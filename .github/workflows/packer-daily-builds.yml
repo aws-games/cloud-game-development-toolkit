@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
           ref: main
       - name: Install yq
@@ -44,7 +44,7 @@ jobs:
         aws-region: ${{ vars.AWS_REGION }}
         role-session-name: CGDToolkitGitHubActions
     - name: Checkout code
-      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
       with:
         ref: main
     - name: Install AWS CLI
