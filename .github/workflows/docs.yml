@@ -46,7 +46,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           ref: ${{ inputs.git_ref }}
       - name: Git client setup
         run: |
