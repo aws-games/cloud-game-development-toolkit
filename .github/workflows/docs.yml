@@ -50,5 +50,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - name: Deploy Docs
-        run: make docs-deploy-prod VERSION="$VERSION" ALIAS="$ALIAS" PUSH_REMOTE="true"
+        run: make docs-deploy-prod VERSION=${{ inputs.VERSION }} ALIAS=${{ inputs.ALIAS }} PUSH_REMOTE="true"
 
