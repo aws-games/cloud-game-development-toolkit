@@ -6,7 +6,6 @@ ENV GIT_USER_NAME=$GIT_USER_NAME GIT_USER_EMAIL=$GIT_USER_EMAIL GITHUB_ACTIONS=$
 RUN git config --global user.name "$GIT_USER_NAME" && git config --global user.email "$GIT_USER_EMAIL"
 RUN pip install -r ./docs/requirements.txt
 RUN \
-  if [ "PUSH_REMOTE" = "true" ]; then export MIKE_SET_PUSH_FLAG="--push"; else export MIKE_SET_PUSH_FLAG=""; fi && \
-  mike deploy --update-aliases ${VERSION} ${ALIAS} && \
-  mike set-default ${MIKE_PUSH_FLAG} ${ALIAS} 
+  if [ "PUSH_REMOTE" = "true" ]; then export MIKE_PUSH_FLAG="--push"; else export MIKE_PUSH_FLAG=""; fi && \
+  mike deploy ${MIKE_PUSH_FLAG} --update-aliases ${VERSION} ${ALIAS}
 CMD ["sh", "-c"]

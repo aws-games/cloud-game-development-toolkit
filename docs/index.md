@@ -11,33 +11,28 @@ The **CGD Toolkit** consists of three key components:
 
 <div class="grid cards" markdown>
 
--   __Assets__
+- :fontawesome-regular-file-code: [__Assets__](./assets/index.html)
 
     ---
 
-    Assets are reusable scripts (i.e. [Ansible Playbooks](https://github.com/ansible/ansible)), pipeline definitions (i.e. [Jenkins Pipelines](https://www.jenkins.io/doc/book/pipeline/)), [Dockerfiles](https://docs.docker.com/reference/dockerfile/), [Packer](https://www.packer.io/) templates, and other resources that might prove useful for common game development workloads.
+    Foundational resources such as image templates, configurations scripts, and CI/CD pipeline definitions for game development.
 
-    [:octicons-arrow-right-24: Learn about Assets](./assets)
+    [:octicons-arrow-right-24: Assets](./assets/index.html)
 
--   __Modules__
-
-    ---
-
-    Configurable [Terraform](https://www.terraform.io/) modules for simplified cloud deployment with best-practices by default.
-
-    [:octicons-arrow-right-24: Learn about Modules](./modules)
-
--   __Samples__
+- :fontawesome-solid-cube: [__Modules__](./modules/index.html)
 
     ---
 
-    Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
+    Infrastructure as code (we use [Terraform](https://www.terraform.io/)) for deploying common game dev workloads with best-practices by default. These typically consume assets.
 
-    [:octicons-arrow-right-24: Learn about Samples](./samples)
+    [:octicons-arrow-right-24: Modules](./modules/index.html)
+
+- :fontawesome-solid-cubes: [__Samples__](./samples/index.html)
+
+    ---
+
+    Opinionated implementations to address common use cases for expedited game studio setup and battle-tested scenarios from the community.
+
+    [:octicons-arrow-right-24: Samples](./samples/index.html)
 
 </div>
-
-
-## Getting Started
-
-Check the [Getting Started](getting-started.md).
