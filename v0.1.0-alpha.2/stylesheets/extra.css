@@ -1,0 +1,7 @@
+.md-grid {
+  max-width: 90vw
+}
+
+.md-typeset table td:first-child {
+  white-space: nowrap;
+}
