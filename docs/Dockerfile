@@ -1,9 +1,12 @@
 FROM python:3.12
 WORKDIR /build
 COPY . . 
-ARG GIT_USER_NAME GIT_USER_EMAIL GITHUB_ACTIONS
-ENV GIT_USER_NAME=$GIT_USER_NAME GIT_USER_EMAIL=$GIT_USER_EMAIL GITHUB_ACTIONS=$GITHUB_ACTIONS
-
+ARG GIT_USER_NAM GIT_USER_EMAIL GITHUB_ACTIONS VERSION ALIAS PUSH_REMOTE=false
+ENV GIT_USER_NAME=$GIT_USER_NAME GIT_USER_EMAIL=$GIT_USER_EMAIL GITHUB_ACTIONS=$GITHUB_ACTIONS VERSION=$VERSION ALIAS=$ALIAS PUSH_REMOTE=$PUSH_REMOTE
 RUN git config --global user.name "$GIT_USER_NAME" && git config --global user.email "$GIT_USER_EMAIL"
-#RUN git config --global --add safe.directory /build
-RUN pip install -r ./docs/requirements.txt --no-cache-dir
+RUN pip install -r ./docs/requirements.txt
+RUN \
+  if [ "PUSH_REMOTE" = "true" ]; then export MIKE_SET_PUSH_FLAG="--push"; else export MIKE_SET_PUSH_FLAG=""; fi && \
+  mike deploy --update-aliases ${VERSION} ${ALIAS} && \
+  mike set-default ${MIKE_PUSH_FLAG} ${ALIAS} 
+CMD ["sh", "-c"]
