@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix: 
         include: ${{fromJson(needs.get-packer-templates.outputs.matrix)}}
-      fail-fast: false
+    continue-on-error: true
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
