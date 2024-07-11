@@ -1,0 +1,17 @@
+# Runs security scans 
+
+name: Security
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  trivy-scan:
+    uses: ./.github/workflows/trivy.yml
+    secrets: inherit
+  codeql-analysis:
+    uses: ./.github/workflows/codeql-analysis.yml
+    secrets: inherit
