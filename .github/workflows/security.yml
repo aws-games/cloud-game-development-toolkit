@@ -1,11 +1,8 @@
-# Runs security scans 
+# This workflow can be used as needed and is triggered manually to consolidate the security scans.
 
 name: Security
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,4 +15,7 @@ jobs:
     secrets: inherit
   codeql-analysis:
     uses: ./.github/workflows/codeql-analysis.yml
+    secrets: inherit
+  checkov:
+    uses: ./.github/workflows/checkov.yml
     secrets: inherit
