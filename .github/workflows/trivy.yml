@@ -1,9 +1,8 @@
+# Reusable workflow that scans a repository for vulnerabilities using Trivy and uploads the results to the GitHub Security tab.
+# Triggered by a workflow call event from the Security workflow.
 name: Trivy Scan
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_call:
 jobs:
   trivy_scan:
     name: Trivy Scan
