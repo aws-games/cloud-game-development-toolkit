@@ -1,4 +1,3 @@
-
 /*****************************
 * Networking Configuration
 
@@ -6,17 +5,12 @@ If vpc_id and subnet_id are null Packer will attempt to use
 the default vpc and subnet for the region. If you do not have
 a default VPC in the target region, you'll need to provide a
 VPC and a subnet.
-
-If you are running Packer from outside your VPC you will need
-to set the following:
-    - associate_public_ip_address = true
-    - ssh_interface = "public_ip"
 *****************************/
-region = "us-west-2"
-vpc_id = "PLACEHOLDER" 
+region = "us-west-2" # DEFAULT
+vpc_id = "PLACEHOLDER"
 subnet_id = "PLACEHOLDER"
-associate_public_ip_address = true
-ssh_interface = "public_ip"
+associate_public_ip_address = true # DEFAULT
+ssh_interface = "public_ip" # DEFAULT
 
 /*****************************
 * Instance Configuration
@@ -31,8 +25,8 @@ root_volume_size to 256 to accomodate the Visual Studio Build
 Tools. We then mount an external volume or filesystem to instances
 to store the Unreal Engine content.
 *****************************/
-instance_type = "c6a.4xlarge"
-root_volume_size = 256
+instance_type = "c6a.4xlarge" # DEFAULT
+root_volume_size = 256 # DEFAULT
 
 /*****************************
 * Software Configuration

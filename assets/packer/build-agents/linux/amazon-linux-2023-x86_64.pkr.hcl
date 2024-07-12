@@ -12,16 +12,24 @@ variable "region" {
     default = "us-west-2"
 }
 
-variable "profile" {
-  type = string
-}
-
 variable "vpc_id" {
   type = string
+  default = null
 }
 
 variable "subnet_id" {
   type = string
+  default = null
+}
+
+variable "associate_public_ip_address" {
+  type = bool
+  default = true
+}
+
+variable "ssh_interface" {
+  type = string
+  default = "public_ip"
 }
 
 variable "ami_prefix" {
@@ -41,7 +49,6 @@ source "amazon-ebs" "al2023" {
   ami_name      = "${var.ami_prefix}-${local.timestamp}"
   instance_type = "c5.2xlarge" # we need to build octobuild from source as there are no packages available for AL2023, and this requires a bit beefier of an instance
   region        = var.region
-  profile       = var.profile
   source_ami_filter {
     filters = {
       name                = "al2023-ami-2023.*-x86_64"
@@ -63,7 +70,8 @@ source "amazon-ebs" "al2023" {
   # network specific details
   vpc_id = var.vpc_id
   subnet_id = var.subnet_id
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
+  ssh_interface = var.ssh_interface
 }
 
 build {
@@ -77,21 +85,23 @@ build {
     destination = "/tmp/install_common.al2023.sh"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-cloud-init status --wait
-sudo chmod 755 /tmp/install_common.al2023.sh
-/tmp/install_common.al2023.sh
-EOF
+    inline = [
+      <<-EOF
+      cloud-init status --wait
+      sudo chmod 755 /tmp/install_common.al2023.sh
+      /tmp/install_common.al2023.sh
+      EOF
     ]
   }
 
   # add the public key
   provisioner "shell" {
-    inline = [ <<-EOF
-echo "${var.public_key}" >> ~/.ssh/authorized_keys
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/authorized_keys
-EOF
+    inline = [
+      <<-EOF
+      echo "${var.public_key}" >> ~/.ssh/authorized_keys
+      chmod 700 ~/.ssh
+      chmod 600 ~/.ssh/authorized_keys
+      EOF
     ]
   }
 
@@ -100,10 +110,11 @@ EOF
     destination = "/tmp/install_mold.sh"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo chmod 755 /tmp/install_mold.sh
-/tmp/install_mold.sh
-EOF
+    inline = [
+      <<-EOF
+      sudo chmod 755 /tmp/install_mold.sh
+      /tmp/install_mold.sh
+      EOF
     ]
   }
 
@@ -116,12 +127,13 @@ EOF
     destination = "/tmp/install_octobuild.al2023.x86_64.sh"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo chmod 755 /tmp/install_octobuild.al2023.x86_64.sh
-/tmp/install_octobuild.al2023.x86_64.sh
-sudo mkdir -p /etc/octobuild/
-sudo cp /tmp/octobuild.conf /etc/octobuild/octobuild.conf
-EOF
+    inline = [
+      <<-EOF
+      sudo chmod 755 /tmp/install_octobuild.al2023.x86_64.sh
+      /tmp/install_octobuild.al2023.x86_64.sh
+      sudo mkdir -p /etc/octobuild/
+      sudo cp /tmp/octobuild.conf /etc/octobuild/octobuild.conf
+      EOF
     ]
   }
 
@@ -134,17 +146,18 @@ EOF
     destination = "/tmp/fsx_automounter.service"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo cp /tmp/fsx_automounter.py /opt/fsx_automounter.py
-sudo dos2unix /opt/fsx_automounter.py
-sudo chmod 755 /opt/fsx_automounter.py
-sudo mkdir -p /etc/systemd/system/
-sudo cp /tmp/fsx_automounter.service /etc/systemd/system/fsx_automounter.service
-sudo chmod 755 /etc/systemd/system/fsx_automounter.service
-sudo systemctl enable fsx_automounter.service
-EOF
+    inline = [
+      <<-EOF
+      sudo cp /tmp/fsx_automounter.py /opt/fsx_automounter.py
+      sudo dos2unix /opt/fsx_automounter.py
+      sudo chmod 755 /opt/fsx_automounter.py
+      sudo mkdir -p /etc/systemd/system/
+      sudo cp /tmp/fsx_automounter.service /etc/systemd/system/fsx_automounter.service
+      sudo chmod 755 /etc/systemd/system/fsx_automounter.service
+      sudo systemctl enable fsx_automounter.service
+      EOF
     ]
-  }  
+  }
 
   # set up script to automatically format and mount ephemeral storage
   provisioner "file" {
@@ -156,15 +169,16 @@ EOF
     destination = "/tmp/mount_ephemeral.service"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo cp /tmp/mount_ephemeral.sh /opt/mount_ephemeral.sh
-sudo dos2unix /opt/mount_ephemeral.sh
-sudo chmod 755 /opt/mount_ephemeral.sh
-sudo mkdir -p /etc/systemd/system/
-sudo cp /tmp/mount_ephemeral.service /etc/systemd/system/mount_ephemeral.service
-sudo chmod 755 /etc/systemd/system/mount_ephemeral.service
-sudo systemctl enable mount_ephemeral.service
-EOF
+    inline = [
+      <<-EOF
+      sudo cp /tmp/mount_ephemeral.sh /opt/mount_ephemeral.sh
+      sudo dos2unix /opt/mount_ephemeral.sh
+      sudo chmod 755 /opt/mount_ephemeral.sh
+      sudo mkdir -p /etc/systemd/system/
+      sudo cp /tmp/mount_ephemeral.service /etc/systemd/system/mount_ephemeral.service
+      sudo chmod 755 /etc/systemd/system/mount_ephemeral.service
+      sudo systemctl enable mount_ephemeral.service
+      EOF
     ]
   }
 
@@ -177,15 +191,16 @@ EOF
     destination = "/tmp/create_swap.service"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo cp /tmp/create_swap.sh /opt/create_swap.sh
-sudo dos2unix /opt/create_swap.sh
-sudo chmod 755 /opt/create_swap.sh
-sudo mkdir -p /etc/systemd/system/
-sudo cp /tmp/create_swap.service /etc/systemd/system/create_swap.service
-sudo chmod 755 /etc/systemd/system/create_swap.service
-sudo systemctl enable create_swap.service
-EOF
+    inline = [
+      <<-EOF
+      sudo cp /tmp/create_swap.sh /opt/create_swap.sh
+      sudo dos2unix /opt/create_swap.sh
+      sudo chmod 755 /opt/create_swap.sh
+      sudo mkdir -p /etc/systemd/system/
+      sudo cp /tmp/create_swap.service /etc/systemd/system/create_swap.service
+      sudo chmod 755 /etc/systemd/system/create_swap.service
+      sudo systemctl enable create_swap.service
+      EOF
     ]
   }
 
@@ -198,14 +213,15 @@ EOF
     destination = "/tmp/install_sccache.sh"
   }
   provisioner "shell" {
-    inline = [ <<-EOF
-sudo chmod 755 /tmp/install_sccache.sh
-/tmp/install_sccache.sh
-sudo mkdir -p /etc/systemd/system/
-sudo cp /tmp/sccache.service /etc/systemd/system/sccache.service
-sudo chmod 755 /etc/systemd/system/sccache.service
-sudo systemctl enable sccache.service
-EOF
+    inline = [
+      <<-EOF
+      sudo chmod 755 /tmp/install_sccache.sh
+      /tmp/install_sccache.sh
+      sudo mkdir -p /etc/systemd/system/
+      sudo cp /tmp/sccache.service /etc/systemd/system/sccache.service
+      sudo chmod 755 /etc/systemd/system/sccache.service
+      sudo systemctl enable sccache.service
+      EOF
     ]
   }
 }

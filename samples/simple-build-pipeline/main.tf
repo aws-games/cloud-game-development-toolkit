@@ -121,14 +121,15 @@ resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_swarm" {
 module "jenkins" {
   source = "../../modules/jenkins"
 
-  cluster_name              = aws_ecs_cluster.build_pipeline_cluster.name
-  vpc_id                    = aws_vpc.build_pipeline_vpc.id
-  jenkins_alb_subnets       = aws_subnet.public_subnets[*].id
-  jenkins_service_subnets   = aws_subnet.private_subnets[*].id
-  existing_security_groups  = []
-  internal                  = false
-  certificate_arn           = aws_acm_certificate.jenkins.arn
-  jenkins_agent_secret_arns = var.jenkins_agent_secret_arns
+  cluster_name                   = aws_ecs_cluster.build_pipeline_cluster.name
+  vpc_id                         = aws_vpc.build_pipeline_vpc.id
+  jenkins_alb_subnets            = aws_subnet.public_subnets[*].id
+  jenkins_service_subnets        = aws_subnet.private_subnets[*].id
+  existing_security_groups       = []
+  internal                       = false
+  certificate_arn                = aws_acm_certificate.jenkins.arn
+  jenkins_agent_secret_arns      = var.jenkins_agent_secret_arns
+  create_ec2_fleet_plugin_policy = true
 
   # Build Farms
   build_farm_subnets = aws_subnet.private_subnets[*].id
