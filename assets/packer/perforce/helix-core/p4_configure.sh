@@ -31,6 +31,30 @@ resolve_aws_secret() {
   echo $result
 }
 
+
+# wait for p4d_1 service
+
+wait_for_service() {
+  local service_name=$1
+  local max_attempts=10
+  local attempt=1
+
+  while [ $attempt -le $max_attempts ]; do
+    log_message "Waiting for $service_name to start... Attempt $attempt of $max_attempts."
+    systemctl is-active --quiet $service_name && break
+    sleep 1
+    ((attempt++))
+  done
+
+  if [ $attempt -gt $max_attempts ]; then
+    log_message "Service $service_name did not start within the expected time."
+    return 1
+  fi
+
+  log_message "Service $service_name started successfully."
+  return 0
+}
+
 # Setup Helix Authentication Extension
 setup_helix_auth() {
   local p4port=$1
@@ -245,7 +269,7 @@ fi
 FILE_PATH="/p4/ssl/config.txt"
 
 # Retrieve the EC2 instance DNS name
-if [-z $7]; then
+if [ -z $7 ]; then
   log_message "FQDN was not provided. Retrieving from EC2 metadata."
   EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
 else
