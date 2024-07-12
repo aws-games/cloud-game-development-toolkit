@@ -110,6 +110,7 @@ data "aws_iam_policy_document" "ec2_fleet_plugin_policy" {
   count = var.create_ec2_fleet_plugin_policy ? 1 : 0
 
   # EC2
+  #checkov:skip=CKV_AWS_111:Required permissions from EC2 Fleet
   statement {
     effect = "Allow"
     actions = [
@@ -126,15 +127,23 @@ data "aws_iam_policy_document" "ec2_fleet_plugin_policy" {
       "ec2:ModifyFleet",
       "ec2:DescribeInstanceTypes"
     ]
-    resources = values(aws_autoscaling_group.jenkins_build_farm_asg)[*].arn
+    resources = ["*"]
   }
   statement {
     effect = "Allow"
     actions = [
-      "autoscaling:DescribeAutoScalingGroups",
       "autoscaling:UpdateAutoScalingGroup"
     ]
     resources = values(aws_autoscaling_group.jenkins_build_farm_asg)[*].arn
+  }
+  #checkov:skip=CKV_AWS_356:Required permissions from EC2 Fleet
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "autoscaling:DescribeAutoScalingGroups",
+    ]
+    resources = ["*"]
   }
 
   # IAM

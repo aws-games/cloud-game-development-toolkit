@@ -29,12 +29,12 @@ variable "instance_type" {
 
 variable "associate_public_ip_address" {
   type = bool
-  default = false
+  default = true
 }
 
 variable "ssh_interface" {
   type = string
-  default = "private_ip"
+  default = "public_ip"
 }
 
 variable "ami_prefix" {

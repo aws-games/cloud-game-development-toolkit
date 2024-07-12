@@ -8,6 +8,8 @@ resource "aws_launch_template" "jenkins_build_farm_launch_template" {
   instance_type = each.value.instance_type
   ebs_optimized = each.value.ebs_optimized
 
+  vpc_security_group_ids = [aws_security_group.jenkins_build_farm_sg.id]
+
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
