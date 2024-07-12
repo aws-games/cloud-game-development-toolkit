@@ -45,12 +45,12 @@ jobs:
             - name: Terraform Validate
               id: validate
               run: terraform validate -no-color
-            
+
             - name: Terraform Plan
               id: plan
               run: |
-                terraform plan -detailed-exitcode -no-color -var="fully_qualified_domain_name=${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}" -out tf.plan
-            
+                terraform plan -detailed-exitcode -no-color -var="fully_qualified_domain_name=${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}" -var="build_farm_compute={"test_builder": {ami: "${{secrets.CI_TEST_BUILDER_AMI}}", instance_type: "t4g.small"}}" -out tf.plan
+
             - name: Publish Terraform Plan
               if: steps.plan.outcome == 'success'
               uses: actions/upload-artifact@v4
@@ -74,7 +74,7 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            
+
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
@@ -82,7 +82,7 @@ jobs:
                 ## the following creates an ARN based on the values entered into github secrets
                 role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
                 role-session-name: CGDToolkitGitHubActions
-            
+
             # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
@@ -90,14 +90,14 @@ jobs:
             # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
             - name: Terraform Init
               run: terraform init
-            
-            # Download saved plan from artifacts  
+
+            # Download saved plan from artifacts
             - name: Download Terraform Plan
               uses: actions/download-artifact@v4
               with:
                 name: tfplan
                 path: ${{matrix.dir}}
-            
+
             # Terraform Apply
             - name: Terraform Apply
               id: apply
@@ -163,7 +163,7 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            
+
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
@@ -171,7 +171,7 @@ jobs:
                 ## the following creates an ARN based on the values entered into github secrets
                 role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
                 role-session-name: CGDToolkitGitHubActions
-            
+
             # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
@@ -179,8 +179,8 @@ jobs:
             # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
             - name: Terraform Init
               run: terraform init
-            
-            # Download saved plan from artifacts  
+
+            # Download saved plan from artifacts
             - name: Download Terraform State
               uses: actions/download-artifact@v4
               with:
@@ -190,4 +190,3 @@ jobs:
             # Terraform Apply
             - name: Terraform Destroy
               run: terraform destroy -auto-approve -var="fully_qualified_domain_name=${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}"
-
