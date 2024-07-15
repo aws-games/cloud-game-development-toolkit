@@ -36,3 +36,5 @@ build_farm_compute = {
     enable_monitoring = true
   }
 }
+
+create_ec2_fleet_plugin_policy = true
