@@ -12,9 +12,7 @@ This module deploys the following resources:
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 ## Architecture
 
-<<<<<<< HEAD
-=======
-![Jenkins Module Architecture](../../docs/media/Images/jenkins-module-architecture.jpg "Jenkins Module Architecture")
+![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.jpg)
 
 ## Prerequisites
 There are three (3) resources required for the deployment of Jenkins which are not directly provided in the module. The first is a Route 53 Hosted Zone which we will use to route traffic to the Jenkins ALB. The second is the public certificate used by the Jenkins ALB which will reference the FQDN of the previously created Hosted Zone. Lastly, we upload any secrets we need to make available to Jenkins through AWS Secrets Manager (at a minimum this is used to share the public SSH key used by Jenkins to communicate with its agents).
@@ -215,7 +213,10 @@ Once deployed, the Jenkins service can be accessed through its associated load b
 3. Select the name of the jenkins service you created 
 4. In the `Health and metrics` tab, expand the `Load balancer health` section in the `Status` section 
 5. Click on `View load balancer`
-6. Expand the `Details` section and copy the `DNS name` attribute 
+6. Expand the `Details` section and copy the `DNS name` attribute
+
+![Access Jenkins](../../media/Images/access-jenkins.png)
+
 7. Paste the value into a browser.
 
 !!! note
@@ -234,24 +235,7 @@ When accessing Jenkins for the first time, an administrators password is require
 4. Select the `Logs` tab
 5. Scroll through the logs until you find the password, below is an example of what the password section looks like. Note that each line is shown as its own log entry in the console.
 
-```shell
-	
-*************************************************************
-*************************************************************
-*************************************************************
-
-Jenkins initial setup is required. An admin user has been created and a password generated.
-
-Please use the following password to proceed to installation:
-
-<PASSWORD>
-
-This may also be found at: /var/jenkins_home/secrets/initialAdminPassword
-
-*************************************************************
-*************************************************************
-*************************************************************
-```
+![Jenkins Admin Password](../../media/Images/jenkins-admin-password.png)
 
 #### Jenkins Initial Configuration
 
@@ -280,7 +264,7 @@ The EC2 Fleet Plugin is used to integrate Jenkins with AWS. It will allow Jenkin
 5. Using the search bar at the top of the page, search for `EC2 Fleet`.
 6. Select the `EC2 Fleet` plugin and click `Install`
 7. Select `Go back to the top page`
-8. 
+
 First, we will create the necessary credentials within Jenkins to access its agents over SSH.
 
 1. From the Jenkins homepage, on the left-hand side, select `Manage Jenkins`
@@ -305,18 +289,14 @@ With the necessary credentials created, we will now connect Jenkins to the build
 3. Enter a name for your cloud configuration
 4. Select `Amazon EC2 Fleet`
 5. Click `Create`
-6. On the `New Cloud` configuration page, change the following settings:
-   a. **Region** - Select the region in which you deployed the module
-   b. **EC2 Fleet** - Select the autoscaling group created by the module
-   c. **Launcher** - These configurations pertain to how jenkins communicates with its agents
-       * **Launcher** - Select `Launch agents via SSH`
-       * **Credentials** - Select the credentials created in the previous step
-       * **Host Key Verification Strategy** - Select `Non verifying Verification Strategy`
-   d. **Connect to instaces via private IP instead of public IP** - Select the `Private IP` check box
-   e. **Max Idle Minutes Before Scaledown** - Set this variable to `5` (minutes). Feel free to change this based on your needs.
-### Creating Users
-
-Lorem Ipsum
+6. On the `New Cloud` configuration page, change the following settings.
+    1. **Region** - Select the region in which you deployed the module
+    1. **EC2 Fleet** - Select the autoscaling group created by the module
+    1. **Launcher** - Select `Launch agents via SSH`
+    1. **Credentials** - Select the credentials created in the previous step
+    1. **Host Key Verification Strategy** - Select `Non verifying Verification Strategy`
+    1. **Connect to instaces via private IP instead of public IP** - Select the `Private IP` check box
+    1. **Max Idle Minutes Before Scaledown** - Set this variable to `5` (minutes). Feel free to change this based on your needs.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
