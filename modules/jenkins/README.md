@@ -197,7 +197,7 @@ terraform init
 ## Deploy
 ```shell
 # Review architecture to be deployed
-terraform plan
+terraform plan -var-file=deployment-variables.tfvars
 
 # Deploy terraform module
 # It is recommended that you use a .tfvars file to pass variables to the module when deploying
