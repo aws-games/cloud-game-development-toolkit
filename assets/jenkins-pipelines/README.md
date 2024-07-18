@@ -8,9 +8,11 @@ The pipelines are primarily written as [Declarative Pipelines](https://www.jenki
 
 ## `ue5_build_pipeline.groovy`
 
-This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to store _octobuild_ artifacts to speed up subsequent builds.
+This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to (optionally) store build cache artifacts to speed up subsequent builds.
 
 > **_Note:_** this pipeline requires that you configure GitHub credentials in Jenkins. You also need to [get access to the Unreal Engine 5 source code](https://www.unrealengine.com/en-US/ue-on-github).
+
+> **_Note:_** although this pipeline supports [octobuild](https://github.com/octobuild/octobuild) for caching build artifacts out-of-the-box, octobuild for Linux requires a patch to the Unreal Engine 5 source code. We recommend forking Unreal Engine 5, applying the necessary patch to your fork, and then building from your own fork instead of from the upstream repository. Please refer to the octobuild readme for instructions on which patches to apply.
 
 > **_Note:_** you will need to run this on a build node with large /tmp space.
 
