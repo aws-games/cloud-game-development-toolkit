@@ -8,10 +8,18 @@ pipeline {
         string(name: 'source_path', defaultValue: '', description: 'Source path to build from, e.g. snapshot location in the mounted FSx workspace volume + project path. If not set, project will be fetched/pulled and a new snapshot will be created. Do not provide this value unless you want to build from an already-created FSx snapshot.')
     }
     environment {
-        FSX_WORKSPACE_VOLUME_ID = "fsvol-XXXXXXXXXXXXXXXXX"
         GH_TOKEN = credentials('github-token')
     }
     stages {
+        stage('Validate Pipeline') {
+            steps {
+                script {
+                    if (env.FSX_WORKSPACE_VOLUME_ID == null || env.FSX_WORKSPACE_VOLUME_ID.length() <= 0) {
+                        throw new Exception("FSX_WORKSPACE_VOLUME_ID environment variable not set. Please set it globally in Jenkins as a global environment variable, or set it as a pipeline-specific environment variable")
+                    }
+                }
+            }
+        }
         stage('Prepare') {
             when {
                 expression {

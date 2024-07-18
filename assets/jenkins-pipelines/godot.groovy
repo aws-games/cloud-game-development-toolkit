@@ -37,12 +37,20 @@ pipeline {
     }
 
     environment {
-        FSX_WORKSPACE_VOLUME_ID = "fsvol-WWWWWWWWWWWWWWWWW"
         PROJECT_GIT_URL = "https://github.com/godotengine/godot.git"
         PROJECT_PROJECT_FOLDER = "godot" // folder name of the checked out Git repository
     }
 
     stages {
+        stage('Validate Pipeline') {
+            steps {
+                script {
+                    if (env.FSX_WORKSPACE_VOLUME_ID == null || env.FSX_WORKSPACE_VOLUME_ID.length() <= 0) {
+                        throw new Exception("FSX_WORKSPACE_VOLUME_ID environment variable not set. Please set it globally in Jenkins as a global environment variable, or set it as a pipeline-specific environment variable")
+                    }
+                }
+            }
+        }
         stage('Prepare') {
             when {
                 expression {

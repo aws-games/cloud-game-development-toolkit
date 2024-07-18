@@ -24,9 +24,17 @@ pipeline {
         GAMELIFT_ZIP_URL = "https://gamelift-release.s3.us-west-2.amazonaws.com/GameLift-SDK-Release-06_15_2023.zip"
         GAMELIFT_SDK_RELEASE = "GameLift-SDK-Release-06_15_2023" // Name of the GameLift SDK folder found within the zip file
         GAMELIFT_CPP_SDK_VERSION = "GameLift-Cpp-ServerSDK-5.0.4" // Name of the GameLift C++ Server SDK found within the GameLift SDK folder in the zip file
-        FSX_WORKSPACE_VOLUME_ID = "fsvol-WWWWWWWWWWWWWWWWW"
     }
     stages {
+        stage('Validate Pipeline') {
+            steps {
+                script {
+                    if (env.FSX_WORKSPACE_VOLUME_ID == null || env.FSX_WORKSPACE_VOLUME_ID.length() <= 0) {
+                        throw new Exception("FSX_WORKSPACE_VOLUME_ID environment variable not set. Please set it globally in Jenkins as a global environment variable, or set it as a pipeline-specific environment variable")
+                    }
+                }
+            }
+        }
         stage('Prepare') {
             when {
                 expression {
