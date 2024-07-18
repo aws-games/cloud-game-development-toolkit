@@ -103,7 +103,7 @@ AWS Secrets Manager can be used to store sensitive information such as SSH keys 
     3. On the Choose secret type page, do the following:
         1. For Secret type, choose Other type of secret.
 
-        1. In Key/value pairs, either enter your secret in JSON Key/value pairs, or choose the Plaintext tab and enter the secret in any format. You can store up to 65536 bytes in the secret.
+        1. In Key/value pairs, either enter your secret in JSON Key/value pairs, or choose the Plaintext tab and enter the secret in any format (you must choose Plaintext if storing SSH keys). You can store up to 65536 bytes in the secret.
 
         1. For Encryption key, choose the AWS KMS key that Secrets Manager uses to encrypt the secret value. For more information, see [Secret encryption and decryption](https://docs.aws.amazon.com/secretsmanager/latest/userguide/security-encryption.html).
 
