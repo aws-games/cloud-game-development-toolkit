@@ -286,6 +286,7 @@ With the necessary credentials created, we will now connect Jenkins to the build
 
 1. From the Jenkins homepage, on the left-hand side, choose `Manage Jenkins`.
 2. Under the `System Configuration` section, choose `Clouds`
+3. Select `New Cloud`
 3. Enter a name for your cloud configuration
 4. Select `Amazon EC2 Fleet`
 5. Click `Create`
