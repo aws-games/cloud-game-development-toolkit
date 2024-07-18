@@ -7,7 +7,7 @@ jenkins_service_subnets = [
   "subnet-<private-a>",
   "subnet-<private-b>"
 ]
-certificate_arn = "arn:aws:acm:<region>:<account-if>>:certificate/<cert-id>"
+certificate_arn = "arn:aws:acm:<region>:<account-id>:certificate/<cert-id>"
 
 build_farm_subnets = [
   "subnet-<private-a>",
