@@ -75,9 +75,6 @@ pipeline {
 
                         cd $SRCDIR
                         
-                        # Apply a patch to enable octobuild on Linux (https://github.com/EpicGames/UnrealEngine/pull/9933)
-                        echo "ZGlmZiAtLWdpdCBhL0VuZ2luZS9Tb3VyY2UvUHJvZ3JhbXMvVW5yZWFsQnVpbGRUb29sL1BsYXRmb3JtL0xpbnV4L1VFQnVpbGRMaW51eC5jcyBiL0VuZ2luZS9Tb3VyY2UvUHJvZ3JhbXMvVW5yZWFsQnVpbGRUb29sL1BsYXRmb3JtL0xpbnV4L1VFQnVpbGRMaW51eC5jcwppbmRleCAyZmIxNWY3MDk2ODAuLjdhMzY5NGY3NzQ0NyAxMDA2NDQKLS0tIGEvRW5naW5lL1NvdXJjZS9Qcm9ncmFtcy9VbnJlYWxCdWlsZFRvb2wvUGxhdGZvcm0vTGludXgvVUVCdWlsZExpbnV4LmNzCisrKyBiL0VuZ2luZS9Tb3VyY2UvUHJvZ3JhbXMvVW5yZWFsQnVpbGRUb29sL1BsYXRmb3JtL0xpbnV4L1VFQnVpbGRMaW51eC5jcwpAQCAtMjk3LDcgKzI5Nyw3IEBAIG5hbWVzcGFjZSBVbnJlYWxCdWlsZFRvb2wKIAkJCS8vIFtic2NoYWVmZXJdIDIwMTgtMTAtMDQ6IGVuYWJsaW5nIFhHRSBhcyBhbiB1cGRhdGUgaW4geGdDb25zb2xlIHNlZW1zIHRvIGhhdmUgZml4ZWQgaXQgZm9yIG1lCiAJCQkvLyBbYnNjaGFlZmVyXSAyMDE4LTEyLTE3OiBkaXNhYmxlIFhHRSBhZ2FpbiwgYXMgdGhlIHNhbWUgaXNzdWUgYmVmb3JlIHNlZW1zIHRvIHN0aWxsIGJlIGhhcHBlbmluZyBidXQgaW50ZXJtaXR0ZW50bHkKIAkJCS8vIFtic2NoYWVmZXJdIDIwMTktNi0xMzogZW5hYmxlIFhHRSwgYXMgdGhlIGJ1ZyBmcm9tIGJlZm9yZSBpcyBub3cgZml4ZWQKLQkJCXJldHVybiBCdWlsZEhvc3RQbGF0Zm9ybS5DdXJyZW50LlBsYXRmb3JtID09IFVucmVhbFRhcmdldFBsYXRmb3JtLldpbjY0OworCQkJcmV0dXJuIHRydWU7CiAJCX0KIAogCQkvLy8gPHN1bW1hcnk+Cg==" | base64 --decode | git apply -  || echo "Octobuild patch does not apply; assuming it's already been applied and continuing!"
-                        
                         # Build UE5
                         time ./Setup.sh
                         time ./GenerateProjectFiles.sh
