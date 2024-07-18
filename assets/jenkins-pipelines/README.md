@@ -8,7 +8,7 @@ You will likely need to change the pipelines slightly to suit your needs, for ex
 
 This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to store _octobuild_ artefacts to speed up subsequent builds.
 
-Note that you need to run this on a build node with large /tmp space.
+> **_Note:_** you will need to run this on a build node with large /tmp space.
 
 The pipeline is divided in two stages:
 1. **Prepare** - Clones or pulls the Git repository to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
@@ -47,8 +47,8 @@ The pipeline is divided in two stages:
 
 This pipeline deletes the oldest FSx snapshot that's older than 7 days. Use this to clean up automatically-created snapshots for workspace volumes that you no longer need.
 
-Note that this pipeline performs no logic to check whether a snapshot was created automatically, so do not run this pipeline against FSx volumes where you use snapshots for data backup purposes.
+> **_Note:_** this pipeline performs no logic to check whether a snapshot was created automatically, so do not run this pipeline against FSx volumes where you use snapshots for data backup purposes.
 
 ## `multiplatform_build.groovy`
 
-This simple multi-stage pipeline demonstrates how to build for multiple platforms by runnin multiple stages, and how to paralellize steps in a single stage across different build nodes. It can be used to verify that build nodes for various platforms work correctly, and is a great starting point for creating new pipelines.
+This simple multi-stage pipeline demonstrates how to build for multiple platforms by running multiple stages, and how to paralellize steps in a single stage across different build nodes. It can be used to verify that build nodes for various platforms work correctly, and is a great starting point for creating new pipelines.
