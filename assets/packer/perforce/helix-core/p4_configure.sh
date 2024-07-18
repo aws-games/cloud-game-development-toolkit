@@ -31,6 +31,28 @@ resolve_aws_secret() {
   echo $result
 }
 
+# wait for p4d_1 service
+wait_for_service() {
+  local service_name=$1
+  local max_attempts=10
+  local attempt=1
+
+  while [ $attempt -le $max_attempts ]; do
+    log_message "Waiting for $service_name to start... Attempt $attempt of $max_attempts."
+    systemctl is-active --quiet $service_name && break
+    sleep 1
+    ((attempt++))
+  done
+
+  if [ $attempt -gt $max_attempts ]; then
+    log_message "Service $service_name did not start within the expected time."
+    return 1
+  fi
+
+  log_message "Service $service_name started successfully."
+  return 0
+}
+
 # Setup Helix Authentication Extension
 setup_helix_auth() {
   local p4port=$1
@@ -141,7 +163,7 @@ perform_operations() {
             mount -t nfs -o nconnect=16,rsize=1048576,wsize=1048576,timeo=600 "$mount_point" "$dest_dir"
         else
             # Mount as EBS the called function also creates XFS on EBS
-            
+
             prepare_ebs_volume "$mount_point" "$dest_dir"
         fi
     }
@@ -191,13 +213,13 @@ log_message "$0" "$@"
 
 log_message "Starting the configuration part after mounting was done later will configure the commit or replica depending on configuration."
 
-SDP_Setup_Script=/hxdepots/sdp/Server/Unix/setup/mkdirs.sh 
-SDP_New_Server_Script=/p4/sdp/Server/setup/configure_new_server.sh 
-SDP_Live_Checkpoint=/p4/sdp/Server/Unix/p4/common/bin/live_checkpoint.sh 
-SDP_Offline_Recreate=/p4/sdp/Server/Unix/p4/common/bin/recreate_offline_db.sh 
-SDP_Client_Binary=/hxdepots/sdp/helix_binaries/p4 
+SDP_Setup_Script=/hxdepots/sdp/Server/Unix/setup/mkdirs.sh
+SDP_New_Server_Script=/p4/sdp/Server/setup/configure_new_server.sh
+SDP_Live_Checkpoint=/p4/sdp/Server/Unix/p4/common/bin/live_checkpoint.sh
+SDP_Offline_Recreate=/p4/sdp/Server/Unix/p4/common/bin/recreate_offline_db.sh
+SDP_Client_Binary=/hxdepots/sdp/helix_binaries/p4
 SDP=/hxdepots/sdp
-TOKEN=$(curl --request PUT "http://169.254.169.254/latest/api/token" --header "X-aws-ec2-metadata-token-ttl-seconds: 3600") # This is only for the metadata V2 need to check go and try the V1 with no token and see which one works. 
+TOKEN=$(curl --request PUT "http://169.254.169.254/latest/api/token" --header "X-aws-ec2-metadata-token-ttl-seconds: 3600") # This is only for the metadata V2 need to check go and try the V1 with no token and see which one works.
 EC2_DNS_PRIVATE=$(curl -s http://169.254.169.254/latest/meta-data/hostname --header "X-aws-ec2-metadata-token: $TOKEN") # same need to check for V2 vs V1
 SDP_Setup_Script_Config=/hxdepots/sdp/Server/Unix/setup/mkdirs.cfg # Config to the new script needed for mkdirs.sh
 AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region --header "X-aws-ec2-metadata-token: $TOKEN") # Get AWS region for SiteTags
@@ -245,7 +267,7 @@ fi
 FILE_PATH="/p4/ssl/config.txt"
 
 # Retrieve the EC2 instance DNS name
-if [-z $7]; then
+if [ -z $7 ]; then
   log_message "FQDN was not provided. Retrieving from EC2 metadata."
   EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
 else
@@ -265,7 +287,7 @@ sed -i "s/REPL_DNSNAME/$EC2_DNS_NAME/" "$FILE_PATH"
 echo "File updated successfully."
 
 I=1
-# generate certificate 
+# generate certificate
 
 /p4/common/bin/p4master_run ${I} /p4/${I}/bin/p4d_${I} -Gc
 
@@ -361,4 +383,3 @@ touch "$FLAG_FILE"
 
 # Ending the script
 log_message "EC2 mount script finished."
-

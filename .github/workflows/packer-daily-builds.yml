@@ -6,6 +6,8 @@ on:
 permissions:
   id-token: write
   contents: read
+env:
+  GITHUB_BRANCH: main
 jobs:
   get-packer-templates: # Retrieve the Packer templates from the config file and build a matrix of them to run parallel jobs
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
@@ -14,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
         with:
-          ref: main
+          ref: ${{ env.GITHUB_BRANCH }}
       - name: Install yq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
@@ -28,7 +30,7 @@ jobs:
           echo "MATRIX_JSON: ${MATRIX_JSON}"
     outputs:
       matrix: ${{ steps.packer-templates-matrix.outputs.matrix }}
-  packer-ci: # Run Packer validation and build for each template
+  run-packer-builds:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     needs: get-packer-templates
     strategy:
@@ -38,46 +40,10 @@ jobs:
     environment: aws-ci
     runs-on: ubuntu-latest
     steps:
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+    - name: 'Build Packer template - ${{ matrix.file_name }}
+      uses: ./github/workflows/packer-build.yml
       with:
-        role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
-        aws-region: ${{ vars.AWS_REGION }}
-        role-session-name: CGDToolkitGitHubActions
-    - name: Checkout code
-      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
-      with:
-        ref: main
-    - name: Install AWS CLI
-      run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install --update
-        aws --version
-    - name: Install Packer
-      run: |
-        PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r -M '.current_version')
-        wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip
-        unzip packer_${PACKER_VERSION}_linux_amd64.zip
-        mv packer /usr/local/bin
-        rm packer_${PACKER_VERSION}_linux_amd64.zip
-    - name: Packer Init and Validate
-      working-directory: ./assets/packer/${{ matrix.dir }}
-      run: |
-        echo "Validating Packer template: ${{ matrix.description }} - ${{ matrix.file_name }}"
-        packer init ${{ matrix.file_name }}
-        cat > ci.pkrvars.hcl << EOF
-        region = "${{ vars.AWS_REGION }}"
-        vpc_id = "${{ secrets.AWS_VPC_ID_CI }}"
-        subnet_id = "${{ secrets.AWS_SUBNET_ID_CI }}"
-        public_key = <<PUBLIC_KEY
-        ${{ secrets.PACKER_CI_PUBLIC_KEY }}
-        PUBLIC_KEY
-        profile = "${{ secrets.AWS_PROFILE_CI }}"
-        EOF
-        packer validate -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
-    - name: Packer Build
-      working-directory: ./assets/packer/${{ matrix.dir }}
-      run: |
-        packer build -var-file=ci.pkrvars.hcl ${{ matrix.file_name }}
-
+        packer_template_file_name: ${{ matrix.file_name }}
+        packer_template_dir: ${{ matrix.dir }}
+        packer_template_description: ${{ matrix.description }}
+        branch: ${{ env.GITHUB_BRANCH }}

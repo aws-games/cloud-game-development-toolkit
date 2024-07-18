@@ -1,0 +1,21 @@
+# This workflow can be used as needed and is triggered manually to consolidate the security scans.
+
+name: Security
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  
+jobs:
+  trivy-scan:
+    uses: ./.github/workflows/trivy.yml
+    secrets: inherit
+  codeql-analysis:
+    uses: ./.github/workflows/codeql-analysis.yml
+    secrets: inherit
+  checkov:
+    uses: ./.github/workflows/checkov.yml
+    secrets: inherit
