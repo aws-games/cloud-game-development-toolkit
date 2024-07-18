@@ -293,8 +293,8 @@ With the necessary credentials created, we will now connect Jenkins to the build
     1. **Region** - Select the region in which you deployed the module
     1. **EC2 Fleet** - Select the autoscaling group created by the module
     1. **Launcher** - Select `Launch agents via SSH`
-    1. **Credentials** - Select the credentials created in the previous step
-    1. **Host Key Verification Strategy** - Select `Non verifying Verification Strategy`
+    1. **Launcher** -> **Credentials** - Select the credentials created in the previous step
+    1. **Launcher** -> **Host Key Verification Strategy** - Select `Non verifying Verification Strategy`
     1. **Connect to instaces via private IP instead of public IP** - Select the `Private IP` check box
     1. **Max Idle Minutes Before Scaledown** - Set this variable to `5` (minutes). Feel free to change this based on your needs.
 
