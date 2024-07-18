@@ -1,12 +1,16 @@
 # Jenkins example pipelines
 
-This folder contains example Jenkins pipelines for building various pieces of software. To use them, create a new Jenkins pipeline project, and then copy-and-paste the contents of the files into the "Pipeline" section in the configuration page.
+This folder contains example Jenkins pipelines for building various pieces of software. To use them, [create a new Jenkins pipeline project](https://www.jenkins.io/doc/book/pipeline/getting-started/#through-the-classic-ui), and then copy-and-paste the contents of a sample file into the "Pipeline" section in the configuration page.
 
 You will likely need to change the pipelines slightly to suit your needs, for example to provide the correct FSx volume IDs or alter the agent node labels on which steps run.
 
+The pipelines are primarily written as [Declarative Pipelines](https://www.jenkins.io/doc/book/pipeline/syntax/), with sections of [scripted pipeline blocks](https://www.jenkins.io/doc/book/pipeline/syntax/#script) used to pass variables between stages or to implement try/catch behavior.
+
 ## `ue5_build_pipeline.groovy`
 
-This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to store _octobuild_ artefacts to speed up subsequent builds.
+This pipeline builds Unreal Engine 5 on Linux from its Git repository on GitHub, using an FSx volume as workspace cache and another FSx volume to store _octobuild_ artifacts to speed up subsequent builds.
+
+> **_Note:_** this pipeline requires that you configure GitHub credentials in Jenkins. You also need to [get access to the Unreal Engine 5 source code](https://www.unrealengine.com/en-US/ue-on-github).
 
 > **_Note:_** you will need to run this on a build node with large /tmp space.
 
@@ -16,7 +20,7 @@ The pipeline is divided in two stages:
 
 ## `godot.groovy`
 
-This pipeline builds the Godot engine from its public Git repository, using an FSx volume as workspace cache and another FSx volume to store _sccache_ artefacts to speed up subsequent builds.
+This pipeline builds the Godot engine from its public Git repository, using an FSx volume as workspace cache and another FSx volume to store _sccache_ artifacts to speed up subsequent builds.
 
 The pipeline is divided in two stages:
 1. **Prepare** - Clones or pulls the Git repository to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
@@ -24,8 +28,7 @@ The pipeline is divided in two stages:
 
 ## `gamelift_sdk.groovy`
 
-This pipeline builds the [GameLift Server C++ SDK](https://aws.amazon.com/gamelift/getting-started-sdks/) in 8 different configurations. It uses an FSx volume as workspace cache and (optionally) another FSx volume to store _sccache_ artefacts to speed up subsequent builds.
-
+This pipeline builds the [GameLift Server C++ SDK](https://aws.amazon.com/gamelift/getting-started-sdks/) in 8 different configurations. It uses an FSx volume as workspace cache and (optionally) another FSx volume to store _sccache_ artifacts to speed up subsequent builds.
 
 The build configurations are:
 |Operating sytem | CPU architecture | Build configuration |
@@ -38,6 +41,8 @@ The build configurations are:
 |Amazon Linux 2023  | x86_64 | Built for Unreal Engine |
 |Amazon Linux 2023  | arm64  | Standard build          |
 |Amazon Linux 2023  | arm64  | Built for Unreal Engine |
+
+> **_Note:_** you will most likely not need each of these build configurations to compile the GameLift Server SDK for your game. We recommend that you delete those you don't need from the pipeline manually.
 
 The pipeline is divided in two stages:
 1. **Prepare** - Downloads the GameLift Server SDK .zip to the FSx workspace volume, then creates an FSx snapshot and waits for it to be available. This stage is skipped if the `source_path` parameter is provided.
