@@ -160,6 +160,9 @@ The CGD Toolkit provides packer templates for generating Amazon Machine Images (
     3. When prompted to "Enter a file in which to save the key", enter a path in which to save the generated key, or press **Enter** to accept the default location.
 
     4. When prompted to "Enter passphrase", enter a password for your key, or leave empty for no password.
+    
+    !!! warning
+        If using the [AWS Secrets Manager Credentials Provider](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/), leave the passphrase empty. The AWS Secrets Manager Credentials Provider plugin does **NOT** support passphrases.
 
 ??? note "How to Create Linux AMI using Packer"
 
