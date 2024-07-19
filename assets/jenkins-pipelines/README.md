@@ -2,7 +2,7 @@
 
 This folder contains example Jenkins pipelines for building various pieces of software. To use them, [create a new Jenkins pipeline project](https://www.jenkins.io/doc/book/pipeline/getting-started/#through-the-classic-ui), and then copy-and-paste the contents of a sample file into the "Pipeline" section in the configuration page.
 
-You will likely need to change the pipelines slightly to suit your needs, for example to provide the correct FSx volume IDs or alter the agent node labels on which steps run.
+You will likely need to change the pipelines slightly to suit your needs, for example to alter the agent node labels on which steps run. Many pipelines also depend on a global Jenkins environment variable to be set: `FSX_WORKSPACE_VOLUME_ID`, which should be set to the FSx for OpenZFS volume ID of the Workspace volume.
 
 The pipelines are primarily written as [Declarative Pipelines](https://www.jenkins.io/doc/book/pipeline/syntax/), with sections of [scripted pipeline blocks](https://www.jenkins.io/doc/book/pipeline/syntax/#script) used to pass variables between stages or to implement try/catch behavior.
 
@@ -52,7 +52,10 @@ The pipeline is divided in two stages:
 
 ## `delete_oldest_snapshot.groovy`
 
-This pipeline deletes the oldest FSx snapshot that's older than 7 days. Use this to clean up automatically-created snapshots for workspace volumes that you no longer need.
+This parameterized pipeline deletes the oldest FSx snapshot that's older than 7 days. Use this to clean up automatically-created snapshots for workspace volumes that you no longer need.
+
+This pipeline has the following input parameters:
+* `FSX_VOLUME_ID` - FSx volume ID of the volume to delete the oldest snapshot from.
 
 > **_Note:_** this pipeline performs no logic to check whether a snapshot was created automatically, so do not run this pipeline against FSx volumes where you use snapshots for data backup purposes.
 
