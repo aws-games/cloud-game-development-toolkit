@@ -12,7 +12,7 @@ This module deploys the following resources:
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 ## Architecture
 
-![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.jpg)
+![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.png)
 
 ## Prerequisites
 There are three (3) resources required for the deployment of Jenkins which are not directly provided in the module. The first is a Route 53 Hosted Zone which we will use to route traffic to the Jenkins ALB. The second is the public certificate used by the Jenkins ALB which will reference the FQDN of the previously created Hosted Zone. Lastly, we upload any secrets we need to make available to Jenkins through AWS Secrets Manager (at a minimum this is used to share the public SSH key used by Jenkins to communicate with its agents).
