@@ -4,7 +4,7 @@ def build(build_for_unreal) {
     echo "Zeroing sccache stats..."
     sccache --zero-stats
     echo cwd: $(pwd)
-    time cmake -DBUILD_FOR_UNREAL=$build_for_unreal -DRUN_CLANG_FORMAT=0 -S /mnt/nfs_workspace/$source_path
+    time cmake -DBUILD_FOR_UNREAL=$build_for_unreal -DRUN_CLANG_FORMAT=0 -S /mnt/fsx_workspace/$source_path
     time make
     echo "sccache stats for this run (NOTE: may not be correct if there's parallel builds on this node!):"
     sccache --show-stats
@@ -52,8 +52,8 @@ pipeline {
                     // Any output of any command in the below section will break things, so ensure that all output happens on stderr or not at all!
                     env.source_path = sh(returnStdout: true, script:'''
                     # Download the SDK to a locally mounted, writable FSx for OpenZFS volume.
-                    mkdir -p /mnt/nfs_workspace/gamelift_sdk
-                    cd /mnt/nfs_workspace/gamelift_sdk
+                    mkdir -p /mnt/fsx_workspace/gamelift_sdk
+                    cd /mnt/fsx_workspace/gamelift_sdk
 
                     [ -d "$GAMELIFT_SDK_RELEASE" ] && (echo "nothing to do" 1>&2) || (curl -s "$GAMELIFT_ZIP_URL" | bsdtar -xf- 1>&2)
 

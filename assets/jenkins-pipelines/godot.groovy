@@ -9,7 +9,7 @@ def build_linux() {
     MOUNTDIR=/tmp/overlay_mount
     USER=\$(whoami)
     chown -R $USER:$USER $TMPDIR
-    sudo mount -t overlay overlay -o lowerdir=/mnt/nfs_workspace/$source_path,upperdir=$TMPDIR/upperdir,workdir=$TMPDIR/workdir $MOUNTDIR
+    sudo mount -t overlay overlay -o lowerdir=/mnt/fsx_workspace/$source_path,upperdir=$TMPDIR/upperdir,workdir=$TMPDIR/workdir $MOUNTDIR
     echo $MOUNTDIR
     SRCDIR=$MOUNTDIR
 
@@ -67,8 +67,8 @@ pipeline {
                     // Any output of any command in the below section will break things, so ensure that all output happens on stderr or not at all!
                     env.source_path = sh(returnStdout: true, script:'''
                     # Clone/pull the git repo to a locally mounted, writable FSx for OpenZFS volume.
-                    mkdir -p /mnt/nfs_workspace
-                    cd /mnt/nfs_workspace
+                    mkdir -p /mnt/fsx_workspace
+                    cd /mnt/fsx_workspace
                     [ -d "$PROJECT_PROJECT_FOLDER" ] && (cd $PROJECT_PROJECT_FOLDER; time git pull --recurse-submodules 1>&2) || (time git clone --recurse-submodules $PROJECT_GIT_URL $PROJECT_PROJECT_FOLDER 1>&2; cd $PROJECT_PROJECT_FOLDER)
 
                     # Create an FSx for OpenZFS snapshot

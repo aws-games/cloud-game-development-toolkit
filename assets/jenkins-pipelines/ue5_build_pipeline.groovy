@@ -33,8 +33,8 @@ pipeline {
                     // Any output of any command in the below section will break things, so ensure that all output happens on stderr or not at all!
                     env.source_path = sh(returnStdout: true, script:'''
                     # Clone/pull the UE5 git repo to a locally mounted, writable FSx for OpenZFS volume.
-                    mkdir -p /mnt/nfs_workspace/ue5_project
-                    cd /mnt/nfs_workspace/ue5_project
+                    mkdir -p /mnt/fsx_workspace/ue5_project
+                    cd /mnt/fsx_workspace/ue5_project
                     [ -d "UnrealEngine" ] && (cd UnrealEngine; time git pull --recurse-submodules 1>&2) || (time git clone --single-branch --branch ue5-main --recurse-submodules https://$GH_TOKEN@github.com/EpicGames/UnrealEngine 1>&2; cd UnrealEngine)
 
                     # Create an FSx for OpenZFS snapshot
@@ -48,7 +48,7 @@ pipeline {
                         STATUS=$(aws fsx describe-snapshots --snapshot-ids $SNAPSHOTID --output text --query 'Snapshots[0].Lifecycle')
                         # if the status is 'AVAILABLE', break out:
                         if [ "$STATUS" = "AVAILABLE" ]; then
-                            echo /mnt/nfs_workspace/.zfs/snapshot/$SNAPSHOTNAME/ue5_project/UnrealEngine
+                            echo /mnt/fsx_workspace/.zfs/snapshot/$SNAPSHOTNAME/ue5_project/UnrealEngine
                             date +%s 1>&2
                             break;
                         else
