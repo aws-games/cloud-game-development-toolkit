@@ -7,6 +7,8 @@ This module deploys the following resources:
 - An Elastic Container Service (ECS) cluster backed by AWS Fargate.
 - An ECS service running the latest Jenkins container ([jenkins/jenkins:lts-jdk17](https://hub.docker.com/r/jenkins/jenkins)) available.
 - An Elastic File System (EFS) for the Jenkins service to use as a persistent datastore.
+- A ZFS File System (FSxZ) for shared cache
+- A ZFS File System (FSxZ) for shared workspaces
 - An Elastic Load Balancer (ELB) for TLS termination of the Jenkins service
 - A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
@@ -93,6 +95,9 @@ There are three (3) resources required for the deployment of Jenkins which are n
 ### Upload Secrets to AWS Secrets Manager
 
 AWS Secrets Manager can be used to store sensitive information such as SSH keys and access tokens, which can then be made available to Jenkins. At a minimum, we use the service to store the private key for the Jenkins agents which the Jenkins orchestrator uses to communicate over SSH.
+
+!!! warning
+    To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the `AWS Secrets Manager Credentials Provider` Jenkins plugin is recommended. **There are requirements around tagging your secrets for the plugin to work properly**. See the [AWS Secrets Manager Credentials Provider Plugin Documentation](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) for additional details.
 
 ??? note "How to Upload Secrets to AWS Secrets Manager"
 
@@ -208,26 +213,22 @@ terraform deploy -var-file=deployment-variables.tfvars
 
 Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is served on port 8080 by default. This behaviour can be changed by providing a new port through the `container_port` variable.
 
-1. Log in to the AWS console and Navigate to the [Elastic Container Service (ECS) console](https://console.aws.amazon.com/ecs).
-2. In the `Clusters` tab, select the name of the cluster you created 
-3. Select the name of the jenkins service you created 
-4. In the `Health and metrics` tab, expand the `Load balancer health` section in the `Status` section 
-5. Click on `View load balancer`
-6. Expand the `Details` section and copy the `DNS name` attribute
+You can find the DNS address for the ALB created by the module by running the following command:
 
-![Access Jenkins](../../media/Images/access-jenkins.png)
-
-7. Paste the value into a browser.
+``` bash
+# This command pulls the DNS address of the ALB associated with the Jenkins ECS service
+terraform output jenkins_alb_dns_name
+```
 
 !!! note
-    if you are accessing the load balancer directly (not through Route 53), you may receive a `Warning: Potential Security Risk Ahead` warning. This is due to a mismatch in the certificates FQDN. To continue click `advanced` then click `Accept the Risk and Continue`. 
+    if you are accessing the load balancer directly (not through Route 53), you may receive a `Warning: Potential Security Risk Ahead` warning. This is due to a mismatch in the certificates FQDN. To continue click `advanced` then click `Accept the Risk and Continue`.
 
 ## Configuring Jenkins
 
 When accessing Jenkins for the first time, an administrators password is required. This password is auto-generated and available through the ECS logs. The administrative user will be replaced with a new user upon completion of the setup, see [Creating Users](README.md#creating-users).
 
 
-#### Retrieve the Jenkins Administrator Password
+### Retrieve the Jenkins Administrator Password
 
 1. Open the AWS console and navigate to the [Elastic Container Service (ECS) console](https://console.aws.amazon.com/ecs).
 2. In the `Clusters` tab, select the name of the cluster you created
@@ -237,7 +238,7 @@ When accessing Jenkins for the first time, an administrators password is require
 
 ![Jenkins Admin Password](../../media/Images/jenkins-admin-password.png)
 
-#### Jenkins Initial Configuration
+### Jenkins Initial Configuration
 
 1. Open the Jenkins console on your preferred browser, see [Accessing Jenkins](README.md#accessing-jenkins) for details.
 2. Paste the password you retrieved from the logs in the previous step into the text box and click **Continue**
@@ -253,36 +254,78 @@ When accessing Jenkins for the first time, an administrators password is require
 5. For the Jenkins URL, accept the default value by clicking `Save and Finish`.
 6. Click `Start using Jenkins`
 
-#### Configuring the EC2 Fleet Plugin
+### Configuring Plugins
 
-The EC2 Fleet Plugin is used to integrate Jenkins with AWS. It will allow Jenkins to use a provided autoscaling group for build jobs.
+There are 2 plugins recommended for the solutions: The [EC2 Fleet](https://plugins.jenkins.io/ec2-fleet/) Plugin and the [AWS Secrets Manager Credentials Provider](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) Plugin. The `EC2 Fleet` Plugin is used to integrate Jenkins with AWS and allows EC2 instances to be used as build nodes through an autoscaling group. The `AWS Secrets Manager Credentials Provider` Plugin will allow users to store their credentials in AWS Secrets Manager and seamlessly access them in Jenkins.
+
+#### Install the Plugins
 
 1. Open the Jenkins console.
 2. On the left-hand side, select the `Manage Jenkins` tab.
 3. Then, under the `System Configuration` section, select `Plugins`.
 4. On the left-hand side, select ` Available plugins`.
 5. Using the search bar at the top of the page, search for `EC2 Fleet`.
-6. Select the `EC2 Fleet` plugin and click `Install`
-7. Select `Go back to the top page`
+6. Select the `EC2 Fleet` plugin.
+7. Using the search bar at the top of the page, search for `AWS Secret Manager Credentials Provider`.
+8. Select the `AWS Secret Manager Credentials Provider` plugin.
+9. Click `install` on the top-right corner of the page.
+10. Once the installation is complete, Select `Go back to the top page` at the bottom of the page
 
-First, we will create the necessary credentials within Jenkins to access its agents over SSH.
+#### Create the Necessary Credentials
 
-1. From the Jenkins homepage, on the left-hand side, select `Manage Jenkins`
-2. Under the `Security` section, select `Credentials`
-3. Under `Stores scoped to Jenkins`, select `System`
-4. Select `Global credentials (unrestricted)`
-5. In the top right corner, click the `Add Credentials` button
-6. For the `Kind` dropdown, select `SSH Username with private key`
-7. For `ID` enter a name for your credentials
-8. For `Description` add a description of your credential
-9. For `Username`, enter the username to be used for the SSH connection
-10. For `Private Key`, select the `Enter directly` radio button.
-11. In the next section displayed, select the `Add` button
-12. Paste the Private Key created earlier into the text box.
-13. For `Passphrase` enter the Passphrase for the SSH key, if no passphrase was entered when creating the keys, leave this blank
-14. Note the `ID` of your newly created credentials. This will be referenced in the next section.
+!!! note ""
+    === "Using the Jenkins Console"
+        1. From the Jenkins homepage, on the left-hand side, select `Manage Jenkins`
+        2. Under the `Security` section, select `Credentials`
+        3. Under `Stores scoped to Jenkins`, select `System`
+        4. Select `Global credentials (unrestricted)`
+        5. In the top right corner, click the `Add Credentials` button
+        6. For the `Kind` dropdown, select `SSH Username with private key`
+        7. For `ID` enter a name for your credentials
+        8. For `Description` add a description of your credential
+        9. For `Username`, enter the username to be used for the SSH connection
+        10. For `Private Key`, select the `Enter directly` radio button.
+        11. In the next section displayed, select the `Add` button
+        12. Paste the Private Key created earlier into the text box.
+        13. For `Passphrase` enter the Passphrase for the SSH key, if no passphrase was entered when creating the keys, leave this blank
+        14. Note the `ID` of your newly created credentials. This will be referenced in the next section.
+    
+    === "Using the AWS Secrets Manager Plugin"
+    
+        1. Open the Secrets Manager [console](https://console.aws.amazon.com/secretsmanager/).
+    
+        2. Choose Store a new secret.
+    
+        3. On the Choose secret type page, do the following:
+            1. For Secret type, choose Other type of secret.
+    
+            1. Select the `Plaintext` test tab, select all text in the textbox and delete it.
+    
+            1. Paste your Private key into the textbox
+    
+            1. Choose Next
+    
+        4. On the Configure secret page, do the following:
+            1. Enter a descriptive Secret name and Description. Note that the name chosen here will also be used as the name of the credentials within Jenkins.
+    
+            1. In the Tags section, add the 2 required tags for the [AWS Secrets Manager Credentials Provider](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) Plugin
+                * `jenkins:credentials:type` = `sshUserPrivateKey`
+                * `jenkins:credentials:username` = `<username>`
 
-With the necessary credentials created, we will now connect Jenkins to the build farm autoscaling group created by terraform.
+
+                !!! info
+                    The username will depend on the image being used for the build agent.
+    
+                    * Amazon Linux -> `ec2-user`
+                    * Ubuntu -> `ubuntu`
+                    * Windows -> `Administrator`
+
+
+            1. Choose Next.
+    
+        6. On the Review page, review your secret details, and then choose Store.
+
+#### Connect Jenkins to the Build Farm
 
 1. From the Jenkins homepage, on the left-hand side, choose `Manage Jenkins`.
 2. Under the `System Configuration` section, choose `Clouds`
