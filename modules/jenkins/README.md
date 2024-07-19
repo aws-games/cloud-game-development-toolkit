@@ -17,36 +17,8 @@ This module deploys the following resources:
 ![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.png)
 
 ## Prerequisites
-There are three (3) resources required for the deployment of Jenkins which are not directly provided in the module. The first is a Route 53 Hosted Zone which we will use to route traffic to the Jenkins ALB. The second is the public certificate used by the Jenkins ALB which will reference the FQDN of the previously created Hosted Zone. Lastly, we upload any secrets we need to make available to Jenkins through AWS Secrets Manager (at a minimum this is used to share the public SSH key used by Jenkins to communicate with its agents).
+There are two prerequisites to the deployment of Jenkins which are not directly provided in the module. The first is a public certificate used by the Jenkins ALB for SSL termination. The second is an AWS Secrets Manager secret which we use to store the private key Jenkins will use to communicate with its Agents over SSH.
 
-### Create a Route 53 Hosted Zone
-
-??? note "How to Create a Route 53 Hosted Zone"
-
-    :warning: You must own a public domain to access Jenkins from the internet through Route 53
-
-    1. Sign in to the AWS Management Console and open the [Route 53 console](https://console.aws.amazon.com/route53/).
-
-    1. If you're new to Route 53, choose Get started under DNS management. 
-        2. If you're already using Route 53, choose Hosted zones in the navigation pane.
-    
-    1. Choose Create hosted zone.
-    
-    1. In the Create Hosted Zone pane, enter the name of the domain that you want to route traffic for. You can also optionally enter a comment. 
-        2. For information about how to specify characters other than a-z, 0-9, and - (hyphen) and how to specify internationalized domain names, see [DNS domain name format](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DomainNameFormat.html).
-    
-    1. For Type, accept the default value of Public Hosted Zone.
-    
-    1. Choose Create.
-    
-    1. Create records that specify how you want to route traffic for the domain and subdomains. For more information, see [Working with records](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/rrsets-working-with.html).
-    
-    1. To use records in the new hosted zone to route traffic for your domain, see the applicable topic:
-    
-        2. If you're making Route 53 the DNS service for a domain that is registered with another domain registrar, see [Making Amazon Route 53 the DNS service for an existing domain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html). 
-        2. If the domain is registered with Route 53, see [Adding or changing name servers and glue records for a domain](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-name-servers-glue-records.html).
-
-[Amazon Route 53 Documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/CreatingHostedZone.html)
 
 ### Create Public Certificate
 
@@ -224,7 +196,7 @@ terraform output jenkins_alb_dns_name
 ```
 
 !!! note
-    if you are accessing the load balancer directly (not through Route 53), you may receive a `Warning: Potential Security Risk Ahead` warning. This is due to a mismatch in the certificates FQDN. To continue click `advanced` then click `Accept the Risk and Continue`.
+    if you are accessing the load balancer directly, you may receive a `Warning: Potential Security Risk Ahead` warning. This is due to a mismatch in the certificates FQDN. To continue click `advanced` then click `Accept the Risk and Continue`.
 
 ## Configuring Jenkins
 
