@@ -10,7 +10,7 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
   storage_capacity    = each.value.storage_capacity
   throughput_capacity = each.value.throughput_capacity
 
-  security_group_ids = []
+  security_group_ids = [aws_security_group.jenkins_build_storage_sg.id]
 
   root_volume_configuration {
     data_compression_type  = "LZ4"
