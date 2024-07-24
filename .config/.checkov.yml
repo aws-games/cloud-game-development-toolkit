@@ -1,0 +1,22 @@
+branch: main
+compact: true
+directory:
+  - modules
+  - samples
+download-external-modules: true
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+  - all
+output: cli
+quiet: true
+skip-check:
+  - CKV_AWS_91 # "Elastic Load Balancing | Ensure the ELBv2 (Application/Network) has access logging enabled"
+  - CKV_AWS_150 # "Elastic Load Balancing | Ensure that Load Balancer has deletion protection enabled"
+  - CKV_AWS_184 # "EFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
+  - CKV_AWS_189 # "EBS | Ensure EBS Volume is encrypted by KMS using a customer managed Key (CMK)"
+  - CKV_AWS_203 # "FSx OpenZFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
+skip-framework:
+  - dockerfile
+  - secrets
+soft-fail: false
