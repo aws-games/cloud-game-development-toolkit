@@ -194,9 +194,6 @@ You can find the DNS address for the ALB created by the module by running the fo
 terraform output jenkins_alb_dns_name
 ```
 
-!!! note
-    if you are accessing the load balancer directly, you may receive a `Warning: Potential Security Risk Ahead` warning. This is due to a mismatch in the certificates FQDN. To continue click `advanced` then click `Accept the Risk and Continue`.
-
 ## Configuring Jenkins
 
 When accessing Jenkins for the first time, an administrators password is required. This password is auto-generated and available through the ECS logs. The administrative user will be replaced with a new user upon completion of the setup, see [Creating Users](README.md#creating-users).
