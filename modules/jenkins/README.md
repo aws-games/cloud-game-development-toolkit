@@ -185,7 +185,7 @@ terraform deploy -var-file=deployment-variables.tfvars
 
 ## Accessing Jenkins
 
-Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is served on port 8080 by default. This behaviour can be changed by providing a new port through the `container_port` variable.
+Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is accessible through the ALB on ports 443 and 80 by default.
 
 You can find the DNS address for the ALB created by the module by running the following command:
 
