@@ -15,12 +15,20 @@ repos:
     rev: "3.2.201"
     hooks:
       - id: checkov
+<<<<<<< HEAD
         args: ["--config-file", ".config/.checkov.yml"]
+=======
+        args: ["--config-file .config/.checkov.yml"]
+>>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
   - repo: "https://github.com/terraform-docs/terraform-docs"
     rev: "v0.18.0"
     hooks:
       - id: terraform-docs-go
+<<<<<<< HEAD
         args: ["--config", ".config/.terraform-docs.yml"]
+=======
+        args: ["--config .config/.terraform-docs.yml"]
+>>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.89.1"
     hooks:
