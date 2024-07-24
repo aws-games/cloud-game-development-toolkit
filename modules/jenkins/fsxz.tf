@@ -10,7 +10,7 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
   storage_capacity    = each.value.storage_capacity
   throughput_capacity = each.value.throughput_capacity
 
-  security_group_ids = []
+  security_group_ids = [aws_security_group.jenkins_build_storage_sg.id]
 
   root_volume_configuration {
     data_compression_type  = "LZ4"
@@ -31,7 +31,30 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
   copy_tags_to_volumes              = true
   daily_automatic_backup_start_time = "06:00"
 
-  tags = merge(local.tags, {
+  tags = merge(local.tags, each.value.tags, {
     Name = "${var.project_prefix}-${each.key}"
   })
 }
+
+resource "aws_fsx_openzfs_volume" "jenkins_build_farm_fsxz_volume" {
+  for_each = aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system
+
+  name = "${var.project_prefix}-${each.key}"
+  parent_volume_id = aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system[each.key].root_volume_id
+
+  copy_tags_to_snapshots = true
+
+  data_compression_type = "LZ4"
+
+  nfs_exports {
+    client_configurations {
+      clients = data.aws_vpc.build_farm_vpc.cidr_block
+      options = ["async", "rw", "crossmnt"]
+    }
+  }
+
+  tags = merge(local.tags, each.value.tags, {
+    Name = "${var.project_prefix}-${each.key}"
+  })
+}
+
