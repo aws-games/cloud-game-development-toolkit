@@ -11,7 +11,7 @@ This module deploys the following resources:
 - A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -135,4 +135,4 @@ No modules.
 | <a name="output_jenkins_alb_dns_name"></a> [jenkins\_alb\_dns\_name](#output\_jenkins\_alb\_dns\_name) | The DNS name of the Jenkins application load balancer. |
 | <a name="output_jenkins_alb_zone_id"></a> [jenkins\_alb\_zone\_id](#output\_jenkins\_alb\_zone\_id) | The zone ID of the Jenkins ALB. |
 | <a name="output_service_security_group"></a> [service\_security\_group](#output\_service\_security\_group) | Security group associated with the ECS service hosting jenkins |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
