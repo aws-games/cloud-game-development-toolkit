@@ -7,8 +7,7 @@ This module deploys the following resources:
 - An Elastic Container Service (ECS) cluster backed by AWS Fargate.
 - An ECS service running the latest Jenkins container ([jenkins/jenkins:lts-jdk17](https://hub.docker.com/r/jenkins/jenkins)) available.
 - An Elastic File System (EFS) for the Jenkins service to use as a persistent datastore.
-- A ZFS File System (FSxZ) for shared cache
-- A ZFS File System (FSxZ) for shared workspaces
+- A user defined number of ZFS File Systems
 - An Elastic Load Balancer (ELB) for TLS termination of the Jenkins service
 - A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
