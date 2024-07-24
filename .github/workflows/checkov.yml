@@ -1,11 +1,10 @@
 name: Checkov
 on:
-  push:
-    branches:
-      - main
   pull_request:
+      paths:
+        - 'modules/**'
+        - 'samples/**'
   workflow_dispatch:
-
 jobs:
   scan:
     permissions:
@@ -20,6 +19,7 @@ jobs:
         with:
           output_format: sarif
           output_file_path: results.sarif
+          config_file: .config/.checkov.yml
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         if: success() || failure()
