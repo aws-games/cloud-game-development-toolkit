@@ -16,12 +16,12 @@ This module deploys the following resources:
 ![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.png)
 
 ## Prerequisites
-There are two prerequisites to the deployment of Jenkins which are not directly provided in the module. The first is a public certificate used by the Jenkins ALB for SSL termination. The second is an AWS Secrets Manager secret which we use to store the private key Jenkins will use to communicate with its Agents over SSH.
+There are a few prerequisites to the deployment of Jenkins which are not directly provided in the module. The first is a public certificate used by the Jenkins ALB for SSL termination, instructions are included for provisioning the certificates using the AWS Certificates Manager (ACM) but certificates created else where can also be uploaded into the service for later use. The second is an AWS Secrets Manager secret which is used to store sensitive information, such as SSH keys, which can then be made available to Jenkins through a Plugin.
 
 
-### Create Public Certificate
+### Create a Public Certificate
 
-??? note "How to Create a Public Certificate Using Amazon Route 53"
+??? note "How to Create a Public Certificate Using Amazon Certificate Manager"
 
     1. Sign in to the AWS Management Console and open the Amazon Certificate Manager (ACM) [console](https://console.aws.amazon.com/acm/home) and choose Request a certificate.
 
@@ -63,12 +63,12 @@ There are two prerequisites to the deployment of Jenkins which are not directly 
 
 [Amazon Certificate Manager Documentation](https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html)
 
-### Upload Secrets to AWS Secrets Manager
+### (Optional) Upload Secrets to AWS Secrets Manager
 
-AWS Secrets Manager can be used to store sensitive information such as SSH keys and access tokens, which can then be made available to Jenkins. At a minimum, we use the service to store the private key for the Jenkins agents which the Jenkins orchestrator uses to communicate over SSH.
+AWS Secrets Manager can be used to store sensitive information such as SSH keys and access tokens, which can then be made available to Jenkins. We recommend using the service to store the private key for the Jenkins agents which the Jenkins orchestrator uses to communicate over SSH.
 
 !!! warning
-    To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the `AWS Secrets Manager Credentials Provider` Jenkins plugin is recommended. **There are requirements around tagging your secrets for the plugin to work properly**. See the [AWS Secrets Manager Credentials Provider Plugin Documentation](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) for additional details.
+    To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the `AWS Secrets Manager Credentials Provider` Jenkins plugin is recommended. **There are requirements around tagging your secrets for the plugin to work properly**. See the [AWS Secrets Manager Credentials Provider Plugin Documentation](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) for additional details. Step-by-step instructions for uploading SSH keys into AWS Secrets Manager can be found in the [Configure Pluings]() section.
 
 ??? note "How to Upload Secrets to AWS Secrets Manager"
 
@@ -185,7 +185,7 @@ terraform deploy -var-file=deployment-variables.tfvars
 
 ## Accessing Jenkins
 
-Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is accessible through the ALB on ports 443 and 80 by default.
+Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is accessible through the ALB on ports 443 and 80 by default. The module does **NOT** allowlist any IP addresses by default. Users must edit the ALB security group to grant access to the Jenkins Service.
 
 You can find the DNS address for the ALB created by the module by running the following command:
 
