@@ -10,18 +10,17 @@ The project is designed for piecemeal usage:
 - Looking to migrate your Perforce server from on-premise to AWS? :white_check_mark:
 - Starting your new studio from the ground up and looking for pre-built templates to deploy common infrastructure? :white_check_mark:
 
-The **Toolkit** consists of four key components:
+The **Toolkit** consists of three key components:
 
 | Component | Description
 |-|-|
-|**Assets**| Reusable scripts, pipeline definitions, Dockerfiles, [Packer](https://www.packer.io/) templates, and other resources that might prove useful or are dependencies of any of the modules. 
+|**Assets**| Reusable scripts, pipeline definitions, Dockerfiles, [Packer](https://www.packer.io/) templates, [Ansible](https://github.com/ansible/ansible) Playbooks to configure workloads after deployment, and other resources that might prove useful or are dependencies of any of the modules.
 |**Modules**| Highly configurable and extensible [Terraform](https://www.terraform.io/) modules for simplified deployment of key game development infrastructure on AWS with best-practices by default.
 |**Samples**| Complete Terraform configurations for expedited studio setup that demonstrate module usage and integration with other AWS services.
-|**Playbooks**| Automation scripts written with [Ansible](https://github.com/ansible/ansible) to configure workloads after deployment.
 
 ## Getting Started
 
-**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/getting-started/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
+**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/latest/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
 
 ## Security
 

@@ -8,17 +8,6 @@ log_message() {
     echo "$(date) - $1" >> $LOG_FILE
 }
 
-# Known things to be fixed:  
-# 1. Add function to validate dirs and files isnsted of calling it multiple times. - DONE
-# 2. Fix variable names 
-# 3. Validate values passed to functions
-# 4. Error handling (distro check) - this works for rhel based with dnf
-# 5. Move hardcoded paths/names to a config file
-# 6. Add a log - DONE
-# 7. Split the script into two: one for p4 copy of necessary files and second to run mkdirs cfg to setup replica. make te second setup also a one timer that mounts basic dirs /hxlogs /hxmetadata /hxdepots - DONE
-# 8. Install s-nail and sendmail from dnf that provides with "mail" command otherwise daily checkpoint script fails. 
-# 9. Add nfs-utils package
-
 # Constants
 ROOT_UID=0
 
@@ -32,32 +21,19 @@ fi
 # Set local variables
 SDP_Root=/hxdepots/sdp/helix_binaries
 SDP=/hxdepots/sdp
-PACKAGE="policycoreutils-python-utils sendmail nfs-utils s-nail" # Required in both
+PACKAGE="policycoreutils-python-utils" # Required in both
 
-
-# Check if SELinux is enabled, we need to relabel the service post installation otherwise it will not start p4d
-
-SELINUX_STATUS=$(getenforce)
-
-
-
-
-if [ "$SELINUX_STATUS" = "Enforcing" ] || [ "$SELINUX_STATUS" = "Permissive" ]; then
-    log_message "SELinux is enabled."
-    if ! dnf list installed "$PACKAGE" &> /dev/null; then
-        log_message "Package $PACKAGE is not installed. Installing..."
-        sudo dnf install -y $PACKAGE
-        if [ $? -eq 0 ]; then
-            log_message "$PACKAGE installed successfully."
-        else
-            log_message "Failed to install $PACKAGE."
-        fi
+# Function to check SELinux status
+check_selinux_status() {
+    SELINUX_STATUS=$(getenforce)
+    if [ "$SELINUX_STATUS" = "Enforcing" ] || [ "$SELINUX_STATUS" = "Permissive" ]; then
+        log_message "SELinux is enabled."
+        return 0  # Return 0 for enabled
     else
-        log_message "Package $PACKAGE is already installed."
+        log_message "SELinux is not enabled."
+        return 1  # Return 1 for disabled
     fi
-else
-    log_message "SELinux is not enabled. Skipping package installation."
-fi
+}
 
 # Function to check if a group exists
 group_exists() {
@@ -74,30 +50,24 @@ directory_exists() {
   [ -d "$1" ]
 }
 
-# Function to wait for a service to start
-wait_for_service() {
-  local service_name=$1
-  local max_attempts=10
-  local attempt=1
-
-  while [ $attempt -le $max_attempts ]; do
-    log_message "Waiting for $service_name to start... Attempt $attempt of $max_attempts."
-    systemctl is-active --quiet $service_name && break
-    sleep 1
-    ((attempt++))
-  done
-
-  if [ $attempt -gt $max_attempts ]; then
-    log_message "Service $service_name did not start within the expected time."
-    return 1
-  fi
-
-  log_message "Service $service_name started successfully."
-  return 0
-}
-
 log_message "Installing Perforce"
-# dnf update -y skipping this for now as it prolongs the AMI build and can be called post launch. 
+
+# Check if SELinux is enabled
+if check_selinux_status; then
+    if ! dnf list installed "$PACKAGE" &> /dev/null; then
+        log_message "Package $PACKAGE is not installed. Installing..."
+        sudo dnf install -y $PACKAGE
+        if [ $? -eq 0 ]; then
+            log_message "$PACKAGE installed successfully."
+        else
+            log_message "Failed to install $PACKAGE."
+        fi
+    else
+        log_message "Package $PACKAGE is already installed."
+    fi
+else
+    log_message "SELinux is not enabled. Skipping package installation."
+fi
 
 # Check if group 'perforce' exists, if not, add it
 if ! group_exists perforce; then

@@ -110,6 +110,7 @@ data "aws_iam_policy_document" "ec2_fleet_plugin_policy" {
   count = var.create_ec2_fleet_plugin_policy ? 1 : 0
 
   # EC2
+  #checkov:skip=CKV_AWS_111:Required permissions from EC2 Fleet
   statement {
     effect = "Allow"
     actions = [
@@ -126,15 +127,23 @@ data "aws_iam_policy_document" "ec2_fleet_plugin_policy" {
       "ec2:ModifyFleet",
       "ec2:DescribeInstanceTypes"
     ]
-    resources = values(aws_autoscaling_group.jenkins_build_farm_asg)[*].arn
+    resources = ["*"]
   }
   statement {
     effect = "Allow"
     actions = [
-      "autoscaling:DescribeAutoScalingGroups",
       "autoscaling:UpdateAutoScalingGroup"
     ]
     resources = values(aws_autoscaling_group.jenkins_build_farm_asg)[*].arn
+  }
+  #checkov:skip=CKV_AWS_356:Required permissions from EC2 Fleet
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "autoscaling:DescribeAutoScalingGroups",
+    ]
+    resources = ["*"]
   }
 
   # IAM
@@ -191,14 +200,26 @@ data "aws_iam_policy_document" "build_farm_fsxz_policy" {
     actions = [
       "fsx:DeleteSnapshot",
       "fsx:CreateSnapshot",
-      "fsx:DescribeSnapshots",
-      "fsx:DescribeVolumes",
       "fsx:ListTagsForResource"
     ]
     resources = concat(
       ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"],
       [for fs in values(aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system) : "arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/${fs.id}/*"]
     )
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "fsx:DescribeSnapshots"
+    ]
+    resources = ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "fsx:DescribeVolumes"
+    ]
+    resources = ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/*/*"]
   }
 }
 resource "aws_iam_policy" "build_farm_fsxz_policy" {

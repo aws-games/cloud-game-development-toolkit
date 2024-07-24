@@ -1,4 +1,4 @@
-# [Jenkins](https://www.jenkins.io/)
+# Jenkins Module
 
 Jenkins is an open source automation server. It helps automate the parts of software development related to building, testing, and deploying, facilitating continuous integration, and continuous delivery.
 
@@ -132,5 +132,7 @@ No modules.
 |------|-------------|
 | <a name="output_alb_security_group"></a> [alb\_security\_group](#output\_alb\_security\_group) | Security group associated with the Jenkins load balancer |
 | <a name="output_build_farm_security_group"></a> [build\_farm\_security\_group](#output\_build\_farm\_security\_group) | Security group associated with the build farm autoscaling groups |
+| <a name="output_jenkins_alb_dns_name"></a> [jenkins\_alb\_dns\_name](#output\_jenkins\_alb\_dns\_name) | The DNS name of the Jenkins application load balancer. |
+| <a name="output_jenkins_alb_zone_id"></a> [jenkins\_alb\_zone\_id](#output\_jenkins\_alb\_zone\_id) | The zone ID of the Jenkins ALB. |
 | <a name="output_service_security_group"></a> [service\_security\_group](#output\_service\_security\_group) | Security group associated with the ECS service hosting jenkins |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

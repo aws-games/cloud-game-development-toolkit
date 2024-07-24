@@ -2,23 +2,20 @@
 ## Process
 # 1. When changes are made to documentation files and pushed to the main branch, the workflow in this file is triggered.
 # 2. Copy the repository's contents to the runner, so the workflow can access them.
-# 3. `make docs-deploy` is run inside Docker container to deploy the documentation to GitHub Pages.
+# 3. `make docs-deploy-prod` is run inside Docker container to deploy the documentation to GitHub Pages.
 # Currently using fixed version and alias until release
 #====================================================================================================
 name: Build Docs and Publish to gh-pages
-env:
-  VERSION: v0.1.0-alpha.1
-  ALIAS: latest
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "docs/**"
-      - "mkdocs.yml"
-      - "CHANGELOG.md"
-      - "**/README.md"
-      - ".github/workflows/docs.yml"
+  #push:
+  #  branches:
+  #    - main
+  #  paths:
+  #    - "docs/**"
+  #    - "mkdocs.yml"
+  #    - "CHANGELOG.md"
+  #    - "**/README.md"
+  #    - ".github/workflows/docs.yml"
   workflow_dispatch:
     inputs:
       version:
@@ -36,12 +33,15 @@ on:
         default: main
 permissions:
   contents: write
+  pages: write
 jobs:
   publish_docs:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
     concurrency:
       group: docs
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,6 +52,12 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: make docs-install-dependencies
       - name: Deploy Docs
-        run: make docs-deploy VERSION="$VERSION" ALIAS="$ALIAS"   
+        run: make docs-deploy-github VERSION=${{ inputs.VERSION }} ALIAS=${{ inputs.ALIAS }}
 

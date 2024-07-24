@@ -9,12 +9,7 @@ packer {
 
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
-  ami_prefix = "p4_rocky_linux"
-}
-
-variable "profile" {
-  type = string
-  default = "DEFAULT"
+  ami_prefix = "p4_al2023"
 }
 
 variable "region" {
@@ -32,8 +27,17 @@ variable "subnet_id" {
     default = null
 }
 
-source "amazon-ebs" "rocky" {
-  profile = var.profile
+variable "associate_public_ip_address" {
+  type = bool
+  default = true
+}
+
+variable "ssh_interface" {
+  type = string
+  default = "public_ip"
+}
+
+source "amazon-ebs" "al2023" {
   region = var.region
   ami_name      = "${local.ami_prefix}-${local.timestamp}"
   instance_type = "t3.medium"
@@ -41,26 +45,35 @@ source "amazon-ebs" "rocky" {
   vpc_id = var.vpc_id
   subnet_id = var.subnet_id
 
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
+  ssh_interface = var.ssh_interface
 
   source_ami_filter {
     filters = {
-      name                = "Rocky-9-EC2-Base-9.2-20230513.0.x86_64*"
+      name                = "al2023-ami-2023.5.*"
+      architecture        = "x86_64"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
     }
     most_recent = true
-    owners      = ["679593333241"]
+    owners      = ["amazon"]
   }
 
-  ssh_username = "rocky"
+  ssh_username = "ec2-user"
 }
 
 build {
   name = "P4_SDP_AWS"
   sources = [
-    "source.amazon-ebs.rocky"
+    "source.amazon-ebs.al2023"
   ]
+
+    provisioner "shell" {
+      inline = [
+        "sudo dnf install -y git sendmail nfs-utils s-nail unzip cronie"
+      ]
+    }
+
     provisioner "shell" {
       script = "p4_setup.sh"
       execute_command = "sudo sh {{.Path}}"
@@ -68,17 +81,17 @@ build {
 
     provisioner "file" {
       source      = "p4_configure.sh"
-      destination = "/home/rocky/p4_configure.sh"
+      destination = "/tmp/p4_configure.sh"
     }
 
     provisioner "shell" {    
-      inline = ["chmod +x /home/rocky/p4_configure.sh"]
-    }
-
-    provisioner "shell" {
-      inline = [
-        "sudo dnf install -y https://s3.${var.region}.amazonaws.com/amazon-ssm-${var.region}/latest/linux_amd64/amazon-ssm-agent.rpm",
-        "sudo systemctl enable amazon-ssm-agent"
+      inline = ["mkdir -p /home/ec2-user/gpic_scripts",
+                "sudo mv /tmp/p4_configure.sh /home/ec2-user/gpic_scripts"
       ]
     }
+
+    provisioner "shell" {    
+      inline = ["sudo chmod +x /home/ec2-user/gpic_scripts/p4_configure.sh"]
+    }
+
 }
