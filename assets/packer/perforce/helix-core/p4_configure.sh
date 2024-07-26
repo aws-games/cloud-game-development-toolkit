@@ -158,14 +158,24 @@ perform_operations() {
     mount_fs_or_ebs() {
         local mount_point=$1
         local dest_dir=$2
+        local mount_options=""
+        local fs_type=""
+
         if is_fsx_mount "$mount_point"; then
             # Mount as FSx
             mount -t nfs -o nconnect=16,rsize=1048576,wsize=1048576,timeo=600 "$mount_point" "$dest_dir"
+            mount_options="nfs nconnect=16,rsize=1048576,wsize=1048576,timeo=600"
+            fs_type="nfs"
         else
             # Mount as EBS the called function also creates XFS on EBS
-
             prepare_ebs_volume "$mount_point" "$dest_dir"
+            
+            mount_options="defaults"
+            fs_type="xfs"
+
         fi
+            # Adding appending to the fstab so mounts persist across reboots. 
+        echo "$mount_point $dest_dir $fs_type $mount_options 0 0" >> /etc/fstab
     }
 
     # Create temporary directories and mount
