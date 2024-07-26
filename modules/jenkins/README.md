@@ -13,7 +13,7 @@ This module deploys the following resources:
 - Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices
 ## Architecture
 
-![Jenkins Module Architecture](../../media/Images/jenkins-module-architecture.png)
+![Jenkins Module Architecture](../../docs/media/Images/jenkins-module-architecture.png)
 
 ## Prerequisites
 There are a few prerequisites to the deployment of Jenkins which are not directly provided in the module. The first is a public certificate used by the Jenkins ALB for SSL termination, instructions are included for provisioning the certificates using the AWS Certificates Manager (ACM) but certificates created else where can also be uploaded into the service for later use. The second is an AWS Secrets Manager secret which is used to store sensitive information, such as SSH keys, which can then be made available to Jenkins through a Plugin.
