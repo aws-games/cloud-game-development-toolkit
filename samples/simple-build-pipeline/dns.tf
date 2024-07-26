@@ -5,6 +5,8 @@
 
 resource "aws_route53_zone" "public_zone" {
   name = var.fully_qualified_domain_name
+  #checkov:skip=CKV2_AWS_38: DNSSEC signing disabled by design
+  #checkov:skip=CKV2_AWS_39: Query logging disabled by design
 }
 
 resource "aws_route53_record" "jenkins" {
@@ -24,7 +26,8 @@ resource "aws_route53_record" "jenkins" {
 
 resource "aws_route53_zone" "helix_private_zone" {
   name = "helix.perforce.internal"
-
+  #checkov:skip=CKV2_AWS_38: Hosted zone is private (vpc association)
+  #checkov:skip=CKV2_AWS_39: Query logging disabled by design
   vpc {
     vpc_id = aws_vpc.build_pipeline_vpc.id
   }
@@ -57,6 +60,7 @@ resource "aws_route53_record" "perforce_helix_core" {
   name    = "core.helix.${aws_route53_zone.public_zone.name}"
   type    = "A"
   ttl     = 300
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
   records = [module.perforce_helix_core.helix_core_eip_public_ip]
 }
 
@@ -65,6 +69,7 @@ resource "aws_route53_record" "perforce_helix_core_pvt" {
   name    = "core.${aws_route53_zone.helix_private_zone.name}"
   type    = "A"
   ttl     = 300
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
   records = [module.perforce_helix_core.helix_core_eip_private_ip]
 }
 

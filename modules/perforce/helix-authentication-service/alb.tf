@@ -16,8 +16,9 @@ resource "aws_lb" "helix_authentication_service_alb" {
       prefix  = var.helix_authentication_service_alb_access_logs_prefix != null ? var.helix_authentication_service_alb_access_logs_prefix : "${local.name_prefix}-alb"
     }
   }
-
   enable_deletion_protection = var.enable_helix_authentication_service_alb_deletion_protection
+
+  #checkov:skip=CKV2_AWS_28: ALB access is managed with SG allow listing
 
   drop_invalid_header_fields = true
 
@@ -35,10 +36,55 @@ resource "aws_s3_bucket" "helix_authentication_service_alb_access_logs_bucket" {
   count  = var.enable_helix_authentication_service_alb_access_logs && var.helix_authentication_service_alb_access_logs_bucket == null ? 1 : 0
   bucket = "${local.name_prefix}-alb-access-logs-${random_string.helix_authentication_service_alb_access_logs_bucket_suffix[0].result}"
 
+  #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
+  #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
+  #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
+  #checkov:skip=CKV_AWS_18: S3 access logs not necessary
+  #checkov:skip=CKV2_AWS_62: Event notifications not necessary
+
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-alb-access-logs-${random_string.helix_authentication_service_alb_access_logs_bucket_suffix[0].result}"
   })
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
+  count = var.enable_helix_authentication_service_alb_access_logs && var.helix_authentication_service_alb_access_logs_bucket == null ? 1 : 0
+  depends_on = [
+    aws_s3_bucket.helix_authentication_service_alb_access_logs_bucket[0]
+  ]
+  bucket = aws_s3_bucket.helix_authentication_service_alb_access_logs_bucket[0].id
+  rule {
+    id     = "access-logs-lifecycle"
+    status = "Enabled"
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+    transition {
+      days          = 60
+      storage_class = "GLACIER"
+    }
+    expiration {
+      days = 90
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
+  count = var.enable_helix_authentication_service_alb_access_logs && var.helix_authentication_service_alb_access_logs_bucket == null ? 1 : 0
+  depends_on = [
+    aws_s3_bucket.helix_authentication_service_alb_access_logs_bucket[0]
+  ]
+  bucket                  = aws_s3_bucket.helix_authentication_service_alb_access_logs_bucket[0].id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 
 resource "aws_lb_target_group" "helix_authentication_service_alb_target_group" {
   name        = "${local.name_prefix}-tg"
@@ -66,6 +112,7 @@ resource "aws_lb_listener" "helix_authentication_service_alb_https_listener" {
   load_balancer_arn = aws_lb.helix_authentication_service_alb.arn
   port              = "443"
   protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
 
   default_action {

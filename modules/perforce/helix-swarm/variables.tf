@@ -119,12 +119,6 @@ variable "redis_container_name" {
   default     = "swarm-redis"
 }
 
-variable "enable_elasticache_serverless" {
-  type        = bool
-  description = "Flag to enable/disable Redis elasticache. Defaults to false."
-  default     = false
-}
-
 variable "enable_elastic_filesystem" {
   type        = bool
   description = "Flag to enable/disable elastic filesystem for persistent storage. Defaults to false."
@@ -167,8 +161,8 @@ variable "swarm_alb_subnets" {
 
 variable "enable_swarm_alb_access_logs" {
   type        = bool
-  description = "Enables access logging for the Helix Swarm ALB. Defaults to false."
-  default     = false
+  description = "Enables access logging for the Helix Swarm ALB. Defaults to true."
+  default     = true
 }
 
 variable "swarm_alb_access_logs_bucket" {
@@ -185,8 +179,8 @@ variable "swarm_alb_access_logs_prefix" {
 
 variable "enable_swarm_alb_deletion_protection" {
   type        = bool
-  description = "Enables deletion protection for the Helix Swarm ALB. Defaults to false."
-  default     = false
+  description = "Enables deletion protection for the Helix Swarm ALB. Defaults to true."
+  default     = true
 }
 
 variable "swarm_service_subnets" {

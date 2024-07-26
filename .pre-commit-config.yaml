@@ -15,31 +15,15 @@ repos:
     rev: "3.2.201"
     hooks:
       - id: checkov
-<<<<<<< HEAD
-<<<<<<< HEAD
         args: ["--config-file", ".config/.checkov.yml"]
-=======
-        args: ["--config-file .config/.checkov.yml"]
->>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
-=======
-        args: ["--config-file .config/.checkov.yml"]
->>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
-  - repo: "https://github.com/terraform-docs/terraform-docs"
-    rev: "v0.18.0"
-    hooks:
-      - id: terraform-docs-go
-<<<<<<< HEAD
-<<<<<<< HEAD
-        args: ["--config", ".config/.terraform-docs.yml"]
-=======
-        args: ["--config .config/.terraform-docs.yml"]
->>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
-=======
-        args: ["--config .config/.terraform-docs.yml"]
->>>>>>> 935b69b (feat: Updates to CI configurations for pre-commit and GHA)
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.89.1"
     hooks:
+      - id: terraform_docs
+        args:
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=false
+          - --hook-config=--use-standard-markers=true
       - id: terraform_validate
       - id: terraform_fmt
       - id: terraform_tflint

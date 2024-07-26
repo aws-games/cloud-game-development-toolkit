@@ -30,7 +30,7 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
   copy_tags_to_backups              = true
   copy_tags_to_volumes              = true
   daily_automatic_backup_start_time = "06:00"
-
+  #checkov:skip=CKV_AWS_203: CMK encryption not supported currently
   tags = merge(local.tags, each.value.tags, {
     Name = "${var.project_prefix}-${each.key}"
   })
@@ -39,7 +39,7 @@ resource "aws_fsx_openzfs_file_system" "jenkins_build_farm_fsxz_file_system" {
 resource "aws_fsx_openzfs_volume" "jenkins_build_farm_fsxz_volume" {
   for_each = aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system
 
-  name = "${var.project_prefix}-${each.key}"
+  name             = "${var.project_prefix}-${each.key}"
   parent_volume_id = aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system[each.key].root_volume_id
 
   copy_tags_to_snapshots = true
@@ -57,4 +57,3 @@ resource "aws_fsx_openzfs_volume" "jenkins_build_farm_fsxz_volume" {
     Name = "${var.project_prefix}-${each.key}"
   })
 }
-

@@ -83,7 +83,7 @@ resource "aws_ebs_volume" "logs" {
   availability_zone = local.helix_core_az
   size              = var.logs_volume_size
   encrypted         = true
-
+  #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
   tags = local.tags
 }
 
@@ -98,7 +98,7 @@ resource "aws_ebs_volume" "metadata" {
   availability_zone = local.helix_core_az
   size              = var.metadata_volume_size
   encrypted         = true
-
+  #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
   tags = local.tags
 }
 
@@ -113,7 +113,7 @@ resource "aws_ebs_volume" "depot" {
   availability_zone = local.helix_core_az
   size              = var.depot_volume_size
   encrypted         = true
-
+  #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
   tags = local.tags
 }
 
@@ -128,7 +128,9 @@ resource "aws_volume_attachment" "depot_attachment" {
 ##########################################
 
 resource "aws_security_group" "helix_core_security_group" {
-  count       = var.create_default_sg ? 1 : 0
+  count = var.create_default_sg ? 1 : 0
+  #checkov:skip=CKV2_AWS_5:SG is attahced to FSxZ file systems
+
   vpc_id      = var.vpc_id
   name        = "${local.name_prefix}-instance"
   description = "Security group for Helix Core machines."
@@ -142,4 +144,3 @@ resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
   ip_protocol       = -1
   description       = "Helix Core out to Internet"
 }
-

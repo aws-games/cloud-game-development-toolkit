@@ -82,21 +82,3 @@ resource "aws_vpc_security_group_ingress_rule" "swarm_efs_inbound_service" {
   to_port                      = 2049
   ip_protocol                  = "tcp"
 }
-
-resource "aws_security_group" "swarm_elasticache_sg" {
-  count       = var.enable_elasticache_serverless ? 1 : 0
-  name        = "${local.name_prefix}-elasticache"
-  vpc_id      = var.vpc_id
-  description = "Swarm Elasticache security group"
-  tags        = local.tags
-}
-
-resource "aws_vpc_security_group_ingress_rule" "swarm_elasticache_inbound_service" {
-  count                        = var.enable_elasticache_serverless ? 1 : 0
-  security_group_id            = aws_security_group.swarm_elasticache_sg[0].id
-  description                  = "Allow inbound access from Helix Swarm service to Elasticache."
-  referenced_security_group_id = aws_security_group.swarm_service_sg.id
-  from_port                    = 6379
-  to_port                      = 6380
-  ip_protocol                  = "tcp"
-}
