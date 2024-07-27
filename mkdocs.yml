@@ -58,9 +58,11 @@ theme:
       info: octicons/info-16
   logo: media/logos/aws-logo-white.svg
   favicon: media/logos/aws-logo-white.svg
-  
-markdown_extensions: 
+
+markdown_extensions:
   - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - pymdownx.snippets:
       base_path: "."
       check_paths: true
@@ -73,6 +75,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
       
 nav:
   - Home: 
