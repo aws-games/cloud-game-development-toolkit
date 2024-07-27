@@ -5,6 +5,7 @@ sections:
     - inputs
     - providers
     - modules
+    - resources
     - footer
 output:
   file: README.md

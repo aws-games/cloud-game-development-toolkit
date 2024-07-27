@@ -10,6 +10,12 @@ resource "aws_vpc" "build_pipeline_vpc" {
     }
   )
   enable_dns_hostnames = true
+  #checkov:skip=CKV2_AWS_11: VPC flow logging disabled by design
+}
+
+# Set default SG to restrict all traffic
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.build_pipeline_vpc.id
 }
 
 ##########################################
@@ -83,6 +89,7 @@ resource "aws_route_table_association" "public_rt_asso" {
 
 resource "aws_eip" "nat_gateway_eip" {
   depends_on = [aws_internet_gateway.igw]
+  #checkov:skip=CKV2_AWS_19:EIP associated with NAT Gateway through association ID
   tags = merge(local.tags,
     {
       Name = "build-pipeline-nat-eip"

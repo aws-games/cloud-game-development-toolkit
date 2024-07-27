@@ -16,14 +16,14 @@ repos:
     hooks:
       - id: checkov
         args: ["--config-file", ".config/.checkov.yml"]
-  - repo: "https://github.com/terraform-docs/terraform-docs"
-    rev: "v0.18.0"
-    hooks:
-      - id: terraform-docs-go
-        args: ["--config", ".config/.terraform-docs.yml"]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.89.1"
     hooks:
+      - id: terraform_docs
+        args:
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=false
+          - --hook-config=--use-standard-markers=true
       - id: terraform_validate
       - id: terraform_fmt
       - id: terraform_tflint

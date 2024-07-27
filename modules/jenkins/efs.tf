@@ -18,7 +18,7 @@ resource "aws_efs_file_system" "jenkins_efs_file_system" {
   lifecycle_policy {
     transition_to_primary_storage_class = "AFTER_1_ACCESS"
   }
-
+  #checkov:skip=CKV_AWS_184: CMK encryption not supported currently
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-efs-file-system"
   })
@@ -49,5 +49,3 @@ resource "aws_efs_access_point" "jenkins_efs_access_point" {
   }
   tags = local.tags
 }
-
-
