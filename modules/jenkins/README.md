@@ -17,15 +17,15 @@ This module deploys the following resources:
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.30 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.50 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >=3.6 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.30 |
-| <a name="provider_random"></a> [random](#provider\_random) | >=3.6 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
 
@@ -45,6 +45,7 @@ No modules.
 | [aws_efs_file_system.jenkins_efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system) | resource |
 | [aws_efs_mount_target.jenkins_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_mount_target) | resource |
 | [aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_openzfs_file_system) | resource |
+| [aws_fsx_openzfs_volume.jenkins_build_farm_fsxz_volume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_openzfs_volume) | resource |
 | [aws_iam_instance_profile.build_farm_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_policy.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
@@ -60,12 +61,18 @@ No modules.
 | [aws_lb_target_group.jenkins_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_s3_bucket.artifact_buckets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.jenkins_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.artifacts_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_versioning.artifact_bucket_versioning](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
 | [aws_security_group.jenkins_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.jenkins_build_farm_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.jenkins_build_storage_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.jenkins_efs_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.jenkins_service_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_egress_rule.jenkins_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.jenkins_build_farm_inbound_ssh_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -92,9 +99,9 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_artifact_buckets"></a> [artifact\_buckets](#input\_artifact\_buckets) | List of Amazon S3 buckets you wish to create to store build farm artifacts. | <pre>map(<br>    object({<br>      name                 = string<br>      enable_force_destroy = optional(bool, true)<br>  }))</pre> | `null` | no |
+| <a name="input_artifact_buckets"></a> [artifact\_buckets](#input\_artifact\_buckets) | List of Amazon S3 buckets you wish to create to store build farm artifacts. | <pre>map(<br>    object({<br>      name                 = string<br>      enable_force_destroy = optional(bool, true)<br>      enable_versioning    = optional(bool, true)<br>      tags                 = optional(map(string), {})<br>    })<br>  )</pre> | `null` | no |
 | <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object in this map corresponds to an ASG used by Jenkins as build agents. | <pre>map(object(<br>    {<br>      ami = string<br>      #TODO: Support mixed instances / spot with custom policies<br>      instance_type     = string<br>      ebs_optimized     = optional(bool, true)<br>      enable_monitoring = optional(bool, true)<br>    }<br>  ))</pre> | `{}` | no |
-| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "SINGLE_AZ_1")<br>      route_table_ids     = optional(list(string), null)<br>    }<br>  ))</pre> | `{}` | no |
+| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "SINGLE_AZ_1")<br>      route_table_ids     = optional(list(string), null)<br>      tags                = optional(map(string), null)<br>    }<br>  ))</pre> | `{}` | no |
 | <a name="input_build_farm_subnets"></a> [build\_farm\_subnets](#input\_build\_farm\_subnets) | The subnets to deploy the build farms into. | `list(string)` | n/a | yes |
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Jenkins service load balancer. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The ARN of the cluster to deploy the Jenkins service into. Defaults to null and a cluster will be created. | `string` | `null` | no |
@@ -106,8 +113,8 @@ No modules.
 | <a name="input_create_jenkins_default_policy"></a> [create\_jenkins\_default\_policy](#input\_create\_jenkins\_default\_policy) | Optional creation of Jenkins Default IAM Policy. Default is set to true. | `bool` | `true` | no |
 | <a name="input_create_jenkins_default_role"></a> [create\_jenkins\_default\_role](#input\_create\_jenkins\_default\_role) | Optional creation of Jenkins Default IAM Role. Default is set to true. | `bool` | `true` | no |
 | <a name="input_custom_jenkins_role"></a> [custom\_jenkins\_role](#input\_custom\_jenkins\_role) | ARN of the custom IAM Role you wish to use with Jenkins. | `string` | `null` | no |
-| <a name="input_enable_jenkins_alb_access_logs"></a> [enable\_jenkins\_alb\_access\_logs](#input\_enable\_jenkins\_alb\_access\_logs) | Enables access logging for the Jenkins ALB. Defaults to false. | `bool` | `false` | no |
-| <a name="input_enable_jenkins_alb_deletion_protection"></a> [enable\_jenkins\_alb\_deletion\_protection](#input\_enable\_jenkins\_alb\_deletion\_protection) | Enables deletion protection for the Jenkins ALB. Defaults to false. | `bool` | `false` | no |
+| <a name="input_enable_jenkins_alb_access_logs"></a> [enable\_jenkins\_alb\_access\_logs](#input\_enable\_jenkins\_alb\_access\_logs) | Enables access logging for the Jenkins ALB. Defaults to true. | `bool` | `true` | no |
+| <a name="input_enable_jenkins_alb_deletion_protection"></a> [enable\_jenkins\_alb\_deletion\_protection](#input\_enable\_jenkins\_alb\_deletion\_protection) | Enables deletion protection for the Jenkins ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_artifact_buckets"></a> [existing\_artifact\_buckets](#input\_existing\_artifact\_buckets) | List of ARNs of the S3 buckets used to store artifacts created by the build farm. | `list(string)` | `[]` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Jenkins service load balancer. | `list(string)` | `null` | no |

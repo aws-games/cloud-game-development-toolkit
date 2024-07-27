@@ -113,8 +113,8 @@ variable "helix_authentication_service_alb_subnets" {
 
 variable "enable_helix_authentication_service_alb_access_logs" {
   type        = bool
-  description = "Enables access logging for the Helix Authentication Service ALB. Defaults to false."
-  default     = false
+  description = "Enables access logging for the Helix Authentication Service ALB. Defaults to true."
+  default     = true
 }
 
 variable "helix_authentication_service_alb_access_logs_bucket" {
@@ -131,8 +131,8 @@ variable "helix_authentication_service_alb_access_logs_prefix" {
 
 variable "enable_helix_authentication_service_alb_deletion_protection" {
   type        = bool
-  description = "Enables deletion protection for the Helix Authentication Service ALB. Defaults to false."
-  default     = false
+  description = "Enables deletion protection for the Helix Authentication Service ALB. Defaults to true."
+  default     = true
 }
 
 variable "helix_authentication_service_subnets" {

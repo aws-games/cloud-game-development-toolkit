@@ -1,21 +1,20 @@
 # Helix Authentication Service (HAS)
 
-[Perforce Helix Authentication Service](https://www.perforce.com/downloads/helix-authentication-service) enables you to integrate certain Perforce products with your organization's Identity Provider (IdP). 
+[Perforce Helix Authentication Service](https://www.perforce.com/downloads/helix-authentication-service) enables you to integrate certain Perforce products with your organization's Identity Provider (IdP).
 
 This module deploys Perforce Helix Authentication Service on AWS as a fully managed ECS Service using Fargate.
 
-## Instructiosn for Deployment 
+## Instructions for Deployment
 
 They Go Here
 
-
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.30 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.50 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >=3.6 |
 
@@ -23,9 +22,9 @@ They Go Here
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.30 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.2.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | >=3.6 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.6.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
 
@@ -48,6 +47,8 @@ No modules.
 | [aws_lb_listener.helix_authentication_service_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_target_group.helix_authentication_service_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_s3_bucket.helix_authentication_service_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_security_group.helix_authentication_service_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.helix_authentication_service_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_egress_rule.helix_authentication_service_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -78,8 +79,8 @@ No modules.
 | <a name="input_create_helix_authentication_service_default_role"></a> [create\_helix\_authentication\_service\_default\_role](#input\_create\_helix\_authentication\_service\_default\_role) | Optional creation of Helix Authentication Service default IAM Role. Default is set to true. | `bool` | `true` | no |
 | <a name="input_custom_helix_authentication_service_role"></a> [custom\_helix\_authentication\_service\_role](#input\_custom\_helix\_authentication\_service\_role) | ARN of the custom IAM Role you wish to use with Helix Authentication Service. | `string` | `null` | no |
 | <a name="input_desired_container_count"></a> [desired\_container\_count](#input\_desired\_container\_count) | The desired number of containers running the Helix Authentication Service. | `number` | `1` | no |
-| <a name="input_enable_helix_authentication_service_alb_access_logs"></a> [enable\_helix\_authentication\_service\_alb\_access\_logs](#input\_enable\_helix\_authentication\_service\_alb\_access\_logs) | Enables access logging for the Helix Authentication Service ALB. Defaults to false. | `bool` | `false` | no |
-| <a name="input_enable_helix_authentication_service_alb_deletion_protection"></a> [enable\_helix\_authentication\_service\_alb\_deletion\_protection](#input\_enable\_helix\_authentication\_service\_alb\_deletion\_protection) | Enables deletion protection for the Helix Authentication Service ALB. Defaults to false. | `bool` | `false` | no |
+| <a name="input_enable_helix_authentication_service_alb_access_logs"></a> [enable\_helix\_authentication\_service\_alb\_access\_logs](#input\_enable\_helix\_authentication\_service\_alb\_access\_logs) | Enables access logging for the Helix Authentication Service ALB. Defaults to true. | `bool` | `true` | no |
+| <a name="input_enable_helix_authentication_service_alb_deletion_protection"></a> [enable\_helix\_authentication\_service\_alb\_deletion\_protection](#input\_enable\_helix\_authentication\_service\_alb\_deletion\_protection) | Enables deletion protection for the Helix Authentication Service ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_web_based_administration"></a> [enable\_web\_based\_administration](#input\_enable\_web\_based\_administration) | Flag for enabling web based administration of Helix Authentication Service. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Authentication Service load balancer. | `list(string)` | `[]` | no |
@@ -106,4 +107,4 @@ No modules.
 | <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | The hosted zone ID of the Helix Authentication Service ALB |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the ECS cluster hosting helix\_authentication\_service |
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service running Helix Authentication Service |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
