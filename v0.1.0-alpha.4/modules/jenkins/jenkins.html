@@ -1,0 +1,2253 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cloud Game Development Toolkit">
+      
+      
+        <meta name="author" content="Amazon Web Services">
+      
+      
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/v0.1.0-alpha.4/modules/jenkins/jenkins.html">
+      
+      
+        <link rel="prev" href="../index.html">
+      
+      
+        <link rel="next" href="terraform-docs.html">
+      
+      
+      <link rel="icon" href="../../media/logos/aws-logo-white.svg">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.30">
+    
+    
+      
+        <title>Installation and Usage - Cloud Game Development Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.3cba04c6.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+  
+  
+    
+    
+  
+  
+  <style>:root{--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>');}</style>
+
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#jenkins-module" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+  <a href="../../.."> 
+    <strong>Click here to go to latest.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Cloud Game Development Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Installation and Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2C5.13 2 2 5.13 2 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7M6 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H6v1m13-8h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9L19 13m-2.15 5.65L18 15l1.15 3.65h-2.3Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../index.html" class="md-tabs__link">
+          
+  
+    
+  
+  Home
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started.html" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing.html" class="md-tabs__link">
+        
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../discussion.html" class="md-tabs__link">
+        
+  
+    
+  
+  Discussion
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ci/" class="md-tabs__link">
+        
+  
+    
+  
+  CI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-tabs__link">
+        
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    Cloud Game Development Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Home
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../assets/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Assets
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1_2" id="__nav_1_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            Assets
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Packer Templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/jenkins-pipelines.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jenkins Pipelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/playbooks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ansible Playbooks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/dockerfiles.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerfiles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1_3" id="__nav_1_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_3_2" id="__nav_1_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Jenkins
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Jenkins
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Installation and Usage
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="jenkins.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Installation and Usage
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Architecture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-public-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Public Certificate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-upload-secrets-to-aws-secrets-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Upload Secrets to AWS Secrets Manager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-create-amazon-machine-image-ami-for-jenkins-agent-using-packer" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Create Amazon Machine Image (AMI) for Jenkins Agent Using Packer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-jenkins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessing Jenkins
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-jenkins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring Jenkins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring Jenkins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retrieve-the-jenkins-administrator-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieve the Jenkins Administrator Password
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-initial-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jenkins Initial Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring Plugins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-the-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install the Plugins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-necessary-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the Necessary Credentials
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-jenkins-to-the-build-farm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connect Jenkins to the Build Farm
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="terraform-docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3_3" id="__nav_1_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Perforce
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Perforce
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_3_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3_3_1" id="__nav_1_3_3_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Helix Authentication Service
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_1_3_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Helix Authentication Service
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-authentication-service/helix-authentication-service.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation and Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-authentication-service/terraform-docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_3_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3_3_2" id="__nav_1_3_3_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Helix Core Server
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_1_3_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Helix Core Server
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-core/helix-core.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation and Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-core/terraform-docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_3_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3_3_3" id="__nav_1_3_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Helix Swarm
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_1_3_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Helix Swarm
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-swarm/helix-swarm.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation and Usage
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../perforce/helix-swarm/terraform-docs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../samples/index.html" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Samples
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1_4" id="__nav_1_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            Samples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../samples/simple-build-pipeline.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Simple Build Pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discussion.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Discussion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Roadmap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Architecture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-public-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Public Certificate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-upload-secrets-to-aws-secrets-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Upload Secrets to AWS Secrets Manager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-create-amazon-machine-image-ami-for-jenkins-agent-using-packer" class="md-nav__link">
+    <span class="md-ellipsis">
+      (Optional) Create Amazon Machine Image (AMI) for Jenkins Agent Using Packer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-jenkins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessing Jenkins
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-jenkins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring Jenkins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring Jenkins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retrieve-the-jenkins-administrator-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieve the Jenkins Administrator Password
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jenkins-initial-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Jenkins Initial Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring Plugins
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-the-plugins" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install the Plugins
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-necessary-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the Necessary Credentials
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-jenkins-to-the-build-farm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connect Jenkins to the Build Farm
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="jenkins-module">Jenkins Module<a class="headerlink" href="#jenkins-module" title="Permanent link">&para;</a></h1>
+<p><a class="md-button md-button--primary" href="terraform-docs.html">Jump to Terraform docs</a></p>
+<p>Jenkins is an open source automation server that simplifies repeatable software development tasks such as building, testing, and deploying applications. This module deploys Jenkins on an Elastic Container Service (ECS) cluster backed by AWS Fargate using the latest Jenkins container image (<a href="https://hub.docker.com/r/jenkins/jenkins">jenkins/jenkins:lts-jdk17</a>). The deployment includes an Elastic File System (EFS) volume for persisting plugins and configurations, along with an Elastic Load Balancer (ELB) deployment for TLS termination. The module also includes the deployment of an EC2 Autoscaling group to serve as a flexible pool of build nodes, however the user must configure Jenkins to use the build farm.</p>
+<p>This module deploys the following resources:</p>
+<ul>
+<li>An Elastic Container Service (ECS) cluster backed by AWS Fargate.</li>
+<li>An ECS service running the latest Jenkins container image (<a href="https://hub.docker.com/r/jenkins/jenkins">jenkins/jenkins:lts-jdk17</a>) available.</li>
+<li>An Elastic File System (EFS) for the Jenkins service to use as a persistent datastore.</li>
+<li>A user defined number of ZFS File Systems</li>
+<li>An Elastic Load Balancer (ELB) for TLS termination of the Jenkins service</li>
+<li>A configurable number of EC2 Autoscaling groups to serve as a flexible pool of build nodes for the Jenkins service</li>
+<li>Supporting resources including KMS keys for encryption and IAM roles to ensure security best practices</li>
+</ul>
+<h2 id="deployment-architecture">Deployment Architecture<a class="headerlink" href="#deployment-architecture" title="Permanent link">&para;</a></h2>
+<p><img alt="Jenkins Module Architecture" src="../../media/images/jenkins-module-architecture.png" /></p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>There are a few prerequisites to the deployment of Jenkins which are not directly provided in the module. The first is a public certificate used by the Jenkins ALB for SSL termination, instructions are included for provisioning the certificates using the AWS Certificates Manager (ACM) but certificates created else where can also be uploaded into the service for later use. The second is an AWS Secrets Manager secret which is used to store sensitive information, such as SSH keys, which can then be made available to Jenkins through a Plugin.</p>
+<h3 id="create-a-public-certificate">Create a Public Certificate<a class="headerlink" href="#create-a-public-certificate" title="Permanent link">&para;</a></h3>
+<details class="note">
+<summary>How to Create a Public Certificate Using Amazon Certificate Manager</summary>
+<ol>
+<li>
+<p>Sign in to the AWS Management Console and open the Amazon Certificate Manager (ACM) <a href="https://console.aws.amazon.com/acm/home">console</a> and choose Request a certificate.</p>
+</li>
+<li>
+<p>In the Domain names section, type your domain name.</p>
+<p>a. You can use a fully qualified domain name (FQDN), such as www.example.com, or a bare or apex domain name such as example.com. You can also use an asterisk (*) as a wild card in the leftmost position to protect several site names in the same domain. For example, *.example.com protects corp.example.com, and images.example.com. The wild-card name will appear in the Subject field and in the Subject Alternative Name extension of the ACM certificate.</p>
+<p>b. When you request a wild-card certificate, the asterisk (*) must be in the leftmost position of the domain name and can protect only one subdomain level. For example, *.example.com can protect login.example.com, and test.example.com, but it cannot protect test.login.example.com. Also note that *.example.com protects only the subdomains of example.com, it does not protect the bare or apex domain (example.com). To protect both, see the next step.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In compliance with <a href="https://datatracker.ietf.org/doc/html/rfc5280">RFC 5280</a>, the length of the domain name (technically, the Common Name) that you enter in this step cannot exceed 64 octets (characters), including periods. Each subsequent Subject Alternative Name (SAN) that you provide, as in the next step, can be up to 253 octets in length.</p>
+</div>
+<p>c. To add another name, choose Add another name to this certificate and type the name in the text box. This is useful for protecting both a bare or apex domain (such as example.com) and its subdomains such as *.example.com).</p>
+</li>
+<li>
+<p>In the Validation method section, choose either DNS validation – recommended or Email validation, depending on your needs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you are able to edit your DNS configuration, we recommend that you use DNS domain validation rather than email validation. <a href="https://docs.aws.amazon.com/acm/latest/userguide/dns-validation.html">DNS validation</a> has multiple benefits over email validation. See DNS validation.</p>
+</div>
+<p>a. Before ACM issues a certificate, it validates that you own or control the domain names in your certificate request. You can use either email validation or DNS validation.</p>
+<p>b. If you choose email validation, ACM sends validation email to three contact addresses registered in the WHOIS database, and up to five common system administration addresses for each domain name. You or an authorized representative must reply to one of these email messages. For more information, see <a href="https://docs.aws.amazon.com/acm/latest/userguide/email-validation.html">Email validation</a>.</p>
+<p>c. If you use DNS validation, you simply add a CNAME record provided by ACM to your DNS configuration. For more information about DNS validation, see <a href="https://docs.aws.amazon.com/acm/latest/userguide/dns-validation.html">DNS validation</a>.</p>
+</li>
+<li>
+<p>In the Key algorithm section, chose one of the three available algorithms:</p>
+<ul>
+<li>RSA 2048 (default)</li>
+<li>ECDSA P 256</li>
+<li>ECDSA P 384</li>
+</ul>
+<p>a. For information to help you choose an algorithm, see <a href="https://docs.aws.amazon.com/acm/latest/userguide/acm-certificate.html#algorithms">Key algorithms</a> and the AWS blog post <a href="https://aws.amazon.com/blogs/security/how-to-evaluate-and-use-ecdsa-certificates-in-aws-certificate-manager/">How to evaluate and use ECDSA certificates in AWS Certificate Manager</a>.</p>
+</li>
+</ol>
+<p>5.In the Tags page, you can optionally tag your certificate. Tags are key-value pairs that serve as metadata for identifying and organizing AWS resources. For a list of ACM tag parameters and for instructions on how to add tags to certificates after creation, see <a href="https://docs.aws.amazon.com/acm/latest/userguide/tags.html">Tagging AWS Certificate Manager certificates</a>. When you finish adding tags, choose Request.</p>
+<ol>
+<li>
+<p>After the request is processed, the console returns you to your certificate list, where information about the new certificate is displayed.
+    a. A certificate enters status Pending validation upon being requested, unless it fails for any of the reasons given in the troubleshooting topic <a href="https://docs.aws.amazon.com/acm/latest/userguide/troubleshooting-failed.html">Certificate request fails</a>. ACM makes repeated attempts to validate a certificate for 72 hours and then times out. If a certificate shows status Failed or Validation timed out, delete the request, correct the issue with <a href="https://docs.aws.amazon.com/acm/latest/userguide/dns-validation.html">DNS validation</a> or <a href="https://docs.aws.amazon.com/acm/latest/userguide/email-validation.html">Email validation</a>, and try again. If validation succeeds, the certificate enters status Issued.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Depending on how you have ordered the list, a certificate you are looking for might not be immediately visible. You can click the black triangle at right to change the ordering. You can also navigate through multiple pages of certificates using the page numbers at upper-right.</p>
+</div>
+</li>
+</ol>
+</details>
+<p><a href="https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html">Amazon Certificate Manager Documentation</a></p>
+<h3 id="optional-upload-secrets-to-aws-secrets-manager">(Optional) Upload Secrets to AWS Secrets Manager<a class="headerlink" href="#optional-upload-secrets-to-aws-secrets-manager" title="Permanent link">&para;</a></h3>
+<p>AWS Secrets Manager can be used to store sensitive information such as SSH keys and access tokens, which can then be made available to Jenkins. We recommend using the service to store the private key for the Jenkins agents which the Jenkins orchestrator uses to communicate over SSH.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the <code>AWS Secrets Manager Credentials Provider</code> Jenkins plugin is recommended. <strong>There are requirements around tagging your secrets for the plugin to work properly</strong>. See the <a href="https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/">AWS Secrets Manager Credentials Provider Plugin Documentation</a> for additional details. Step-by-step instructions for uploading SSH keys into AWS Secrets Manager can be found in the <a href="">Configure Pluings</a> section.</p>
+</div>
+<details class="note">
+<summary>How to Upload Secrets to AWS Secrets Manager</summary>
+<ol>
+<li>
+<p>Open the Secrets Manager <a href="https://console.aws.amazon.com/secretsmanager/">console</a>.</p>
+</li>
+<li>
+<p>Choose Store a new secret.</p>
+</li>
+<li>
+<p>On the Choose secret type page, do the following:</p>
+<ol>
+<li>
+<p>For Secret type, choose Other type of secret.</p>
+</li>
+<li>
+<p>In Key/value pairs, either enter your secret in JSON Key/value pairs, or choose the Plaintext tab and enter the secret in any format (you must choose Plaintext if storing SSH keys). You can store up to 65536 bytes in the secret.</p>
+</li>
+<li>
+<p>For Encryption key, choose the AWS KMS key that Secrets Manager uses to encrypt the secret value. For more information, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/security-encryption.html">Secret encryption and decryption</a>.</p>
+<ul>
+<li>
+<p>For most cases, choose aws/secretsmanager to use the AWS managed key for Secrets Manager. There is no cost for using this key.</p>
+</li>
+<li>
+<p>If you need to access the secret from another AWS account, or if you want to use your own KMS key so that you can rotate it or apply a key policy to it, choose a customer managed key from the list or choose Add new key to create one. For information about the costs of using a customer managed key, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html#asm_pricing">Pricing</a>.</p>
+</li>
+<li>
+<p>You must have <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/security-encryption.html#security-encryption-authz">Permissions for the KMS key</a>. For information about cross-account access, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html">Access AWS Secrets Manager secrets from a different account</a>.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Choose Next</p>
+</li>
+</ol>
+</li>
+<li>
+<p>On the Configure secret page, do the following:</p>
+<ol>
+<li>
+<p>Enter a descriptive Secret name and Description. Secret names must contain 1-512 Unicode characters.</p>
+</li>
+<li>
+<p>(Optional) In the Tags section, add tags to your secret. For tagging strategies, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/managing-secrets_tagging.html">Tag AWS Secrets Manager secrets</a>. Don't store sensitive information in tags because they aren't encrypted.</p>
+</li>
+<li>
+<p>(Optional) In Resource permissions, to add a resource policy to your secret, choose Edit permissions. For more information, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-policies.html">Attach a permissions policy to an AWS Secrets Manager secret</a>.</p>
+</li>
+<li>
+<p>(Optional) In Replicate secret, to replicate your secret to another AWS Region, choose Replicate secret. You can replicate your secret now or come back and replicate it later. For more information, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/replicate-secrets.html">Replicate secrets across Regions</a>.</p>
+</li>
+<li>
+<p>Choose Next.</p>
+</li>
+</ol>
+</li>
+<li>
+<p>(Optional) On the Configure rotation page, you can turn on automatic rotation. You can also keep rotation off for now and then turn it on later. For more information, see <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets.html">Rotate secrets</a>. Choose Next.</p>
+</li>
+<li>
+<p>On the Review page, review your secret details, and then choose Store.</p>
+</li>
+</ol>
+<p>Secrets Manager returns to the list of secrets. If your new secret doesn't appear, choose the refresh button.</p>
+</details>
+<p><a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html">AWS Secrets Manager Documentation</a></p>
+<h3 id="optional-create-amazon-machine-image-ami-for-jenkins-agent-using-packer">(Optional) Create Amazon Machine Image (AMI) for Jenkins Agent Using Packer<a class="headerlink" href="#optional-create-amazon-machine-image-ami-for-jenkins-agent-using-packer" title="Permanent link">&para;</a></h3>
+<p>The CGD Toolkit provides packer templates for generating Amazon Machine Images (AMIs) for use as Jenkins Agents. The Toolkit provides both Windows and Linux options</p>
+<details class="note">
+<summary>How to Generate SSH Keys</summary>
+<ol>
+<li>
+<p>Open your preferred Command Line App.</p>
+</li>
+<li>
+<p>Paste the text below, replacing the email used in the example with your email</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># This command creates a new SSH key, using the provided email as a label</span>
+ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;your_email@example.com&quot;</span>
+</code></pre></div>
+<ol>
+<li>
+<p>When prompted to "Enter a file in which to save the key", enter a path in which to save the generated key, or press <strong>Enter</strong> to accept the default location.</p>
+</li>
+<li>
+<p>When prompted to "Enter passphrase", enter a password for your key, or leave empty for no password.</p>
+</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If using the <a href="https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/">AWS Secrets Manager Credentials Provider</a>, leave the passphrase empty. The AWS Secrets Manager Credentials Provider plugin does <strong>NOT</strong> support passphrases.</p>
+</div>
+</details>
+<details class="note">
+<summary>How to Create Linux AMI using Packer</summary>
+<ol>
+<li>Copy the existing example Packer configuration file located at <strong>assets/packer/build-agents/linux/example.pkvars.hcl</strong></li>
+<li>Replace placeholder values<ul>
+<li><strong>region</strong> - AWS Region code to deploy the AMI into. i.e. "us-west-2"</li>
+<li><strong>vpc_id</strong> - The ID of the VPC you wish to use to create the AMI.</li>
+<li><strong>subnet_id</strong> - The ID of the subnet you wish to use to create the AMI.</li>
+<li><strong>profile</strong> - The name of the <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html">AWS CLI profile</a> you wish to use to create the AMI.</li>
+<li><strong>public_key</strong> - The public ssh key to be used by Jenkins when communicating with its agents.</li>
+</ul>
+</li>
+<li>
+<p>Download the Packer dependencies
+    <div class="highlight"><pre><span></span><code><span class="c1"># This command will download all necessary dependencies to build the AMI</span>
+packer<span class="w"> </span>init
+</code></pre></div></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you do not have Hashicorp Packer installed, see <a href="https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli">Packer Installation Instructions</a>.</p>
+</div>
+</li>
+<li>
+<p>Build the Image
+    <div class="highlight"><pre><span></span><code><span class="c1"># This command builds the Linux x86_64 AMI using the configurations provided in the .pkvars.hcl you created above</span>
+packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="w"> </span>your-vars.pkvars.hcl<span class="w"> </span>amazon-linux-2023-x86_64.pkr.hcl
+</code></pre></div></p>
+</li>
+<li>
+<p>Notate the AMI id (<strong>ami-#################</strong>) returned from the previous command.
+    <div class="highlight"><pre><span></span><code><span class="o">==</span>&gt;<span class="w"> </span>Wait<span class="w"> </span>completed<span class="w"> </span>after<span class="w"> </span><span class="m">10</span><span class="w"> </span>minutes<span class="w"> </span><span class="m">23</span><span class="w"> </span><span class="nv">seconds</span>
+
+<span class="o">==</span>&gt;<span class="w"> </span>Builds<span class="w"> </span>finished.<span class="w"> </span>The<span class="w"> </span>artifacts<span class="w"> </span>of<span class="w"> </span>successful<span class="w"> </span>builds<span class="w"> </span>are:
+--&gt;<span class="w"> </span>jenkins-linux-packer.amazon-ebs.al2023:<span class="w"> </span>AMIs<span class="w"> </span>were<span class="w"> </span>created:
+us-east-1:<span class="w"> </span>ami-08862...e2e
+</code></pre></div></p>
+</li>
+</ol>
+</details>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
+</code></pre></div>
+<h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Review architecture to be deployed</span>
+terraform<span class="w"> </span>plan<span class="w"> </span>-var-file<span class="o">=</span>deployment-variables.tfvars
+
+<span class="c1"># Deploy terraform module</span>
+<span class="c1"># It is recommended that you use a .tfvars file to pass variables to the module when deploying</span>
+terraform<span class="w"> </span>deploy<span class="w"> </span>-var-file<span class="o">=</span>deployment-variables.tfvars
+</code></pre></div>
+<h2 id="accessing-jenkins">Accessing Jenkins<a class="headerlink" href="#accessing-jenkins" title="Permanent link">&para;</a></h2>
+<p>Once deployed, the Jenkins service can be accessed through its associated load balancer. The service is accessible through the ALB on ports 443 and 80 by default. The module does <strong>NOT</strong> allowlist any IP addresses by default. Users must edit the ALB security group to grant access to the Jenkins Service.</p>
+<p>You can find the DNS address for the ALB created by the module by running the following command:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># This command pulls the DNS address of the ALB associated with the Jenkins ECS service</span>
+terraform<span class="w"> </span>output<span class="w"> </span>jenkins_alb_dns_name
+</code></pre></div>
+<h2 id="configuring-jenkins">Configuring Jenkins<a class="headerlink" href="#configuring-jenkins" title="Permanent link">&para;</a></h2>
+<p>When accessing Jenkins for the first time, an administrators password is required. This password is auto-generated and available through the ECS logs. The administrative user will be replaced with a new user upon completion of the setup, see <a href="README.md#creating-users">Creating Users</a>.</p>
+<h3 id="retrieve-the-jenkins-administrator-password">Retrieve the Jenkins Administrator Password<a class="headerlink" href="#retrieve-the-jenkins-administrator-password" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open the AWS console and navigate to the <a href="https://console.aws.amazon.com/ecs">Elastic Container Service (ECS) console</a>.</li>
+<li>In the <code>Clusters</code> tab, select the name of the cluster you created</li>
+<li>Select the name of the jenkins service you created</li>
+<li>Select the <code>Logs</code> tab</li>
+<li>Scroll through the logs until you find the password, below is an example of what the password section looks like. Note that each line is shown as its own log entry in the console.</li>
+</ol>
+<p><img alt="Jenkins Admin Password" src="../../media/images/jenkins-admin-password.png" /></p>
+<h3 id="jenkins-initial-configuration">Jenkins Initial Configuration<a class="headerlink" href="#jenkins-initial-configuration" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open the Jenkins console on your preferred browser, see <a href="README.md#accessing-jenkins">Accessing Jenkins</a> for details.</li>
+<li>Paste the password you retrieved from the logs in the previous step into the text box and click <strong>Continue</strong></li>
+<li>You will then be prompted to select the plugins you wish to install.
+   a. If you are unsure of which plugins to install, select <code>Install suggested plugins</code>.
+   b. Otherwise, select <code>Select plugins to install</code> and choose your preferred plugins.</li>
+<li>You are then prompted to create your first admin user.
+   a. Enter a username for your new user
+   b. Enter a password
+   c. Enter your full name
+   d. Enter you email
+   e. Click <code>Save and Continue</code></li>
+<li>For the Jenkins URL, accept the default value by clicking <code>Save and Finish</code>.</li>
+<li>Click <code>Start using Jenkins</code></li>
+</ol>
+<h3 id="configuring-plugins">Configuring Plugins<a class="headerlink" href="#configuring-plugins" title="Permanent link">&para;</a></h3>
+<p>There are 2 plugins recommended for the solutions: The <a href="https://plugins.jenkins.io/ec2-fleet/">EC2 Fleet</a> Plugin and the <a href="https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/">AWS Secrets Manager Credentials Provider</a> Plugin. The <code>EC2 Fleet</code> Plugin is used to integrate Jenkins with AWS and allows EC2 instances to be used as build nodes through an autoscaling group. The <code>AWS Secrets Manager Credentials Provider</code> Plugin will allow users to store their credentials in AWS Secrets Manager and seamlessly access them in Jenkins.</p>
+<h4 id="install-the-plugins">Install the Plugins<a class="headerlink" href="#install-the-plugins" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Open the Jenkins console.</li>
+<li>On the left-hand side, select the <code>Manage Jenkins</code> tab.</li>
+<li>Then, under the <code>System Configuration</code> section, select <code>Plugins</code>.</li>
+<li>On the left-hand side, select <code>Available plugins</code>.</li>
+<li>Using the search bar at the top of the page, search for <code>EC2 Fleet</code>.</li>
+<li>Select the <code>EC2 Fleet</code> plugin.</li>
+<li>Using the search bar at the top of the page, search for <code>AWS Secret Manager Credentials Provider</code>.</li>
+<li>Select the <code>AWS Secret Manager Credentials Provider</code> plugin.</li>
+<li>Click <code>install</code> on the top-right corner of the page.</li>
+<li>Once the installation is complete, Select <code>Go back to the top page</code> at the bottom of the page</li>
+</ol>
+<h4 id="create-the-necessary-credentials">Create the Necessary Credentials<a class="headerlink" href="#create-the-necessary-credentials" title="Permanent link">&para;</a></h4>
+<div class="admonition note">
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Using the Jenkins Console</label><label for="__tabbed_1_2">Using the AWS Secrets Manager Plugin</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<ol>
+<li>From the Jenkins homepage, on the left-hand side, select <code>Manage Jenkins</code></li>
+<li>Under the <code>Security</code> section, select <code>Credentials</code></li>
+<li>Under <code>Stores scoped to Jenkins</code>, select <code>System</code></li>
+<li>Select <code>Global credentials (unrestricted)</code></li>
+<li>In the top right corner, click the <code>Add Credentials</code> button</li>
+<li>For the <code>Kind</code> dropdown, select <code>SSH Username with private key</code></li>
+<li>For <code>ID</code> enter a name for your credentials</li>
+<li>For <code>Description</code> add a description of your credential</li>
+<li>For <code>Username</code>, enter the username to be used for the SSH connection</li>
+<li>For <code>Private Key</code>, select the <code>Enter directly</code> radio button.</li>
+<li>In the next section displayed, select the <code>Add</code> button</li>
+<li>Paste the Private Key created earlier into the text box.</li>
+<li>For <code>Passphrase</code> enter the Passphrase for the SSH key, if no passphrase was entered when creating the keys, leave this blank</li>
+<li>Note the <code>ID</code> of your newly created credentials. This will be referenced in the next section.</li>
+</ol>
+</div>
+<div class="tabbed-block">
+<ol>
+<li>
+<p>Open the Secrets Manager <a href="https://console.aws.amazon.com/secretsmanager/">console</a>.</p>
+</li>
+<li>
+<p>Choose Store a new secret.</p>
+</li>
+<li>
+<p>On the Choose secret type page, do the following:</p>
+<ol>
+<li>
+<p>For Secret type, choose Other type of secret.</p>
+</li>
+<li>
+<p>Select the <code>Plaintext</code> test tab, select all text in the textbox and delete it.</p>
+</li>
+<li>
+<p>Paste your Private key into the textbox</p>
+</li>
+<li>
+<p>Choose Next</p>
+</li>
+</ol>
+</li>
+<li>
+<p>On the Configure secret page, do the following:</p>
+<ol>
+<li>
+<p>Enter a descriptive Secret name and Description. Note that the name chosen here will also be used as the name of the credentials within Jenkins.</p>
+</li>
+<li>
+<p>In the Tags section, add the 2 required tags for the <a href="https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/">AWS Secrets Manager Credentials Provider</a> Plugin</p>
+<ul>
+<li><code>jenkins:credentials:type</code> = <code>sshUserPrivateKey</code></li>
+<li><code>jenkins:credentials:username</code> = <code>&lt;username&gt;</code></li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>The username will depend on the image being used for the build agent.</p>
+<ul>
+<li>Amazon Linux -&gt; <code>ec2-user</code></li>
+<li>Ubuntu -&gt; <code>ubuntu</code></li>
+<li>Windows -&gt; <code>Administrator</code></li>
+</ul>
+</div>
+</li>
+<li>
+<p>Choose Next.</p>
+</li>
+</ol>
+</li>
+<li>
+<p>On the Review page, review your secret details, and then choose Store.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<h4 id="connect-jenkins-to-the-build-farm">Connect Jenkins to the Build Farm<a class="headerlink" href="#connect-jenkins-to-the-build-farm" title="Permanent link">&para;</a></h4>
+<ol>
+<li>From the Jenkins homepage, on the left-hand side, choose <code>Manage Jenkins</code>.</li>
+<li>Under the <code>System Configuration</code> section, choose <code>Clouds</code></li>
+<li>Select <code>New Cloud</code></li>
+<li>Enter a name for your cloud configuration</li>
+<li>Select <code>Amazon EC2 Fleet</code></li>
+<li>Click <code>Create</code></li>
+<li>On the <code>New Cloud</code> configuration page, change the following settings.<ol>
+<li><strong>Region</strong> - Select the region in which you deployed the module</li>
+<li><strong>EC2 Fleet</strong> - Select the autoscaling group created by the module</li>
+<li><strong>Launcher</strong> - Select <code>Launch agents via SSH</code></li>
+<li><strong>Launcher</strong> -&gt; <strong>Credentials</strong> - Select the credentials created in the previous step</li>
+<li><strong>Launcher</strong> -&gt; <strong>Host Key Verification Strategy</strong> - Select <code>Non verifying Verification Strategy</code></li>
+<li><strong>Connect to instaces via private IP instead of public IP</strong> - Select the <code>Private IP</code> check box</li>
+<li><strong>Max Idle Minutes Before Scaledown</strong> - Set this variable to <code>5</code> (minutes). Feel free to change this based on your needs.</li>
+</ol>
+</li>
+</ol>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    2024-07-29
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 Amazon Web Services
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [{"toc": {"permalink": true, "sticky": true}}, "header.autohide", "navigation.sections", "navigation.top", "navigation.instant", "navigation.indexes", "navigation.expand", "navigation.tracking", "navigation.tabs", "content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.fe8b6f2b.min.js"></script>
+      
+        <script src="../../js/open_in_new_tab.js"></script>
+      
+    
+  </body>
+</html>
