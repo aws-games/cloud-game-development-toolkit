@@ -31,7 +31,7 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
-  
+
   features:
     - toc:
         permalink: true
@@ -58,9 +58,11 @@ theme:
       info: octicons/info-16
   logo: media/logos/aws-logo-white.svg
   favicon: media/logos/aws-logo-white.svg
-  
-markdown_extensions: 
+
+markdown_extensions:
   - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - pymdownx.snippets:
       base_path: "."
       check_paths: true
@@ -73,24 +75,34 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-      
+  - pymdownx.tabbed:
+      alternate_style: true
+
 nav:
-  - Home: 
+  - Home:
       - Home: index.md
-      - Assets: 
+      - Assets:
           - Overview: assets/index.md
           - Packer Templates: assets/packer.md
           - Jenkins Pipelines: assets/jenkins-pipelines.md
           - Ansible Playbooks: assets/playbooks.md
           - Dockerfiles: assets/dockerfiles.md
-      - Modules: 
+      - Modules:
           - Overview: modules/index.md
-          - Jenkins: modules/jenkins/index.md
+          - Jenkins:
+              - Installation and Usage: modules/jenkins/jenkins.md
+              - Module Docs: modules/jenkins/terraform-docs.md
           - Perforce:
-              - Helix Authentication Service: modules/perforce/helix-authentication-service.md
-              - Helix Core Server: modules/perforce/helix-core.md
-              - Helix Swarm: modules/perforce/helix-swarm.md
-      - Samples: 
+              - Helix Authentication Service:
+                  - Installation and Usage: modules/perforce/helix-authentication-service/helix-authentication-service.md
+                  - Module Docs: modules/perforce/helix-authentication-service/terraform-docs.md
+              - Helix Core Server:
+                  - Installation and Usage: modules/perforce/helix-core/helix-core.md
+                  - Module Docs: modules/perforce/helix-core/terraform-docs.md
+              - Helix Swarm:
+                  - Installation and Usage: modules/perforce/helix-swarm/helix-swarm.md
+                  - Module Docs: modules/perforce/helix-swarm/terraform-docs.md
+      - Samples:
           - Overview: samples/index.md
           - Simple Build Pipeline: samples/simple-build-pipeline.md
       - Changelog: changelog.md
@@ -99,11 +111,13 @@ nav:
   - Contributing: contributing.md
   - Discussion: discussion.md
   - CI: ci/
+  - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
 plugins:
   - search
   - git-revision-date
   - offline
+  - open-in-new-tab
 
 extra:
   version:

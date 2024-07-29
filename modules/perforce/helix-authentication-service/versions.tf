@@ -4,15 +4,15 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.50"
+      version = "5.59.0"
     }
     awscc = {
       source  = "hashicorp/awscc"
-      version = ">= 1.2.0"
+      version = "1.6.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">=3.6"
+      version = "3.6.2"
     }
   }
 }

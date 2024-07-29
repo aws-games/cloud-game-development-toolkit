@@ -87,7 +87,7 @@ variable "cluster_name" {
 # - Load Balancer -
 variable "jenkins_alb_subnets" {
   type        = list(string)
-  description = "A list of subnets to deploy the Jenkins load balancer into. Public subnets are recommended."
+  description = "A list of subnet ids to deploy the Jenkins load balancer into. Public subnets are recommended."
 }
 
 variable "enable_jenkins_alb_access_logs" {
