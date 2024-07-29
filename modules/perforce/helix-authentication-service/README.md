@@ -1,12 +1,8 @@
-# Helix Authentication Service (HAS)
+# Perforce Helix Authentication Service (HAS)
 
 [Perforce Helix Authentication Service](https://www.perforce.com/downloads/helix-authentication-service) enables you to integrate certain Perforce products with your organization's Identity Provider (IdP).
 
 This module deploys Perforce Helix Authentication Service on AWS as a fully managed ECS Service using Fargate.
-
-## Instructions for Deployment
-
-They Go Here
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -22,8 +18,8 @@ They Go Here
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.6.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.56.1 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.4.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
