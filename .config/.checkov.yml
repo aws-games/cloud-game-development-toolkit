@@ -1,0 +1,16 @@
+branch: main
+compact: true
+download-external-modules: true
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+  - all
+output: cli
+quiet: true
+soft-fail-on:
+  - CKV2_GHA_1
+  - CKV_GHA_7
+skip-framework:
+  - dockerfile
+  - secrets
+soft-fail: false

@@ -128,6 +128,7 @@ resource "aws_vpc_security_group_egress_rule" "jenkins_build_farm_outbound_ipv6"
 
 # Jenkins Build Farm Security Group attached to FSx OpenZFS File Systems
 resource "aws_security_group" "jenkins_build_storage_sg" {
+  #checkov:skip=CKV2_AWS_5:SG is attahced to FSxZ file systems
   name        = "${local.name_prefix}-build-storage-fsx"
   vpc_id      = var.vpc_id
   description = "Jenkins Build Storage Security Group"

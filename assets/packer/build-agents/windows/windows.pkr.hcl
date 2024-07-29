@@ -146,7 +146,7 @@ build {
     elevated_password = build.Password
     inline = [
       "$authorizedKey = '${var.public_key}'",
-      "powershell Add-Content -Force -Path $env:ProgramData/ssh/administrators_authorized_keys -Value '$authorizedKey';icacls.exe \"\"$env:ProgramData/ssh/administrators_authorized_keys\"\" /inheritance:r /grant \"\"Administrators:F\"\" /grant \"\"SYSTEM:F\"\"",
+      "Add-Content -Force -Path $env:ProgramData/ssh/administrators_authorized_keys -Value $authorizedKey;icacls.exe \"\"$env:ProgramData/ssh/administrators_authorized_keys\"\" /inheritance:r /grant \"\"Administrators:F\"\" /grant \"\"SYSTEM:F\"\"",
       "Get-Disk | where partitionstyle -eq \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false"
     ]
   }

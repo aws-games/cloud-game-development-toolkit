@@ -6,14 +6,13 @@ This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AM
 
 
 ### overview
-
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.30 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.50 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >=3.6 |
 
@@ -21,9 +20,9 @@ This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AM
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.30 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.2.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | >=3.6 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.6.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
 
@@ -90,4 +89,4 @@ No modules.
 | <a name="output_helix_core_super_user_password_secret_arn"></a> [helix\_core\_super\_user\_password\_secret\_arn](#output\_helix\_core\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your Helix Core super user's password. |
 | <a name="output_helix_core_super_user_username_secret_arn"></a> [helix\_core\_super\_user\_username\_secret\_arn](#output\_helix\_core\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your Helix Core super user's username. |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your Helix Core instance. |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->

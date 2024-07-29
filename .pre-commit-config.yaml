@@ -11,34 +11,19 @@ repos:
       - id: detect-aws-credentials
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: "3.2.201"
+    hooks:
+      - id: checkov
+        args: ["--config-file", ".config/.checkov.yml"]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.89.1"
     hooks:
       - id: terraform_docs
         args:
-            - '--args=--lockfile=false'
-      - id: terraform_checkov
-        args:
-          # Ignore check for ebs volume encryption using CMK. Volumes are encrypted using default AWS key
-          - --args=--skip-check CKV_AWS_189       # "EBS | Ensure EBS Volume is encrypted by KMS using a customer managed Key (CMK)"
-          - --args=--skip-check CKV_AWS_91        # "Elastic Load Balancing | Ensure the ELBv2 (Application/Network) has access logging enabled"
-          - --args=--skip-check CKV_AWS_150       # "Elastic Load Balancing | Ensure that Load Balancer has deletion protection enabled"
-          - --args=--skip-check CKV_AWS_184       # "EFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
-          - --args=--skip-check CKV_AWS_203       # "FSx OpenZFS | Ensure resource is encrypted by KMS using a customer managed Key (CMK)"
-          - --args=--quiet
-          # Enables scans against Third-Party modules
-          - --args=--download-external-modules true
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=false
+          - --hook-config=--use-standard-markers=true
       - id: terraform_validate
       - id: terraform_fmt
       - id: terraform_tflint
-    ci:
-      autofix_commit_msg: |
-          [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-          for more information, see https://pre-commit.ci
-      autofix_prs: true
-      autoupdate_branch: ''
-      autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-      autoupdate_schedule: weekly
-      skip: []
-      submodules: false

@@ -92,8 +92,8 @@ variable "jenkins_alb_subnets" {
 
 variable "enable_jenkins_alb_access_logs" {
   type        = bool
-  description = "Enables access logging for the Jenkins ALB. Defaults to false."
-  default     = false
+  description = "Enables access logging for the Jenkins ALB. Defaults to true."
+  default     = true
 }
 
 variable "jenkins_alb_access_logs_bucket" {
@@ -110,8 +110,8 @@ variable "jenkins_alb_access_logs_prefix" {
 
 variable "enable_jenkins_alb_deletion_protection" {
   type        = bool
-  description = "Enables deletion protection for the Jenkins ALB. Defaults to false."
-  default     = false
+  description = "Enables deletion protection for the Jenkins ALB. Defaults to true."
+  default     = true
 }
 
 variable "jenkins_service_subnets" {
@@ -218,6 +218,7 @@ variable "build_farm_fsx_openzfs_storage" {
       storage_type        = optional(string, "SSD") # "SSD", "HDD"
       deployment_type     = optional(string, "SINGLE_AZ_1")
       route_table_ids     = optional(list(string), null)
+      tags                = optional(map(string), null)
     }
   ))
   description = "Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents."
@@ -247,7 +248,10 @@ variable "artifact_buckets" {
     object({
       name                 = string
       enable_force_destroy = optional(bool, true)
-  }))
+      enable_versioning    = optional(bool, true)
+      tags                 = optional(map(string), {})
+    })
+  )
   description = "List of Amazon S3 buckets you wish to create to store build farm artifacts."
   default     = null
 }
