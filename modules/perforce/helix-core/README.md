@@ -12,9 +12,9 @@ This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AM
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.50 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | >=3.6 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.59.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.6.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.2 |
 
 ## Providers
 
@@ -32,26 +32,26 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume) | resource |
-| [aws_eip.helix_core_eip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip) | resource |
-| [aws_iam_instance_profile.helix_core_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.helix_core_default_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_instance.helix_core_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_security_group.helix_core_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment) | resource |
-| [aws_vpc_security_group_egress_rule.helix_core_internet](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [awscc_secretsmanager_secret.helix_core_super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
-| [awscc_secretsmanager_secret.helix_core_super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
-| [random_string.helix_core](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
-| [aws_ami.helix_core_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
+| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ebs_volume) | resource |
+| [aws_eip.helix_core_eip](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/eip) | resource |
+| [aws_iam_instance_profile.helix_core_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_policy.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.helix_core_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_role) | resource |
+| [aws_instance.helix_core_instance](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/instance) | resource |
+| [aws_security_group.helix_core_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
+| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/volume_attachment) | resource |
+| [aws_vpc_security_group_egress_rule.helix_core_internet](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [awscc_secretsmanager_secret.helix_core_super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.6.0/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.helix_core_super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.6.0/docs/resources/secretsmanager_secret) | resource |
+| [random_string.helix_core](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
+| [aws_ami.helix_core_ami](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/ami) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
