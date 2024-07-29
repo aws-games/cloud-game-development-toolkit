@@ -18,8 +18,8 @@ This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AM
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.56.1 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.4.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.6.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
