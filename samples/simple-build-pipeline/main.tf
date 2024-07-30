@@ -89,8 +89,8 @@ module "perforce_helix_swarm" {
   source                      = "../../modules/perforce/helix-swarm"
   vpc_id                      = aws_vpc.build_pipeline_vpc.id
   cluster_name                = aws_ecs_cluster.build_pipeline_cluster.name
-  swarm_alb_subnets           = aws_subnet.public_subnets[*].id
-  swarm_service_subnets       = aws_subnet.private_subnets[*].id
+  helix_swarm_alb_subnets     = aws_subnet.public_subnets[*].id
+  helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
   certificate_arn             = aws_acm_certificate.helix.arn
   p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt.name}:1666"
   enable_elastic_filesystem   = false
