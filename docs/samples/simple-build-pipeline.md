@@ -12,7 +12,7 @@ There are a few prerequisites that need to be completed **prior** to deploying t
 
 The Simple Build Pipeline will deploy a number of web-based applications into your AWS account. The Cloud Game Development Toolkit attempts to follow a "secure-by-default" design pattern, so HTTPS is the standard protocol for all applications deployed by the Toolkit.
 
-All applications deployed by the Simple Build Pipeline use Route 53, Amazon's highly available and scalable DNS service, for routing traffic from the internet. All you need to provide is the root domain you would like the Simple Build Pipeline to use, and your Jenkins and Perforce applications will be provisioned as sub-domains. Route53 will need to be able to validate ownership of this domain, so make sure you are using a domain that you have complete control over.
+All applications deployed by the Simple Build Pipeline use Route 53, Amazon's highly available and scalable DNS service, for routing traffic from the internet. All you need to provide is the root hosted zone you would like the Simple Build Pipeline to use, and your Jenkins and Perforce applications will be provisioned as sub-domains. Route53 will need to be able to validate ownership of this domain, so make sure you are using a domain that you have complete control over.
 
 If you do not have a domain yet you can [register one through Route53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html#domain-register-procedure-section).
 

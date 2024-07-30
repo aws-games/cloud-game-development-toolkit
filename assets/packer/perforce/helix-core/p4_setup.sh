@@ -100,7 +100,8 @@ chown -R perforce:perforce /hx*
 # Download and extract SDP
 cd /hxdepots
 if [ ! -f sdp.Unix.tgz ]; then
-  curl -L -O https://swarm.workshop.perforce.com/projects/perforce-software-sdp/download/downloads/sdp.Unix.tgz
+  log_message "Downloading SDP..."
+  curl -L -O https://swarm.workshop.perforce.com/download/guest/perforce_software/sdp/downloads/sdp.Unix.tgz
   tar -xzf sdp.Unix.tgz
 fi
 
@@ -129,6 +130,3 @@ fi
 ###### previously each run got the binaries by: /hxdepots/sdp/helix_binaries/get_helix_binaries.sh
 
 chown -R perforce:perforce $SDP_Root
-
-
-

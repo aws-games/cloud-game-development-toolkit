@@ -75,22 +75,22 @@ build {
     }
 
     provisioner "shell" {
-      script = "p4_setup.sh"
+      script = "${path.root}/p4_setup.sh"
       execute_command = "sudo sh {{.Path}}"
     }
 
     provisioner "file" {
-      source      = "p4_configure.sh"
+      source      = "${path.root}/p4_configure.sh"
       destination = "/tmp/p4_configure.sh"
     }
 
-    provisioner "shell" {    
+    provisioner "shell" {
       inline = ["mkdir -p /home/ec2-user/gpic_scripts",
                 "sudo mv /tmp/p4_configure.sh /home/ec2-user/gpic_scripts"
       ]
     }
 
-    provisioner "shell" {    
+    provisioner "shell" {
       inline = ["sudo chmod +x /home/ec2-user/gpic_scripts/p4_configure.sh"]
     }
 
