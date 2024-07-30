@@ -51,6 +51,7 @@ No modules.
 | [aws_s3_bucket.artifact_buckets](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket.jenkins_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_public_access_block.artifacts_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_versioning.artifact_bucket_versioning](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_versioning) | resource |
@@ -75,6 +76,8 @@ No modules.
 | [random_string.jenkins_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/caller_identity) | data source |
 | [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
