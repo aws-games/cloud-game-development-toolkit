@@ -10,7 +10,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.56.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
 
 ## Modules
 
@@ -59,12 +59,7 @@
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object corresponds to an autoscaling group that Jenkins can use as build nodes. | <pre>map(object({<br>    ami : string<br>    instance_type : string<br>  }))</pre> | `{}` | no |
-| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | n/a | <pre>map(object({<br>    storage_type        = string<br>    throughput_capacity = number<br>    storage_capacity    = number<br>  }))</pre> | n/a | yes |
-| <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | Provide the FQDN that should be used for routing. | `string` | `null` | no |
-| <a name="input_jenkins_agent_secret_arns"></a> [jenkins\_agent\_secret\_arns](#input\_jenkins\_agent\_secret\_arns) | A list of ARNs for secrets Jenkins should have access to | `list(string)` | `[]` | no |
+No inputs.
 
 ## Outputs
 

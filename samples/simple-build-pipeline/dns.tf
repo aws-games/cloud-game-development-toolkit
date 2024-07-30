@@ -4,7 +4,7 @@
 ##########################################
 
 resource "aws_route53_zone" "public_zone" {
-  name = var.fully_qualified_domain_name
+  name = local.fully_qualified_domain_name
   #checkov:skip=CKV2_AWS_38: DNSSEC signing disabled by design
   #checkov:skip=CKV2_AWS_39: Query logging disabled by design
 }
@@ -78,7 +78,7 @@ resource "aws_route53_record" "perforce_helix_core_pvt" {
 ##########################################
 
 resource "aws_acm_certificate" "jenkins" {
-  domain_name       = "jenkins.${var.fully_qualified_domain_name}"
+  domain_name       = "jenkins.${local.fully_qualified_domain_name}"
   validation_method = "DNS"
 
   tags = {
@@ -119,8 +119,8 @@ resource "aws_acm_certificate_validation" "jenkins" {
 ##########################################
 
 resource "aws_acm_certificate" "helix" {
-  domain_name               = "helix.${var.fully_qualified_domain_name}"
-  subject_alternative_names = ["*.helix.${var.fully_qualified_domain_name}"]
+  domain_name               = "helix.${local.fully_qualified_domain_name}"
+  subject_alternative_names = ["*.helix.${local.fully_qualified_domain_name}"]
 
   validation_method = "DNS"
 

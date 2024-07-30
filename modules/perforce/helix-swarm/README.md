@@ -1,14 +1,10 @@
 # Perforce Helix Swarm
 
-### Overview
-
-[Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) is a free code review tool for projects hosted in [Perforce Helix Core](https://www.perforce.com/products/helix-core).
-
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
-|------|---------|
+|------|---------
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.59.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.2 |
