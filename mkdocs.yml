@@ -82,6 +82,11 @@ nav:
   - Home:
       - Home: index.md
       - Assets:
+          - Packer Templates:
+            - Build Agents:
+              - Linux Build Agents: assets/packer/build-agents/linux.md
+              - Windows Build Agent: assets/packer/build-agents/windows.md
+            - Perforce Helix Core: assets/packer/helix-core.md
           - Overview: assets/index.md
           - Packer Templates: assets/packer.md
           - Jenkins Pipelines: assets/jenkins-pipelines.md
