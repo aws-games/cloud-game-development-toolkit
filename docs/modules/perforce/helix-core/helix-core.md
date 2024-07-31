@@ -7,7 +7,7 @@
 This module provisions Perforce Helix Core on an EC2 Instance with three dedicated EBS volumes for Helix Core depots, metadata, and logs. It can also be configured to automatically install the required plugins to integrate with Perforce Helix Authentication Service. This allows end users to quickly set up single-sign-on for their Perforce Helix Core server.
 
 ## Deployment Architecture
-![Helix Core Module Architecture](/docs/media/images/helix-core-architecture.png)
+![Helix Core Module Architecture](../../../media/images/helix-core-architecture.png)
 
 ## Prerequisites
 

@@ -13,7 +13,7 @@ This module creates the following resources:
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Deployment Architecture
-![Helix Authentication Service Module Architecture](/docs/media/images/helix-auth-service-architecture.png)
+![Helix Authentication Service Module Architecture](../../../media/images/helix-auth-service-architecture.png)
 
 ## Prerequisites
 

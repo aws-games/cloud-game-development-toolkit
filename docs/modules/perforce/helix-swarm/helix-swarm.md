@@ -14,7 +14,7 @@ This module deploys the following resources:
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Deployment Architecture
-![HelixSwarm Module Architecture](/docs/media/images/helix-swarm-architecture.png)
+![HelixSwarm Module Architecture](../../../media/images/helix-swarm-architecture.png)
 
 ## Prerequisites
 
