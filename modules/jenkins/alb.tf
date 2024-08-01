@@ -48,6 +48,29 @@ resource "aws_s3_bucket" "jenkins_alb_access_logs_bucket" {
   })
 }
 
+data "aws_elb_service_account" "main" {}
+
+data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
+  count = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  statement {
+    effect  = "Allow"
+    actions = ["s3:PutObject"]
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_elb_service_account.main.arn]
+    }
+    resources = [
+      "${var.jenkins_alb_access_logs_bucket != null ? var.jenkins_alb_access_logs_bucket : aws_s3_bucket.jenkins_alb_access_logs_bucket[0].arn}/${var.jenkins_alb_access_logs_prefix != null ? var.jenkins_alb_access_logs_prefix : "${local.name_prefix}-alb"}/*"
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {
+  count  = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  bucket = var.jenkins_alb_access_logs_bucket == null ? aws_s3_bucket.jenkins_alb_access_logs_bucket[0].id : var.jenkins_alb_access_logs_bucket
+  policy = data.aws_iam_policy_document.access_logs_bucket_alb_write[0].json
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
   count = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   depends_on = [

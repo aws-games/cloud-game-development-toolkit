@@ -1,10 +1,8 @@
-### Perforce Helix Core Packer Template
+# Perforce Helix Core Packer Template
 
-#### Overview
+This Packer template creates an Amazon Machine Image for installing and configuring a Perforce [Helix Core] server on Linux.
 
-This Packer template automates the deployment and configuration of a Helix Core Server (P4D) on a Linux environment, specifically tailored for use with SELinux and systemd. It performs various tasks such as checking and setting up the necessary user and group, handling SELinux context, installing and configuring Perforce Software's Server Deployment Package (SDP), and setting up the Helix Core service with systemd.
-
-Steps in the Packer template automation include: 
+The `p4_configure.sh` script contains the majority of Helix Core setup. It performs the following operations:
 
 1. **Pre-Flight Checks**: Ensures the script is run with root privileges.
 2. **Environment Setup**: Defines paths and necessary constants for the installation.
@@ -17,27 +15,37 @@ Steps in the Packer template automation include:
 9. **SELinux Context Management**: Updates SELinux context for p4d.
 10. **Crontab Initialization**: Sets up crontab for the 'perforce' user.
 11. **SDP Verification**: Runs a script to verify the SDP installation.
+12. **Helix Authentication Extension**: Installs the [Helix Authentication Extension](https://github.com/perforce/helix-authentication-extension) and validates successful communication with Helix Authentication Service.
 
-#### Prerequisites
 
-- A Linux system with DNF package manager (e.g., Fedora, RHEL, CentOS).
-- Root access to the system.
-- SELinux in Enforcing or Permissive mode (optional but recommended).
-- Access to the internet for downloading necessary packages and binaries.
+## How to Use
 
-#### How to Use
+Building this AMI is as easy as running:
 
-1. **Download the Script**: Clone or download this repository to your system.
-2. **Provide Execution Permission**: Give execute permission to the script using `chmod +x <script_name>.sh`.
-3. **Run the Script**: Execute the script as root:
+``` bash
+packer build /assets/packer/perforce/helix-core/perforce.pkr.hcl
+```
 
-   ```
-   sudo ./<script_name>.sh
-   ```
+Packer will attempt to leverage the default VPC available in the AWS account and Region specified by your CLI credentials. It will provision an instance in a public subnet and communicate with that instance over the public internet. If a default VPC is not provided the above command will fail. This Packer template can take a number of variables as specified in `example.pkrvars.hcl`. Variables can be passed individually through the `-var` command line flag or through a configuration file with the `-var-file` command line flag.
 
-4. **Follow the On-Screen Instructions**: The script is mostly automated, but monitor the output for any errors or required manual inputs.
+An instance that is provisioned with this AMI will not automatically deploy a Helix Core server. Instead, the required installation and configuration scripts are loaded onto this AMI by Packer, and then invoked at boot through EC2 user data. The [Perforce Helix Core module](/docs/modules/perforce/helix-core/helix-core.md) does this through Terraform, but you can also manually provision an instance off of this AMI and specify the user data yourself:
 
-#### Important Notes
+``` bash
+#!/bin/bash
+/home/ec2-user/cloud-game-development-toolkit/p4_configure.sh \
+   <volume label for hxdepot> \
+   <volume label for hxmetadata> \
+   <volume label for hxlogs> \
+   <p4d server type> \
+   <super user username ARN from AWS Secrets Manager> \
+   <super user password ARN from AWS Secrets Manager> \
+   <fully qualified domain name of Helix Core> \
+   <URL for Helix Authentication Service>
+```
+
+As you can see, there are quite a few configurables that need to be passed to the `p4_configure.sh` script. We recommend using the [Perforce Helix Core module](/docs/modules/perforce/helix-core/helix-core.md) for this reason.
+
+## Important Notes
 
 - This script is designed for a specific use-case and might require modifications for different environments or requirements.
 - Ensure you have a backup of your system before running the script, as it makes significant changes to users, groups, and services.
