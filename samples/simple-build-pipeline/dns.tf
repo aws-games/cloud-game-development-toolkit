@@ -2,16 +2,20 @@
 ##########################################
 # Route53 Hosted Zone for FQDN
 ##########################################
-
-resource "aws_route53_zone" "public_zone" {
-  name = var.fully_qualified_domain_name
-  #checkov:skip=CKV2_AWS_38: DNSSEC signing disabled by design
-  #checkov:skip=CKV2_AWS_39: Query logging disabled by design
+data "aws_route53_zone" "root" {
+  name         = local.fully_qualified_domain_name
+  private_zone = false
 }
 
+# resource "aws_route53_zone" "root" {
+#   name = local.fully_qualified_domain_name
+#   #checkov:skip=CKV2_AWS_38: DNSSEC signing disabled by design
+#   #checkov:skip=CKV2_AWS_39: Query logging disabled by design
+# }
+
 resource "aws_route53_record" "jenkins" {
-  zone_id = aws_route53_zone.public_zone.id
-  name    = aws_route53_zone.public_zone.name
+  zone_id = data.aws_route53_zone.root.id
+  name    = data.aws_route53_zone.root.name
   type    = "A"
   alias {
     name                   = module.jenkins.jenkins_alb_dns_name
@@ -34,8 +38,8 @@ resource "aws_route53_zone" "helix_private_zone" {
 }
 
 resource "aws_route53_record" "helix_swarm" {
-  zone_id = aws_route53_zone.public_zone.id
-  name    = "swarm.helix.${aws_route53_zone.public_zone.name}"
+  zone_id = data.aws_route53_zone.root.id
+  name    = "swarm.helix.${data.aws_route53_zone.root.name}"
   type    = "A"
   alias {
     name                   = module.perforce_helix_swarm.alb_dns_name
@@ -45,8 +49,8 @@ resource "aws_route53_record" "helix_swarm" {
 }
 
 resource "aws_route53_record" "helix_authentication_service" {
-  zone_id = aws_route53_zone.public_zone.zone_id
-  name    = "auth.helix.${aws_route53_zone.public_zone.name}"
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = "auth.helix.${data.aws_route53_zone.root.name}"
   type    = "A"
   alias {
     name                   = module.perforce_helix_authentication_service.alb_dns_name
@@ -56,8 +60,8 @@ resource "aws_route53_record" "helix_authentication_service" {
 }
 
 resource "aws_route53_record" "perforce_helix_core" {
-  zone_id = aws_route53_zone.public_zone.zone_id
-  name    = "core.helix.${aws_route53_zone.public_zone.name}"
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = "core.helix.${data.aws_route53_zone.root.name}"
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
@@ -78,7 +82,7 @@ resource "aws_route53_record" "perforce_helix_core_pvt" {
 ##########################################
 
 resource "aws_acm_certificate" "jenkins" {
-  domain_name       = "jenkins.${var.fully_qualified_domain_name}"
+  domain_name       = "jenkins.${local.fully_qualified_domain_name}"
   validation_method = "DNS"
 
   tags = {
@@ -104,7 +108,7 @@ resource "aws_route53_record" "jenkins_cert" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.public_zone.id
+  zone_id         = data.aws_route53_zone.root.id
 }
 
 resource "aws_acm_certificate_validation" "jenkins" {
@@ -119,8 +123,8 @@ resource "aws_acm_certificate_validation" "jenkins" {
 ##########################################
 
 resource "aws_acm_certificate" "helix" {
-  domain_name               = "helix.${var.fully_qualified_domain_name}"
-  subject_alternative_names = ["*.helix.${var.fully_qualified_domain_name}"]
+  domain_name               = "helix.${local.fully_qualified_domain_name}"
+  subject_alternative_names = ["*.helix.${local.fully_qualified_domain_name}"]
 
   validation_method = "DNS"
 
@@ -147,7 +151,7 @@ resource "aws_route53_record" "helix_cert" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.public_zone.id
+  zone_id         = data.aws_route53_zone.root.id
 }
 
 resource "aws_acm_certificate_validation" "helix" {

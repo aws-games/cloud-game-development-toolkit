@@ -1,5 +1,5 @@
 # If cluster name is not provided create a new cluster
-resource "aws_ecs_cluster" "swarm_cluster" {
+resource "aws_ecs_cluster" "helix_swarm_cluster" {
   count = var.cluster_name != null ? 0 : 1
   name  = "${local.name_prefix}-cluster"
 
@@ -11,9 +11,9 @@ resource "aws_ecs_cluster" "swarm_cluster" {
   tags = local.tags
 }
 
-resource "aws_ecs_cluster_capacity_providers" "swarm_cluster_fargate_providers" {
+resource "aws_ecs_cluster_capacity_providers" "helix_swarm_cluster_fargate_providers" {
   count        = var.cluster_name != null ? 0 : 1
-  cluster_name = aws_ecs_cluster.swarm_cluster[0].name
+  cluster_name = aws_ecs_cluster.helix_swarm_cluster[0].name
 
   capacity_providers = ["FARGATE"]
 
@@ -24,23 +24,23 @@ resource "aws_ecs_cluster_capacity_providers" "swarm_cluster_fargate_providers" 
   }
 }
 
-resource "aws_cloudwatch_log_group" "swarm_service_log_group" {
+resource "aws_cloudwatch_log_group" "helix_swarm_service_log_group" {
   #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
   name              = "${local.name_prefix}-log-group"
-  retention_in_days = var.swarm_cloudwatch_log_retention_in_days
+  retention_in_days = var.helix_swarm_cloudwatch_log_retention_in_days
   tags              = local.tags
 }
 
-resource "aws_cloudwatch_log_group" "swarm_redis_service_log_group" {
+resource "aws_cloudwatch_log_group" "helix_swarm_redis_service_log_group" {
   #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
   name              = "${local.name_prefix}-redis-log-group"
-  retention_in_days = var.swarm_cloudwatch_log_retention_in_days
+  retention_in_days = var.helix_swarm_cloudwatch_log_retention_in_days
   tags              = local.tags
 }
 
 
 # Define swarm task definition
-resource "aws_ecs_task_definition" "swarm_task_definition" {
+resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
   family                   = var.name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -66,7 +66,7 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
           logConfiguration = {
             logDriver = "awslogs"
             options = {
-              awslogs-group         = aws_cloudwatch_log_group.swarm_redis_service_log_group.name
+              awslogs-group         = aws_cloudwatch_log_group.helix_swarm_redis_service_log_group.name
               awslogs-region        = data.aws_region.current.name
               awslogs-stream-prefix = "redis"
             }
@@ -81,24 +81,24 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
           ] : []
       }] : [],
       [{
-        name      = var.swarm_container_name,
-        image     = local.swarm_image,
-        cpu       = var.swarm_container_cpu,
-        memory    = var.swarm_container_memory,
+        name      = var.helix_swarm_container_name,
+        image     = local.helix_swarm_image,
+        cpu       = var.helix_swarm_container_cpu,
+        memory    = var.helix_swarm_container_memory,
         essential = true,
         portMappings = [
           {
-            containerPort = var.swarm_container_port,
-            hostPort      = var.swarm_container_port
+            containerPort = var.helix_swarm_container_port,
+            hostPort      = var.helix_swarm_container_port
             protocol      = "tcp"
           }
         ]
         logConfiguration = {
           logDriver = "awslogs"
           options = {
-            awslogs-group         = aws_cloudwatch_log_group.swarm_service_log_group.name
+            awslogs-group         = aws_cloudwatch_log_group.helix_swarm_service_log_group.name
             awslogs-region        = data.aws_region.current.name
-            awslogs-stream-prefix = "swarm"
+            awslogs-stream-prefix = "helix-swarm"
           }
         }
         secrets = [
@@ -148,18 +148,18 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
       }]
   ))
 
-  task_role_arn      = var.custom_swarm_role != null ? var.custom_swarm_role : aws_iam_role.swarm_default_role[0].arn
-  execution_role_arn = aws_iam_role.swarm_task_execution_role.arn
+  task_role_arn      = var.custom_helix_swarm_role != null ? var.custom_helix_swarm_role : aws_iam_role.helix_swarm_default_role[0].arn
+  execution_role_arn = aws_iam_role.helix_swarm_task_execution_role.arn
 
   dynamic "volume" {
     for_each = var.enable_elastic_filesystem ? [1] : []
     content {
       name = "swarm_data"
       efs_volume_configuration {
-        file_system_id     = aws_efs_file_system.swarm_efs_file_system[0].id
+        file_system_id     = aws_efs_file_system.helix_swarm_efs_file_system[0].id
         transit_encryption = "ENABLED"
         authorization_config {
-          access_point_id = aws_efs_access_point.swarm_efs_access_point[0].id
+          access_point_id = aws_efs_access_point.helix_swarm_efs_access_point[0].id
           iam             = "ENABLED"
         }
       }
@@ -171,7 +171,7 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
     content {
       name = "redis_data"
       efs_volume_configuration {
-        file_system_id     = aws_efs_file_system.swarm_efs_file_system[0].id
+        file_system_id     = aws_efs_file_system.helix_swarm_efs_file_system[0].id
         transit_encryption = "ENABLED"
         authorization_config {
           access_point_id = aws_efs_access_point.redis_efs_access_point[0].id
@@ -190,26 +190,25 @@ resource "aws_ecs_task_definition" "swarm_task_definition" {
 }
 
 # Define swarm service
-resource "aws_ecs_service" "swarm_service" {
+resource "aws_ecs_service" "helix_swarm_service" {
   name = "${local.name_prefix}-service"
 
-  cluster              = var.cluster_name != null ? data.aws_ecs_cluster.swarm_cluster[0].arn : aws_ecs_cluster.swarm_cluster[0].arn
-  task_definition      = aws_ecs_task_definition.swarm_task_definition.arn
+  cluster              = var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn : aws_ecs_cluster.helix_swarm_cluster[0].arn
+  task_definition      = aws_ecs_task_definition.helix_swarm_task_definition.arn
   launch_type          = "FARGATE"
-  desired_count        = var.swarm_desired_container_count
+  desired_count        = var.helix_swarm_desired_container_count
   force_new_deployment = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.swarm_alb_target_group.arn
-    container_name   = var.swarm_container_name
-    container_port   = var.swarm_container_port
+    target_group_arn = aws_lb_target_group.helix_swarm_alb_target_group.arn
+    container_name   = var.helix_swarm_container_name
+    container_port   = var.helix_swarm_container_port
   }
 
   network_configuration {
-    subnets         = var.swarm_service_subnets
-    security_groups = [aws_security_group.swarm_service_sg.id]
+    subnets         = var.helix_swarm_service_subnets
+    security_groups = [aws_security_group.helix_swarm_service_sg.id]
   }
 
   tags = local.tags
 }
-

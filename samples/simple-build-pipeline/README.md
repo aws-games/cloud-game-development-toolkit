@@ -10,7 +10,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.56.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
 
 ## Modules
 
@@ -43,7 +43,6 @@
 | [aws_route53_record.perforce_helix_core](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.perforce_helix_core_pvt](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route53_record) | resource |
 | [aws_route53_zone.helix_private_zone](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route53_zone) | resource |
-| [aws_route53_zone.public_zone](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route53_zone) | resource |
 | [aws_route_table.private_rt](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route_table) | resource |
 | [aws_route_table.public_rt](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route_table) | resource |
 | [aws_route_table_association.private_rt_asso](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/route_table_association) | resource |
@@ -56,15 +55,11 @@
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_swarm](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_swarm_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/availability_zones) | data source |
+| [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/route53_zone) | data source |
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object corresponds to an autoscaling group that Jenkins can use as build nodes. | <pre>map(object({<br>    ami : string<br>    instance_type : string<br>  }))</pre> | `{}` | no |
-| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | n/a | <pre>map(object({<br>    storage_type        = string<br>    throughput_capacity = number<br>    storage_capacity    = number<br>  }))</pre> | n/a | yes |
-| <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | Provide the FQDN that should be used for routing. | `string` | `null` | no |
-| <a name="input_jenkins_agent_secret_arns"></a> [jenkins\_agent\_secret\_arns](#input\_jenkins\_agent\_secret\_arns) | A list of ARNs for secrets Jenkins should have access to | `list(string)` | `[]` | no |
+No inputs.
 
 ## Outputs
 

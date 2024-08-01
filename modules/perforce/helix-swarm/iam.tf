@@ -1,5 +1,5 @@
 # - Random Strings to prevent naming conflicts -
-resource "random_string" "swarm" {
+resource "random_string" "helix_swarm" {
   length  = 4
   special = false
   upper   = false
@@ -21,8 +21,8 @@ data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
 
 # - Policies -
 # swarm
-data "aws_iam_policy_document" "swarm_default_policy" {
-  count = var.create_swarm_default_policy ? 1 : 0
+data "aws_iam_policy_document" "helix_swarm_default_policy" {
+  count = var.create_helix_swarm_default_policy ? 1 : 0
   # ECS
   statement {
     sid    = "ECSExec"
@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "swarm_default_policy" {
   }
 }
 
-data "aws_iam_policy_document" "swarm_efs_policy" {
+data "aws_iam_policy_document" "helix_swarm_efs_policy" {
   count = var.enable_elastic_filesystem ? 1 : 0
   # EFS
   statement {
@@ -50,12 +50,12 @@ data "aws_iam_policy_document" "swarm_efs_policy" {
       "elasticfilesystem:ClientMount"
     ]
     resources = [
-      aws_efs_file_system.swarm_efs_file_system[0].arn
+      aws_efs_file_system.helix_swarm_efs_file_system[0].arn
     ]
   }
 }
 
-data "aws_iam_policy_document" "swarm_ssm_policy" {
+data "aws_iam_policy_document" "helix_swarm_ssm_policy" {
   # ssm
   statement {
     effect = "Allow"
@@ -72,46 +72,46 @@ data "aws_iam_policy_document" "swarm_ssm_policy" {
   }
 }
 
-resource "aws_iam_policy" "swarm_default_policy" {
-  count = var.create_swarm_default_policy ? 1 : 0
+resource "aws_iam_policy" "helix_swarm_default_policy" {
+  count = var.create_helix_swarm_default_policy ? 1 : 0
 
-  name        = "${var.project_prefix}-swarm-default-policy"
-  description = "Policy granting permissions for swarm."
-  policy      = data.aws_iam_policy_document.swarm_default_policy[0].json
+  name        = "${var.project_prefix}-helix-swarm-default-policy"
+  description = "Policy granting permissions for Helix Swarm."
+  policy      = data.aws_iam_policy_document.helix_swarm_default_policy[0].json
 }
 
-resource "aws_iam_policy" "swarm_efs_policy" {
+resource "aws_iam_policy" "helix_swarm_efs_policy" {
   count       = var.enable_elastic_filesystem ? 1 : 0
-  name        = "${var.project_prefix}-swarm-efs-policy"
-  description = "Policy granting permissions for swarm to access EFS."
-  policy      = data.aws_iam_policy_document.swarm_efs_policy[0].json
+  name        = "${var.project_prefix}-helix-swarm-efs-policy"
+  description = "Policy granting permissions for Helix Swarm to access EFS."
+  policy      = data.aws_iam_policy_document.helix_swarm_efs_policy[0].json
 }
 
-resource "aws_iam_policy" "swarm_ssm_policy" {
-  name        = "${var.project_prefix}-swarm-ssm-policy"
-  description = "Policy granting permissions for swarm task execution role to access SSM."
-  policy      = data.aws_iam_policy_document.swarm_ssm_policy.json
+resource "aws_iam_policy" "helix_swarm_ssm_policy" {
+  name        = "${var.project_prefix}-helix-swarm-ssm-policy"
+  description = "Policy granting permissions for Helix Swarm task execution role to access SSM."
+  policy      = data.aws_iam_policy_document.helix_swarm_ssm_policy.json
 }
 
 # - Roles -
 # swarm
-resource "aws_iam_role" "swarm_default_role" {
-  count = var.create_swarm_default_role ? 1 : 0
+resource "aws_iam_role" "helix_swarm_default_role" {
+  count = var.create_helix_swarm_default_role ? 1 : 0
 
-  name               = "${var.project_prefix}-swarm-default-role"
+  name               = "${var.project_prefix}-helix-swarm-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
 
   managed_policy_arns = concat([
-    aws_iam_policy.swarm_default_policy[0].arn
+    aws_iam_policy.helix_swarm_default_policy[0].arn
     ], var.enable_elastic_filesystem ? [
-    aws_iam_policy.swarm_efs_policy[0].arn
+    aws_iam_policy.helix_swarm_efs_policy[0].arn
   ] : [])
   tags = local.tags
 }
 
-resource "aws_iam_role" "swarm_task_execution_role" {
-  name = "${var.project_prefix}-swarm-task-execution-role"
+resource "aws_iam_role" "helix_swarm_task_execution_role" {
+  name = "${var.project_prefix}-helix-swarm-task-execution-role"
 
   assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.swarm_ssm_policy.arn]
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.helix_swarm_ssm_policy.arn]
 }

@@ -44,28 +44,28 @@ variable "vpc_id" {
 # ECS CONFIGURATION
 ########################################
 
-variable "swarm_container_name" {
+variable "helix_swarm_container_name" {
   type        = string
   description = "The name of the swarm container."
   default     = "helix-swarm-container"
   nullable    = false
 }
 
-variable "swarm_container_port" {
+variable "helix_swarm_container_port" {
   type        = number
   description = "The container port that swarm runs on."
   default     = 80
   nullable    = false
 }
 
-variable "swarm_container_cpu" {
+variable "helix_swarm_container_cpu" {
   type        = number
   description = "The CPU allotment for the swarm container."
   default     = 1024
   nullable    = false
 }
 
-variable "swarm_container_memory" {
+variable "helix_swarm_container_memory" {
   type        = number
   description = "The memory allotment for the swarm container."
   default     = 2048
@@ -139,7 +139,7 @@ variable "task_memory" {
   nullable    = false
 }
 
-variable "swarm_desired_container_count" {
+variable "helix_swarm_desired_container_count" {
   type        = number
   description = "The desired number of containers running the Helix Swarm service."
   default     = 1
@@ -154,36 +154,36 @@ variable "cluster_name" {
 }
 
 # - Load Balancer -
-variable "swarm_alb_subnets" {
+variable "helix_swarm_alb_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Helix Swarm load balancer into. Public subnets are recommended."
 }
 
-variable "enable_swarm_alb_access_logs" {
+variable "enable_helix_swarm_alb_access_logs" {
   type        = bool
   description = "Enables access logging for the Helix Swarm ALB. Defaults to true."
   default     = true
 }
 
-variable "swarm_alb_access_logs_bucket" {
+variable "helix_swarm_alb_access_logs_bucket" {
   type        = string
   description = "ID of the S3 bucket for Helix Swarm ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
   default     = null
 }
 
-variable "swarm_alb_access_logs_prefix" {
+variable "helix_swarm_alb_access_logs_prefix" {
   type        = string
   description = "Log prefix for Helix Swarm ALB access logs. If null the project prefix and module name are used."
   default     = null
 }
 
-variable "enable_swarm_alb_deletion_protection" {
+variable "enable_helix_swarm_alb_deletion_protection" {
   type        = bool
   description = "Enables deletion protection for the Helix Swarm ALB. Defaults to true."
   default     = true
 }
 
-variable "swarm_service_subnets" {
+variable "helix_swarm_service_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Helix Swarm service into. Private subnets are recommended."
 }
@@ -206,39 +206,39 @@ variable "certificate_arn" {
 }
 
 # - Filesystem -
-variable "swarm_efs_performance_mode" {
+variable "helix_swarm_efs_performance_mode" {
   type        = string
   description = "The performance mode of the EFS file system used by the Helix Swarm service. Defaults to general purpose."
   default     = "generalPurpose"
 }
 
-variable "swarm_efs_throughput_mode" {
+variable "helix_swarm_efs_throughput_mode" {
   type        = string
   description = "The throughput mode of the EFS file system used by the Helix Swarm service. Defaults to bursting."
   default     = "bursting"
 }
 
 # - Logging -
-variable "swarm_cloudwatch_log_retention_in_days" {
+variable "helix_swarm_cloudwatch_log_retention_in_days" {
   type        = string
   description = "The log retention in days of the cloudwatch log group for Helix Swarm."
   default     = 365
 }
 
 # - Security and Permissions -
-variable "custom_swarm_role" {
+variable "custom_helix_swarm_role" {
   type        = string
   description = "ARN of the custom IAM Role you wish to use with Helix Swarm."
   default     = null
 }
 
-variable "create_swarm_default_role" {
+variable "create_helix_swarm_default_role" {
   type        = bool
   description = "Optional creation of Helix Swarm Default IAM Role. Default is set to true."
   default     = true
 }
 
-variable "create_swarm_default_policy" {
+variable "create_helix_swarm_default_policy" {
   type        = bool
   description = "Optional creation of Helix Swarm default IAM Policy. Default is set to true."
   default     = true

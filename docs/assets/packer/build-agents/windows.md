@@ -1,0 +1,1 @@
+--8<-- "assets/packer/build-agents/windows/README.md"

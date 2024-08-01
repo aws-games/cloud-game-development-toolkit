@@ -83,7 +83,12 @@ nav:
       - Home: index.md
       - Assets:
           - Overview: assets/index.md
-          - Packer Templates: assets/packer.md
+          - Packer Templates:
+              - Overview: assets/packer/index.md
+              - Build Agents:
+                  - Linux Build Agents: assets/packer/build-agents/linux.md
+                  - Windows Build Agent: assets/packer/build-agents/windows.md
+              - Perforce Helix Core: assets/packer/helix-core.md
           - Jenkins Pipelines: assets/jenkins-pipelines.md
           - Ansible Playbooks: assets/playbooks.md
           - Dockerfiles: assets/dockerfiles.md
@@ -109,7 +114,6 @@ nav:
       - Security: security.md
   - Getting Started: getting-started.md
   - Contributing: contributing.md
-  - Discussion: discussion.md
   - CI: ci/
   - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
