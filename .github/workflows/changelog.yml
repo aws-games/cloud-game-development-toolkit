@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: '0 0 * * *'  # This will run the action every day at midnight
   workflow_dispatch: # If we need to run the action manually
+permissions:
+  contents: read
 jobs:
   update-changelog:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
