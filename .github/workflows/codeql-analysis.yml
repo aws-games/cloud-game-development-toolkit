@@ -10,7 +10,6 @@ permissions:
 jobs:
   analyze:
     name: Analyze
-    if: github.repository == 'aws-games/cloud-game-development'
     runs-on: ubuntu-latest
     permissions:
       security-events: write
