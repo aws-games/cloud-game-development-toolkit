@@ -143,6 +143,7 @@ EBS_LOGS=$1
 EBS_METADATA=$2
 EBS_DEPOTS=$3
 P4D_TYPE=$4
+[[$4 == "p4d_commit"]] || && P4D_TYPE="p4d_master" || P4D_TYPE=$4
 P4D_ADMIN_USERNAME_SECRET_ID=$5
 P4D_ADMIN_PASS_SECRET_ID=$6
 
@@ -169,12 +170,12 @@ perform_operations() {
         else
             # Mount as EBS the called function also creates XFS on EBS
             prepare_ebs_volume "$mount_point" "$dest_dir"
-            
+
             mount_options="defaults"
             fs_type="xfs"
 
         fi
-            # Adding appending to the fstab so mounts persist across reboots. 
+            # Adding appending to the fstab so mounts persist across reboots.
         echo "$mount_point $dest_dir $fs_type $mount_options 0 0" >> /etc/fstab
     }
 
