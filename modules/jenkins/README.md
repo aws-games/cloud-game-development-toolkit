@@ -31,6 +31,7 @@ No modules.
 | [aws_ecs_service.jenkins_service](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.jenkins_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_task_definition) | resource |
 | [aws_efs_access_point.jenkins_efs_access_point](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_access_point) | resource |
+| [aws_efs_backup_policy.policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_backup_policy) | resource |
 | [aws_efs_file_system.jenkins_efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_file_system) | resource |
 | [aws_efs_mount_target.jenkins_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_mount_target) | resource |
 | [aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/fsx_openzfs_file_system) | resource |
@@ -105,6 +106,7 @@ No modules.
 | <a name="input_create_jenkins_default_policy"></a> [create\_jenkins\_default\_policy](#input\_create\_jenkins\_default\_policy) | Optional creation of Jenkins Default IAM Policy. Default is set to true. | `bool` | `true` | no |
 | <a name="input_create_jenkins_default_role"></a> [create\_jenkins\_default\_role](#input\_create\_jenkins\_default\_role) | Optional creation of Jenkins Default IAM Role. Default is set to true. | `bool` | `true` | no |
 | <a name="input_custom_jenkins_role"></a> [custom\_jenkins\_role](#input\_custom\_jenkins\_role) | ARN of the custom IAM Role you wish to use with Jenkins. | `string` | `null` | no |
+| <a name="input_enable_default_efs_backup_plan"></a> [enable\_default\_efs\_backup\_plan](#input\_enable\_default\_efs\_backup\_plan) | This flag controls EFS backups for the Jenkins module. Default is set to true. | `bool` | `true` | no |
 | <a name="input_enable_jenkins_alb_access_logs"></a> [enable\_jenkins\_alb\_access\_logs](#input\_enable\_jenkins\_alb\_access\_logs) | Enables access logging for the Jenkins ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_jenkins_alb_deletion_protection"></a> [enable\_jenkins\_alb\_deletion\_protection](#input\_enable\_jenkins\_alb\_deletion\_protection) | Enables deletion protection for the Jenkins ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |

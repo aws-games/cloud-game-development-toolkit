@@ -149,6 +149,12 @@ variable "jenkins_efs_throughput_mode" {
   default     = "bursting"
 }
 
+variable "enable_default_efs_backup_plan" {
+  type        = bool
+  description = "This flag controls EFS backups for the Jenkins module. Default is set to true."
+  default     = true
+}
+
 # - Logging -
 variable "jenkins_cloudwatch_log_retention_in_days" {
   type        = string

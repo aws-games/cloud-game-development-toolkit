@@ -5,14 +5,19 @@ on:
       - main
   pull_request:
   workflow_call:
+permissions:
+  contents: read
 jobs:
   trivy_scan:
     name: Trivy Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -22,7 +27,6 @@ jobs:
           output: 'trivy-results.sarif'
           scanners: 'vuln, secret, config'
           severity: 'CRITICAL,HIGH'
-
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:

@@ -2,7 +2,11 @@ data "aws_availability_zones" "available" {}
 
 locals {
   # Simple Build Pipeline Configuration
-  fully_qualified_domain_name = "" # update this to the root domain name you own
+  fully_qualified_domain_name = "henrykie.people.aws.dev" # update this to the root domain name you own
+
+  # IPV4 CIDR blocks that need Jenkins access. For example:
+  # <my personal ip>/32
+  allowlist = []
 
   # Jenkins and Build Farm Configurations
   jenkins_agent_secret_arns = []
@@ -10,11 +14,11 @@ locals {
   build_farm_compute = {
     /* Example Configuration
     graviton_builders : {
-      ami           = ami-0a1b2c3d4e5f
+      ami           = "ami-0a1b2c3d4e5f"
       instance_type = c7g.large
     }
     windows_builders : {
-      ami           = ami-9z8y7x6w5v
+      ami           = "ami-9z8y7x6w5v"
       instance_type = c7a.large
     }
     */
@@ -45,7 +49,7 @@ locals {
   private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]
 
   tags = {
-    environment = "build"
+    environment = "cgd"
   }
   azs = slice(data.aws_availability_zones.available.names, 0, 2)
 }
