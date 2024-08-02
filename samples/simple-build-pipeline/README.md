@@ -50,10 +50,14 @@
 | [aws_subnet.private_subnets](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/subnet) | resource |
 | [aws_subnet.public_subnets](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/subnet) | resource |
 | [aws_vpc.build_pipeline_vpc](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_auth_access](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_auth_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_core_access](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_build_farm](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_swarm](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_swarm_access](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_swarm_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.jenkins_access](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/route53_zone) | data source |
 
