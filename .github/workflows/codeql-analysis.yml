@@ -10,11 +10,11 @@ permissions:
 jobs:
   analyze:
     name: Analyze
-    if: github.repository == 'aws-games/cloud-game-development'
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       actions: read
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
