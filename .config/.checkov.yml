@@ -8,8 +8,8 @@ framework:
 output: cli
 quiet: true
 soft-fail-on:
-  - CKV2_GHA_1
-  - CKV_GHA_7
+  # - CKV2_GHA_1
+  # - CKV_GHA_7
 skip-framework:
   - dockerfile
   - secrets
