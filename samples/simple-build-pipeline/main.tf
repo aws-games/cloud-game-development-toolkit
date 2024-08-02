@@ -2,7 +2,6 @@
 # Shared ECS Cluster for Services
 ##########################################
 
-
 resource "aws_ecs_cluster" "build_pipeline_cluster" {
   name = "build-pipeline-cluster"
 
@@ -31,7 +30,7 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 module "perforce_helix_core" {
   source             = "../../modules/perforce/helix-core"
   vpc_id             = aws_vpc.build_pipeline_vpc.id
-  server_type        = "p4d_master"
+  server_type        = "p4d_commit"
   instance_subnet_id = aws_subnet.public_subnets[0].id
   instance_type      = "c6in.large"
 
@@ -43,24 +42,6 @@ module "perforce_helix_core" {
   FQDN = "core.helix.perforce.${local.fully_qualified_domain_name}"
 
   helix_authentication_service_url = "https://${aws_route53_record.helix_authentication_service.name}"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "helix_auth_inbound_core" {
-  security_group_id = module.perforce_helix_authentication_service.alb_security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
-  description       = "Enables Helix Core to access Helix Authentication Service"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "helix_swarm_inbound_core" {
-  security_group_id = module.perforce_helix_swarm.alb_security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
-  description       = "Enables Helix Core to access Helix Swarm"
 }
 
 ##########################################
@@ -104,19 +85,9 @@ module "perforce_helix_swarm" {
   depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
 
-resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_swarm" {
-  security_group_id            = module.perforce_helix_core.security_group_id
-  ip_protocol                  = "TCP"
-  from_port                    = 1666
-  to_port                      = 1666
-  referenced_security_group_id = module.perforce_helix_swarm.service_security_group_id
-  description                  = "Enables Helix Swarm to access Helix Core."
-}
-
 ##########################################
 # Jenkins
 ##########################################
-
 
 module "jenkins" {
   source = "../../modules/jenkins"
@@ -150,13 +121,4 @@ module "jenkins" {
   }
 
   depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.jenkins]
-}
-
-resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_build_farm" {
-  security_group_id            = module.perforce_helix_core.security_group_id
-  ip_protocol                  = "TCP"
-  from_port                    = 1666
-  to_port                      = 1666
-  referenced_security_group_id = module.jenkins.build_farm_security_group
-  description                  = "Enables build farm to access Helix Core."
 }

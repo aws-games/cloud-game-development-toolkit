@@ -49,3 +49,12 @@ resource "aws_efs_access_point" "jenkins_efs_access_point" {
   }
   tags = local.tags
 }
+
+resource "aws_efs_backup_policy" "policy" {
+  count          = var.enable_default_efs_backup_plan ? 1 : 0
+  file_system_id = aws_efs_file_system.jenkins_efs_file_system.id
+
+  backup_policy {
+    status = "ENABLED"
+  }
+}

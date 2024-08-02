@@ -85,8 +85,8 @@ variable "server_type" {
   type        = string
   description = "The Perforce Helix Core server type."
   validation {
-    condition     = contains(["p4d_master", "p4d_replica"], var.server_type)
-    error_message = "${var.server_type} is not one of p4d_master or p4d_replica."
+    condition     = contains(["p4d_commit", "p4d_replica"], var.server_type)
+    error_message = "${var.server_type} is not one of p4d_commit or p4d_replica."
   }
 }
 
