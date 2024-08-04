@@ -1,10 +1,6 @@
 name: Checkov
 on:
   pull_request:
-      paths:
-        - 'modules/**'
-        - 'samples/**'
-        - '.github/**'
   workflow_dispatch:
 permissions:
   contents: read
