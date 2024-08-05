@@ -3,8 +3,8 @@ template: index.html
 title: Cloud Game Development Toolkit
 hide: [navigation]
 hero:
-  title: Deploy game development infrastructure on AWS with best practice templates and configurations
-  subtitle: Get started with pre-configured templates, or use only what you need
+  title: Tools and best practices for deploying game development infrastructure on AWS
+  subtitle: Get started with ready-to-use templates or use only what you need
   install_button: Getting Started
   source_button: Source Code
 features:
@@ -26,12 +26,16 @@ The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of t
 !!! info
     **This project is under active development and community contributions are welcomed!**. If you would like to see something in this repository please create a <a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE" target="_blank">feature request</a> in the Issues tab. If you'd like to contribute, raise a <a href="https://github.com/aws-games/cloud-game-development-toolkit/pulls/" target="_blank">pull request</a>. You'll find our contribution guidelines [here](./contributing.md).
 
-The Cloud Game Development Toolkit (CGD Toolkit) incorporates several key design principles:
+The Cloud Game Development Toolkit (CGD Toolkit) is built with several key principles in mind:
 
-- **Solutions are designed to run on AWS**
-- **Meet game developers where they are**
+- **Fork-first**. This project is intended to be forked so that you can use what you need and customize. Simply fork the repo, create your own branches for changes, and feel free to cut PRs to contribute your work back upstream. We encourage contributions.
+- **Our expertise is AWS, and this project prioritizes solutions built to run on AWS**. It notably does not attempt to standardize for hosting on other platforms. If AWS is not your jam, that's okay, fork and customize as needed (see above).
 - **Someting else**
 
 ## Getting Started
 
+[Installation](./getting-started.md){ .md-button  }
+
 ## License
+
+This project is licensed under the [MIT-0 License](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/LICENSE).
