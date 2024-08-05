@@ -1,5 +1,12 @@
 [
   {
+    "version": "v0.1.0-alpha.6",
+    "title": "v0.1.0-alpha.6",
+    "aliases": [
+      "staging"
+    ]
+  },
+  {
     "version": "v0.1.0-alpha.5",
     "title": "v0.1.0-alpha.5",
     "aliases": [
