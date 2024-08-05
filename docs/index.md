@@ -9,13 +9,13 @@ hero:
   source_button: Source Code
 features:
   - title: Assets
-    image: media/images/assets.png
+    #image: media/images/assets.png
     description: Foundational resources such as image templates, configurations scripts, and CI/CD pipeline definitions for game development.
   - title: Modules
-    image: media/images/modules.png
+    #image: media/images/modules.png
     description: Terraform Modules for deploying common game dev workloads with best-practices by default.
   - title: Samples
-    image: media/images/samples.png
+    #image: media/images/samples.png
     description: Opinionated ready-to-use implementations to address common use cases for expedited game studio setup and battle-tested scenarios from the community.
 companies:
   title:
