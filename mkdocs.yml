@@ -2,13 +2,21 @@ site_name: Cloud Game Development Toolkit
 site_description: Cloud Game Development Toolkit
 site_author: Amazon Web Services
 repo_url: https://github.com/aws-games/cloud-game-development-toolkit
+repo_name: aws-games/cloud-game-development-toolkit
 site_url: https://aws-games.github.io/cloud-game-development-toolkit/
 edit_uri: edit/main/docs/
 
 theme:
   name: material
-  font:
-    text: Roboto
+  custom_dir: docs/overrides
+  icon:
+    repo: fontawesome/brands/github
+    admonition:
+      info: octicons/info-16
+  logo: media/logos/aws-logo-white.svg
+  favicon: media/logos/favicon.ico
+  #font:
+  #  text: Roboto
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -18,16 +26,16 @@ theme:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: black
-      accent: teal
+      #primary: black
+      #accent: teal
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: black
-      accent: teal
+      #primary: black
+      #accent: teal
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
@@ -36,33 +44,37 @@ theme:
     - toc:
         permalink: true
         sticky: true
-    - header.autohide
-    - navigation.sections
-    - navigation.top
-    - navigation.instant
-    - navigation.indexes
-    - navigation.expand
-    - navigation.tracking
-    - navigation.tabs
+        integrate: true
     - content.code.annotate
     - content.code.copy
     - content.tabs.link
     - search.suggest
     - search.highlight
     - search.share
+    - navigation.sections
+    - navigation.indexes
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.expand
+    - navigation.instant
+    - navigation.footer
+    - toc.integrate
     - emoji_index: twemoji
-  custom_dir: docs/overrides
-  icon:
-    repo: fontawesome/brands/github
-    admonition:
-      info: octicons/info-16
-  logo: media/logos/aws-logo-white.svg
-  favicon: media/logos/aws-logo-white.svg
 
 markdown_extensions:
+  - meta
   - admonition
+  - footnotes
   - pymdownx.details
+  - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - attr_list
+  - md_in_html
+  - def_list
+  - tables
   - pymdownx.snippets:
       base_path: "."
       check_paths: true
@@ -70,8 +82,6 @@ markdown_extensions:
   - toc:
       permalink: true
       toc_depth: 5
-  - attr_list
-  - md_in_html
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -79,42 +89,40 @@ markdown_extensions:
       alternate_style: true
 
 nav:
-  - Home:
-      - Home: index.md
-      - Assets:
-          - Overview: assets/index.md
-          - Packer Templates:
-              - Overview: assets/packer/index.md
-              - Build Agents:
-                  - Linux Build Agents: assets/packer/build-agents/linux.md
-                  - Windows Build Agent: assets/packer/build-agents/windows.md
-              - Perforce Helix Core: assets/packer/helix-core.md
-          - Jenkins Pipelines: assets/jenkins-pipelines.md
-          - Ansible Playbooks: assets/playbooks.md
-          - Dockerfiles: assets/dockerfiles.md
-      - Modules:
-          - Overview: modules/index.md
-          - Jenkins:
-              - Installation and Usage: modules/jenkins/jenkins.md
-              - Module Docs: modules/jenkins/terraform-docs.md
-          - Perforce:
-              - Helix Authentication Service:
-                  - Installation and Usage: modules/perforce/helix-authentication-service/helix-authentication-service.md
-                  - Module Docs: modules/perforce/helix-authentication-service/terraform-docs.md
-              - Helix Core Server:
-                  - Installation and Usage: modules/perforce/helix-core/helix-core.md
-                  - Module Docs: modules/perforce/helix-core/terraform-docs.md
-              - Helix Swarm:
-                  - Installation and Usage: modules/perforce/helix-swarm/helix-swarm.md
-                  - Module Docs: modules/perforce/helix-swarm/terraform-docs.md
-      - Samples:
-          - Overview: samples/index.md
-          - Simple Build Pipeline: samples/simple-build-pipeline.md
-      - Changelog: changelog.md
-      - Security: security.md
+  - Home: index.md
   - Getting Started: getting-started.md
+  - Assets:
+      - Overview: assets/index.md
+      - Packer Templates:
+          - Overview: assets/packer/index.md
+          - Build Agents:
+              - Linux Build Agents: assets/packer/build-agents/linux.md
+              - Windows Build Agent: assets/packer/build-agents/windows.md
+          - Perforce Helix Core: assets/packer/helix-core.md
+      - Jenkins Pipelines: assets/jenkins-pipelines.md
+      - Ansible Playbooks: assets/playbooks.md
+      - Dockerfiles: assets/dockerfiles.md
+  - Modules:
+      - Overview: modules/index.md
+      - Jenkins:
+          - Installation and Usage: modules/jenkins/jenkins.md
+          - Module Docs: modules/jenkins/terraform-docs.md
+      - Perforce:
+          - Helix Authentication Service:
+              - Installation and Usage: modules/perforce/helix-authentication-service/helix-authentication-service.md
+              - Module Docs: modules/perforce/helix-authentication-service/terraform-docs.md
+          - Helix Core Server:
+              - Installation and Usage: modules/perforce/helix-core/helix-core.md
+              - Module Docs: modules/perforce/helix-core/terraform-docs.md
+          - Helix Swarm:
+              - Installation and Usage: modules/perforce/helix-swarm/helix-swarm.md
+              - Module Docs: modules/perforce/helix-swarm/terraform-docs.md
+  - Samples:
+      - Overview: samples/index.md
+      - Simple Build Pipeline: samples/simple-build-pipeline.md
+  - Changelog: changelog.md
+  - Security: security.md
   - Contributing: contributing.md
-  - CI: ci/
   - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
 plugins:
@@ -128,7 +136,18 @@ extra:
     provider: mike
     default: latest
     alias: true
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/aws-games/cloud-game-development-toolkit
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/AWSGameTech
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/awsgametech
+
 extra_css:
-  - stylesheets/extra.css
+  #- stylesheets/extra.css
+  - stylesheets/themes.css
+  - stylesheets/hero.css
+
 
 copyright: Copyright &copy; 2024 Amazon Web Services

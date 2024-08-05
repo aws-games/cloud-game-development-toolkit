@@ -1,0 +1,1 @@
+--8<-- "assets/ansible-playbooks/README.md"

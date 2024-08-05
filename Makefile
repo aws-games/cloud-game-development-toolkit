@@ -13,7 +13,7 @@ ifdef COLOR_SUPPORT
     RESET := $(shell tput sgr0)
   endif
 endif
-		
+
 .PHONY: docs-build-local
 docs-build-local: ## Build the docs to run locally as a container image, tagged with version and alias (ex: docs:v1.0.0, docs:latest). Usage: `make docs-build-local VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'docs-build-local VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
@@ -24,11 +24,10 @@ docs-build-local: ## Build the docs to run locally as a container image, tagged 
 		--build-arg GIT_USER_EMAIL="${GIT_USER_EMAIL}" \
 		--build-arg VERSION="${VERSION}" \
 		--build-arg ALIAS="${ALIAS}" \
-		--no-cache
 
 .PHONY: docs-install-dependencies
 docs-install-dependencies: ## Install dependencies required for the docs. Usage: `make docs-install-dependencies VERSION=v1.0.0 ALIAS=latest`
-	pip install -r ./docs/requirements.txt 
+	pip install -r ./docs/requirements.txt
 
 .PHONY: docs-deploy-github
 docs-deploy-github: ## Deploy the docs to remote branch in github. Usage: `docs-deploy-github VERSION=v1.0.0 ALIAS=latest`
