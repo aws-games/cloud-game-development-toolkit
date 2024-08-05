@@ -20,7 +20,7 @@
           title="{{ page.next_page.title | e }}"
           class="md-button md-button--primary"
         >
-          {{ page.meta.hero.install_button }}
+          {{ page.meta.hero.getting_started_button }}
         </a>
         <a
           href="{{ '//github.com/aws-games/cloud-game-development-toolkit' | url }}"
@@ -38,7 +38,7 @@
 <div class="mdx-features">
   {% for feature in page.meta.features %}
   <div>
-    <!--<img src="{{ feature.image }}" alt="Clean and simple" /> -->
+    <img src="{{ feature.image }}" />
     <h2>{{ feature.title }}</h2>
     <p>{{ feature.description }}</p>
   </div>

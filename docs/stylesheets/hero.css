@@ -1,11 +1,24 @@
 .hero-container {
   padding: 2rem 0;
+  background: rgb(35, 47, 63);
+  background: linear-gradient(
+    180deg,
+    var(--md-primary-fg-color),
+    var(--md-accent-fg-color) 99%,
+    var(--md-default-bg-color) 0
+  );
   background-repeat: no-repeat;
   background-position: bottom;
   background-size: contain;
 }
 
 [data-md-color-scheme="slate"] .hero-container {
+  background: linear-gradient(
+    180deg,
+    var(--md-primary-fg-color),
+    var(--md-accent-fg-color) 99%,
+    var(--md-default-bg-color) 0
+  );
   background-repeat: no-repeat;
   background-position: bottom;
   background-size: contain;

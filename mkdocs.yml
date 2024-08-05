@@ -60,6 +60,7 @@ theme:
     - navigation.expand
     - navigation.instant
     - navigation.footer
+    - toc.integrate
     - emoji_index: twemoji
 
 markdown_extensions:
@@ -122,7 +123,6 @@ nav:
   - Changelog: changelog.md
   - Security: security.md
   - Contributing: contributing.md
-  - CI: ci/
   - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
 plugins:
