@@ -99,8 +99,8 @@ nav:
               - Linux Build Agents: assets/packer/build-agents/linux.md
               - Windows Build Agent: assets/packer/build-agents/windows.md
           - Perforce Helix Core: assets/packer/helix-core.md
-      - Jenkins Pipelines: assets/jenkins-pipelines.md
-      - Ansible Playbooks: assets/playbooks.md
+      - Jenkins Pipelines: assets/jenkins-pipelines/jenkins-pipelines.md
+      - Ansible Playbooks: assets/ansible-playbooks/ansible-playbooks.md
       - Dockerfiles: assets/dockerfiles.md
   - Modules:
       - Overview: modules/index.md

@@ -70,7 +70,7 @@ There are a few prerequisites to the deployment of Jenkins which are not directl
 AWS Secrets Manager can be used to store sensitive information such as SSH keys and access tokens, which can then be made available to Jenkins. We recommend using the service to store the private key for the Jenkins agents which the Jenkins orchestrator uses to communicate over SSH.
 
 !!! warning
-    To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the `AWS Secrets Manager Credentials Provider` Jenkins plugin is recommended. **There are requirements around tagging your secrets for the plugin to work properly**. See the [AWS Secrets Manager Credentials Provider Plugin Documentation](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) for additional details. Step-by-step instructions for uploading SSH keys into AWS Secrets Manager can be found in the [Configure Pluings]() section.
+    To grant Jenkins access to the secrets stored in the AWS Secrets Manager, the `AWS Secrets Manager Credentials Provider` Jenkins plugin is recommended. **There are requirements around tagging your secrets for the plugin to work properly**. See the [AWS Secrets Manager Credentials Provider Plugin Documentation](https://plugins.jenkins.io/aws-secrets-manager-credentials-provider/) for additional details. Step-by-step instructions for uploading SSH keys into AWS Secrets Manager can be found in the [Configure Plugins](#configuring-plugins) section.
 
 ??? note "How to Upload Secrets to AWS Secrets Manager"
 

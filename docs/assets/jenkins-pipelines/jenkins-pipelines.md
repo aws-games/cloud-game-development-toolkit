@@ -1,1 +1,1 @@
-# Jenkins Pipelines
+--8<-- "assets/jenkins-pipelines/README.md"
