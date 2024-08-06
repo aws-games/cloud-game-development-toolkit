@@ -209,7 +209,7 @@ When accessing Jenkins for the first time, an administrators password is require
 4. Select the `Logs` tab
 5. Scroll through the logs until you find the password, below is an example of what the password section looks like. Note that each line is shown as its own log entry in the console.
 
-![Jenkins Admin Password](/docs/media/images/jenkins-admin-password.png)
+![Jenkins Admin Password](../../media/images/jenkins-admin-password.png)
 
 ### Jenkins Initial Configuration
 

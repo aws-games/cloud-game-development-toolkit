@@ -2,7 +2,7 @@ data "aws_availability_zones" "available" {}
 
 locals {
   # Simple Build Pipeline Configuration
-  fully_qualified_domain_name = "henrykie.people.aws.dev" # update this to the root domain name you own
+  fully_qualified_domain_name = "PLACEHOLDER" # update this to the root domain name you own
 
   # IPV4 CIDR blocks that need Jenkins access. For example:
   # "<my personal ip>/32"
