@@ -2,10 +2,10 @@ data "aws_availability_zones" "available" {}
 
 locals {
   # Simple Build Pipeline Configuration
-  fully_qualified_domain_name = "PLACEHOLDER" # update this to the root domain name you own
+  fully_qualified_domain_name = "henrykie.people.aws.dev" # update this to the root domain name you own
 
   # IPV4 CIDR blocks that need Jenkins access. For example:
-  # <my personal ip>/32
+  # "<my personal ip>/32"
   allowlist = []
 
   # Jenkins and Build Farm Configurations
@@ -15,11 +15,11 @@ locals {
     /* Example Configuration
     graviton_builders : {
       ami           = "ami-0a1b2c3d4e5f"
-      instance_type = c7g.large
+      instance_type = "c7g.large"
     }
     windows_builders : {
       ami           = "ami-9z8y7x6w5v"
-      instance_type = c7a.large
+      instance_type = "c7a.large"
     }
     */
   }

@@ -40,12 +40,12 @@ packer build /packer/perforce/helix-core/perforce.pkr.hcl
 
 This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](/assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
-!!! Note
+???+ Note
     The AWS Region where this AMI is created _must_ be the same Region where you intend to deploy the Simple Build Pipeline.
 
 ### Step 3. Create Build Agent Amazon Machine Images
 
-This section covers the creation of Amazon Machine Images used to provision Jenkins build agents. Different studio's have different needs at this stage, so we'll cover the creation of three different build agent AMIs.
+This section covers the creation of Amazon Machine Images used to provision Jenkins build agents. Different studios have different needs at this stage, so we'll cover the creation of three different build agent AMIs.
 
 #### Amazon Linux 2023 ARM based Amazon Machine Image
 
@@ -58,7 +58,7 @@ packer build amazon-linux-2023-arm64.pkr.hcl \
     -var "public_key=<include public key here>"
 ```
 
-??? Note
+???+ Note
     The above command assumes you are running `packer` from the `/assets/packer/build-agents/linux` directory.
 
 ``` bash
@@ -80,7 +80,7 @@ packer build ubuntu-jammy-22.04-amd64-server.pkr.hcl \
     -var-file="linux.pkrvars.hcl"
 ```
 
-??? Note
+???+ Note
     The above command assumes you are running `packer` from the `/assets/packer/build-agents/linux` directory.
 
 Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.
@@ -106,7 +106,7 @@ packer build windows.pkr.hcl \
     -var "public_key=<include public ssh key here>"
 ```
 
-??? Note
+???+ Note
     The above command assumes you are running `packer` from the `/assets/packer/build-agents/windows` directory.
 
 Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.
@@ -125,7 +125,7 @@ Take note of the output of this CLI command. You will need the ARN later.
 
 Now that all of the required Amazon Machine Images exist we are almost ready to move on to provisioning infrastructure. However, the _Simple Build Pipeline_ requires that we create one resource ahead of time: [A Route53 Hosted Zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-working-with.html). The _Simple Build Pipeline_ creates DNS records and SSL certificates for all the applications it deploys to support secure communication over the internet. However, these certificates and DNS records rely on the existence of a public hosted zone associated with your company's route domain. Since different studios may use different DNS registrars or DNS providers, the _Simple Build Pipeline_ requires this first step to be completed manually. Everything else will be deployed automatically in the next step.
 
-If you do not already have a domain you can [register one with Route53.](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html#domain-register-procedure-section). When you register a domain with Route53 a public hosted zone is automatically created.
+If you do not already have a domain you can [register one with Route53.](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html#domain-register-procedure-section) When you register a domain with Route53 a public hosted zone is automatically created.
 
 If you already have a domain that you would like to use for the _Simple Build Pipeline_ please consult the documentation for [making Amazon Route 53 the DNS service for an existing domain.](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html)
 
@@ -141,7 +141,7 @@ We'll walk through the required configurations in [`local.tf`](/samples/simple-b
 
 2. `allowlist` grants public internet access to the various applications deployed in the _Simple Build Pipeline_. At a minimum you will need to include your own IP address to gain access to Jenkins and Perforce Helix Core for configuration following deployment. For example, if your IP address is `192.158.1.38` you would want to set `allowlist=["192.158.1.38/32"]` to grant yourself access.
 
-??? Note
+???+ Note
     The `/32` suffix above is a subnet mask that specifies a single IP address. If you have different CIDR blocks that you would like to grant access to you can include those as well.
 
 3. `jenkins_agent_secret_arns` is a list of [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the `jenkins_agent_secret_arns` list so that Jenkins can connect to the provisioned build agents.
