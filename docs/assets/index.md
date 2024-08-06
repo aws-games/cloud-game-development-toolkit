@@ -8,6 +8,6 @@
 | Asset Type | Description |
 | :--------------------------------------------------------------- | :- |
 | [:simple-packer: __Packer Templates__](./packer/index.md)              | Packer templates provide an easy way to build machine images for commonly used game dev infrastructure. Currently the project includes Packer templates for UE5 build agents for Linux and Windows, as well as a Packer template for building a Perforce Helix Core version control AMI. |
-| [:simple-jenkins: __Jenkins Pipelines__](./jenkins-pipelines.md) | Jenkins Pipelines for common game dev automation workflows |
-| [:simple-ansible: __Ansible Playbooks__](./playbooks.md)         | Automation scripts for reusable system level configurations. |
+| [:simple-jenkins: __Jenkins Pipelines__](./jenkins-pipelines/jenkins-pipelines.md) | Jenkins Pipelines for common game dev automation workflows |
+| [:simple-ansible: __Ansible Playbooks__](./ansible-playbooks/ansible-playbooks.md)         | Automation scripts for reusable system level configurations. |
 | [:simple-docker: __Dockerfiles (Coming Soon!)__](./dockerfiles.md)              | Dockerfiles for creating Docker images of commonly used game dev infrastructure. These are primarily used in scenarios where there aren't openly available pre-built images that address a use case, or significant customization is needed that warrants building an image |
