@@ -6,7 +6,7 @@ Welcome to the **Cloud Game Development Toolkit**. There are a number of ways to
 
 ### Assets
 
-An _asset_ is a singular template, script, or automation document that may prove useful in isolation. Currently, the **Toolkit** contains three types of _assets_: [Ansible playbooks](/docs/assets/ansible-playbooks/ansible-playbooks.md), [Jenkins pipelines](/docs/assets/jenkins-pipelines/jenkins-pipelines.md), and [Packer templates](/docs/assets/packer/index.md). Each of these _assets_ can be used in isolation. For more information about _assets_ specifically consult the [detailed documentation](/docs/assets/index.md).
+An _asset_ is a singular template, script, or automation document that may prove useful in isolation. Currently, the **Toolkit** contains three types of _assets_: [Ansible playbooks](./assets/ansible-playbooks/ansible-playbooks.md), [Jenkins pipelines](./assets/jenkins-pipelines/jenkins-pipelines.md), and [Packer templates](./assets/packer/index.md). Each of these _assets_ can be used in isolation. For more information about _assets_ specifically consult the [detailed documentation](./assets/index.md).
 
 ### Modules
 
@@ -14,11 +14,11 @@ A _module_ is a reusable [Terraform](https://www.terraform.io/) configuration en
 
 ### Samples
 
-A _sample_ is a complete reference architecture that stitches together [modules](/docs/modules/index.md) and first-party AWS services. A _sample_ is deployed with Terraform, and is the best way to get started with the **Cloud Game Development Toolkit**.
+A _sample_ is a complete reference architecture that stitches together [modules](./modules/index.md) and first-party AWS services. A _sample_ is deployed with Terraform, and is the best way to get started with the **Cloud Game Development Toolkit**.
 
 ## Step by Step Tutorial
 
-This section will walk you through the prerequisites for deploying the [Simple Build Pipeline](/docs/samples/simple-build-pipeline.md), the actual deployment process with Terraform, and basic configuration of Jenkins and Perforce.
+This section will walk you through the prerequisites for deploying the [Simple Build Pipeline](./samples/simple-build-pipeline.md), the actual deployment process with Terraform, and basic configuration of Jenkins and Perforce.
 
 ### Step 1. Install Prerequisites
 
@@ -38,7 +38,7 @@ Prior to deploying the infrastructure for running Perforce Helix Core we need to
 packer build /packer/perforce/helix-core/perforce.pkr.hcl
 ```
 
-This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](/assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
+This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](./assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
 ???+ Note
     The AWS Region where this AMI is created _must_ be the same Region where you intend to deploy the Simple Build Pipeline.
@@ -51,7 +51,7 @@ This section covers the creation of Amazon Machine Images used to provision Jenk
 
 This Amazon Machine Image is provisioned using the [Amazon Linux 2023](https://aws.amazon.com/linux/amazon-linux-2023/) base operating system. It is highly configurable through variables, but there is only one variable that is required: A public SSH key. This public SSH key is used by the Jenkins orchestration service to establish an initial connection to the agent.
 
-This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
+This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](./assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
 
 ``` bash
 packer build amazon-linux-2023-arm64.pkr.hcl \
@@ -133,9 +133,9 @@ Once your hosted zone exists you can proceed to the next step.
 
 ### Step 5. Configure Simple Build Pipeline Variables
 
-All configuration of the _Simple Build Pipeline_ occurs in the [`local.tf`](/samples/simple-build-pipeline/local.tf) file. Before you deploy this architecture you will need to provide the outputs from previous steps.
+All configuration of the _Simple Build Pipeline_ occurs in the [`local.tf`](./samples/simple-build-pipeline/local.tf) file. Before you deploy this architecture you will need to provide the outputs from previous steps.
 
-We'll walk through the required configurations in [`local.tf`](/samples/simple-build-pipeline/local.tf).
+We'll walk through the required configurations in [`local.tf`](./samples/simple-build-pipeline/local.tf).
 
 1. `fully_qualified_domain_name` must be set to the domain name you created a public hosted zone for in [Step 4](#step-4-create-route53-hosted-zone). Your applications will be deployed at subdomains. For example, if `fully_qualified_domain_name=example.com` then Jenkins will be available at `jenkins.example.com` and Perforce Helix Core will be available at `core.helix.example.com`.
 
@@ -152,7 +152,7 @@ We'll walk through the required configurations in [`local.tf`](/samples/simple-b
 
 ### Step 6. Deploy Simple Build Pipeline
 
-Now we are ready to deploy your _Simple Build Pipeline_! Navigate to the [`/samples/simple-build-pipeline`](/samples/simple-build-pipeline/) directory and run the following commands:
+Now we are ready to deploy your _Simple Build Pipeline_! Navigate to the [`/samples/simple-build-pipeline`](./samples/simple-build-pipeline/) directory and run the following commands:
 
 ``` bash
 terraform init
@@ -180,7 +180,7 @@ When accessing Jenkins for the first time, an administrator's password is requir
 4. Select the `Logs` tab
 5. Scroll through the logs until you find the password, below is an example of what the password section looks like. Note that each line is shown as its own log entry in the console.
 
-![Jenkins Admin Password](/docs/media/images/jenkins-admin-password.png)
+![Jenkins Admin Password](./media/images/jenkins-admin-password.png)
 
 Open the Jenkins console in your preferred browser by navigating to `jenkins.<your fully qualified domain name>`, and log in using the administrator's password you just located. Install the suggested plugins and create your first admin user. For the Jenkins URL accept the default value.
 
