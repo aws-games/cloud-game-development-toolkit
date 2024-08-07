@@ -6,7 +6,7 @@
     <div class="mdx-hero">
       <div class="mdx-hero__image">
         <img
-          src="{{ '/media/aws-games-background.jpeg' | url }}"
+          src=""
           alt=""
           width="50%"
           draggable="false"
@@ -16,7 +16,7 @@
         <h1>{{ page.meta.hero.title }}</h1>
         <p>{{ page.meta.hero.subtitle }}</p>
         <a
-          href="{{ '/getting-started' | url }}"
+          href="{{ './getting-started.html' }}"
           title="{{ page.next_page.title | e }}"
           class="md-button md-button--primary"
         >
@@ -38,8 +38,10 @@
 <div class="mdx-features">
   {% for feature in page.meta.features %}
   <div>
-    <img src="{{ feature.image }}" />
-    <h2>{{ feature.title }}</h2>
+    <a href="{{ feature.link }}">
+      <!-- <img src="{{ feature.image }}" /> -->
+      <h2>{{ feature.title }}</h2>
+    </a>
     <p>{{ feature.description }}</p>
   </div>
   {% endfor %}

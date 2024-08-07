@@ -1,6 +1,5 @@
-.hero-container {
-  padding: 2rem 0;
-  background: rgb(35, 47, 63);
+[data-md-color-scheme="default"] .hero-container {
+  padding: 4rem 0;
   background: linear-gradient(
     180deg,
     var(--md-primary-fg-color),
@@ -13,6 +12,7 @@
 }
 
 [data-md-color-scheme="slate"] .hero-container {
+  padding: 4rem 0;
   background: linear-gradient(
     180deg,
     var(--md-primary-fg-color),
@@ -31,6 +31,18 @@
 .mdx-hero .md-button {
   margin-top: 0.5rem;
   margin-right: 0.5rem;
+}
+
+.mdx-hero .md-button--primary {
+  color: var(--md-primary-fg-color--light);
+  background-color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.mdx-hero .md-button--primary:hover {
+  color: var(--md-accent-fg-color);
+  background-color: transparent;
+  border-color: var(--md-accent-fg-color);
 }
 
 .mdx-hero__image {

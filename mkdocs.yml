@@ -15,8 +15,6 @@ theme:
       info: octicons/info-16
   logo: media/logos/aws-logo-white.svg
   favicon: media/logos/favicon.ico
-  #font:
-  #  text: Roboto
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -145,7 +143,7 @@ extra:
       link: https://www.linkedin.com/company/awsgametech
 
 extra_css:
-  #- stylesheets/extra.css
+  - stylesheets/extra.css
   - stylesheets/themes.css
   - stylesheets/hero.css
 
