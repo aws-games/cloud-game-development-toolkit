@@ -8,10 +8,11 @@ permissions:
 jobs:
   update-changelog:
     if: github.repository == 'aws-games/cloud-game-development-toolkit'
-    # Force Github action to run only a single job at a time (based on the group name)
-    # This is to prevent race-condition and inconsistencies with changelog push
     concurrency:
       group: changelog-build
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
