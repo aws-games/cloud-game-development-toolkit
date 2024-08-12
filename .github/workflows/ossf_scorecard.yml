@@ -1,13 +1,11 @@
 name: Scorecard supply-chain security
 on:
-  branch_protection_rule:
-  #schedule:
-  #  - cron: '0 0 * * *'
-  #push:
-  #  branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+    branches: [ "main" ]
   workflow_dispatch:
-permissions:
-  contents: read
+permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
@@ -28,7 +26,6 @@ jobs:
           results_file: results.sarif
           results_format: sarif
           publish_results: true # Publish results to OpenSSF REST API for easy access by consumers
-          repo_token: ${{ secrets.SCORECARD_TOKEN }}  # read-only fine-grained token to read branch protection settings
       - name: "Upload artifact"
         uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
