@@ -8,7 +8,12 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "terraform"
-    directory: "/"
+    directories:
+      - "/modules/jenkins"
+      - "/modules/perforce/helix-authentication-service"
+      - "/modules/perforce/helix-core"
+      - "/modules/perforce/helix-swarm"
+      - "/samples/simple-build-pipeline"
     commit-message:
       prefix: "chore"
       include: "scope"
