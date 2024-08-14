@@ -25,7 +25,7 @@ This section will walk you through the prerequisites for deploying the [Simple B
 You will need the following tools to complete this tutorial:
 
 1. [Terraform CLI](https://developer.hashicorp.com/terraform/install)
-2. [Packer CLI](https://developer.hashicorp.com/packer/tutorials/docker-get-started/get-started-install-cli)
+2. [Packer CLI](https://developer.hashicorp.com/packer/install)
 3. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ### Step 2. Create Perforce Helix Core Amazon Machine Image
