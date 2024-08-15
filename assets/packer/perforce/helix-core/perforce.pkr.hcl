@@ -70,6 +70,7 @@ build {
 
     provisioner "shell" {
       inline = [
+        "cloud-init status --wait",
         "sudo dnf install -y git sendmail nfs-utils s-nail unzip cronie"
       ]
     }
