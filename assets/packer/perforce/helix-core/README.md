@@ -23,7 +23,7 @@ The `p4_configure.sh` script contains the majority of Helix Core setup. It perfo
 Building this AMI is as easy as running:
 
 ``` bash
-packer build /assets/packer/perforce/helix-core/perforce.pkr.hcl
+packer build ./assets/packer/perforce/helix-core/perforce.pkr.hcl
 ```
 
 Packer will attempt to leverage the default VPC available in the AWS account and Region specified by your CLI credentials. It will provision an instance in a public subnet and communicate with that instance over the public internet. If a default VPC is not provided the above command will fail. This Packer template can take a number of variables as specified in `example.pkrvars.hcl`. Variables can be passed individually through the `-var` command line flag or through a configuration file with the `-var-file` command line flag.
