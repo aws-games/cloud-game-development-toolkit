@@ -24,18 +24,19 @@ This section will walk you through the prerequisites for deploying the [Simple B
 
 You will need the following tools to complete this tutorial:
 
-1. Terraform CLI
-2. Packer CLI
-3. AWS CLI
+1. [Terraform CLI](https://developer.hashicorp.com/terraform/install)
+2. [Packer CLI](https://developer.hashicorp.com/packer/install)
+3. [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
 ### Step 2. Create Perforce Helix Core Amazon Machine Image
 
 Prior to deploying the infrastructure for running Perforce Helix Core we need to create an [Amazon Machine Image](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) containing the necessary software and tools. The **Cloud Game Development Toolkit** contains a Packer template for doing just this.
 
-1. From your terminal, run the following command from the root of the repository:
+1. From your terminal, run the following commands from the root of the repository:
 
 ``` bash
-packer build /packer/perforce/helix-core/perforce.pkr.hcl
+packer init ./assets/packer/perforce/helix-core/perforce.pkr.hcl
+packer build ./assets/packer/perforce/helix-core/perforce.pkr.hcl
 ```
 
 This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](./assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
