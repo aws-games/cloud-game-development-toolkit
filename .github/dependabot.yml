@@ -17,6 +17,19 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      aws-provider:
+        applies-to: version-updates
+        patterns:
+          -hashicorp/aws
+      awscc-provider:
+        applies-to: version-updates
+        patterns:
+          -hashicorp/awscc
+      random-provider:
+        applies-to: version-updates
+        patterns:
+          -hashicorp/random
     schedule:
       interval: "daily"
   - package-ecosystem: "docker"
