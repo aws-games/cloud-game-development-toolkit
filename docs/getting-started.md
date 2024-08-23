@@ -206,8 +206,8 @@ There are 2 plugins recommended for the solutions: The [EC2 Fleet](https://plugi
 4. On the left-hand side, select ` Available plugins`.
 5. Using the search bar at the top of the page, search for `EC2 Fleet`.
 6. Select the `EC2 Fleet` plugin.
-7. Using the search bar at the top of the page, search for `AWS Secret Manager Credentials Provider`.
-8. Select the `AWS Secret Manager Credentials Provider` plugin.
+7. Using the search bar at the top of the page, search for `AWS Secrets Manager Credentials Provider`.
+8. Select the `AWS Secrets Manager Credentials Provider` plugin.
 9. Click `install` on the top-right corner of the page.
 10. Once the installation is complete, Select `Go back to the top page` at the bottom of the page
 
