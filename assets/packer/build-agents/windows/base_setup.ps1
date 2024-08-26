@@ -35,6 +35,15 @@ catch {
 }
 
 try {
+    # Installing Client for NFS
+    Write "Installing Client for NFS"
+    Install-WindowsFeature NFS-Client
+}
+catch {
+    Write "Failed to install Client for NFS"
+}
+
+try {
     Write Get-Disk | Where-Object partitionstyle -EQ 'raw'
     Get-Disk | Where-Object partitionstyle -EQ \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false
 }
