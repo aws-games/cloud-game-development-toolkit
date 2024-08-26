@@ -44,6 +44,17 @@ catch {
 }
 
 try {
+    # Python
+    Write "Installing Python, botocore, boto3"
+    choco install -y  --no-progress python
+    refreshenv
+    pip install botocore boto3
+}
+catch {
+    Write "Failed to install Python, botocore, boto3"
+}
+
+try {
     Write Get-Disk | Where-Object partitionstyle -EQ 'raw'
     Get-Disk | Where-Object partitionstyle -EQ \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false
 }
