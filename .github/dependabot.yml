@@ -21,15 +21,15 @@ updates:
       aws-provider:
         applies-to: version-updates
         patterns:
-          -hashicorp/aws
+          - "hashicorp/aws"
       awscc-provider:
         applies-to: version-updates
         patterns:
-          -hashicorp/awscc
+          - "hashicorp/awscc"
       random-provider:
         applies-to: version-updates
         patterns:
-          -hashicorp/random
+          - "hashicorp/random"
     schedule:
       interval: "daily"
   - package-ecosystem: "docker"
