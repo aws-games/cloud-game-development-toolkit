@@ -22,4 +22,8 @@ data "aws_ami" "helix_core_ami" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+    filter {
+    name   = "architecture"
+    values = [var.instance_architecture]
+  }
 }
