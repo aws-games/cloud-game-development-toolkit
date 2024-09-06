@@ -132,7 +132,7 @@ prepare_site_tags() {
 log_message "Starting the p4 configure script."
 
 # Check if the script received 7 arguments
-if [ "$#" < 6 || "$#" > 7 ]; then
+if [[ "$#" < 6 || "$#" > 7 ]]; then
     log_message "Incorrect usage. Expected 6 or 7 arguments, got $#."
     log_message "Usage: $0 <EBS path or FSx for hxlogs> <EBS path or FSx for hxmetadata> <EBS path or FSx for hxdepots> <p4d_master or p4d_replica> <p4d_super_user_username_secret_arn> <p4d_super_user_password_secret_arn> <FQDN (optional)>"
     exit 1
@@ -143,7 +143,7 @@ EBS_LOGS=$1
 EBS_METADATA=$2
 EBS_DEPOTS=$3
 P4D_TYPE=$4
-[[$4 == "p4d_commit"]] || && P4D_TYPE="p4d_master" || P4D_TYPE=$4
+[[ "$P4D_TYPE" == "p4d_commit" ]] && P4D_TYPE="p4d_master" || P4D_TYPE="$4" 
 P4D_ADMIN_USERNAME_SECRET_ID=$5
 P4D_ADMIN_PASS_SECRET_ID=$6
 
@@ -364,7 +364,8 @@ else
 fi
 
 # initialize crontab for user perforce
-
+# fixing broken crontab on SDP, cron runs on minute schedule */60 is incorrect
+sed -i 's#\*/60#0#g' /p4/p4.crontab.1
 sudo -u "$P4USER" crontab /p4/p4.crontab.1
 
 # verify sdp installation should warn about missing license only:
