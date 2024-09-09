@@ -118,7 +118,7 @@ variable "unreal_horde_alb_access_logs_prefix" {
 variable "enable_unreal_horde_alb_deletion_protection" {
   type        = bool
   description = "Enables deletion protection for the Unreal Horde ALB. Defaults to true."
-  default     = true
+  default     = false
 }
 
 variable "unreal_horde_subnets" {
@@ -172,4 +172,148 @@ variable "create_unreal_horde_default_policy" {
 variable "github_credentials_secret_arn" {
   type        = string
   description = "A secret containing the Github username and password with permissions to the EpicGames organization."
+}
+
+
+###########################
+# DocumentDB Configuration
+###########################
+
+variable "docdb_master_username" {
+  type        = string
+  description = "Master username created for DocumentDB cluster."
+  default     = "horde"
+}
+
+variable "docdb_master_password" {
+  type        = string
+  description = "Master password created for DocumentDB cluster."
+  default     = "mustbeeightchars"
+}
+
+variable "docdb_backup_retention_period" {
+  type        = number
+  description = "Number of days to retain backups for DocumentDB cluster."
+  default     = 7
+}
+
+variable "docdb_preferred_backup_window" {
+  type        = string
+  description = "The preferred window for DocumentDB backups to be created."
+  default     = "07:00-09:00"
+}
+
+variable "docdb_skip_final_snapshot" {
+  type        = bool
+  description = "Flag for whether a final snapshot should be created when the cluster is destroyed."
+  default     = true
+}
+
+variable "docdb_instance_count" {
+  type        = number
+  description = "The number of instances to provision for the Horde DocumentDB cluster."
+  default     = 2
+}
+
+variable "docdb_instance_class" {
+  type        = string
+  description = "The instance class for the Horde DocumentDB cluster."
+  default     = "db.t4g.medium"
+}
+
+
+variable "elasticache_daily_snapshot_time" {
+  type        = string
+  description = "The daily time for Elasticache to create a snapshot of the cluster."
+  default     = "09:00"
+}
+
+variable "database_connection_string" {
+  type        = string
+  description = "The database connection string that Horde should use."
+  default     = null
+}
+
+variable "redis_connection_config" {
+  type        = string
+  description = "The redis connection configuration that Horde should use."
+  default     = null
+}
+
+variable "auth_method" {
+  type        = string
+  description = "The authentication method for the Horde server."
+  default     = "Anonymous"
+  validation {
+    condition     = contains(["Anonymous", "Okta", "OpenIdConnect", "Horde"], var.auth_method)
+    error_message = "Invalid authentication method. Must be one of: Anonymous, Okta, OpenIdConnect, Horde"
+  }
+}
+
+variable "oidc_authority" {
+  type        = string
+  description = "The authority for the OIDC authentication provider used."
+  default     = null
+  validation {
+    condition     = contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_authority != null : var.oidc_authority == null
+    error_message = "An OIDC authority must be provided for Okta and OpenIdConnect authentication methods."
+  }
+}
+
+variable "oidc_audience" {
+  type        = string
+  description = "The audience used for validating externally issued tokens."
+  default     = null
+  validation {
+    condition     = contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_audience != null : var.oidc_audience == null
+    error_message = "An OIDC audience must be provided for Okta and OpenIdConnect authentication methods."
+  }
+}
+
+variable "oidc_client_id" {
+  type        = string
+  description = "The client ID used for authenticating with the OIDC provider."
+  default     = null
+  validation {
+    condition     = contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_id != null : var.oidc_client_id == null
+    error_message = "An OIDC client ID must be provided for Okta and OpenIdConnect authentication methods."
+  }
+}
+
+variable "oidc_client_secret" {
+  type        = string
+  description = "The client secret used for authenticating with the OIDC provider."
+  default     = null
+  validation {
+    condition     = contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_secret != null : var.oidc_client_secret == null
+    error_message = "An OIDC client secret must be provided for Okta and OpenIdConnect authentication methods."
+  }
+}
+
+variable "oidc_signin_redirect" {
+  type        = string
+  description = "The sign-in redirect URL for the OIDC provider."
+  default     = null
+  validation {
+    condition     = contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_signin_redirect != null : var.oidc_signin_redirect == null
+    error_message = "An OIDC sign-in redirect URL must be provided for Okta and OpenIdConnect authentication methods."
+  }
+}
+
+variable "admin_claim_type" {
+  type        = string
+  description = "The claim type for administrators."
+  default     = null
+}
+
+variable "admin_claim_value" {
+  type        = string
+  description = "The claim value for administrators."
+  default     = null
+}
+
+variable "docdb_storage_encrypted" {
+  type        = bool
+  description = "Configure DocumentDB storage at rest."
+  default     = true
 }

@@ -41,5 +41,5 @@ module "unreal_horde" {
   github_credentials_secret_arn = var.github_credentials_secret_arn
   tags                          = local.tags
 
-  depends_on = [aws_ecs_cluster.cluster]
+  depends_on = [aws_ecs_cluster.cluster, aws_acm_certificate_validation.unreal_horde]
 }

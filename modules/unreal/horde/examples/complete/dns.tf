@@ -8,7 +8,7 @@ data "aws_route53_zone" "root" {
 
 resource "aws_route53_record" "unreal_horde" {
   zone_id = data.aws_route53_zone.root.id
-  name    = data.aws_route53_zone.root.name
+  name    = "horde.${data.aws_route53_zone.root.name}"
   type    = "A"
   alias {
     name                   = module.unreal_horde.alb_dns_name
@@ -18,7 +18,7 @@ resource "aws_route53_record" "unreal_horde" {
 }
 
 resource "aws_acm_certificate" "unreal_horde" {
-  domain_name       = "horde.${var.root_domain_name}"
+  domain_name       = "horde.${data.aws_route53_zone.root.name}"
   validation_method = "DNS"
 
   tags = {
