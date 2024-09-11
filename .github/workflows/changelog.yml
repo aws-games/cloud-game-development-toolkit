@@ -11,8 +11,8 @@ jobs:
     concurrency:
       group: changelog-build
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # Used to create temporary branch for changelog updates
+      pull-requests: write # Used to create PRs for changelog updates
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
@@ -20,16 +20,16 @@ jobs:
       with:
         fetch-depth: 0
     - name: Update Changelog
-      run: docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
+      run: make changelog
     - name: Create Pull Request
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config user.name github-actions[bot]
         git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+        git config pull.rebase true
         git checkout -b changelog-update
         git add .
         git commit -m "Update Changelog"
         git push origin changelog-update
-        echo $GH_TOKEN | gh auth login --with-token
         gh pr create --title chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update --repo ${{ github.repository }} --confirm
