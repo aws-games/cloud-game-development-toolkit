@@ -32,5 +32,4 @@ jobs:
         git add .
         git commit -m "Update Changelog"
         git push origin changelog-update
-        echo $GH_TOKEN | gh auth login --with-token
         gh pr create --title chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update --repo ${{ github.repository }} --confirm
