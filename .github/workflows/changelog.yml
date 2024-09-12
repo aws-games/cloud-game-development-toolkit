@@ -23,17 +23,35 @@ jobs:
       run: |
         git fetch --tags origin
         docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
-    - name: Create Pull Request
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Create Pull Request
+    #   env:
+    #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    #   run: |
+    #     git config user.name github-actions[bot]
+    #     git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+    #     git config user.signingkey
+    #     git config commit.gpgsign true
+    #     git checkout -b changelog-update-${{ github.run_id }}
+    #     git add .
+    #     git commit -m "Update Changelog"
+    #     git push origin changelog-update-${{ github.run_id }}
+    #     gh version
+    #     gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update-${{ github.run_id }}
+    - name: Commit changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FILE_TO_COMMIT: CHANGELOG.md
+        DESTINATION_BRANCH: changelog-update-${{ github.run_id }}
       run: |
-        git config user.name github-actions[bot]
-        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-        git rev-parse --short HEAD
-        git checkout -b changelog-update-${{ github.run_id }}
-        git add .
-        git commit -m "Update Changelog"
-        git push origin changelog-update-${{ github.run_id }}
-        gh version
+        export TODAY=$( date -u '+%Y-%m-%d' )
+        export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+        export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
+        export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+        gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+          --field message="$MESSAGE" \
+          --field content="$CONTENT" \
+          --field encoding="base64" \
+          --field branch="$DESTINATION_BRANCH" \
+          --field sha="$SHA"
         gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update-${{ github.run_id }}
