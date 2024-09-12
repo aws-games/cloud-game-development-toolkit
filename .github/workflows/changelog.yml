@@ -20,7 +20,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Update Changelog
-      run: make changelog
+      run: docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
     - name: Create Pull Request
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
