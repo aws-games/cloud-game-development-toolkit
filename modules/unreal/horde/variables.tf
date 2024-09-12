@@ -21,8 +21,8 @@ variable "project_prefix" {
 
 variable "environment" {
   type        = string
-  description = "The current environment (e.g. dev, prod, etc.)"
-  default     = "dev"
+  description = "The current environment (e.g. Development, Staging, Production, etc.). This will tag ressources and set ASPNETCORE_ENVIRONMENT variable."
+  default     = "Development"
 }
 
 variable "tags" {

@@ -87,6 +87,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           name  = "Horde__adminClaimValue"
           value = var.admin_claim_value
         },
+        {
+          name  = "ASPNETCORE_ENVIRONMENT"
+          value = var.environment
+        }
       ]
       logConfiguration = {
         logDriver = "awslogs"
