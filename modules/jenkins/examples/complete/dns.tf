@@ -2,15 +2,9 @@
 # Route53 Hosted Zone for FQDN
 ##########################################
 data "aws_route53_zone" "root" {
-  name         = local.fully_qualified_domain_name
+  name         = var.fully_qualified_domain_name
   private_zone = false
 }
-
-# resource "aws_route53_zone" "root" {
-#   name = local.fully_qualified_domain_name
-#   #checkov:skip=CKV2_AWS_38: DNSSEC signing disabled by design
-#   #checkov:skip=CKV2_AWS_39: Query logging disabled by design
-# }
 
 resource "aws_route53_record" "jenkins" {
   zone_id = data.aws_route53_zone.root.id
@@ -57,7 +51,6 @@ resource "aws_route53_record" "jenkins_cert" {
   zone_id         = data.aws_route53_zone.root.id
 }
 
-# tflint-ignore: terraform_required_providers
 resource "aws_acm_certificate_validation" "jenkins" {
   timeouts {
     create = "15m"

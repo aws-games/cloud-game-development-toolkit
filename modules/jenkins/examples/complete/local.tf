@@ -2,17 +2,6 @@ data "aws_availability_zones" "available" {}
 
 
 locals {
-  # Simple Build Pipeline Configuration
-  fully_qualified_domain_name = "example.com" # update this to the root domain name you own
-
-  # IPV4 CIDR blocks that need Jenkins access. For example:
-  # "<my personal ip>/32"
-
-  # tflint-ignore: terraform_unused_declarations
-  allowlist = []
-
-  # Jenkins and Build Farm Configurations
-  jenkins_agent_secret_arns = []
 
   build_farm_compute = {
     example_builders : {

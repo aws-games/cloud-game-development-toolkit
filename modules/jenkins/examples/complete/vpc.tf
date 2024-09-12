@@ -2,11 +2,11 @@
 # VPC
 ##########################################
 
-resource "aws_vpc" "build_pipeline_vpc" {
+resource "aws_vpc" "jenkins_vpc" {
   cidr_block = local.vpc_cidr_block
   tags = merge(local.tags,
     {
-      Name = "build-pipeline-vpc"
+      Name = "jenkins-vpc"
     }
   )
   enable_dns_hostnames = true
@@ -15,7 +15,7 @@ resource "aws_vpc" "build_pipeline_vpc" {
 
 # Set default SG to restrict all traffic
 resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.build_pipeline_vpc.id
+  vpc_id = aws_vpc.jenkins_vpc.id
 }
 
 ##########################################
@@ -24,7 +24,7 @@ resource "aws_default_security_group" "default" {
 
 resource "aws_subnet" "public_subnets" {
   count             = length(local.public_subnet_cidrs)
-  vpc_id            = aws_vpc.build_pipeline_vpc.id
+  vpc_id            = aws_vpc.jenkins_vpc.id
   cidr_block        = element(local.public_subnet_cidrs, count.index)
   availability_zone = element(local.azs, count.index)
 
@@ -37,7 +37,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_subnet" "private_subnets" {
   count             = length(local.private_subnet_cidrs)
-  vpc_id            = aws_vpc.build_pipeline_vpc.id
+  vpc_id            = aws_vpc.jenkins_vpc.id
   cidr_block        = element(local.private_subnet_cidrs, count.index)
   availability_zone = element(local.azs, count.index)
 
@@ -53,7 +53,7 @@ resource "aws_subnet" "private_subnets" {
 ##########################################
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.build_pipeline_vpc.id
+  vpc_id = aws_vpc.jenkins_vpc.id
   tags = merge(local.tags,
     {
       Name = "build-pipeline-igw"
@@ -66,7 +66,7 @@ resource "aws_internet_gateway" "igw" {
 ##########################################
 
 resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.build_pipeline_vpc.id
+  vpc_id = aws_vpc.jenkins_vpc.id
 
   # public route to the internet
   route {
@@ -76,7 +76,7 @@ resource "aws_route_table" "public_rt" {
 
   tags = merge(local.tags,
     {
-      Name = "build-pipeline-public-rt"
+      Name = "jenkins-public-rt"
     }
   )
 }
@@ -92,13 +92,13 @@ resource "aws_eip" "nat_gateway_eip" {
   #checkov:skip=CKV2_AWS_19:EIP associated with NAT Gateway through association ID
   tags = merge(local.tags,
     {
-      Name = "build-pipeline-nat-eip"
+      Name = "jenkins-nat-eip"
     }
   )
 }
 
 resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.build_pipeline_vpc.id
+  vpc_id = aws_vpc.jenkins_vpc.id
 
   # route to the internet through NAT gateway
   route {
@@ -108,7 +108,7 @@ resource "aws_route_table" "private_rt" {
 
   tags = merge(local.tags,
     {
-      Name = "build-pipeline-private-rt"
+      Name = "jenkins-private-rt"
     }
   )
 }
@@ -119,13 +119,12 @@ resource "aws_route_table_association" "private_rt_asso" {
   subnet_id      = aws_subnet.private_subnets[count.index].id
 }
 
-# tflint-ignore: terraform_required_providers
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.nat_gateway_eip.id
   subnet_id     = aws_subnet.public_subnets[0].id
   tags = merge(local.tags,
     {
-      Name = "build-pipeline-nat"
+      Name = "jenkins-nat"
     }
   )
 }
