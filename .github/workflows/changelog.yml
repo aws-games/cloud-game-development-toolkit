@@ -49,7 +49,7 @@ jobs:
         export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
         export CONTENT=$( base64 -i $FILE_TO_COMMIT )
         gh api --method POST /repos/:owner/:repo/git/refs \
-          --field ref="refs/head/changelog-${{ github.run_id }}" \
+          --field ref="refs/heads/changelog-${{ github.run_id }}" \
           --field sha="$SHA"
         gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
           --field message="$MESSAGE" \
