@@ -1,15 +1,59 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
-### Ci
-- update changelog GHA permissions ([#180](https://github.com/aws-games/cloud-game-development-toolkit/issues/180))
+### Bug Fixes
+- changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
+- adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
+- dependabot grouping terraform providers ([#228](https://github.com/aws-games/cloud-game-development-toolkit/issues/228))
+- wait for cloud-init to complete prior to installing packages during Perforce Helix Core AMI creation ([#193](https://github.com/aws-games/cloud-game-development-toolkit/issues/193))
+- **changelog:** GHA bot committer ([#255](https://github.com/aws-games/cloud-game-development-toolkit/issues/255))
+- **changelog:** Add automated PR creation ([#252](https://github.com/aws-games/cloud-game-development-toolkit/issues/252))
+- **fsx_automounter:** when FSx automounter can't list tags for an FSx volume, the AccessDenied exception is now treated as a warning ([#226](https://github.com/aws-games/cloud-game-development-toolkit/issues/226))
+- **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
+
+### Chore
+- **deps:** bump python from 3.12 to 3.12.6 in /docs ([#243](https://github.com/aws-games/cloud-game-development-toolkit/issues/243))
+- **deps:** bump mkdocs-material from 9.5.33 to 9.5.34 in /docs ([#236](https://github.com/aws-games/cloud-game-development-toolkit/issues/236))
+- **deps:** bump actions/upload-artifact from 4.3.6 to 4.4.0 ([#235](https://github.com/aws-games/cloud-game-development-toolkit/issues/235))
+- **deps:** bump the aws-provider group across 5 directories with 1 update ([#241](https://github.com/aws-games/cloud-game-development-toolkit/issues/241))
+- **deps:** bump the awscc-provider group across 3 directories with 1 update ([#242](https://github.com/aws-games/cloud-game-development-toolkit/issues/242))
+- **deps:** bump the aws-provider group across 5 directories with 1 update ([#233](https://github.com/aws-games/cloud-game-development-toolkit/issues/233))
+- **deps:** bump the aws-provider group across 5 directories with 1 update ([#231](https://github.com/aws-games/cloud-game-development-toolkit/issues/231))
+- **deps:** bump mkdocs-material from 9.5.32 to 9.5.33 in /docs ([#229](https://github.com/aws-games/cloud-game-development-toolkit/issues/229))
+- **deps:** bump hashicorp/awscc from 1.10.0 to 1.11.0 in /samples/simple-build-pipeline ([#220](https://github.com/aws-games/cloud-game-development-toolkit/issues/220))
+- **deps:** bump mkdocs-material from 9.5.31 to 9.5.32 in /docs ([#211](https://github.com/aws-games/cloud-game-development-toolkit/issues/211))
+- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-core ([#207](https://github.com/aws-games/cloud-game-development-toolkit/issues/207))
+- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-authentication-service ([#205](https://github.com/aws-games/cloud-game-development-toolkit/issues/205))
+- **deps:** bump hashicorp/aws from 5.62.0 to 5.63.1 in /samples/simple-build-pipeline ([#216](https://github.com/aws-games/cloud-game-development-toolkit/issues/216))
+- **deps:** bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-authentication-service ([#196](https://github.com/aws-games/cloud-game-development-toolkit/issues/196))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-authentication-service ([#197](https://github.com/aws-games/cloud-game-development-toolkit/issues/197))
+- **deps:** bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-core ([#198](https://github.com/aws-games/cloud-game-development-toolkit/issues/198))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-core ([#199](https://github.com/aws-games/cloud-game-development-toolkit/issues/199))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-swarm ([#200](https://github.com/aws-games/cloud-game-development-toolkit/issues/200))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /samples/simple-build-pipeline ([#201](https://github.com/aws-games/cloud-game-development-toolkit/issues/201))
+- **deps:** bump hashicorp/awscc from 1.6.0 to 1.9.0 in /samples/simple-build-pipeline ([#202](https://github.com/aws-games/cloud-game-development-toolkit/issues/202))
+- **deps:** bump mike from 2.1.2 to 2.1.3 in /docs ([#189](https://github.com/aws-games/cloud-game-development-toolkit/issues/189))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/jenkins ([#195](https://github.com/aws-games/cloud-game-development-toolkit/issues/195))
+
+### Docs
+- add openssf scorecard badge to readme ([#219](https://github.com/aws-games/cloud-game-development-toolkit/issues/219))
+- link to installation instructions for required tools, fix packer command invocation instructions ([#194](https://github.com/aws-games/cloud-game-development-toolkit/issues/194))
+- Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 
 <a name="v1.0.0-alpha"></a>
 ## [v1.0.0-alpha] - 2024-08-07
 
+<a name="staging"></a>
+## [staging] - 2024-08-07
+
 <a name="latest"></a>
 ## latest - 2024-08-07
+### Bug Fixes
+- fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI ([#150](https://github.com/aws-games/cloud-game-development-toolkit/issues/150))
+- bug fixes for FSxZ storage in build farm ([#152](https://github.com/aws-games/cloud-game-development-toolkit/issues/152))
+- allow Jenkins build agents to discover FSx volumes/snapshots and make outbound Internet connections ([#147](https://github.com/aws-games/cloud-game-development-toolkit/issues/147))
+
 ### Chore
 - add CODEOWNERS file ([#132](https://github.com/aws-games/cloud-game-development-toolkit/issues/132))
 - Updates to docs ([#63](https://github.com/aws-games/cloud-game-development-toolkit/issues/63))
@@ -30,39 +74,11 @@
 - **deps:** bump github/codeql-action from 3.24.9 to 3.25.8 ([#53](https://github.com/aws-games/cloud-game-development-toolkit/issues/53))
 - **deps:** bump mkdocs-material from 9.5.25 to 9.5.26 in /docs ([#54](https://github.com/aws-games/cloud-game-development-toolkit/issues/54))
 
-### Ci
-- fix gha workflow level permissions to contents: read ([#170](https://github.com/aws-games/cloud-game-development-toolkit/issues/170))
-- update dependabot terraform versioning ([#162](https://github.com/aws-games/cloud-game-development-toolkit/issues/162))
-- remove packer github actions which are moving to codebuild in CI ([#164](https://github.com/aws-games/cloud-game-development-toolkit/issues/164))
-- add config scanning to trivy ([#143](https://github.com/aws-games/cloud-game-development-toolkit/issues/143))
-- add checkov ([#140](https://github.com/aws-games/cloud-game-development-toolkit/issues/140))
-- fix workflow permissions ([#139](https://github.com/aws-games/cloud-game-development-toolkit/issues/139))
-- consolidate security workflows under a reusable workflow template… ([#138](https://github.com/aws-games/cloud-game-development-toolkit/issues/138))
-- add trivy scan github action ([#134](https://github.com/aws-games/cloud-game-development-toolkit/issues/134))
-- add pre-commit hooks ([#133](https://github.com/aws-games/cloud-game-development-toolkit/issues/133))
-- adds codeql github action ([#131](https://github.com/aws-games/cloud-game-development-toolkit/issues/131))
-- update packer ci matrix to run to completion even with errors ([#130](https://github.com/aws-games/cloud-game-development-toolkit/issues/130))
-- modify the run if statement for the workflow ([#115](https://github.com/aws-games/cloud-game-development-toolkit/issues/115))
-- fix permissions ([#89](https://github.com/aws-games/cloud-game-development-toolkit/issues/89))
-- fix permissions on Packer ci ([#88](https://github.com/aws-games/cloud-game-development-toolkit/issues/88))
-- add packer template ci ([#87](https://github.com/aws-games/cloud-game-development-toolkit/issues/87))
-- packer build agent linux updates ([#70](https://github.com/aws-games/cloud-game-development-toolkit/issues/70))
-- add release-drafter github action ([#58](https://github.com/aws-games/cloud-game-development-toolkit/issues/58))
-- adds dependabot.yml ([#52](https://github.com/aws-games/cloud-game-development-toolkit/issues/52))
-- updates to release workflow ([#50](https://github.com/aws-games/cloud-game-development-toolkit/issues/50))
-- update docs release workflow ([#48](https://github.com/aws-games/cloud-game-development-toolkit/issues/48))
-- add docs release versioning ([#47](https://github.com/aws-games/cloud-game-development-toolkit/issues/47))
-- Update github action for docs ([#39](https://github.com/aws-games/cloud-game-development-toolkit/issues/39))
-- fix docs release automation ([#37](https://github.com/aws-games/cloud-game-development-toolkit/issues/37))
-- modify Makefile ([#35](https://github.com/aws-games/cloud-game-development-toolkit/issues/35))
-- resolving merge conflicts ([#30](https://github.com/aws-games/cloud-game-development-toolkit/issues/30))
-- fix permissions on gh action ([#29](https://github.com/aws-games/cloud-game-development-toolkit/issues/29))
-- bump versions in ossf scorecard action ([#27](https://github.com/aws-games/cloud-game-development-toolkit/issues/27))
-- update ossf scorecard action to trigger on pull requests on main ([#26](https://github.com/aws-games/cloud-game-development-toolkit/issues/26))
-- setup ossf scorecard GH action ([#23](https://github.com/aws-games/cloud-game-development-toolkit/issues/23))
-- Updates documentation release workflow, adds semantic.yml and release-drafter.yml  ([#22](https://github.com/aws-games/cloud-game-development-toolkit/issues/22))
+### Code Refactoring
+- Perforce Helix Core AMI revamp, simple build pipeline DNS ([#73](https://github.com/aws-games/cloud-game-development-toolkit/issues/73))
 
 ### Docs
+- update changelog ([#181](https://github.com/aws-games/cloud-game-development-toolkit/issues/181))
 - update main docs page ([#179](https://github.com/aws-games/cloud-game-development-toolkit/issues/179))
 - update layout of documentation main page theme ([#175](https://github.com/aws-games/cloud-game-development-toolkit/issues/175))
 - update documentation ([#163](https://github.com/aws-games/cloud-game-development-toolkit/issues/163))
@@ -90,7 +106,7 @@
 - Updates to project README ([#20](https://github.com/aws-games/cloud-game-development-toolkit/issues/20))
 - Adds project docs ([#13](https://github.com/aws-games/cloud-game-development-toolkit/issues/13))
 
-### Feat
+### Features
 - Added getting-started documentation for quickstart with Simple Build Pipeline ([#177](https://github.com/aws-games/cloud-game-development-toolkit/issues/177))
 - Updates to CI configurations for pre-commit and GHA ([#154](https://github.com/aws-games/cloud-game-development-toolkit/issues/154))
 - Helix Authentication Extension ([#82](https://github.com/aws-games/cloud-game-development-toolkit/issues/82))
@@ -100,14 +116,7 @@
 - **devops:** Add new DevOps playbook files ([#76](https://github.com/aws-games/cloud-game-development-toolkit/issues/76))
 - **packer:** switch AMI from Rocky Linux to Amazon Linux 2023 and up… ([#141](https://github.com/aws-games/cloud-game-development-toolkit/issues/141))
 
-### Fix
-- fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI ([#150](https://github.com/aws-games/cloud-game-development-toolkit/issues/150))
-- bug fixes for FSxZ storage in build farm ([#152](https://github.com/aws-games/cloud-game-development-toolkit/issues/152))
-- allow Jenkins build agents to discover FSx volumes/snapshots and make outbound Internet connections ([#147](https://github.com/aws-games/cloud-game-development-toolkit/issues/147))
-
-### Refactor
-- Perforce Helix Core AMI revamp, simple build pipeline DNS ([#73](https://github.com/aws-games/cloud-game-development-toolkit/issues/73))
-
 
 [Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...HEAD
-[v1.0.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.0.0-alpha
+[v1.0.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/staging...v1.0.0-alpha
+[staging]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...staging
