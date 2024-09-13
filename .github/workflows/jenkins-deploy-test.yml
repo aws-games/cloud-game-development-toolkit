@@ -19,6 +19,9 @@ permissions:
 jobs:
   aws-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./modules/jenkins/examples/complete
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
@@ -36,10 +39,6 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.6.3
-
-      - name: cd to project
-        run: |
-          cd modules/jenkins/examples/complete
 
       - name: Terraform init and validate
         run: |
