@@ -37,6 +37,10 @@ jobs:
         with:
           terraform_version: 1.6.3
 
+      - name: cd to project
+        run: |
+          cd modules/jenkins/examples/complete
+
       - name: Terraform init and validate
         run: |
           terraform init
