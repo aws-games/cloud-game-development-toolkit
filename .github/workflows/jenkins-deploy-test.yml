@@ -32,7 +32,15 @@ jobs:
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ env.AWS_REGION }}
 
-      # Hello from AWS: WhoAmI
-      - name: Sts GetCallerIdentity
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.6.3
+
+      - name: Terraform init and validate
         run: |
-          aws sts get-caller-identity
+          terraform init
+
+      - name: Terraform plan
+        run: |
+          terraform plan
