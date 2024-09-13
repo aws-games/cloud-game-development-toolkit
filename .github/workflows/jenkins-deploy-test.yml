@@ -1,0 +1,38 @@
+name: Jenkins Deployment Test
+
+env:
+  AWS_REGION: "us-east-1"
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+jobs:
+  aws-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3.0.0
+        with:
+          fetch-depth: 0
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::968702293218:oidc-provider/token.actions.githubusercontent.com
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
