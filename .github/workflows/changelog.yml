@@ -20,20 +20,25 @@ jobs:
       with:
         fetch-depth: 0
     - name: Update Changelog
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FILE_TO_COMMIT: CHANGELOG.md
+        DESTINATION_BRANCH: changelog-${{ github.run_id }}
       run: |
         git fetch --tags origin
         docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
-    - name: Create Pull Request
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      run: |
-        git config user.name github-actions[bot]
-        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-        git rev-parse --short HEAD
-        git checkout -b changelog-update-${{ github.run_id }}
-        git add .
-        git commit -m "Update Changelog"
-        git push origin changelog-update-${{ github.run_id }}
-        gh version
-        gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update-${{ github.run_id }}
+        export TODAY=$( date -u '+%Y-%m-%d' )
+        export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+        export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+        export BRANCH_SHA=$( gh api /repos/:owner/:repo/git/ref/heads/main | jq .object.sha | tr -d '"')
+        gh api --method POST /repos/:owner/:repo/git/refs \
+          --field "ref=refs/heads/$DESTINATION_BRANCH" \
+          --field "sha=$BRANCH_SHA"
+        export SHA=$( gh api -XGET /repos/:owner/:repo/contents/$FILE_TO_COMMIT -F ref=refs/heads/$DESTINATION_BRANCH  | jq .sha | tr -d '"')
+        gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+          --field message="$MESSAGE" \
+          --field content="$CONTENT" \
+          --field encoding="base64" \
+          --field branch="$DESTINATION_BRANCH" \
+          --field sha=$SHA
+        gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH
