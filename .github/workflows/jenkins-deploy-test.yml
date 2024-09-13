@@ -2,6 +2,7 @@ name: Jenkins Deployment Test
 
 env:
   AWS_REGION: "us-east-1"
+  TF_VAR_fully_qualified_domain_name: "gabeaws.people.aws.dev"
 
 on:
   push:
