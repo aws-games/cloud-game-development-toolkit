@@ -1,5 +1,7 @@
 name: 'Dependency Review'
-on: [pull_request]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 permissions:
   contents: read
 jobs:
