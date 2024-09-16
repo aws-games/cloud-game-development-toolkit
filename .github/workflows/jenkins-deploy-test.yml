@@ -18,7 +18,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: ./modules/jenkins/examples/complete
+    working-directory: modules/jenkins/examples/complete
 
 jobs:
   prep:
