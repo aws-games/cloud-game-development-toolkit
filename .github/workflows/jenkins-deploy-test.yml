@@ -5,7 +5,7 @@ env:
 
 # push on: PR when jenkin's files are changed
 on:
-  pull_request:
+  push: # change to pull_request before publish
     paths:
       - 'modules/jenkins/**'
   workflow_dispatch:
