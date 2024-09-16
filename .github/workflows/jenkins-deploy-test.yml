@@ -19,11 +19,10 @@ permissions:
 jobs:
   prep:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: home/runner/work
-
     steps:
+      - name: test
+        run: |
+          echo $GITHUB_WORKSPACE
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
 
