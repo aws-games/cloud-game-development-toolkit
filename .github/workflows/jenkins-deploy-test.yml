@@ -19,6 +19,9 @@ permissions:
 jobs:
   prep:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: home/runner/work/cloud-game-development-toolkit
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
