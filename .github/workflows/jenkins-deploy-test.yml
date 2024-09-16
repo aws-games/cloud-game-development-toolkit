@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./modules/jenkins/examples/complete
+        working-directory: modules/jenkins/examples/complete
     steps:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./modules/jenkins/examples/complete
+        working-directory: modules/jenkins/examples/complete
     steps:
       # Write output file as comment in triggering PR
       # - name: Manual Approval in Triggering PR
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./modules/jenkins/examples/complete
+        working-directory: modules/jenkins/examples/complete
     steps:
       - name: Terraform Destroy
         run: |
