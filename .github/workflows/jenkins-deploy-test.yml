@@ -16,10 +16,6 @@ permissions:
   contents: read
   issues: write
 
-defaults:
-  run:
-    working-directory: modules/jenkins/examples/complete
-
 jobs:
   prep:
     runs-on: ubuntu-latest
@@ -39,6 +35,9 @@ jobs:
   plan:
     needs: [ prep ]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/jenkins/examples/complete
     steps:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -59,6 +58,9 @@ jobs:
     needs: [ plan ]
     environment: jenkins-test-environment
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/jenkins/examples/complete
     steps:
       # Write output file as comment in triggering PR
       # - name: Manual Approval in Triggering PR
@@ -71,6 +73,9 @@ jobs:
   destroy:
     needs: [ deploy ]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/jenkins/examples/complete
     steps:
       - name: Terraform Destroy
         run: |
