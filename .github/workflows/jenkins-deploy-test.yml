@@ -8,6 +8,7 @@ on:
   push: # change to pull_request before publish
     paths:
       - 'modules/jenkins/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
