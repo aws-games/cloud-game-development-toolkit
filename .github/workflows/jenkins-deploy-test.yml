@@ -20,10 +20,6 @@ jobs:
   prep:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3.0.0
-        with:
-          ref: main
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
@@ -38,13 +34,14 @@ jobs:
       run:
         working-directory: modules/jenkins/examples/complete
     steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3.0.0
+        with:
+          ref: main
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.6.3
-      - name: explore file system
-        run: |
-          ls -al /home/runner/work/cloud-game-development-toolkit/cloud-game-development-toolkit/
       - name: Terraform init and validate
         run: |
           terraform init
