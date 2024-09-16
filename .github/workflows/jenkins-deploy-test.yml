@@ -17,64 +17,64 @@ permissions:
   issues: write
 
 jobs:
-  prep:
+  plan:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/jenkins/examples/complete
     steps:
+      # Checkout Repository
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3.0.0
+        with:
+          ref: main
+      # Retrive necessary AWS permissions
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ secrets.AWS_REGION }}
-
-  plan:
-    needs: [ prep ]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: modules/jenkins/examples/complete
-    steps:
-      - name: Checkout Git Repository
-        uses: actions/checkout@v3.0.0
-        with:
-          ref: main
-      - name: Setup Terraform
+      # Install Terraform
+      - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.6.3
-      - name: Terraform init and validate
+      # Initialize environment
+      - name: Terraform init
         run: |
           terraform init
 
       # Save output as file and pass to apply step
+      # Generate tf plan
       - name: Terraform plan
         run: |
           terraform plan
 
 
-  deploy:
-    needs: [ plan ]
-    environment: jenkins-test-environment
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: modules/jenkins/examples/complete
-    steps:
-      # Write output file as comment in triggering PR
-      # - name: Manual Approval in Triggering PR
-
-      # Run apply
-      - name: Terraform apply
-        run: |
-          terraform apply
-
-  destroy:
-    needs: [ deploy ]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: modules/jenkins/examples/complete
-    steps:
-      - name: Terraform Destroy
-        run: |
-          terraform destroy
+#  deploy:
+#    needs: [ plan ]
+#    environment: jenkins-test-environment
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: modules/jenkins/examples/complete
+#    steps:
+#      # Write output file as comment in triggering PR
+#      # - name: Manual Approval in Triggering PR
+#
+#      # Run apply
+#      - name: Terraform apply
+#        run: |
+#          terraform apply
+#
+#  destroy:
+#    needs: [ deploy ]
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        working-directory: modules/jenkins/examples/complete
+#    steps:
+#      - name: Terraform Destroy
+#        run: |
+#          terraform destroy
