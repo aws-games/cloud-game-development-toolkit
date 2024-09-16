@@ -22,6 +22,7 @@ jobs:
     defaults:
       run:
         working-directory: home/runner/work
+
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
