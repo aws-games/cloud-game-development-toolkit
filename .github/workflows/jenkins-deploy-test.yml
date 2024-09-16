@@ -20,11 +20,10 @@ jobs:
   prep:
     runs-on: ubuntu-latest
     steps:
-      - name: test
-        run: |
-          echo $GITHUB_WORKSPACE
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
+        with:
+          ref: main
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
