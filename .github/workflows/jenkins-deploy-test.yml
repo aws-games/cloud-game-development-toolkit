@@ -1,16 +1,14 @@
 name: Jenkins Deployment Test
 
 env:
-  AWS_REGION: "us-east-1"
-  TF_VAR_fully_qualified_domain_name: "gabeaws.people.aws.dev"
+  TF_VAR_fully_qualified_domain_name: ${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}
 
+# push on: PR when jenkin's files are changed
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    paths:
+      - 'modules/jenkins/**'
   workflow_dispatch:
-    branches:
-      - main
 
 permissions:
   id-token: write
@@ -18,11 +16,8 @@ permissions:
   issues: write
 
 jobs:
-  aws-deploy:
+  prep:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./modules/jenkins/examples/complete
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
@@ -32,10 +27,17 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
-          role-to-assume: arn:aws:iam::968702293218:role/GitHubAction-AssumeRoleWithAction
+          role-to-assume: arn:aws:iam::968702293218:role/GitHubAction-AssumeRoleWithAction # Move to secret
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
+  plan:
+    needs: [prep]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./modules/jenkins/examples/complete
+    steps:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -45,6 +47,35 @@ jobs:
         run: |
           terraform init
 
+      # Save output as file and pass to apply step
       - name: Terraform plan
         run: |
           terraform plan
+
+
+  deploy:
+    needs: [plan]
+    environment: jenkins-test-environment
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./modules/jenkins/examples/complete
+    steps:
+      # Write output file as comment in triggering PR
+      # - name: Manual Approval in Triggering PR
+
+      # Run apply
+      - name: Terraform apply
+        run: |
+          terraform apply
+
+  destroy:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./modules/jenkins/examples/complete
+    steps:
+      - name: Terraform Destroy
+        run: |
+          terraform destroy
