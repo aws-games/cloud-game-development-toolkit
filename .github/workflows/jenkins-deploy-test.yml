@@ -22,8 +22,6 @@ jobs:
     steps:
       - name: Checkout Git Repository
         uses: actions/checkout@v3.0.0
-        with:
-          fetch-depth: 0
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
