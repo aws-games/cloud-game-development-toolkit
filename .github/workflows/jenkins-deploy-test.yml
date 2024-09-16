@@ -27,7 +27,7 @@ jobs:
 
       - name: explore file system
         run: |
-          ls /home/runner/work/cloud-game-development-toolkit/cloud-game-development-toolkit/modules/jenkins/
+          ls /home/runner/work/cloud-game-development-toolkit/cloud-game-development-toolkit/modules/jenkins/examples/
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
