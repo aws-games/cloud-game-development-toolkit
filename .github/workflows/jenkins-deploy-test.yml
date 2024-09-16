@@ -25,6 +25,9 @@ jobs:
         with:
           ref: main
 
+      - name: explore file system
+        run: |
+          ls /home/runner/work/cloud-game-development-toolkit/cloud-game-development-toolkit/
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
