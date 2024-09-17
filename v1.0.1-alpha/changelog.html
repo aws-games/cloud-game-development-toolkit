@@ -1510,13 +1510,49 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v101-alpha-2024-09-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      v1.0.1-alpha - 2024-09-16
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latest-2024-09-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      latest - 2024-09-16
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="latest - 2024-09-16">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ci" class="md-nav__link">
+  <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
-      Ci
+      Bug Fixes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Chore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docs
     </span>
   </a>
   
@@ -1537,17 +1573,26 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#latest-2024-08-07" class="md-nav__link">
+  <a href="#staging-2024-08-07" class="md-nav__link">
     <span class="md-ellipsis">
-      latest - 2024-08-07
+      staging - 2024-08-07
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="latest - 2024-08-07">
+    <nav class="md-nav" aria-label="staging - 2024-08-07">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#chore" class="md-nav__link">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bug Fixes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_1" class="md-nav__link">
     <span class="md-ellipsis">
       Chore
     </span>
@@ -1556,16 +1601,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ci_1" class="md-nav__link">
+  <a href="#code-refactoring" class="md-nav__link">
     <span class="md-ellipsis">
-      Ci
+      Code Refactoring
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#docs" class="md-nav__link">
+  <a href="#docs_1" class="md-nav__link">
     <span class="md-ellipsis">
       Docs
     </span>
@@ -1574,27 +1619,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#feat" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
-      Feat
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fix" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fix
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refactor" class="md-nav__link">
-    <span class="md-ellipsis">
-      Refactor
+      Features
     </span>
   </a>
   
@@ -1694,16 +1721,67 @@
   <h1>Changelog</h1>
 
 <p><a name="unreleased"></a></p>
-<h2 id="unreleased"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
-<h3 id="ci">Ci<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
+<h2 id="unreleased"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.1-alpha...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<p><a name="v1.0.1-alpha"></a></p>
+<h2 id="v101-alpha-2024-09-16"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.0.1-alpha">v1.0.1-alpha</a> - 2024-09-16<a class="headerlink" href="#v101-alpha-2024-09-16" title="Permanent link">&para;</a></h2>
+<p><a name="latest"></a></p>
+<h2 id="latest-2024-09-16"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...latest">latest</a> - 2024-09-16<a class="headerlink" href="#latest-2024-09-16" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
-<li>update changelog GHA permissions (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/180">#180</a>)</li>
+<li>changelog automation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/261">#261</a>)</li>
+<li>adding branch creation to workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/259">#259</a>)</li>
+<li>dependabot grouping terraform providers (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/228">#228</a>)</li>
+<li>wait for cloud-init to complete prior to installing packages during Perforce Helix Core AMI creation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/193">#193</a>)</li>
+<li><strong>changelog:</strong> GHA bot committer (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/255">#255</a>)</li>
+<li><strong>changelog:</strong> Add automated PR creation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/252">#252</a>)</li>
+<li><strong>fsx_automounter:</strong> when FSx automounter can't list tags for an FSx volume, the AccessDenied exception is now treated as a warning (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/226">#226</a>)</li>
+<li><strong>p4_configure:</strong> resolve script execution errors and repair broken … (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/232">#232</a>)</li>
+</ul>
+<h3 id="chore">Chore<a class="headerlink" href="#chore" title="Permanent link">&para;</a></h3>
+<ul>
+<li>adjusting changelog automation to leverage GH api (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/266">#266</a>)</li>
+<li>update changelog workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/284">#284</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.31 to 9.5.32 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/211">#211</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/jenkins (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/195">#195</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-open-in-new-tab from 1.0.3 to 1.0.5 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/263">#263</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.3.6 to 4.4.0 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/235">#235</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/241">#241</a>)</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/242">#242</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/233">#233</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/231">#231</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.32 to 9.5.33 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/229">#229</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/205">#205</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.33 to 9.5.34 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/236">#236</a>)</li>
+<li><strong>deps:</strong> bump python from 3.12 to 3.12.6 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/243">#243</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.10.0 to 1.11.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/220">#220</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.62.0 to 5.63.1 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/216">#216</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/196">#196</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/197">#197</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/198">#198</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/199">#199</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-swarm (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/200">#200</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/201">#201</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/202">#202</a>)</li>
+<li><strong>deps:</strong> bump mike from 2.1.2 to 2.1.3 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/189">#189</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/207">#207</a>)</li>
+</ul>
+<h3 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add openssf scorecard badge to readme (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/219">#219</a>)</li>
+<li>link to installation instructions for required tools, fix packer command invocation instructions (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/194">#194</a>)</li>
+<li>Windows Build AMI README (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/187">#187</a>)</li>
 </ul>
 <p><a name="v1.0.0-alpha"></a></p>
-<h2 id="v100-alpha-2024-08-07"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.0.0-alpha">v1.0.0-alpha</a> - 2024-08-07<a class="headerlink" href="#v100-alpha-2024-08-07" title="Permanent link">&para;</a></h2>
-<p><a name="latest"></a></p>
-<h2 id="latest-2024-08-07">latest - 2024-08-07<a class="headerlink" href="#latest-2024-08-07" title="Permanent link">&para;</a></h2>
-<h3 id="chore">Chore<a class="headerlink" href="#chore" title="Permanent link">&para;</a></h3>
+<h2 id="v100-alpha-2024-08-07"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/staging...v1.0.0-alpha">v1.0.0-alpha</a> - 2024-08-07<a class="headerlink" href="#v100-alpha-2024-08-07" title="Permanent link">&para;</a></h2>
+<p><a name="staging"></a></p>
+<h2 id="staging-2024-08-07">staging - 2024-08-07<a class="headerlink" href="#staging-2024-08-07" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/150">#150</a>)</li>
+<li>bug fixes for FSxZ storage in build farm (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/152">#152</a>)</li>
+<li>allow Jenkins build agents to discover FSx volumes/snapshots and make outbound Internet connections (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/147">#147</a>)</li>
+</ul>
+<h3 id="chore_1">Chore<a class="headerlink" href="#chore_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>add CODEOWNERS file (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/132">#132</a>)</li>
 <li>Updates to docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/63">#63</a>)</li>
@@ -1724,41 +1802,13 @@
 <li><strong>deps:</strong> bump github/codeql-action from 3.24.9 to 3.25.8 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/53">#53</a>)</li>
 <li><strong>deps:</strong> bump mkdocs-material from 9.5.25 to 9.5.26 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/54">#54</a>)</li>
 </ul>
-<h3 id="ci_1">Ci<a class="headerlink" href="#ci_1" title="Permanent link">&para;</a></h3>
+<h3 id="code-refactoring">Code Refactoring<a class="headerlink" href="#code-refactoring" title="Permanent link">&para;</a></h3>
 <ul>
-<li>fix gha workflow level permissions to contents: read (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/170">#170</a>)</li>
-<li>update dependabot terraform versioning (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/162">#162</a>)</li>
-<li>remove packer github actions which are moving to codebuild in CI (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/164">#164</a>)</li>
-<li>add config scanning to trivy (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/143">#143</a>)</li>
-<li>add checkov (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/140">#140</a>)</li>
-<li>fix workflow permissions (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/139">#139</a>)</li>
-<li>consolidate security workflows under a reusable workflow template… (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/138">#138</a>)</li>
-<li>add trivy scan github action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/134">#134</a>)</li>
-<li>add pre-commit hooks (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/133">#133</a>)</li>
-<li>adds codeql github action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/131">#131</a>)</li>
-<li>update packer ci matrix to run to completion even with errors (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/130">#130</a>)</li>
-<li>modify the run if statement for the workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/115">#115</a>)</li>
-<li>fix permissions (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/89">#89</a>)</li>
-<li>fix permissions on Packer ci (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/88">#88</a>)</li>
-<li>add packer template ci (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/87">#87</a>)</li>
-<li>packer build agent linux updates (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/70">#70</a>)</li>
-<li>add release-drafter github action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/58">#58</a>)</li>
-<li>adds dependabot.yml (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/52">#52</a>)</li>
-<li>updates to release workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/50">#50</a>)</li>
-<li>update docs release workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/48">#48</a>)</li>
-<li>add docs release versioning (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/47">#47</a>)</li>
-<li>Update github action for docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/39">#39</a>)</li>
-<li>fix docs release automation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/37">#37</a>)</li>
-<li>modify Makefile (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/35">#35</a>)</li>
-<li>resolving merge conflicts (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/30">#30</a>)</li>
-<li>fix permissions on gh action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/29">#29</a>)</li>
-<li>bump versions in ossf scorecard action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/27">#27</a>)</li>
-<li>update ossf scorecard action to trigger on pull requests on main (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/26">#26</a>)</li>
-<li>setup ossf scorecard GH action (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/23">#23</a>)</li>
-<li>Updates documentation release workflow, adds semantic.yml and release-drafter.yml  (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/22">#22</a>)</li>
+<li>Perforce Helix Core AMI revamp, simple build pipeline DNS (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/73">#73</a>)</li>
 </ul>
-<h3 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h3>
+<h3 id="docs_1">Docs<a class="headerlink" href="#docs_1" title="Permanent link">&para;</a></h3>
 <ul>
+<li>update changelog (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/181">#181</a>)</li>
 <li>update main docs page (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/179">#179</a>)</li>
 <li>update layout of documentation main page theme (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/175">#175</a>)</li>
 <li>update documentation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/163">#163</a>)</li>
@@ -1786,7 +1836,7 @@
 <li>Updates to project README (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/20">#20</a>)</li>
 <li>Adds project docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/13">#13</a>)</li>
 </ul>
-<h3 id="feat">Feat<a class="headerlink" href="#feat" title="Permanent link">&para;</a></h3>
+<h3 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Added getting-started documentation for quickstart with Simple Build Pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/177">#177</a>)</li>
 <li>Updates to CI configurations for pre-commit and GHA (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/154">#154</a>)</li>
@@ -1796,16 +1846,6 @@
 <li>Add packer build agent templates for Linux (Ubuntu Jammy 22.04, Amazon Linux 2023) (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/46">#46</a>)</li>
 <li><strong>devops:</strong> Add new DevOps playbook files (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/76">#76</a>)</li>
 <li><strong>packer:</strong> switch AMI from Rocky Linux to Amazon Linux 2023 and up… (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/141">#141</a>)</li>
-</ul>
-<h3 id="fix">Fix<a class="headerlink" href="#fix" title="Permanent link">&para;</a></h3>
-<ul>
-<li>fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/150">#150</a>)</li>
-<li>bug fixes for FSxZ storage in build farm (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/152">#152</a>)</li>
-<li>allow Jenkins build agents to discover FSx volumes/snapshots and make outbound Internet connections (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/147">#147</a>)</li>
-</ul>
-<h3 id="refactor">Refactor<a class="headerlink" href="#refactor" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Perforce Helix Core AMI revamp, simple build pipeline DNS (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/73">#73</a>)</li>
 </ul>
 
 
