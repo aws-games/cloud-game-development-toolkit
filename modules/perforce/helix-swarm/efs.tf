@@ -20,7 +20,7 @@ resource "aws_efs_file_system" "helix_swarm_efs_file_system" {
   lifecycle_policy {
     transition_to_primary_storage_class = "AFTER_1_ACCESS"
   }
-
+  #checkov:skip=CKV_AWS_184: CMK encryption not supported currently
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-efs-file-system"
   })

@@ -35,13 +35,14 @@ resource "aws_instance" "helix_core_instance" {
 
   user_data = <<-EOT
     #!/bin/bash
-    /home/ec2-user/gpic_scripts/p4_configure.sh /dev/sdf /dev/sdg /dev/sdh \
-      ${var.server_type} \
-      ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
-      ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
-      ${var.FQDN == null ? "" : var.FQDN} \
-      ${var.helix_authentication_service_url == null ? "" : var.helix_authentication_service_url}
+    /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs /dev/sdf --hx_metadata /dev/sdg --hx_depots /dev/sdh \
+     --p4d_type ${var.server_type} \
+     --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
+     --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
+     --fqdn ${var.FQDN == null ? "" : var.FQDN} \
+     --auth ${var.helix_authentication_service_url == null ? "" : var.helix_authentication_service_url}
   EOT
+
 
   vpc_security_group_ids = concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id])
 
