@@ -1,8 +1,5 @@
 #!/bin/bash
 
-
-#Currently this needs proper EBS volume locations from /dev with proper nvme names $1 is a hxlogs $2 hxmetadata $3 hxdepots $4 perforce server type  p4d_master/ p4d_replica
-
 # Log file location
 LOG_FILE="/var/log/p4_configure.log"
 
@@ -80,7 +77,6 @@ setup_helix_auth() {
     >> $LOG_FILE 2>> $LOG_FILE
 }
 
-
 # Function to create and mount XFS on EBS
 prepare_ebs_volume() {
     local ebs_volume=$1
@@ -99,7 +95,6 @@ prepare_ebs_volume() {
 }
 
 # Function to copy SiteTags template and update with AWS regions -> This file will be updated by Ansible with replica AWS regions.
-
 prepare_site_tags() {
   log_message "Setting up SiteTags for installation"
   local source="/hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample"
@@ -131,21 +126,98 @@ prepare_site_tags() {
 # Starting the script
 log_message "Starting the p4 configure script."
 
-# Check if the script received 7 arguments
-if [[ "$#" < 6 || "$#" > 7 ]]; then
-    log_message "Incorrect usage. Expected 6 or 7 arguments, got $#."
-    log_message "Usage: $0 <EBS path or FSx for hxlogs> <EBS path or FSx for hxmetadata> <EBS path or FSx for hxdepots> <p4d_master or p4d_replica> <p4d_super_user_username_secret_arn> <p4d_super_user_password_secret_arn> <FQDN (optional)>"
+# Function to print help
+print_help() {
+    echo "Usage: $0 [OPTIONS]"
+    echo "Options:"
+    echo "  --p4d_type <type>        Specify the type of Helix Core server (p4d_master, p4d_replica, p4d_edge)"
+    echo "  --username <secret_id>   AWS Secrets Manager secret ID for the Helix Core admin username"
+    echo "  --password <secret_id>   AWS Secrets Manager secret ID for the Helix Core admin password"
+    echo "  --auth <url>             Helix Authentication Service URL"
+    echo "  --fqdn <hostname>        Fully Qualified Domain Name for the Helix Core server"
+    echo "  --hx_logs <path>         Path for Helix Core logs"
+    echo "  --hx_metadata <path>     Path for Helix Core metadata"
+    echo "  --hx_depots <path>       Path for Helix Core depots"
+    echo "  --help                   Display this help and exit"
+}
+
+# Parse command-line options
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,help -n 'parse-options' -- "$@")
+
+if [ $? != 0 ]; then
+    log_message "Failed to parse options"
     exit 1
 fi
 
-# Assigning arguments to variables
-EBS_LOGS=$1
-EBS_METADATA=$2
-EBS_DEPOTS=$3
-P4D_TYPE=$4
-[[ "$P4D_TYPE" == "p4d_commit" ]] && P4D_TYPE="p4d_master" || P4D_TYPE="$4" 
-P4D_ADMIN_USERNAME_SECRET_ID=$5
-P4D_ADMIN_PASS_SECRET_ID=$6
+eval set -- "$OPTS"
+
+while true; do
+    case "$1" in
+        --p4d_type)
+            P4D_TYPE=$([ "$2" = "p4d_commit" ] && echo "p4d_master" || echo "$2")
+            case "$P4D_TYPE" in
+                p4d_master|p4d_replica|p4d_edge)
+                    shift 2
+                    ;;
+                *)
+                    log_message "Invalid value for --p4d_type: $2"
+                    print_help
+                    exit 1
+                    ;;
+            esac
+            ;;
+        --username)
+            P4D_ADMIN_USERNAME_SECRET_ID="$2"
+            shift 2
+            ;;
+        --password)
+            P4D_ADMIN_PASS_SECRET_ID="$2"
+            shift 2
+            ;;
+        --auth)
+            HELIX_AUTH_SERVICE_URL="$2"
+            shift 2
+            ;;
+        --fqdn)
+            FQDN="$2"
+            shift 2
+            ;;
+        --hx_logs)
+            EBS_LOGS="$2"
+            log_message "EBS_LOGS: $EBS_LOGS"
+            shift 2
+            ;;
+        --hx_metadata)
+            EBS_METADATA="$2"
+            log_message "EBS_METADATA: $EBS_METADATA"
+            shift 2
+            ;;
+        --hx_depots)
+            EBS_DEPOTS="$2"
+            log_message "EBS_DEPOTS: $EBS_DEPOTS"
+            shift 2
+            ;;
+        --help)
+            print_help
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            log_message "Invalid option: $1"
+            print_help
+            exit 1
+            ;;
+    esac
+done
+
+# Validate P4D_TYPE
+if [[ "$P4D_TYPE" != "p4d_master" && "$P4D_TYPE" != "p4d_replica" && "$P4D_TYPE" != "p4d_edge" ]]; then
+    log_message "Invalid P4D_TYPE: $P4D_TYPE. Valid options are p4d_master, p4d_replica, or p4d_edge."
+    exit 1
+fi
 
 # Fetch credentials for admin user from secrets manager
 P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
@@ -211,14 +283,34 @@ perform_operations() {
     log_message "Operation completed successfully."
 }
 
-# Check if EBS volumes or FSx mount points are provided for all required paths
-if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" ) && \
-   ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" ) && \
-   ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" ); then
-    perform_operations
-else
-    log_message "One or more required paths are not valid EBS volumes or FSx mount points. No operations performed. Will continue with single disk setup"
+
+# Maximum number of attempts (added due to terraform not mounting EBS fast enough at instance boot)
+MAX_ATTEMPTS=3
+
+# Counter for attempts
+attempt=1
+
+# Flag to track if the condition is met
+condition_met=false
+
+while [ $attempt -le $MAX_ATTEMPTS ] && [ "$condition_met" = false ]; do
+    # Check if EBS volumes or FSx mount points are provided for all required paths
+    if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" ) && \
+       ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" ) && \
+       ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" ); then
+        condition_met=true
+        perform_operations
+    else
+        log_message "Attempt $attempt: One or more required paths are not valid EBS volumes or FSx mount points."
+        sleep 5  # Wait for 1 second before the next attempt
+        ((attempt++))
+    fi
+done
+
+if [ "$condition_met" = false ]; then
+    log_message "All attempts failed. No operations performed. Will continue with single disk setup."
 fi
+
 
 log_message "$0" "$@"
 
@@ -278,12 +370,12 @@ fi
 FILE_PATH="/p4/ssl/config.txt"
 
 # Retrieve the EC2 instance DNS name
-if [ -z $7 ]; then
+if [ -z $FQDN ]; then
   log_message "FQDN was not provided. Retrieving from EC2 metadata."
   EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
 else
-  log_message "FQDN was provided: $7"
-  EC2_DNS_NAME=$7
+  log_message "FQDN was provided: $FQDN"
+  EC2_DNS_NAME=$FQDN
 fi
 
 # Check if the DNS name was successfully retrieved
@@ -382,11 +474,10 @@ else
 fi
 
 # Check if the HELIX_AUTH_SERVICE_URL is empty. if not, configure Helix Authentication Extension
-if [-z $8]; then
+if [-z $HELIX_AUTH_SERVICE_URL ]; then
   log_message "Helix Authentication Service URL was not provided. Skipping configuration."
 else
-  log_message "Configuring Helix Authentication Extension against $8"
-  HELIX_AUTH_SERVICE_URL=$8
+  log_message "Configuring Helix Authentication Extension against $HELIX_AUTH_SERVICE_URL"
   setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
 fi
 

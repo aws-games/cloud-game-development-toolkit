@@ -35,6 +35,16 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "instance_architecture" {
+  type        = string
+  description = "The architecture of the Helix Core instance. Allowed values are 'arm64' or 'x86_64'."
+  default     = "x86_64"
+  validation {
+    condition     = var.instance_architecture == "arm64" || var.instance_architecture == "x86_64"
+    error_message = "The instance_architecture variable must be either 'arm64' or 'x86_64'."
+  }
+}
+
 ########################################
 # Networking and Security
 ########################################
