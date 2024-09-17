@@ -16,12 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.BOT_PAT }}
     - name: Update Changelog
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.BOT_PAT }}
         FILE_TO_COMMIT: CHANGELOG.md
         DESTINATION_BRANCH: changelog-${{ github.run_id }}
       run: |
