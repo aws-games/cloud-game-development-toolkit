@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Features
+- **helix-core:** add ARM64 support ([#239](https://github.com/aws-games/cloud-game-development-toolkit/issues/239))
+
 
 <a name="v1.0.1-alpha"></a>
 ## [v1.0.1-alpha] - 2024-09-16
@@ -20,19 +23,20 @@
 ### Chore
 - adjusting changelog automation to leverage GH api ([#266](https://github.com/aws-games/cloud-game-development-toolkit/issues/266))
 - update changelog workflow ([#284](https://github.com/aws-games/cloud-game-development-toolkit/issues/284))
-- **deps:** bump mkdocs-material from 9.5.31 to 9.5.32 in /docs ([#211](https://github.com/aws-games/cloud-game-development-toolkit/issues/211))
-- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/jenkins ([#195](https://github.com/aws-games/cloud-game-development-toolkit/issues/195))
-- **deps:** bump mkdocs-open-in-new-tab from 1.0.3 to 1.0.5 in /docs ([#263](https://github.com/aws-games/cloud-game-development-toolkit/issues/263))
+- update changelog ([#285](https://github.com/aws-games/cloud-game-development-toolkit/issues/285))
+- **deps:** bump hashicorp/awscc from 1.10.0 to 1.11.0 in /samples/simple-build-pipeline ([#220](https://github.com/aws-games/cloud-game-development-toolkit/issues/220))
+- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-core ([#207](https://github.com/aws-games/cloud-game-development-toolkit/issues/207))
+- **deps:** bump mkdocs-material from 9.5.33 to 9.5.34 in /docs ([#236](https://github.com/aws-games/cloud-game-development-toolkit/issues/236))
 - **deps:** bump actions/upload-artifact from 4.3.6 to 4.4.0 ([#235](https://github.com/aws-games/cloud-game-development-toolkit/issues/235))
 - **deps:** bump the aws-provider group across 5 directories with 1 update ([#241](https://github.com/aws-games/cloud-game-development-toolkit/issues/241))
 - **deps:** bump the awscc-provider group across 3 directories with 1 update ([#242](https://github.com/aws-games/cloud-game-development-toolkit/issues/242))
 - **deps:** bump the aws-provider group across 5 directories with 1 update ([#233](https://github.com/aws-games/cloud-game-development-toolkit/issues/233))
 - **deps:** bump the aws-provider group across 5 directories with 1 update ([#231](https://github.com/aws-games/cloud-game-development-toolkit/issues/231))
 - **deps:** bump mkdocs-material from 9.5.32 to 9.5.33 in /docs ([#229](https://github.com/aws-games/cloud-game-development-toolkit/issues/229))
-- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-authentication-service ([#205](https://github.com/aws-games/cloud-game-development-toolkit/issues/205))
-- **deps:** bump mkdocs-material from 9.5.33 to 9.5.34 in /docs ([#236](https://github.com/aws-games/cloud-game-development-toolkit/issues/236))
+- **deps:** bump mkdocs-open-in-new-tab from 1.0.3 to 1.0.5 in /docs ([#263](https://github.com/aws-games/cloud-game-development-toolkit/issues/263))
+- **deps:** bump mkdocs-material from 9.5.31 to 9.5.32 in /docs ([#211](https://github.com/aws-games/cloud-game-development-toolkit/issues/211))
 - **deps:** bump python from 3.12 to 3.12.6 in /docs ([#243](https://github.com/aws-games/cloud-game-development-toolkit/issues/243))
-- **deps:** bump hashicorp/awscc from 1.10.0 to 1.11.0 in /samples/simple-build-pipeline ([#220](https://github.com/aws-games/cloud-game-development-toolkit/issues/220))
+- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-authentication-service ([#205](https://github.com/aws-games/cloud-game-development-toolkit/issues/205))
 - **deps:** bump hashicorp/aws from 5.62.0 to 5.63.1 in /samples/simple-build-pipeline ([#216](https://github.com/aws-games/cloud-game-development-toolkit/issues/216))
 - **deps:** bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-authentication-service ([#196](https://github.com/aws-games/cloud-game-development-toolkit/issues/196))
 - **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-authentication-service ([#197](https://github.com/aws-games/cloud-game-development-toolkit/issues/197))
@@ -42,7 +46,7 @@
 - **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /samples/simple-build-pipeline ([#201](https://github.com/aws-games/cloud-game-development-toolkit/issues/201))
 - **deps:** bump hashicorp/awscc from 1.6.0 to 1.9.0 in /samples/simple-build-pipeline ([#202](https://github.com/aws-games/cloud-game-development-toolkit/issues/202))
 - **deps:** bump mike from 2.1.2 to 2.1.3 in /docs ([#189](https://github.com/aws-games/cloud-game-development-toolkit/issues/189))
-- **deps:** bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-core ([#207](https://github.com/aws-games/cloud-game-development-toolkit/issues/207))
+- **deps:** bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/jenkins ([#195](https://github.com/aws-games/cloud-game-development-toolkit/issues/195))
 
 ### Docs
 - add openssf scorecard badge to readme ([#219](https://github.com/aws-games/cloud-game-development-toolkit/issues/219))
