@@ -83,7 +83,11 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           name  = "ADMIN_ENABLED"
           value = var.enable_web_based_administration ? "true" : "false"
         },
-
+        {
+          name = "TRUST_PROXY"
+          value = "true"
+        },
+        
         ],
         var.enable_web_based_administration ? [
           {
