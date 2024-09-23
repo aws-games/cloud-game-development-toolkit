@@ -52,6 +52,11 @@ variable "install_vs_tools" {
   default = true
 }
 
+variable "install_git" {
+  type = bool
+  default = true
+}
+
 variable "public_key" {
   type = string
 }
@@ -90,7 +95,7 @@ source "amazon-ebs" "base" {
   winrm_insecure = true
   winrm_username = "Administrator"
   winrm_use_ssl = true
-  winrm_timeout = "1h"
+  winrm_timeout = "15m"
   user_data_file = "./userdata.ps1"
 
   # network specific details
