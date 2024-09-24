@@ -2,6 +2,7 @@
 ## [Unreleased]
 
 ### Chore
+- update changelog ([#305](https://github.com/aws-games/cloud-game-development-toolkit/issues/305))
 - **deps:** bump mkdocs-material from 9.5.34 to 9.5.35 in /docs ([#287](https://github.com/aws-games/cloud-game-development-toolkit/issues/287))
 
 ### Features
