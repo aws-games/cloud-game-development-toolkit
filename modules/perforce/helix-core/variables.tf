@@ -166,3 +166,12 @@ variable "helix_authentication_service_url" {
   description = "The URL for the Helix Authentication Service."
   default     = null
 }
+
+########################################
+# Helix Core settings
+########################################
+variable "helix_case_sensitive" {
+  type        = bool
+  description = "Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode"
+  default     = true
+}
