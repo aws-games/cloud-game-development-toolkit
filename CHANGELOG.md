@@ -2,6 +2,9 @@
 ## [Unreleased]
 
 ### Chore
+- update changelog ([#305](https://github.com/aws-games/cloud-game-development-toolkit/issues/305))
+- **deps:** bump the awscc-provider group across 3 directories with 1 update ([#291](https://github.com/aws-games/cloud-game-development-toolkit/issues/291))
+- **deps:** bump the random-provider group across 5 directories with 1 update ([#310](https://github.com/aws-games/cloud-game-development-toolkit/issues/310))
 - **deps:** bump mkdocs-material from 9.5.34 to 9.5.35 in /docs ([#287](https://github.com/aws-games/cloud-game-development-toolkit/issues/287))
 
 ### Features
