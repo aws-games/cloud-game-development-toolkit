@@ -138,11 +138,12 @@ print_help() {
     echo "  --hx_logs <path>         Path for Helix Core logs"
     echo "  --hx_metadata <path>     Path for Helix Core metadata"
     echo "  --hx_depots <path>       Path for Helix Core depots"
+    echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -195,6 +196,11 @@ while true; do
         --hx_depots)
             EBS_DEPOTS="$2"
             log_message "EBS_DEPOTS: $EBS_DEPOTS"
+            shift 2
+            ;;
+        --case_sensitive)
+            CASE_SENSITIVE="$2"
+            log_message "CASE_SENSITIVE: $CASE_SENSITIVE"
             shift 2
             ;;
         --help)
@@ -355,6 +361,10 @@ sed -i "s/^P4MASTERHOST=.*/P4MASTERHOST=$EC2_DNS_PRIVATE/" "$SDP_Setup_Script_Co
 
 log_message "Updated P4MASTERHOST to $EC2_DNS_PRIVATE in $SDP_Setup_Script_Config."
 
+# Update Perforce case_sensitivity in configuration
+sed -i "s/^CASE_SENSITIVE=.*/CASE_SENSITIVE=CASE_SENSITIVE/" "$SDP_Setup_Script_Config"
+
+log_message "Updated CASE_SENSITIVE in $SDP_Setup_Script_Config."
 
 log_message "Mounting done ok - continue to the install"
 
