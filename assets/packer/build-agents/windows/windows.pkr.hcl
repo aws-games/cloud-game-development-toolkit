@@ -118,9 +118,6 @@ build {
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
-    environment_vars = [
-      "INSTALL_GIT=${var.install_git}"
-    ]
     script           = "./base_setup.ps1"
   }
 
