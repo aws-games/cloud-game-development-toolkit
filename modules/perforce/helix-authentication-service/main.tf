@@ -84,10 +84,9 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           value = var.enable_web_based_administration ? "true" : "false"
         },
         {
-          name = "TRUST_PROXY"
+          name  = "TRUST_PROXY"
           value = "true"
         },
-        
         ],
         var.enable_web_based_administration ? [
           {
@@ -110,6 +109,11 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           containerPath = "/var/has"
         }
       ],
+      healthCheck = {
+        command = [
+          "CMD-SHELL", "curl http://localhost:${var.container_port} || exit 1"
+        ]
+      }
       dependsOn = [
         {
           containerName = "helix-auth-svc-config"
@@ -165,13 +169,14 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
 resource "aws_ecs_service" "helix_authentication_service" {
   name = local.name_prefix
 
-  cluster              = var.cluster_name != null ? data.aws_ecs_cluster.helix_authentication_service_cluster[0].arn : aws_ecs_cluster.helix_authentication_service_cluster[0].arn
-  task_definition      = aws_ecs_task_definition.helix_authentication_service_task_definition.arn
-  launch_type          = "FARGATE"
-  desired_count        = var.desired_container_count
-  force_new_deployment = true
+  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.helix_authentication_service_cluster[0].arn : aws_ecs_cluster.helix_authentication_service_cluster[0].arn
+  task_definition        = aws_ecs_task_definition.helix_authentication_service_task_definition.arn
+  launch_type            = "FARGATE"
+  desired_count          = var.desired_container_count
+  force_new_deployment   = var.debug
+  enable_execute_command = var.debug
 
-  enable_execute_command = true
+  wait_for_steady_state = true
 
   load_balancer {
     target_group_arn = aws_lb_target_group.helix_authentication_service_alb_target_group.arn
@@ -246,8 +251,3 @@ resource "aws_vpc_security_group_ingress_rule" "helix_authentication_service_inb
   to_port                      = var.container_port
   ip_protocol                  = "tcp"
 }
-
-
-
-
-

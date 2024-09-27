@@ -194,3 +194,9 @@ variable "helix_authentication_service_admin_password_secret_arn" {
   description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator password."
   default     = null
 }
+
+variable "debug" {
+  type        = bool
+  description = "Set this flag to enable execute command on service containers and force redeploys."
+  default     = false
+}
