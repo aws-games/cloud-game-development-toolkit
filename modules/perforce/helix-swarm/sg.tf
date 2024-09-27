@@ -59,26 +59,21 @@ resource "aws_vpc_security_group_egress_rule" "helix_swarm_alb_outbound_service"
   ip_protocol                  = "tcp"
 }
 
-
-########################################
-# SWARM FILE SYSTEM SECURITY GROUP
-########################################
-
-resource "aws_security_group" "helix_swarm_efs_security_group" {
-  count       = var.enable_elastic_filesystem ? 1 : 0
-  name        = "${local.name_prefix}-efs"
+# Helix Swarm Elasticache Redis Security Group
+resource "aws_security_group" "helix_swarm_elasticache_sg" {
+  count = var.existing_redis_connection != null ? 0 : 1
+  #checkov:skip=CKV2_AWS_5:Security group is attached to Elasticache cluster
+  name        = "${local.name_prefix}-elasticache"
   vpc_id      = var.vpc_id
-  description = "Helix Swarm EFS mount target Security Group"
+  description = "Helix Swarm Elasticache Redis Security Group"
   tags        = local.tags
 }
-
-# Inbound access from Service to EFS mount targets
-resource "aws_vpc_security_group_ingress_rule" "helix_swarm_efs_inbound_service" {
-  count                        = var.enable_elastic_filesystem ? 1 : 0
-  security_group_id            = aws_security_group.helix_swarm_efs_security_group[0].id
-  description                  = "Allow inbound access from Helix Swarm service containers to EFS."
+resource "aws_vpc_security_group_ingress_rule" "helix_swarm_elasticache_ingress" {
+  count                        = var.existing_redis_connection != null ? 0 : 1
+  security_group_id            = aws_security_group.helix_swarm_elasticache_sg[0].id
+  description                  = "Allow inbound traffic from Helix Swarm service to Redis"
   referenced_security_group_id = aws_security_group.helix_swarm_service_sg.id
-  from_port                    = 2049
-  to_port                      = 2049
+  from_port                    = local.elasticache_redis_port
+  to_port                      = local.elasticache_redis_port
   ip_protocol                  = "tcp"
 }

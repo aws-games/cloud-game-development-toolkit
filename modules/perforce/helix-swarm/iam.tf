@@ -39,22 +39,6 @@ data "aws_iam_policy_document" "helix_swarm_default_policy" {
   }
 }
 
-data "aws_iam_policy_document" "helix_swarm_efs_policy" {
-  count = var.enable_elastic_filesystem ? 1 : 0
-  # EFS
-  statement {
-    effect = "Allow"
-    actions = [
-      "elasticfilesystem:ClientWrite",
-      "elasticfilesystem:ClientRootAccess",
-      "elasticfilesystem:ClientMount"
-    ]
-    resources = [
-      aws_efs_file_system.helix_swarm_efs_file_system[0].arn
-    ]
-  }
-}
-
 data "aws_iam_policy_document" "helix_swarm_ssm_policy" {
   # ssm
   statement {
@@ -80,13 +64,6 @@ resource "aws_iam_policy" "helix_swarm_default_policy" {
   policy      = data.aws_iam_policy_document.helix_swarm_default_policy[0].json
 }
 
-resource "aws_iam_policy" "helix_swarm_efs_policy" {
-  count       = var.enable_elastic_filesystem ? 1 : 0
-  name        = "${var.project_prefix}-helix-swarm-efs-policy"
-  description = "Policy granting permissions for Helix Swarm to access EFS."
-  policy      = data.aws_iam_policy_document.helix_swarm_efs_policy[0].json
-}
-
 resource "aws_iam_policy" "helix_swarm_ssm_policy" {
   name        = "${var.project_prefix}-helix-swarm-ssm-policy"
   description = "Policy granting permissions for Helix Swarm task execution role to access SSM."
@@ -101,11 +78,9 @@ resource "aws_iam_role" "helix_swarm_default_role" {
   name               = "${var.project_prefix}-helix-swarm-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
 
-  managed_policy_arns = concat([
-    aws_iam_policy.helix_swarm_default_policy[0].arn
-    ], var.enable_elastic_filesystem ? [
-    aws_iam_policy.helix_swarm_efs_policy[0].arn
-  ] : [])
+  managed_policy_arns = [
+    aws_iam_policy.helix_swarm_default_policy[0].arn,
+  ]
   tags = local.tags
 }
 
