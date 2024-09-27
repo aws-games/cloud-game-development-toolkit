@@ -75,13 +75,14 @@ module "perforce_helix_swarm" {
   helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
   certificate_arn             = aws_acm_certificate.helix.arn
   p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt.name}:1666"
-  enable_elastic_filesystem   = false
   p4d_super_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_super_user_password_arn = module.perforce_helix_core.helix_core_super_user_password_secret_arn
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
 
   fqdn = "swarm.helix.${var.root_domain_name}"
+
+  enable_sso = true
 
   depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
 }
