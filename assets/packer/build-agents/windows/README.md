@@ -36,6 +36,10 @@ Currently this AMI is designed to work with our Jenkins module. This is why it c
 - OpenJDK used by Jenkins agents
 - Git
 - OpenSSH
+- Python3
+    - Botocore
+    - Boto3
+- Client for Network File System (NFS)
 - Windows Development Kit and Debugging Tools
 - Visual Studio 2022 Build Tools
     - VCTools Workload; Include Recommended
