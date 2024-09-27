@@ -43,4 +43,15 @@ module "unreal_horde" {
   tags                              = local.tags
 
   depends_on = [aws_ecs_cluster.cluster, aws_acm_certificate_validation.unreal_horde]
+
+  agents = {
+    al2023-x86 = {
+      ami           = data.aws_ami.al2023_x86.id
+      instance_type = "c7a.large"
+      min_size      = 1
+      max_size      = 5
+    }
+  }
+
+  fully_qualified_domain_name = "https://horde.${var.root_domain_name}"
 }

@@ -372,3 +372,28 @@ variable "elasticache_snapshot_retention_limit" {
   description = "The number of Elasticache snapshots to retain."
   default     = 5
 }
+
+######################
+# BUILD AGENT CONFIG
+######################
+variable "agents" {
+  type = map(object({
+    ami           = string
+    instance_type = string
+    min_size      = optional(number, 0)
+    max_size      = optional(number, 1)
+  }))
+  description = "Configures autoscaling groups to be used as build agents by Unreal Engine Horde."
+  default     = {}
+}
+
+variable "fully_qualified_domain_name" {
+  type        = string
+  description = "The fully qualified domain name where your Unreal Engine Horde server will be available. This agents will use this to enroll."
+}
+
+variable "enable_new_agents_by_default" {
+  type        = bool
+  description = "Set this flag to automatically enable new agents that enroll with the Horde Server."
+  default     = false
+}

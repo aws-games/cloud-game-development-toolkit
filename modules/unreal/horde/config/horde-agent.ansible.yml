@@ -1,0 +1,47 @@
+---
+# This playbook installs the Unreal Engine Horde Agent
+- name: Linux Horde Agent
+  hosts: all
+  vars:
+    horde_user_name: Horde
+    horde_agent_dir: ~/
+  tasks:
+    - name: Create Horde user
+      ansible.builtin.user:
+        name: "{{ horde_user_name }}"
+        create_home: true
+    - name: Install DotNet
+      ansible.builtin.dnf:
+        name: dotnet-runtime-6.0
+        state: present
+    - name: Download the Horde Agent
+      ansible.builtin.uri:
+        url: https://{{ horde_server_url }}/api/v1/tools/horde-agent?action=Zip
+        dest: "{{ horde_agent_dir }}/agent.zip"
+    - name: Unarchive }/api/v1/tools/horde-agenthe Horde Agent
+      ansible.builtin.unarchive:
+        src: "{{ horde_agent_dir }}/agent.zip"
+        dest: "{{ horde_agent_dir }}"
+        owner: "{{ horde_user_name }}"
+      become: true
+      become_user: "{{ horde_user_name }}"
+    - name: Configure the Horde Agent
+      ansible.builtin.shell:
+        chdir: $HORDE_AGENT_DIR
+        cmd: dotnet HordeAgent.dll SetServer -Name="Default" -Url="$HORDE_SERVER_URL" -Default
+      become: true
+      become_user: "{{ horde_user_name }}"
+      environment:
+        HORDE_AGENT_DIR: "{{ horde_agent_dir }}"
+        HORDE_SERVER_URL: https://{{ horde_server_url }}
+      changed_when: true
+    - name: Create Horde Agent Service
+      ansible.builtin.copy:
+        src: horde-agent.service
+        dest: /etc/systemd/system/horde-agent.service
+        mode: "0644"
+    - name: Enable Horde Agent Service
+      ansible.builtin.service:
+        service: horde-agent
+        enabled: true
+        state: started

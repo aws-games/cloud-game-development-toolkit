@@ -57,6 +57,10 @@ locals {
       value = var.admin_claim_value
     },
     {
+      name  = "Horde__enableNewAgentsByDefault",
+      value = tostring(var.enable_new_agents_by_default)
+    },
+    {
       name  = "ASPNETCORE_ENVIRONMENT"
       value = var.environment
     }

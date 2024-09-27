@@ -131,12 +131,11 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
 resource "aws_ecs_service" "unreal_horde" {
   name = local.name_prefix
 
-  cluster              = var.cluster_name != null ? data.aws_ecs_cluster.unreal_horde_cluster[0].arn : aws_ecs_cluster.unreal_horde_cluster[0].arn
-  task_definition      = aws_ecs_task_definition.unreal_horde_task_definition.arn
-  launch_type          = "FARGATE"
-  desired_count        = var.desired_container_count
-  force_new_deployment = var.debug
-
+  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.unreal_horde_cluster[0].arn : aws_ecs_cluster.unreal_horde_cluster[0].arn
+  task_definition        = aws_ecs_task_definition.unreal_horde_task_definition.arn
+  launch_type            = "FARGATE"
+  desired_count          = var.desired_container_count
+  force_new_deployment   = var.debug
   enable_execute_command = var.debug
 
   wait_for_steady_state = true

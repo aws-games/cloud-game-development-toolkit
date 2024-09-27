@@ -25,3 +25,7 @@ output "internal_alb_sg_id" {
 output "service_security_group_id" {
   value = aws_security_group.unreal_horde_sg.id
 }
+
+output "agent_security_group_id" {
+  value = aws_security_group.unreal_horde_agent_sg.id
+}
