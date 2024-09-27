@@ -4,17 +4,18 @@
 
 [Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) is a free code review tool for projects hosted in [Perforce Helix Core](https://www.perforce.com/products/helix-core). This module deploys Helix Swarm as a service on AWS Elastic Container Service using the [publicly available image from Dockerhub](https://hub.docker.com/r/perforce/helix-swarm).
 
-Helix Swarm also relies on a Redis cache. The module runs Redis as a service alongside Helix Swarm as part of the same task definition.
+Helix Swarm also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and configures connectivity for the Helix Swarm service.
 
 This module deploys the following resources:
 
 - An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in via the `cluster_name` variable.
-- An ECS service running the latest Helix Swarm container ([perforce/helix-swarm](https://hub.docker.com/r/perforce/helix-swarm)) available and a Redis sidecar.
+- An ECS service running the latest Helix Swarm container ([perforce/helix-swarm](https://hub.docker.com/r/perforce/helix-swarm)) available.
 - An Application Load Balancer for TLS termination of the Helix Swarm service.
+- A single node [AWS Elasticache Redis OSS](https://aws.amazon.com/elasticache/redis/) cluster.
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Deployment Architecture
-![HelixSwarm Module Architecture](../../../media/images/helix-swarm-architecture.png)
+![Helix Swarm Module Architecture](../../../media/images/helix-swarm-architecture.png){: style="max-width:100%;max-height:100vh;margin:auto"}
 
 ## Prerequisites
 
