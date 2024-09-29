@@ -6,7 +6,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.68.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.69.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.3 |
 
 ## Providers
@@ -24,79 +24,79 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_autoscaling_group.unreal_horde_agent_asg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/autoscaling_group) | resource |
-| [aws_cloudwatch_log_group.unreal_horde_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_docdb_cluster.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/docdb_cluster) | resource |
-| [aws_docdb_cluster_instance.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/docdb_cluster_instance) | resource |
-| [aws_docdb_cluster_parameter_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/docdb_cluster_parameter_group) | resource |
-| [aws_docdb_subnet_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/docdb_subnet_group) | resource |
-| [aws_ecs_cluster.unreal_horde_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_service.unreal_horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.unreal_horde_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ecs_task_definition) | resource |
-| [aws_elasticache_cluster.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/elasticache_cluster) | resource |
-| [aws_elasticache_subnet_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/elasticache_subnet_group) | resource |
-| [aws_iam_instance_profile.unreal_horde_agent_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.unreal_horde_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.unreal_horde_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.unreal_horde_agent_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.unreal_horde_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.unreal_horde_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/iam_role) | resource |
-| [aws_launch_template.unreal_horde_agent_template](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/launch_template) | resource |
-| [aws_lb.unreal_horde_external_alb](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb) | resource |
-| [aws_lb.unreal_horde_internal_alb](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb) | resource |
-| [aws_lb_listener.unreal_horde_external_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_listener) | resource |
-| [aws_lb_listener.unreal_horde_internal_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_listener) | resource |
-| [aws_lb_listener_rule.unreal_horde_external_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_listener_rule) | resource |
-| [aws_lb_listener_rule.unreal_horde_internal_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_listener_rule) | resource |
-| [aws_lb_target_group.unreal_horde_api_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group.unreal_horde_api_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group.unreal_horde_grpc_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group.unreal_horde_grpc_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/lb_target_group) | resource |
-| [aws_s3_bucket.ansible_playbooks](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.unreal_horde_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.ansible_playbooks_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_versioning.ansible_playbooks_versioning](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_bucket_versioning) | resource |
-| [aws_s3_object.unreal_horde_agent_playbook](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_object) | resource |
-| [aws_s3_object.unreal_horde_agent_service](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/s3_object) | resource |
-| [aws_security_group.unreal_horde_agent_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_security_group.unreal_horde_docdb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_security_group.unreal_horde_elasticache_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_security_group.unreal_horde_external_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_security_group.unreal_horde_internal_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_security_group.unreal_horde_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
-| [aws_ssm_association.configure_unreal_horde_agent](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ssm_association) | resource |
-| [aws_ssm_document.ansible_run_document](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ssm_document) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_docdb_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_elasticache_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_api](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_api](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unreal_horde_service_inbound_agents](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_autoscaling_group.unreal_horde_agent_asg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/autoscaling_group) | resource |
+| [aws_cloudwatch_log_group.unreal_horde_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/cloudwatch_log_group) | resource |
+| [aws_docdb_cluster.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/docdb_cluster) | resource |
+| [aws_docdb_cluster_instance.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/docdb_cluster_instance) | resource |
+| [aws_docdb_cluster_parameter_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/docdb_cluster_parameter_group) | resource |
+| [aws_docdb_subnet_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/docdb_subnet_group) | resource |
+| [aws_ecs_cluster.unreal_horde_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_cluster) | resource |
+| [aws_ecs_service.unreal_horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_service) | resource |
+| [aws_ecs_task_definition.unreal_horde_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_task_definition) | resource |
+| [aws_elasticache_cluster.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/elasticache_cluster) | resource |
+| [aws_elasticache_subnet_group.horde](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/elasticache_subnet_group) | resource |
+| [aws_iam_instance_profile.unreal_horde_agent_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_policy.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.unreal_horde_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.unreal_horde_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.unreal_horde_agent_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.unreal_horde_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.unreal_horde_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_launch_template.unreal_horde_agent_template](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/launch_template) | resource |
+| [aws_lb.unreal_horde_external_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb) | resource |
+| [aws_lb.unreal_horde_internal_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb) | resource |
+| [aws_lb_listener.unreal_horde_external_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unreal_horde_internal_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
+| [aws_lb_listener_rule.unreal_horde_external_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener_rule) | resource |
+| [aws_lb_listener_rule.unreal_horde_internal_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener_rule) | resource |
+| [aws_lb_target_group.unreal_horde_api_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unreal_horde_api_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unreal_horde_grpc_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unreal_horde_grpc_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
+| [aws_s3_bucket.ansible_playbooks](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.unreal_horde_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.ansible_playbooks_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_versioning.ansible_playbooks_versioning](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_versioning) | resource |
+| [aws_s3_object.unreal_horde_agent_playbook](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_object) | resource |
+| [aws_s3_object.unreal_horde_agent_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_object) | resource |
+| [aws_security_group.unreal_horde_agent_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.unreal_horde_docdb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.unreal_horde_elasticache_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.unreal_horde_external_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.unreal_horde_internal_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.unreal_horde_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_ssm_association.configure_unreal_horde_agent](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ssm_association) | resource |
+| [aws_ssm_document.ansible_run_document](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ssm_document) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_docdb_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_elasticache_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_api](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_api](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_service_inbound_agents](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.unreal_horde](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
 | [random_string.unreal_horde_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
 | [random_string.unreal_horde_ansible_playbooks_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
-| [aws_ecs_cluster.unreal_horde_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/ecs_cluster) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.unreal_horde_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.unreal_horde_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/region) | data source |
+| [aws_ecs_cluster.unreal_horde_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unreal_horde_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unreal_horde_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/region) | data source |
 
 ## Inputs
 
