@@ -93,9 +93,9 @@ variable "desired_container_count" {
 
 # - Environment Variables -
 
-variable "fqdn" {
+variable "fully_qualified_domain_name" {
   type        = string
-  description = "The fully qualified domain name of Helix Authentication Service."
+  description = "The fully qualified domain name where Helix Authentication Service will be available."
   default     = "localhost"
 }
 

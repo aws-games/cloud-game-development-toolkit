@@ -77,7 +77,7 @@ variable "p4d_port" {
   default     = "ssl:perforce:1666"
 }
 
-variable "fqdn" {
+variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name that Swarm should use for internal URLs."
   default     = null

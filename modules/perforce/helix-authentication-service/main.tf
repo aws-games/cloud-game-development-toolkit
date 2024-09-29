@@ -77,7 +77,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       environment = concat([
         {
           name  = "SVC_BASE_URI"
-          value = var.fqdn
+          value = "https://${var.fully_qualified_domain_name}"
         },
         {
           name  = "ADMIN_ENABLED"

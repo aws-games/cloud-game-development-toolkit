@@ -102,7 +102,7 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
           },
           {
             name  = "SWARM_HOST"
-            value = var.fqdn
+            value = var.fully_qualified_domain_name
           },
           {
             name  = "SWARM_REDIS"

@@ -51,13 +51,13 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_FQDN"></a> [FQDN](#input\_FQDN) | The FQDN that should be used to generate the self-signed SSL cert on the Helix Core instance. | `string` | `null` | no |
 | <a name="input_create_default_sg"></a> [create\_default\_sg](#input\_create\_default\_sg) | Whether to create a default security group for the Helix Core instance. | `bool` | `true` | no |
 | <a name="input_create_helix_core_default_role"></a> [create\_helix\_core\_default\_role](#input\_create\_helix\_core\_default\_role) | Optional creation of Helix Core default IAM Role with SSM managed instance core policy attached. Default is set to true. | `bool` | `true` | no |
 | <a name="input_custom_helix_core_role"></a> [custom\_helix\_core\_role](#input\_custom\_helix\_core\_role) | ARN of the custom IAM Role you wish to use with Helix Core. | `string` | `null` | no |
 | <a name="input_depot_volume_size"></a> [depot\_volume\_size](#input\_depot\_volume\_size) | The size of the depot volume in GiB. Defaults to 128 GiB. | `number` | `128` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Core load balancer. | `list(string)` | `[]` | no |
+| <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where Helix Core will be available. This is used to generate self-signed certificates on the Helix Core server. | `string` | `null` | no |
 | <a name="input_helix_authentication_service_url"></a> [helix\_authentication\_service\_url](#input\_helix\_authentication\_service\_url) | The URL for the Helix Authentication Service. | `string` | `null` | no |
 | <a name="input_helix_case_sensitive"></a> [helix\_case\_sensitive](#input\_helix\_case\_sensitive) | Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode | `bool` | `true` | no |
 | <a name="input_helix_core_super_user_password_secret_arn"></a> [helix\_core\_super\_user\_password\_secret\_arn](#input\_helix\_core\_super\_user\_password\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here. | `string` | `null` | no |
