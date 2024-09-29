@@ -59,7 +59,7 @@
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_unreal_horde_agent](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_unreal_horde_service](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_swarm_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_ami.al2023_x86](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/ami) | data source |
+| [aws_ami.ubuntu_noble_amd](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/ami) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/data-sources/route53_zone) | data source |
 

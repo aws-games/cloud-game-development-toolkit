@@ -103,10 +103,10 @@ module "unreal_engine_horde" {
   tags                              = local.tags
 
   agents = {
-    al2023-x86 = {
-      ami           = data.aws_ami.al2023_x86.id
+    ubuntu-x86 = {
+      ami           = data.aws_ami.ubuntu_noble_amd.id
       instance_type = "c7a.large"
-      min_size      = 1
+      min_size      = 2
       max_size      = 5
     }
   }
