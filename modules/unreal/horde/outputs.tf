@@ -27,5 +27,5 @@ output "service_security_group_id" {
 }
 
 output "agent_security_group_id" {
-  value = aws_security_group.unreal_horde_agent_sg.id
+  value = aws_security_group.unreal_horde_agent_sg[0].id
 }

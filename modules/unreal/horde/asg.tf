@@ -7,7 +7,7 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
   instance_type = each.value.instance_type
   ebs_optimized = true
 
-  vpc_security_group_ids = [aws_security_group.unreal_horde_agent_sg.id]
+  vpc_security_group_ids = [aws_security_group.unreal_horde_agent_sg[0].id]
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -121,6 +121,8 @@ resource "aws_s3_bucket" "ansible_playbooks" {
 }
 
 resource "aws_s3_bucket_versioning" "ansible_playbooks_versioning" {
+  count = length(var.agents) > 0 ? 1 : 0
+
   bucket = aws_s3_bucket.ansible_playbooks[0].id
   versioning_configuration {
     status = "Enabled"
@@ -144,26 +146,33 @@ resource "aws_s3_object" "unreal_horde_agent_playbook" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
   key    = "horde-agent.ansible.yml"
-  source = "${path.module}/config/horde-agent.ansible.yml"
-  etag   = filemd5("${path.module}/config/horde-agent.ansible.yml")
+  source = "${path.module}/config/agent/horde-agent.ansible.yml"
+  etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
 }
 
 resource "aws_s3_object" "unreal_horde_agent_service" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
   key    = "horde-agent.service"
-  source = "${path.module}/config/horde-agent.service"
-  etag   = filemd5("${path.module}/config/horde-agent.service")
+  source = "${path.module}/config/agent/horde-agent.service"
+  etag   = filemd5("${path.module}/config/agent/horde-agent.service")
+}
+
+resource "aws_ssm_document" "ansible_run_document" {
+  count         = length(var.agents) > 0 ? 1 : 0
+  document_type = "Command"
+  name          = "AnsibleRun"
+  content       = file("${path.module}/config/ssm/AnsibleRunCommand.json")
+  tags          = local.tags
 }
 
 resource "aws_ssm_association" "configure_unreal_horde_agent" {
   count            = length(var.agents) > 0 ? 1 : 0
   association_name = "ConfigureUnrealHordeAgent"
-  name             = "AWS-ApplyAnsiblePlaybooks"
+  name             = aws_ssm_document.ansible_run_document[0].name
   parameters = {
-    SourceType     = "S3"
-    PlaybookFile   = aws_s3_object.unreal_horde_agent_playbook[0].key
     SourceInfo     = "{\"path\":\"https://${aws_s3_bucket.ansible_playbooks[0].bucket_domain_name}/\"}"
+    PlaybookFile   = aws_s3_object.unreal_horde_agent_playbook[0].key
     ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name}"
   }
 

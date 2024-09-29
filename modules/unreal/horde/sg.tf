@@ -183,6 +183,9 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_docdb_ingress" {
 ###########################################
 
 resource "aws_security_group" "unreal_horde_agent_sg" {
+  #checkov:skip=CKV2_AWS_5:SG is attached to Horde agent autoscaling groups
+
+  count       = length(var.agents) > 0 ? 1 : 0
   name        = "${local.name_prefix}-agents"
   vpc_id      = var.vpc_id
   description = "Unreal Horde agents Security Group"
@@ -191,7 +194,8 @@ resource "aws_security_group" "unreal_horde_agent_sg" {
 
 # Outbound access from Agents to Internet (IPV4)
 resource "aws_vpc_security_group_egress_rule" "unreal_horde_agents_outbound_ipv4" {
-  security_group_id = aws_security_group.unreal_horde_agent_sg.id
+  count             = length(var.agents) > 0 ? 1 : 0
+  security_group_id = aws_security_group.unreal_horde_agent_sg[0].id
   description       = "Allow outbound traffic from Unreal Horde agents to internet (ipv4)"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1" # semantically equivalent to all ports
@@ -199,7 +203,8 @@ resource "aws_vpc_security_group_egress_rule" "unreal_horde_agents_outbound_ipv4
 
 # Outbound access from Agents to Internet (IPV6)
 resource "aws_vpc_security_group_egress_rule" "unreal_horde_agents_outbound_ipv6" {
-  security_group_id = aws_security_group.unreal_horde_agent_sg.id
+  count             = length(var.agents) > 0 ? 1 : 0
+  security_group_id = aws_security_group.unreal_horde_agent_sg[0].id
   description       = "Allow outbound traffic from Unreal Horde agents to internet (ipv6)"
   cidr_ipv6         = "::/0"
   ip_protocol       = "-1" # semantically equivalent to all ports
@@ -207,10 +212,10 @@ resource "aws_vpc_security_group_egress_rule" "unreal_horde_agents_outbound_ipv6
 
 # Horde Internal ALB allow inbound HTTPS access from Agents
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_service_inbound_agents" {
-  count                        = var.create_internal_alb ? 1 : 0
+  count                        = var.create_internal_alb && length(var.agents) > 0 ? 1 : 0
   security_group_id            = aws_security_group.unreal_horde_internal_alb_sg[0].id
   description                  = "Allow inbound traffic to Unreal Horde Service from agents."
-  referenced_security_group_id = aws_security_group.unreal_horde_agent_sg.id
+  referenced_security_group_id = aws_security_group.unreal_horde_agent_sg[0].id
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"

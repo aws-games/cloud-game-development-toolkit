@@ -69,6 +69,7 @@ No modules.
 | [aws_security_group.unreal_horde_internal_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
 | [aws_security_group.unreal_horde_sg](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/security_group) | resource |
 | [aws_ssm_association.configure_unreal_horde_agent](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ssm_association) | resource |
+| [aws_ssm_document.ansible_run_document](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/ssm_document) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_agents_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/5.68.0/docs/resources/vpc_security_group_egress_rule) | resource |

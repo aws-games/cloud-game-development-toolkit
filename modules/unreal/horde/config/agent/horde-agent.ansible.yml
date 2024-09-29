@@ -10,10 +10,20 @@
       ansible.builtin.user:
         name: "{{ horde_user_name }}"
         create_home: true
+    - name: Add DotNet Backport package repository on Ubuntu
+      ansible.builtin.apt_repository:
+        repo: ppa:dotnet/backports
+        state: present
+      when: ansible_distribution == "Ubuntu"
     - name: Install DotNet
-      ansible.builtin.dnf:
+      ansible.builtin.package:
         name: dotnet-runtime-6.0
         state: present
+    - name: Install Wine on Ubuntu machines
+      ansible.builtin.package:
+        name: wine
+        state: present
+      when: ansible_distribution == "Ubuntu"
     - name: Download the Horde Agent
       ansible.builtin.uri:
         url: https://{{ horde_server_url }}/api/v1/tools/horde-agent?action=Zip
