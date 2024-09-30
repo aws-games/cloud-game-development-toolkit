@@ -55,7 +55,7 @@ This project uses [Material for MkDocs](https://squidfunk.github.io/mkdocs-mater
 
 **Local development:**
 
-* To build the project documentation, execute the following command: `make docs-local-docker VERSION=<VERSION> ALIAS=<ALIAS>`, including a semantic release version (i.e. `v1.0.0`) and an alias (i.e. `latest`). This will build the project using `./docs/Dockerfile`.
+* To build the project documentation, execute the following command: `make docs-build-local VERSION=<VERSION> ALIAS=<ALIAS>`, including a semantic release version (i.e. `v1.0.0`) and an alias (i.e. `latest`). This will build the project using `./docs/Dockerfile`.
 * To run the documentation locally, execute the following command: `make docs-run VERSION=<VERSION> ALIAS=<ALIAS>` which runs the documentation in a local container using `mkdocs serve` on port `8000`.
 
 **Live documentation (GitHub Pages):**
