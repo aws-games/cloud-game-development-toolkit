@@ -56,6 +56,7 @@
 | [aws_vpc.build_pipeline_vpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_auth_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_swarm](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_core_inbound_unreal_horde_agent](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_core_inbound_unreal_horde_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.helix_swarm_inbound_core](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_ami.ubuntu_noble_amd](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/ami) | data source |

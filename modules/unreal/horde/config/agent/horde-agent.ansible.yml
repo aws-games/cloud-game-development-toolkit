@@ -45,7 +45,7 @@
       ansible.builtin.uri:
         url: https://{{ horde_server_url }}/api/v1/tools/horde-agent?action=Zip
         dest: "{{ horde_agent_dir }}/agent.zip"
-    - name: Unarchive }/api/v1/tools/horde-agenthe Horde Agent
+    - name: Unarchive The Horde Agent
       ansible.builtin.unarchive:
         src: "{{ horde_agent_dir }}/agent.zip"
         dest: "{{ horde_agent_dir }}"
