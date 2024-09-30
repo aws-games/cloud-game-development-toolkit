@@ -7,6 +7,17 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
   instance_type = each.value.instance_type
   ebs_optimized = true
 
+  dynamic "block_device_mappings" {
+    for_each = each.value.block_device_mappings
+    content {
+      device_name = block_device_mappings.value.device_name
+      ebs {
+        volume_size = block_device_mappings.value.ebs.volume_size
+        volume_type = "gp2"
+      }
+    }
+  }
+
   vpc_security_group_ids = [aws_security_group.unreal_horde_agent_sg[0].id]
 
   metadata_options {
@@ -61,7 +72,10 @@ data "aws_iam_policy_document" "horde_agents_s3_policy" {
     effect = "Allow"
     actions = [
       "s3:GetObject",
-      "s3:ListBucket"
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetEncryptionConfiguration"
     ]
     resources = [
       aws_s3_bucket.ansible_playbooks[0].arn,
@@ -145,7 +159,7 @@ resource "aws_s3_bucket_public_access_block" "ansible_playbooks_bucket_public_bl
 resource "aws_s3_object" "unreal_horde_agent_playbook" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
-  key    = "horde-agent.ansible.yml"
+  key    = "/agent/horde-agent.ansible.yml"
   source = "${path.module}/config/agent/horde-agent.ansible.yml"
   etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
 }
@@ -153,7 +167,7 @@ resource "aws_s3_object" "unreal_horde_agent_playbook" {
 resource "aws_s3_object" "unreal_horde_agent_service" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
-  key    = "horde-agent.service"
+  key    = "/agent/horde-agent.service"
   source = "${path.module}/config/agent/horde-agent.service"
   etag   = filemd5("${path.module}/config/agent/horde-agent.service")
 }
@@ -171,9 +185,14 @@ resource "aws_ssm_association" "configure_unreal_horde_agent" {
   association_name = "ConfigureUnrealHordeAgent"
   name             = aws_ssm_document.ansible_run_document[0].name
   parameters = {
-    SourceInfo     = "{\"path\":\"https://${aws_s3_bucket.ansible_playbooks[0].bucket_domain_name}/\"}"
-    PlaybookFile   = aws_s3_object.unreal_horde_agent_playbook[0].key
+    SourceInfo     = "{\"path\":\"https://${aws_s3_bucket.ansible_playbooks[0].bucket_domain_name}/agent/\"}"
+    PlaybookFile   = "horde-agent.ansible.yml"
     ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name}"
+  }
+
+  output_location {
+    s3_bucket_name = aws_s3_bucket.ansible_playbooks[0].bucket
+    s3_key_prefix  = "logs"
   }
 
   targets {

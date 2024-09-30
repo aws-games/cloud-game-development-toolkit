@@ -380,8 +380,16 @@ variable "agents" {
   type = map(object({
     ami           = string
     instance_type = string
-    min_size      = optional(number, 0)
-    max_size      = optional(number, 1)
+    block_device_mappings = list(
+      object({
+        device_name = string
+        ebs = object({
+          volume_size = number
+        })
+      })
+    )
+    min_size = optional(number, 0)
+    max_size = optional(number, 1)
   }))
   description = "Configures autoscaling groups to be used as build agents by Unreal Engine Horde."
   default     = {}

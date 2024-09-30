@@ -4,7 +4,7 @@
   hosts: all
   vars:
     horde_user_name: Horde
-    horde_agent_dir: ~/
+    horde_agent_dir: /home/Horde
   tasks:
     - name: Create Horde user
       ansible.builtin.user:
@@ -19,10 +19,27 @@
       ansible.builtin.package:
         name: dotnet-runtime-6.0
         state: present
+    - name: Check if i386 enabled
+      ansible.builtin.shell:
+        cmd: set -o pipefail && dpkg --print-foreign-architectures | grep i386
+        executable: /bin/bash
+      register: result_i386_check
+      changed_when: result_i386_check.rc == 1
+      failed_when: result_i386_check.rc > 1
+    - name: Enable Multiarch
+      ansible.builtin.command:
+        cmd: dpkg --add-architecture i386
+      when: result_i386_check.rc == 1
+      changed_when: result_i386_check.rc == 1
+    - name: Update Cache
+      ansible.builtin.apt:
+        update_cache: true
+      when: result_i386_check.rc == 1
     - name: Install Wine on Ubuntu machines
       ansible.builtin.package:
-        name: wine
+        name: "{{ item }}"
         state: present
+      with_items: [wine, wine32:i386]
       when: ansible_distribution == "Ubuntu"
     - name: Download the Horde Agent
       ansible.builtin.uri:
@@ -33,6 +50,30 @@
         src: "{{ horde_agent_dir }}/agent.zip"
         dest: "{{ horde_agent_dir }}"
         owner: "{{ horde_user_name }}"
+      become: true
+      become_user: "{{ horde_user_name }}"
+    - name: Load appsettings.json
+      ansible.builtin.slurp:
+        src: "{{ horde_agent_dir }}/appsettings.json"
+      register: appsettings
+      become: true
+      become_user: "{{ horde_user_name }}"
+    - name: Debug imported appsettings.json
+      ansible.builtin.debug:
+        msg: "{{ appsettings.content | b64decode | from_json }}"
+    - name: Modify appsettings.json to include Wine executable
+      ansible.builtin.set_fact:
+        appsettings: "{{ appsettings.content | b64decode | from_json | combine(item, recursive=True) }}"
+      loop:
+        - { Horde: { wineExecutablePath: /usr/bin/wine } }
+    - name: Debug updated appsettings.json
+      ansible.builtin.debug:
+        var: appsettings
+    - name: Write updated appsettings.json to file
+      ansible.builtin.copy:
+        content: "{{ appsettings | to_nice_json }}"
+        dest: /home/Horde/appsettings.json
+        mode: "0644"
       become: true
       become_user: "{{ horde_user_name }}"
     - name: Configure the Horde Agent

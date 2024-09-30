@@ -105,9 +105,17 @@ module "unreal_engine_horde" {
   agents = {
     ubuntu-x86 = {
       ami           = data.aws_ami.ubuntu_noble_amd.id
-      instance_type = "c7a.large"
-      min_size      = 2
-      max_size      = 5
+      instance_type = "c7a.8xlarge"
+      min_size      = 10
+      max_size      = 20
+      block_device_mappings = [
+        {
+          device_name = "/dev/sda1"
+          ebs = {
+            volume_size = 64
+          }
+        }
+      ]
     }
   }
 
