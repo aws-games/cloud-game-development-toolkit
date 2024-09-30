@@ -128,7 +128,7 @@ resource "aws_acm_certificate" "unreal_engine_horde" {
   validation_method = "DNS"
 
   tags = {
-    Environment = "dev"
+    environment = "dev"
   }
 
   lifecycle {
@@ -171,7 +171,7 @@ resource "aws_acm_certificate" "helix" {
   validation_method = "DNS"
 
   tags = {
-    Environment = "dev"
+    environment = "dev"
   }
 
   lifecycle {

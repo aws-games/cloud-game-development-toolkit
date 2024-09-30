@@ -10,6 +10,6 @@ locals {
   helix_swarm_data_volume_name = "helix-swarm-data"
 
   tags = merge(var.tags, {
-    "ENVIRONMENT" = var.environment
+    "environment" = var.environment
   })
 }
