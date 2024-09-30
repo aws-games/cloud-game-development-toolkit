@@ -2,10 +2,15 @@ name: Automatic Rebase
 on:
   issue_comment:
     types: [created]
+permissions:
+  contents: read
 jobs:
   rebase:
     name: Rebase
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     if: github.event.issue.pull_request != '' && (contains(github.event.comment.body, '/rebase') || contains(github.event.comment.body, '/autosquash')) && github.event.comment.author_association == 'MEMBER'
     steps:
       - name: Checkout the latest code
