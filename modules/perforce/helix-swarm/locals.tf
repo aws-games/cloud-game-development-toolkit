@@ -1,8 +1,13 @@
 locals {
-  helix_swarm_image           = "perforce/helix-swarm"
-  name_prefix                 = "${var.project_prefix}-${var.name}"
-  helix_swarm_config_path     = "/opt/perforce/swarm/data"
-  helix_swarm_redis_data_path = "/data"
+  helix_swarm_image     = "perforce/helix-swarm"
+  name_prefix           = "${var.project_prefix}-${var.name}"
+  helix_swarm_data_path = "/opt/perforce/swarm/data"
+
+  elasticache_redis_port                 = 6379
+  elasticache_redis_engine_version       = "7.0"
+  elasticache_redis_parameter_group_name = "default.redis7"
+
+  helix_swarm_data_volume_name = "helix-swarm-data"
 
   tags = merge(var.tags, {
     "ENVIRONMENT" = var.environment
