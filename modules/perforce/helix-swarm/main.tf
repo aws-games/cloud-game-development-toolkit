@@ -38,49 +38,21 @@ resource "aws_cloudwatch_log_group" "helix_swarm_redis_service_log_group" {
   tags              = local.tags
 }
 
-
 # Define swarm task definition
 resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
   family                   = var.name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = var.task_cpu
-  memory                   = var.task_memory
+  cpu                      = var.helix_swarm_container_cpu
+  memory                   = var.helix_swarm_container_memory
+
+  volume {
+    name = local.helix_swarm_data_volume_name
+  }
 
   container_definitions = jsonencode(
-    concat(
-      var.existing_redis_host == null ? [
-        {
-          name      = var.redis_container_name,
-          image     = var.redis_image,
-          cpu       = var.redis_container_cpu,
-          memory    = var.redis_container_memory,
-          essential = true,
-          portMappings = [
-            {
-              containerPort = var.redis_container_port
-              hostPort      = var.redis_container_port
-              protocol      = "tcp"
-            }
-          ]
-          logConfiguration = {
-            logDriver = "awslogs"
-            options = {
-              awslogs-group         = aws_cloudwatch_log_group.helix_swarm_redis_service_log_group.name
-              awslogs-region        = data.aws_region.current.name
-              awslogs-stream-prefix = "redis"
-            }
-          }
-          readonlyRootFilesystem = false
-          mountPoints = var.enable_elastic_filesystem ? [
-            {
-              containerPath = local.helix_swarm_redis_data_path,
-              sourceVolume  = "redis_data",
-              readOnly      = false,
-            }
-          ] : []
-      }] : [],
-      [{
+    [
+      {
         name      = var.helix_swarm_container_name,
         image     = local.helix_swarm_image,
         cpu       = var.helix_swarm_container_cpu,
@@ -93,6 +65,10 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
             protocol      = "tcp"
           }
         ]
+        healthCheck = {
+          command     = ["CMD-SHELL", "curl -f http://localhost:${var.helix_swarm_container_port}/login || exit 1"]
+          startPeriod = 30
+        }
         logConfiguration = {
           logDriver = "awslogs"
           options = {
@@ -126,60 +102,64 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
           },
           {
             name  = "SWARM_HOST"
-            value = var.fqdn
+            value = var.fully_qualified_domain_name
           },
           {
             name  = "SWARM_REDIS"
-            value = var.existing_redis_host != null ? var.existing_redis_host : "127.0.0.1"
+            value = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.swarm[0].cache_nodes[0].address
           },
           {
             name  = "SWARM_REDIS_PORT"
-            value = tostring(var.redis_container_port)
+            value = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.swarm[0].cache_nodes[0].port)
           }
         ],
         readonlyRootFilesystem = false
-        mountPoints = var.enable_elastic_filesystem ? [
+        mountPoints = [
           {
-            containerPath = local.helix_swarm_config_path,
-            sourceVolume  = "swarm_data",
-            readOnly      = false,
+            sourceVolume  = local.helix_swarm_data_volume_name
+            containerPath = local.helix_swarm_data_path
+            readOnly      = false
           }
-        ] : []
-      }]
-  ))
+        ],
+      },
+      {
+        name      = local.helix_swarm_data_volume_name
+        image     = "bash"
+        essential = false
+        // Only run this command if enable_sso is set
+        command = concat([], var.enable_sso ? [
+          "sh",
+          "-c",
+          "echo \"/p4/a\\\t'sso' => 'enabled',\" > ${local.helix_swarm_data_path}/sso.sed && sed -i -f ${local.helix_swarm_data_path}/sso.sed ${local.helix_swarm_data_path}/config.php && rm -rf ${local.helix_swarm_data_path}/cache",
+        ] : []),
+        readonly_root_filesystem = false
+
+        logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-group         = aws_cloudwatch_log_group.helix_swarm_service_log_group.name
+            awslogs-region        = data.aws_region.current.name
+            awslogs-stream-prefix = local.helix_swarm_data_volume_name
+          }
+        }
+        mountPoints = [
+          {
+            sourceVolume  = local.helix_swarm_data_volume_name
+            containerPath = local.helix_swarm_data_path
+          }
+        ],
+        dependsOn = [
+          {
+            containerName = var.helix_swarm_container_name
+            condition     = "HEALTHY"
+          }
+        ]
+      }
+    ]
+  )
 
   task_role_arn      = var.custom_helix_swarm_role != null ? var.custom_helix_swarm_role : aws_iam_role.helix_swarm_default_role[0].arn
   execution_role_arn = aws_iam_role.helix_swarm_task_execution_role.arn
-
-  dynamic "volume" {
-    for_each = var.enable_elastic_filesystem ? [1] : []
-    content {
-      name = "swarm_data"
-      efs_volume_configuration {
-        file_system_id     = aws_efs_file_system.helix_swarm_efs_file_system[0].id
-        transit_encryption = "ENABLED"
-        authorization_config {
-          access_point_id = aws_efs_access_point.helix_swarm_efs_access_point[0].id
-          iam             = "ENABLED"
-        }
-      }
-    }
-  }
-
-  dynamic "volume" {
-    for_each = var.enable_elastic_filesystem ? [1] : []
-    content {
-      name = "redis_data"
-      efs_volume_configuration {
-        file_system_id     = aws_efs_file_system.helix_swarm_efs_file_system[0].id
-        transit_encryption = "ENABLED"
-        authorization_config {
-          access_point_id = aws_efs_access_point.redis_efs_access_point[0].id
-          iam             = "ENABLED"
-        }
-      }
-    }
-  }
 
   runtime_platform {
     operating_system_family = "LINUX"
@@ -193,11 +173,12 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
 resource "aws_ecs_service" "helix_swarm_service" {
   name = "${local.name_prefix}-service"
 
-  cluster              = var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn : aws_ecs_cluster.helix_swarm_cluster[0].arn
-  task_definition      = aws_ecs_task_definition.helix_swarm_task_definition.arn
-  launch_type          = "FARGATE"
-  desired_count        = var.helix_swarm_desired_container_count
-  force_new_deployment = true
+  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn : aws_ecs_cluster.helix_swarm_cluster[0].arn
+  task_definition        = aws_ecs_task_definition.helix_swarm_task_definition.arn
+  launch_type            = "FARGATE"
+  desired_count          = var.helix_swarm_desired_container_count
+  force_new_deployment   = var.debug
+  enable_execute_command = var.debug
 
   load_balancer {
     target_group_arn = aws_lb_target_group.helix_swarm_alb_target_group.arn
@@ -211,4 +192,6 @@ resource "aws_ecs_service" "helix_swarm_service" {
   }
 
   tags = local.tags
+
+  depends_on = [aws_elasticache_cluster.swarm]
 }

@@ -76,9 +76,9 @@ variable "internal" {
   default     = false
 }
 
-variable "FQDN" {
+variable "fully_qualified_domain_name" {
   type        = string
-  description = "The FQDN that should be used to generate the self-signed SSL cert on the Helix Core instance."
+  description = "The fully qualified domain name where Helix Core will be available. This is used to generate self-signed certificates on the Helix Core server."
   default     = null
 }
 

@@ -2,8 +2,8 @@
 # Shared ECS Cluster for Services
 ##########################################
 
-resource "aws_ecs_cluster" "build_pipeline_cluster" {
-  name = "build-pipeline-cluster"
+resource "aws_ecs_cluster" "perforce_cluster" {
+  name = "perforce-cluster"
 
   setting {
     name  = "containerInsights"
@@ -12,7 +12,7 @@ resource "aws_ecs_cluster" "build_pipeline_cluster" {
 }
 
 resource "aws_ecs_cluster_capacity_providers" "providers" {
-  cluster_name = aws_ecs_cluster.build_pipeline_cluster.name
+  cluster_name = aws_ecs_cluster.perforce_cluster.name
 
   capacity_providers = ["FARGATE"]
 
@@ -28,8 +28,8 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 ##########################################
 
 module "perforce_helix_core" {
-  source                = "../../modules/perforce/helix-core"
-  vpc_id                = aws_vpc.build_pipeline_vpc.id
+  source                = "../../helix-core"
+  vpc_id                = aws_vpc.perforce_vpc.id
   server_type           = "p4d_commit"
   instance_subnet_id    = aws_subnet.public_subnets[0].id
   instance_type         = "c6g.large"
@@ -50,9 +50,9 @@ module "perforce_helix_core" {
 ##########################################
 
 module "perforce_helix_authentication_service" {
-  source                                   = "../../modules/perforce/helix-authentication-service"
-  vpc_id                                   = aws_vpc.build_pipeline_vpc.id
-  cluster_name                             = aws_ecs_cluster.build_pipeline_cluster.name
+  source                                   = "../../helix-authentication-service"
+  vpc_id                                   = aws_vpc.perforce_vpc.id
+  cluster_name                             = aws_ecs_cluster.perforce_cluster.name
   helix_authentication_service_alb_subnets = aws_subnet.public_subnets[*].id
   helix_authentication_service_subnets     = aws_subnet.private_subnets[*].id
   certificate_arn                          = aws_acm_certificate.helix.arn
@@ -60,7 +60,7 @@ module "perforce_helix_authentication_service" {
   enable_web_based_administration = true
   fully_qualified_domain_name     = "auth.helix.${var.root_domain_name}"
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
+  depends_on = [aws_ecs_cluster.perforce_cluster, aws_acm_certificate_validation.helix]
 }
 
 ##########################################
@@ -68,9 +68,9 @@ module "perforce_helix_authentication_service" {
 ##########################################
 
 module "perforce_helix_swarm" {
-  source                      = "../../modules/perforce/helix-swarm"
-  vpc_id                      = aws_vpc.build_pipeline_vpc.id
-  cluster_name                = aws_ecs_cluster.build_pipeline_cluster.name
+  source                      = "../../helix-swarm"
+  vpc_id                      = aws_vpc.perforce_vpc.id
+  cluster_name                = aws_ecs_cluster.perforce_cluster.name
   helix_swarm_alb_subnets     = aws_subnet.public_subnets[*].id
   helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
   certificate_arn             = aws_acm_certificate.helix.arn
@@ -80,47 +80,9 @@ module "perforce_helix_swarm" {
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
 
-  fully_qualified_domain_name = "swarm.helix.${var.root_domain_name}"
-
   enable_sso = true
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
-}
+  fully_qualified_domain_name = "swarm.helix.${var.root_domain_name}"
 
-##########################################
-# Jenkins
-##########################################
-
-module "jenkins" {
-  source = "../../modules/jenkins"
-
-  cluster_name                   = aws_ecs_cluster.build_pipeline_cluster.name
-  vpc_id                         = aws_vpc.build_pipeline_vpc.id
-  jenkins_alb_subnets            = aws_subnet.public_subnets[*].id
-  jenkins_service_subnets        = aws_subnet.private_subnets[*].id
-  existing_security_groups       = []
-  internal                       = false
-  certificate_arn                = aws_acm_certificate.jenkins.arn
-  jenkins_agent_secret_arns      = local.jenkins_agent_secret_arns
-  create_ec2_fleet_plugin_policy = true
-
-  # Build Farms
-  build_farm_subnets = aws_subnet.private_subnets[*].id
-
-  build_farm_compute = local.build_farm_compute
-
-  build_farm_fsx_openzfs_storage = local.build_farm_fsx_openzfs_storage
-  # Artifacts
-  artifact_buckets = {
-    builds : {
-      name                 = "game-builds"
-      enable_force_destroy = true
-
-      tags = {
-        Name = "game-builds"
-      }
-    },
-  }
-
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.jenkins]
+  depends_on = [aws_ecs_cluster.perforce_cluster, aws_acm_certificate_validation.helix]
 }

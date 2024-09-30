@@ -77,73 +77,25 @@ variable "p4d_port" {
   default     = "ssl:perforce:1666"
 }
 
-variable "fqdn" {
+variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name that Swarm should use for internal URLs."
   default     = null
 }
 
-variable "redis_container_cpu" {
-  type        = number
-  description = "CPU allotment for Helix Swarm Redis container."
-  default     = 1024
-}
-
-variable "redis_container_memory" {
-  type        = number
-  description = "Memory allotment for Helix Swarm Redis container."
-  default     = 2048
-}
-
-variable "existing_redis_host" {
-  type        = string
-  description = "The hostname where the Redis cache that Swarm should use is running."
+variable "existing_redis_connection" {
+  type = object({
+    host = string
+    port = number
+  })
+  description = "The connection specifications to use for an existing Redis deployment."
   default     = null
-}
-
-variable "redis_container_port" {
-  type        = number
-  description = "The port where the Redis cache that Swarm should use is running."
-  default     = 6379
-}
-
-variable "redis_image" {
-  type        = string
-  description = "The Redis image and version that Helix Swarm should use."
-  default     = "redis"
-}
-
-variable "redis_container_name" {
-  type        = string
-  description = "The name of the Redis container."
-  default     = "swarm-redis"
-}
-
-variable "enable_elastic_filesystem" {
-  type        = bool
-  description = "Flag to enable/disable elastic filesystem for persistent storage. Defaults to false."
-  default     = false
-}
-
-variable "task_cpu" {
-  type        = number
-  description = "The CPU allotment for the Helix Swarm task."
-  default     = 2048
-  nullable    = false
-}
-
-variable "task_memory" {
-  type        = number
-  description = "The memory allotment for the Helix Swarm task."
-  default     = 4096
-  nullable    = false
 }
 
 variable "helix_swarm_desired_container_count" {
   type        = number
   description = "The desired number of containers running the Helix Swarm service."
   default     = 1
-  nullable    = false
 }
 
 # - Existing Cluster -
@@ -205,19 +157,6 @@ variable "certificate_arn" {
   description = "The TLS certificate ARN for the Helix Swarm service load balancer."
 }
 
-# - Filesystem -
-variable "helix_swarm_efs_performance_mode" {
-  type        = string
-  description = "The performance mode of the EFS file system used by the Helix Swarm service. Defaults to general purpose."
-  default     = "generalPurpose"
-}
-
-variable "helix_swarm_efs_throughput_mode" {
-  type        = string
-  description = "The throughput mode of the EFS file system used by the Helix Swarm service. Defaults to bursting."
-  default     = "bursting"
-}
-
 # - Logging -
 variable "helix_swarm_cloudwatch_log_retention_in_days" {
   type        = string
@@ -262,4 +201,36 @@ variable "p4d_swarm_user_arn" {
 variable "p4d_swarm_password_arn" {
   type        = string
   description = "The ARN of the parameter or secret where the swarm user password is stored."
+}
+
+variable "debug" {
+  type        = bool
+  default     = false
+  description = "Debug flag to enable execute command on service for container access."
+}
+
+variable "enable_sso" {
+  type        = bool
+  default     = false
+  description = "Set this to true if using SSO for Helix Swarm authentication."
+}
+
+######################
+# ELASTICACHE CONFIG
+######################
+
+variable "elasticache_node_count" {
+  type        = number
+  description = "Number of cache nodes to provision in the Elasticache cluster."
+  default     = 1
+  validation {
+    condition     = var.elasticache_node_count > 0
+    error_message = "The defined 'elasticache_node_count' must be greater than 0."
+  }
+}
+
+variable "elasticache_node_type" {
+  type        = string
+  description = "The type of nodes provisioned in the Elasticache cluster."
+  default     = "cache.t4g.micro"
 }

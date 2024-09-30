@@ -39,8 +39,8 @@ resource "aws_instance" "helix_core_instance" {
      --p4d_type ${var.server_type} \
      --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
      --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
-     --fqdn ${var.FQDN == null ? "" : var.FQDN} \
-     --auth ${var.helix_authentication_service_url == null ? "" : var.helix_authentication_service_url} \
+     ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
+     ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
      --case_sensitive ${var.helix_case_sensitive ? 1 : 0}
   EOT
 
