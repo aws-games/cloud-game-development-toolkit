@@ -8,50 +8,34 @@ locals {
   tags                 = {}
 }
 
-# Create ECS Cluster
-resource "aws_ecs_cluster" "cluster" {
-  name = "horde-cluster"
-
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
-
-# Specify Fargate Capacity Provider for Cluster
-resource "aws_ecs_cluster_capacity_providers" "providers" {
-  cluster_name = aws_ecs_cluster.cluster.name
-
-  capacity_providers = ["FARGATE"]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = "FARGATE"
-  }
-}
-
-module "unreal_horde" {
+module "unreal_engine_horde" {
   source                            = "../../"
   unreal_horde_service_subnets      = aws_subnet.private_subnets[*].id
   unreal_horde_external_alb_subnets = aws_subnet.public_subnets[*].id  # External ALB used by developers
   unreal_horde_internal_alb_subnets = aws_subnet.private_subnets[*].id # Internal ALB used by agents
-  vpc_id                            = aws_vpc.unreal_horde_vpc.id
-  cluster_name                      = aws_ecs_cluster.cluster.name
-  certificate_arn                   = aws_acm_certificate.unreal_horde.arn
+  vpc_id                            = aws_vpc.unreal_engine_horde_vpc.id
+  certificate_arn                   = aws_acm_certificate.unreal_engine_horde.arn
   github_credentials_secret_arn     = var.github_credentials_secret_arn
   tags                              = local.tags
 
-  depends_on = [aws_ecs_cluster.cluster, aws_acm_certificate_validation.unreal_horde]
-
   agents = {
-    al2023-x86 = {
-      ami           = data.aws_ami.al2023_x86.id
+    ubuntu-x86 = {
+      ami           = data.aws_ami.ubuntu_noble_amd.id
       instance_type = "c7a.large"
-      min_size      = 1
+      min_size      = 2
       max_size      = 5
+      block_device_mappings = [
+        {
+          device_name = "/dev/sda1"
+          ebs = {
+            volume_size = 64
+          }
+        }
+      ]
     }
   }
 
-  fully_qualified_domain_name = "https://horde.${var.root_domain_name}"
+  fully_qualified_domain_name = "horde.${var.root_domain_name}"
+
+  depends_on = [aws_acm_certificate_validation.unreal_engine_horde]
 }

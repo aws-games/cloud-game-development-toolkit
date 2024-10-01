@@ -1,8 +1,8 @@
-data "aws_ami" "al2023_x86" {
+data "aws_ami" "ubuntu_noble_amd" {
   most_recent = true
   filter {
     name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {

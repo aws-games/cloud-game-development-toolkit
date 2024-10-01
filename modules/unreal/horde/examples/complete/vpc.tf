@@ -1,8 +1,8 @@
-resource "aws_vpc" "unreal_horde_vpc" {
+resource "aws_vpc" "unreal_engine_horde_vpc" {
   cidr_block = local.vpc_cidr_block
   tags = merge(local.tags,
     {
-      Name = "unreal-horde-vpc"
+      Name = "unreal-engine-horde-vpc"
     }
   )
   enable_dns_hostnames = true
@@ -11,12 +11,12 @@ resource "aws_vpc" "unreal_horde_vpc" {
 
 # Set default SG to restrict all traffic
 resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.unreal_horde_vpc.id
+  vpc_id = aws_vpc.unreal_engine_horde_vpc.id
 }
 
 resource "aws_subnet" "public_subnets" {
   count             = length(local.public_subnet_cidrs)
-  vpc_id            = aws_vpc.unreal_horde_vpc.id
+  vpc_id            = aws_vpc.unreal_engine_horde_vpc.id
   cidr_block        = element(local.public_subnet_cidrs, count.index)
   availability_zone = element(local.azs, count.index)
 
@@ -29,7 +29,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_subnet" "private_subnets" {
   count             = length(local.private_subnet_cidrs)
-  vpc_id            = aws_vpc.unreal_horde_vpc.id
+  vpc_id            = aws_vpc.unreal_engine_horde_vpc.id
   cidr_block        = element(local.private_subnet_cidrs, count.index)
   availability_zone = element(local.azs, count.index)
 
@@ -45,7 +45,7 @@ resource "aws_subnet" "private_subnets" {
 ##########################################
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.unreal_horde_vpc.id
+  vpc_id = aws_vpc.unreal_engine_horde_vpc.id
   tags = merge(local.tags,
     {
       Name = "ue-horde-igw"
@@ -58,7 +58,7 @@ resource "aws_internet_gateway" "igw" {
 ##########################################
 
 resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.unreal_horde_vpc.id
+  vpc_id = aws_vpc.unreal_engine_horde_vpc.id
 
   # public route to the internet
   route {
@@ -90,7 +90,7 @@ resource "aws_eip" "nat_gateway_eip" {
 }
 
 resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.unreal_horde_vpc.id
+  vpc_id = aws_vpc.unreal_engine_horde_vpc.id
 
   # route to the internet through NAT gateway
   route {
