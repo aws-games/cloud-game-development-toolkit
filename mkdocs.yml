@@ -115,6 +115,7 @@ nav:
           - Helix Swarm:
               - Installation and Usage: modules/perforce/helix-swarm/helix-swarm.md
               - Module Docs: modules/perforce/helix-swarm/terraform-docs.md
+          - Examples: modules/perforce/examples/complete.md
   - Samples:
       - Overview: samples/index.md
       - Simple Build Pipeline: samples/simple-build-pipeline.md
