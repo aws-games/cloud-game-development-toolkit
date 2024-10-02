@@ -29,6 +29,7 @@ resource "aws_lb" "unreal_horde_external_alb" {
 
 # External target group for web server traffic
 resource "aws_lb_target_group" "unreal_horde_api_target_group_external" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   count       = var.create_external_alb ? 1 : 0
   name        = "${local.name_prefix}-ext-api-tg"
   port        = var.container_api_port
@@ -51,6 +52,7 @@ resource "aws_lb_target_group" "unreal_horde_api_target_group_external" {
 
 # External target group for GRPC traffic
 resource "aws_lb_target_group" "unreal_horde_grpc_target_group_external" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   count            = var.create_external_alb ? 1 : 0
   name             = "${local.name_prefix}-ext-grpc-tg"
   port             = var.container_grpc_port
@@ -138,6 +140,7 @@ resource "aws_lb" "unreal_horde_internal_alb" {
 
 # Internal target group for web server traffic
 resource "aws_lb_target_group" "unreal_horde_api_target_group_internal" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   count       = var.create_internal_alb ? 1 : 0
   name        = "${local.name_prefix}-int-api-tg"
   port        = var.container_api_port
@@ -162,6 +165,7 @@ resource "aws_lb_target_group" "unreal_horde_api_target_group_internal" {
 
 # Internal target group for GRPC traffic
 resource "aws_lb_target_group" "unreal_horde_grpc_target_group_internal" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   count            = var.create_internal_alb ? 1 : 0
   name             = "${local.name_prefix}-int-grpc-tg"
   port             = var.container_grpc_port
