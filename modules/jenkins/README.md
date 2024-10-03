@@ -6,14 +6,14 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.59.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.2 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.69.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.3 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.59.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.57.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.6.2 |
 
 ## Modules
@@ -24,69 +24,69 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_autoscaling_group.jenkins_build_farm_asg](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/autoscaling_group) | resource |
-| [aws_cloudwatch_log_group.jenkins_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_cluster_capacity_providers.jenkins_cluster_fargate_rpvodiers](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_cluster_capacity_providers) | resource |
-| [aws_ecs_service.jenkins_service](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.jenkins_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/ecs_task_definition) | resource |
-| [aws_efs_access_point.jenkins_efs_access_point](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_access_point) | resource |
-| [aws_efs_backup_policy.policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_backup_policy) | resource |
-| [aws_efs_file_system.jenkins_efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_file_system) | resource |
-| [aws_efs_mount_target.jenkins_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/efs_mount_target) | resource |
-| [aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/fsx_openzfs_file_system) | resource |
-| [aws_fsx_openzfs_volume.jenkins_build_farm_fsxz_volume](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/fsx_openzfs_volume) | resource |
-| [aws_iam_instance_profile.build_farm_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.build_farm_role](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.jenkins_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.jenkins_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.ec2_fleet_plugin_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_launch_template.jenkins_build_farm_launch_template](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/launch_template) | resource |
-| [aws_lb.jenkins_alb](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/lb) | resource |
-| [aws_lb_listener.jenkins_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.jenkins_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/lb_target_group) | resource |
-| [aws_s3_bucket.artifact_buckets](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.jenkins_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.artifacts_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_versioning.artifact_bucket_versioning](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/s3_bucket_versioning) | resource |
-| [aws_security_group.jenkins_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
-| [aws_security_group.jenkins_build_farm_sg](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
-| [aws_security_group.jenkins_build_storage_sg](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
-| [aws_security_group.jenkins_efs_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
-| [aws_security_group.jenkins_service_sg](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.jenkins_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.jenkins_build_farm_inbound_ssh_service](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.jenkins_build_vpc_all_traffic](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.jenkins_efs_inbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.jenkins_service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_string.artifact_buckets](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
-| [random_string.build_farm](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
-| [random_string.fsxz](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
-| [random_string.jenkins](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
-| [random_string.jenkins_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.2/docs/resources/string) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/caller_identity) | data source |
-| [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/ecs_cluster) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/region) | data source |
-| [aws_vpc.build_farm_vpc](https://registry.terraform.io/providers/hashicorp/aws/5.59.0/docs/data-sources/vpc) | data source |
+| [aws_autoscaling_group.jenkins_build_farm_asg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/autoscaling_group) | resource |
+| [aws_cloudwatch_log_group.jenkins_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/cloudwatch_log_group) | resource |
+| [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_cluster) | resource |
+| [aws_ecs_cluster_capacity_providers.jenkins_cluster_fargate_rpvodiers](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_cluster_capacity_providers) | resource |
+| [aws_ecs_service.jenkins_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_service) | resource |
+| [aws_ecs_task_definition.jenkins_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/ecs_task_definition) | resource |
+| [aws_efs_access_point.jenkins_efs_access_point](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/efs_access_point) | resource |
+| [aws_efs_backup_policy.policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/efs_backup_policy) | resource |
+| [aws_efs_file_system.jenkins_efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/efs_file_system) | resource |
+| [aws_efs_mount_target.jenkins_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/efs_mount_target) | resource |
+| [aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/fsx_openzfs_file_system) | resource |
+| [aws_fsx_openzfs_volume.jenkins_build_farm_fsxz_volume](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/fsx_openzfs_volume) | resource |
+| [aws_iam_instance_profile.build_farm_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_policy.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.build_farm_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.jenkins_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.jenkins_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.ec2_fleet_plugin_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_launch_template.jenkins_build_farm_launch_template](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/launch_template) | resource |
+| [aws_lb.jenkins_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb) | resource |
+| [aws_lb_listener.jenkins_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
+| [aws_lb_target_group.jenkins_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
+| [aws_s3_bucket.artifact_buckets](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.jenkins_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.artifacts_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_versioning.artifact_bucket_versioning](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/s3_bucket_versioning) | resource |
+| [aws_security_group.jenkins_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.jenkins_build_farm_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.jenkins_build_storage_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.jenkins_efs_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_security_group.jenkins_service_sg](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.jenkins_build_farm_inbound_ssh_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.jenkins_build_vpc_all_traffic](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.jenkins_efs_inbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.jenkins_service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [random_string.artifact_buckets](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
+| [random_string.build_farm](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
+| [random_string.fsxz](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
+| [random_string.jenkins](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
+| [random_string.jenkins_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/caller_identity) | data source |
+| [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/region) | data source |
+| [aws_vpc.build_farm_vpc](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/data-sources/vpc) | data source |
 
 ## Inputs
 

@@ -27,3 +27,8 @@ output "helix_core_super_user_password_secret_arn" {
   value       = var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn
   description = "The ARN of the AWS Secrets Manager secret holding your Helix Core super user's password."
 }
+
+output "helix_core_instance_id" {
+  value       = aws_instance.helix_core_instance.id
+  description = "Instance ID for the Helix Core instance"
+}

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from botocore.utils import IMDSFetcher
+from botocore.exceptions import ClientError
 import boto3
 import subprocess
 import os
@@ -22,7 +23,14 @@ def get_volumes_with_automount_tags(client):
     volumes = client.describe_volumes()['Volumes']
     returninfo = []
     for volume in volumes:
-        tags = client.list_tags_for_resource(ResourceARN=volume['ResourceARN'])['Tags']
+        try:
+            tags = client.list_tags_for_resource(ResourceARN=volume['ResourceARN'])['Tags']
+        except ClientError as error:
+            print("WARN: Could not list tags for resource %s; reason: %s" % (volume['ResourceARN'], error.response['Error']['Code']))
+            print("Detailed info:")
+            print(error)
+            print("ignoring volume and continuing!")
+            continue
         mount_on_tag = [t for t in tags if t['Key'] == 'automount-fsx-volume-on']
         mount_name_tag = [t for t in tags if t['Key'] == 'automount-fsx-volume-name']
         if mount_on_tag and mount_name_tag:

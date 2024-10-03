@@ -99,8 +99,8 @@ resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
   restrict_public_buckets = true
 }
 
-
 resource "aws_lb_target_group" "helix_swarm_alb_target_group" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   name        = "${local.name_prefix}-tg"
   port        = var.helix_swarm_container_port
   protocol    = "HTTP"

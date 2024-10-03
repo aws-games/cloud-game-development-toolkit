@@ -93,9 +93,9 @@ variable "desired_container_count" {
 
 # - Environment Variables -
 
-variable "fqdn" {
+variable "fully_qualified_domain_name" {
   type        = string
-  description = "The fully qualified domain name of Helix Authentication Service."
+  description = "The fully qualified domain name where Helix Authentication Service will be available."
   default     = "localhost"
 }
 
@@ -193,4 +193,10 @@ variable "helix_authentication_service_admin_password_secret_arn" {
   type        = string
   description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator password."
   default     = null
+}
+
+variable "debug" {
+  type        = bool
+  description = "Set this flag to enable execute command on service containers and force redeploys."
+  default     = false
 }

@@ -11,25 +11,35 @@ jobs:
     concurrency:
       group: changelog-build
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # Used to create temporary branch for changelog updates
+      pull-requests: write # Used to create PRs for changelog updates
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.BOT_PAT }}
     - name: Update Changelog
-      run: docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
-    - name: Create Pull Request
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.BOT_PAT }}
+        FILE_TO_COMMIT: CHANGELOG.md
+        DESTINATION_BRANCH: changelog-${{ github.run_id }}
       run: |
-        git config user.name github-actions[bot]
-        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-        git checkout -b changelog-update
-        git add .
-        git commit -m "Update Changelog"
-        git push origin changelog-update
-        echo $GH_TOKEN | gh auth login --with-token
-        gh pr create --title chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update --repo ${{ github.repository }} --confirm
+        git fetch --tags origin
+        docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
+        export TODAY=$( date -u '+%Y-%m-%d' )
+        export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+        export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+        export BRANCH_SHA=$( gh api /repos/:owner/:repo/git/ref/heads/main | jq .object.sha | tr -d '"')
+        gh api --method POST /repos/:owner/:repo/git/refs \
+          --field "ref=refs/heads/$DESTINATION_BRANCH" \
+          --field "sha=$BRANCH_SHA"
+        export SHA=$( gh api -XGET /repos/:owner/:repo/contents/$FILE_TO_COMMIT -F ref=refs/heads/$DESTINATION_BRANCH  | jq .sha | tr -d '"')
+        gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+          --field message="$MESSAGE" \
+          --field content="$CONTENT" \
+          --field encoding="base64" \
+          --field branch="$DESTINATION_BRANCH" \
+          --field sha=$SHA
+        gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH

@@ -35,6 +35,16 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "instance_architecture" {
+  type        = string
+  description = "The architecture of the Helix Core instance. Allowed values are 'arm64' or 'x86_64'."
+  default     = "x86_64"
+  validation {
+    condition     = var.instance_architecture == "arm64" || var.instance_architecture == "x86_64"
+    error_message = "The instance_architecture variable must be either 'arm64' or 'x86_64'."
+  }
+}
+
 ########################################
 # Networking and Security
 ########################################
@@ -66,9 +76,9 @@ variable "internal" {
   default     = false
 }
 
-variable "FQDN" {
+variable "fully_qualified_domain_name" {
   type        = string
-  description = "The FQDN that should be used to generate the self-signed SSL cert on the Helix Core instance."
+  description = "The fully qualified domain name where Helix Core will be available. This is used to generate self-signed certificates on the Helix Core server."
   default     = null
 }
 
@@ -155,4 +165,13 @@ variable "helix_authentication_service_url" {
   type        = string
   description = "The URL for the Helix Authentication Service."
   default     = null
+}
+
+########################################
+# Helix Core settings
+########################################
+variable "helix_case_sensitive" {
+  type        = bool
+  description = "Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode"
+  default     = true
 }

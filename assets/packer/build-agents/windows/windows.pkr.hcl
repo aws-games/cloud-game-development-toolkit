@@ -90,7 +90,7 @@ source "amazon-ebs" "base" {
   winrm_insecure = true
   winrm_username = "Administrator"
   winrm_use_ssl = true
-  winrm_timeout = "1h"
+  winrm_timeout = "15m"
   user_data_file = "./userdata.ps1"
 
   # network specific details
@@ -118,9 +118,6 @@ build {
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
-    environment_vars = [
-      "INSTALL_GIT=${var.install_git}"
-    ]
     script           = "./base_setup.ps1"
   }
 

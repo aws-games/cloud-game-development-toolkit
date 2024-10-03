@@ -12,10 +12,6 @@ variable "region" {
     default = "us-west-2"
 }
 
-variable "profile" {
-  type = string
-}
-
 variable "vpc_id" {
   type = string
 }
