@@ -1,4 +1,4 @@
-FROM python:3.12.6
+FROM python:3.12.7
 WORKDIR /build
 COPY . . 
 ARG VERSION ALIAS
