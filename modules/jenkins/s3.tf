@@ -19,7 +19,7 @@ resource "aws_s3_bucket" "artifact_buckets" {
 
   tags = merge(
     {
-      "ENVIRONMENT" = var.environment
+      "environment" = var.environment
     },
     each.value.tags,
   )

@@ -28,9 +28,9 @@ variable "environment" {
 variable "tags" {
   type = map(any)
   default = {
-    "IAC_MANAGEMENT" = "CGD-Toolkit"
-    "IAC_MODULE"     = "helix-core"
-    "IAC_PROVIDER"   = "Terraform"
+    "iac-management" = "CGD-Toolkit"
+    "iac-module"     = "helix-core"
+    "iac-provider"   = "Terraform"
   }
   description = "Tags to apply to resources."
 }
