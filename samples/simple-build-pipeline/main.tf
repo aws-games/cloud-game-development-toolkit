@@ -43,6 +43,8 @@ module "perforce_helix_core" {
   fully_qualified_domain_name = "core.helix.perforce.${var.root_domain_name}"
 
   helix_authentication_service_url = "https://${aws_route53_record.helix_authentication_service.name}"
+
+  depends_on = [module.perforce_helix_authentication_service]
 }
 
 ##########################################
