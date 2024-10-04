@@ -1,12 +1,38 @@
 ################################################################################
 # Load Balancer
 ################################################################################
-resource "aws_lb" "helix_swarm_alb" {
-  name               = "${local.name_prefix}-alb"
-  internal           = var.internal
+resource "aws_lb" "helix_swarm_external_alb" {
+  count              = var.create_external_alb ? 1 : 0
+  name               = "${local.name_prefix}-ext-alb"
   load_balancer_type = "application"
-  subnets            = var.helix_swarm_alb_subnets
-  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_swarm_alb_sg.id])
+  subnets            = var.helix_swarm_external_alb_subnets
+  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_swarm_external_alb_sg[0].id])
+
+  dynamic "access_logs" {
+    for_each = var.enable_helix_swarm_alb_access_logs ? [1] : []
+    content {
+      enabled = var.enable_helix_swarm_alb_access_logs
+      bucket  = var.helix_swarm_alb_access_logs_bucket != null ? var.helix_swarm_alb_access_logs_bucket : aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id
+      prefix  = var.helix_swarm_alb_access_logs_prefix != null ? var.helix_swarm_alb_access_logs_prefix : "${local.name_prefix}-alb"
+    }
+  }
+
+  #checkov:skip=CKV2_AWS_28: ALB access is managed with SG allow listing
+
+  enable_deletion_protection = var.enable_helix_swarm_alb_deletion_protection
+
+  drop_invalid_header_fields = true
+
+  tags = local.tags
+}
+
+resource "aws_lb" "helix_swarm_internal_alb" {
+  count              = var.create_internal_alb ? 1 : 0
+  name               = "${local.name_prefix}-int-alb"
+  load_balancer_type = "application"
+  subnets            = var.helix_swarm_internal_alb_subnets
+  internal           = true
+  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_swarm_internal_alb_sg[0].id])
 
   dynamic "access_logs" {
     for_each = var.enable_helix_swarm_alb_access_logs ? [1] : []
@@ -99,9 +125,32 @@ resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
   restrict_public_buckets = true
 }
 
-resource "aws_lb_target_group" "helix_swarm_alb_target_group" {
+resource "aws_lb_target_group" "helix_swarm_external_alb_target_group" {
+  count = var.create_external_alb ? 1 : 0
   #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
-  name        = "${local.name_prefix}-tg"
+  name        = "${local.name_prefix}-ext-tg"
+  port        = var.helix_swarm_container_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200,401"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 10
+    interval            = 30
+  }
+
+  tags = local.tags
+}
+
+resource "aws_lb_target_group" "helix_swarm_internal_alb_target_group" {
+  count = var.create_internal_alb ? 1 : 0
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
+  name        = "${local.name_prefix}-int-tg"
   port        = var.helix_swarm_container_port
   protocol    = "HTTP"
   target_type = "ip"
@@ -121,16 +170,34 @@ resource "aws_lb_target_group" "helix_swarm_alb_target_group" {
 }
 
 
+
 # HTTPS listener for swarm ALB
-resource "aws_lb_listener" "swarm_alb_https_listener" {
-  load_balancer_arn = aws_lb.helix_swarm_alb.arn
+resource "aws_lb_listener" "swarm_external_alb_https_listener" {
+  count             = var.create_external_alb ? 1 : 0
+  load_balancer_arn = aws_lb.helix_swarm_external_alb[0].arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
 
   default_action {
-    target_group_arn = aws_lb_target_group.helix_swarm_alb_target_group.arn
+    target_group_arn = aws_lb_target_group.helix_swarm_external_alb_target_group[0].arn
+    type             = "forward"
+  }
+
+  tags = local.tags
+}
+
+resource "aws_lb_listener" "swarm_internal_alb_https_listener" {
+  count             = var.create_internal_alb ? 1 : 0
+  load_balancer_arn = aws_lb.helix_swarm_internal_alb[0].arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.certificate_arn
+
+  default_action {
+    target_group_arn = aws_lb_target_group.helix_swarm_internal_alb_target_group[0].arn
     type             = "forward"
   }
 

@@ -106,9 +106,34 @@ variable "enable_web_based_administration" {
 }
 
 # - Load Balancer -
-variable "helix_authentication_service_alb_subnets" {
+variable "create_internal_alb" {
+  type        = bool
+  default     = true
+  description = "This flag controls the creation of an internal ALB for the Helix Authentication Service."
+}
+
+variable "create_external_alb" {
+  type        = bool
+  default     = true
+  description = "This flag controls the creation of an external ALB for the Helix Authentication Service."
+}
+
+variable "helix_authentication_service_external_alb_subnets" {
   type        = list(string)
-  description = "A list of subnets to deploy the Helix Authentication Service load balancer into. Public subnets are recommended."
+  description = "A list of subnets to deploy the Helix Authentication Service external load balancer into. Public subnets are recommended."
+  validation {
+    condition     = var.create_external_alb && length(var.helix_authentication_service_external_alb_subnets) > 0
+    error_message = "You must provide subnets for the external ALB."
+  }
+}
+
+variable "helix_authentication_service_internal_alb_subnets" {
+  type        = list(string)
+  description = "A list of subnets to deploy the Helix Authentication Service internal load balancer into. Private subnets are recommended."
+  validation {
+    condition     = var.create_internal_alb && length(var.helix_authentication_service_internal_alb_subnets) > 0
+    error_message = "You must provide subnets for the internal ALB."
+  }
 }
 
 variable "enable_helix_authentication_service_alb_access_logs" {
@@ -144,12 +169,6 @@ variable "existing_security_groups" {
   type        = list(string)
   description = "A list of existing security group IDs to attach to the Helix Authentication Service load balancer."
   default     = []
-}
-
-variable "internal" {
-  type        = bool
-  description = "Set this flag to true if you do not want the Helix Authentication Service load balancer to have a public IP."
-  default     = false
 }
 
 variable "certificate_arn" {

@@ -1,24 +1,28 @@
+output "external_alb_dns_name" {
+  value = var.create_external_alb ? aws_lb.helix_authentication_service_external_alb[0].dns_name : null
+}
+
+output "internal_alb_dns_name" {
+  value = var.create_internal_alb ? aws_lb.helix_authentication_service_internal_alb[0].dns_name : null
+}
+
+output "external_alb_zone_id" {
+  value = var.create_external_alb ? aws_lb.helix_authentication_service_external_alb[0].zone_id : null
+}
+
+output "internal_alb_zone_id" {
+  value = var.create_internal_alb ? aws_lb.helix_authentication_service_internal_alb[0].zone_id : null
+}
+
+output "external_alb_security_group_id" {
+  value = var.create_external_alb ? aws_security_group.helix_authentication_service_external_alb_sg[0].id : null
+}
+
+output "internal_alb_security_group_id" {
+  value = var.create_internal_alb ? aws_security_group.helix_authentication_service_internal_alb_sg[0].id : null
+}
+
 output "service_security_group_id" {
   description = "Security group associated with the ECS service running Helix Authentication Service"
   value       = aws_security_group.helix_authentication_service_sg.id
-}
-
-output "alb_security_group_id" {
-  description = "Security group associated with the Helix Authentication Service load balancer"
-  value       = aws_security_group.helix_authentication_service_alb_sg.id
-}
-
-output "cluster_name" {
-  description = "Name of the ECS cluster hosting helix_authentication_service"
-  value       = var.cluster_name != null ? var.cluster_name : aws_ecs_cluster.helix_authentication_service_cluster[0].name
-}
-
-output "alb_dns_name" {
-  description = "The DNS name of the Helix Authentication Service ALB"
-  value       = aws_lb.helix_authentication_service_alb.dns_name
-}
-
-output "alb_zone_id" {
-  description = "The hosted zone ID of the Helix Authentication Service ALB"
-  value       = aws_lb.helix_authentication_service_alb.zone_id
 }

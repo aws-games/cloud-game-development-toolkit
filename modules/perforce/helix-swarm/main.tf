@@ -180,10 +180,22 @@ resource "aws_ecs_service" "helix_swarm_service" {
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.helix_swarm_alb_target_group.arn
-    container_name   = var.helix_swarm_container_name
-    container_port   = var.helix_swarm_container_port
+  dynamic "load_balancer" {
+    for_each = var.create_external_alb ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.helix_swarm_external_alb_target_group[0].arn
+      container_name   = var.helix_swarm_container_name
+      container_port   = var.helix_swarm_container_port
+    }
+  }
+
+  dynamic "load_balancer" {
+    for_each = var.create_internal_alb ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.helix_swarm_internal_alb_target_group[0].arn
+      container_name   = var.helix_swarm_container_name
+      container_port   = var.helix_swarm_container_port
+    }
   }
 
   network_configuration {
