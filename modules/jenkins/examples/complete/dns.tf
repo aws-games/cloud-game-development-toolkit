@@ -26,7 +26,7 @@ resource "aws_acm_certificate" "jenkins" {
   validation_method = "DNS"
 
   tags = {
-    Environment = "dev"
+    environment = "dev"
   }
 
   lifecycle {

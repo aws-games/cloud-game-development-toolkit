@@ -28,9 +28,9 @@ variable "environment" {
 variable "tags" {
   type = map(any)
   default = {
-    "IAC_MANAGEMENT" = "CGD-Toolkit"
-    "IAC_MODULE"     = "unreal-horde"
-    "IAC_PROVIDER"   = "Terraform"
+    "iac-management" = "CGD-Toolkit"
+    "iac-module"     = "unreal-horde"
+    "iac-provider"   = "Terraform"
   }
   description = "Tags to apply to resources."
 }
