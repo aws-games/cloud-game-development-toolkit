@@ -77,7 +77,7 @@ No modules.
 | <a name="input_enable_helix_swarm_alb_deletion_protection"></a> [enable\_helix\_swarm\_alb\_deletion\_protection](#input\_enable\_helix\_swarm\_alb\_deletion\_protection) | Enables deletion protection for the Helix Swarm ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_sso"></a> [enable\_sso](#input\_enable\_sso) | Set this to true if using SSO for Helix Swarm authentication. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
-| <a name="input_existing_redis_connection"></a> [existing\_redis\_connection](#input\_existing\_redis\_connection) | The connection specifications to use for an existing Redis deployment. | <pre>object({<br>    host = string<br>    port = number<br>  })</pre> | `null` | no |
+| <a name="input_existing_redis_connection"></a> [existing\_redis\_connection](#input\_existing\_redis\_connection) | The connection specifications to use for an existing Redis deployment. | <pre>object({<br/>    host = string<br/>    port = number<br/>  })</pre> | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Swarm service load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name that Swarm should use for internal URLs. | `string` | `null` | no |
 | <a name="input_helix_swarm_alb_access_logs_bucket"></a> [helix\_swarm\_alb\_access\_logs\_bucket](#input\_helix\_swarm\_alb\_access\_logs\_bucket) | ID of the S3 bucket for Helix Swarm ALB access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
@@ -98,7 +98,7 @@ No modules.
 | <a name="input_p4d_swarm_password_arn"></a> [p4d\_swarm\_password\_arn](#input\_p4d\_swarm\_password\_arn) | The ARN of the parameter or secret where the swarm user password is stored. | `string` | n/a | yes |
 | <a name="input_p4d_swarm_user_arn"></a> [p4d\_swarm\_user\_arn](#input\_p4d\_swarm\_user\_arn) | The ARN of the parameter or secret where the swarm user username is stored. | `string` | n/a | yes |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IAC_MANAGEMENT": "CGD-Toolkit",<br>  "IAC_MODULE": "swarm",<br>  "IAC_PROVIDER": "Terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "swarm",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy swarm into. | `string` | n/a | yes |
 
 ## Outputs

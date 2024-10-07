@@ -91,7 +91,7 @@ No modules.
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the Helix Authentication Service load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Helix Authentication Service module resources. | `string` | `"helix-auth-svc"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IAC_MANAGEMENT": "CGD-Toolkit",<br>  "IAC_MODULE": "helix-authentication-service",<br>  "IAC_PROVIDER": "Terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "helix-authentication-service",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy Helix Authentication Service into. | `string` | n/a | yes |
 
 ## Outputs
