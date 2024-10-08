@@ -1,7 +1,7 @@
 name: Documentation improvements
 description: Suggest a documentation update
 title: "Docs: TITLE"
-labels: ["documentation"]
+labels: ["documentation", "triage"]
 body:
   - type: textarea
     id: search_area
