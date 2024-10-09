@@ -20,7 +20,7 @@ If you own the domain: "example.com" this example will deploy Helix Core to "cor
 
 Unreal Engine Horde is only available through the Epic Games Github organization's package registry or the Unreal Engine source code. In order to get access to this software you will need to [join the Epic Games organization](https://github.com/EpicGames/Signup) on Github and accept the Unreal Engine EULA.
 
-The `github_credentials_secret_arn` corresponds to a secret stored in AWS Secrets Manager. The Unreal Engine Horde module uses the Github credentials stored in this secret to pull the Horde container from the Epic Games Github organization. We recommend using a Github Personal Access Token in place of your password. This PAT will need `read:packages` permissions. Please consult the AWS documentation on [Using non-AWS container images in Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html) for more information.
+The `github_credentials_secret_arn` corresponds to a secret stored in AWS Secrets Manager. The Unreal Engine Horde module uses the Github credentials stored in this secret to pull the Horde container from the Epic Games Github organization. We recommend using a [Github Personal Access Token (Classic)](https://github.com/settings/tokens) in place of your password. This PAT will need `read:packages` permissions. Please consult the AWS documentation on [Using non-AWS container images in Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/private-auth.html) for more information.
 
 This command shows how to create the secret from the AWS CLI:
 
