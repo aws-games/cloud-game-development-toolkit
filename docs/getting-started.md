@@ -16,6 +16,9 @@ A _module_ is a reusable [Terraform](https://www.terraform.io/) configuration en
 
 A _sample_ is a complete reference architecture that stitches together [modules](./modules/index.md) and first-party AWS services. A _sample_ is deployed with Terraform, and is the best way to get started with the **Cloud Game Development Toolkit**.
 
+???+ Note
+    Because samples may deploy resources that have unique name constraints, we cannot guarantee that two different samples can be deployed into the same AWS account without modifying either of the samples to integrate shared infrastructure or resolve conflicts. If you're interested in using functionality from multiple samples, we recommend that you use them as reference material to base your own infrastructure off of.
+
 ## Step by Step Tutorial
 
 This section will walk you through the prerequisites for deploying the [Simple Build Pipeline](./samples/simple-build-pipeline.md), the actual deployment process with Terraform, and basic configuration of Jenkins and Perforce.
