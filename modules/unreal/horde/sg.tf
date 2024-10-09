@@ -220,3 +220,14 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_service_inbound_age
   to_port                      = 443
   ip_protocol                  = "tcp"
 }
+
+# Horde agents allow inbound access from other agents
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_agents_inbound_agents" {
+  count                        = length(var.agents) > 0 ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_agent_sg[0].id
+  description                  = "Allow inbound traffic to Horde Agents from other Horde Agents."
+  referenced_security_group_id = aws_security_group.unreal_horde_agent_sg[0].id
+  from_port                    = 7000
+  to_port                      = 7010
+  ip_protocol                  = "tcp"
+}
