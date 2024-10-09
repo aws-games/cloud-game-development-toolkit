@@ -1,6 +1,6 @@
 # Simple Build Pipeline Sample
 
-The Simple Build Pipeline is the best place to get started when first exploring the Cloud Game Development Toolkit. It encapsulates all of the available modules alongside best practice deployments of core AWS services. The Simple Build Pipeline provisions a well-architected Virtual Private Cloud ([VPC](https://aws.amazon.com/vpc/)), a skeleton for managing DNS and SSL certificates with [Route 53](https://aws.amazon.com/route53/) and AWS Certificate Manager([ACM](https://aws.amazon.com/certificate-manager/)), [Jenkins](https://www.jenkins.io/) for continuous integration and deployment, [Perforce Helix Core](https://www.perforce.com/products/helix-core/aws) for version control, [Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) for code review, and [Perforce Helix Authentication Service](https://github.com/perforce/helix-authentication-service) for external identity provider integrations.
+The Simple Build Pipeline is the best place to get started when first exploring the Cloud Game Development Toolkit. It encapsulates many of the available modules alongside best practice deployments of core AWS services. The Simple Build Pipeline provisions a well-architected Virtual Private Cloud ([VPC](https://aws.amazon.com/vpc/)), a skeleton for managing DNS and SSL certificates with [Route 53](https://aws.amazon.com/route53/) and AWS Certificate Manager([ACM](https://aws.amazon.com/certificate-manager/)), [Jenkins](https://www.jenkins.io/) for continuous integration and deployment, [Perforce Helix Core](https://www.perforce.com/products/helix-core/aws) for version control, [Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) for code review, and [Perforce Helix Authentication Service](https://github.com/perforce/helix-authentication-service) for external identity provider integrations.
 
 We recommend that you [**fork**](https://github.com/aws-games/cloud-game-development-toolkit/fork) the Cloud Game Development Toolkit and then use this Simple Build Pipeline as the starting point for managing your studio's infrastructure.
 
@@ -8,7 +8,7 @@ We recommend that you [**fork**](https://github.com/aws-games/cloud-game-develop
 
 There are a few prerequisites that need to be completed **prior** to deploying this sample architecture. We'll walk through those here.
 
-1. Domain Name System (DNS) Resolution
+### 1. Domain Name System (DNS) Resolution
 
 The Simple Build Pipeline will deploy a number of web-based applications into your AWS account. The Cloud Game Development Toolkit attempts to follow a "secure-by-default" design pattern, so HTTPS is the standard protocol for all applications deployed by the Toolkit.
 
@@ -20,7 +20,7 @@ If you already have a domain with a different domain registrar you can leverage 
 
 Regardless, the Simple Build Pipeline requires the **fully qualified domain name (FQDN)** that you would like resources to be provisioned under. If you own the domain: "example.com" the simple build pipeline would deploy Jenkins to "jenkins.example.com" and Helix Swarm to "swarm.helix.example.com" - this can be modified from the `dns.tf` file.
 
-2. Jenkins Build Farm
+### 2. Jenkins Build Farm
 
 The [Jenkins module](/docs/modules/jenkins/jenkins.md) provisions the Jenkins coordinator as a service on Amazon Elastic Container Service ([ECS](https://aws.amazon.com/ecs)). It also provisions any number of [EC2 autoscaling groups](https://aws.amazon.com/ec2/autoscaling/) to be used as build nodes by Jenkins, and any number of [Amazon FSx for OpenZFS filesystems](https://aws.amazon.com/fsx/openzfs/) to be used as shared storage by those build nodes.
 
@@ -85,7 +85,7 @@ The deployment can take close to ten minutes. Creating the certificates and perf
 
 After the Simple Build Pipeline deploys you still need to configure the underlying applications.
 
-1. Jenkins
+### 1. Jenkins
 
 Jenkins requires a couple of plugins to be able to send build jobs to the provisioned autoscaling groups. These plugins are outlined in the [Jenkins documentation](/docs/modules/jenkins/jenkins.md). In the future we will automate the installation of these plugins.
 
@@ -108,7 +108,7 @@ You will need to run `terraform apply` to deploy this change.
 
 Now that you are able to access Jenkins you'll need to configure the plugins, cloud based agents, and credentials that Jenkins has access to. Please consult the [Jenkins documentation](/docs/modules/jenkins/jenkins.md) for these steps.
 
-2. Helix Authentication Service
+### 2. Helix Authentication Service
 
 In order to use your external identity provider with Helix Core and Helix Swarm you will need to configure a OIDC or SAML connection in the Helix Authentication Service. The Helix Authentication Service module provides a web-based UI to do this.
 
@@ -131,7 +131,7 @@ You will need to run `terraform apply` to deploy this change.
 
 You should now be able to access the Helix Authentication Service's web based UI. Please consult the [Helix Authentication Service documentation](/docs/modules/perforce/helix-authentication-service/helix-authentication-service.md) for guidance on logging in and configuring your external IDP.
 
-3. Helix Core and Helix Swarm
+### 3. Helix Core and Helix Swarm
 
 Helix Core and Helix Swarm are configured to leverage the Helix Authentication Service for sign-in out of the box. However, they are not exposed to the public internet by default. You will need to create rules on the `helix core security group` and the `helix swarm security group` that grant personal access. As above, we recommend doing this with Terraform:
 
