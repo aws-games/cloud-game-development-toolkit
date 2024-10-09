@@ -43,12 +43,12 @@ locals {
 
   build_farm_compute = {
       graviton_builders : {
-          ami = ami-0a1b2c3d4e5f
-          instance_type = c7g.large
+          ami = "ami-0a1b2c3d4e5f"
+          instance_type = "c7g.large"
       }
       windows_builders : {
-          ami = ami-9z8y7x6w5v
-          instance_type = c7a.large
+          ami = "ami-9z8y7x6w5v"
+          instance_type = "c7a.large"
       }
   }
 
