@@ -100,17 +100,18 @@ resource "aws_eip" "nat_gateway_eip" {
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.jenkins_vpc.id
 
-  # route to the internet through NAT gateway
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_gateway.id
-  }
-
   tags = merge(local.tags,
     {
       Name = "jenkins-private-rt"
     }
   )
+}
+
+# route to the internet through NAT gateway
+resource "aws_route" "private_rt_nat_gateway" {
+  route_table_id            = aws_route_table.private_rt.id
+  destination_cidr_block    = "0.0.0.0/0"
+  nat_gateway_id            = aws_nat_gateway.nat_gateway.id
 }
 
 resource "aws_route_table_association" "private_rt_asso" {
