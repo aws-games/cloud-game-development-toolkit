@@ -1,7 +1,7 @@
 name: Feature request
 description: Suggest an idea for Cloud Game Development Toolkit
 title: "Feature request: TITLE"
-labels: ["feature-request"]
+labels: ["feature-request", "triage"]
 body:
   - type: markdown
     attributes:
