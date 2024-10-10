@@ -14,10 +14,12 @@ variable "region" {
 
 variable "vpc_id" {
   type = string
+  default = null
 }
 
 variable "subnet_id" {
   type = string
+  default = null
 }
 
 variable "associate_public_ip_address" {
