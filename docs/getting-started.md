@@ -42,11 +42,17 @@ packer build ./assets/packer/perforce/helix-core/perforce_arm64.pkr.hcl
 This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](./assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
 ???+ Note
+    The Perforce Helix Core template will default to the _us-west-2_ (Oregon) region, if a region is not provided.
+
+???+ Note
     The AWS Region where this AMI is created _must_ be the same Region where you intend to deploy the Simple Build Pipeline.
 
 ### Step 3. Create Build Agent Amazon Machine Images
 
 This section covers the creation of Amazon Machine Images used to provision Jenkins build agents. Different studios have different needs at this stage, so we'll cover the creation of three different build agent AMIs.
+
+???+ Note
+    The Build Agent templates will default to the _us-west-2_ (Oregon) region, if a region is not provided.
 
 #### Amazon Linux 2023 ARM based Amazon Machine Image
 
@@ -55,8 +61,8 @@ This Amazon Machine Image is provisioned using the [Amazon Linux 2023](https://a
 This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](./assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
 
 ``` bash
-packer build amazon-linux-2023-arm64.pkr.hcl \
-    -var "public_key=<include public key here>"
+packer build -var "public_key=<include public key here>" amazon-linux-2023-arm64.pkr.hcl
+
 ```
 
 ???+ Note
@@ -79,11 +85,12 @@ Take note of the output of this CLI command. You will need the ARN later.
 This Amazon Machine Image is provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. To build this AMI with a variables file called `linux.pkrvars.hcl` you would use the following command:
 
 ``` bash
-packer build ubuntu-jammy-22.04-amd64-server.pkr.hcl \
-    -var-file="linux.pkrvars.hcl"
+# This command fails if not run from the '/assets/packer/build-agents/linux' directory.
+packer build -var "public_key=<include public key here>" ubuntu-jammy-22.04-amd64-server.pkr.hcl
+
 ```
 
-???+ Note
+???+ Warning
     The above command assumes you are running `packer` from the `/assets/packer/build-agents/linux` directory.
 
 Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.
@@ -105,8 +112,7 @@ This Amazon Machine Image is provisioned using the Windows Server 2022 base oper
 Again, the only required variable for building this Amazon Machine Image is a public SSH key.
 
 ``` bash
-packer build windows.pkr.hcl \
-    -var "public_key=<include public ssh key here>"
+packer build -var "public_key=<include public ssh key here>" windows.pkr.hcl
 ```
 
 ???+ Note
@@ -136,22 +142,25 @@ Once your hosted zone exists you can proceed to the next step.
 
 ### Step 5. Configure Simple Build Pipeline Variables
 
-All configuration of the _Simple Build Pipeline_ occurs in the [`local.tf`](./samples/simple-build-pipeline/local.tf) file. Before you deploy this architecture you will need to provide the outputs from previous steps.
+Configurations for the _Simple Build Pipeline_ are split between 2 files: [`local.tf`](./samples/simple-build-pipeline/local.tf) and [`variables.tf`](./samples/simple-build-pipeline/variables.tf). Variables in [`local.tf`](./samples/simple-build-pipeline/local.tf) are typically static and can be modified within the file itself. Variables in [`variables.tf`](./samples/simple-build-pipeline/variables.tf), tend to be more dynamic and are passed in through the `terraform apply` command either directly through a `-var` flag or as file using the `-var-file` flag.
 
-We'll walk through the required configurations in [`local.tf`](./samples/simple-build-pipeline/local.tf).
+We'll start by walking through the required configurations in [`local.tf`](./samples/simple-build-pipeline/local.tf).
 
-1. `fully_qualified_domain_name` must be set to the domain name you created a public hosted zone for in [Step 4](#step-4-create-route53-hosted-zone). Your applications will be deployed at subdomains. For example, if `fully_qualified_domain_name=example.com` then Jenkins will be available at `jenkins.example.com` and Perforce Helix Core will be available at `core.helix.example.com`.
-
-2. `allowlist` grants public internet access to the various applications deployed in the _Simple Build Pipeline_. At a minimum you will need to include your own IP address to gain access to Jenkins and Perforce Helix Core for configuration following deployment. For example, if your IP address is `192.158.1.38` you would want to set `allowlist=["192.158.1.38/32"]` to grant yourself access.
+1. `allowlist` grants public internet access to the various applications deployed in the _Simple Build Pipeline_. At a minimum you will need to include your own IP address to gain access to Jenkins and Perforce Helix Core for configuration following deployment. For example, if your IP address is `192.158.1.38` you would want to set `allowlist=["192.158.1.38/32"]` to grant yourself access.
 
 ???+ Note
     The `/32` suffix above is a subnet mask that specifies a single IP address. If you have different CIDR blocks that you would like to grant access to you can include those as well.
 
-3. `jenkins_agent_secret_arns` is a list of [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the `jenkins_agent_secret_arns` list so that Jenkins can connect to the provisioned build agents.
+2. `jenkins_agent_secret_arns` is a list of [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the `jenkins_agent_secret_arns` list so that Jenkins can connect to the provisioned build agents.
 
-4. The `build_farm_compute` map contains all of the information needed to provision your Jenkins build farms. Each entry in this map corresponds to an [EC2 Auto Scaling group](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html), and requires two fields to be specified: `ami` and `instance_type`. The `local.tf` file contains an example configuration that has been commented out. Using the AMI IDs from [Step 3](#step-3-create-build-agent-amazon-machine-images), please specify the build farms you would like to provision. Selecting the right instance type for your build farm is highly dependent on your build process. Larger instances are more expensive, but provide improved performance. For example, large Unreal Engine compilation jobs will perform significantly better on [Compute Optimized](https://aws.amazon.com/ec2/instance-types/#Compute_Optimized) instances, while cook jobs tend to benefit from the increased RAM available from [Memory Optimized](https://aws.amazon.com/ec2/instance-types/#Memory_Optimized) instances. It can be a good practice to provision an EC2 instance using your custom AMI, and run your build process locally to determine the right instance size for your build farm. Once you have settled on an instance type, complete the `build_farm_compute` map to configure your build farms.
+3. The `build_farm_compute` map contains all of the information needed to provision your Jenkins build farms. Each entry in this map corresponds to an [EC2 Auto Scaling group](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html), and requires two fields to be specified: `ami` and `instance_type`. The `local.tf` file contains an example configuration that has been commented out. Using the AMI IDs from [Step 3](#step-3-create-build-agent-amazon-machine-images), please specify the build farms you would like to provision. Selecting the right instance type for your build farm is highly dependent on your build process. Larger instances are more expensive, but provide improved performance. For example, large Unreal Engine compilation jobs will perform significantly better on [Compute Optimized](https://aws.amazon.com/ec2/instance-types/#Compute_Optimized) instances, while cook jobs tend to benefit from the increased RAM available from [Memory Optimized](https://aws.amazon.com/ec2/instance-types/#Memory_Optimized) instances. It can be a good practice to provision an EC2 instance using your custom AMI, and run your build process locally to determine the right instance size for your build farm. Once you have settled on an instance type, complete the `build_farm_compute` map to configure your build farms.
 
-5. Finally, the `build_farm_fsx_openzfs_storage` field configures file systems used by your build agents for mounting Helix Core workspaces and shared caches. Again, an example configuration is provided but commented out. Depending on the number of builds you expect to be performing and the size of your project, you may want to adjust the size of the suggested file systems.
+4. Finally, the `build_farm_fsx_openzfs_storage` field configures file systems used by your build agents for mounting Helix Core workspaces and shared caches. Again, an example configuration is provided but commented out. Depending on the number of builds you expect to be performing and the size of your project, you may want to adjust the size of the suggested file systems.
+
+The variables in [`variables.tf`] are as follows:
+
+1. `root_domain_name` must be set to the domain name you created a public hosted zone for in [Step 4](#step-4-create-route53-hosted-zone). Your applications will be deployed at subdomains. For example, if `root_domain_name=example.com` then Jenkins will be available at `jenkins.example.com` and Perforce Helix Core will be available at `core.helix.example.com`.
+
 
 ### Step 6. Deploy Simple Build Pipeline
 
@@ -164,7 +173,7 @@ terraform init
 This will install the modules and required Terraform providers.
 
 ``` bash
-terraform apply
+terraform apply -var "root_domain_name=<insert your root domain>"
 ```
 
 This will create a Terraform plan, and wait for manual approval to deploy the proposed resources. Once approval is given the entire deployment process takes roughly 10 minutes.
