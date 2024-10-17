@@ -22,23 +22,12 @@ variable "jwt_authority" {
   description = "JWT Authority"
 }
 
-variable "ghcr_username" {
+variable "github_credential_arn" {
   type        = string
   sensitive   = true
-  description = "GHCR username"
+  description = "Github Credential ARN"
 }
 
-variable "ghcr_password" {
-  type        = string
-  sensitive   = true
-  description = "GHCR password"
-}
-
-variable "profile" {
-  type        = string
-  default     = "default"
-  description = "AWS Profile name"
-}
 
 variable "caller_ip" {
   type        = list(string)

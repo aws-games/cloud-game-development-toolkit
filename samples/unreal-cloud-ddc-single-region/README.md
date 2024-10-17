@@ -67,7 +67,7 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.64.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.71.0 |
 
 ## Modules
 
@@ -82,6 +82,8 @@ No outputs.
 | Name | Type |
 |------|------|
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_ecr_authorization_token.token](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_authorization_token) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -89,13 +91,11 @@ No outputs.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_caller_ip"></a> [caller\_ip](#input\_caller\_ip) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
-| <a name="input_ghcr_password"></a> [ghcr\_password](#input\_ghcr\_password) | GHCR password | `string` | n/a | yes |
-| <a name="input_ghcr_username"></a> [ghcr\_username](#input\_ghcr\_username) | GHCR username | `string` | n/a | yes |
+| <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_jwt_audience"></a> [jwt\_audience](#input\_jwt\_audience) | JWT Audience | `string` | n/a | yes |
 | <a name="input_jwt_authority"></a> [jwt\_authority](#input\_jwt\_authority) | JWT Authority | `string` | n/a | yes |
 | <a name="input_okta_auth_server_id"></a> [okta\_auth\_server\_id](#input\_okta\_auth\_server\_id) | Okta Auth Server ID | `string` | n/a | yes |
 | <a name="input_okta_domain"></a> [okta\_domain](#input\_okta\_domain) | Okta Domain | `string` | n/a | yes |
-| <a name="input_profile"></a> [profile](#input\_profile) | AWS Profile name | `string` | `"default"` | no |
 
 ## Outputs
 

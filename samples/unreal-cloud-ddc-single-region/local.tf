@@ -4,6 +4,10 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
+data "aws_ecr_authorization_token" "token" {}
+
+data "aws_caller_identity" "current" {}
+
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 2)
 
