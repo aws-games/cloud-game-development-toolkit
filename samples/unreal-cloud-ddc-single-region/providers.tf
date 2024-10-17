@@ -23,9 +23,11 @@ provider "kubernetes" {
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra.cluster_name, "--output", "json", "--profile", var.profile]
+    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra.cluster_name, "--output", "json"]
   }
 }
+
+
 
 provider "helm" {
   kubernetes {
@@ -34,12 +36,12 @@ provider "helm" {
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra.cluster_name, "--output", "json", "--profile", var.profile]
+      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra.cluster_name, "--output", "json"]
     }
   }
   registry {
-    url      = "oci://ghcr.io/epicgames"
-    username = var.ghcr_username
-    password = var.ghcr_password
+    url      = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+    username = data.aws_ecr_authorization_token.token.user_name
+    password = data.aws_ecr_authorization_token.token.password
   }
 }

@@ -196,16 +196,22 @@ resource "kubernetes_service_account" "unreal_cloud_ddc_service_account" {
 ################################################################################
 # Helm
 ################################################################################
+resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_cache_rule" {
+  ecr_repository_prefix = "github"
+  upstream_registry_url = "ghcr.io"
+  credential_arn        = var.gchr_credentials_secret_manager_arn
+}
 
 resource "helm_release" "unreal_cloud_ddc" {
   name       = "unreal-cloud-ddc"
   chart      = "unreal-cloud-ddc"
-  repository = "oci://ghcr.io/epicgames"
+  repository = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
   namespace  = var.unreal_cloud_ddc_namespace
-  version    = "1.1.1+helm"
+  version    = "1.2.0+helm"
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
-    kubernetes_namespace.unreal_cloud_ddc
+    kubernetes_namespace.unreal_cloud_ddc,
+    aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
   ]
 
   values = var.unreal_cloud_ddc_helm_values
