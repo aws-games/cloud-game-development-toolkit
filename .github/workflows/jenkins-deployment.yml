@@ -32,7 +32,7 @@ jobs:
     steps:
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -108,7 +108,7 @@ jobs:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -155,7 +155,7 @@ jobs:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
