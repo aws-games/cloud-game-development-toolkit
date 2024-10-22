@@ -44,7 +44,7 @@ jobs:
           ref: ${{ github.ref }}
       # Install Terraform
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.3
       # Inject remote state block
@@ -115,7 +115,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       # Install Terraform
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.3
       # Inject remote state block
@@ -162,7 +162,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       # Install Terraform
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.3
       # Inject remote state block
