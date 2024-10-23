@@ -16,7 +16,6 @@ terraform {
   required_version = ">= 1.0"
 }
 
-
 provider "kubernetes" {
   host                   = module.unreal_cloud_ddc_infra.cluster_endpoint
   cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra.cluster_certificate_authority_data)
@@ -26,8 +25,6 @@ provider "kubernetes" {
     args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra.cluster_name, "--output", "json"]
   }
 }
-
-
 
 provider "helm" {
   kubernetes {
