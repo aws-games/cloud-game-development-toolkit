@@ -1,61 +1,3 @@
-
-locals {
-  sg_rules_all = [
-    { port : 7000, description : "ScyllaDB Inter-node communication (RPC)", protocol : "tcp" },
-    { port : 7001, description : "ScyllaDB SSL inter-node communication (RPC)", protocol : "tcp" },
-    { port : 7199, description : "ScyllaDB JMX management", protocol : "tcp" },
-    { port : 9042, description : "ScyllaDB CQL (native_transport_port)", protocol : "tcp" },
-    { port : 9100, description : "ScyllaDB node_exporter (Optionally)", protocol : "tcp" },
-    { port : 9142, description : "ScyllaDB SSL CQL (secure client to node)", protocol : "tcp" },
-    { port : 9160, description : "Scylla client port (Thrift)", protocol : "tcp" },
-    { port : 9180, description : "ScyllaDB Prometheus API", protocol : "tcp" },
-    { port : 10000, description : "ScyllaDB REST API", protocol : "tcp" },
-    { port : 19042, description : "Native shard-aware transport port", protocol : "tcp" },
-    { port : 19142, description : "Native shard-aware transport port (ssl)", protocol : "tcp" }
-  ]
-  scylla_variables = {
-    scylla-cluster-name = var.name
-  }
-  scylla_user_data = jsonencode(
-    { "scylla_yaml" : {
-      "cluster_name" : local.scylla_variables.scylla-cluster-name,
-      "seed_provider" : [
-        { "class_name" : "org.apache.cassandra.locator.SimpleSeedProvider",
-          "parameters" : [
-            { "seeds" : "test-ip" }
-          ]
-        }
-      ]
-      },
-  "start_scylla_on_first_boot" : true })
-  nvme-pre-bootstrap-userdata = <<EOF
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="//"
-
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-
-#!/bin/bash
-sudo mkfs.ext4 -E nodiscard /dev/nvme1n1
-sudo mkdir /data
-sudo mount /dev/nvme1n1 /data
---//--\
-EOF
-}
-
-data "aws_ami" "scylla_ami" {
-  most_recent = true
-  owners      = ["797456418907", "158855661827"]
-  filter {
-    name   = "name"
-    values = [var.scylla_ami_name]
-  }
-  filter {
-    name   = "architecture"
-    values = [var.scylla_architecture]
-  }
-}
-
 ################################################################################
 # Scylla DNS Name Record
 ################################################################################
@@ -78,79 +20,6 @@ resource "aws_route53_record" "scylla_records" {
   records = [for scylla in aws_instance.scylla_ec2_instance : scylla.private_ip]
 }
 
-################################################################################
-# Scylla SG
-################################################################################
-resource "aws_security_group" "scylla_security_group" {
-  name        = "${var.name}-scylla-sg"
-  description = "Security group for ScyllaDB"
-  vpc_id      = var.vpc_id
-
-  tags = {
-    Name = "unreal-cloud-ddc-scylla-sg"
-  }
-}
-
-################################################################################
-# Scylla Security Group Rules
-################################################################################
-resource "aws_security_group_rule" "ssm_egress_sg_rules" {
-  security_group_id = aws_security_group.scylla_security_group.id
-  from_port         = 0
-  description       = "Egress All"
-  protocol          = "-1"
-  to_port           = 0
-  type              = "egress"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
-
-
-################################################################################
-# Scylla Security Group to Peer CIDR Rules
-################################################################################
-resource "aws_security_group_rule" "peer_cidr_blocks_ingress_sg_rules" {
-  for_each          = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
-  security_group_id = aws_security_group.scylla_security_group.id
-  from_port         = each.value.port
-  description       = each.value.description
-  protocol          = each.value.protocol
-  cidr_blocks       = var.peer_cidr_blocks
-  to_port           = each.value.port
-  type              = "ingress"
-}
-
-resource "aws_security_group_rule" "peer_cidr_blocks_scylla_egress_sg_rules" {
-  security_group_id = aws_security_group.scylla_security_group.id
-  from_port         = 0
-  protocol          = "tcp"
-  cidr_blocks       = var.peer_cidr_blocks
-  to_port           = 0
-  type              = "egress"
-  description       = "Peer block egress"
-}
-################################################################################
-# Scylla Security Group to Self Rules
-################################################################################
-resource "aws_security_group_rule" "self_ingress_sg_rules" {
-  for_each          = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
-  security_group_id = aws_security_group.scylla_security_group.id
-  from_port         = each.value.port
-  description       = each.value.description
-  protocol          = each.value.protocol
-  self              = true
-  to_port           = each.value.port
-  type              = "ingress"
-}
-
-resource "aws_security_group_rule" "self_scylla_egress_sg_rules" {
-  security_group_id = aws_security_group.scylla_security_group.id
-  from_port         = 0
-  protocol          = "tcp"
-  self              = true
-  to_port           = 0
-  type              = "egress"
-  description       = "Self SG Egress"
-}
 
 # ################################################################################
 # # Scylla Security Group to NVME sg Rules
@@ -248,19 +117,7 @@ resource "aws_security_group_rule" "self_scylla_egress_sg_rules" {
 #   description              = "Scylla SG to Montoring SG Egress"
 # }
 
-################################################################################
-# Worker SG Rules
-################################################################################
-resource "aws_security_group_rule" "scylla_to_worker_group_ingress_sg_rules" {
-  for_each                 = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
-  security_group_id        = aws_security_group.worker_security_group.id
-  from_port                = each.value.port
-  description              = each.value.description
-  protocol                 = each.value.protocol
-  source_security_group_id = aws_security_group.scylla_security_group.id
-  to_port                  = each.value.port
-  type                     = "ingress"
-}
+
 #
 # resource "aws_security_group_rule" "scylla_to_worker_group_egress_sg_rules" {
 #   security_group_id        = aws_security_group.worker_security_group.id
@@ -271,19 +128,7 @@ resource "aws_security_group_rule" "scylla_to_worker_group_ingress_sg_rules" {
 #   type                     = "egress"
 #   description              = "Scylla SG to Worker SG Egress"
 # }
-################################################################################
-# NVME SG Rules
-################################################################################
-resource "aws_security_group_rule" "scylla_to_nvme_group_ingress_sg_rules" {
-  for_each                 = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
-  security_group_id        = aws_security_group.nvme_security_group.id
-  from_port                = each.value.port
-  description              = each.value.description
-  protocol                 = each.value.protocol
-  source_security_group_id = aws_security_group.scylla_security_group.id
-  to_port                  = each.value.port
-  type                     = "ingress"
-}
+
 #
 # resource "aws_security_group_rule" "scylla_to_nvme_group_egress_sg_rules" {
 #   security_group_id        = aws_security_group.nvme_security_group.id
@@ -544,6 +389,7 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   #checkov:skip=CKV_AWS_39:Ensure Amazon EKS public endpoint disabled
   #checkov:skip=CKV_AWS_58:Ensure EKS Cluster has Secrets Encryption Enabled
   #checkov:skip=CKV_AWS_339:Ensure EKS clusters run on a supported Kubernetes version
+  #checkov:skip=CKV_AWS_38:IP restriction set in module variables
   name                      = var.name
   role_arn                  = aws_iam_role.eks_cluster_role.arn
   version                   = "1.29"
@@ -789,45 +635,8 @@ resource "aws_eks_identity_provider_config" "eks_cluster_oidc_association" {
 }
 
 ################################################################################
-# S3
-################################################################################
-
-resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
-  #checkov:skip=CKV_AWS_21:Ensure all data stored in the S3 bucket have versioning enabled
-  #checkov:skip=CKV2_AWS_61:Ensure that an S3 bucket has a lifecycle configuration
-  #checkov:skip=CKV2_AWS_62:Ensure S3 buckets should have event notifications enabled
-  #checkov:skip=CKV_AWS_144:Ensure that S3 bucket has cross-region replication enabled
-  bucket_prefix = "${var.name}-s3-bucket"
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "unreal-s3-bucket" {
-  #checkov:skip=CKV2_AWS_67:Ensure AWS S3 bucket encrypted with Customer Managed Key (CMK) has regular rotation
-  bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      kms_master_key_id = "aws/s3"
-      sse_algorithm     = "aws:kms"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "unreal_ddc_s3_acls" {
-  bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-
-################################################################################
 # Log Bucket
 ################################################################################
-
-
 resource "aws_s3_bucket" "unreal_ddc_logging_s3_bucket" {
   #checkov:skip=CKV_AWS_21:Ensure all data stored in the S3 bucket have versioning enabled
   #checkov:skip=CKV2_AWS_61:Ensure that an S3 bucket has a lifecycle configuration
@@ -846,69 +655,5 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "unreal-s3-logging
       kms_master_key_id = "aws/s3"
       sse_algorithm     = "aws:kms"
     }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "unreal_ddc_log_s3_acls" {
-  bucket = aws_s3_bucket.unreal_ddc_logging_s3_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-
-resource "aws_s3_bucket_logging" "unreal-s3-log" {
-  bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
-
-  target_bucket = aws_s3_bucket.unreal_ddc_logging_s3_bucket.id
-  target_prefix = "log/unreal-ddc-bucket/"
-}
-
-resource "aws_s3_bucket_logging" "unreal-log-s3-log" {
-  bucket = aws_s3_bucket.unreal_ddc_logging_s3_bucket.id
-
-  target_bucket = aws_s3_bucket.unreal_ddc_logging_s3_bucket.id
-  target_prefix = "log/unreal-ddc-loggin-bucket/"
-}
-
-
-################################################################################
-# SSM
-################################################################################
-
-resource "aws_ssm_document" "config_scylla" {
-  name            = "${var.name}-scylla-run-command"
-  document_type   = "Command"
-  document_format = "YAML"
-
-  content = yamlencode({
-    "schemaVersion" : "2.2",
-    "description" : "Config Scylla",
-    "mainSteps" : [
-      {
-        "action" : "aws:runShellScript",
-        "name" : "ConfigScylla",
-        "inputs" : {
-          "runCommand" : [
-            "sudo apt-get update && sudo apt-get -y upgrade",
-            "sudo sed -i 's/- seeds: test-ip.*$/- seeds: ${aws_instance.scylla_ec2_instance[0].private_ip} /g' /etc/scylla/scylla.yaml",
-            "echo \"Config of /etc/scylla/scylla.yaml Done\"",
-            "sudo reboot now"
-          ]
-        }
-      }
-    ]
-    }
-  )
-}
-
-resource "aws_ssm_association" "scylla_config_association" {
-  name = aws_ssm_document.config_scylla.name
-
-  targets {
-    key    = "tag:Name"
-    values = ["${var.name}-scylla-db"]
   }
 }
