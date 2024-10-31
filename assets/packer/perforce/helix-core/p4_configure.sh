@@ -161,7 +161,7 @@ print_help() {
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -223,12 +223,12 @@ while true; do
             ;;
         --unicode)
             if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
-              UNICODE="$2"
-              log_message "UNICODE: $UNICODE"
-              shift 2
+                UNICODE="$2"
+                log_message "UNICODE: $UNICODE"
+                shift 2
             else
-              log_message "Error: --unicode flag must be either 'true' or 'false'"
-              exit 1
+                log_message "Error: --unicode flag must be either 'true' or 'false'"
+                exit 1
             fi
             ;;
         --help)
