@@ -126,10 +126,10 @@ prepare_site_tags() {
 set_unicode() {
     log_message "Setting unicode flag for p4d."
     log_message "sourcing p4_vars"
-    
+
     # Capture the command output
     output=$(su - perforce -c "source /p4/common/bin/p4_vars && /p4/common/bin/p4d -xi" 2>&1)
-    
+
     # Check if the output matches exactly what we expect
     if [ "$output" = "Server switched to Unicode mode." ]; then
         log_message "Successfully switched server to Unicode mode"
