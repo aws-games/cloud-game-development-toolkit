@@ -123,6 +123,23 @@ prepare_site_tags() {
   log_message "Added $aws_info as a site tag"
 }
 
+set_unicode() {
+    log_message "Setting unicode flag for p4d."
+    log_message "sourcing p4_vars"
+    
+    # Capture the command output
+    output=$(su - perforce -c "source /p4/common/bin/p4_vars && /p4/common/bin/p4d -xi" 2>&1)
+    
+    # Check if the output matches exactly what we expect
+    if [ "$output" = "Server switched to Unicode mode." ]; then
+        log_message "Successfully switched server to Unicode mode"
+        return 0
+    else
+        log_message "Unexpected output while setting Unicode mode: $output"
+        return 1
+    fi
+}
+
 # Starting the script
 log_message "Starting the p4 configure script."
 
@@ -139,6 +156,7 @@ print_help() {
     echo "  --hx_metadata <path>     Path for Helix Core metadata"
     echo "  --hx_depots <path>       Path for Helix Core depots"
     echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
+    echo "  --unicode                Set the Helix Core Server with -xi flag for Unicode"
     echo "  --help                   Display this help and exit"
 }
 
@@ -202,6 +220,16 @@ while true; do
             CASE_SENSITIVE="$2"
             log_message "CASE_SENSITIVE: $CASE_SENSITIVE"
             shift 2
+            ;;
+        --unicode)
+            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+              UNICODE="$2"
+              log_message "UNICODE: $UNICODE"
+              shift 2
+            else
+              log_message "Error: --unicode flag must be either 'true' or 'false'"
+              exit 1
+            fi
             ;;
         --help)
             print_help
@@ -413,9 +441,9 @@ chmod 644 p4d_${I}.service
 systemctl daemon-reload
 
 
-# update label for selinux
-semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
-restorecon -vF /p4/1/bin/p4d_1_init
+# update label for selinux -> This should be optional as by default in Amazon Linux selinux is disabled - Permissive
+# semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
+# restorecon -vF /p4/1/bin/p4d_1_init
 
 # start service
 systemctl start p4d_1
@@ -490,6 +518,14 @@ else
   log_message "Configuring Helix Authentication Extension against $HELIX_AUTH_SERVICE_URL"
   setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
 fi
+
+if [ "${UNICODE,,}" = "true" ]; then
+    set_unicode
+    log_message "Unicode configuration applied"
+elif [ "${UNICODE,,}" = "false" ]; then
+    log_message "Skipping Unicode configuration"
+fi
+
 
 # Create the flag file to prevent re-run
 touch "$FLAG_FILE"
