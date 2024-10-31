@@ -14,7 +14,7 @@ output "helix_core_eip_id" {
 }
 
 output "security_group_id" {
-  value       = aws_security_group.helix_core_security_group[0].id
+  value       = var.create_default_sg ? aws_security_group.helix_core_security_group[0].id : null
   description = "The default security group of your Helix Core instance."
 }
 
