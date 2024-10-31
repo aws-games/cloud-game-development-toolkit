@@ -45,6 +45,13 @@ variable "instance_architecture" {
   }
 }
 
+variable "unicode" {
+  type        = bool
+  description = "Whether to enable Unicode configuration for Helix Core the -xi flag for p4d. Set to true to enable Unicode support."
+  default     = false
+}
+
+
 ########################################
 # Networking and Security
 ########################################
