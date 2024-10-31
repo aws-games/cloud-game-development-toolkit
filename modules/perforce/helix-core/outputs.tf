@@ -13,9 +13,9 @@ output "helix_core_eip_ids" {
   description = "Map of server types to their Elastic IP IDs."
 }
 
-output "security_group_ids" {
-  value       = { for k, v in aws_security_group.helix_core_security_group : k => v.id }
-  description = "Map of server types to their security group IDs."
+output "security_group_id" {
+  value       = var.create_default_sg ? aws_security_group.helix_core_security_group[0].id : null
+  description = "The default security group of your Helix Core instance."
 }
 
 output "helix_core_super_user_username_secret_arn" {

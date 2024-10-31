@@ -51,11 +51,6 @@ variable "unicode" {
   default     = false
 }
 
-variable "selinux" {
-  type        = bool
-  description = "Whether to apply SELinux label updates for Helix Core. Don't enable this if SELinux is disabled on your target operating system."
-  default     = false
-}
 
 ########################################
 # Networking and Security

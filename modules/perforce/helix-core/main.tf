@@ -44,14 +44,11 @@ resource "aws_instance" "helix_core_instance" {
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
      ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
      --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
-     --unicode ${var.unicode ? "true" : "false"} \
-     --selinux ${var.selinux ? "true" : "false"}
+     --unicode ${var.unicode ? "true" : "false"}
   EOT
 
 
-  #vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
-
-  vpc_security_group_ids = [aws_security_group.helix_core_security_group[each.key].id]
+  vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
 
   metadata_options {
     http_endpoint               = "enabled"
