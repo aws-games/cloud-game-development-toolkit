@@ -41,11 +41,12 @@ resource "aws_instance" "helix_core_instance" {
      --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
      ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
-     --case_sensitive ${var.helix_case_sensitive ? 1 : 0}
+     --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
+     --unicode ${var.unicode ? "true" : "false"}
   EOT
 
 
-  vpc_security_group_ids = concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id])
+  vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
 
   metadata_options {
     http_endpoint               = "enabled"
