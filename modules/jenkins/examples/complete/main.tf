@@ -41,6 +41,10 @@ module "jenkins" {
   certificate_arn                = aws_acm_certificate.jenkins.arn
   jenkins_agent_secret_arns      = var.jenkins_agent_secret_arns
   create_ec2_fleet_plugin_policy = true
+  enable_jenkins_alb_access_logs = false
+  #checkov:skip=CKV_AWS_150:Disabling to allow for automated destroy during test deploys
+  enable_jenkins_alb_deletion_protection = false
+  enable_default_efs_backup_plan         = false
 
   # Build Farms
   build_farm_subnets = aws_subnet.private_subnets[*].id
