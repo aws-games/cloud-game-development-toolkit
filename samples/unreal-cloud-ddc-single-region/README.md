@@ -59,7 +59,7 @@ No outputs.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.38 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.73.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
 
@@ -67,7 +67,7 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.71.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.73.0 |
 
 ## Modules
 
@@ -92,10 +92,7 @@ No outputs.
 |------|-------------|------|---------|:--------:|
 | <a name="input_caller_ip"></a> [caller\_ip](#input\_caller\_ip) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
-| <a name="input_jwt_audience"></a> [jwt\_audience](#input\_jwt\_audience) | JWT Audience | `string` | n/a | yes |
-| <a name="input_jwt_authority"></a> [jwt\_authority](#input\_jwt\_authority) | JWT Authority | `string` | n/a | yes |
-| <a name="input_okta_auth_server_id"></a> [okta\_auth\_server\_id](#input\_okta\_auth\_server\_id) | Okta Auth Server ID | `string` | n/a | yes |
-| <a name="input_okta_domain"></a> [okta\_domain](#input\_okta\_domain) | Okta Domain | `string` | n/a | yes |
+| <a name="input_oidc_credential_arn"></a> [oidc\_credential\_arn](#input\_oidc\_credential\_arn) | OIDC Secrets Credential ARN | `string` | n/a | yes |
 
 ## Outputs
 
