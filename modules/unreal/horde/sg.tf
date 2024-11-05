@@ -95,6 +95,18 @@ resource "aws_vpc_security_group_egress_rule" "unreal_horde_outbound_ipv6" {
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 
+
+# Inbound access to ALB from external traffic.
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_external_alb_traffic" {
+  count             = var.create_external_alb ? 1 : 0
+  security_group_id = aws_security_group.unreal_horde_external_alb_sg[0].id
+  description       = "Allow inbound web server traffic from Unreal Horde external ALB."
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = var.external_api_port
+  to_port           = var.external_api_port
+  ip_protocol       = "tcp"
+}
+
 # Inbound access to Containers from External ALB on API port
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_external_alb_api" {
   count                        = var.create_external_alb ? 1 : 0

@@ -123,6 +123,8 @@ resource "aws_s3_bucket" "ansible_playbooks" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = "unreal-horde-ansible-playbooks-${random_string.unreal_horde_ansible_playbooks_bucket_suffix[0].id}"
 
+  force_destroy = var.enable_force_cleanup
+
   #checkov:skip=CKV_AWS_144: Cross-region replication not necessary
   #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
   #checkov:skip=CKV_AWS_18: S3 access logs not necessary

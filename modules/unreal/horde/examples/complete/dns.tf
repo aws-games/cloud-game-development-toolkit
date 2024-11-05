@@ -46,6 +46,11 @@ resource "aws_acm_certificate" "unreal_engine_horde" {
   domain_name       = "horde.${data.aws_route53_zone.root.name}"
   validation_method = "DNS"
 
+  subject_alternative_names = [
+    "*.${data.aws_route53_zone.root.name}",
+    "*.horde.${data.aws_route53_zone.root.name}"
+  ]
+
   tags = {
     environment = "dev"
   }
@@ -63,6 +68,8 @@ resource "aws_route53_record" "unreal_engine_horde_cert" {
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
     }
+    # skips the domain if it doesn't contain a wildcard
+    if length(regexall("\\*\\..+", dvo.domain_name)) > 0
   }
 
   allow_overwrite = true
