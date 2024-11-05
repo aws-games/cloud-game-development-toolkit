@@ -44,6 +44,7 @@ module "unreal_cloud_ddc_intra_cluster" {
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   oidc_provider_arn                   = module.unreal_cloud_ddc_infra.oidc_provider_arn
   gchr_credentials_secret_manager_arn = var.github_credential_arn
+  oidc_credentials_secret_manager_arn = var.oidc_credential_arn
 
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
@@ -55,10 +56,10 @@ module "unreal_cloud_ddc_intra_cluster" {
     templatefile("./assets/unreal_cloud_ddc_base.yaml", {
       scylla_dns          = "scylla.example.com"
       region              = data.aws_region.current.name
-      okta_domain         = var.okta_domain
-      okta_auth_server_id = var.okta_auth_server_id
-      jwt_audience        = var.jwt_audience
-      jwt_authority       = var.jwt_authority
+      okta_domain         = "aws!${var.oidc_credential_arn}|okta_domain"
+      okta_auth_server_id = "aws!${var.oidc_credential_arn}|okta_auth_server_id"
+      jwt_audience        = "aws!${var.oidc_credential_arn}|jwt_audience"
+      jwt_authority       = "aws!${var.oidc_credential_arn}|jwt_authority"
     }),
     file("./assets/unreal_cloud_ddc_values.yaml")
   ]
