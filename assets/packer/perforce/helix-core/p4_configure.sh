@@ -441,9 +441,9 @@ chmod 644 p4d_${I}.service
 systemctl daemon-reload
 
 
-# update label for selinux -> This should be optional as by deualt in Amazon Linux selinux is disabled - Permissive
-semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
-restorecon -vF /p4/1/bin/p4d_1_init
+# update label for selinux -> This should be optional as by defualt in Amazon Linux selinux is disabled - Permissive
+# semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
+# restorecon -vF /p4/1/bin/p4d_1_init
 
 # start service
 systemctl start p4d_1
