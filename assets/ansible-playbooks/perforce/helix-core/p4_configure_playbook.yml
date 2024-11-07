@@ -173,3 +173,5 @@
         path: "{{ log_file }}"
         line: "{{ ansible_date_time.iso8601 }} - Perforce installation and configuration completed"
         create: yes
+
+        
