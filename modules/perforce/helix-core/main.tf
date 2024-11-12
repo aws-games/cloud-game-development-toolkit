@@ -28,8 +28,7 @@ resource "aws_instance" "helix_core_instance" {
   ami           = data.aws_ami.helix_core_ami.id
   instance_type = var.instance_type
 
-  availability_zone = local.helix_core_az
-  subnet_id         = var.instance_subnet_id
+  subnet_id = var.instance_subnet_id
 
   iam_instance_profile = aws_iam_instance_profile.helix_core_instance_profile.id
 
@@ -62,7 +61,7 @@ resource "aws_instance" "helix_core_instance" {
   }
 
   tags = merge(local.tags, {
-    Name = "${local.name_prefix}-${var.server_type}-${local.helix_core_az}"
+    Name = "${local.name_prefix}-${var.server_type}"
   })
 }
 
@@ -82,7 +81,7 @@ resource "aws_eip" "helix_core_eip" {
 
 // hxlogs
 resource "aws_ebs_volume" "logs" {
-  availability_zone = local.helix_core_az
+  availability_zone = aws_instance.helix_core_instance.availability_zone
   size              = var.logs_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
@@ -97,7 +96,7 @@ resource "aws_volume_attachment" "logs_attachment" {
 
 // hxmetadata
 resource "aws_ebs_volume" "metadata" {
-  availability_zone = local.helix_core_az
+  availability_zone = aws_instance.helix_core_instance.availability_zone
   size              = var.metadata_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
@@ -112,7 +111,7 @@ resource "aws_volume_attachment" "metadata_attachment" {
 
 // hxdepot
 resource "aws_ebs_volume" "depot" {
-  availability_zone = local.helix_core_az
+  availability_zone = aws_instance.helix_core_instance.availability_zone
   size              = var.depot_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
