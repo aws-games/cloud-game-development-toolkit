@@ -17,7 +17,7 @@ jobs:
       actions: read  # Uncomment the permissions if installing in a private repository.
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@3b9b8c884f6b4bb4d5be2779c26374abadae0871 # v4.1.6
         with:
           persist-credentials: false
       - name: "Run analysis"
