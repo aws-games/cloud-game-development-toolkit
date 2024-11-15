@@ -125,13 +125,13 @@ resource "aws_ssm_document" "ansible_playbook" {
   })
 }
 
-resource "aws_ssm_association" "toolkitdoc" {
+resource "aws_ssm_association" "configure_perforce_helix_core" {
   name = aws_ssm_document.ansible_playbook.name
   association_name = "Toolkit-AnsibleAssociation"
 
   targets {
     key    = "tag:Project"
-    values = ["ToolkitTest"]
+    values = ["PerforceHelixCore"]
   }
   parameters = {
     SourceType = "S3"
