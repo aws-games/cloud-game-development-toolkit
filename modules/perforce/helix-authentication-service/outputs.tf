@@ -10,7 +10,8 @@ output "alb_security_group_id" {
 
 output "cluster_name" {
   description = "Name of the ECS cluster hosting helix_authentication_service"
-  value       = var.cluster_name != null ? var.cluster_name : aws_ecs_cluster.helix_authentication_service_cluster[0].name
+  value = (var.cluster_name != null ? var.cluster_name :
+  aws_ecs_cluster.helix_authentication_service_cluster[0].name)
 }
 
 output "alb_dns_name" {
@@ -21,4 +22,9 @@ output "alb_dns_name" {
 output "alb_zone_id" {
   description = "The hosted zone ID of the Helix Authentication Service ALB"
   value       = aws_lb.helix_authentication_service_alb.zone_id
+}
+
+output "target_group_arn" {
+  value       = aws_lb_target_group.helix_authentication_service_alb_target_group.arn
+  description = "The service target group for the Helix Authentication Service."
 }
