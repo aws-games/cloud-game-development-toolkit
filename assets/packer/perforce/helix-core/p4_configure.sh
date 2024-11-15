@@ -140,6 +140,12 @@ set_unicode() {
     fi
 }
 
+set_selinux() {
+    # update label for SELinux -> This is optional as by default in some operating systems like Amazon Linux SELinux is disabled - Permissive
+    semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
+    restorecon -vF /p4/1/bin/p4d_1_init
+}
+
 # Starting the script
 log_message "Starting the p4 configure script."
 
@@ -157,11 +163,12 @@ print_help() {
     echo "  --hx_depots <path>       Path for Helix Core depots"
     echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
     echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
+    echo "  --selinux <true/false>   Update labels for SELinux"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -228,6 +235,16 @@ while true; do
                 shift 2
             else
                 log_message "Error: --unicode flag must be either 'true' or 'false'"
+                exit 1
+            fi
+            ;;
+        --selinux)
+            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+                SELINUX="$2"
+                log_message "SELINUX: $SELINUX"
+                shift 2
+            else
+                log_message "Error: --selinux flag must be either 'true' or 'false'"
                 exit 1
             fi
             ;;
@@ -440,10 +457,12 @@ sed -e "s:__INSTANCE__:$I:g" -e "s:__OSUSER__:perforce:g" $SDP/Server/Unix/p4/co
 chmod 644 p4d_${I}.service
 systemctl daemon-reload
 
-
-# update label for selinux -> This should be optional as by default in Amazon Linux selinux is disabled - Permissive
-# semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
-# restorecon -vF /p4/1/bin/p4d_1_init
+if [ "${SELINUX,,}" = "true" ]; then
+    set_selinux
+    log_message "SELinux labels updated"
+elif [ "${SELINUX,,}" = "false" ]; then
+    log_message "Skipping SELinux label update"
+fi
 
 # start service
 systemctl start p4d_1

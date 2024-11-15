@@ -42,7 +42,8 @@ resource "aws_instance" "helix_core_instance" {
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
      ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
      --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
-     --unicode ${var.unicode ? "true" : "false"}
+     --unicode ${var.unicode ? "true" : "false"} \
+     --selinux ${var.selinux ? "true" : "false"}
   EOT
 
 
