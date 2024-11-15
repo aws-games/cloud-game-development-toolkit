@@ -22,3 +22,8 @@ output "alb_zone_id" {
   description = "The hosted zone ID of the Swarm ALB"
   value       = aws_lb.helix_swarm_alb.zone_id
 }
+
+output "alb_arn" {
+  value       = aws_lb.helix_swarm_alb.arn
+  description = "the ARN of the Helix Swarm application load balancer."
+}
