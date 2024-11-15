@@ -156,7 +156,7 @@ print_help() {
     echo "  --hx_metadata <path>     Path for Helix Core metadata"
     echo "  --hx_depots <path>       Path for Helix Core depots"
     echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
-    echo "  --unicode                Set the Helix Core Server with -xi flag for Unicode"
+    echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
     echo "  --help                   Display this help and exit"
 }
 
