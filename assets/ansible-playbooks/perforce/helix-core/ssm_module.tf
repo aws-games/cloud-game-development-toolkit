@@ -127,7 +127,7 @@ resource "aws_ssm_document" "ansible_playbook" {
 
 resource "aws_ssm_association" "configure_perforce_helix_core" {
   name = aws_ssm_document.ansible_playbook.name
-  association_name = "Toolkit-AnsibleAssociation"
+  association_name = "ConfigurePerforceHelixCore"
 
   targets {
     key    = "tag:Project"
