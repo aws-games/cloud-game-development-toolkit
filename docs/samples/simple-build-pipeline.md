@@ -2,8 +2,6 @@
 
 The Simple Build Pipeline is the best place to get started when first exploring the Cloud Game Development Toolkit. It encapsulates many of the available modules alongside best practice deployments of core AWS services. The Simple Build Pipeline provisions a well-architected Virtual Private Cloud ([VPC](https://aws.amazon.com/vpc/)), a skeleton for managing DNS and SSL certificates with [Route 53](https://aws.amazon.com/route53/) and AWS Certificate Manager([ACM](https://aws.amazon.com/certificate-manager/)), [Jenkins](https://www.jenkins.io/) for continuous integration and deployment, [Perforce Helix Core](https://www.perforce.com/products/helix-core/aws) for version control, [Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) for code review, and [Perforce Helix Authentication Service](https://github.com/perforce/helix-authentication-service) for external identity provider integrations.
 
-We recommend that you [**fork**](https://github.com/aws-games/cloud-game-development-toolkit/fork) the Cloud Game Development Toolkit and then use this Simple Build Pipeline as the starting point for managing your studio's infrastructure.
-
 ## Predeployment
 
 There are a few prerequisites that need to be completed **prior** to deploying this sample architecture. We'll walk through those here.

@@ -2,11 +2,13 @@
 
 ## Introduction
 
-These modules simplify the deployment of common game development workloads on AWS. Some have pre-requisites that will be outlined in their respective documentation. They are designed to easily integrate with each other, and provide relevant outputs to simplify permissions, networking, and access.
+These modules simplify the deployment of common game development workloads on AWS. Some have pre-requisites that will be outlined in their respective documentation. They are designed to be depended on from other modules (including your own root module), easily integrate with each other, and provide relevant outputs to simplify permissions, networking, and access.
+
+## How to include these modules
+
+We've found that including the **CGD Toolkit** repository as a git submodule in your own infrastructure repository is a good way of depending on the modules within an (existing) Terraform root module. Forking the **CGD Toolkit** and submoduling your fork may be a good approach if you intend to make changes to any modules. We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed. Note how you can use the [module source argument](https://developer.hashicorp.com/terraform/language/modules/sources) to declare modules that use the **CGD Toolkit**'s module source code.
 
 ## Contribution
-
-We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed.
 
 Please follow these guidelines when developing a new module. These are also outlined in the pull-request template for Module additions.
 
