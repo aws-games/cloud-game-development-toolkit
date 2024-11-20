@@ -19,7 +19,7 @@ features:
   - title: Samples
     #image: media/images/samples.svg
     link: samples/index.html
-    description: Opinionated ready-to-use implementations to address common use cases for expedited game studio setup and battle-tested scenarios from the community.
+    description: Opinionated reference implementations to address common use cases for expedited game studio setup and battle-tested scenarios from the community.
 companies:
   title:
   list:
