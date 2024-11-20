@@ -10,11 +10,11 @@ An _asset_ is a singular template, script, or automation document that may prove
 
 ### Modules
 
-A _module_ is a reusable [Terraform](https://www.terraform.io/) configuration encapsulating all of the resources needed to deploy a particular workload on AWS. These modules are highly configurable through variables, and provide necessary outputs for building interconnected architectures. We recommend reviewing the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) if you are unfamiliar with this concept.
+A _module_ is a reusable [Terraform](https://www.terraform.io/) configuration encapsulating all of the resources needed to deploy a particular workload on AWS. These modules are highly configurable through variables, and provide necessary outputs for building interconnected architectures. We recommend reviewing the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) if you are unfamiliar with this concept. Modules are designed for you to depend on in your own Terraform modules, and we don't expect you to have to make any modifications to them; that said, if a module doesn't meet your needs, please raise an issue!
 
 ### Samples
 
-A _sample_ is a complete reference architecture that stitches together [modules](./modules/index.md) and first-party AWS services. A _sample_ is deployed with Terraform, and is the best way to get started with the **Cloud Game Development Toolkit**.
+A _sample_ is a complete reference architecture that stitches together [modules](./modules/index.md) and first-party AWS services. A _sample_ is deployed with Terraform, and is the best way to get started with the **Cloud Game Development Toolkit**. Samples are designed for you to copy from and modify as needed to suit your architecture and needs.
 
 ???+ Note
     Because samples may deploy resources that have unique name constraints, we cannot guarantee that two different samples can be deployed into the same AWS account without modifying either of the samples to integrate shared infrastructure or resolve conflicts. If you're interested in using functionality from multiple samples, we recommend that you use them as reference material to base your own infrastructure off of.
