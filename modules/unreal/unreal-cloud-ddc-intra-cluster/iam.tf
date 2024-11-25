@@ -5,7 +5,7 @@
 module "eks_service_account_iam_role" {
   #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
   #checkov:skip=CKV_AWS_356:Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
-  source     = "git::https://github.com/terraform-aws-modules/terraform-aws-iam.git//modules/iam-assumable-role-with-oidc?ref=ccb4f252cc340d85fd70a8a1fb1cae496a698c1f"
+  source     = "git::https://github.com/terraform-aws-modules/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=ccb4f252cc340d85fd70a8a1fb1cae496a698c1f"
   depends_on = [data.aws_eks_cluster.unreal_cloud_ddc_cluster]
 
   create_role      = true
@@ -15,15 +15,18 @@ module "eks_service_account_iam_role" {
   tags = {
     Role = "eks-unreal-cloud-ddc-role"
   }
-  provider_url  = data.aws_eks_cluster.unreal_cloud_ddc_cluster.identity[0].oidc[0].issuer
-  provider_urls = [data.aws_eks_cluster.unreal_cloud_ddc_cluster.identity[0].oidc[0].issuer]
 
-  role_policy_arns = [
-    aws_iam_policy.s3_iam_policy.arn,
-    aws_iam_policy.secrets_iam_policy.arn
-  ]
+  role_policy_arns = {
+    policy_1 = aws_iam_policy.s3_iam_policy.arn,
+    policy_2 = aws_iam_policy.secrets_iam_policy.arn
+  }
 
-  oidc_fully_qualified_subjects = ["system:serviceaccount:${var.unreal_cloud_ddc_namespace}:${var.unreal_cloud_ddc_namespace}-sa"]
+  oidc_providers = {
+    ex = {
+      provider_arn               = data.aws_iam_openid_connect_provider.oidc_provider.arn
+      namespace_service_accounts = ["${var.unreal_cloud_ddc_namespace}:${var.unreal_cloud_ddc_namespace}-sa"]
+    }
+  }
 }
 
 module "ebs_csi_irsa_role" {
@@ -37,7 +40,7 @@ module "ebs_csi_irsa_role" {
 
   oidc_providers = {
     ex = {
-      provider_arn               = var.oidc_provider_arn
+      provider_arn               = data.aws_iam_openid_connect_provider.oidc_provider.arn
       namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
     }
   }

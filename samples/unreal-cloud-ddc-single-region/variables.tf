@@ -11,7 +11,7 @@ variable "github_credential_arn" {
 }
 
 
-variable "caller_ip" {
+variable "eks_cluster_ip_allow_list" {
   type        = list(string)
   default     = []
   description = "IPs that will be allow listed to access cluster over internet"

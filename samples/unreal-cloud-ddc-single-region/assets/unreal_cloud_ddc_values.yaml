@@ -1,0 +1,280 @@
+config:
+  HostSwaggerDocumentation: false
+
+replicaCount: 2
+
+## Docker image configuration
+image:
+  repository: "ghcr.io/epicgames/unreal-cloud-ddc"
+  pullPolicy: IfNotPresent
+
+tolerations:
+  - key: role
+    operator: Equal
+    value: unreal-cloud-ddc
+    effect: NoSchedule
+
+nodeSelector:
+  unreal-cloud-ddc/node-type: nvme
+
+serviceAccount:
+  create: false
+  name: unreal-cloud-ddc-sa
+
+persistence:
+  enabled: false
+#  volume:
+#    hostPath:
+#      path: /data
+#      type: Directory
+
+  ## Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  #storageClass: "gp2"
+
+
+  ## Persistent Volume Claim annotations
+  ##
+  annotations: {}
+
+## Service properties
+##
+service:
+  ## Service type
+  ##
+  type: LoadBalancer
+  portName: http
+  port: 80
+  targetPort: nginx-http
+  extraPort:
+    - name: http2
+      port: 8080
+      targetPort: nginx-h2
+
+
+  ## Specify the nodePort value for the LoadBalancer and NodePort service types.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+  ##
+  # nodePort:
+
+  ## Provide any additional annotations which may be required. This can be used to
+  ## set the LoadBalancer service type to internal only.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
+  ##
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-name: "unreal-cloud-ddc"
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health/live"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "application=unreal-cloud-ddc"
+
+  ## loadBalancerIP for the PrestaShop Service (optional, cloud specific)
+  ## ref: http://kubernetes.io/docs/user-guide/services/#type-loadbalancer
+  ##
+  # loadBalancerIP:
+
+## Configure the ingress resource that allows you to access the pod
+##
+ingress:
+  ## Set to true to enable ingress record generation
+  ##
+  enabled: false
+
+  ## Ingress Path type
+  ##
+  pathType: ImplementationSpecific
+
+  ## Override API Version (automatically detected if not set)
+  ##
+  apiVersion:
+
+  ## When the ingress is enabled, a host pointing to this will be created
+  ##
+  # hostname: hostname.example
+
+  ## The Path to host the ingress under. You may need to set this to '/*' in order to use this
+  ## with ALB ingress controllers.
+  ##
+  path: /api
+
+  ## Ingress annotations done as key:value pairs
+  ##
+  annotations: {}
+
+  ## The list of additional hostnames to be covered with this ingress record.
+  ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+  ## extraHosts:
+  ## - name: hostname.example
+  ##   path: /
+  ##
+
+  ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
+  ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     name: ssl-redirect
+  ##     port:
+  ##       name: use-annotation
+  ##
+
+## A secondary ingress, identical to the first ingress
+##
+ingressExtra:
+  ## Set to true to enable ingress record generation
+  ##
+  enabled: false
+
+  ## Ingress Path type
+  ##
+  pathType: ImplementationSpecific
+
+  ## Override API Version (automatically detected if not set)
+  ##
+  apiVersion:
+
+  ## When the ingress is enabled, a host pointing to this will be created
+  ##
+  # hostname: hostname.example
+
+  ## The Path to host the ingress under. You may need to set this to '/*' in order to use this
+  ## with ALB ingress controllers.
+  ##
+  path: /api
+
+  ## Ingress annotations done as key:value pairs
+  ##
+  annotations: {}
+
+  ## The list of additional hostnames to be covered with this ingress record.
+  ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+  ## extraHosts:
+  ## - name: hostname.example
+  ##   path: /
+  ##
+
+  ## Any additional arbitrary paths that may need to be added to the ingress under the main host.
+  ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     name: ssl-redirect
+  ##     port:
+  ##       name: use-annotation
+  ##
+
+
+## Role Based Access
+## Ref: https://kubernetes.io/docs/admin/authorization/rbac/
+##
+rbac:
+  ## Specifies whether RBAC rules should be created
+  ##
+  create: true
+
+
+## Dotnet debugging
+## Enable to install a sidecar container which allows you to remoteley run dotnet monitoring tools
+## see https://devblogs.microsoft.com/dotnet/introducing-dotnet-monitor/
+useDotnetMonitorSidecar : false
+
+## Peer pod blobs
+## Attempt to fetch blobs from other pods in the same deployment before hitting blob store
+## this is typically faster then falling back to global blob store
+fetchBlobsFromPeerPods: false
+
+## Nginx configuration
+nginx:
+
+  ## Enable this option to run a nginx proxy in the all pods that is able to serve content directly from the filesystem
+  enabled: true
+
+  ## Set this to add a header whenever X-Accel is used from nginx to send blobs
+  addXAccelDebugHeader: false
+
+  ## Set this to use Unix domain sockets rather then ports for inter process communication
+  useDomainSockets: true
+
+  ## Set to enable access log output, can be useful for debugging but will generate a lot of logs in prod
+  accessLogging: false
+
+  ## Control the number of worker connections used for nginx
+  workerConnections: 1024
+
+  ## Number of connections to keep alive between nginx and Jupiter
+  keepAliveConnections: 2048
+
+  ## The length of the nginx backlog, bump this if you increase `net.core.somaxconn` beyond 4096
+  backlog: 4096
+
+  ## Liveness and readiness probes, defaults to corresponding endpoints
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 5
+
+worker:
+  enabled: false
+
+  replicaCount: 1
+
+  image:
+    repository: "ghcr.io/epicgames/unreal-cloud-ddc"
+    pullPolicy: IfNotPresent
+
+  tolerations:
+    - key: role
+      operator: Equal
+      value: unreal-cloud-ddc
+      effect: NoSchedule
+
+  nodeSelector:
+    unreal-cloud-ddc/node-type: worker
+
+  persistence:
+    enabled: false
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 5
+
+  podAffinityPreset: ""
+
+  podAntiAffinityPreset: soft
+
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
