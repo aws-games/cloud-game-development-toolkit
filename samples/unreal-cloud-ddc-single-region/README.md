@@ -67,7 +67,7 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.73.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.77.0 |
 
 ## Modules
 
@@ -85,12 +85,14 @@ No outputs.
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_ecr_authorization_token.token](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_authorization_token) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_secretsmanager_secret.oidc_secrets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret) | data source |
+| [aws_secretsmanager_secret_version.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_caller_ip"></a> [caller\_ip](#input\_caller\_ip) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
+| <a name="input_eks_cluster_ip_allow_list"></a> [eks\_cluster\_ip\_allow\_list](#input\_eks\_cluster\_ip\_allow\_list) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_oidc_credential_arn"></a> [oidc\_credential\_arn](#input\_oidc\_credential\_arn) | OIDC Secrets Credential ARN | `string` | n/a | yes |
 

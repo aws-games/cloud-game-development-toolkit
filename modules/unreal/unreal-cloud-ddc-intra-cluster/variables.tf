@@ -33,3 +33,9 @@ variable "oidc_credentials_secret_manager_arn" {
   type        = string
   description = "Arn for oidc credentials stored in secret manager."
 }
+
+variable "unreal_cloud_ddc_version" {
+  type        = string
+  description = "Version of the Unreal Cloud DDC Helm chart"
+  default     = "1.2.0"
+}
