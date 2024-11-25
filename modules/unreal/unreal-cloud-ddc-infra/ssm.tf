@@ -17,9 +17,9 @@ resource "aws_ssm_document" "config_scylla" {
         "inputs" : {
           "runCommand" : [
             "sudo apt-get update && sudo apt-get -y upgrade",
-            "sudo sed -i 's/- seeds: test-ip.*$/- seeds: ${aws_instance.scylla_ec2_instance[0].private_ip} /g' /etc/scylla/scylla.yaml",
+            "sudo sed -i -r 's/- seeds: ([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/- seeds: ${aws_instance.scylla_ec2_instance[0].private_ip}/g' /etc/scylla/scylla.yaml",
             "echo \"Config of /etc/scylla/scylla.yaml Done\"",
-            "sudo reboot now"
+            "sudo systemctl start scylla-server"
           ]
         }
       }

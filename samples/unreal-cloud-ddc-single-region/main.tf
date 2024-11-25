@@ -1,3 +1,11 @@
+data "aws_secretsmanager_secret" "oidc_secrets" {
+  arn = var.oidc_credential_arn
+}
+
+data "aws_secretsmanager_secret_version" "current" {
+  secret_id = data.aws_secretsmanager_secret.oidc_secrets.id
+}
+
 module "unreal_cloud_ddc_vpc" {
   source                = "./vpc"
   vpc_cidr              = "192.168.0.0/23"
@@ -17,11 +25,11 @@ module "unreal_cloud_ddc_infra" {
   name                    = "unreal-cloud-ddc"
   vpc_id                  = module.unreal_cloud_ddc_vpc.vpc_id
   private_subnets         = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_access_cidr = var.caller_ip
+  eks_cluster_access_cidr = var.eks_cluster_ip_allow_list
 
   scylla_private_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
   scylla_dns             = "scylla.example.com"
-  scylla_ami_name        = "ScyllaDB 6.0.1"
+  scylla_ami_name        = "ScyllaDB 6.2.1"
   scylla_architecture    = "x86_64"
   scylla_instance_type   = "i4i.xlarge"
 
@@ -39,7 +47,11 @@ module "unreal_cloud_ddc_infra" {
 }
 
 module "unreal_cloud_ddc_intra_cluster" {
-  depends_on                          = [module.unreal_cloud_ddc_infra]
+  depends_on = [
+    module.unreal_cloud_ddc_infra,
+    module.unreal_cloud_ddc_infra.oidc_provider_arn
+  ]
+
   source                              = "../../modules/unreal/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   oidc_provider_arn                   = module.unreal_cloud_ddc_infra.oidc_provider_arn
@@ -56,10 +68,10 @@ module "unreal_cloud_ddc_intra_cluster" {
     templatefile("./assets/unreal_cloud_ddc_base.yaml", {
       scylla_dns          = "scylla.example.com"
       region              = data.aws_region.current.name
-      okta_domain         = "aws!${var.oidc_credential_arn}|okta_domain"
-      okta_auth_server_id = "aws!${var.oidc_credential_arn}|okta_auth_server_id"
-      jwt_audience        = "aws!${var.oidc_credential_arn}|jwt_audience"
-      jwt_authority       = "aws!${var.oidc_credential_arn}|jwt_authority"
+      okta_domain         = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["okta_domain"]
+      okta_auth_server_id = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["okta_auth_server_id"]
+      jwt_audience        = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["jwt_audience"]
+      jwt_authority       = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["jwt_authority"]
     }),
     file("./assets/unreal_cloud_ddc_values.yaml")
   ]

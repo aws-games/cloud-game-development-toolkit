@@ -1,0 +1,22 @@
+config:
+  Scylla: &scylla-connection-info
+    LocalKeyspaceReplicationStrategy:
+      class : "NetworkTopologyStrategy"
+      us-west-2 : 2
+    LocalDatacenterName: ${region}
+    LocalKeyspaceSuffix: "ddc"
+  S3: &s3-connection-info
+    BucketName: ${bucket_name}
+
+
+worker:
+  config:
+    GC:
+      CleanOldRefRecords: true
+
+    Scylla: *scylla-connection-info
+    S3: *s3-connection-info
+
+global:
+  awsRegion: ${region}
+  siteName: ${region}

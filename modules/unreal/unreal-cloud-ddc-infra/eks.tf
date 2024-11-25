@@ -1,118 +1,6 @@
 ################################################################################
-# EKS Node IAM Role
-################################################################################
-
-resource "aws_iam_role" "monitoring_node_group_role" {
-  name_prefix = "unreal-cloud-ddc-eks-node-group-role-"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-  inline_policy {
-    name = "external-dns-policy"
-
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action = ["route53:ChangeResourceRecordSets"]
-          Effect = "Allow"
-          Resource = [
-            "arn:aws:route53:::hostedzone/*"
-          ]
-        },
-        {
-          Action = [
-            "route53:ListHostedZones",
-            "route53:ListResourceRecordSets",
-            "route53:ListTagsForResource"
-          ],
-          Effect   = "Allow"
-          Resource = ["*"]
-        }
-      ]
-    })
-  }
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ]
-}
-
-resource "aws_iam_role" "nvme_node_group_role" {
-  name_prefix = "unreal-cloud-ddc-eks-node-group-role-"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ]
-}
-
-resource "aws_iam_role" "worker_node_group_role" {
-  name_prefix = "unreal-cloud-ddc-eks-node-group-role-"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ]
-}
-
-
-
-
-################################################################################
 # EKS Cluster
 ################################################################################
-resource "aws_iam_role" "eks_cluster_role" {
-  name_prefix = "unreal-cloud-ddc-eks-cluster-role-"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "eks.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  ]
-}
 
 resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   #checkov:skip=CKV_AWS_39:Ensure Amazon EKS public endpoint disabled
@@ -121,7 +9,7 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   #checkov:skip=CKV_AWS_38:IP restriction set in module variables
   name                      = var.name
   role_arn                  = aws_iam_role.eks_cluster_role.arn
-  version                   = "1.29"
+  version                   = var.kubernetes_version
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
 
@@ -291,7 +179,7 @@ resource "aws_eks_node_group" "system_node_group" {
   node_group_name = "unreal-cloud-ddc-monitoring-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_latest_release.value)
-  node_role_arn   = aws_iam_role.monitoring_node_group_role.arn
+  node_role_arn   = aws_iam_role.system_node_group_role.arn
   subnet_ids      = var.private_subnets
   labels = {
     "pool" = "system-pool"
@@ -353,12 +241,12 @@ resource "aws_iam_openid_connect_provider" "unreal_cloud_ddc_oidc_provider" {
   url             = data.tls_certificate.eks_tls_certificate.url
 }
 
-resource "aws_eks_identity_provider_config" "eks_cluster_oidc_association" {
-  cluster_name = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-
-  oidc {
-    client_id                     = substr(aws_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer, -32, -1)
-    identity_provider_config_name = "unreal-ddc-oidc-provider"
-    issuer_url                    = "https://${aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider.url}"
-  }
-}
+# resource "aws_eks_identity_provider_config" "eks_cluster_oidc_association" {
+#   cluster_name = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
+#
+#   oidc {
+#     client_id                     = substr(aws_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer, -32, -1)
+#     identity_provider_config_name = "unreal-ddc-oidc-provider"
+#     issuer_url                    = "https://${aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider.url}"
+#   }
+# }
