@@ -44,12 +44,12 @@ variable "scylla_private_subnets" {
   nullable    = false
 }
 
-variable "peer_cidr_blocks" {
-  type        = list(string)
-  default     = []
-  description = "The peered cidr blocks you want your vpc to communicate with if you have a multi region ddc."
-  nullable    = false
-}
+# variable "peer_cidr_blocks" {
+#   type        = list(string)
+#   default     = []
+#   description = "The peered cidr blocks you want your vpc to communicate with if you have a multi region ddc."
+#   nullable    = false
+# }
 
 
 variable "scylla_dns" {
@@ -136,4 +136,11 @@ variable "system_managed_node_max_size" {
 variable "eks_cluster_access_cidr" {
   type        = list(string)
   description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster."
+}
+
+variable "kubernetes_version" {
+  type        = string
+  default     = "1.30"
+  description = "Kubernetes version to be used by the EKS cluster."
+  nullable    = false
 }

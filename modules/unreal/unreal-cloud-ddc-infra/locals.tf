@@ -17,17 +17,12 @@ locals {
     scylla-cluster-name = var.name
   }
   scylla_user_data = jsonencode(
-    { "scylla_yaml" : {
-      "cluster_name" : local.scylla_variables.scylla-cluster-name,
-      "seed_provider" : [
-        { "class_name" : "org.apache.cassandra.locator.SimpleSeedProvider",
-          "parameters" : [
-            { "seeds" : "test-ip" }
-          ]
-        }
-      ]
-      },
-  "start_scylla_on_first_boot" : true })
+    {
+      "scylla_yaml" : {
+        "cluster_name" : local.scylla_variables.scylla-cluster-name
+      }
+    }
+  )
   nvme-pre-bootstrap-userdata = <<EOF
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="//"

@@ -1,68 +1,9 @@
-################################################################################
-# Cert Manager
-################################################################################
-
-module "cert_manager" {
-  source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addon.git?ref=327207ad17f3069fdd0a76c14d3e07936eff4582"
-
-  name             = "cert-manager"
-  description      = "A Helm chart to deploy cert-manager"
-  namespace        = "cert-manager"
-  create_namespace = true
-  chart            = "cert-manager"
-  chart_version    = "v1.14.3"
-  repository       = "https://charts.jetstack.io"
-  values           = []
-
-  create         = true
-  create_release = true
-
-  postrender = []
-  set = concat([
-    {
-      name  = "installCRDs"
-      value = true
-    },
-    {
-      name  = "serviceAccount.name"
-      value = "cert-manager"
-    }
-    ]
-  )
-
-  # IAM role for service account (IRSA)
-  set_irsa_names       = ["serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"]
-  create_role          = true
-  role_name            = "cert-manager"
-  role_name_use_prefix = true
-  role_path            = "/"
-  role_description     = "IRSA for cert-manger project"
-
-  allow_self_assume_role  = true
-  create_policy           = true
-  source_policy_documents = data.aws_iam_policy_document.cert_manager[*].json
-  policy_name             = "cert-manager-policy"
-  policy_name_use_prefix  = true
-  policy_description      = "IAM Policy for cert-manager"
-
-  oidc_providers = {
-    this = {
-      provider_arn    = var.oidc_provider_arn
-      service_account = "cert-manager"
-    }
-  }
-
-}
-
 module "eks_blueprints_all_other_addons" {
   #checkov:skip=CKV_TF_1:Ensure Terraform module sources use a commit hash
   #checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management / resource exposure without constraints
   #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
   #checkov:skip=CKV_AWS_356:Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
   source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
-  depends_on = [
-    module.cert_manager
-  ]
 
   eks_addons = {
     coredns = {
@@ -84,11 +25,10 @@ module "eks_blueprints_all_other_addons" {
   cluster_name      = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
   cluster_endpoint  = data.aws_eks_cluster.unreal_cloud_ddc_cluster.endpoint
   cluster_version   = data.aws_eks_cluster.unreal_cloud_ddc_cluster.version
-  oidc_provider_arn = var.oidc_provider_arn
+  oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
 
   enable_aws_load_balancer_controller = true
   enable_aws_cloudwatch_metrics       = true
-  enable_external_dns                 = true
 
   tags = {
     Environment = var.cluster_name
@@ -129,7 +69,7 @@ resource "helm_release" "unreal_cloud_ddc" {
   chart      = "unreal-cloud-ddc"
   repository = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
   namespace  = var.unreal_cloud_ddc_namespace
-  version    = "1.2.0+helm"
+  version    = "${var.unreal_cloud_ddc_version}+helm"
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
