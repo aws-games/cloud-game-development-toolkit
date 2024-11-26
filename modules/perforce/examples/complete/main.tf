@@ -60,7 +60,8 @@ module "perforce_helix_authentication_service" {
   enable_web_based_administration = true
   fully_qualified_domain_name     = "auth.helix.${var.root_domain_name}"
 
-  depends_on = [aws_ecs_cluster.perforce_cluster, aws_acm_certificate_validation.helix]
+  helix_authentication_service_alb_access_logs_prefix = ""
+  depends_on                                          = [aws_ecs_cluster.perforce_cluster, aws_acm_certificate_validation.helix]
 }
 
 ##########################################

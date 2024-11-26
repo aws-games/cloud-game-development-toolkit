@@ -106,9 +106,21 @@ variable "enable_web_based_administration" {
 }
 
 # - Load Balancer -
+variable "create_application_load_balancer" {
+  type        = bool
+  default     = true
+  description = "This flag controls the creation of an application load balancer as part of the module."
+}
+
 variable "helix_authentication_service_alb_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Helix Authentication Service load balancer into. Public subnets are recommended."
+  default     = []
+  validation {
+    condition     = (length(var.helix_authentication_service_alb_subnets) > 0) == var.create_application_load_balancer
+    error_message = "Subnets are only necessary if the create_application_load_balancer variable is set."
+  }
+
 }
 
 variable "enable_helix_authentication_service_alb_access_logs" {
