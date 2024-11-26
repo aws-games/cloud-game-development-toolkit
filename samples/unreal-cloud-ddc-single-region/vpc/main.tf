@@ -3,7 +3,7 @@
 ##########################################
 
 resource "aws_vpc" "unreal_cloud_ddc_vpc" {
-  #checkov:skip=CKV2_AWS_11:Ensure VPC flow logging is enabled in all VPCs
+  #checkov:skip=CKV2_AWS_11:flow logs are out of scope for sample architecture.
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
 
@@ -105,7 +105,7 @@ resource "aws_eip" "nat_gateway_eip" {
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
 
-  # route to the internet through NAT gateway
+  # private route to the internet through NAT gateway
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat_gateway.id
