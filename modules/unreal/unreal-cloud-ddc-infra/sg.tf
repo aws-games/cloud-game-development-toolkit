@@ -85,29 +85,6 @@ resource "aws_vpc_security_group_egress_rule" "self_scylla_egress_sg_rules" {
 }
 
 ################################################################################
-# Scylla Security Group to Peer CIDR Rules
-################################################################################
-# resource "aws_vpc_security_group_ingress_rule" "peer_cidr_blocks_ingress_sg_rules" {
-#   for_each          = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
-#   security_group_id = aws_security_group.scylla_security_group.id
-#   from_port         = each.value.port
-#   description       = each.value.description
-#   ip_protocol       = each.value.protocol
-#   cidr_ipv4         = var.peer_cidr_blocks
-#   to_port           = each.value.port
-# }
-#
-# resource "aws_vpc_security_group_egress_rule" "peer_cidr_blocks_scylla_egress_sg_rules" {
-#   security_group_id = aws_security_group.scylla_security_group.id
-#   from_port         = 0
-#   ip_protocol       = "tcp"
-#   cidr_ipv4         = var.peer_cidr_blocks
-#   to_port           = 0
-#   description       = "Peer block egress"
-# }
-
-
-################################################################################
 # System Security Group
 ################################################################################
 resource "aws_security_group" "system_security_group" {

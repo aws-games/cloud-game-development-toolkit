@@ -3,9 +3,8 @@
 ################################################################################
 
 resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
-  #checkov:skip=CKV_AWS_39:Ensure Amazon EKS public endpoint disabled
-  #checkov:skip=CKV_AWS_58:Ensure EKS Cluster has Secrets Encryption Enabled
-  #checkov:skip=CKV_AWS_339:Ensure EKS clusters run on a supported Kubernetes version
+  #checkov:skip=CKV_AWS_39:This needs to be open to configure the eks cluster.
+  #checkov:skip=CKV_AWS_58:This will need to be enabled in a future update
   #checkov:skip=CKV_AWS_38:IP restriction set in module variables
   name                      = var.name
   role_arn                  = aws_iam_role.eks_cluster_role.arn
@@ -34,9 +33,8 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
 
 resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
   #checkov:skip=CKV_AWS_158:Ensure that CloudWatch Log Group is encrypted by KMS
-  name_prefix       = "/aws/eks/${var.name}/cluster"
+  name_prefix       = var.eks_cluster_cloudwatch_log_group_prefix
   retention_in_days = 365
-
 }
 
 data "aws_ssm_parameter" "eks_ami_latest_release" {
@@ -79,7 +77,6 @@ resource "aws_eks_node_group" "worker_node_group" {
 }
 
 resource "aws_launch_template" "worker_launch_template" {
-  #checkov:skip=CKV_AWS_341:Ensure Launch template should not have a metadata response hop limit greater than 1
   name_prefix   = "unreal-ddc-worker-launch-template"
   instance_type = var.worker_managed_node_instance_type
   vpc_security_group_ids = [
@@ -91,7 +88,7 @@ resource "aws_launch_template" "worker_launch_template" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }
 
@@ -142,7 +139,6 @@ resource "aws_eks_node_group" "nvme_node_group" {
 }
 
 resource "aws_launch_template" "nvme_launch_template" {
-  #checkov:skip=CKV_AWS_341:Ensure Launch template should not have a metadata response hop limit greater than 1
   name_prefix   = "unreal-ddc-nvme-launch-template"
   instance_type = var.nvme_managed_node_instance_type
   user_data     = base64encode(local.nvme-pre-bootstrap-userdata)
@@ -155,7 +151,7 @@ resource "aws_launch_template" "nvme_launch_template" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }
 
@@ -201,14 +197,13 @@ resource "aws_eks_node_group" "system_node_group" {
 }
 
 resource "aws_launch_template" "system_launch_template" {
-  #checkov:skip=CKV_AWS_341:Ensure Launch template should not have a metadata response hop limit greater than 1
   name_prefix   = "unreal-ddc-system-launch-template"
   instance_type = var.system_managed_node_instance_type
 
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 2
+    http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }
 
@@ -240,13 +235,3 @@ resource "aws_iam_openid_connect_provider" "unreal_cloud_ddc_oidc_provider" {
   thumbprint_list = [data.tls_certificate.eks_tls_certificate.certificates[0].sha1_fingerprint]
   url             = data.tls_certificate.eks_tls_certificate.url
 }
-
-# resource "aws_eks_identity_provider_config" "eks_cluster_oidc_association" {
-#   cluster_name = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-#
-#   oidc {
-#     client_id                     = substr(aws_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer, -32, -1)
-#     identity_provider_config_name = "unreal-ddc-oidc-provider"
-#     issuer_url                    = "https://${aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider.url}"
-#   }
-# }

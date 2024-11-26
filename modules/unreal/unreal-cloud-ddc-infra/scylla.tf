@@ -12,10 +12,10 @@ resource "aws_iam_instance_profile" "scylla_instance_profile" {
 resource "aws_instance" "scylla_ec2_instance" {
   count = length(var.scylla_private_subnets)
 
-  ami             = data.aws_ami.scylla_ami.id
-  instance_type   = var.scylla_instance_type
-  security_groups = [aws_security_group.scylla_security_group.id]
-  monitoring      = true
+  ami                    = data.aws_ami.scylla_ami.id
+  instance_type          = var.scylla_instance_type
+  vpc_security_group_ids = [aws_security_group.scylla_security_group.id]
+  monitoring             = true
 
   subnet_id = element(var.private_subnets, count.index)
 
