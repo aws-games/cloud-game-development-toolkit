@@ -33,7 +33,6 @@ resource "aws_iam_role_policy_attachments_exclusive" "system_policy_attachement"
 ################################################################################
 # NVME Role
 ################################################################################
-
 resource "aws_iam_role" "nvme_node_group_role" {
   name_prefix = "nvme-node-group-role-"
 
@@ -62,8 +61,6 @@ resource "aws_iam_role_policy_attachments_exclusive" "nvme_policy_attachement" {
 ################################################################################
 # Worker Node Role
 ################################################################################
-
-
 resource "aws_iam_role" "worker_node_group_role" {
   name_prefix = "unreal-cloud-ddc-eks-node-group-role-"
 
@@ -91,7 +88,6 @@ resource "aws_iam_role_policy_attachments_exclusive" "worker_policy_attachement"
 ################################################################################
 # EKS Role
 ################################################################################
-
 resource "aws_iam_role" "eks_cluster_role" {
   name_prefix = "unreal-cloud-ddc-eks-cluster-role-"
 

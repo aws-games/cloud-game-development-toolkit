@@ -44,14 +44,6 @@ variable "scylla_private_subnets" {
   nullable    = false
 }
 
-# variable "peer_cidr_blocks" {
-#   type        = list(string)
-#   default     = []
-#   description = "The peered cidr blocks you want your vpc to communicate with if you have a multi region ddc."
-#   nullable    = false
-# }
-
-
 variable "scylla_dns" {
   type        = string
   default     = null
@@ -143,4 +135,10 @@ variable "kubernetes_version" {
   default     = "1.30"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
+}
+
+variable "eks_cluster_cloudwatch_log_group_prefix" {
+  type        = string
+  default     = "/aws/eks/unreal-cloud-ddc/cluster"
+  description = "Prefix to be used for the EKS cluster CloudWatch log group."
 }
