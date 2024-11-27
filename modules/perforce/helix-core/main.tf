@@ -4,7 +4,7 @@
 
 resource "awscc_secretsmanager_secret" "helix_core_super_user_password" {
   count       = var.helix_core_super_user_password_secret_arn == null ? 1 : 0
-  name        = "perforceHelixCoreSuperUserPassword"
+  name        = var.helix_core_super_user_password_secret_name
   description = "The password for the created Helix Core super user."
   generate_secret_string = {
     exclude_numbers     = false
@@ -15,7 +15,7 @@ resource "awscc_secretsmanager_secret" "helix_core_super_user_password" {
 
 resource "awscc_secretsmanager_secret" "helix_core_super_user_username" {
   count         = var.helix_core_super_user_username_secret_arn == null ? 1 : 0
-  name          = "perforceHelixCoreSuperUserUsername"
+  name          = var.helix_core_super_user_username_secret_name
   secret_string = "perforce"
 }
 
@@ -25,11 +25,13 @@ resource "awscc_secretsmanager_secret" "helix_core_super_user_username" {
 ##########################################
 
 resource "aws_instance" "helix_core_instance" {
+  for_each = { for idx, server in var.server_configuration : server.type => server}
+
   ami           = data.aws_ami.helix_core_ami.id
   instance_type = var.instance_type
 
-  availability_zone = local.helix_core_az
-  subnet_id         = var.instance_subnet_id
+  #availability_zone = local.helix_core_az
+  subnet_id         = each.value.subnet_id
 
   iam_instance_profile = aws_iam_instance_profile.helix_core_instance_profile.id
 
@@ -47,7 +49,9 @@ resource "aws_instance" "helix_core_instance" {
   EOT
 
 
-  vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
+  #vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
+
+  vpc_security_group_ids = [aws_security_group.helix_core_security_group[each.key].id]
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -64,8 +68,11 @@ resource "aws_instance" "helix_core_instance" {
   }
 
   tags = merge(local.tags, {
-    Name = "${local.name_prefix}-${var.server_type}-${local.helix_core_az}"
-  })
+    #Name = "${local.name_prefix}-${var.server_type}-${local.helix_core_az}"
+    Name = "${local.name_prefix}-${each.key}"
+  },
+  local.p4_server_type_tags[each.key]
+  )
 }
 
 ##########################################
@@ -73,8 +80,9 @@ resource "aws_instance" "helix_core_instance" {
 ##########################################
 
 resource "aws_eip" "helix_core_eip" {
-  count    = var.internal ? 0 : 1
-  instance = aws_instance.helix_core_instance.id
+  for_each = { for idx, server in var.server_configuration : server.type => server if !var.internal }
+  #count    = var.internal ? 0 : 1
+  instance = aws_instance.helix_core_instance[each.key].id
   domain   = "vpc"
 }
 
@@ -84,47 +92,53 @@ resource "aws_eip" "helix_core_eip" {
 
 // hxlogs
 resource "aws_ebs_volume" "logs" {
-  availability_zone = local.helix_core_az
+  for_each = {for idx, server in var.server_configuration : server.type => server }
+  availability_zone = data.aws_subnet.selected[each.key].availability_zone
   size              = var.logs_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags              = merge(local.tags, { Name = "${local.name_prefix}-${each.key}-logs" })
 }
 
 resource "aws_volume_attachment" "logs_attachment" {
+  for_each = { for idx, server in var.server_configuration : server.type => server }
   device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.logs.id
-  instance_id = aws_instance.helix_core_instance.id
+  volume_id   = aws_ebs_volume.logs[each.key].id
+  instance_id = aws_instance.helix_core_instance[each.key].id
 }
 
 // hxmetadata
 resource "aws_ebs_volume" "metadata" {
-  availability_zone = local.helix_core_az
+  for_each = { for idx, server in var.server_configuration : server.type => server }
+  availability_zone = data.aws_subnet.selected[each.key].availability_zone
   size              = var.metadata_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags              = merge(local.tags, { Name = "${local.name_prefix}-${each.key}-logs" })
 }
 
 resource "aws_volume_attachment" "metadata_attachment" {
+  for_each = { for idx, server in var.server_configuration : server.type => server }
   device_name = "/dev/sdg"
-  volume_id   = aws_ebs_volume.metadata.id
-  instance_id = aws_instance.helix_core_instance.id
+  volume_id   = aws_ebs_volume.metadata[each.key].id
+  instance_id = aws_instance.helix_core_instance[each.key].id
 }
 
 // hxdepot
 resource "aws_ebs_volume" "depot" {
-  availability_zone = local.helix_core_az
+  for_each = { for idx, server in var.server_configuration : server.type => server }
+  availability_zone = data.aws_subnet.selected[each.key].availability_zone
   size              = var.depot_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags              = merge(local.tags, { Name = "${local.name_prefix}-${each.key}-logs" })
 }
 
 resource "aws_volume_attachment" "depot_attachment" {
+  for_each = { for idx, server in var.server_configuration : server.type => server }
   device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.depot.id
-  instance_id = aws_instance.helix_core_instance.id
+  volume_id   = aws_ebs_volume.depot[each.key].id
+  instance_id = aws_instance.helix_core_instance[each.key].id
 }
 
 ##########################################
@@ -132,19 +146,48 @@ resource "aws_volume_attachment" "depot_attachment" {
 ##########################################
 
 resource "aws_security_group" "helix_core_security_group" {
-  count = var.create_default_sg ? 1 : 0
+  for_each = { for idx, server in var.server_configuration : server.type => server}
+  #count = var.create_default_sg ? 1 : 0
   #checkov:skip=CKV2_AWS_5:SG is attahced to FSxZ file systems
 
-  vpc_id      = var.vpc_id
-  name        = "${local.name_prefix}-instance"
-  description = "Security group for Helix Core machines."
+  vpc_id      = each.value.vpc_id
+  name        = "${local.name_prefix}-${each.key}-instance"
+  description = "Security group for Helix Core ${each.key} machine."
   tags        = local.tags
 }
 
 resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
-  count             = var.create_default_sg ? 1 : 0
-  security_group_id = aws_security_group.helix_core_security_group[0].id
+  for_each = {for idx, server in var.server_configuration : server.type => server}
+  #count             = var.create_default_sg ? 1 : 0
+  security_group_id = aws_security_group.helix_core_security_group[each.key].id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = -1
   description       = "Helix Core out to Internet"
 }
+
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_1666" {
+  for_each = { for idx, server in var.server_configuration : server.type => server }
+
+  security_group_id = aws_security_group.helix_core_security_group[each.key].id
+  
+  from_port   = 1666
+  to_port     = 1669
+  ip_protocol = "tcp"
+  
+  referenced_security_group_id = aws_security_group.helix_core_security_group[each.key].id
+  
+  description = "Allow incoming traffic on port 1666-1669 from other Perforce servers"
+}
+
+##########################################
+# Systems Manager Parameter Store - Add facts about Helix Core servers
+##########################################
+
+resource "aws_ssm_parameter" "server_info" {
+  for_each = { for idx, server in var.server_configuration : server.type => server }
+  name  = "/perforce/${each.key}/server_info"
+  type  = "StringList"
+  value = "${aws_instance.helix_core_instance[each.key].private_ip},${aws_instance.helix_core_instance[each.key].private_dns}"
+  tags  = local.tags
+}
+
