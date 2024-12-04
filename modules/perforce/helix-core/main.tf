@@ -35,17 +35,17 @@ resource "aws_instance" "helix_core_instance" {
 
   iam_instance_profile = aws_iam_instance_profile.helix_core_instance_profile.id
 
-  user_data = <<-EOT
-    #!/bin/bash
-    /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs /dev/sdf --hx_metadata /dev/sdg --hx_depots /dev/sdh \
-     --p4d_type ${var.server_type} \
-     --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
-     --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
-     ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
-     ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
-     --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
-     --unicode ${var.unicode ? "true" : "false"}
-  EOT
+ # user_data = <<-EOT
+ #   #!/bin/bash
+ #   /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs /dev/sdf --hx_metadata /dev/sdg --hx_depots /dev/sdh \
+ #    --p4d_type ${var.server_type} \
+ #    --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
+ #    --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
+ #    ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
+ #    ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
+ #    --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
+ #    --unicode ${var.unicode ? "true" : "false"}
+ # EOT
 
 
   vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
@@ -186,5 +186,17 @@ resource "aws_ssm_parameter" "server_info" {
   type  = "StringList"
   value = "${aws_instance.helix_core_instance[each.key].private_ip},${aws_instance.helix_core_instance[each.key].private_dns}"
   tags  = local.tags
+}
+
+resource "aws_ssm_parameter" "helix_core_topology" {
+  name  = "/${var.project_prefix}/${var.environment}/perforce/topology"
+  type  = "String"
+  value = jsonencode(local.topology)
+  
+  description = "Perforce Helix Core Server Topology"
+  
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-topology"
+  })
 }
 

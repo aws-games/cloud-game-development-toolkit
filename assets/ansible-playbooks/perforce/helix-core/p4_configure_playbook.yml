@@ -17,8 +17,28 @@
     perforce_ftp_base_url: "https://ftp.perforce.com/perforce"
     stage_bin_dir: "/hxdepots/sdp/helix_binaries"
     download_apis: false
+    flag_file: "/var/run/p4_configure_ran.flag"
+    p4d_type: "{{ p4d_type | default('p4d_master') }}"
+    p4d_admin_username_secret_id: "{{ p4d_admin_username_secret_id }}"
+    p4d_admin_pass_secret_id: "{{ p4d_admin_pass_secret_id }}"
+    helix_auth_service_url: "{{ helix_auth_service_url | default('') }}"
+    fqdn: "{{ fqdn | default('') }}"
+    ebs_logs: "{{ ebs_logs }}"
+    ebs_metadata: "{{ ebs_metadata }}"
+    ebs_depots: "{{ ebs_depots }}"
+    case_sensitive: "{{ case_sensitive | default('1') }}"
+    unicode: "{{ unicode | default('false') }}"
 
   tasks:
+    - name: Check if script has already run
+      stat:
+        path: "{{ flag_file }}"
+      register: flag_file_stat
+
+    - name: Exit if script has already run
+      meta: end_play
+      when: flag_file_stat.stat.exists
+
     - name: Ensure running as root
       fail:
         msg: "This playbook must be run as root"
@@ -101,11 +121,11 @@
     - name: Set platform for each binary
       set_fact:
         platform: >-
-                {%- if os_name == 'linux' -%}
-                linux26{{ 'x86_64' if os_arch == 'x86_64' else '' }}
-                {%- else -%}
-                {{ os_name }}{{ '64' if os_arch == 'x86_64' else '' }}
-                {%- endif -%}
+          {%- if os_name == 'linux' -%}
+          linux26{{ 'x86_64' if os_arch == 'x86_64' else '' }}
+          {%- else -%}
+          {{ os_name }}{{ '64' if os_arch == 'x86_64' else '' }}
+          {%- endif -%}
 
     - name: Download binaries
       get_url:
@@ -117,7 +137,6 @@
       retries: 3
       delay: 5
       until: download_result is success
-
 
     - name: Get binary versions
       command: "{{ stage_bin_dir }}/{{ item }} -V"
@@ -168,10 +187,179 @@
         owner: perforce
         group: perforce
 
-    - name: Log completion
-      lineinfile:
-        path: "{{ log_file }}"
-        line: "{{ ansible_date_time.iso8601 }} - Perforce installation and configuration completed"
-        create: yes
+    - name: Resolve AWS secrets
+      command: aws secretsmanager get-secret-value --secret-id {{ item.secret_id }} --query SecretString --output text
+      register: aws_secrets
+      loop:
+        - { secret_id: "{{ p4d_admin_username_secret_id }}", var_name: "p4d_admin_username" }
+        - { secret_id: "{{ p4d_admin_pass_secret_id }}", var_name: "p4d_admin_pass" }
+      no_log: true
 
-        
+    - name: Set fact for resolved secrets
+      set_fact:
+        "{{ item.item.var_name }}": "{{ item.stdout }}"
+      loop: "{{ aws_secrets.results }}"
+      no_log: true
+
+    - name: Prepare EBS volumes or mount FSx
+      block:
+        - name: Create temporary mount points
+          file:
+            path: "{{ item }}"
+            state: directory
+          loop:
+            - /mnt/temp_hxlogs
+            - /mnt/temp_hxmetadata
+            - /mnt/temp_hxdepots
+
+        - name: Mount EBS volumes or FSx
+          mount:
+            path: "{{ item.path }}"
+            src: "{{ item.src }}"
+            fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
+            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
+            state: mounted
+          loop:
+            - { path: "/mnt/temp_hxlogs", src: "{{ ebs_logs }}" }
+            - { path: "/mnt/temp_hxmetadata", src: "{{ ebs_metadata }}" }
+            - { path: "/mnt/temp_hxdepots", src: "{{ ebs_depots }}" }
+
+        - name: Sync directories
+          synchronize:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+          loop:
+            - { src: "/hxlogs/", dest: "/mnt/temp_hxlogs/" }
+            - { src: "/hxmetadata/", dest: "/mnt/temp_hxmetadata/" }
+            - { src: "/hxdepots/", dest: "/mnt/temp_hxdepots/" }
+
+        - name: Unmount temporary mounts
+          mount:
+            path: "{{ item }}"
+            state: unmounted
+          loop:
+            - /mnt/temp_hxlogs
+            - /mnt/temp_hxmetadata
+            - /mnt/temp_hxdepots
+
+        - name: Clear destination directories
+          file:
+            path: "{{ item }}/*"
+            state: absent
+          loop:
+            - /hxlogs
+            - /hxmetadata
+            - /hxdepots
+
+        - name: Mount EBS volumes or FSx to final destinations
+          mount:
+            path: "{{ item.path }}"
+            src: "{{ item.src }}"
+            fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
+            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
+            state: mounted
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_depots }}" }
+
+    - name: Update mkdirs.cfg
+      lineinfile:
+        path: /hxdepots/sdp/Server/Unix/setup/mkdirs.cfg
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^P4ADMINPASS=', line: 'P4ADMINPASS={{ p4d_admin_pass }}' }
+        - { regexp: '^ADMINUSER=', line: 'ADMINUSER={{ p4d_admin_username }}' }
+        - { regexp: '^P4MASTERHOST=', line: 'P4MASTERHOST={{ ansible_hostname }}' }
+        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE=CASE_SENSITIVE' }
+
+    - name: Execute mkdirs.sh
+      command: /hxdepots/sdp/Server/Unix/setup/mkdirs.sh 1 -t {{ p4d_type }}
+      args:
+        chdir: /hxdepots/sdp/Server/Unix/setup
+
+    - name: Update SSL config with EC2 DNS name
+      lineinfile:
+        path: /p4/ssl/config.txt
+        regexp: '^REPL_DNSNAME'
+        line: "{{ fqdn | default(ansible_ec2_public_hostname) }}"
+
+    - name: Generate SSL certificate
+      command: /p4/common/bin/p4master_run 1 /p4/1/bin/p4d_1 -Gc
+
+    - name: Configure systemd service
+      template:
+        src: "{{ sdp }}/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t"
+        dest: /etc/systemd/system/p4d_1.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Start p4d service
+      systemd:
+        name: p4d_1
+        state: started
+
+    - name: Wait for p4d service to start
+      wait_for:
+        port: 1666
+        timeout: 300
+
+    - name: Create symlink for p4 binary
+      file:
+        src: "{{ sdp_root }}/p4"
+        dest: /usr/bin/p4
+        state: link
+
+    - name: Trust p4 server
+      command: p4 -p ssl:{{ ansible_hostname }}:1666 trust -y
+
+    - name: Execute configure_new_server.sh
+      command: /p4/sdp/Server/setup/configure_new_server.sh 1
+
+    - name: Execute live_checkpoint.sh
+      command: /p4/sdp/Server/Unix/p4/common/bin/live_checkpoint.sh 1
+      become: yes
+      become_user: perforce
+
+    - name: Execute recreate_offline_db.sh
+      command: /p4/sdp/Server/Unix/p4/common/bin/recreate_offline_db.sh 1
+      become: yes
+      become_user: perforce
+
+    - name: Fix crontab
+      lineinfile:
+        path: /p4/p4.crontab.1
+        regexp: '\*/60'
+        line: '0'
+
+    - name: Initialize crontab for perforce user
+      cron:
+        name: "Perforce cron jobs"
+        user: perforce
+        cron_file: /p4/p4.crontab.1
+
+    - name: Verify SDP installation
+      command: /hxdepots/p4/common/bin/verify_sdp.sh 1
+
+    - name: Prepare SiteTags
+      block:
+        - name: Get AWS region
+          command: curl -s http://169.254.169.254/latest/meta-data/placement/region
+          register: aws_region
+
+        - name: Create SiteTags file
+          template:
+            src: /hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample
+            dest: /hxdepots/p4/common/config/SiteTags.cfg
+
+        - name: Append AWS region to SiteTags
+          lineinfile:
+            path: /hxdepots/p4/common/config/SiteTags.cfg
+            line: "aws{{ aws_region.stdout | replace('-', '') }
+          
