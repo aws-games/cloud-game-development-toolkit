@@ -126,10 +126,10 @@ prepare_site_tags() {
 set_unicode() {
     log_message "Setting unicode flag for p4d."
     log_message "sourcing p4_vars"
-    
+
     # Capture the command output
     output=$(su - perforce -c "source /p4/common/bin/p4_vars && /p4/common/bin/p4d -xi" 2>&1)
-    
+
     # Check if the output matches exactly what we expect
     if [ "$output" = "Server switched to Unicode mode." ]; then
         log_message "Successfully switched server to Unicode mode"
@@ -164,11 +164,12 @@ print_help() {
     echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
     echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
     echo "  --selinux <true/false>   Update labels for SELinux"
+    echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -245,6 +246,16 @@ while true; do
                 shift 2
             else
                 log_message "Error: --selinux flag must be either 'true' or 'false'"
+                exit 1
+            fi
+            ;;
+        --plaintext)
+            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+                PLAINTEXT="$2"
+                log_message "PLAINTEXT: $PLAINTEXT"
+                shift 2
+            else
+                log_message "Error: --plaintext flag must be either 'true' or 'false'"
                 exit 1
             fi
             ;;
@@ -407,9 +418,17 @@ sed -i "s/^P4MASTERHOST=.*/P4MASTERHOST=$EC2_DNS_PRIVATE/" "$SDP_Setup_Script_Co
 log_message "Updated P4MASTERHOST to $EC2_DNS_PRIVATE in $SDP_Setup_Script_Config."
 
 # Update Perforce case_sensitivity in configuration
-sed -i "s/^CASE_SENSITIVE=.*/CASE_SENSITIVE=CASE_SENSITIVE/" "$SDP_Setup_Script_Config"
+sed -i "s/^CASE_SENSITIVE=.*/CASE_SENSITIVE=$CASE_SENSITIVE/" "$SDP_Setup_Script_Config"
 
 log_message "Updated CASE_SENSITIVE in $SDP_Setup_Script_Config."
+
+# Update SSL prefix in configuration if plaintext is true
+if [ "${PLAINTEXT,,}" = "true" ]; then
+  sed -i "s/^SSL_PREFIX=.*/SSL_PREFIX=/" "$SDP_Setup_Script_Config"
+  log_message "SSL_PREFIX removed from $SDP_Setup_Script_Config. Server will be configured to use plaintext."
+else
+  log_message "Skipping SSL_PREFIX removal from $SDP_Setup_Script_Config. Server will be configured to use SSL."
+fi
 
 log_message "Mounting done ok - continue to the install"
 
@@ -421,37 +440,32 @@ else
   log_message "Setup script (mkdirs.sh) not found or P4D Type: $P4D_TYPE not provided."
 fi
 
-# update cert config with ec2 DNS name
-FILE_PATH="/p4/ssl/config.txt"
-
-# Retrieve the EC2 instance DNS name
-if [ -z $FQDN ]; then
-  log_message "FQDN was not provided. Retrieving from EC2 metadata."
-  EC2_DNS_NAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname --header "X-aws-ec2-metadata-token: $TOKEN")
-else
-  log_message "FQDN was provided: $FQDN"
-  EC2_DNS_NAME=$FQDN
-fi
-
-# Check if the DNS name was successfully retrieved
-if [ -z "$EC2_DNS_NAME" ]; then
-  echo "Failed to retrieve EC2 instance DNS name."
-  exit 1
-fi
-
-# Replace REPL_DNSNAME with the EC2 instance DNS name for ssl certificate generation
-sed -i "s/REPL_DNSNAME/$EC2_DNS_NAME/" "$FILE_PATH"
-
-echo "File updated successfully."
-
 I=1
-# generate certificate
 
-/p4/common/bin/p4master_run ${I} /p4/${I}/bin/p4d_${I} -Gc
+# Create self signed certificate if plaintext is false
+if [ "${PLAINTEXT,,}" = "false" ]; then
+  log_message "Generating self signed certificate"
+  # update cert config with ec2 DNS name
+  FILE_PATH="/p4/ssl/config.txt"
+
+  # Check if the DNS name was successfully retrieved
+  if [ -z "$EC2_DNS_NAME" ]; then
+    log_message "Failed to retrieve EC2 instance DNS name."
+    exit 1
+  fi
+
+  # Replace REPL_DNSNAME with the EC2 instance DNS name for ssl certificate generation
+  sed -i "s/REPL_DNSNAME/$EC2_DNS_NAME/" "$FILE_PATH"
+
+  echo "File updated successfully."
+
+  # generate certificate
+  /p4/common/bin/p4master_run ${I} /p4/${I}/bin/p4d_${I} -Gc
+else
+  log_message "Skipping self signed certificate generation due to --plaintext true"
+fi
 
 # Configure systemd service to start p4d
-
-
 cd /etc/systemd/system
 sed -e "s:__INSTANCE__:$I:g" -e "s:__OSUSER__:perforce:g" $SDP/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t > p4d_${I}.service
 chmod 644 p4d_${I}.service
@@ -470,19 +484,23 @@ systemctl start p4d_1
 # Wait for the p4d service to start before continuing
 wait_for_service "p4d_1"
 
-P4PORT=ssl:1666
+# Set P4PORT depending on plaintext variable
+if [ "${PLAINTEXT,,}" = "true" ]; then
+  P4PORT=:1666
+else
+  P4PORT=ssl:1666
+fi
+
 P4USER=$P4D_ADMIN_USERNAME
 
 #probably need to copy p4 binary to the /usr/bin or add to the path variable to avoid running with a full path adding:
 #permissions for lal users:
 
-
 chmod +x /hxdepots/sdp/helix_binaries/p4
 ln -s $SDP_Client_Binary /usr/bin/p4
 
-# now can test:
-p4 -p ssl:$HOSTNAME:1666 trust -y
-
+# now can test depending on plaintext
+p4 -p $P4PORT -u $P4USER info
 
 # Execute new server setup from the extracted package
 if [ -f "$SDP_New_Server_Script" ]; then
@@ -491,8 +509,6 @@ if [ -f "$SDP_New_Server_Script" ]; then
 else
   echo "Setup script (configure_new_server.sh) not found."
 fi
-
-
 
 # create a live checkpoint and restore offline db
 # switching to user perforce
