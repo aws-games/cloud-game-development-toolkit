@@ -28,10 +28,11 @@ resource "aws_vpc_security_group_egress_rule" "helix_swarm_service_outbound_ipv6
 
 # Inbound access to Containers from ALB
 resource "aws_vpc_security_group_ingress_rule" "helix_swarm_service_inbound_alb" {
+  count = var.create_application_load_balancer ? 1 : 0
   #checkov:skip=CKV_AWS_260: "This restricts inbound access on port 80 to the ALB."
   security_group_id            = aws_security_group.helix_swarm_service_sg.id
   description                  = "Allow inbound traffic from Helix Swarm ALB to Helix Swarm service"
-  referenced_security_group_id = aws_security_group.helix_swarm_alb_sg.id
+  referenced_security_group_id = aws_security_group.helix_swarm_alb_sg[0].id
   from_port                    = var.helix_swarm_container_port
   to_port                      = var.helix_swarm_container_port
   ip_protocol                  = "tcp"
@@ -43,6 +44,8 @@ resource "aws_vpc_security_group_ingress_rule" "helix_swarm_service_inbound_alb"
 
 # swarm Load Balancer Security Group (attached to ALB)
 resource "aws_security_group" "helix_swarm_alb_sg" {
+  #checkov:skip=CKV2_AWS_5:Security group is attached to Application Load Balancer
+  count       = var.create_application_load_balancer ? 1 : 0
   name        = "${local.name_prefix}-ALB"
   vpc_id      = var.vpc_id
   description = "Helix Swarm ALB Security Group"
@@ -51,7 +54,8 @@ resource "aws_security_group" "helix_swarm_alb_sg" {
 
 # Outbound access from ALB to Containers
 resource "aws_vpc_security_group_egress_rule" "helix_swarm_alb_outbound_service" {
-  security_group_id            = aws_security_group.helix_swarm_alb_sg.id
+  count                        = var.create_application_load_balancer ? 1 : 0
+  security_group_id            = aws_security_group.helix_swarm_alb_sg[0].id
   description                  = "Allow outbound traffic from Helix Swarm ALB to Helix Swarm service"
   referenced_security_group_id = aws_security_group.helix_swarm_service_sg.id
   from_port                    = var.helix_swarm_container_port
