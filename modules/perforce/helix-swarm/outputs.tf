@@ -5,7 +5,7 @@ output "service_security_group_id" {
 
 output "alb_security_group_id" {
   description = "Security group associated with the swarm load balancer"
-  value       = aws_security_group.helix_swarm_alb_sg.id
+  value       = var.create_application_load_balancer ? aws_security_group.helix_swarm_alb_sg[0].id : null
 }
 
 output "cluster_name" {
@@ -15,12 +15,12 @@ output "cluster_name" {
 
 output "alb_dns_name" {
   description = "The DNS name of the Swarm ALB"
-  value       = aws_lb.helix_swarm_alb.dns_name
+  value       = var.create_application_load_balancer ? aws_lb.helix_swarm_alb[0].dns_name : null
 }
 
 output "alb_zone_id" {
   description = "The hosted zone ID of the Swarm ALB"
-  value       = aws_lb.helix_swarm_alb.zone_id
+  value       = var.create_application_load_balancer ? aws_lb.helix_swarm_alb[0].zone_id : null
 }
 
 output "target_group_arn" {
