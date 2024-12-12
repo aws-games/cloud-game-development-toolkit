@@ -157,7 +157,6 @@ variable "create_helix_core_default_role" {
 }
 
 
-
 ########################################
 # Super User Credentials
 ########################################
@@ -186,4 +185,10 @@ variable "helix_case_sensitive" {
   type        = bool
   description = "Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode"
   default     = true
+}
+
+variable "plaintext" {
+  type        = bool
+  description = "Whether to enable plaintext authentication for Helix Core. This is not recommended for production environments unless you are using a load balancer for TLS termination."
+  default     = false
 }
