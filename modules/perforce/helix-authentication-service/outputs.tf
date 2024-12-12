@@ -16,12 +16,12 @@ output "cluster_name" {
 
 output "alb_dns_name" {
   description = "The DNS name of the Helix Authentication Service ALB"
-  value       = aws_lb.helix_authentication_service_alb.dns_name
+  value       = var.create_application_load_balancer ? aws_lb.helix_authentication_service_alb[0].dns_name : null
 }
 
 output "alb_zone_id" {
   description = "The hosted zone ID of the Helix Authentication Service ALB"
-  value       = aws_lb.helix_authentication_service_alb.zone_id
+  value       = var.create_application_load_balancer ? aws_lb.helix_authentication_service_alb[0].zone_id : null
 }
 
 output "target_group_arn" {
