@@ -1,3 +1,14 @@
+# Table of contents <!-- omit in toc -->
+
+- [Contributing Guidelines](#contributing-guidelines)
+  - [Reporting Bugs/Feature Requests](#reporting-bugsfeature-requests)
+  - [Contributing via Pull Requests](#contributing-via-pull-requests)
+  - [Conventional Commits](#conventional-commits)
+  - [Finding contributions to work on](#finding-contributions-to-work-on)
+  - [Code of Conduct](#code-of-conduct)
+  - [Security issue notifications](#security-issue-notifications)
+  - [Licensing](#licensing)
+
 # Contributing Guidelines
 
 Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
@@ -5,7 +16,6 @@ documentation, we greatly value feedback and contributions from our community.
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
 information to effectively respond to your bug report or contribution.
-
 
 ## Reporting Bugs/Feature Requests
 
@@ -19,15 +29,8 @@ reported the issue. Please try to include as much information as you can. Detail
 * Any modifications you've made relevant to the bug
 * Anything unusual about your environment or deployment
 
-
-## Conventional Commits
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) following the release of v1.0.0-alpha. These conventions ensure that the commit history of the project remains readable, and supports extensive automation around pull request creation, release cadence, and documentation.
-
-We do not enforce conventional commits on contributors. We do require that pull request titles follow convention so that the changelog and release automation work as expected.
-
-
 ## Contributing via Pull Requests
+
 Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
 
 1. You are working against the latest source on the *main* branch.
@@ -46,6 +49,12 @@ To send us a pull request, please:
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+## Conventional Commits
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) following the release of v1.0.0-alpha. These conventions ensure that the commit history of the project remains readable, and supports extensive automation around pull request creation, release cadence, and documentation.
+
+We do not enforce conventional commits on contributors. We do require that pull request titles follow convention so that the changelog and release automation work as expected.
+
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
@@ -63,14 +72,14 @@ This project uses [Material for MkDocs](https://squidfunk.github.io/mkdocs-mater
 * A Github workflow is used to build and deploy the documentation to the gh-pages branch: `.github/workflows/docs.yml`
 
 ## Code of Conduct
+
 This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
 For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
 opensource-codeofconduct@amazon.com with any additional questions or comments.
 
-
 ## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
 
+If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
 
 ## Licensing
 
