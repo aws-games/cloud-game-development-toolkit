@@ -74,4 +74,4 @@ If you discover a potential security issue in this project we ask that you notif
 
 ## Licensing
 
-See the [LICENSE](LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+See the [LICENSE](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.

@@ -1,3 +1,8 @@
+---
+title: Unreal Engine Horde
+description: Unreal Engine Horde Terraform module for game development on AWS
+---
+
 # Unreal Engine Horde
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }

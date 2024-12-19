@@ -17,12 +17,12 @@ Please follow these guidelines when developing a new module. These are also outl
 Modules should *not* define its own provider configurations. Required provider versions should be outlined in a `required_versions` block inside of a `terraform` block:
 
 ```terraform
-terraform {  
-    required_providers {    
-        aws = {      
-            source  = "hashicorp/aws"      
-            version = ">= 5.30.0"    
-        }  
+terraform {
+    required_providers {
+        aws = {
+            source  = "hashicorp/aws"
+            version = ">= 5.30.0"
+        }
     }
 }
 ```
@@ -31,7 +31,7 @@ terraform {
 
 It is fine if your module needs to declare significant networking or compute resources to run - the *Cloud Game Development Toolkit* is intended to be highly opinionated. At the same time, we require that modules support a significant level of dependency injection through variables to support diverse use cases. This is a simple consideration that is easier to incorporate from the beginning of module development rather than retroactively.
 
-For example, the [Jenkins module](./jenkins/README.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
+For example, the [Jenkins module](./jenkins/jenkins.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
 
 ### 3. Assumptions and Guarantees
 
@@ -47,4 +47,4 @@ The modules contained in the **CGD Toolkit** are designed to simplify infrastruc
 
 If your module relies on a container or image that is not distributed through the **CGD Toolkit** we require a disclaimer and the usage of end-user credentials passed as a variable to the module. *This repository is not to be used to redistribute software that may be subject to licensing or contractual agreements*.
 
-If your module relies on a custom Amazon Machine Image (AMI) or container we ask that you provide a Packer template or Dockerfile in the [assets](../assets/README.md) directory and include instructions to create the image prior to infrastructure deployment.
+If your module relies on a custom Amazon Machine Image (AMI) or container we ask that you provide a Packer template or Dockerfile in the `assets/` directory and include instructions to create the image prior to infrastructure deployment.

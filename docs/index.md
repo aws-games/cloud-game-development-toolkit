@@ -28,7 +28,7 @@ companies:
 # Welcome to the Cloud Game Development Toolkit
 
 !!! info
-    **This project is under active development and community contributions are welcomed!**. If you would like to see something in this repository please create a <a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE" target="_blank">feature request</a> in the Issues tab. If you'd like to contribute, raise a <a href="https://github.com/aws-games/cloud-game-development-toolkit/pulls/" target="_blank">pull request</a>. You'll find our contribution guidelines [here](./contributing.md).
+    **This project is under active development and community contributions are welcomed!**. If you would like to see something in this repository please create a <a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE" target="_blank">feature request</a> in the Issues tab. If you'd like to contribute, raise a <a href="https://github.com/aws-games/cloud-game-development-toolkit/pulls/" target="_blank">pull request</a>. You'll find our contribution guidelines [here](https://aws-games.github.io/cloud-game-development-toolkit/latest/contributing.html).
 
 The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of templates and configurations for deploying game development infrastructure and tools on AWS.
 
@@ -40,7 +40,7 @@ Below are key tenets driving project's focus:
 
 ## Getting Started
 
-[Getting Started](./getting-started.md){ .md-button  }
+[Getting Started](https://aws-games.github.io/cloud-game-development-toolkit/latest/getting-started.html){ .md-button  }
 
 ## License
 
