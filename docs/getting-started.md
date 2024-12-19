@@ -1,3 +1,8 @@
+---
+title: Getting Started
+description: Getting started with Cloud Game Development Toolkit
+---
+
 # Getting Started
 
 Welcome to the **Cloud Game Development Toolkit**. There are a number of ways to use this repository depending on your development needs. This guide will introduce some of the key features of the project, and provide detailed instructions for deploying your game studio on AWS.
@@ -42,7 +47,7 @@ packer init ./assets/packer/perforce/helix-core/perforce_arm64.pkr.hcl
 packer build ./assets/packer/perforce/helix-core/perforce_arm64.pkr.hcl
 ```
 
-This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](./assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
+This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
 ???+ Note
     The Perforce Helix Core template will default to the _us-west-2_ (Oregon) region, if a region is not provided.
@@ -61,7 +66,7 @@ This section covers the creation of Amazon Machine Images used to provision Jenk
 
 This Amazon Machine Image is provisioned using the [Amazon Linux 2023](https://aws.amazon.com/linux/amazon-linux-2023/) base operating system. It is highly configurable through variables, but there is only one variable that is required: A public SSH key. This public SSH key is used by the Jenkins orchestration service to establish an initial connection to the agent.
 
-This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](./assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
+This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
 
 ``` bash
 packer build -var "public_key=<include public key here>" amazon-linux-2023-arm64.pkr.hcl
@@ -145,9 +150,9 @@ Once your hosted zone exists you can proceed to the next step.
 
 ### Step 5. Configure Simple Build Pipeline Variables
 
-Configurations for the _Simple Build Pipeline_ are split between 2 files: [`local.tf`](./samples/simple-build-pipeline/local.tf) and [`variables.tf`](./samples/simple-build-pipeline/variables.tf). Variables in [`local.tf`](./samples/simple-build-pipeline/local.tf) are typically static and can be modified within the file itself. Variables in [`variables.tf`](./samples/simple-build-pipeline/variables.tf), tend to be more dynamic and are passed in through the `terraform apply` command either directly through a `-var` flag or as file using the `-var-file` flag.
+Configurations for the _Simple Build Pipeline_ are split between 2 files: [`local.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/local.tf) and [`variables.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/variables.tf). Variables in `local.tf` are typically static and can be modified within the file itself. Variables in `variables.tf` tend to be more dynamic and are passed in through the `terraform apply` command either directly through a `-var` flag or as file using the `-var-file` flag.
 
-We'll start by walking through the required configurations in [`local.tf`](./samples/simple-build-pipeline/local.tf).
+We'll start by walking through the required configurations in `local.tf`.
 
 1. `allowlist` grants public internet access to the various applications deployed in the _Simple Build Pipeline_. At a minimum you will need to include your own IP address to gain access to Jenkins and Perforce Helix Core for configuration following deployment. For example, if your IP address is `192.158.1.38` you would want to set `allowlist=["192.158.1.38/32"]` to grant yourself access.
 
@@ -160,14 +165,14 @@ We'll start by walking through the required configurations in [`local.tf`](./sam
 
 4. Finally, the `build_farm_fsx_openzfs_storage` field configures file systems used by your build agents for mounting Helix Core workspaces and shared caches. Again, an example configuration is provided but commented out. Depending on the number of builds you expect to be performing and the size of your project, you may want to adjust the size of the suggested file systems.
 
-The variables in [`variables.tf`] are as follows:
+The variables in `variables.tf` are as follows:
 
 1. `root_domain_name` must be set to the domain name you created a public hosted zone for in [Step 4](#step-4-create-route53-hosted-zone). Your applications will be deployed at subdomains. For example, if `root_domain_name=example.com` then Jenkins will be available at `jenkins.example.com` and Perforce Helix Core will be available at `core.helix.example.com`.
 
 
 ### Step 6. Deploy Simple Build Pipeline
 
-Now we are ready to deploy your _Simple Build Pipeline_! Navigate to the [`/samples/simple-build-pipeline`](./samples/simple-build-pipeline/) directory and run the following commands:
+Now we are ready to deploy your _Simple Build Pipeline_! Navigate to the `/samples/simple-build-pipeline` directory and run the following commands:
 
 ``` bash
 terraform init

@@ -1,3 +1,8 @@
+---
+title: Perforce Helix Core
+description: Helix Core Terraform Module for AWS
+---
+
 # Perforce Helix Core
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }
@@ -11,7 +16,7 @@ This module provisions Perforce Helix Core on an EC2 Instance with three dedicat
 
 ## Prerequisites
 
-This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AMI) that is included in the Cloud Game Development Toolkit. You **must** provision this AMI using [Hashicorp Packer](https://www.packer.io/) prior to deploying this module. To get started consult [the documentation for the Perforce Helix Core AMI](/docs/assets/packer.md).
+This module deploys Perforce Helix Core on AWS using an Amazon Machine Image (AMI) that is included in the Cloud Game Development Toolkit. You **must** provision this AMI using [Hashicorp Packer](https://www.packer.io/) prior to deploying this module. To get started consult [the documentation for the Perforce Helix Core AMI](../../../assets/packer/helix-core.md).
 
 ### Optional
 
