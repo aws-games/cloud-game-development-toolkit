@@ -1,3 +1,8 @@
+---
+title: Perforce Helix Authentication Service
+description: Helix Authentication Service Terraform Module for AWS
+---
+
 # Helix Authentication Service (HAS)
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }

@@ -1,3 +1,8 @@
+---
+title: Perforce Helix Swarm
+description: Helix Swarm Terraform Module for AWS
+---
+
 # Perforce Helix Swarm
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }
@@ -21,7 +26,7 @@ This module deploys the following resources:
 
 Perforce Helix Swarm needs to be able to connect to a Perforce Helix Core server. Helix Swarm leverages the same authentication mechanism as Helix Core, and needs to install required plugins on the upstream Helix Core instance during setup. This happens automatically, but Swarm requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the Helix Swarm container during startup. See the `p4d_super_user_arn`, `p4d_super_user_password_arn`, `p4d_swarm_user_arn`, and `p4d_swarm_password_arn` variables below for more details.
 
-The [Helix Core module](/docs/modules/perforce/helix-core/helix-core.md) creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere.
+The [Helix Core module](../helix-core/helix-core.md) creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere.
 
 Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:
 

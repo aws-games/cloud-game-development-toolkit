@@ -1,3 +1,8 @@
+---
+title: Jenkins Module
+description: Jenkins Terraform Module for game development on AWS
+---
+
 # Jenkins Module
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }
@@ -198,7 +203,7 @@ terraform output jenkins_alb_dns_name
 
 ## Configuring Jenkins
 
-When accessing Jenkins for the first time, an administrators password is required. This password is auto-generated and available through the ECS logs. The administrative user will be replaced with a new user upon completion of the setup, see [Creating Users](README.md#creating-users).
+When accessing Jenkins for the first time, an administrators password is required. This password is auto-generated and available through the ECS logs. The administrative user will be replaced with a new user upon completion of the setup.
 
 
 ### Retrieve the Jenkins Administrator Password
@@ -213,7 +218,7 @@ When accessing Jenkins for the first time, an administrators password is require
 
 ### Jenkins Initial Configuration
 
-1. Open the Jenkins console on your preferred browser, see [Accessing Jenkins](README.md#accessing-jenkins) for details.
+1. Open the Jenkins console on your preferred browser, see [Accessing Jenkins](#accessing-jenkins) for details.
 2. Paste the password you retrieved from the logs in the previous step into the text box and click **Continue**
 3. You will then be prompted to select the plugins you wish to install.
    a. If you are unsure of which plugins to install, select `Install suggested plugins`.
