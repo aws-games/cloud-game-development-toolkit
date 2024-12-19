@@ -28,7 +28,7 @@ packer build ./assets/packer/perforce/helix-core/perforce_arm64.pkr.hcl
 
 Packer will attempt to leverage the default VPC available in the AWS account and Region specified by your CLI credentials. It will provision an instance in a public subnet and communicate with that instance over the public internet. If a default VPC is not provided the above command will fail. This Packer template can take a number of variables as specified in `example.pkrvars.hcl`. Variables can be passed individually through the `-var` command line flag or through a configuration file with the `-var-file` command line flag.
 
-An instance that is provisioned with this AMI will not automatically deploy a Helix Core server. Instead, the required installation and configuration scripts are loaded onto this AMI by Packer, and then invoked at boot through EC2 user data. The [Perforce Helix Core module](/docs/modules/perforce/helix-core/helix-core.md) does this through Terraform, but you can also manually provision an instance off of this AMI and specify the user data yourself:
+An instance that is provisioned with this AMI will not automatically deploy a Helix Core server. Instead, the required installation and configuration scripts are loaded onto this AMI by Packer, and then invoked at boot through EC2 user data. The Perforce Helix Core module does this through Terraform, but you can also manually provision an instance off of this AMI and specify the user data yourself:
 
 ``` bash
 #!/bin/bash
@@ -43,7 +43,7 @@ An instance that is provisioned with this AMI will not automatically deploy a He
    <URL for Helix Authentication Service>
 ```
 
-As you can see, there are quite a few configurables that need to be passed to the `p4_configure.sh` script. We recommend using the [Perforce Helix Core module](/docs/modules/perforce/helix-core/helix-core.md) for this reason.
+As you can see, there are quite a few configurables that need to be passed to the `p4_configure.sh` script. We recommend using the [Perforce Helix Core module]() for this reason.
 
 ## Important Notes
 

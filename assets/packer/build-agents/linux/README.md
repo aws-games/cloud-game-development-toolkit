@@ -4,10 +4,10 @@ The following templates provide Unreal Engine Linux build agents:
 
 | Operating system | CPU architecture | file location
 |-|-|-|
-|Ubuntu Jammy 22.04 | x86_64 (a.k.a. amd64)  | [`x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl) 
-|Ubuntu Jammy 22.04 | aarch64 (a.k.a. arm64) | [`aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl) 
-|Amazon Linux 2023  | x86_64 (a.k.a. amd64)  | [`x86_64/amazon-linux-2023-x86_64.pkr.hcl`]((https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/x86_64/amazon-linux-2023-x86_64.pkr.hcl) )
-|Amazon Linux 2023  | aarch64 (a.k.a. arm64) | [`aarch64/amazon-linux-2023-arm64.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/amazon-linux-2023-arm64.pkr.hcl)  
+|Ubuntu Jammy 22.04 | x86_64 (a.k.a. amd64)  | [`x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/x86_64/ubuntu-jammy-22.04-amd64-server.pkr.hcl)
+|Ubuntu Jammy 22.04 | aarch64 (a.k.a. arm64) | [`aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/ubuntu-jammy-22.04-arm64-server.pkr.hcl)
+|Amazon Linux 2023  | x86_64 (a.k.a. amd64)  | [`x86_64/amazon-linux-2023-x86_64.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/amazon-linux-2023-x86_64.pkr.hcl)
+|Amazon Linux 2023  | aarch64 (a.k.a. arm64) | [`aarch64/amazon-linux-2023-arm64.pkr.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/aarch64/amazon-linux-2023-arm64.pkr.hcl)
 
 ##### Usage
 
@@ -74,7 +74,7 @@ sccache is installed as a _systemd service_, and configured to use `/mnt/fsx_cac
 
 '[Octobuild](https://github.com/octobuild/octobuild)' is installed to act as a compilation cache for Unreal Engine.
 
-Octobuild is configured (in [octobuild.conf](octobuild.conf)) to use `/mnt/fsx_cache/octobuild_cache` as its cache folder, and expects this folder to be available or set up by another service.
+Octobuild is configured in [octobuild.conf](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/octobuild.conf) to use `/mnt/fsx_cache/octobuild_cache` as its cache folder, and expects this folder to be available or set up by another service.
 
 NOTE: Octobuild is not supported on aarch64, and therefore not installed there.
 

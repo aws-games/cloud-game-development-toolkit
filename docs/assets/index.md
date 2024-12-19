@@ -1,3 +1,8 @@
+---
+title: Assets
+description: Re-usable assets for game development on AWS
+---
+
 # Assets
 
 **Assets** are reusable scripts, pipeline definitions, Dockerfiles, Packer templates, and other resources that might prove useful or are dependencies of any of the modules.

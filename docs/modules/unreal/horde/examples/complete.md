@@ -1,3 +1,8 @@
+---
+title: Unreal Horde Example
+description: Complete example of Unreal Horde for game development on AWS
+---
+
 # Unreal Engine Horde Complete Example
 
 This example provisions [Unreal Engine Horde](https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde).

@@ -1,3 +1,8 @@
+---
+title: Perforce Complete Example
+description: Automated deployment of Helix Core, Helix Swarm, and Helix Authentication Service on AWS
+---
+
 # Perforce Complete Example
 
 This example provisions [Helix Core](https://www.perforce.com/products/helix-core), [Helix Swarm](https://www.perforce.com/products/helix-swarm), and the [Helix Authentication Service](https://www.perforce.com/downloads/helix-authentication-service). It also configures security groups for each of these modules to allow inter-service communication. This example takes a single input variable:`root_domain_name` is expected to correspond to an existing [AWS Route53 hosted zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/route-53-concepts.html#route-53-concepts-hosted-zone). This hosted zone is used for provisioning DNS records used for external and internal routing, and enables this example to create validated SSL certificates on your behalf.
