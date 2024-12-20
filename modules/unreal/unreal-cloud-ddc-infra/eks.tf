@@ -4,7 +4,7 @@
 
 resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   #checkov:skip=CKV_AWS_39:This needs to be open to configure the eks cluster.
-  #checkov:skip=CKV_AWS_58:This will need to be enabled in a future update
+  #checkov:skip=CKV_AWS_58:Secrets encryptiom will be enabled in a future update
   #checkov:skip=CKV_AWS_38:IP restriction set in module variables
   name                      = var.name
   role_arn                  = aws_iam_role.eks_cluster_role.arn
@@ -197,13 +197,14 @@ resource "aws_eks_node_group" "system_node_group" {
 }
 
 resource "aws_launch_template" "system_launch_template" {
+  #checkov:skip=CKV_AWS_341:Required for the load balancer controller
   name_prefix   = "unreal-ddc-system-launch-template"
   instance_type = var.system_managed_node_instance_type
 
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
     instance_metadata_tags      = "enabled"
   }
 
