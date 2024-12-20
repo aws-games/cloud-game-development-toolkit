@@ -3,7 +3,21 @@
 
 
 <a name="latest"></a>
-## [latest] - 2024-12-17
+## [latest] - 2024-12-20
+
+<a name="v1.1.2-alpha"></a>
+## [v1.1.2-alpha] - 2024-12-20
+### Chore
+- ignore tf backend.tf files in .gitignore
+- **deps:** bump the awscc-provider group across 3 directories with 1 update
+- **deps:** bump actions/upload-artifact from 4.4.3 to 4.5.0
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+
+### Docs
+- removed READMEs from source directories and moved them to their own dedicated docs pages in docs/ dir
+- update contributor documentation to include table of contents
+- updates to doc formatting and fixed broken links
+
 
 <a name="v1.1.1-alpha"></a>
 ## [v1.1.1-alpha] - 2024-12-17
@@ -22,11 +36,12 @@
 - fix tag names so that they match recommended best practices ([#343](https://github.com/aws-games/cloud-game-development-toolkit/issues/343))
 - define nat gateway routes for private route tables outside of aws_route_table resources in samples and modules ([#354](https://github.com/aws-games/cloud-game-development-toolkit/issues/354))
 - adds triage label to our issue templates
+- regenerate CHANGELOG.md for 2024-12-17
 - document parameter values for '--unicode' flag
 - provide appropriate association name for configuring Helix Core via SSM
 - fix naming
 - **checkov:** Suppresses CKV_AWS_378 rule ([#339](https://github.com/aws-games/cloud-game-development-toolkit/issues/339))
-- **deps:** bump hashicorp/setup-terraform from 1 to 3
+- **deps:** bump mkdocs-material from 9.5.42 to 9.5.44 in /docs
 - **deps:** bump the awscc-provider group across 3 directories with 1 update
 - **deps:** bump aquasecurity/trivy-action from 0.28.0 to 0.29.0
 - **deps:** bump mkdocs-material from 9.5.45 to 9.5.46 in /docs
@@ -36,8 +51,8 @@
 - **deps:** bump the aws-provider group across 5 directories with 1 update
 - **deps:** bump actions/checkout from 3.0.0 to 4.2.2
 - **deps:** bump the awscc-provider group across 3 directories with 1 update
-- **deps:** bump mkdocs-material from 9.5.42 to 9.5.44 in /docs
-- **deps:** bump python from 3.13.0 to 3.13.1 in /docs
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump hashicorp/setup-terraform from 1 to 3
 - **deps:** bump aws-actions/configure-aws-credentials
 - **deps:** bump mkdocs-material from 9.5.41 to 9.5.42 in /docs
 - **deps:** bump mkdocs-open-in-new-tab from 1.0.6 to 1.0.7 in /docs
@@ -45,18 +60,18 @@
 - **deps:** bump the aws-provider group across 5 directories with 1 update
 - **deps:** bump aquasecurity/trivy-action from 0.24.0 to 0.28.0
 - **deps:** bump mkdocs-material from 9.5.40 to 9.5.41 in /docs
-- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump the awscc-provider group across 3 directories with 1 update
 - **deps:** bump python from 3.12.7 to 3.13.0 in /docs ([#349](https://github.com/aws-games/cloud-game-development-toolkit/issues/349))
 - **deps:** bump actions/upload-artifact from 4.4.0 to 4.4.3 ([#356](https://github.com/aws-games/cloud-game-development-toolkit/issues/356))
 - **deps:** bump mkdocs-material from 9.5.39 to 9.5.40 in /docs ([#359](https://github.com/aws-games/cloud-game-development-toolkit/issues/359))
 - **deps:** bump mkdocs-open-in-new-tab from 1.0.5 to 1.0.6 in /docs ([#345](https://github.com/aws-games/cloud-game-development-toolkit/issues/345))
-- **deps:** bump the awscc-provider group across 3 directories with 1 update
+- **deps:** bump the aws-provider group across 5 directories with 1 update
 - **deps:** bump mkdocs-material from 9.5.37 to 9.5.39 in /docs ([#335](https://github.com/aws-games/cloud-game-development-toolkit/issues/335))
 - **deps:** bump the aws-provider group across 5 directories with 1 update ([#344](https://github.com/aws-games/cloud-game-development-toolkit/issues/344))
-- **deps:** bump the aws-provider group across 5 directories with 1 update
-- **deps:** bump python from 3.12.6 to 3.12.7 in /docs ([#340](https://github.com/aws-games/cloud-game-development-toolkit/issues/340))
 - **deps:** bump mkdocs-material from 9.5.46 to 9.5.48 in /docs
+- **deps:** bump python from 3.12.6 to 3.12.7 in /docs ([#340](https://github.com/aws-games/cloud-game-development-toolkit/issues/340))
 - **deps:** bump mkdocs-material from 9.5.48 to 9.5.49 in /docs
+- **deps:** bump python from 3.13.0 to 3.13.1 in /docs
 
 ### Docs
 - clarify that modules are intended to be depended on, and samples are reference implementations meant to be copied and modified
@@ -217,7 +232,8 @@
 
 
 [Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...HEAD
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...latest
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...latest
+[v1.1.2-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha
 [v1.1.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.0-alpha...v1.1.1-alpha
 [v1.1.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.1-alpha...v1.1.0-alpha
 [v1.0.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...v1.0.1-alpha
