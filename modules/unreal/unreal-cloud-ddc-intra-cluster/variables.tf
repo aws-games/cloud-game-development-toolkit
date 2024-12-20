@@ -2,7 +2,7 @@ variable "cluster_name" {
   type        = string
   description = "Name of the EKS Cluster"
 }
-variable "oidc_provider_arn" {
+variable "cluster_oidc_provider_arn" {
   type        = string
   description = "ARN of the OIDC Provider from EKS Cluster"
 }
