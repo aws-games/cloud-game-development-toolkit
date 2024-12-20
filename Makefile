@@ -15,7 +15,7 @@ ifdef COLOR_SUPPORT
 endif
 
 .PHONY: docs-deploy-github
-# Deploy the docs to remote branch in github. 
+# Deploy the docs to remote branch in github.
 docs-deploy-github: ## Usage: `docs-deploy-github VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'docs-deploy-github VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'docs-deploy-github VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
@@ -29,7 +29,7 @@ docs-run: ## Usage: `make docs-run VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-run VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'make docs-run VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
-	docker build -t docs:${VERSION} ./docs/
+	docker build --no-cache -t docs:${VERSION} ./docs/
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:${VERSION}
 
 .PHONY: docs-run-versioned
@@ -38,7 +38,7 @@ docs-run-versioned: ## Usage: `make docs-run-versioned VERSION=v1.0.0 ALIAS=late
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-run-versioned VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'make docs-run-versioned VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
-	docker build -t docs:${VERSION} ./docs/
+	docker build --no-cache -t docs:${VERSION} ./docs/
 	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs --entrypoint /bin/sh docs:${VERSION} -c "mike serve --dev-addr=0.0.0.0:8000"
 
 .PHONY: help
