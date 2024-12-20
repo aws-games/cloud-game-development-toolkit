@@ -14,36 +14,32 @@ ifdef COLOR_SUPPORT
   endif
 endif
 
-.PHONY: docs-build-local
-docs-build-local: ## Build the docs to run locally as a container image, tagged with version and alias (ex: docs:v1.0.0, docs:latest). Usage: `make docs-build-local VERSION=v1.0.0 ALIAS=latest`
-	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'docs-build-local VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
-	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'docs-build-local VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
-	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
-	@docker build -f ./docs/Dockerfile -t docs:${VERSION} -t docs:${ALIAS} . \
-		--build-arg GIT_USER_NAME="${GIT_USER_NAME}" \
-		--build-arg GIT_USER_EMAIL="${GIT_USER_EMAIL}" \
-		--build-arg VERSION="${VERSION}" \
-		--build-arg ALIAS="${ALIAS}" \
-
-.PHONY: docs-install-dependencies
-docs-install-dependencies: ## Install dependencies required for the docs. Usage: `make docs-install-dependencies VERSION=v1.0.0 ALIAS=latest`
-	pip install -r ./docs/requirements.txt
-
 .PHONY: docs-deploy-github
-docs-deploy-github: ## Deploy the docs to remote branch in github. Usage: `docs-deploy-github VERSION=v1.0.0 ALIAS=latest`
+# Deploy the docs to remote branch in github. 
+docs-deploy-github: ## Usage: `docs-deploy-github VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'docs-deploy-github VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'docs-deploy-github VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
+	pip install -r ./docs/requirements.txt
 	mike deploy --push --update-aliases ${VERSION} ${ALIAS}
 
 .PHONY: docs-run
-docs-run: ## Run a built docs container image locally. Usage: `make docs-run VERSION=v1.0.0 ALIAS=latest`
+# Builds and runs a specific version of the docs in Docker with live reloading to support iterative development. This doesn't include the version selector in the navigation pane that ships in production.
+docs-run: ## Usage: `make docs-run VERSION=v1.0.0 ALIAS=latest`
 	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-run VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'make docs-run VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
 	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
-	@CONTAINERS=$(shell docker ps -q -f publish=8000) && if [ -n "$$CONTAINERS" ]; then echo -e "${GREEN}Clearing port 8000 and running docs locally. Waiting...${RESET}"; docker stop $$CONTAINERS; fi
-	@docker run -d -p 8000:8000 docs:${VERSION} mike serve --dev-addr=0.0.0.0:8000
-	@echo -e "${GREEN}Docs running at: http://localhost:8000${RESET}"
+	docker build -t docs:${VERSION} ./docs/
+	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs docs:${VERSION}
+
+.PHONY: docs-run-versioned
+# Builds and runs the docs in Docker using `mike` instead of `mkdocs` to run a versioned docs site locally (what we deploy to prod). `mike` doesn't support live reloading, so you'll need to rebuild the container to see changes.
+docs-run-versioned: ## Usage: `make docs-run-versioned VERSION=v1.0.0 ALIAS=latest`
+	@if [ -z "${VERSION}" ]; then echo -e "${RED}VERSION is not set. Example: 'make docs-run-versioned VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
+	@if [ -z "${ALIAS}" ]; then echo -e "${RED}ALIAS is not set. Example: 'make docs-run-versioned VERSION=v1.0.0 ALIAS=latest'. Run 'make help' for usage. ${RESET}"; exit 1; fi
+	@echo -e "${GREEN}Docs version is: ${VERSION}:${ALIAS}${RESET}";
+	docker build -t docs:${VERSION} ./docs/
+	docker run --rm -it -p 8000:8000 -v ${PWD}:/docs --entrypoint /bin/sh docs:${VERSION} -c "mike serve --dev-addr=0.0.0.0:8000"
 
 .PHONY: help
 help: ## Display this help
