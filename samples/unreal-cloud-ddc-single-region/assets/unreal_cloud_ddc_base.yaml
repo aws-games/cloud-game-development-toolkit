@@ -1,7 +1,7 @@
 # This is the base settings of your deployment, most things should go into here except for anything that is unique to a single region
 config:
   Scylla: &scylla-connection-info
-    ConnectionString: Contact Points=${scylla_dns};Default Keyspace=jupiter;
+    ConnectionString: Contact Points=${scylla_ips};Default Keyspace=jupiter;
   # if you have a locally attached filesystem for caching (we recommend you do) then this configures it
   #Filesystem:
   #  MaxSizeBytes: 800000000000 # 800 Gb - the amount of storage we can use on the storage

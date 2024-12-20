@@ -21,6 +21,7 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name
       }
+      "start_scylla_on_first_boot" : false
     }
   )
   nvme-pre-bootstrap-userdata = <<EOF

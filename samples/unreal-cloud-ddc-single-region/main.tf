@@ -6,6 +6,7 @@ data "aws_secretsmanager_secret_version" "current" {
   secret_id = data.aws_secretsmanager_secret.oidc_secrets.id
 }
 
+
 module "unreal_cloud_ddc_vpc" {
   source                = "./vpc"
   vpc_cidr              = "192.168.0.0/23"
@@ -28,7 +29,6 @@ module "unreal_cloud_ddc_infra" {
   eks_cluster_access_cidr = var.eks_cluster_ip_allow_list
 
   scylla_private_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_dns             = "scylla.example.com"
   scylla_ami_name        = "ScyllaDB 6.2.1"
   scylla_architecture    = "x86_64"
   scylla_instance_type   = "i4i.xlarge"
@@ -54,7 +54,7 @@ module "unreal_cloud_ddc_intra_cluster" {
 
   source                              = "../../modules/unreal/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
-  oidc_provider_arn                   = module.unreal_cloud_ddc_infra.oidc_provider_arn
+  cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
   gchr_credentials_secret_manager_arn = var.github_credential_arn
   oidc_credentials_secret_manager_arn = var.oidc_credential_arn
 
@@ -66,7 +66,7 @@ module "unreal_cloud_ddc_intra_cluster" {
       bucket_name = module.unreal_cloud_ddc_infra.s3_bucket_id
     }),
     templatefile("./assets/unreal_cloud_ddc_base.yaml", {
-      scylla_dns          = "scylla.example.com"
+      scylla_ips          = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       region              = data.aws_region.current.name
       okta_domain         = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["okta_domain"]
       okta_auth_server_id = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["okta_auth_server_id"]
