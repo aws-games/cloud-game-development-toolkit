@@ -237,6 +237,8 @@ resource "aws_s3_bucket" "unreal_horde_alb_access_logs_bucket" {
   count  = var.enable_unreal_horde_alb_access_logs && var.unreal_horde_alb_access_logs_bucket == null ? 1 : 0
   bucket = "${local.name_prefix}-alb-access-logs-${random_string.unreal_horde_alb_access_logs_bucket_suffix[0].result}"
 
+  force_destroy = var.enable_force_cleanup
+
   #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
   #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
   #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
