@@ -9,7 +9,6 @@ variable "vpc_id" {
   type        = string
 }
 
-
 variable "private_subnets" {
   type        = list(string)
   default     = []
@@ -42,12 +41,6 @@ variable "scylla_private_subnets" {
   default     = []
   description = "The subnets you want Scylla to be installed into. Can repeat subnet ids to install into the same subnet/az. This will also determine how many Scylla instances are deployed."
   nullable    = false
-}
-
-variable "scylla_dns" {
-  type        = string
-  default     = null
-  description = "The local private dns name that you want Scylla to be queryable on."
 }
 
 variable "scylla_db_storage" {
@@ -128,6 +121,7 @@ variable "system_managed_node_max_size" {
 variable "eks_cluster_access_cidr" {
   type        = list(string)
   description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster."
+  default     = []
 }
 
 variable "kubernetes_version" {

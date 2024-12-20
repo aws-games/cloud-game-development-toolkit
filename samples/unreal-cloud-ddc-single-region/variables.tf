@@ -10,7 +10,6 @@ variable "github_credential_arn" {
   description = "Github Credential ARN"
 }
 
-
 variable "eks_cluster_ip_allow_list" {
   type        = list(string)
   default     = []

@@ -103,9 +103,9 @@ No outputs.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Name of the EKS Cluster | `string` | n/a | yes |
+| <a name="input_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#input\_cluster\_oidc\_provider\_arn) | ARN of the OIDC Provider from EKS Cluster | `string` | n/a | yes |
 | <a name="input_gchr_credentials_secret_manager_arn"></a> [gchr\_credentials\_secret\_manager\_arn](#input\_gchr\_credentials\_secret\_manager\_arn) | Arn for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. | `string` | n/a | yes |
 | <a name="input_oidc_credentials_secret_manager_arn"></a> [oidc\_credentials\_secret\_manager\_arn](#input\_oidc\_credentials\_secret\_manager\_arn) | Arn for oidc credentials stored in secret manager. | `string` | n/a | yes |
-| <a name="input_oidc_provider_arn"></a> [oidc\_provider\_arn](#input\_oidc\_provider\_arn) | ARN of the OIDC Provider from EKS Cluster | `string` | n/a | yes |
 | <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of the S3 Bucket for Unreal Cloud DDC to use | `string` | n/a | yes |
 | <a name="input_unreal_cloud_ddc_helm_values"></a> [unreal\_cloud\_ddc\_helm\_values](#input\_unreal\_cloud\_ddc\_helm\_values) | List of YAML files for Unreal Cloud DDC | `list(string)` | `[]` | no |
 | <a name="input_unreal_cloud_ddc_namespace"></a> [unreal\_cloud\_ddc\_namespace](#input\_unreal\_cloud\_ddc\_namespace) | Namespace for Unreal Cloud DDC | `string` | `"unreal-cloud-ddc"` | no |

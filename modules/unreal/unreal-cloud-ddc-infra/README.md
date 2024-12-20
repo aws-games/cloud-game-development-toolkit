@@ -151,8 +151,6 @@ No modules.
 | [aws_launch_template.nvme_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
 | [aws_launch_template.system_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
 | [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_route53_record.scylla_records](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
-| [aws_route53_zone.scylla_zone](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
 | [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.unreal-s3-bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
@@ -176,7 +174,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_eks_cluster_access_cidr"></a> [eks\_cluster\_access\_cidr](#input\_eks\_cluster\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster. | `list(string)` | n/a | yes |
+| <a name="input_eks_cluster_access_cidr"></a> [eks\_cluster\_access\_cidr](#input\_eks\_cluster\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster. | `list(string)` | `[]` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.30"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
@@ -188,7 +186,6 @@ No modules.
 | <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | The chip architecture to use when finding the scylla image. Valid | `string` | `"x86_64"` | no |
 | <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
 | <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
-| <a name="input_scylla_dns"></a> [scylla\_dns](#input\_scylla\_dns) | The local private dns name that you want Scylla to be queryable on. | `string` | `null` | no |
 | <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
 | <a name="input_scylla_private_subnets"></a> [scylla\_private\_subnets](#input\_scylla\_private\_subnets) | The subnets you want Scylla to be installed into. Can repeat subnet ids to install into the same subnet/az. This will also determine how many Scylla instances are deployed. | `list(string)` | `[]` | no |
 | <a name="input_system_managed_node_desired_size"></a> [system\_managed\_node\_desired\_size](#input\_system\_managed\_node\_desired\_size) | Desired number of monitoring managed node group instances. | `number` | `1` | no |
@@ -210,4 +207,5 @@ No modules.
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | n/a |
 | <a name="output_peer_security_group"></a> [peer\_security\_group](#output\_peer\_security\_group) | n/a |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | n/a |
+| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | n/a |
 <!-- END_TF_DOCS -->

@@ -25,3 +25,7 @@ output "cluster_certificate_authority_data" {
 output "peer_security_group" {
   value = aws_security_group.scylla_security_group
 }
+
+output "scylla_ips" {
+  value = tolist(aws_instance.scylla_ec2_instance[*].private_ip)
+}
