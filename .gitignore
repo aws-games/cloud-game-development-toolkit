@@ -38,6 +38,9 @@ override.tf.json
 terraform.rc
 *.tfbackend
 
+# Ignore terraform backend state configuration
+backend.tf
+
 # Ignore packer variables
 *.pkrvars.hcl
 !example.pkrvars.hcl
