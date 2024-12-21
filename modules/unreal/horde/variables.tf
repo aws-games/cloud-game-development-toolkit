@@ -38,7 +38,13 @@ variable "tags" {
 variable "debug" {
   type        = bool
   description = "Set this flag to enable ECS execute permissions on the Unreal Horde container and force new service deployments on Terraform apply."
-  default     = false
+  default     = true
+}
+
+variable "enable_force_cleanup" {
+  type        = bool
+  description = "Set this flag to true to enable force destroying of resources."
+  default     = true
 }
 
 ########################################
@@ -71,6 +77,13 @@ variable "container_name" {
   type        = string
   description = "The name of the Unreal Horde container."
   default     = "unreal-horde-container"
+  nullable    = false
+}
+
+variable "external_api_port" {
+  type        = number
+  description = "The external port for the Unreal Horde web server."
+  default     = 443
   nullable    = false
 }
 
@@ -165,7 +178,7 @@ variable "unreal_horde_alb_access_logs_prefix" {
 
 variable "enable_unreal_horde_alb_deletion_protection" {
   type        = bool
-  description = "Enables deletion protection for the Unreal Horde ALB. Defaults to true."
+  description = "Enables deletion protection for the Unreal Horde ALB. Defaults to false."
   default     = false
 }
 
