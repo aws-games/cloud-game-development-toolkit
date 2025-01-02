@@ -68,7 +68,7 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_helix_core_inbound_web_
   referenced_security_group_id = module.perforce_helix_core.security_group_id
 }
 
-# Egress for Perfoce Web Services ALB to Helix Swarm service
+# Egress for Perforce Web Services ALB to Helix Swarm service
 resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_helix_swarm" {
   security_group_id            = aws_security_group.perforce_web_services_alb.id
   description                  = "Perforce ALB outbound to Helix Swarm"
