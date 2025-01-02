@@ -4,11 +4,11 @@ output "helix_core_connection_string" {
 }
 
 output "helix_swarm_url" {
-  value       = "swarm.perforce.${var.root_domain_name}"
+  value       = "https://swarm.perforce.${var.root_domain_name}"
   description = "The URL for the Helix Swarm server."
 }
 
 output "helix_authentication_service_admin_url" {
-  value       = "auth.perforce.${var.root_domain_name}/admin"
+  value       = "https://auth.perforce.${var.root_domain_name}/admin"
   description = "The URL for the Helix Authentication Service admin page."
 }

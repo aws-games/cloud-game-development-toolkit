@@ -22,8 +22,8 @@ to the fully qualified domain name of an existing public hosted zone in the AWS 
 reference architecture. The deployment steps below will get you up and running.
 
 1. You will need the Cloud Game Development Toolkit's Perforce Helix Core Amazon Machine Image. This Amazon Machine
-   Image (AMI) can be build using
-   our [provided Packer template](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/perforce/helix-core).
+   Image (AMI) can be built using
+   our [provided Packer template](../../../assets/packer/helix-core.md).
    This example uses the ARM64 version of this AMI, and
    leverages Amazon Graviton for the Helix Core instance. Follow our documentation for provisioning this AMI in your AWS
    account.
