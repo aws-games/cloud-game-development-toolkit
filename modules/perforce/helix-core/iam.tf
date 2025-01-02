@@ -47,9 +47,21 @@ resource "aws_iam_role" "helix_core_default_role" {
   name               = "${var.project_prefix}-${var.name}-helix-core-${var.server_type}-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_trust_relationship.json
 
-  managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore", aws_iam_policy.helix_core_default_policy.arn]
+  #managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore", aws_iam_policy.helix_core_default_policy.arn]
 
   tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "helix_core_ssm_policy_attachment" {
+  count      = var.create_helix_core_default_role ? 1 : 0
+  role       = aws_iam_role.helix_core_default_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "helix_core_default_policy_attachment" {
+  count      = var.create_helix_core_default_role ? 1 : 0
+  role       = aws_iam_role.helix_core_default_role[0].name
+  policy_arn = aws_iam_policy.helix_core_default_policy.arn
 }
 
 # Instance Profile

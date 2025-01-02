@@ -43,21 +43,25 @@ resource "aws_route53_record" "helix_authentication_service" {
 }
 
 resource "aws_route53_record" "perforce_helix_core" {
+  for_each = module.perforce_helix_core.helix_core_eip_public_ips
+
   zone_id = data.aws_route53_zone.root.zone_id
-  name    = "core.helix.${data.aws_route53_zone.root.name}"
+  name    = "${each.key}.core.helix.${data.aws_route53_zone.root.name}"
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
-  records = [module.perforce_helix_core.helix_core_eip_public_ip]
+  records = [each.value]
 }
 
 resource "aws_route53_record" "perforce_helix_core_pvt" {
+  for_each = module.perforce_helix_core.helix_core_private_ips
+
   zone_id = aws_route53_zone.helix_private_zone.zone_id
-  name    = "core.${aws_route53_zone.helix_private_zone.name}"
+  name    = "${each.key}.core.${aws_route53_zone.helix_private_zone.name}"
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
-  records = [module.perforce_helix_core.helix_core_eip_private_ip]
+  records = [each.value]
 }
 
 ##########################################

@@ -60,10 +60,10 @@ variable "selinux" {
 ########################################
 # Networking and Security
 ########################################
-variable "vpc_id" {
-  type        = string
-  description = "The VPC where Helix Core should be deployed"
-}
+#variable "vpc_id" {
+#  type        = string
+#  description = "The VPC where Helix Core Commit server should be deployed"
+#}
 
 variable "create_default_sg" {
   type        = bool
@@ -71,16 +71,16 @@ variable "create_default_sg" {
   default     = true
 }
 
-variable "instance_subnet_id" {
-  type        = string
-  description = "The subnet where the Helix Core instance will be deployed."
-}
+#variable "instance_subnet_id" {
+#  type        = string
+#  description = "The subnet where the Helix Core instance will be deployed."
+#}
 
-variable "existing_security_groups" {
-  type        = list(string)
-  description = "A list of existing security group IDs to attach to the Helix Core load balancer."
-  default     = []
-}
+#variable "existing_security_groups" {
+#  type        = list(string)
+#  description = "A list of existing security group IDs to attach to the Helix Core load balancer."
+#  default     = []
+#}
 
 variable "internal" {
   type        = bool
@@ -179,6 +179,19 @@ variable "helix_authentication_service_url" {
   default     = null
 }
 
+variable "helix_core_super_user_password_secret_name" {
+  type        = string
+  description = "The name for the Secrets Manager secret holding the Helix Core super user password"
+  default     = "perforceHelixCoreSuperUserPassword"
+}
+
+variable "helix_core_super_user_username_secret_name" {
+  type        = string
+  description = "The name for the Secrets Manager secret holding the Helix Core super user username"
+  default     = "perforceHelixCoreSuperUserUsername"
+}
+
+
 ########################################
 # Helix Core settings
 ########################################
@@ -186,4 +199,17 @@ variable "helix_case_sensitive" {
   type        = bool
   description = "Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode"
   default     = true
+}
+
+variable "server_configuration" {
+  description = "Perforce Helix Core topology configuration i.e server types to create: commit, replica, edge. Each server requires VPC and Subnet"
+  type = list(object({
+    type   = string 
+    subnet_id = string
+    vpc_id = string 
+  }))
+  validation {
+    condition = length([for s in var.server_configuration : s if s.type == "commit"]) == 1
+    error_message = "Only one commit server is allowed in configuration."
+  }
 }

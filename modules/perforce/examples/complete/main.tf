@@ -29,11 +29,25 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 
 module "perforce_helix_core" {
   source                = "../../helix-core"
-  vpc_id                = aws_vpc.perforce_vpc.id
+  
   server_type           = "p4d_commit"
-  instance_subnet_id    = aws_subnet.public_subnets[0].id
-  instance_type         = "c6g.large"
-  instance_architecture = "arm64"
+  
+  instance_type         = "c6in.xlarge"
+  instance_architecture = "x86_64"
+
+  server_configuration = [
+    {
+    type = "commit"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.public_subnets[0].id
+    },
+        {
+    type = "replica"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.private_subnets[0].id
+    }
+  ]
+
 
   storage_type         = "EBS"
   depot_volume_size    = 64
@@ -43,6 +57,9 @@ module "perforce_helix_core" {
   fully_qualified_domain_name = "core.helix.perforce.${var.root_domain_name}"
 
   helix_authentication_service_url = "https://${aws_route53_record.helix_authentication_service.name}"
+  
+  helix_core_super_user_password_secret_name = "example-password-secret-name"
+  helix_core_super_user_username_secret_name = "example-username-secret-name"
 }
 
 ##########################################
@@ -74,7 +91,7 @@ module "perforce_helix_swarm" {
   helix_swarm_alb_subnets     = aws_subnet.public_subnets[*].id
   helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
   certificate_arn             = aws_acm_certificate.helix.arn
-  p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt.name}:1666"
+  p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt[var.helix_core_server_type].name}:1666"
   p4d_super_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_super_user_password_arn = module.perforce_helix_core.helix_core_super_user_password_secret_arn
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
