@@ -3,13 +3,14 @@
 ################################################################################
 
 resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
-  #checkov:skip=CKV_AWS_39:This needs to be open to configure the eks cluster.
-  #checkov:skip=CKV_AWS_58:Secrets encryptiom will be enabled in a future update
-  #checkov:skip=CKV_AWS_38:IP restriction set in module variables
+  #checkov:skip=CKV_AWS_39:EKS Public Endpoint needs to be open to configure the eks cluster.
+  #checkov:skip=CKV_AWS_58:Secrets encryption will be enabled in a future update
+  #checkov:skip=CKV_AWS_38:IP restriction set in module variables with a conditional
+  #checkov:skip=CKV_AWS_339:Checkov not picking up supported version correctly. Added validation to check for correct version
   name                      = var.name
   role_arn                  = aws_iam_role.eks_cluster_role.arn
   version                   = var.kubernetes_version
-  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_cluster_log_types = var.eks_cluster_logging_types
 
 
 
@@ -20,8 +21,8 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
 
   vpc_config {
     subnet_ids              = var.private_subnets
-    endpoint_private_access = true
-    endpoint_public_access  = true
+    endpoint_private_access = var.eks_cluster_private_access
+    endpoint_public_access  = var.eks_cluster_public_access
     public_access_cidrs     = var.eks_cluster_access_cidr
     security_group_ids = [
       aws_security_group.system_security_group.id,
@@ -37,10 +38,6 @@ resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
   retention_in_days = 365
 }
 
-data "aws_ssm_parameter" "eks_ami_latest_release" {
-  name = "/aws/service/eks/optimized-ami/${aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version}/amazon-linux-2/recommended/release_version"
-}
-
 ################################################################################
 # Worker Node Group
 ################################################################################
@@ -48,7 +45,6 @@ resource "aws_eks_node_group" "worker_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   node_group_name = "unreal-cloud-ddc-worker-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_latest_release.value)
   node_role_arn   = aws_iam_role.worker_node_group_role.arn
   subnet_ids      = var.private_subnets
 
@@ -65,7 +61,7 @@ resource "aws_eks_node_group" "worker_node_group" {
   scaling_config {
     desired_size = var.worker_managed_node_desired_size
     max_size     = var.worker_managed_node_max_size
-    min_size     = 0
+    min_size     = var.worker_managed_node_min_size
   }
   launch_template {
     id      = aws_launch_template.worker_launch_template.id
@@ -111,7 +107,6 @@ resource "aws_eks_node_group" "nvme_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   node_group_name = "unreal-cloud-ddc-nvme-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_latest_release.value)
   node_role_arn   = aws_iam_role.nvme_node_group_role.arn
   subnet_ids      = var.private_subnets
 
@@ -128,7 +123,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
   scaling_config {
     desired_size = var.nvme_managed_node_desired_size
     max_size     = var.nvme_managed_node_max_size
-    min_size     = 1
+    min_size     = var.nvme_managed_node_min_size
   }
 
   launch_template {
@@ -172,9 +167,8 @@ resource "aws_launch_template" "nvme_launch_template" {
 ################################################################################
 resource "aws_eks_node_group" "system_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "unreal-cloud-ddc-monitoring-ng"
+  node_group_name = "unreal-cloud-ddc-system-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_latest_release.value)
   node_role_arn   = aws_iam_role.system_node_group_role.arn
   subnet_ids      = var.private_subnets
   labels = {
@@ -189,7 +183,7 @@ resource "aws_eks_node_group" "system_node_group" {
   scaling_config {
     desired_size = var.system_managed_node_desired_size
     max_size     = var.system_managed_node_max_size
-    min_size     = 1
+    min_size     = var.system_managed_node_min_size
   }
   tags = {
     Name = "unreal-cloud-ddc-system-instance"

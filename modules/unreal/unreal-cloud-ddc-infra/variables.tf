@@ -12,7 +12,7 @@ variable "vpc_id" {
 variable "private_subnets" {
   type        = list(string)
   default     = []
-  description = "Private subnets you want scylla and the worker nodes to be installed into."
+  description = "A list of private subnets ids you want scylla and the EKS nodes to be installed into."
 }
 
 variable "scylla_ami_name" {
@@ -59,7 +59,7 @@ variable "scylla_db_throughput" {
 
 variable "nvme_managed_node_instance_type" {
   type        = string
-  default     = "i3en.xlarge"
+  default     = "i3en.large"
   description = "Nvme managed node group instance type"
   nullable    = false
 }
@@ -68,6 +68,10 @@ variable "nvme_managed_node_desired_size" {
   default     = 2
   description = "Desired number of nvme managed node group instances"
   nullable    = false
+  validation {
+    condition     = (var.nvme_managed_node_min_size <= var.nvme_managed_node_desired_size) && (var.nvme_managed_node_desired_size <= var.nvme_managed_node_max_size)
+    error_message = "NVME desired size needs to be larger than min size but smaller than max size"
+  }
 }
 
 variable "nvme_managed_node_max_size" {
@@ -75,11 +79,26 @@ variable "nvme_managed_node_max_size" {
   default     = 2
   description = "Max number of nvme managed node group instances"
   nullable    = false
+  validation {
+    condition     = (var.nvme_managed_node_max_size >= var.nvme_managed_node_min_size)
+    error_message = "NVME max size needs to be larger than min size"
+  }
+}
+
+variable "nvme_managed_node_min_size" {
+  type        = number
+  default     = 1
+  description = "Min number of nvme managed node group instances"
+  nullable    = false
+  validation {
+    condition     = (var.nvme_managed_node_min_size >= 0)
+    error_message = "NVME min size needs to be smaller than max size"
+  }
 }
 
 variable "worker_managed_node_instance_type" {
   type        = string
-  default     = "c5.xlarge"
+  default     = "c5.large"
   description = "Worker managed node group instance type."
   nullable    = false
 }
@@ -89,12 +108,30 @@ variable "worker_managed_node_desired_size" {
   default     = 1
   description = "Desired number of worker managed node group instances."
   nullable    = false
+  validation {
+    condition     = (var.worker_managed_node_min_size <= var.worker_managed_node_desired_size) && (var.worker_managed_node_desired_size <= var.worker_managed_node_max_size)
+    error_message = "Worker desired size needs to be smaller than max size and larger than min size"
+  }
 }
 variable "worker_managed_node_max_size" {
   type        = number
   default     = 1
   description = "Max number of worker managed node group instances."
   nullable    = false
+  validation {
+    condition     = (var.worker_managed_node_max_size >= var.worker_managed_node_min_size)
+    error_message = "Worker max size needs to be larger than min size"
+  }
+}
+variable "worker_managed_node_min_size" {
+  type        = number
+  default     = 0
+  description = "Min number of worker managed node group instances."
+  nullable    = false
+  validation {
+    condition     = (var.worker_managed_node_min_size >= 0)
+    error_message = "Worker min size needs to be smaller than max size"
+  }
 }
 
 variable "system_managed_node_instance_type" {
@@ -107,32 +144,83 @@ variable "system_managed_node_instance_type" {
 variable "system_managed_node_desired_size" {
   type        = number
   default     = 1
-  description = "Desired number of monitoring managed node group instances."
+  description = "Desired number of system managed node group instances."
   nullable    = false
+  validation {
+    condition     = (var.system_managed_node_min_size <= var.system_managed_node_desired_size) && (var.system_managed_node_desired_size <= var.system_managed_node_max_size)
+    error_message = "System desired size needs to be smaller than max size and larger than min size"
+  }
 }
 
 variable "system_managed_node_max_size" {
   type        = number
   default     = 2
-  description = "Max number of monitoring managed node group instances."
+  description = "Max number of system managed node group instances."
   nullable    = false
+  validation {
+    condition     = (var.system_managed_node_max_size >= var.nvme_managed_node_min_size)
+    error_message = "System max size needs to be larger than min size"
+  }
+}
+
+variable "system_managed_node_min_size" {
+  type        = number
+  default     = 1
+  description = "Min number of system managed node group instances."
+  nullable    = false
+  validation {
+    condition     = (var.system_managed_node_min_size >= 0)
+    error_message = "System min size needs to be smaller than max size"
+  }
 }
 
 variable "eks_cluster_access_cidr" {
   type        = list(string)
   description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster."
-  default     = []
+  default     = null
 }
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.30"
+  default     = "1.31"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
+  validation {
+    condition     = contains(["1.24", "1.25", "1.26", "1.27", "1.28", "1.29", "1.30", "1.31"], var.kubernetes_version)
+    error_message = "Version number must be supported version in AWS Kubernetes"
+  }
 }
 
 variable "eks_cluster_cloudwatch_log_group_prefix" {
   type        = string
   default     = "/aws/eks/unreal-cloud-ddc/cluster"
   description = "Prefix to be used for the EKS cluster CloudWatch log group."
+}
+
+variable "eks_cluster_logging_types" {
+  type = list(string)
+  default = [
+    "api",
+    "audit",
+    "authenticator",
+    "controllerManager",
+    "scheduler"
+  ]
+  description = "List of EKS cluster log types to be enabled."
+}
+
+variable "eks_cluster_public_access" {
+  type        = bool
+  default     = false
+  description = "Allows public access of EKS Control Plane should be used with "
+  validation {
+    condition     = (var.eks_cluster_public_access == true) && (length(var.eks_cluster_access_cidr) > 0)
+    error_message = "If public access is allowed need to set up eks_cluster_access_cidr with at least a single value."
+  }
+}
+
+variable "eks_cluster_private_access" {
+  type        = bool
+  default     = true
+  description = "Allows private access of the EKS Control Plane from subnets attached to EKS Cluster "
 }

@@ -1,7 +1,7 @@
 variable "oidc_credential_arn" {
   type        = string
   sensitive   = true
-  description = "OIDC Secrets Credential ARN"
+  description = "OIDC Secrets Credential ARN."
 }
 
 variable "github_credential_arn" {
