@@ -1,4 +1,4 @@
-To use this example you will need to deploy each module individually.
+To use this example you will need to set up a secret with AWS Secrets Manager.
 ```
 terraform apply --target module.unreal_cloud_ddc_vpc
 terraform apply --target module.unreal_cloud_ddc_infra
@@ -58,7 +58,7 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.73.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
@@ -94,7 +94,7 @@ No outputs.
 |------|-------------|------|---------|:--------:|
 | <a name="input_eks_cluster_ip_allow_list"></a> [eks\_cluster\_ip\_allow\_list](#input\_eks\_cluster\_ip\_allow\_list) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
-| <a name="input_oidc_credential_arn"></a> [oidc\_credential\_arn](#input\_oidc\_credential\_arn) | OIDC Secrets Credential ARN | `string` | n/a | yes |
+| <a name="input_oidc_credential_arn"></a> [oidc\_credential\_arn](#input\_oidc\_credential\_arn) | OIDC Secrets Credential ARN. | `string` | n/a | yes |
 
 ## Outputs
 

@@ -21,12 +21,14 @@ module "unreal_cloud_ddc_vpc" {
 ################################################################################
 
 module "unreal_cloud_ddc_infra" {
-  depends_on              = [module.unreal_cloud_ddc_vpc]
-  source                  = "../../modules/unreal/unreal-cloud-ddc-infra"
-  name                    = "unreal-cloud-ddc"
-  vpc_id                  = module.unreal_cloud_ddc_vpc.vpc_id
-  private_subnets         = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_access_cidr = var.eks_cluster_ip_allow_list
+  depends_on                 = [module.unreal_cloud_ddc_vpc]
+  source                     = "../../modules/unreal/unreal-cloud-ddc-infra"
+  name                       = "unreal-cloud-ddc"
+  vpc_id                     = module.unreal_cloud_ddc_vpc.vpc_id
+  private_subnets            = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  eks_cluster_access_cidr    = var.eks_cluster_ip_allow_list
+  eks_cluster_private_access = true
+  eks_cluster_public_access  = true
 
   scylla_private_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
   scylla_ami_name        = "ScyllaDB 6.2.1"
@@ -61,11 +63,11 @@ module "unreal_cloud_ddc_intra_cluster" {
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
   unreal_cloud_ddc_helm_values = [
-    templatefile("./assets/unreal_cloud_ddc_region_values.yaml", {
+    templatefile("${path.module}/assets/unreal_cloud_ddc_region_values.yaml", {
       region      = data.aws_region.current.name
       bucket_name = module.unreal_cloud_ddc_infra.s3_bucket_id
     }),
-    templatefile("./assets/unreal_cloud_ddc_base.yaml", {
+    templatefile("${path.module}/assets/unreal_cloud_ddc_base.yaml", {
       scylla_ips          = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       region              = data.aws_region.current.name
       okta_domain         = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["okta_domain"]
@@ -73,6 +75,6 @@ module "unreal_cloud_ddc_intra_cluster" {
       jwt_audience        = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["jwt_audience"]
       jwt_authority       = jsondecode(data.aws_secretsmanager_secret_version.current.secret_string)["jwt_authority"]
     }),
-    file("./assets/unreal_cloud_ddc_values.yaml")
+    file("${path.module}/assets/unreal_cloud_ddc_values.yaml")
   ]
 }
