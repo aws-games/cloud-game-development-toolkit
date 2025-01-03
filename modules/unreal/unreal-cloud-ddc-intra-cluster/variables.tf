@@ -27,6 +27,10 @@ variable "unreal_cloud_ddc_helm_values" {
 variable "gchr_credentials_secret_manager_arn" {
   type        = string
   description = "Arn for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache."
+  validation {
+    condition     = length(regexall("ecr-pullthroughcache/", var.gchr_credentials_secret_manager_arn)) > 0
+    error_message = "Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache."
+  }
 }
 
 variable "oidc_credentials_secret_manager_arn" {

@@ -1,8 +1,7 @@
 module "eks_blueprints_all_other_addons" {
-  #checkov:skip=CKV_TF_1:Ensure Terraform module sources use a commit hash
-  #checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management / resource exposure without constraints
-  #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
-  #checkov:skip=CKV_AWS_356:Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
+  #checkov:skip=CKV_TF_1:Upstream commit hash not being checked. This will be broken out in the future.
+  #checkov:skip=CKV_AWS_356:Upstream requirement for Load Balancer Controller
+  #checkov:skip=CKV_AWS_111:Upstream requirement for Load Balancer Controller
   source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
 
   eks_addons = {
