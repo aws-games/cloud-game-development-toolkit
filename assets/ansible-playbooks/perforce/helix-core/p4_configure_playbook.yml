@@ -2,6 +2,8 @@
 - name: Install and Configure Perforce
   hosts: all
   become: yes
+  collections:
+    - amazon.aws
   vars:
     log_file: "/var/log/p4_setup.log"
     sdp_root: "/hxdepots/sdp/helix_binaries"
@@ -28,6 +30,7 @@
     ebs_depots: "{{ ebs_depots }}"
     case_sensitive: "{{ case_sensitive | default('1') }}"
     unicode: "{{ unicode | default('false') }}"
+    topology_file: "/etc/perforce/topology.json"
 
   tasks:
     - name: Check if script has already run
@@ -43,6 +46,96 @@
       fail:
         msg: "This playbook must be run as root"
       when: ansible_user_id != "root"
+
+    - name: Ensure required directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "/etc/perforce"
+        - "/var/log/perforce"
+
+    - name: Fetch topology from AWS Parameter Store
+      set_fact:
+        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', '/{{ lookup('env', 'PROJECT_PREFIX') }}/{{ lookup('env', 'ENVIRONMENT') }}/perforce/topology') }}"
+
+
+    - name: Parse fetched topology
+      set_fact:
+        new_topology: "{{ ssm_topology }}"
+
+    - name: Check if local topology file was previously written
+      stat:
+        path: "{{ topology_file }}"
+      register: topology_stat
+
+    - name: Read existing topology if it exists
+      block:
+        - name: Read existing topology
+          slurp:
+            src: "{{ topology_file }}"
+          register: existing_topology_raw
+
+        - name: Parse existing topology
+          set_fact:
+            existing_topology: "{{ existing_topology_raw['content'] | b64decode | from_json }}"
+      when: topology_stat.stat.exists
+
+    - name: Compare topologies and update if necessary
+      block:
+        - name: Check if topology has changed
+          set_fact:
+            topology_changed: "{{ new_topology.version != existing_topology.version }}"
+
+        - name: Log topology change
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Topology change detected. New version: {{ new_topology.version }}"
+            create: yes
+          when: topology_changed
+
+        - name: Update local topology file
+          copy:
+            content: "{{ new_topology | to_nice_json }}"
+            dest: "{{ topology_file }}"
+          when: topology_changed
+      when: topology_stat.stat.exists
+      
+    - name: Store new topology if it doesn't exist locally
+      copy:
+        content: "{{ new_topology | to_nice_json }}"
+        dest: "{{ topology_file }}"
+      when: not topology_stat.stat.exists
+
+    - name: Fetch instance metadata
+      ec2_metadata_facts:
+
+    - name: Check if ServerType tag exists
+      set_fact:
+        server_type_tag_exists: "{{ 'ServerType' in ansible_ec2_instance_tags_keys }}"
+
+    - name: Debug ServerType tag existence
+      debug:
+        var: server_type_tag_exists
+
+    - name: Set facts based on instance metadata
+      set_fact:
+        server_type: "{{ 'ServerType' in ansible_ec2_instance_tags_keys }}"
+
+    - name: Set server-specific facts
+      set_fact:
+        commit_server_dns: "{{ new_topology.servers.commit.private_dns }}"
+        replica_server_dns: "{{ new_topology.servers.replica.private_dns | default('') }}"
+        edge_server_dns: "{{ new_topology.servers.edge.private_dns | default('') }}"
+
+    - name: Display server information
+      debug:
+        msg: 
+          - "Server Type: {{ server_type }}"
+          - "Commit Server DNS: {{ commit_server_dns }}"
+          - "Replica Server DNS: {{ replica_server_dns }}"
+          - "Edge Server DNS: {{ edge_server_dns }}"
 
     - name: Ensure perforce group exists
       group:
@@ -212,56 +305,113 @@
             - /mnt/temp_hxmetadata
             - /mnt/temp_hxdepots
 
-        - name: Mount EBS volumes or FSx
-          mount:
-            path: "{{ item.path }}"
-            src: "{{ item.src }}"
-            fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
-            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
-            state: mounted
-          loop:
-            - { path: "/mnt/temp_hxlogs", src: "{{ ebs_logs }}" }
-            - { path: "/mnt/temp_hxmetadata", src: "{{ ebs_metadata }}" }
-            - { path: "/mnt/temp_hxdepots", src: "{{ ebs_depots }}" }
+    - name: Get device information
+      set_fact:
+        device_info:
+          - path: "/mnt/temp_hxlogs"
+            src: "{{ ebs_logs }}"
+          - path: "/mnt/temp_hxmetadata"
+            src: "{{ ebs_metadata }}"
+          - path: "/mnt/temp_hxdepots"
+            src: "{{ ebs_depots }}"
 
-        - name: Sync directories
-          synchronize:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
-          loop:
-            - { src: "/hxlogs/", dest: "/mnt/temp_hxlogs/" }
-            - { src: "/hxmetadata/", dest: "/mnt/temp_hxmetadata/" }
-            - { src: "/hxdepots/", dest: "/mnt/temp_hxdepots/" }
+    - name: Identify device types and prepare for mounting
+      set_fact:
+        mount_info: "{{ mount_info | default([]) + [{ 
+          'path': item.path, 
+          'src': item.src,
+          'is_nfs': item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/'),
+          'fstype': 'nfs' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'xfs',
+          'opts': 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'defaults'
+        }] }}"
+      loop: "{{ device_info }}"
 
-        - name: Unmount temporary mounts
-          mount:
-            path: "{{ item }}"
-            state: unmounted
-          loop:
-            - /mnt/temp_hxlogs
-            - /mnt/temp_hxmetadata
-            - /mnt/temp_hxdepots
+    - name: Debug mount info
+      debug:
+        var: mount_info
 
-        - name: Clear destination directories
-          file:
-            path: "{{ item }}/*"
-            state: absent
-          loop:
-            - /hxlogs
-            - /hxmetadata
-            - /hxdepots
+    - name: Ensure mount directories exist
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ mount_info }}"
 
-        - name: Mount EBS volumes or FSx to final destinations
-          mount:
-            path: "{{ item.path }}"
-            src: "{{ item.src }}"
-            fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
-            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
-            state: mounted
-          loop:
-            - { path: "/hxlogs", src: "{{ ebs_logs }}" }
-            - { path: "/hxmetadata", src: "{{ ebs_metadata }}" }
-            - { path: "/hxdepots", src: "{{ ebs_depots }}" }
+    - name: Get actual device names for EBS volumes
+      shell: |
+        lsblk -nlo NAME,SERIAL | grep "{{ item.src | regex_replace('/dev/', '') }}" | awk '{print $1}'
+      register: actual_device_names
+      when: not item.is_nfs
+      loop: "{{ mount_info }}"
+
+    - name: Update mount info with actual device names
+      set_fact:
+        mount_info: "{{ mount_info | map('combine', {'actual_src': item.stdout if item.stdout else item.item.src}) | list }}"
+      loop: "{{ actual_device_names.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check if EBS filesystems are formatted
+      command: "blkid {{ item.actual_src }}"
+      register: blkid_results
+      failed_when: false
+      changed_when: false
+      when: not item.is_nfs
+      loop: "{{ mount_info }}"
+
+    - name: Format EBS filesystems if needed
+      filesystem:
+        fstype: xfs
+        dev: "{{ item.item.actual_src }}"
+      when: not item.item.is_nfs and item.rc != 0
+      loop: "{{ blkid_results.results }}"
+
+    - name: Mount volumes or FSx
+      mount:
+        path: "{{ item.path }}"
+        src: "{{ item.actual_src | default(item.src) }}"
+        fstype: "{{ item.fstype }}"
+        opts: "{{ item.opts }}"
+        state: mounted
+      loop: "{{ mount_info }}"
+
+    - name: Sync directories
+      synchronize:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { src: "/hxlogs/", dest: "/mnt/temp_hxlogs/" }
+        - { src: "/hxmetadata/", dest: "/mnt/temp_hxmetadata/" }
+        - { src: "/hxdepots/", dest: "/mnt/temp_hxdepots/" }
+
+    - name: Unmount temporary mounts
+      mount:
+        path: "{{ item }}"
+        state: unmounted
+      loop:
+        - /mnt/temp_hxlogs
+        - /mnt/temp_hxmetadata
+        - /mnt/temp_hxdepots
+
+    - name: Clear destination directories
+      file:
+        path: "{{ item }}/*"
+        state: absent
+      loop:
+        - /hxlogs
+        - /hxmetadata
+        - /hxdepots
+
+    - name: Mount EBS volumes or FSx to final destinations
+      mount:
+        path: "{{ item.path }}"
+        src: "{{ item.src }}"
+        fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
+        opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
+        state: mounted
+      loop:
+        - { path: "/hxlogs", src: "{{ ebs_logs }}" }
+        - { path: "/hxmetadata", src: "{{ ebs_metadata }}" }
+        - { path: "/hxdepots", src: "{{ ebs_depots }}" }
 
     - name: Update mkdirs.cfg
       lineinfile:
@@ -361,5 +511,5 @@
         - name: Append AWS region to SiteTags
           lineinfile:
             path: /hxdepots/p4/common/config/SiteTags.cfg
-            line: "aws{{ aws_region.stdout | replace('-', '') }
+            line: "aws{{ aws_region.stdout | replace('-', '') }}"
           

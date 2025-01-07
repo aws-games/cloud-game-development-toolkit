@@ -45,6 +45,11 @@ module "perforce_helix_core" {
     type = "replica"
     vpc_id                = aws_vpc.perforce_vpc.id
     subnet_id    = aws_subnet.private_subnets[0].id
+    },
+    {
+    type = "edge"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.private_subnets[0].id
     }
   ]
 
