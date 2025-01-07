@@ -20,10 +20,10 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   }
 
   vpc_config {
-    subnet_ids              = var.private_subnets
+    subnet_ids              = var.eks_node_group_private_subnets
     endpoint_private_access = var.eks_cluster_private_access
     endpoint_public_access  = var.eks_cluster_public_access
-    public_access_cidrs     = var.eks_cluster_access_cidr
+    public_access_cidrs     = var.eks_cluster_public_endpoint_access_cidr
     security_group_ids = [
       aws_security_group.system_security_group.id,
       aws_security_group.worker_security_group.id,
@@ -46,7 +46,7 @@ resource "aws_eks_node_group" "worker_node_group" {
   node_group_name = "unreal-cloud-ddc-worker-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.worker_node_group_role.arn
-  subnet_ids      = var.private_subnets
+  subnet_ids      = var.eks_node_group_private_subnets
 
   labels = {
     "unreal-cloud-ddc/node-type" = "worker"
@@ -73,6 +73,7 @@ resource "aws_eks_node_group" "worker_node_group" {
 }
 
 resource "aws_launch_template" "worker_launch_template" {
+  #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-worker-launch-template"
   instance_type = var.worker_managed_node_instance_type
   vpc_security_group_ids = [
@@ -81,10 +82,12 @@ resource "aws_launch_template" "worker_launch_template" {
     aws_security_group.scylla_security_group.id
   ]
 
+  //In line with best practices for container environments
+  // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
     instance_metadata_tags      = "enabled"
   }
 
@@ -108,7 +111,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
   node_group_name = "unreal-cloud-ddc-nvme-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.nvme_node_group_role.arn
-  subnet_ids      = var.private_subnets
+  subnet_ids      = var.eks_node_group_private_subnets
 
   labels = {
     "unreal-cloud-ddc/node-type" = "nvme"
@@ -134,6 +137,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
 }
 
 resource "aws_launch_template" "nvme_launch_template" {
+  #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-nvme-launch-template"
   instance_type = var.nvme_managed_node_instance_type
   user_data     = base64encode(local.nvme-pre-bootstrap-userdata)
@@ -143,10 +147,12 @@ resource "aws_launch_template" "nvme_launch_template" {
     aws_security_group.scylla_security_group.id
   ]
 
+  //In line with our recommendation for container environments
+  // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 2
     instance_metadata_tags      = "enabled"
   }
 
@@ -170,7 +176,7 @@ resource "aws_eks_node_group" "system_node_group" {
   node_group_name = "unreal-cloud-ddc-system-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.system_node_group_role.arn
-  subnet_ids      = var.private_subnets
+  subnet_ids      = var.eks_node_group_private_subnets
   labels = {
     "pool" = "system-pool"
   }
@@ -191,10 +197,12 @@ resource "aws_eks_node_group" "system_node_group" {
 }
 
 resource "aws_launch_template" "system_launch_template" {
-  #checkov:skip=CKV_AWS_341:Required for the load balancer controller
+  #checkov:skip=CKV_AWS_341:Hop limit 2 required for the load balancer controller. Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-system-launch-template"
   instance_type = var.system_managed_node_instance_type
 
+  //In line with best practices for container environments
+  //https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
