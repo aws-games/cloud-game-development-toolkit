@@ -17,7 +17,7 @@ resource "aws_instance" "scylla_ec2_instance" {
   vpc_security_group_ids = [aws_security_group.scylla_security_group.id]
   monitoring             = true
 
-  subnet_id = element(var.private_subnets, count.index)
+  subnet_id = element(var.scylla_private_subnets, count.index)
 
   user_data                   = local.scylla_user_data
   user_data_replace_on_change = true

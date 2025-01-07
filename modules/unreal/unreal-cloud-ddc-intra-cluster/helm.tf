@@ -60,7 +60,7 @@ resource "kubernetes_service_account" "unreal_cloud_ddc_service_account" {
 resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_cache_rule" {
   ecr_repository_prefix = "github"
   upstream_registry_url = "ghcr.io"
-  credential_arn        = var.gchr_credentials_secret_manager_arn
+  credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
 
 resource "helm_release" "unreal_cloud_ddc" {

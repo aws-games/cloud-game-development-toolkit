@@ -93,8 +93,8 @@ No outputs.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_eks_cluster_ip_allow_list"></a> [eks\_cluster\_ip\_allow\_list](#input\_eks\_cluster\_ip\_allow\_list) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
+| <a name="input_external_idp_oidc_credential_arn"></a> [external\_idp\_oidc\_credential\_arn](#input\_external\_idp\_oidc\_credential\_arn) | External IDP OIDC Secrets Credential ARN. | `string` | n/a | yes |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
-| <a name="input_oidc_credential_arn"></a> [oidc\_credential\_arn](#input\_oidc\_credential\_arn) | OIDC Secrets Credential ARN. | `string` | n/a | yes |
 
 ## Outputs
 

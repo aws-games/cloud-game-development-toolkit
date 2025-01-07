@@ -1,5 +1,5 @@
 data "aws_secretsmanager_secret" "oidc_secrets" {
-  arn = var.oidc_credential_arn
+  arn = var.external_idp_oidc_credential_arn
 }
 
 data "aws_secretsmanager_secret_version" "current" {
@@ -9,7 +9,7 @@ data "aws_secretsmanager_secret_version" "current" {
 
 module "unreal_cloud_ddc_vpc" {
   source                = "./vpc"
-  vpc_cidr              = "192.168.0.0/23"
+  vpc_cidr              = "192.168.0.0/24"
   private_subnets_cidrs = ["192.168.0.0/25", "192.168.0.128/25"]
   public_subnets_cidrs  = ["192.168.1.0/25", "192.168.1.128/25"]
   availability_zones    = local.azs
@@ -21,14 +21,15 @@ module "unreal_cloud_ddc_vpc" {
 ################################################################################
 
 module "unreal_cloud_ddc_infra" {
-  depends_on                 = [module.unreal_cloud_ddc_vpc]
-  source                     = "../../modules/unreal/unreal-cloud-ddc-infra"
-  name                       = "unreal-cloud-ddc"
-  vpc_id                     = module.unreal_cloud_ddc_vpc.vpc_id
-  private_subnets            = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_access_cidr    = var.eks_cluster_ip_allow_list
-  eks_cluster_private_access = true
-  eks_cluster_public_access  = true
+  depends_on = [module.unreal_cloud_ddc_vpc]
+  source     = "../../modules/unreal/unreal-cloud-ddc-infra"
+  name       = "unreal-cloud-ddc"
+  vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
+
+  eks_node_group_private_subnets          = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  eks_cluster_public_endpoint_access_cidr = var.eks_cluster_ip_allow_list
+  eks_cluster_private_access              = true
+  eks_cluster_public_access               = true
 
   scylla_private_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
   scylla_ami_name        = "ScyllaDB 6.2.1"
@@ -57,8 +58,8 @@ module "unreal_cloud_ddc_intra_cluster" {
   source                              = "../../modules/unreal/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
-  gchr_credentials_secret_manager_arn = var.github_credential_arn
-  oidc_credentials_secret_manager_arn = var.oidc_credential_arn
+  ghcr_credentials_secret_manager_arn = var.github_credential_arn
+  oidc_credentials_secret_manager_arn = var.external_idp_oidc_credential_arn
 
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 

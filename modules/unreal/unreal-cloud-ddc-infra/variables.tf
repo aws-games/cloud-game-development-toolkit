@@ -2,6 +2,10 @@ variable "name" {
   description = "Unreal Cloud DDC Workload Name"
   type        = string
   default     = "unreal-cloud-ddc"
+  validation {
+    condition     = length(var.name) > 1 && length(var.name) <= 50
+    error_message = "The defined 'name' has too many characters. This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
+  }
 }
 
 variable "vpc_id" {
@@ -9,10 +13,16 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "private_subnets" {
+variable "scylla_private_subnets" {
   type        = list(string)
   default     = []
-  description = "A list of private subnets ids you want scylla and the EKS nodes to be installed into."
+  description = "A list of private subnets ids you want Scylla to be installed into."
+}
+
+variable "eks_node_group_private_subnets" {
+  type        = list(string)
+  default     = []
+  description = "A list of private subnets ids you want the EKS nodes to be installed into."
 }
 
 variable "scylla_ami_name" {
@@ -27,6 +37,14 @@ variable "scylla_instance_type" {
   default     = "i4i.2xlarge"
   description = "The type and size of the Scylla instance."
   nullable    = false
+  validation {
+    condition     = contains(["i8g", "i7ie", "i4g", "i4i", "im4gn", "is4gen", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0])
+    error_message = "Must be an instance family that contains NVME"
+  }
+  validation {
+    condition     = (contains(["arm64"], var.scylla_architecture) && contains(["i8g", "i4g", "im4gn", "is4gen"], split(".", var.scylla_instance_type)[0])) || (contains(["x86_64"], var.scylla_architecture) && contains(["i7ie", "i4i", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0]))
+    error_message = "Chip architecture must match instance type"
+  }
 }
 
 variable "scylla_architecture" {
@@ -34,13 +52,10 @@ variable "scylla_architecture" {
   default     = "x86_64"
   description = "The chip architecture to use when finding the scylla image. Valid"
   nullable    = false
-}
-
-variable "scylla_private_subnets" {
-  type        = list(string)
-  default     = []
-  description = "The subnets you want Scylla to be installed into. Can repeat subnet ids to install into the same subnet/az. This will also determine how many Scylla instances are deployed."
-  nullable    = false
+  validation {
+    condition     = contains(["x86_64", "arm64"], var.scylla_architecture)
+    error_message = "Must be a supported chip architecture"
+  }
 }
 
 variable "scylla_db_storage" {
@@ -174,9 +189,9 @@ variable "system_managed_node_min_size" {
   }
 }
 
-variable "eks_cluster_access_cidr" {
+variable "eks_cluster_public_endpoint_access_cidr" {
   type        = list(string)
-  description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster."
+  description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint."
   default     = null
 }
 
@@ -214,7 +229,7 @@ variable "eks_cluster_public_access" {
   default     = false
   description = "Allows public access of EKS Control Plane should be used with "
   validation {
-    condition     = (var.eks_cluster_public_access == true) && (length(var.eks_cluster_access_cidr) > 0)
+    condition     = (var.eks_cluster_public_access == true) && (length(var.eks_cluster_public_endpoint_access_cidr) > 0)
     error_message = "If public access is allowed need to set up eks_cluster_access_cidr with at least a single value."
   }
 }

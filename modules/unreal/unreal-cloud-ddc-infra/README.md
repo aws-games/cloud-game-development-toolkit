@@ -173,24 +173,24 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_eks_cluster_access_cidr"></a> [eks\_cluster\_access\_cidr](#input\_eks\_cluster\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster. | `list(string)` | `null` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
 | <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
 | <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
 | <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
+| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `null` | no |
+| <a name="input_eks_node_group_private_subnets"></a> [eks\_node\_group\_private\_subnets](#input\_eks\_node\_group\_private\_subnets) | A list of private subnets ids you want the EKS nodes to be installed into. | `list(string)` | `[]` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
 | <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
-| <a name="input_private_subnets"></a> [private\_subnets](#input\_private\_subnets) | A list of private subnets ids you want scylla and the EKS nodes to be installed into. | `list(string)` | `[]` | no |
 | <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
 | <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | The chip architecture to use when finding the scylla image. Valid | `string` | `"x86_64"` | no |
 | <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
 | <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
 | <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
-| <a name="input_scylla_private_subnets"></a> [scylla\_private\_subnets](#input\_scylla\_private\_subnets) | The subnets you want Scylla to be installed into. Can repeat subnet ids to install into the same subnet/az. This will also determine how many Scylla instances are deployed. | `list(string)` | `[]` | no |
+| <a name="input_scylla_private_subnets"></a> [scylla\_private\_subnets](#input\_scylla\_private\_subnets) | A list of private subnets ids you want Scylla to be installed into. | `list(string)` | `[]` | no |
 | <a name="input_system_managed_node_desired_size"></a> [system\_managed\_node\_desired\_size](#input\_system\_managed\_node\_desired\_size) | Desired number of system managed node group instances. | `number` | `1` | no |
 | <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
 | <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |

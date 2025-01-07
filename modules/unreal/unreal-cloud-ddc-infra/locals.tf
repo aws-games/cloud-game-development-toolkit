@@ -21,6 +21,8 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name
       }
+      #required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
+      #if scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring.
       "start_scylla_on_first_boot" : false
     }
   )
