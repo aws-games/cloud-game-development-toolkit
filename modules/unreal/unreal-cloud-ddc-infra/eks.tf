@@ -20,7 +20,7 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   }
 
   vpc_config {
-    subnet_ids              = var.eks_node_group_private_subnets
+    subnet_ids              = var.eks_node_group_subnets
     endpoint_private_access = var.eks_cluster_private_access
     endpoint_public_access  = var.eks_cluster_public_access
     public_access_cidrs     = var.eks_cluster_public_endpoint_access_cidr
@@ -46,7 +46,7 @@ resource "aws_eks_node_group" "worker_node_group" {
   node_group_name = "unreal-cloud-ddc-worker-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.worker_node_group_role.arn
-  subnet_ids      = var.eks_node_group_private_subnets
+  subnet_ids      = var.eks_node_group_subnets
 
   labels = {
     "unreal-cloud-ddc/node-type" = "worker"
@@ -111,7 +111,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
   node_group_name = "unreal-cloud-ddc-nvme-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.nvme_node_group_role.arn
-  subnet_ids      = var.eks_node_group_private_subnets
+  subnet_ids      = var.eks_node_group_subnets
 
   labels = {
     "unreal-cloud-ddc/node-type" = "nvme"
@@ -176,7 +176,7 @@ resource "aws_eks_node_group" "system_node_group" {
   node_group_name = "unreal-cloud-ddc-system-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.system_node_group_role.arn
-  subnet_ids      = var.eks_node_group_private_subnets
+  subnet_ids      = var.eks_node_group_subnets
   labels = {
     "pool" = "system-pool"
   }
