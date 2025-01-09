@@ -26,15 +26,15 @@ module "unreal_cloud_ddc_infra" {
   name       = "unreal-cloud-ddc"
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
-  eks_node_group_private_subnets          = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
   eks_cluster_public_endpoint_access_cidr = var.eks_cluster_ip_allow_list
   eks_cluster_private_access              = true
   eks_cluster_public_access               = true
 
-  scylla_private_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_ami_name        = "ScyllaDB 6.2.1"
-  scylla_architecture    = "x86_64"
-  scylla_instance_type   = "i4i.xlarge"
+  scylla_subnets       = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  scylla_ami_name      = "ScyllaDB 6.2.1"
+  scylla_architecture  = "x86_64"
+  scylla_instance_type = "i4i.xlarge"
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
@@ -42,6 +42,7 @@ module "unreal_cloud_ddc_infra" {
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
 
+  //Because this is a single region and workers replicate between regions this can be 0
   worker_managed_node_instance_type = "c5.xlarge"
   worker_managed_node_desired_size  = 0
 
