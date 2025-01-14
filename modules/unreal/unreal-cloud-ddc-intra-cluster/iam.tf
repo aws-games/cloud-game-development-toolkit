@@ -3,8 +3,8 @@
 ################################################################################
 
 module "eks_service_account_iam_role" {
-  #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
-  #checkov:skip=CKV_AWS_356:Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
+  #checkov:skip=CKV_AWS_111:There are no policies that have write without constraints
+  #checkov:skip=CKV_AWS_356:Upstream repo is creating these and will need to be modified in the future
   source     = "git::https://github.com/terraform-aws-modules/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=ccb4f252cc340d85fd70a8a1fb1cae496a698c1f"
   depends_on = [data.aws_eks_cluster.unreal_cloud_ddc_cluster]
 
@@ -30,9 +30,9 @@ module "eks_service_account_iam_role" {
 }
 
 module "ebs_csi_irsa_role" {
-  #checkov:skip=CKV_AWS_109:Ensure IAM policies does not allow permissions management / resource exposure without constraints
-  #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints
-  #checkov:skip=CKV_AWS_356:Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
+  #checkov:skip=CKV_AWS_109:Constrained to EC2
+  #checkov:skip=CKV_AWS_111:Using EBS CSI Role requires write without constraints.
+  #checkov:skip=CKV_AWS_356:Using EBS CSI Role requires a wild card.
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-iam.git//modules/iam-role-for-service-accounts-eks?ref=ccb4f252cc340d85fd70a8a1fb1cae496a698c1f"
 
   role_name_prefix      = "ebs-csi-role-"
