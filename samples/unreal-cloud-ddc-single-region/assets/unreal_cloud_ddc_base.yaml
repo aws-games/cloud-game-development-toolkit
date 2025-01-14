@@ -34,6 +34,7 @@ global:
         jwtAudience: ${jwt_audience} # the audience defined for the authorization server
         jwtAuthority: ${jwt_authority} # the full path to your authorization server - is usually <domain>/oauth2/<auth-server>
 
+
     acls:
     # This is an example of how to setup a claim to grant special privileges
     # In this case we expect a group called app-ddc-storage-admin to indicate admins which are granted full access to everything

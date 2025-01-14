@@ -42,7 +42,7 @@ module "unreal_cloud_ddc_infra" {
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
 
-  //Because this is a single region and workers replicate between regions this can be 0
+  //Because this is a single region and workers replicate between regions this is 0
   worker_managed_node_instance_type = "c5.xlarge"
   worker_managed_node_desired_size  = 0
 
