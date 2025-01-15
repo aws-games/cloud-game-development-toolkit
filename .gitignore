@@ -61,6 +61,7 @@ site/
 
 # Python
 *.venv
+*.pyc
 
 # SSH keys
 id_ed25519
