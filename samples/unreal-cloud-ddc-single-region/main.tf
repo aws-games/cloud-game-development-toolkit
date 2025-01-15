@@ -9,9 +9,9 @@ data "aws_secretsmanager_secret_version" "current" {
 
 module "unreal_cloud_ddc_vpc" {
   source                = "./vpc"
-  vpc_cidr              = "192.168.0.0/24"
-  private_subnets_cidrs = ["192.168.0.0/25", "192.168.0.128/25"]
-  public_subnets_cidrs  = ["192.168.1.0/25", "192.168.1.128/25"]
+  vpc_cidr              = "192.168.0.0/16"
+  private_subnets_cidrs = ["192.168.0.0/24", "192.168.1.0/24"]
+  public_subnets_cidrs  = ["192.168.2.0/24", "192.168.3.0/24"]
   availability_zones    = local.azs
   additional_tags       = local.tags
 }
