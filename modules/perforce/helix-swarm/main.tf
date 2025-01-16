@@ -203,7 +203,11 @@ resource "aws_ecs_service" "helix_swarm_service" {
 
 # TASKS:
 # 1. Modify bash script to conditionally remove the cache to use custom config.php file ✅
-# 2. Dynamically create the config.php file
+# 2. Dynamically create the config.php file.
+#   a. Create core template of what is expected in the config.php file
+#   b. Using variables (object) with conditionals, dynamically modify the default values of the template
+# 3. Upload the new config.php file to the Helix Swarm container
+# 4. (stretch) Allow users to alternatively supply their own fully complete custom config.php file
 
 
 # TODO - Create local_file for config.php and inject into Swarm in ECS
@@ -308,6 +312,7 @@ resource "local_file" "custom_config_php" {
 
                 // idk what they want for this. Why isn't the name just 'connection_type' and you pick SSL or TLS?
                 'ssl'       => 'tls',       // empty, 'tls', or 'ssl'
+                'ssl'       => '${config_php_mail.connection_security}',       // empty, 'tls', or 'ssl'
             ),
         ),
         'markdown' => array(
@@ -342,17 +347,17 @@ resource "local_file" "custom_config_php" {
             'disable_change_emails' => false,
         ),
         'p4' => array(
-            'port'       => 'my-helix-core-server:1666',
-            'user'       => 'admin_userid',
-            'password'   => 'admin user ticket or password',
-            'sso'        => 'disabled', // ['disabled'|'optional'|'enabled'] default value is 'disabled'
-            'proxy_mode' => true, // defaults to true
+            'port'       => '${config_php_p4.port}',
+            'user'       => '${config_php_p4.user}',
+            'password'   => '${config_php_p4.password}',
+            'sso'        => '${config_php_p4.sso}', // ['disabled'|'optional'|'enabled'] default value is 'disabled'
+            'proxy_mode' => ${config_php_p4.proxy_mode}, // defaults to true
             'slow_command_logging' => array(
                 3,
                 10 => array('print', 'shelve', 'submit', 'sync', 'unshelve'),
             ),
-            'max_changelist_files' => 1000,
-            'auto_register_url'    => true,
+            'max_changelist_files' => ${config_php_p4.max_changelist_files},
+            'auto_register_url'    => ${config_php_p4.auto_register_url},
         ),
         'projects' => array(
             'mainlines' => array(

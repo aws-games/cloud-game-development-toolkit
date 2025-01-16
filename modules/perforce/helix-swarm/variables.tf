@@ -239,13 +239,24 @@ variable "use_custom_config_php" {
 }
 variable "config_php_mail" {
   type = object({
-    name             = optional(string, "localhost")
-    host             = optional(string, "127.0.0.1")
-    port             = optional(number, 587)
-    connection_class = optional(string, "plain")
-    username         = optional(string, "user")
-    password         = optional(string, "pass")
-    connection_type  = optional(string, "ssl") // valid values are 'ssl', 'tls' or nothing
+    name                = optional(string, "localhost")
+    host                = optional(string, "127.0.0.1")
+    port                = optional(number, 587)
+    connection_class    = optional(string, "plain")
+    username            = optional(string, "user")
+    password            = optional(string, "pass")
+    connection_security = optional(string, "ssl") // valid values are 'ssl', 'tls' or nothing
+  })
+}
+variable "config_php_p4" {
+  type = object({
+    port                 = optional(string, "my-helix-core-server:1666")
+    user                 = optional(string, "admin_userid")
+    password             = optional(string, "admin user ticket or password")
+    sso                  = optional(string, "disabled")
+    proxy_mode           = optional(bool, true)
+    max_changelist_files = optional(number, 1000)
+    auto_register_url    = optional(bool, true)
   })
 }
 
