@@ -79,6 +79,17 @@ module "perforce_helix_authentication_service" {
 module "perforce_helix_swarm" {
   source = "../../modules/perforce/helix-swarm"
 
+  # TODO - ADD VARIABLES FOR Custom Config.php
+  use_custom_config_php = true
+  config_php_mail = {
+    name             = awscc_ses_email_identity.domain // name of the SMTP host
+    host             = ""
+    port             = ""     // SMTP host listening port
+    connection_class = "smtp" // 'smtp', 'plain', 'login', 'crammd5'
+    username         = ""     // username for user on SMTP host
+    password         = ""     // password for user on SMTP host
+  }
+
   # Networking
   vpc_id                           = aws_vpc.perforce_vpc.id
   create_application_load_balancer = false # Shared Perforce web services application load balancer

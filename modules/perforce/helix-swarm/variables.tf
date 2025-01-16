@@ -231,6 +231,26 @@ variable "enable_sso" {
   description = "Set this to true if using SSO for Helix Swarm authentication."
 }
 
+# Config.php
+variable "use_custom_config_php" {
+  type        = bool
+  default     = false
+  description = "Set this to true if you want to use a custom config.php file. If set to false, the default config.php file created by Helix Swarm will be used."
+}
+variable "config_php_mail" {
+  type = object({
+    name             = optional(string, "localhost")
+    host             = optional(string, "127.0.0.1")
+    port             = optional(number, 587)
+    connection_class = optional(string, "plain")
+    username         = optional(string, "user")
+    password         = optional(string, "pass")
+    connection_type  = optional(string, "ssl") // valid values are 'ssl', 'tls' or nothing
+  })
+}
+
+
+
 ######################
 # ELASTICACHE CONFIG
 ######################
