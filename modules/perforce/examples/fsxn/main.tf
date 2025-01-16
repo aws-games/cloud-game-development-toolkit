@@ -35,9 +35,9 @@ resource "aws_instance" "helix_core_instance" {
 
   user_data = <<-EOT
     #!/bin/bash
-    EBS_LOGS_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxlogs" : "/dev/sdf"}"
-    EBS_METADATA_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxmetadata" : "/dev/sdg"}"
-    EBS_DEPOTS_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxdepots" : "/dev/sdh"}"
+    EBS_LOGS_NAME="${var.storage_type == "FSxN" ? "${aws_fsx_ontap_storage_virtual_machine.helix_core_svm[0].id}.${aws_fsx_ontap_file_system.helix_core_fs[0].id}.fsx.${var.fsxn_region}.amazonaws.com:/hxlogs" : "/dev/sdf"}"
+    EBS_METADATA_NAME="${var.storage_type == "FSxN" ? "${aws_fsx_ontap_storage_virtual_machine.helix_core_svm[0].id}.${aws_fsx_ontap_file_system.helix_core_fs[0].id}.fsx.${var.fsxn_region}.amazonaws.com:/hxmetadata" : "/dev/sdg"}"
+    EBS_DEPOTS_NAME="${var.storage_type == "FSxN" ? "${aws_fsx_ontap_storage_virtual_machine.helix_core_svm[0].id}.${aws_fsx_ontap_file_system.helix_core_fs[0].id}.fsx.${var.fsxn_region}.amazonaws.com:/hxdepots" : "/dev/sdh"}"
     /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs $EBS_LOGS_NAME \
      --hx_metadata $EBS_METADATA_NAME \
      --hx_depots $EBS_DEPOTS_NAME \
@@ -84,6 +84,28 @@ resource "aws_eip" "helix_core_eip" {
   count    = var.internal ? 0 : 1
   instance = aws_instance.helix_core_instance.id
   domain   = "vpc"
+}
+
+##########################################
+# FSx ONTAP File System
+##########################################
+
+resource "aws_fsx_ontap_file_system" "helix_core_fs" {
+  count               = var.storage_type == "FSxN" ? 1 : 0
+  storage_capacity    = 1024
+  subnet_ids          = [var.instance_subnet_id]
+  preferred_subnet_id = var.instance_subnet_id
+  deployment_type     = "SINGLE_AZ_1"
+  throughput_capacity = 128
+
+  tags = local.tags
+}
+
+resource "aws_fsx_ontap_storage_virtual_machine" "helix_core_svm" {
+  count          = var.storage_type == "FSxN" ? 1 : 0
+  file_system_id = aws_fsx_ontap_file_system.helix_core_fs[count.index].id
+  name           = "helix_core_svm"
+  tags           = local.tags
 }
 
 ##########################################
@@ -148,7 +170,7 @@ resource "aws_volume_attachment" "depot_attachment" {
 // hxlogs
 resource "aws_fsx_ontap_volume" "logs" {
   count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.helix_core_svm[count.index].id
   name                       = "logs"
   size_in_megabytes          = var.logs_volume_size * 1024
   tags                       = local.tags
@@ -159,7 +181,7 @@ resource "aws_fsx_ontap_volume" "logs" {
 // hxmetadata
 resource "aws_fsx_ontap_volume" "metadata" {
   count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.helix_core_svm[count.index].id
   name                       = "metadata"
   size_in_megabytes          = var.metadata_volume_size * 1024
   tags                       = local.tags
@@ -170,7 +192,7 @@ resource "aws_fsx_ontap_volume" "metadata" {
 // hxdepot
 resource "aws_fsx_ontap_volume" "depot" {
   count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  storage_virtual_machine_id = aws_fsx_ontap_storage_virtual_machine.helix_core_svm[count.index].id
   name                       = "depot"
   size_in_megabytes          = var.depot_volume_size * 1024
   tags                       = local.tags

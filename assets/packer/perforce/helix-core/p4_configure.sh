@@ -18,7 +18,7 @@ log_message() {
 
 # Function to check if path is an FSx mount point
 is_fsx_mount() {
-    echo "$1" | grep -qE 'fs-[0-9a-f]{17}\.fsx\.[a-z0-9-]+\.amazonaws\.com:/' #to be verified if catches all fsxes
+    echo "$1" | grep -qE '(fs|svm)-[0-9a-f]{17}\.fsx\.[a-z0-9-]+\.amazonaws\.com:/' #to be verified if catches all fsxes
     return $?
 }
 

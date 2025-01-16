@@ -38,7 +38,7 @@ variable "tags" {
 variable "instance_architecture" {
   type        = string
   description = "The architecture of the Helix Core instance. Allowed values are 'arm64' or 'x86_64'."
-  default     = "x86_64"
+  default     = "arm64"
   validation {
     condition     = var.instance_architecture == "arm64" || var.instance_architecture == "x86_64"
     error_message = "The instance_architecture variable must be either 'arm64' or 'x86_64'."
@@ -140,37 +140,10 @@ variable "depot_volume_size" {
   default     = 128
 }
 
-variable "amazon_fsxn_filesystem_id" {
-  description = "The ID of the existing FSx ONTAP file system to use if storage type is FSxN."
-  type        = string
-  default     = ""
-
-  validation {
-    condition     = var.storage_type != "FSxN" || length(var.amazon_fsxn_filesystem_id) > 0
-    error_message = "The amazon_fsxn_filesystem_id variable must be provided when storage_type is FSxN."
-  }
-}
-
-variable "amazon_fsxn_svm_id" {
-  description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
-  type        = string
-  default     = ""
-
-  validation {
-    condition     = var.storage_type != "FSxN" || length(var.amazon_fsxn_svm_id) > 0
-    error_message = "The amazon_fsxn_svm_id variable must be provided when storage_type is FSxN."
-  }
-}
-
 variable "fsxn_region" {
   description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
   type        = string
   default     = ""
-
-  validation {
-    condition     = var.storage_type != "FSxN" || length(var.fsxn_region) > 0
-    error_message = "The fsxn_region variable must be provided when storage_type is FSxN."
-  }
 }
 
 ########################################
