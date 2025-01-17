@@ -7,7 +7,7 @@ locals {
   elasticache_redis_engine_version       = "7.0"
   elasticache_redis_parameter_group_name = "default.redis7"
 
-  helix_swarm_data_volume_name = "helix-swarm-data"
+  helix_swarm_data_volume_name = "helix-swarm-sidecar"
 
   tags = merge(var.tags, {
     "environment" = var.environment
