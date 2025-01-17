@@ -122,6 +122,7 @@ resource "random_string" "unreal_horde_ansible_playbooks_bucket_suffix" {
 resource "aws_s3_bucket" "ansible_playbooks" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = "unreal-horde-ansible-playbooks-${random_string.unreal_horde_ansible_playbooks_bucket_suffix[0].id}"
+  # object_lock_enabled = true
 
   #checkov:skip=CKV_AWS_144: Cross-region replication not necessary
   #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
@@ -163,6 +164,7 @@ resource "aws_s3_object" "unreal_horde_agent_playbook" {
   key    = "/agent/horde-agent.ansible.yml"
   source = "${path.module}/config/agent/horde-agent.ansible.yml"
   etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
+  # force_destroy = true
 }
 
 # Recommend using path.root instead of path.module. From the TF docs: "We do not recommend using path.module in write operations because it can produce different behavior depending on whether you use remote or local module sources. Multiple invocations of local modules use the same source directory, overwriting the data in path.module during each call. This can lead to race conditions and unexpected results."
@@ -172,6 +174,7 @@ resource "aws_s3_object" "unreal_horde_agent_service" {
   key    = "/agent/horde-agent.service"
   source = "${path.module}/config/agent/horde-agent.service"
   etag   = filemd5("${path.module}/config/agent/horde-agent.service")
+  # force_destroy = true
 }
 
 # Recommend using path.root instead of path.module. From the TF docs: "We do not recommend using path.module in write operations because it can produce different behavior depending on whether you use remote or local module sources. Multiple invocations of local modules use the same source directory, overwriting the data in path.module during each call. This can lead to race conditions and unexpected results."
