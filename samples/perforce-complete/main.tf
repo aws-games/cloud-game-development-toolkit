@@ -98,7 +98,7 @@ module "perforce_helix_swarm" {
     host = "123"
     port = 6379
   }
-  #  debug = true
+  debug = true
 
 
   # Networking
