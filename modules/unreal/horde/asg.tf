@@ -156,6 +156,7 @@ resource "aws_s3_bucket_public_access_block" "ansible_playbooks_bucket_public_bl
   restrict_public_buckets = true
 }
 
+# Recommend using path.root instead of path.module. From the TF docs: "We do not recommend using path.module in write operations because it can produce different behavior depending on whether you use remote or local module sources. Multiple invocations of local modules use the same source directory, overwriting the data in path.module during each call. This can lead to race conditions and unexpected results."
 resource "aws_s3_object" "unreal_horde_agent_playbook" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
@@ -164,6 +165,7 @@ resource "aws_s3_object" "unreal_horde_agent_playbook" {
   etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
 }
 
+# Recommend using path.root instead of path.module. From the TF docs: "We do not recommend using path.module in write operations because it can produce different behavior depending on whether you use remote or local module sources. Multiple invocations of local modules use the same source directory, overwriting the data in path.module during each call. This can lead to race conditions and unexpected results."
 resource "aws_s3_object" "unreal_horde_agent_service" {
   count  = length(var.agents) > 0 ? 1 : 0
   bucket = aws_s3_bucket.ansible_playbooks[0].id
@@ -172,6 +174,7 @@ resource "aws_s3_object" "unreal_horde_agent_service" {
   etag   = filemd5("${path.module}/config/agent/horde-agent.service")
 }
 
+# Recommend using path.root instead of path.module. From the TF docs: "We do not recommend using path.module in write operations because it can produce different behavior depending on whether you use remote or local module sources. Multiple invocations of local modules use the same source directory, overwriting the data in path.module during each call. This can lead to race conditions and unexpected results."
 resource "aws_ssm_document" "ansible_run_document" {
   count         = length(var.agents) > 0 ? 1 : 0
   document_type = "Command"
