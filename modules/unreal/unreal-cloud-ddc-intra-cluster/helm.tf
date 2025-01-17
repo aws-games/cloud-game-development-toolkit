@@ -16,7 +16,7 @@ module "eks_blueprints_all_other_addons" {
     }
     aws-ebs-csi-driver = {
       most_recent              = true
-      service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
+      service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
     }
   }
 
@@ -47,7 +47,7 @@ resource "kubernetes_service_account" "unreal_cloud_ddc_service_account" {
     name        = "${var.unreal_cloud_ddc_namespace}-sa"
     namespace   = var.unreal_cloud_ddc_namespace
     labels      = { aws-usage : "application" }
-    annotations = { "eks.amazonaws.com/role-arn" : module.eks_service_account_iam_role.iam_role_arn }
+    annotations = { "eks.amazonaws.com/role-arn" : aws_iam_role.unreal_cloud_ddc_sa_iam_role.arn }
   }
   automount_service_account_token = true
 }

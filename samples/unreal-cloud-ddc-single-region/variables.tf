@@ -1,9 +1,3 @@
-variable "external_idp_oidc_credential_arn" {
-  type        = string
-  sensitive   = true
-  description = "External IDP OIDC Secrets Credential ARN."
-}
-
 variable "github_credential_arn" {
   type        = string
   sensitive   = true

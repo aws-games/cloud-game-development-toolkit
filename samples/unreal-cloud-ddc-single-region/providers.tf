@@ -12,6 +12,14 @@ terraform {
       source  = "hashicorp/helm"
       version = ">= 2.9.0"
     }
+    http = {
+      source  = "hashicorp/http"
+      version = ">= 3.4.5"
+    }
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = ">= 1.26.0"
+    }
   }
   required_version = ">= 1.10.3"
 }
