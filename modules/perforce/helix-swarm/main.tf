@@ -329,8 +329,9 @@ resource "aws_s3_bucket" "helix_swarm_config_bucket" {
   #checkov:skip=CKV2_AWS_62: Ensure S3 buckets should have event notifications enabled
   #checkov:skip=CKV_AWS_144: Ensure that S3 bucket has cross-region replication enabled
   #checkov:skip=CKV_AWS_145: Ensure that S3 buckets are encrypted with KMS by default
-  bucket        = "${var.cluster_name}-helix-swarm-config-${random_string.helix_swarm_config_bucket.result}"
-  force_destroy = true
+  bucket              = "${var.cluster_name}-helix-swarm-config-${random_string.helix_swarm_config_bucket.result}"
+  object_lock_enabled = true
+  force_destroy       = true
   tags = {
     ECS_Cluster_Name = var.cluster_name
   }
