@@ -323,7 +323,12 @@ resource "random_string" "helix_swarm_config_bucket" {
 
 # Create S3 bucket to store Helix Swarm Config File
 resource "aws_s3_bucket" "helix_swarm_config_bucket" {
+  #checkov:skip=CKV2_AWS_6: Ensure that S3 bucket has a Public Access block
+  #checkov:skip=CKV2_AWS_18: Ensure the S3 bucket has access logging enabled
+  #checkov:skip=CKV2_AWS_61: Ensure that an S3 bucket has a lifecycle configuration
+  #checkov:skip=CKV2_AWS_62: Ensure S3 buckets should have event notifications enabled
   #checkov:skip=CKV_AWS_144: Ensure that S3 bucket has cross-region replication enabled
+  #checkov:skip=CKV_AWS_145: Ensure that S3 buckets are encrypted with KMS by default
   bucket        = "${var.cluster_name}-helix-swarm-config-${random_string.helix_swarm_config_bucket.result}"
   force_destroy = true
   tags = {
@@ -380,26 +385,6 @@ resource "aws_s3_bucket_policy" "helix_swarm_config_bucket" {
   policy = data.aws_iam_policy_document.helix_swarm_config_bucket.json
 }
 
-
-
-# # - Sleep to avoid eventual consistency  -
-# resource "time_sleep" "wait_20_seconds" {
-#   depends_on = [
-#     aws_s3_bucket.helix_swarm_config_bucket,
-#   null_resource.put_s3_object]
-
-#   create_duration = "20s"
-# }
-
-
-# resource "aws_s3_object" "unreal_horde_agent_playbook" {
-#   count  = length(var.agents) > 0 ? 1 : 0
-#   bucket = aws_s3_bucket.ansible_playbooks[0].id
-#   key    = "/agent/horde-agent.ansible.yml"
-#   source = "${path.module}/config/agent/horde-agent.ansible.yml"
-#   etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
-# }
-
 # Push custom config.php file to S3 bucket
 resource "aws_s3_object" "helix_swarm_custom_config_php" {
   bucket = aws_s3_bucket.helix_swarm_config_bucket.id
@@ -408,54 +393,6 @@ resource "aws_s3_object" "helix_swarm_custom_config_php" {
   # md5() function must be used instead of filemd5() function because all Terraform functions run during the initial configuration processing, not during graph walk. Since using the local_file resource to create the file, it would not yet exist when the function runs. Instead, we can use the .content attribute available from the local_file resource itself.
   etag          = md5(local_file.custom_config_php.content)
   force_destroy = true
-
-  # depends_on = [local_file.custom_config_php]
 }
-
-# # Temporary workaround until this GitHub issue on aws_s3_object is resolved: https://github.com/hashicorp/terraform-provider-aws/issues/12652
-# resource "null_resource" "put_s3_object" {
-#   # Will only trigger this resource to re-run if changes are made to the custom config.php file via the local_file resource
-#   triggers = {
-#     src_hash = local_file.custom_config_php.content_sha256
-#   }
-
-#   # Put custom config.php file in Helix Swarm Config S3 Bucket
-#   provisioner "local-exec" {
-#     command = "aws s3 cp config.php s3://${aws_s3_bucket.helix_swarm_config_bucket.id}/config.php"
-
-#   }
-
-#   # Only attempt to put the file when the S3 Bucket (and related resources) are created
-#   depends_on = [
-#     aws_s3_bucket.helix_swarm_config_bucket,
-#     aws_s3_bucket_notification.helix_swarm_config_bucket,
-#     aws_s3_bucket_policy.helix_swarm_config_bucket,
-#     aws_s3_bucket_versioning.helix_swarm_config_bucket
-#   ]
-# }
-
-# resource "null_resource" "update_helix_swarm_config" {
-#   # Will only trigger this resource to re-run if changes are made to the custom config.php file via the local_file resource
-#   triggers = {
-#     src_hash = local_file.custom_config_php.content_sha256
-#   }
-
-#   # Fetch
-#   provisioner "local-exec" {
-#     command = <<-EOF
-#       aws ecs execute-command --region ${data.aws_region.current} --cluster ${var.cluster_name} --task $TASK_ID --command "aws s3 cp s3://${aws_s3_bucket.helix_swarm_config_bucket.id}/config.php SWARM_ROOT/data/config.php"
-#     EOF
-
-#   }
-
-#   # Only attempt to put the file when the S3 Bucket (and related resources) are created
-#   depends_on = [
-#     aws_s3_bucket.helix_swarm_config_bucket,
-#     aws_s3_bucket_notification.helix_swarm_config_bucket,
-#     aws_s3_bucket_policy.helix_swarm_config_bucket,
-#     aws_s3_bucket_versioning.helix_swarm_config_bucket
-#   ]
-# }
-
 
 

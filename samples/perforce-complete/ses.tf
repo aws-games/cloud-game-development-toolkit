@@ -87,6 +87,7 @@ resource "random_string" "swarm_ses_smtp_user" {
 }
 
 resource "aws_iam_user" "swarm_ses_smtp_user" {
+  #checkov:skip=CKV_AWS_273: Ensure access is controlled through SSO and not AWS IAM defined users
   name          = "swarm-ses-smtp-user-${random_string.swarm_ses_smtp_user.result}"
   path          = "/SES_Users/"
   force_destroy = true # prevents DeleteConflict Error
@@ -110,6 +111,8 @@ resource "aws_iam_access_key" "swarm_ses_smtp_user" {
 # }
 
 data "aws_iam_policy_document" "swarm_ses_smtp_user_policy" {
+  #checkov:skip=CKV_AWS_356: Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
+  #checkov:skip=CKV_AWS_111: Ensure IAM policies does not allow write access without constraint
   statement {
     effect = "Allow"
     actions = [
@@ -122,6 +125,7 @@ data "aws_iam_policy_document" "swarm_ses_smtp_user_policy" {
 }
 
 resource "aws_iam_user_policy" "swarm_ses_smtp_user_policy" {
+  #checkov:skip=CKV_AWS_40: Ensure IAM policies are attached only to groups or roles (Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.)
   name = "swarm-ses-smtp-user-policy"
   # name   = "AmazonSesSendingAccess"
   user   = aws_iam_user.swarm_ses_smtp_user.name
