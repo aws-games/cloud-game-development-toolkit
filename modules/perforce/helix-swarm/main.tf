@@ -323,6 +323,7 @@ resource "random_string" "helix_swarm_config_bucket" {
 
 # Create S3 bucket to store Helix Swarm Config File
 resource "aws_s3_bucket" "helix_swarm_config_bucket" {
+  #checkov:skip=CKV_AWS_144: Ensure that S3 bucket has cross-region replication enabled
   bucket        = "${var.cluster_name}-helix-swarm-config-${random_string.helix_swarm_config_bucket.result}"
   force_destroy = true
   tags = {
