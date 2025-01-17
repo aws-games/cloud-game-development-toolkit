@@ -72,6 +72,7 @@ resource "aws_eks_node_group" "worker_node_group" {
   }
 }
 
+#Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "worker_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-worker-launch-template"
@@ -136,6 +137,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
 
 }
 
+#Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "nvme_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-nvme-launch-template"
@@ -196,6 +198,7 @@ resource "aws_eks_node_group" "system_node_group" {
   }
 }
 
+#Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "system_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit 2 required for the load balancer controller. Hop limit of 2 is a best practice for container environments. See docs in comment.
   name_prefix   = "unreal-ddc-system-launch-template"

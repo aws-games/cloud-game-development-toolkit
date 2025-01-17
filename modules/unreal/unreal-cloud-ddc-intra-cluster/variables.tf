@@ -36,6 +36,7 @@ variable "ghcr_credentials_secret_manager_arn" {
 variable "oidc_credentials_secret_manager_arn" {
   type        = string
   description = "Arn for oidc credentials stored in secret manager."
+  default     = null
 }
 
 variable "unreal_cloud_ddc_version" {
