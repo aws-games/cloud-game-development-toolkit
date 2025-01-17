@@ -77,3 +77,56 @@ resource "local_file" "dkim" {
 
   EOF
 }
+
+
+# Create SMTP User Creds following AWS Docs: https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html
+resource "random_string" "swarm_ses_smtp_user" {
+  length  = 4
+  special = false
+  upper   = false
+}
+
+resource "aws_iam_user" "swarm_ses_smtp_user" {
+  name          = "swarm-ses-smtp-user-${random_string.swarm_ses_smtp_user.result}"
+  path          = "/SES_Users/"
+  force_destroy = true # prevents DeleteConflict Error
+}
+
+resource "aws_iam_access_key" "swarm_ses_smtp_user" {
+  user = aws_iam_user.swarm_ses_smtp_user.name
+}
+
+# resource "aws_iam_group" "swarm_ses_smtp_users" {
+#   name = "AWSSESSendingGroupDoNotRename"
+# }
+# resource "aws_iam_group_membership" "swarm_ses_smtp_users" {
+#   name = "swarm-ses-smtp-user-membership"
+
+#   users = [
+#     aws_iam_user.swarm_ses_smtp_user.name,
+#   ]
+
+#   group = aws_iam_group.swarm_ses_smtp_users.name
+# }
+
+data "aws_iam_policy_document" "swarm_ses_smtp_user_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendTemplatedEmail",
+      "ses:SendRawEmail",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_user_policy" "swarm_ses_smtp_user_policy" {
+  name = "swarm-ses-smtp-user-policy"
+  # name   = "AmazonSesSendingAccess"
+  user   = aws_iam_user.swarm_ses_smtp_user.name
+  policy = data.aws_iam_policy_document.swarm_ses_smtp_user_policy.json
+
+}
+
+
