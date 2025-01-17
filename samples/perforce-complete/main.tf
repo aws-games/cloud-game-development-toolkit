@@ -79,16 +79,27 @@ module "perforce_helix_authentication_service" {
 module "perforce_helix_swarm" {
   source = "../../modules/perforce/helix-swarm"
 
-  # TODO - ADD VARIABLES FOR Custom Config.php
-  use_custom_config_php = true
+  # Custom config.php File Configuration
+  config_php_hostname = var.root_domain_name
   config_php_mail = {
-    name             = awscc_ses_email_identity.domain // name of the SMTP host
-    host             = ""
-    port             = ""     // SMTP host listening port
-    connection_class = "smtp" // 'smtp', 'plain', 'login', 'crammd5'
-    username         = ""     // username for user on SMTP host
-    password         = ""     // password for user on SMTP host
+    name                = "amazon-ses" // name of the SMTP host
+    host                = "email-smtp.${data.aws_region.current.name}.amazonaws.com"
+    port                = "25"                                                        // SMTP host listening port (for SES valid ports are 25, 587, or 2587)
+    connection_class    = "smtp"                                                      // 'smtp', 'plain', 'login', 'crammd5'
+    username            = aws_iam_access_key.swarm_ses_smtp_user.id                   // username for user on SMTP host
+    password            = aws_iam_access_key.swarm_ses_smtp_user.ses_smtp_password_v4 // password for user on SMTP host
+    connection_security = "tls"                                                       // required for Amazon SES
+    recipient           = var.receiver_email_address
   }
+  config_php_p4 = {
+    sso = "enabled"
+  }
+  config_php_redis = {
+    host = "123"
+    port = 6379
+  }
+  #  debug = true
+
 
   # Networking
   vpc_id                           = aws_vpc.perforce_vpc.id
