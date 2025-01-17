@@ -84,7 +84,7 @@ module "perforce_helix_swarm" {
   config_php_mail = {
     name                = "amazon-ses" // name of the SMTP host
     host                = "email-smtp.${data.aws_region.current.name}.amazonaws.com"
-    port                = "25"                                                        // SMTP host listening port (for SES valid ports are 25, 587, or 2587)
+    port                = "587"                                                       // SMTP host listening port (for SES valid ports are 25, 587, or 2587)
     connection_class    = "smtp"                                                      // 'smtp', 'plain', 'login', 'crammd5'
     username            = aws_iam_access_key.swarm_ses_smtp_user.id                   // username for user on SMTP host
     password            = aws_iam_access_key.swarm_ses_smtp_user.ses_smtp_password_v4 // password for user on SMTP host
