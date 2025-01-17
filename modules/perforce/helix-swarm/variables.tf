@@ -231,11 +231,11 @@ variable "enable_sso" {
   description = "Set this to true if using SSO for Helix Swarm authentication."
 }
 
-# Config.php
-variable "use_custom_config_php" {
-  type        = bool
-  default     = false
-  description = "Set this to true if you want to use a custom config.php file. If set to false, the default config.php file created by Helix Swarm will be used."
+# Custom config.php
+variable "config_php_hostname" {
+  type        = string
+  default     = "localhost"
+  description = "The hostname for the custom config.php file."
 }
 variable "config_php_mail" {
   type = object({
@@ -246,6 +246,7 @@ variable "config_php_mail" {
     username            = optional(string, "user")
     password            = optional(string, "pass")
     connection_security = optional(string, "ssl") // valid values are 'ssl', 'tls' or nothing
+    recipient           = string
   })
 }
 variable "config_php_p4" {
@@ -259,6 +260,13 @@ variable "config_php_p4" {
     auto_register_url    = optional(bool, true)
   })
 }
+variable "config_php_redis" {
+  type = object({
+    host = optional(string, "swarm-elasticache-redis-cluster.jmuaq0.0001.usw2.cache.amazonaws.com")
+    port = optional(number, 6379)
+  })
+}
+
 
 
 
