@@ -47,7 +47,7 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
   memory                   = var.helix_swarm_container_memory
 
   volume {
-    name = local.helix_swarm_data_volume_name
+    name = local.helix_swarm_sidecar_container_name
   }
 
   container_definitions = jsonencode(
@@ -116,15 +116,22 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
         readonlyRootFilesystem = false
         mountPoints = [
           {
-            sourceVolume  = local.helix_swarm_data_volume_name
+            sourceVolume  = local.helix_swarm_sidecar_container_name
             containerPath = local.helix_swarm_data_path
             readOnly      = false
           }
         ],
+        dependsOn = [
+          {
+            containerName = local.helix_swarm_sidecar_container_name
+            condition     = "SUCCESS"
+          },
+        ]
       },
       {
-        name      = local.helix_swarm_data_volume_name
-        image     = "bash"
+        name  = local.helix_swarm_sidecar_container_name
+        image = "public.ecr.aws/aws-cli/aws-cli"
+        # image     = "bash"
         essential = false
         environment = [
           {
@@ -153,45 +160,8 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
           },
 
         ],
-        # TODO - Modify this to fetch the object from the S3 bucket using env vars $HELIX_SWARM_CONFIG_S3_BUCKET and $HELIX_SWARM_CONFIG_S3_OBJECT
 
-        # First will need to install the AWS CLI and then run the following commands:
-        #1. Install the AWS CLI
-        # curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-        # unzip awscliv2.zip
-        # sudo ./aws/install
-
-        # 2. Copy file from S3 to Helix Swarm Data Directory
-        # Ex. With Terraform Variables
-        # aws s3 cp s3://${aws_s3_bucket.helix_swarm_config_bucket.id}/config.php ${local.helix_swarm_data_path}/config.php
-        # Ex. With Env Vars (created from Terraform Variables)
-        # aws s3 cp $HELIX_SWARM_CONFIG_S3_OBJECT_S3_URI $HELIX_SWARM_CONFIG_PHP_PATH
-
-        # 3. Delete the cache to reload swarm using the new config
-        # Ex. With Terraform Variables
-        # rm -rf ${local.helix_swarm_data_path}/cache
-        # Ex. With Env Vars (created from Terraform Variables)
-        # rm -rf $HELIX_SWARM_DATA_CACHE_PATH
-
-        # 4. Configure this task definition to be dependent on the S3 Object so the new versions of the task definition is created whenever new versions of the config.php file are created in S3
-
-
-        # entryPoint = [
-        #   "/bin/sh",
-        #   "-c",
-        #   "if [ ! -f ${local.helix_swarm_data_path}/config.php ]; then aws s3 cp s3://${aws_s3_bucket.helix_swarm_config_bucket.id}/${aws_s3_object.helix_swarm_custom_config_php.key} ${local.helix_swarm_data_path}/config.php; fi",
-        # ]
-        // Only run this command if enable_sso is set
-        command = concat([], var.enable_sso ? [
-          "sh",
-          "-c",
-          "echo \"/p4/a\\\t'sso' => 'enabled',\" > ${local.helix_swarm_data_path}/sso.sed && sed -i -f ${local.helix_swarm_data_path}/sso.sed ${local.helix_swarm_data_path}/config.php && rm -rf ${local.helix_swarm_data_path}/cache",
-        ] : []),
-
-        # Only run this command if var.use_custom_config_php is 'true' and custom config.php file is provided. Command will remove the cache so Swarm will reload with the new config.php file.
-
-        # command = concat([], var.use_custom_config_php ? "rm -rf ${local.helix_swarm_data_path}/cache" : []),
-        # command =
+        command = ["s3", "cp", "s3://${aws_s3_bucket.helix_swarm_config_bucket.id}/config.php", "."]
 
         readonly_root_filesystem = false
 
@@ -200,29 +170,29 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
           options = {
             awslogs-group         = aws_cloudwatch_log_group.helix_swarm_service_log_group.name
             awslogs-region        = data.aws_region.current.name
-            awslogs-stream-prefix = local.helix_swarm_data_volume_name
+            awslogs-stream-prefix = local.helix_swarm_sidecar_container_name
           }
         }
         mountPoints = [
           {
-            sourceVolume  = local.helix_swarm_data_volume_name
-            containerPath = local.helix_swarm_data_path
+            sourceVolume  = local.helix_swarm_sidecar_container_name
+            containerPath = "/aws" # reason: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-docker.html#cliv2-docker-share-files
           }
         ],
-        dependsOn = [
-          {
-            containerName = var.helix_swarm_container_name
-            condition     = "HEALTHY"
-          },
-          # S3 object/Config.php file dependency
-          # We should avoid having dependency on data source for s3 object, ex:
-          # `data.aws_s3_object.config_php.checksum_sha256`or `data.aws_s3_object.config_php.etag`. This is because when using a data source, a value is known AFTER apply. This will cause an issue where the task definition will be re-created on every run of `terraform apply` even if there have been no changes to the config.php file.
+        # dependsOn = [
+        #   # {
+        #   #   containerName = var.helix_swarm_container_name
+        #   #   condition     = "HEALTHY"
+        #   # },
+        #   # S3 object/Config.php file dependency
+        #   # We should avoid having dependency on data source for s3 object, ex:
+        #   # `data.aws_s3_object.config_php.checksum_sha256`or `data.aws_s3_object.config_php.etag`. This is because when using a data source, a value is known AFTER apply. This will cause an issue where the task definition will be re-created on every run of `terraform apply` even if there have been no changes to the config.php file.
 
-          # Instead, recommend dependency of the `aws_s3_object` resource, specifically something like `aws_s3_object.helix_swarm_config_php.checksum_sha256` OR `aws_s3_object.helix_swarm_config_php.etag`. This is dependent on the `local_file` resource that is generating the file to be uploaded, so Terraform would have local context on if this has changed or not when determining if it needs to update the S3 Object
+        #   # Instead, recommend dependency of the `aws_s3_object` resource, specifically something like `aws_s3_object.helix_swarm_config_php.checksum_sha256` OR `aws_s3_object.helix_swarm_config_php.etag`. This is dependent on the `local_file` resource that is generating the file to be uploaded, so Terraform would have local context on if this has changed or not when determining if it needs to update the S3 Object
 
-          # Alternatively, could probably also directly reference the `local_file` checksum, since that will be known DURING apply since Terraform will have context of this without having to fetch data from a remote API
+        #   # Alternatively, could probably also directly reference the `local_file` checksum, since that will be known DURING apply since Terraform will have context of this without having to fetch data from a remote API
 
-        ]
+        # ]
       }
     ]
   )
