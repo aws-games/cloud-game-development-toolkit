@@ -48,6 +48,15 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
 
   volume {
     name = local.helix_swarm_data_volume_name
+    efs_volume_configuration {
+      file_system_id          = aws_efs_file_system.helix_swarm.id
+      transit_encryption      = "ENABLED"
+      transit_encryption_port = 2999
+      authorization_config {
+        access_point_id = aws_efs_access_point.helix_swarm.id
+        iam             = "ENABLED"
+      }
+    }
   }
 
   container_definitions = jsonencode(
@@ -105,12 +114,14 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
             value = var.fully_qualified_domain_name
           },
           {
-            name  = "SWARM_REDIS"
-            value = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.swarm[0].cache_nodes[0].address
+            name = "SWARM_REDIS"
+            value = (var.existing_redis_connection != null ? var.existing_redis_connection.host :
+            aws_elasticache_cluster.swarm[0].cache_nodes[0].address)
           },
           {
-            name  = "SWARM_REDIS_PORT"
-            value = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.swarm[0].cache_nodes[0].port)
+            name = "SWARM_REDIS_PORT"
+            value = (var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) :
+            tostring(aws_elasticache_cluster.swarm[0].cache_nodes[0].port))
           }
         ],
         readonlyRootFilesystem = false
@@ -146,6 +157,7 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
           {
             sourceVolume  = local.helix_swarm_data_volume_name
             containerPath = local.helix_swarm_data_path
+            readonly      = false
           }
         ],
         dependsOn = [
@@ -158,7 +170,8 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
     ]
   )
 
-  task_role_arn      = var.custom_helix_swarm_role != null ? var.custom_helix_swarm_role : aws_iam_role.helix_swarm_default_role[0].arn
+  task_role_arn = (var.custom_helix_swarm_role != null ? var.custom_helix_swarm_role :
+  aws_iam_role.helix_swarm_default_role[0].arn)
   execution_role_arn = aws_iam_role.helix_swarm_task_execution_role.arn
 
   runtime_platform {
@@ -173,7 +186,8 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
 resource "aws_ecs_service" "helix_swarm_service" {
   name = "${local.name_prefix}-service"
 
-  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn : aws_ecs_cluster.helix_swarm_cluster[0].arn
+  cluster = (var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn :
+  aws_ecs_cluster.helix_swarm_cluster[0].arn)
   task_definition        = aws_ecs_task_definition.helix_swarm_task_definition.arn
   launch_type            = "FARGATE"
   desired_count          = var.helix_swarm_desired_container_count

@@ -81,3 +81,20 @@ resource "aws_vpc_security_group_ingress_rule" "helix_swarm_elasticache_ingress"
   to_port                      = local.elasticache_redis_port
   ip_protocol                  = "tcp"
 }
+
+resource "aws_security_group" "swarm_efs" {
+  name        = "${local.name_prefix}-efs"
+  vpc_id      = var.vpc_id
+  description = "Helix Swarm EFS Security Group"
+  tags        = local.tags
+}
+
+# Inbound access from Service to EFS mount targets
+resource "aws_vpc_security_group_ingress_rule" "helix_swarm_efs_inbound_service" {
+  security_group_id            = aws_security_group.swarm_efs.id
+  description                  = "Allow inbound access from Helix Swarm service containers to EFS."
+  referenced_security_group_id = aws_security_group.helix_swarm_service_sg.id
+  from_port                    = 2049
+  to_port                      = 2049
+  ip_protocol                  = "tcp"
+}

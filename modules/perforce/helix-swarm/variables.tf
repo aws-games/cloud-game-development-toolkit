@@ -250,3 +250,21 @@ variable "elasticache_node_type" {
   description = "The type of nodes provisioned in the Elasticache cluster."
   default     = "cache.t4g.micro"
 }
+
+variable "elastic_filesystem_performance_mode" {
+  type        = string
+  description = "The performance mode of the elastic filesystem used by the Helix Swarm service."
+  default     = "generalPurpose"
+}
+
+variable "elastic_filesystem_throughput_mode" {
+  type        = string
+  description = "The throughput mode of the elastic filesystem used by the Helix Swarm service."
+  default     = "bursting"
+}
+
+variable "enable_default_efs_backup_plan" {
+  type        = bool
+  default     = true
+  description = "Enables the default backup plan for the Helix Swarm data directory."
+}

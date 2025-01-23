@@ -37,6 +37,17 @@ data "aws_iam_policy_document" "helix_swarm_default_policy" {
       "*"
     ]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "elasticfilesystem:ClientWrite",
+      "elasticfilesystem:ClientRootAccess",
+      "elasticfilesystem:ClientMount"
+    ]
+    resources = [
+      aws_efs_file_system.helix_swarm.arn
+    ]
+  }
 }
 
 data "aws_iam_policy_document" "helix_swarm_ssm_policy" {
@@ -87,6 +98,8 @@ resource "aws_iam_role" "helix_swarm_default_role" {
 resource "aws_iam_role" "helix_swarm_task_execution_role" {
   name = "${var.project_prefix}-helix-swarm-task-execution-role"
 
-  assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.helix_swarm_ssm_policy.arn]
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.helix_swarm_ssm_policy.arn
+  ]
 }

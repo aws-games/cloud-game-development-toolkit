@@ -95,6 +95,7 @@ module "perforce_helix_swarm" {
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
   enable_sso                  = true
+  debug                       = true
 
   depends_on = [aws_ecs_cluster.perforce_cluster]
 }
@@ -153,6 +154,12 @@ resource "aws_lb_target_group" "perforce_web_services" {
   port        = 443
   protocol    = "TCP"
   vpc_id      = aws_vpc.perforce_vpc.id
+}
+
+resource "aws_lb_target_group_attachment" "perforce_web_services" {
+  target_group_arn = aws_lb_target_group.perforce_web_services.arn
+  target_id        = aws_lb.perforce_web_services.arn
+  port             = 443
 }
 
 # Default rule redirects to Helix Swarm
