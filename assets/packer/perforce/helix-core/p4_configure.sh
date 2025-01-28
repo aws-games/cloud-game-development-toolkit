@@ -22,6 +22,11 @@ is_fsx_mount() {
     return $?
 }
 
+is_iscsi_device() {
+    echo "$1" | grep -qE '^/dev/mapper/'
+    return $?
+}
+
 # Function to resolve AWS secrets
 resolve_aws_secret() {
   local result=$(aws secretsmanager get-secret-value --secret-id "$1" --query "SecretString" --output text)
@@ -92,6 +97,161 @@ prepare_ebs_volume() {
 
     log_message "Mounting $ebs_volume on $mount_point."
     mount "$ebs_volume" "$mount_point"
+}
+
+check_command() {
+    if [ $? -ne 0 ]; then
+        log_message "$1 failed. Exiting."
+        exit 1
+    fi
+}
+
+# Function to prepare iSCSI Installation
+prepare_iscsi() {
+    local IGROUP_NAME="perforce"
+    local FLAG_FILE="/var/run/iscsi_prepared.flag"
+    if [ -f "$FLAG_FILE" ]; then
+        echo "iSCSI preparation has already been done. Skipping."
+        return 0
+    fi
+    # Install necessary packages
+    log_message "Installing necessary packages."
+    sudo yum install -y device-mapper-multipath iscsi-initiator-utils sshpass
+    check_command "Package installation"
+
+    # Test connection to ONTAP
+    log_message "Testing connection to ONTAP."
+
+    sshpass -p $FSXN_PASSWORD ssh -o StrictHostKeyChecking=no $ONTAP_USER@$FSXN_IP "version"
+    check_command "Testing connection to ONTAP"
+
+    # Update iSCSI configuration
+    log_message "Updating iSCSI configuration."
+    sudo sed -i 's/node.session.timeo.replacement_timeout = .*/node.session.timeo.replacement_timeout = 5/' /etc/iscsi/iscsid.conf
+    check_command "Updating iSCSI configuration"
+
+    # Start iSCSI service
+    log_message "Starting iSCSI service."
+    sudo service iscsid start
+    check_command "Starting iSCSI service"
+
+    # Enable and start multipath
+    log_message "Enabling and starting multipath."
+    sudo mpathconf --enable --with_multipathd y
+    check_command "Enabling and starting multipath"
+
+    # Get the IQN from the initiatorname.iscsi file
+    INITIATOR_IQN=$(grep -oP 'iqn.\S+' /etc/iscsi/initiatorname.iscsi)
+    log_message "Retrieved initiator IQN: $INITIATOR_IQN"
+
+    log_message "Mapping the IQN to existing igroup"
+    sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "igroup add -igroup $IGROUP_NAME -vserver $FSXN_SVM -initiator $INITIATOR_IQN"
+    check_command "Mapping LUN to iGroup"
+
+    # Retrieve the iSCSI IP address from ONTAP
+    log_message "Retrieving iSCSI IP address from ONTAP."
+    ISCSI_IP=$(sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "network interface show -vserver $FSXN_SVM -fields address" | grep iscsi_1 | awk '{print $3}')
+    check_command "Retrieving iSCSI IP address from ONTAP"
+    log_message "Retrieved iSCSI IP address: $ISCSI_IP"
+
+    # Discover the iSCSI target and get the target IQN
+    log_message "Discovering iSCSI target."
+    TARGET_IQN=$(sudo iscsiadm --mode discovery --op update --type sendtargets --portal $ISCSI_IP | grep $ISCSI_IP | awk '{print $2}')
+    check_command "Discovering iSCSI target"
+    log_message "Discovered target IQN: $TARGET_IQN"
+
+    # Log in to the iSCSI target
+    log_message "Logging in to the iSCSI target."
+    sudo iscsiadm --mode node -T $TARGET_IQN --login
+    check_command "Logging in to the iSCSI target"
+
+    log_message "Creating flag file at $FLAG_FILE"
+    sudo touch "$FLAG_FILE"
+
+}
+
+prepare_iscsi_volume() {
+    local VOLUME_NAME=$1
+    local mount_point=$2
+    timeout=90
+    interval=5
+    elapsed=0
+
+
+    # Set VOLUME based on volume path
+    if [[ "$VOLUME_NAME" == *"log"* ]]; then
+        VOLUME="logs"
+    elif [[ "$VOLUME_NAME" == *"metadata"* ]]; then
+        VOLUME="metadata"
+    else 
+        VOLUME="depot"
+    fi
+
+    # Check if iSCSI preparation is needed
+    prepare_iscsi
+
+    local fs_type=$(lsblk -no FSTYPE "$VOLUME_NAME")
+    if [ -z "$fs_type" ]; then
+        # Retrieve the serial-hex value from the LUN
+        log_message "Retrieving serial-hex value from the LUN."
+        SERIAL_HEX=$(sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "lun show -vserver $FSXN_SVM -path /vol/$VOLUME/$VOLUME -fields serial-hex" | grep /vol/$VOLUME/$VOLUME | awk '{print $3}')
+        check_command "Retrieving serial-hex value from the LUN"
+        log_message "Retrieved serial-hex value: $SERIAL_HEX"
+
+        # Check if serial-hex is empty
+        if [ -z "$SERIAL_HEX" ]; then
+            log_message "Serial-hex value is empty. Exiting."
+            exit 1
+        fi
+
+        # Rescan iSCSI sessions to detect new LUNs
+        log_message "Rescanning iSCSI sessions."
+        sudo iscsiadm -m session --rescan
+        check_command "Rescanning iSCSI sessions"
+
+        # Configure multipath
+        log_message "Configuring multipath."
+        CONF=/etc/multipath.conf
+        grep -q '^multipaths {' $CONF
+        UNCOMMENTED=$?
+        if [ $UNCOMMENTED -eq 0 ]
+        then
+                sed -i '/^multipaths {/a\\tmultipath {\n\t\twwid 3600a0980'"${SERIAL_HEX}"'\n\t\talias '"${VOLUME}"'\n\t}\n' $CONF
+        else
+                printf "multipaths {\n\tmultipath {\n\t\twwid 3600a0980$SERIAL_HEX\n\t\talias $VOLUME\n\t}\n}" >> $CONF
+        fi
+        check_command "Configuring multipath"
+
+        # Restart multipathd service
+        log_message "Restarting multipathd service."
+        sudo systemctl restart multipathd.service
+        check_command "Restarting multipathd service"
+
+        log_message "Checking if the new partition exists."
+        while [ $elapsed -lt $timeout ]; do
+        if [ -e $VOLUME_NAME ]; then
+        log_message "The device $VOLUME_NAME exists."
+        break
+        fi
+        sleep $interval
+        elapsed=$((elapsed + interval))
+        done
+        if [ ! -e $VOLUME_NAME ]; then
+        log_message "The device $VOLUME_NAME does not exist. Exiting."
+        exit 1
+        fi
+            log_message "Creating the file system on the new partition."
+            sudo mkfs.ext4 $VOLUME_NAME
+            check_command "Creating the file system on the new partition"
+    fi
+    
+    # Mount the iSCSI disk
+    log_message "Mounting the iSCSI disk."
+    sudo mount $VOLUME_NAME $mount_point
+    check_command "Mounting the iSCSI disk"
+
+    log_message "iSCSI setup script completed for ${VOLUME_NAME}"
+
 }
 
 # Function to copy SiteTags template and update with AWS regions -> This file will be updated by Ansible with replica AWS regions.
@@ -165,11 +325,14 @@ print_help() {
     echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
     echo "  --selinux <true/false>   Update labels for SELinux"
     echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
+    echo "  --fsxn_password <secret_id> AWS secret manager FSxN fsxadmin user password"
+    echo "  --fsxn_svm_name <secret_id> FSxN storage virtual name"
+    echo "  --fsxn_ip_mgmt <ip_address> FSxN managment ip address"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_ip_mgmt:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -177,6 +340,8 @@ if [ $? != 0 ]; then
 fi
 
 eval set -- "$OPTS"
+
+
 
 while true; do
     case "$1" in
@@ -259,6 +424,20 @@ while true; do
                 exit 1
             fi
             ;;
+        --fsxn_password)
+            FSXN_PASS="$2"
+            shift 2
+            ;;
+        --fsxn_svm_name)
+            FSXN_SVM="$2"
+            log_message "FSXN SVM NAME: $FSXN_SVM"
+            shift 2
+            ;;
+        --fsxn_ip_mgmt)
+            FSXN_IP="$2"
+            log_message "FSXN IP: $FSXN_IP"
+            shift 2
+            ;;
         --help)
             print_help
             exit 0
@@ -284,6 +463,8 @@ fi
 # Fetch credentials for admin user from secrets manager
 P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
 P4D_ADMIN_PASS=$(resolve_aws_secret $P4D_ADMIN_PASS_SECRET_ID)
+FSXN_PASSWORD=$(resolve_aws_secret $FSXN_PASS)
+ONTAP_USER="fsxadmin"
 
 # Function to perform operations
 perform_operations() {
@@ -295,16 +476,22 @@ perform_operations() {
         local dest_dir=$2
         local mount_options=""
         local fs_type=""
-
         if is_fsx_mount "$mount_point"; then
             # Mount as FSx
+            log_message "nfs device detected: $mount_point"
             mount -t nfs -o nconnect=16,rsize=1048576,wsize=1048576,timeo=600 "$mount_point" "$dest_dir"
             mount_options="nfs nconnect=16,rsize=1048576,wsize=1048576,timeo=600"
             fs_type="nfs"
+        elif is_iscsi_device "$mount_point"; then
+            # Handle iSCSI device
+            log_message "iSCSI device detected: $mount_point"
+            prepare_iscsi_volume "$mount_point" "$dest_dir"
+            mount_options="defaults,_netdev"
+            fs_type="ext4"
         else
             # Mount as EBS the called function also creates XFS on EBS
+            log_message "ebs device detected: $mount_point"
             prepare_ebs_volume "$mount_point" "$dest_dir"
-
             mount_options="defaults"
             fs_type="xfs"
 
@@ -321,6 +508,11 @@ perform_operations() {
     mount_fs_or_ebs $EBS_LOGS /mnt/temp_hxlogs
     mount_fs_or_ebs $EBS_METADATA /mnt/temp_hxmetadata
     mount_fs_or_ebs $EBS_DEPOTS /mnt/temp_hxdepots
+
+    # Create temporary directories and mount
+    mkdir -p /hxlogs
+    mkdir -p /hxmetadata
+    mkdir -p /hxdepots
 
     # Syncing directories
     rsync -av /hxlogs/ /mnt/temp_hxlogs/
@@ -357,9 +549,9 @@ condition_met=false
 
 while [ $attempt -le $MAX_ATTEMPTS ] && [ "$condition_met" = false ]; do
     # Check if EBS volumes or FSx mount points are provided for all required paths
-    if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" ) && \
-       ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" ) && \
-       ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" ); then
+    if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" || is_iscsi_device "$EBS_LOGS") && \
+       ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" || is_iscsi_device "$EBS_METADATA" ) && \
+       ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" || is_iscsi_device "$EBS_DEPOTS"); then
         condition_met=true
         perform_operations
     else
