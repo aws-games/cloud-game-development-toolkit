@@ -121,6 +121,7 @@ resource "aws_ecs_task_definition" "helix_swarm_task_definition" {
             readOnly      = false
           }
         ],
+        #  new
         dependsOn = [
           {
             containerName = local.helix_swarm_sidecar_container_name
