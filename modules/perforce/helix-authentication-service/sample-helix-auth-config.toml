@@ -1,0 +1,7 @@
+svc_base_uri = "https://mock.local"
+trust_proxy = true
+
+[[auth_providers]]
+issuer_uri = "https://mock.local"
+client_id = "mock-client-id"
+client_secret = "mock-client-secret"

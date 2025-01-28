@@ -37,27 +37,11 @@ data "aws_iam_policy_document" "helix_authentication_service_default_policy" {
       "*"
     ]
   }
-  statement {
-    effect = "Allow"
-    actions = [
-      "secretsmanager:ListSecrets",
-      "secretsmanager:ListSecretVersionIds",
-      "secretsmanager:GetRandomPassword",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:BatchGetSecretValue"
-    ]
-    resources = [
-      var.helix_authentication_service_admin_username_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id : var.helix_authentication_service_admin_username_secret_arn,
-      var.helix_authentication_service_admin_password_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id : var.helix_authentication_service_admin_password_secret_arn,
-    ]
-  }
 }
 
 
 resource "aws_iam_policy" "helix_authentication_service_default_policy" {
-  count = var.create_helix_authentication_service_default_policy ? 1 : 0
-
+  count       = var.create_helix_authentication_service_default_policy ? 1 : 0
   name        = "${var.project_prefix}-helix_authentication_service-default-policy"
   description = "Policy granting permissions for helix_authentication_service."
   policy      = data.aws_iam_policy_document.helix_authentication_service_default_policy[0].json
@@ -68,44 +52,61 @@ resource "aws_iam_policy" "helix_authentication_service_default_policy" {
 # - Roles -
 # helix_authentication_service
 resource "aws_iam_role" "helix_authentication_service_default_role" {
-  count = var.create_helix_authentication_service_default_role ? 1 : 0
-
+  count              = var.create_helix_authentication_service_default_role ? 1 : 0
   name               = "${var.project_prefix}-helix_authentication_service-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
-  managed_policy_arns = [
-    aws_iam_policy.helix_authentication_service_default_policy[0].arn
-  ]
-  tags = local.tags
+  tags               = local.tags
 }
 
-data "aws_iam_policy_document" "helix_authentication_service_secrets_manager_policy" {
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_default_policy_attachment" {
+  count      = var.create_helix_authentication_service_default_policy ? 1 : 0
+  role       = aws_iam_role.helix_authentication_service_default_role[0].name
+  policy_arn = aws_iam_policy.helix_authentication_service_default_policy[0].arn
+}
+
+data "aws_iam_policy_document" "helix_authentication_service_config_s3_read_write" {
   statement {
     effect = "Allow"
     actions = [
-      "secretsmanager:ListSecrets",
-      "secretsmanager:ListSecretVersionIds",
-      "secretsmanager:GetRandomPassword",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:BatchGetSecretValue"
+      "s3:ListBucket"
     ]
     resources = [
-      var.helix_authentication_service_admin_username_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id : var.helix_authentication_service_admin_username_secret_arn,
-      var.helix_authentication_service_admin_password_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id : var.helix_authentication_service_admin_password_secret_arn,
+      aws_s3_bucket.helix_authentication_service_config_bucket.arn
+    ]
+
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:HeadObject",
+      "s3:PutObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.helix_authentication_service_config_bucket.arn}/*"
     ]
   }
 }
 
-resource "aws_iam_policy" "helix_authentication_service_secrets_manager_policy" {
-  name        = "${var.project_prefix}-helix_authentication_service-secrets-manager-policy"
-  description = "Policy granting permissions for helix_authentication_service task execution role to access SSM."
-  policy      = data.aws_iam_policy_document.helix_authentication_service_secrets_manager_policy.json
+resource "aws_iam_policy" "helix_authentication_service_config_s3_read_write_policy" {
+  name        = "${var.project_prefix}-helix_authentication_service_config_s3_read_write_policy"
+  description = "Policy enabling read and write access to S3 bucket"
+  policy      = data.aws_iam_policy_document.helix_authentication_service_config_s3_read_write.json
 }
 
 resource "aws_iam_role" "helix_authentication_service_task_execution_role" {
-  name = "${var.project_prefix}-helix_authentication_service-task-execution-role"
+  name               = "${var.project_prefix}-helix_authentication_service-task-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+}
 
-  assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.helix_authentication_service_secrets_manager_policy.arn]
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_policy_attachment" {
+  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_config_s3_read_write_policy_attachment" {
+  count      = var.create_helix_authentication_service_default_policy ? 1 : 0
+  role       = aws_iam_role.helix_authentication_service_default_role[0].name
+  policy_arn = aws_iam_policy.helix_authentication_service_config_s3_read_write_policy.arn
 }

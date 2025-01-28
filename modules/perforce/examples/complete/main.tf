@@ -68,7 +68,9 @@ module "perforce_helix_authentication_service" {
   cluster_name = aws_ecs_cluster.perforce_cluster.name
 
   # Configuration
-  enable_web_based_administration = true
+  debug                  = true
+  use_local_config_file  = true
+  local_config_file_path = "../../helix-authentication-service/sample-helix-auth-config.toml"
 
   depends_on = [aws_ecs_cluster.perforce_cluster]
 }
@@ -95,8 +97,7 @@ module "perforce_helix_swarm" {
   p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
   p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
   enable_sso                  = true
-
-  depends_on = [aws_ecs_cluster.perforce_cluster]
+  depends_on                  = [aws_ecs_cluster.perforce_cluster]
 }
 
 ##########################################

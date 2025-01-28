@@ -24,22 +24,6 @@ resource "aws_ecs_cluster_capacity_providers" "helix_authentication_service_clus
     capacity_provider = "FARGATE"
   }
 }
-resource "awscc_secretsmanager_secret" "helix_authentication_service_admin_username" {
-  count         = var.helix_authentication_service_admin_username_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
-  name          = "helixAuthServiceAdminUsername"
-  secret_string = "perforce"
-}
-
-resource "awscc_secretsmanager_secret" "helix_authentication_service_admin_password" {
-  count       = var.helix_authentication_service_admin_password_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
-  name        = "helixAuthServiceAdminUserPassword"
-  description = "The password for the created Helix Authentication Service administrator."
-  generate_secret_string = {
-    exclude_numbers     = false
-    exclude_punctuation = true
-    include_space       = false
-  }
-}
 
 resource "aws_cloudwatch_log_group" "helix_authentication_service_log_group" {
   #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
@@ -70,31 +54,15 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       portMappings = [
         {
           containerPort = var.container_port,
-          hostPort      = var.container_port
+          hostPort      = var.container_port,
           protocol      = "tcp"
         }
-      ]
-      environment = concat([
-        {
-          name  = "SVC_BASE_URI"
-          value = "https://${var.fully_qualified_domain_name}"
-        },
-        {
-          name  = "ADMIN_ENABLED"
-          value = var.enable_web_based_administration ? "true" : "false"
-        },
-        {
-          name  = "TRUST_PROXY"
-          value = "true"
-        },
-        ],
-        var.enable_web_based_administration ? [
-          {
-            name  = "ADMIN_PASSWD_FILE",
-            value = "/var/has/password.txt"
-          }
-        ] : []
-      )
+      ],
+      entryPoint = [
+        "bash",
+        "-c",
+        "mv /srv/cgd-toolkit/config.toml /srv/config.toml && exec node bin/www.js"
+      ],
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -102,11 +70,11 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "helix-auth-svc"
         }
-      }
+      },
       mountPoints = [
         {
           sourceVolume  = "helix-auth-config"
-          containerPath = "/var/has"
+          containerPath = "/srv/cgd-toolkit"
         }
       ],
       healthCheck = {
@@ -122,21 +90,29 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       ]
     },
     {
-      name                     = "helix-auth-svc-config"
-      image                    = "bash"
-      essential                = false
-      command                  = ["sh", "-c", "echo $ADMIN_PASSWD | tee /var/has/password.txt"]
+      name      = "helix-auth-svc-config"
+      image     = "public.ecr.aws/amazonlinux/amazonlinux:2023-minimal"
+      essential = false
+      command = [
+        "bash", "-c", <<-EOT
+        set -e
+        echo "Installing AWS CLI..." && \
+        dnf install -y aws-cli && \
+        echo "Copying config file..." && \
+        aws s3 cp s3://$HELIX_AUTH_CONFIG_BUCKET/$HELIX_AUTH_CONFIG_KEY /srv/cgd-toolkit/config.toml
+      EOT
+      ]
       readonly_root_filesystem = false
-      secrets = var.enable_web_based_administration ? [
+      environment = [
         {
-          name      = "ADMIN_USERNAME"
-          valueFrom = var.helix_authentication_service_admin_username_secret_arn != null ? var.helix_authentication_service_admin_username_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id
+          name  = "HELIX_AUTH_CONFIG_BUCKET"
+          value = aws_s3_object.helix_authentication_service_config[0].bucket
         },
         {
-          name      = "ADMIN_PASSWD"
-          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_username_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
-        },
-      ] : [],
+          name  = "HELIX_AUTH_CONFIG_KEY"
+          value = aws_s3_object.helix_authentication_service_config[0].key
+        }
+      ],
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -148,7 +124,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       mountPoints = [
         {
           sourceVolume  = "helix-auth-config"
-          containerPath = "/var/has"
+          containerPath = "/srv/cgd-toolkit"
         }
       ],
     }
@@ -175,6 +151,10 @@ resource "aws_ecs_service" "helix_authentication_service" {
   desired_count          = var.desired_container_count
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   wait_for_steady_state = true
 
@@ -190,6 +170,51 @@ resource "aws_ecs_service" "helix_authentication_service" {
   }
 
   tags = local.tags
+}
+
+########################################
+# helix_authentication_service S3 CONFIGURATION BUCKET
+########################################
+
+# Generate random suffix for bucket name
+resource "random_string" "helix_authentication_service_config_bucket_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+resource "aws_s3_bucket" "helix_authentication_service_config_bucket" {
+  #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
+  #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
+  #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
+  #checkov:skip=CKV_AWS_18: S3 access logs not necessary
+  #checkov:skip=CKV2_AWS_62: Event notifications not necessary
+  #checkov:skip=CKV2_AWS_61: Lifecycle policy not necessary as file is frequently modified
+  bucket = "${local.name_prefix}-config-bucket-${random_string.helix_authentication_service_config_bucket_suffix.result}"
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-config-bucket-${random_string.helix_authentication_service_config_bucket_suffix.result}"
+  })
+}
+
+# Conditionally create helix auth svc config object in S3
+resource "aws_s3_object" "helix_authentication_service_config" {
+  count                  = (var.use_local_config_file && var.local_config_file_path != null ? 1 : 0)
+  bucket                 = aws_s3_bucket.helix_authentication_service_config_bucket.bucket
+  key                    = basename(var.local_config_file_path)
+  source                 = var.local_config_file_path
+  etag                   = filemd5(var.local_config_file_path)
+  server_side_encryption = "AES256"
+}
+
+resource "aws_s3_bucket_public_access_block" "helix_authentication_service_config_bucket_public_block" {
+  depends_on = [
+    aws_s3_bucket.helix_authentication_service_config_bucket
+  ]
+  bucket                  = aws_s3_bucket.helix_authentication_service_config_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 ########################################

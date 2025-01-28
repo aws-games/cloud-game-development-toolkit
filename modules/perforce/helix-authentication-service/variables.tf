@@ -93,16 +93,11 @@ variable "desired_container_count" {
 
 # - Environment Variables -
 
+# tflint-ignore: terraform_unused_declarations
 variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name where Helix Authentication Service will be available."
   default     = "localhost"
-}
-
-variable "enable_web_based_administration" {
-  type        = bool
-  description = "Flag for enabling web based administration of Helix Authentication Service."
-  default     = false
 }
 
 # - Load Balancer -
@@ -200,20 +195,20 @@ variable "create_helix_authentication_service_default_policy" {
   default     = true
 }
 
-variable "helix_authentication_service_admin_username_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator username."
-  default     = null
-}
-
-variable "helix_authentication_service_admin_password_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the Helix Authentication Service Administrator password."
-  default     = null
-}
-
 variable "debug" {
   type        = bool
   description = "Set this flag to enable execute command on service containers and force redeploys."
   default     = false
+}
+
+variable "use_local_config_file" {
+  type        = bool
+  description = "Set this flag to use a local configuration file for Helix Authentication Service."
+  default     = false
+}
+
+variable "local_config_file_path" {
+  type        = string
+  description = "The path to the local configuration file for Helix Authentication Service."
+  default     = null
 }

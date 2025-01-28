@@ -6,16 +6,16 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.78.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.22.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.84.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.26.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.3 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.72.1 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.20.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.82.1 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.24.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.6.3 |
 
 ## Modules
@@ -26,26 +26,28 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ebs_volume) | resource |
-| [aws_eip.helix_core_eip](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/eip) | resource |
-| [aws_iam_instance_profile.helix_core_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.helix_core_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_role) | resource |
-| [aws_instance.helix_core_instance](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/instance) | resource |
-| [aws_security_group.helix_core_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/security_group) | resource |
-| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/volume_attachment) | resource |
-| [aws_vpc_security_group_egress_rule.helix_core_internet](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [awscc_secretsmanager_secret.helix_core_super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.22.0/docs/resources/secretsmanager_secret) | resource |
-| [awscc_secretsmanager_secret.helix_core_super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.22.0/docs/resources/secretsmanager_secret) | resource |
+| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/ebs_volume) | resource |
+| [aws_eip.helix_core_eip](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/eip) | resource |
+| [aws_iam_instance_profile.helix_core_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_policy.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.helix_core_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.helix_core_AmazonSSMManagedInstanceCore_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.helix_core_default_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_instance.helix_core_instance](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/instance) | resource |
+| [aws_security_group.helix_core_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/security_group) | resource |
+| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/volume_attachment) | resource |
+| [aws_vpc_security_group_egress_rule.helix_core_internet](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [awscc_secretsmanager_secret.helix_core_super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.26.0/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.helix_core_super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.26.0/docs/resources/secretsmanager_secret) | resource |
 | [random_string.helix_core](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
-| [aws_ami.helix_core_ami](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/ami) | data source |
-| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/subnet) | data source |
+| [aws_ami.helix_core_ami](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/data-sources/ami) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/5.84.0/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
@@ -74,7 +76,7 @@ No modules.
 | <a name="input_selinux"></a> [selinux](#input\_selinux) | Whether to apply SELinux label updates for Helix Core. Don't enable this if SELinux is disabled on your target operating system. | `bool` | `false` | no |
 | <a name="input_server_type"></a> [server\_type](#input\_server\_type) | The Perforce Helix Core server type. | `string` | n/a | yes |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | The type of backing store [EBS, FSxZ] | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "helix-core",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "helix-core",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_unicode"></a> [unicode](#input\_unicode) | Whether to enable Unicode configuration for Helix Core the -xi flag for p4d. Set to true to enable Unicode support. | `bool` | `false` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC where Helix Core should be deployed | `string` | n/a | yes |
 
