@@ -7,26 +7,42 @@ description: Helix Swarm Terraform Module for AWS
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }
 
-[Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) is a free code review tool for projects hosted in [Perforce Helix Core](https://www.perforce.com/products/helix-core). This module deploys Helix Swarm as a service on AWS Elastic Container Service using the [publicly available image from Dockerhub](https://hub.docker.com/r/perforce/helix-swarm).
+[Perforce Helix Swarm](https://www.perforce.com/products/helix-swarm) is a free code review tool for projects hosted
+in [Perforce Helix Core](https://www.perforce.com/products/helix-core). This module deploys Helix Swarm as a service on
+AWS Elastic Container Service using
+the [publicly available image from Dockerhub](https://hub.docker.com/r/perforce/helix-swarm).
 
-Helix Swarm also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and configures connectivity for the Helix Swarm service.
+Helix Swarm also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and
+configures connectivity for the Helix Swarm service.
 
 This module deploys the following resources:
 
-- An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in via the `cluster_name` variable.
-- An ECS service running the latest Helix Swarm container ([perforce/helix-swarm](https://hub.docker.com/r/perforce/helix-swarm)) available.
+- An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in
+  via the `cluster_name` variable.
+- An ECS service running the latest Helix Swarm
+  container ([perforce/helix-swarm](https://hub.docker.com/r/perforce/helix-swarm)) available.
 - An Application Load Balancer for TLS termination of the Helix Swarm service.
+- An [Amazon Elastic File System](https://aws.amazon.com/efs/) for persistent storage of the Helix Swarm data directory.
 - A single node [AWS Elasticache Redis OSS](https://aws.amazon.com/elasticache/redis/) cluster.
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Deployment Architecture
-![Helix Swarm Module Architecture](../../../media/images/helix-swarm-architecture.png){: style="max-width:100%;max-height:100vh;margin:auto"}
+
+![Helix Swarm Module Architecture](../../../media/images/helix-swarm-architecture.png){: style="max-width:
+100%;max-height:100vh;margin:auto"}
 
 ## Prerequisites
 
-Perforce Helix Swarm needs to be able to connect to a Perforce Helix Core server. Helix Swarm leverages the same authentication mechanism as Helix Core, and needs to install required plugins on the upstream Helix Core instance during setup. This happens automatically, but Swarm requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the Helix Swarm container during startup. See the `p4d_super_user_arn`, `p4d_super_user_password_arn`, `p4d_swarm_user_arn`, and `p4d_swarm_password_arn` variables below for more details.
+Perforce Helix Swarm needs to be able to connect to a Perforce Helix Core server. Helix Swarm leverages the same
+authentication mechanism as Helix Core, and needs to install required plugins on the upstream Helix Core instance during
+setup. This happens automatically, but Swarm requires an administrative user's credentials to be able to initially
+connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then
+pulled into the Helix Swarm container during startup. See the `p4d_super_user_arn`, `p4d_super_user_password_arn`,
+`p4d_swarm_user_arn`, and `p4d_swarm_password_arn` variables below for more details.
 
-The [Helix Core module](../helix-core/helix-core.md) creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere.
+The [Helix Core module](../helix-core/helix-core.md) creates an administrative user on initial deployment, and stores
+the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output
+from the module, and can be referenced elsewhere.
 
 Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:
 
@@ -37,13 +53,14 @@ aws secretsmanager create-secret \
     --secret-string "{\"username\":\"swarm\",\"password\":\"EXAMPLE-PASSWORD\"}"
 ```
 
-You can then provide these credentials as variables when you define the Helix Swarm module in your terraform configurations:
+You can then provide these credentials as variables when you define the Helix Swarm module in your terraform
+configurations:
 
 ```hcl
 module "perforce_helix_swarm" {
-    source = "modules/perforce/helix-swarm"
-    ...
-    p4d_super_user_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:username::"
-    p4d_super_user_password_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:password::"
+  source                      = "modules/perforce/helix-swarm"
+  ...
+  p4d_super_user_arn          = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:username::"
+  p4d_super_user_password_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:password::"
 }
 ```
