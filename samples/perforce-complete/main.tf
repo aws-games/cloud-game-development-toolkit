@@ -175,6 +175,19 @@ resource "aws_lb_target_group" "perforce_web_services" {
   port        = 443
   protocol    = "TCP"
   vpc_id      = aws_vpc.perforce_vpc.id
+  health_check {
+    enabled  = true
+    protocol = "HTTPS"
+    port     = 443
+    path     = "/"
+  }
+}
+
+
+resource "aws_lb_target_group_attachment" "perforce_web_services" {
+  target_group_arn = aws_lb_target_group.perforce_web_services.arn
+  target_id        = aws_lb.perforce_web_services.arn
+  port             = 443
 }
 
 # Default rule redirects to Helix Swarm
