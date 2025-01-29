@@ -37,3 +37,18 @@ output "scylla_ips" {
   value       = tolist(aws_instance.scylla_ec2_instance[*].private_ip)
   description = "IPs of the Scylla EC2 instances"
 }
+
+output "nvme_node_group_label" {
+  value       = var.nvme_node_group_label
+  description = "Label for the NVME node group"
+}
+
+output "worker_node_group_label" {
+  value       = var.worker_node_group_label
+  description = "Label for the Worker node group"
+}
+
+output "system_node_group_label" {
+  value       = var.system_node_group_label
+  description = "Label for the System node group"
+}

@@ -48,9 +48,7 @@ resource "aws_eks_node_group" "worker_node_group" {
   node_role_arn   = aws_iam_role.worker_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
 
-  labels = {
-    "unreal-cloud-ddc/node-type" = "worker"
-  }
+  labels = var.worker_node_group_label
 
   taint {
     key    = "role"
@@ -114,9 +112,7 @@ resource "aws_eks_node_group" "nvme_node_group" {
   node_role_arn   = aws_iam_role.nvme_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
 
-  labels = {
-    "unreal-cloud-ddc/node-type" = "nvme"
-  }
+  labels = var.nvme_node_group_label
 
   taint {
     key    = "role"
@@ -179,9 +175,7 @@ resource "aws_eks_node_group" "system_node_group" {
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.system_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
-  labels = {
-    "pool" = "system-pool"
-  }
+  labels          = var.system_node_group_label
 
   launch_template {
     id      = aws_launch_template.system_launch_template.id

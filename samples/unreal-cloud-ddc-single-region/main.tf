@@ -2,9 +2,15 @@ resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
   name        = "unreal-cloud-ddc-token"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
-    exclude_numbers = false
-    include_space   = false
+    exclude_punctuation = true
+    exclude_numbers     = false
+    include_space       = false
+    password_length     = 64
   }
+}
+
+data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
+  secret_id = awscc_secretsmanager_secret.unreal_cloud_ddc_token.id
 }
 
 data "http" "public_ip" {
@@ -50,7 +56,6 @@ module "unreal_cloud_ddc_infra" {
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
 
-  //Because this is a single region and workers replicate between regions this is 0
   worker_managed_node_instance_type = "c6i.large"
   worker_managed_node_desired_size  = 1
 
@@ -72,14 +77,11 @@ module "unreal_cloud_ddc_intra_cluster" {
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
   unreal_cloud_ddc_helm_values = [
-    templatefile("${path.module}/assets/unreal_cloud_ddc_region_values.yaml", {
-      region      = data.aws_region.current.name
+    templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
+      scylla_ips  = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       bucket_name = module.unreal_cloud_ddc_infra.s3_bucket_id
-    }),
-    templatefile("${path.module}/assets/unreal_cloud_ddc_base.yaml", {
-      scylla_ips = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
-      region     = data.aws_region.current.name
-      token      = awscc_secretsmanager_secret.unreal_cloud_ddc_token.secret_id
+      region      = data.aws_region.current.name
+      token       = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
     })
   ]
 }

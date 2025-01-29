@@ -153,7 +153,6 @@ No modules.
 | [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
 | [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_server_side_encryption_configuration.unreal-s3-bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_security_group.nvme_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.scylla_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.system_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
@@ -185,6 +184,7 @@ No modules.
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
 | <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
+| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
 | <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
 | <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | The chip architecture to use when finding the scylla image. Valid | `string` | `"x86_64"` | no |
 | <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
@@ -195,11 +195,13 @@ No modules.
 | <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
 | <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
 | <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
+| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
 | <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
 | <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
+| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "worker"<br/>}</pre> | no |
 
 ## Outputs
 
@@ -209,8 +211,11 @@ No modules.
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
+| <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | OIDC provider for the EKS Cluster |
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
 | <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
+| <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
+| <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
