@@ -86,4 +86,4 @@ docker run --network host jupiter_benchmark --seed --seed-remote --host http://<
 ```
 Just a note here, you will have to specify the namespace to be DDC as the token only has access to that namespace.
 
-**It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate.**
+**It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.**
