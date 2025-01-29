@@ -11,7 +11,7 @@ description: Unreal Engine Cloud Derived Data Cache Infrastructure Terraform mod
 
 Unreal Cloud Derived Data Cache relies on a Cassandra compatible database which Epic has recommended ScyllaDB. This module provides these services by provisioning an [EC2 Instance](https://aws.amazon.com/ec2/) with ScyllaDB either as a single node or a clustered configuration, an EKS Cluster with 3 node groups (one for system tasks, NVME, and a Worker for regional replication) and a [S3 Bucket](https://aws.amazon.com/s3/).
 
-All instances deployed in this module have EC2 Connect allowing a user to get command line access through the AWS Console rather than through SSH.
+All instances deployed in this module have Session Manager allowing a user to get command line access through the AWS Console rather than through SSH.
 
 ## Deployment Architecture
 ![Unreal Engine Cloud DDC Infra Module Architecture](../../../media/images/unreal-cloud-ddc-infra.png)
