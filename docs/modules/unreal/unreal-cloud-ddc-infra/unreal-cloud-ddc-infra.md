@@ -15,7 +15,7 @@ Unreal Cloud Derived Data Cache relies on a Cassandra compatible database which 
 ![Unreal Engine Cloud DDC Infra Module Architecture](../../../media/images/unreal-cloud-ddc-infra.png)
 
 ## Prerequisites
-The Unreal Engine Cloud DDC Infrastructure Module has a dependency on a VPC with Subnets. The preferred configuration is a VPC with 2 public subnets and 2 private subnets that span 2 Availability Zones.
+The Unreal Engine Cloud DDC Infrastructure Module has a dependency on a VPC with Subnets. The preferred configuration is a VPC with 2 public subnets and 2 private subnets that span 2 Availability Zones and an S3 interface.
 
 For the variable, eks_node_group_subnets adding additional subnets will register all listed subnets as subnets where nodes can be deployed.
 
