@@ -53,8 +53,8 @@ resource "aws_iam_role" "unreal_cloud_ddc_sa_iam_role" {
       Action = "sts:AssumeRoleWithWebIdentity",
       Condition = {
         StringEquals = {
-          "${data.aws_iam_openid_connect_provider.oidc_provider.arn}:sub" = "system:serviceaccount:${var.unreal_cloud_ddc_namespace}:${var.unreal_cloud_ddc_namespace}-sa"
-          "${data.aws_iam_openid_connect_provider.oidc_provider.arn}:aud" = "sts.amazonaws.com"
+          "${replace(data.aws_iam_openid_connect_provider.oidc_provider.arn, "/^(.*provider/)/", "")}:sub" = "system:serviceaccount:${var.unreal_cloud_ddc_namespace}:${var.unreal_cloud_ddc_namespace}-sa"
+          "${replace(data.aws_iam_openid_connect_provider.oidc_provider.arn, "/^(.*provider/)/", "")}:aud" = "sts.amazonaws.com"
         }
       }
     }]
@@ -74,6 +74,9 @@ data "aws_iam_policy_document" "unreal_cloud_ddc_policy" {
     actions = [
       "s3:PutObject",
       "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
+      "s3:DeleteObjectTagging",
       "s3:DeleteObject",
       "s3:List*",
     ]

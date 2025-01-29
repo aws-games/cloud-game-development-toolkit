@@ -239,3 +239,27 @@ variable "eks_cluster_private_access" {
   default     = true
   description = "Allows private access of the EKS Control Plane from subnets attached to EKS Cluster "
 }
+
+variable "worker_node_group_label" {
+  type = map(string)
+  default = {
+    "unreal-cloud-ddc/node-type" = "worker"
+  }
+  description = "Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition."
+}
+
+variable "nvme_node_group_label" {
+  type = map(string)
+  default = {
+    "unreal-cloud-ddc/node-type" = "nvme"
+  }
+  description = "Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition."
+}
+
+variable "system_node_group_label" {
+  type = map(string)
+  default = {
+    "pool" = "system-pool"
+  }
+  description = "Label applied to system node group"
+}

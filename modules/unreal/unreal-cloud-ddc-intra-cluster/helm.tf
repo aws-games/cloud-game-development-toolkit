@@ -28,6 +28,10 @@ module "eks_blueprints_all_other_addons" {
 
   enable_aws_load_balancer_controller = true
   enable_aws_cloudwatch_metrics       = true
+  enable_cert_manager                 = var.enable_certificate_manager
+
+  cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
+
 
   tags = {
     Environment = var.cluster_name
@@ -44,7 +48,7 @@ resource "kubernetes_namespace" "unreal_cloud_ddc" {
 resource "kubernetes_service_account" "unreal_cloud_ddc_service_account" {
   depends_on = [kubernetes_namespace.unreal_cloud_ddc]
   metadata {
-    name        = "${var.unreal_cloud_ddc_namespace}-sa"
+    name        = var.unreal_cloud_ddc_service_account_name
     namespace   = var.unreal_cloud_ddc_namespace
     labels      = { aws-usage : "application" }
     annotations = { "eks.amazonaws.com/role-arn" : aws_iam_role.unreal_cloud_ddc_sa_iam_role.arn }
@@ -64,16 +68,16 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
 }
 
 resource "helm_release" "unreal_cloud_ddc" {
-  name       = "unreal-cloud-ddc"
-  chart      = "unreal-cloud-ddc"
-  repository = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
-  namespace  = var.unreal_cloud_ddc_namespace
-  version    = "${var.unreal_cloud_ddc_version}+helm"
+  name         = "unreal-cloud-ddc"
+  chart        = "unreal-cloud-ddc"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
+  namespace    = var.unreal_cloud_ddc_namespace
+  version      = "${var.unreal_cloud_ddc_version}+helm"
+  reset_values = true
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
     aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
   ]
-
   values = var.unreal_cloud_ddc_helm_values
 }

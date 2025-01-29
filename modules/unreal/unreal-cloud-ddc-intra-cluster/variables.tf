@@ -41,6 +41,28 @@ variable "oidc_credentials_secret_manager_arn" {
 
 variable "unreal_cloud_ddc_version" {
   type        = string
-  description = "Version of the Unreal Cloud DDC Helm chart"
+  description = "Version of the Unreal Cloud DDC Helm chart."
   default     = "1.2.0"
+}
+
+variable "unreal_cloud_ddc_service_account_name" {
+  type        = string
+  description = "Name of Unreal Cloud DDC service account."
+  default     = "unreal-cloud-ddc-sa"
+}
+
+variable "certificate_manager_hosted_zone_arn" {
+  type        = list(string)
+  description = "ARN of the Certificate Manager for Ingress."
+  default     = []
+}
+
+variable "enable_certificate_manager" {
+  type        = bool
+  description = "Enable Certificate Manager for Ingress. Required for TLS termination."
+  default     = false
+  validation {
+    condition     = var.enable_certificate_manager ? length(var.certificate_manager_hosted_zone_arn) > 0 : true
+    error_message = "Certificate Manager hosted zone ARN is required."
+  }
 }
