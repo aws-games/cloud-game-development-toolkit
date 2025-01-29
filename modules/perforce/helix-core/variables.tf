@@ -146,7 +146,7 @@ variable "amazon_fsxn_filesystem_id" {
   default     = ""
 
   validation {
-    condition     = var.storage_type != "FSxN" || length(var.amazon_fsxn_filesystem_id) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_filesystem_id) > 0
     error_message = "The amazon_fsxn_filesystem_id variable must be provided when storage_type is FSxN."
   }
 }
@@ -157,7 +157,7 @@ variable "amazon_fsxn_svm_id" {
   default     = ""
 
   validation {
-    condition     = var.storage_type != "FSxN" || length(var.amazon_fsxn_svm_id) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_svm_id) > 0
     error_message = "The amazon_fsxn_svm_id variable must be provided when storage_type is FSxN."
   }
 }
@@ -165,7 +165,7 @@ variable "amazon_fsxn_svm_id" {
 variable "fsxn_region" {
   description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
   type        = string
-  default     = ""
+  default     = "us-west-2"
 
   validation {
     condition     = var.storage_type != "FSxN" || length(var.fsxn_region) > 0
@@ -173,6 +173,55 @@ variable "fsxn_region" {
   }
 }
 
+variable "protocol" {
+  description = "Specify the protocol (NFS or ISCSI)"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || contains(["NFS", "ISCSI"], var.protocol)
+    error_message = "The protocol variable must be either 'NFS' or 'ISCSI'."
+  }
+}
+
+variable "fsxn_mgmt_ip" {
+  description = "FSxN management ip address"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_mgmt_ip) > 0
+    error_message = "The fsxn_mgmt_ip variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_svm_name" {
+  description = "FSxN storage virtual machine name"
+  type        = string
+  default     = "fsx"
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_svm_name) > 0
+    error_message = "The fsxn_svm_name variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_password" {
+  description = "FSxN admin user password AWS secret manager arn"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_password) > 0
+    error_message = "The fsxn_password variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_aws_profile" {
+  description = "FSxN admin user password AWS secret manager arn"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_aws_profile) > 0
+    error_message = "The fsxn_aws_profile variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
 ########################################
 # Helix Core Instance Roles
 ########################################

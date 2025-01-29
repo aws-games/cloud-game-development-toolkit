@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "5.83.1"
     }
-    awscc = {
-      source  = "hashicorp/awscc"
-      version = "1.25.0"
-    }
     netapp-ontap = {
         source  = "NetApp/netapp-ontap"
         version = "2.0.0"
