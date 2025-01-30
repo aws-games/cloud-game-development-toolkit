@@ -14,7 +14,7 @@ locals {
 
 variable "region" {
   type = string
-  default = "us-west-2"
+  default = null
 }
 
 variable "vpc_id" {
@@ -50,7 +50,7 @@ source "amazon-ebs" "al2023" {
 
   source_ami_filter {
     filters = {
-      name                = "al2023-ami-2023.6.*"
+      name                = "al2023-ami-2023.*"
       architecture        = "arm64"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
