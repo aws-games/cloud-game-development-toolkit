@@ -59,11 +59,3 @@ resource "aws_lambda_function" "lambda_function" {
   }
   timeout = 10
 }
-
-resource "aws_lambda_permission" "lambda_invoke_permission" {
-  count = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
-  statement_id  = "AllowExecutionFromCustomResource"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_function[count.index].function_name
-  principal     = "052582346341"
-}
