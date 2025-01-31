@@ -1,14 +1,28 @@
-variable "s3_bucket_name" {
-  description = "S3 bucket where playbook is stored"
-  type        = string
-
-  
+resource "random_string" "bucket_suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
 variable "playbook_file_name" {
   description = "The name of the playbook yaml on s3"
-  type = string
+  type        = string
+  default     = "p4_configure_playbook.yml"
 }
+
+resource "aws_s3_bucket" "ansible_bucket" {
+  bucket = local.bucket_name
+  force_destroy = true
+}
+
+resource "aws_s3_object" "playbook" {
+  bucket = aws_s3_bucket.ansible_bucket.id
+  key    = var.playbook_file_name
+  source = local.playbook_path
+  etag   = filemd5(local.playbook_path)
+}
+
+
 
 resource "aws_ssm_document" "ansible_playbook" {
   name          = "Toolkit-AnsiblePlaybook"
@@ -16,7 +30,7 @@ resource "aws_ssm_document" "ansible_playbook" {
   target_type = "/AWS::EC2::Instance"
   content       = jsonencode({
     schemaVersion = "2.2"
-    description   = "Use this document to run Ansible Playbooks on Systems Manager managed instances. For more information, see https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager-ansible.html."
+    description   = "Use this document to run Ansible Playbooks on Systems Manager managed instances. For more information, see https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager-ansible.html however this document is modified updated version of the original AWS document."
     parameters = {
       SourceType = {
         description   = "(Optional) Specify the source type."
@@ -130,14 +144,24 @@ resource "aws_ssm_association" "toolkitdoc" {
   association_name = "Toolkit-AnsibleAssociation"
 
   targets {
-    key    = "tag:Project"
-    values = ["ToolkitTest"]
+    key = "tag:ServerType"
+    values = distinct([
+      for tags in values(local.p4_server_type_tags) : tags.ServerType
+    ])
   }
   parameters = {
     SourceType = "S3"
     SourceInfo = jsonencode({
-      "path" = "https://s3.amazonaws.com/${var.s3_bucket_name}/${var.playbook_file_name}"
+      "path" = "https://s3.amazonaws.com/${aws_s3_bucket.ansible_bucket.id}/${aws_s3_object.playbook.key}"
     })
-    PlaybookFile = "${var.playbook_file_name}"
+    PlaybookFile = var.playbook_file_name
+    ExtraVariables = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment}"
+  }
+
+  depends_on = [aws_s3_object.playbook]
+
+  output_location {
+    s3_bucket_name = aws_s3_bucket.ansible_bucket.id
+    s3_key_prefix  = "ssm-output/"
   }
 }

@@ -48,7 +48,9 @@ resource "aws_instance" "helix_core_instance" {
  # EOT
 
 
-  vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
+ # vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
+  vpc_security_group_ids = [aws_security_group.helix_core_security_group[each.key].id]
+
 
   metadata_options {
     http_endpoint               = "enabled"

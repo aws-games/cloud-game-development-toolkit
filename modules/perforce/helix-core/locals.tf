@@ -53,4 +53,10 @@ locals {
     ]
   }
   
+  # Calculate relative path from the module to the playbook
+  playbook_path = "${path.module}/../../../assets/ansible-playbooks/perforce/helix-core/${var.playbook_file_name}"
+  # Generate bucket name with random suffix
+  bucket_name   = "ansible-playbook-bucket-${random_string.bucket_suffix.result}"
+
+  
 }

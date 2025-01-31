@@ -13,9 +13,9 @@ output "helix_core_eip_ids" {
   description = "Map of server types to their Elastic IP IDs."
 }
 
-output "security_group_id" {
-  value       = var.create_default_sg ? aws_security_group.helix_core_security_group[0].id : null
-  description = "The default security group of your Helix Core instance."
+output "security_group_ids" {
+  value       = { for k, v in aws_security_group.helix_core_security_group : k => v.id }
+  description = "Map of server types to their security group IDs."
 }
 
 output "helix_core_super_user_username_secret_arn" {
@@ -45,4 +45,9 @@ output "ebs_volume_ids" {
     depot    = { for k, v in aws_ebs_volume.depot : k => v.id }
   }
   description = "Map of EBS volume types and server types to their volume IDs."
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.ansible_bucket.id
+  description = "The name of the created S3 bucket that stores the P4 ansible playbooks"
 }

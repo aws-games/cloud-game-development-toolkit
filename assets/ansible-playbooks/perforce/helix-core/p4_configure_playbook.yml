@@ -32,13 +32,30 @@
     unicode: "{{ unicode | default('false') }}"
     topology_file: "/etc/perforce/topology.json"
 
+  pre_tasks:
+    - name: Ensure pip is installed
+      package:
+        name: python3-pip
+        state: present
+      become: yes
+
+    - name: Install required Python libraries
+      pip:
+        name:
+          - boto3
+          - botocore
+
   tasks:
-    - name: Check if script has already run
+    - name: Example task
+      debug:
+        msg: "Project Prefix: {{ PROJECT_PREFIX }}, Environment: {{ ENVIRONMENT }}"
+
+    - name: Check if playbook has already run
       stat:
         path: "{{ flag_file }}"
       register: flag_file_stat
 
-    - name: Exit if script has already run
+    - name: Exit if playbook has already run
       meta: end_play
       when: flag_file_stat.stat.exists
 
@@ -56,10 +73,32 @@
         - "/etc/perforce"
         - "/var/log/perforce"
 
+    - name: Get IMDSv2 token
+      shell: |
+        TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+        echo $TOKEN
+      register: imdsv2_token
+
+    - name: Get AWS Region
+      shell: |
+        curl -H "X-aws-ec2-metadata-token: {{ imdsv2_token.stdout }}" http://169.254.169.254/latest/meta-data/placement/region
+      register: aws_region
+
+    - name: Debug AWS region
+      debug:
+        msg: "AWS Region: {{ aws_region.stdout }}"
+    
+    - name: Set SSM parameter name
+      set_fact:
+        ssm_param_name: "/{{ PROJECT_PREFIX }}/{{ ENVIRONMENT }}/perforce/topology"
+
+    - name: Debug SSM parameter name
+      debug:
+        msg: "SSM Parameter Name: {{ ssm_param_name }}"
+
     - name: Fetch topology from AWS Parameter Store
       set_fact:
-        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', '/{{ lookup('env', 'PROJECT_PREFIX') }}/{{ lookup('env', 'ENVIRONMENT') }}/perforce/topology') }}"
-
+        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', ssm_param_name, region=aws_region.stdout) }}"        
 
     - name: Parse fetched topology
       set_fact:
@@ -110,6 +149,7 @@
 
     - name: Fetch instance metadata
       ec2_metadata_facts:
+      no_log: true
 
     - name: Check if ServerType tag exists
       set_fact:
@@ -281,18 +321,21 @@
         group: perforce
 
     - name: Resolve AWS secrets
-      command: aws secretsmanager get-secret-value --secret-id {{ item.secret_id }} --query SecretString --output text
+      amazon.aws.aws_secret:
+        name: "{{ item.secret_id }}"
+        region: "{{ aws_region }}"
       register: aws_secrets
       loop:
         - { secret_id: "{{ p4d_admin_username_secret_id }}", var_name: "p4d_admin_username" }
         - { secret_id: "{{ p4d_admin_pass_secret_id }}", var_name: "p4d_admin_pass" }
       no_log: true
 
-    - name: Set fact for resolved secrets
+    - name: Set secret values as facts
       set_fact:
-        "{{ item.item.var_name }}": "{{ item.stdout }}"
+        "{{ item.item.var_name }}": "{{ item.secret }}"
       loop: "{{ aws_secrets.results }}"
       no_log: true
+
 
     - name: Prepare EBS volumes or mount FSx
       block:
@@ -497,19 +540,13 @@
     - name: Verify SDP installation
       command: /hxdepots/p4/common/bin/verify_sdp.sh 1
 
-    - name: Prepare SiteTags
-      block:
-        - name: Get AWS region
-          command: curl -s http://169.254.169.254/latest/meta-data/placement/region
-          register: aws_region
 
-        - name: Create SiteTags file
-          template:
-            src: /hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample
-            dest: /hxdepots/p4/common/config/SiteTags.cfg
+    - name: Create SiteTags file
+      template:
+        src: /hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample
+        dest: /hxdepots/p4/common/config/SiteTags.cfg
 
-        - name: Append AWS region to SiteTags
-          lineinfile:
-            path: /hxdepots/p4/common/config/SiteTags.cfg
-            line: "aws{{ aws_region.stdout | replace('-', '') }}"
-          
+    - name: Append AWS region to SiteTags
+      lineinfile:
+        path: /hxdepots/p4/common/config/SiteTags.cfg
+        line: "aws{{ aws_region.stdout | replace('-', '') }}"

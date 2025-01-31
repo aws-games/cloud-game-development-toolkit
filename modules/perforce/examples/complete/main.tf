@@ -53,7 +53,6 @@ module "perforce_helix_core" {
     }
   ]
 
-
   storage_type         = "EBS"
   depot_volume_size    = 64
   metadata_volume_size = 32
@@ -65,6 +64,10 @@ module "perforce_helix_core" {
   
   helix_core_super_user_password_secret_name = "example-password-secret-name"
   helix_core_super_user_username_secret_name = "example-username-secret-name"
+
+  playbook_file_name = ""
+  s3_bucket_name = ""
+
 }
 
 ##########################################

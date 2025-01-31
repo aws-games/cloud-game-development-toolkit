@@ -16,7 +16,7 @@ data "aws_iam_policy_document" "ec2_trust_relationship" {
   }
 }
 
-# Grants permissions for Helix Core instance to fetch super user credentials from Secrets Manager
+# Grants permissions for Helix Core instance to fetch super user credentials from Secrets Manager and allows ansible to write logs to the CloudWatch Log Group
 data "aws_iam_policy_document" "helix_core_default_policy" {
   statement {
     effect = "Allow"
@@ -33,7 +33,18 @@ data "aws_iam_policy_document" "helix_core_default_policy" {
       var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn,
     ]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:PutObjectAcl"
+    ]
+    resources = ["${aws_s3_bucket.ansible_bucket.arn}/ssm-output/*"]
+  }
 }
+
 
 resource "aws_iam_policy" "helix_core_default_policy" {
   name        = "${var.project_prefix}-helix-core-default-policy"
@@ -62,6 +73,12 @@ resource "aws_iam_role_policy_attachment" "helix_core_default_policy_attachment"
   count      = var.create_helix_core_default_role ? 1 : 0
   role       = aws_iam_role.helix_core_default_role[0].name
   policy_arn = aws_iam_policy.helix_core_default_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "helix_core_s3_readonly_attachment" {
+  count      = var.create_helix_core_default_role ? 1 : 0
+  role       = aws_iam_role.helix_core_default_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 }
 
 # Instance Profile

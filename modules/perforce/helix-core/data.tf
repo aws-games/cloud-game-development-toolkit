@@ -11,12 +11,12 @@ data "aws_subnet" "selected" {
 # Fetching custom Perforce Helix Core AMI
 data "aws_ami" "helix_core_ami" {
   most_recent = true
-  name_regex  = "al2023-ami-2023.5.*"
+  name_regex  = "al2023-ami-2023.6.*"
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["al2023-ami-2023.5.*"]
+    values = ["al2023-ami-2023.6.*"]
   }
 
   filter {
