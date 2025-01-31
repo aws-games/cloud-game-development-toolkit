@@ -61,7 +61,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       entryPoint = [
         "bash",
         "-c",
-        "mv /srv/cgd-toolkit/config.toml /srv/config.toml && exec node bin/www.js"
+        "mv /srv/aws-cgd-toolkit/config/config.toml /srv/config.toml && exec node bin/www.js"
       ],
       logConfiguration = {
         logDriver = "awslogs"
@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       mountPoints = [
         {
           sourceVolume  = "helix-auth-config"
-          containerPath = "/srv/cgd-toolkit"
+          containerPath = "/srv/aws-cgd-toolkit/config"
         }
       ],
       healthCheck = {
@@ -85,34 +85,16 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       dependsOn = [
         {
           containerName = "helix-auth-svc-config"
-          condition     = "COMPLETE"
+          condition     = "SUCCESS"
         }
       ]
     },
     {
-      name      = "helix-auth-svc-config"
-      image     = "public.ecr.aws/amazonlinux/amazonlinux:2023-minimal"
-      essential = false
-      command = [
-        "bash", "-c", <<-EOT
-        set -e
-        echo "Installing AWS CLI..." && \
-        dnf install -y aws-cli && \
-        echo "Copying config file..." && \
-        aws s3 cp s3://$HELIX_AUTH_CONFIG_BUCKET/$HELIX_AUTH_CONFIG_KEY /srv/cgd-toolkit/config.toml
-      EOT
-      ]
+      name                     = "helix-auth-svc-config"
+      image                    = "public.ecr.aws/aws-cli/aws-cli:latest"
+      essential                = false
+      command                  = ["s3", "cp", "s3://${aws_s3_object.helix_authentication_service_config[0].bucket}/${aws_s3_object.helix_authentication_service_config[0].key}", "/aws-cgd-toolkit/config/config.toml"]
       readonly_root_filesystem = false
-      environment = [
-        {
-          name  = "HELIX_AUTH_CONFIG_BUCKET"
-          value = aws_s3_object.helix_authentication_service_config[0].bucket
-        },
-        {
-          name  = "HELIX_AUTH_CONFIG_KEY"
-          value = aws_s3_object.helix_authentication_service_config[0].key
-        }
-      ],
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -124,7 +106,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       mountPoints = [
         {
           sourceVolume  = "helix-auth-config"
-          containerPath = "/srv/cgd-toolkit"
+          containerPath = "/aws-cgd-toolkit/config"
         }
       ],
     }
