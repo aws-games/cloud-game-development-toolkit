@@ -44,6 +44,18 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
           awslogs-stream-prefix = "[APP]"
         }
       },
+      mountPoints = [
+        {
+          sourceVolume  = "teamcity_data",
+          containerPath = "/data/teamcity_server/datadir"
+          readOnly      = false
+        },
+        {
+          sourceVolume  = "teamcity_logs",
+          containerPath = "/data/teamcity_server/logs"
+          readOnly      = false
+        }
+      ]
     }
   ])
 
@@ -52,6 +64,31 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
   }
   task_role_arn      = aws_iam_role.teamcity_default_role.arn
   execution_role_arn = aws_iam_role.teamcity_task_execution_role.arn
+
+  volume {
+    name = "teamcity_data"
+    efs_volume_configuration {
+      file_system_id          = aws_efs_file_system.teamcity_efs_file_system.id
+      transit_encryption      = "ENABLED"
+      transit_encryption_port = 2999
+      authorization_config {
+        access_point_id = aws_efs_access_point.teamcity_efs_data_access_point.id
+        iam             = "ENABLED"
+      }
+    }
+  }
+
+  volume {
+    name = "teamcity_logs"
+    efs_volume_configuration {
+      file_system_id     = aws_efs_file_system.teamcity_efs_file_system.id
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.teamcity_efs_logs_access_point.id
+        iam             = "ENABLED"
+      }
+    }
+  }
 }
 
 
@@ -90,6 +127,38 @@ resource "aws_security_group" "teamcity_service_sg" {
 
   tags = local.tags
 }
+
+# TeamCity EFS security group
+resource "aws_security_group" "teamcity_efs_sg" {
+  name        = "${local.name_prefix}-efs-sg"
+  description = "TeamCity EFS mount target security group"
+  vpc_id      = var.vpc_id
+
+  tags = local.tags
+}
+
+# Ingress rule for NFS traffic from service to EFS
+resource "aws_vpc_security_group_ingress_rule" "service_efs" {
+  security_group_id            = aws_security_group.teamcity_efs_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_service_sg.id
+  description                  = "Allow inbound access from TeamCity service containers to EFS"
+  ip_protocol                  = "TCP"
+  from_port                    = 2049
+  to_port                      = 2049
+}
+
+# Ingress rule for NFS traffic from EFS to service
+resource "aws_vpc_security_group_ingress_rule" "efs_service" {
+  security_group_id            = aws_security_group.teamcity_service_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_efs_sg.id
+  description                  = "Allow inbound access from EFS to TeamCity service containers"
+  ip_protocol                  = "TCP"
+  from_port                    = 2049
+  to_port                      = 2049
+}
+
+
+
 
 # TeamCity ALB security group
 resource "aws_security_group" "teamcity_alb_sg" {
@@ -270,24 +339,75 @@ resource "aws_lb_listener" "teamcity_listener" {
 # # TeamCity EFS #
 # ################
 
-# # File system for teamcity
-# resource "aws_efs_file_system" "teamcity_efs_file_system" {
-#   creation_token   = "${local.name_prefix}-efs-file-system"
-#   performance_mode = var.teamcity_efs_performance_mode
-#   throughput_mode  = var.teamcity_efs_throughput_mode
+# File system for teamcity
+resource "aws_efs_file_system" "teamcity_efs_file_system" {
+  creation_token   = "${local.name_prefix}-efs-file-system"
+  performance_mode = var.teamcity_efs_performance_mode
+  throughput_mode  = var.teamcity_efs_throughput_mode
 
-#   #TODO: Parameterize encryption and customer managed key creation
-#   encrypted = true
+  #TODO: Parameterize encryption and customer managed key creation
+  encrypted = false
 
-#   lifecycle_policy {
-#     transition_to_ia = "AFTER_30_DAYS"
-#   }
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
 
-#   lifecycle_policy {
-#     transition_to_primary_storage_class = "AFTER_1_ACCESS"
-#   }
-#   #checkov:skip=CKV_AWS_184: CMK encryption not supported currently
-#   tags = merge(local.tags, {
-#     Name = "${local.name_prefix}-efs-file-system"
-#   })
-# }
+  lifecycle_policy {
+    transition_to_primary_storage_class = "AFTER_1_ACCESS"
+  }
+  #checkov:skip=CKV_AWS_184: CMK encryption not supported currently
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-efs-file-system"
+  })
+}
+
+# Mount Point for teamcity file system
+resource "aws_efs_mount_target" "teamcity_efs_mount_target" {
+  file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
+  subnet_id      = var.service_subnets[0]
+  security_groups = [
+    aws_security_group.teamcity_efs_sg.id
+  ]
+}
+
+# TeamCity data directory
+
+resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
+  file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
+  posix_user {
+    gid = 1000
+    uid = 1000
+  }
+  root_directory {
+    path = "/data/teamcity_server/datadir"
+    creation_info {
+      owner_gid   = 1000
+      owner_uid   = 1000
+      permissions = 755
+    }
+
+  }
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-efs-access-point"
+  })
+}
+
+# TeamCity Log directory
+resource "aws_efs_access_point" "teamcity_efs_logs_access_point" {
+  file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
+  posix_user {
+    gid = 1000
+    uid = 1000
+  }
+  root_directory {
+    path = "/data/teamcity_server/logs"
+    creation_info {
+      owner_gid   = 1000
+      owner_uid   = 1000
+      permissions = 755
+    }
+  }
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-efs-logs-access-point"
+  })
+}
