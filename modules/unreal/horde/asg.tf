@@ -131,7 +131,9 @@ resource "aws_s3_bucket" "ansible_playbooks" {
   #checkov:skip=CKV2_AWS_6: Public access block conditionally defined
   #checkov:skip=CKV_AWS_21: Versioning enabled conditionally
 
-  tags = local.tags
+  tags                = local.tags
+  object_lock_enabled = true
+
 }
 
 resource "aws_s3_bucket_versioning" "ansible_playbooks_versioning" {
@@ -157,19 +159,21 @@ resource "aws_s3_bucket_public_access_block" "ansible_playbooks_bucket_public_bl
 }
 
 resource "aws_s3_object" "unreal_horde_agent_playbook" {
-  count  = length(var.agents) > 0 ? 1 : 0
-  bucket = aws_s3_bucket.ansible_playbooks[0].id
-  key    = "/agent/horde-agent.ansible.yml"
-  source = "${path.module}/config/agent/horde-agent.ansible.yml"
-  etag   = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
+  count         = length(var.agents) > 0 ? 1 : 0
+  bucket        = aws_s3_bucket.ansible_playbooks[0].id
+  key           = "/agent/horde-agent.ansible.yml"
+  source        = "${path.module}/config/agent/horde-agent.ansible.yml"
+  etag          = filemd5("${path.module}/config/agent/horde-agent.ansible.yml")
+  force_destroy = true
 }
 
 resource "aws_s3_object" "unreal_horde_agent_service" {
-  count  = length(var.agents) > 0 ? 1 : 0
-  bucket = aws_s3_bucket.ansible_playbooks[0].id
-  key    = "/agent/horde-agent.service"
-  source = "${path.module}/config/agent/horde-agent.service"
-  etag   = filemd5("${path.module}/config/agent/horde-agent.service")
+  count         = length(var.agents) > 0 ? 1 : 0
+  bucket        = aws_s3_bucket.ansible_playbooks[0].id
+  key           = "/agent/horde-agent.service"
+  source        = "${path.module}/config/agent/horde-agent.service"
+  etag          = filemd5("${path.module}/config/agent/horde-agent.service")
+  force_destroy = true
 }
 
 resource "aws_ssm_document" "ansible_run_document" {
