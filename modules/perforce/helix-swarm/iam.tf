@@ -37,6 +37,18 @@ data "aws_iam_policy_document" "helix_swarm_default_policy" {
       "*"
     ]
   }
+  statement {
+    sid    = "ConfigS3Access"
+    effect = "Allow"
+    actions = [
+      "s3:*"
+    ]
+    resources = [
+      # "*",
+      aws_s3_bucket.helix_swarm_config_bucket.arn,
+      "${aws_s3_bucket.helix_swarm_config_bucket.arn}/*",
+    ]
+  }
 }
 
 data "aws_iam_policy_document" "helix_swarm_ssm_policy" {

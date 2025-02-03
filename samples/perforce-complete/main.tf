@@ -28,7 +28,7 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 ##########################################
 
 module "perforce_helix_core" {
-  source = "../../helix-core"
+  source = "../../modules/perforce/helix-core"
 
   # Networking
   vpc_id                      = aws_vpc.perforce_vpc.id
@@ -56,7 +56,7 @@ module "perforce_helix_core" {
 ##########################################
 
 module "perforce_helix_authentication_service" {
-  source = "../../helix-authentication-service"
+  source = "../../modules/perforce/helix-authentication-service"
 
   # Networking
   vpc_id                               = aws_vpc.perforce_vpc.id
@@ -77,7 +77,29 @@ module "perforce_helix_authentication_service" {
 # Perforce Helix Swarm
 ##########################################
 module "perforce_helix_swarm" {
-  source = "../../helix-swarm"
+  source = "../../modules/perforce/helix-swarm"
+
+  # Custom config.php File Configuration
+  config_php_hostname = var.root_domain_name
+  config_php_mail = {
+    name                = "amazon-ses" // name of the SMTP host
+    host                = "email-smtp.${data.aws_region.current.name}.amazonaws.com"
+    port                = "587"                                                       // SMTP host listening port (for SES valid ports are 25, 587, or 2587)
+    connection_class    = "smtp"                                                      // 'smtp', 'plain', 'login', 'crammd5'
+    username            = aws_iam_access_key.swarm_ses_smtp_user.id                   // username for user on SMTP host
+    password            = aws_iam_access_key.swarm_ses_smtp_user.ses_smtp_password_v4 // password for user on SMTP host
+    connection_security = "tls"                                                       // required for Amazon SES
+    recipient           = var.receiver_email_address
+  }
+  config_php_p4 = {
+    sso = "enabled"
+  }
+  config_php_redis = {
+    host = "123"
+    port = 6379
+  }
+  debug = true
+
 
   # Networking
   vpc_id                           = aws_vpc.perforce_vpc.id
@@ -153,6 +175,19 @@ resource "aws_lb_target_group" "perforce_web_services" {
   port        = 443
   protocol    = "TCP"
   vpc_id      = aws_vpc.perforce_vpc.id
+  health_check {
+    enabled  = true
+    protocol = "HTTPS"
+    port     = 443
+    path     = "/"
+  }
+}
+
+
+resource "aws_lb_target_group_attachment" "perforce_web_services" {
+  target_group_arn = aws_lb_target_group.perforce_web_services.arn
+  target_id        = aws_lb.perforce_web_services.arn
+  port             = 443
 }
 
 # Default rule redirects to Helix Swarm

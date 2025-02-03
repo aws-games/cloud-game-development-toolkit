@@ -231,6 +231,45 @@ variable "enable_sso" {
   description = "Set this to true if using SSO for Helix Swarm authentication."
 }
 
+# Custom config.php
+variable "config_php_hostname" {
+  type        = string
+  default     = "localhost"
+  description = "The hostname for the custom config.php file."
+}
+variable "config_php_mail" {
+  type = object({
+    name                = optional(string, "localhost")
+    host                = optional(string, "127.0.0.1")
+    port                = optional(number, 587)
+    connection_class    = optional(string, "plain")
+    username            = optional(string, "user")
+    password            = optional(string, "pass")
+    connection_security = optional(string, "ssl") // valid values are 'ssl', 'tls' or nothing
+    recipient           = string
+  })
+}
+variable "config_php_p4" {
+  type = object({
+    port                 = optional(string, "my-helix-core-server:1666")
+    user                 = optional(string, "admin_userid")
+    password             = optional(string, "admin user ticket or password")
+    sso                  = optional(string, "disabled")
+    proxy_mode           = optional(bool, true)
+    max_changelist_files = optional(number, 1000)
+    auto_register_url    = optional(bool, true)
+  })
+}
+variable "config_php_redis" {
+  type = object({
+    host = optional(string, "swarm-elasticache-redis-cluster.jmuaq0.0001.usw2.cache.amazonaws.com")
+    port = optional(number, 6379)
+  })
+}
+
+
+
+
 ######################
 # ELASTICACHE CONFIG
 ######################

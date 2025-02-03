@@ -12,3 +12,4 @@ output "helix_authentication_service_admin_url" {
   value       = "https://auth.perforce.${var.root_domain_name}/admin"
   description = "The URL for the Helix Authentication Service admin page."
 }
+

@@ -12,11 +12,6 @@ locals {
   ami_prefix = "p4_al2023"
 }
 
-variable "region" {
-  type = string
-  default = "us-west-2"
-}
-
 variable "vpc_id" {
   type = string
   default = null
@@ -38,7 +33,6 @@ variable "ssh_interface" {
 }
 
 source "amazon-ebs" "al2023" {
-  region = var.region
   ami_name      = "${local.ami_prefix}-${local.timestamp}"
   instance_type = "t4g.medium"
 
@@ -50,7 +44,7 @@ source "amazon-ebs" "al2023" {
 
   source_ami_filter {
     filters = {
-      name                = "al2023-ami-2023.5.*"
+      name                = "al2023-ami-2023.*"
       architecture        = "arm64"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
