@@ -41,7 +41,7 @@ module "unreal_cloud_ddc_infra" {
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
   eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = var.eks_cluster_ip_allow_list != null ? var.eks_cluster_ip_allow_list : [data.http.public_ip.response_body]
+  eks_cluster_public_endpoint_access_cidr = var.eks_cluster_ip_allow_list != null ? var.eks_cluster_ip_allow_list : [chomp(data.http.public_ip.response_body)]
   eks_cluster_private_access              = true
   eks_cluster_public_access               = true
 
