@@ -6,4 +6,5 @@ locals {
   private_subnet_cidrs = ["10.0.3.0/24", "10.0.4.0/24"]
   azs                  = slice(data.aws_availability_zones.available.names, 0, 2)
   tags                 = {}
+
 }

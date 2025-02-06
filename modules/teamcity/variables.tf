@@ -1,8 +1,30 @@
+########################################
+# GENERAL CONFIGURATION
+########################################
+
 variable "name" {
   type        = string
   default     = "teamcity"
   description = "The name applied to resources in the TeamCity module"
 }
+variable "tags" {
+  type = map(any)
+  default = {
+    "iac-management" = "CGD-Toolkit"
+    "iac-module"     = "TeamCity"
+    "iac-provider"   = "Terraform"
+  }
+  description = "Tags to apply to resources."
+}
+variable "environment" {
+  type        = string
+  description = "The current environment (e.g. dev, prod, etc.)"
+  default     = "dev"
+}
+
+########################################
+# TeamCity SERVICE CONFIGURATION
+########################################
 
 variable "container_cpu" {
   type        = number
@@ -65,3 +87,4 @@ variable "alb_certificate_arn" {
   type        = string
   description = "The ARN of the SSL certificate to use for the ALB"
 }
+
