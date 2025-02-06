@@ -74,6 +74,7 @@ data "aws_iam_policy_document" "unreal_cloud_ddc_policy" {
     actions = [
       "s3:PutObject",
       "s3:GetObject",
+      "s3:GetObjectAttributes",
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
       "s3:DeleteObjectTagging",
