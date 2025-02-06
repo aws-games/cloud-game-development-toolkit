@@ -110,16 +110,14 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
 
 # ECS Service
 resource "aws_ecs_service" "teamcity" {
-  name = local.name_prefix
-
+  name                   = local.name_prefix
   cluster                = aws_ecs_cluster.teamcity_cluster.name
   task_definition        = aws_ecs_task_definition.teamcity_task_definition.arn
   launch_type            = "FARGATE"
   desired_count          = 1    #TODO: make this configurable
   force_new_deployment   = true #TODO: make this configurable
   enable_execute_command = true #TODO: make this configurable
-
-  wait_for_steady_state = true
+  wait_for_steady_state  = true
 
   network_configuration {
     subnets         = var.service_subnets
@@ -214,16 +212,6 @@ resource "aws_security_group" "teamcity_alb_sg" {
   tags        = local.tags
 }
 
-# Ingress rule to allow ALB to send health checks to service
-resource "aws_vpc_security_group_ingress_rule" "alb_service_healthcheck" {
-  security_group_id            = aws_security_group.teamcity_service_sg.id
-  referenced_security_group_id = aws_security_group.teamcity_alb_sg.id
-  description                  = "Allow health checks from ALB to service containers"
-  ip_protocol                  = "TCP"
-  from_port                    = 80
-  to_port                      = 80
-}
-
 # Ingress rule for HTTP traffic from ALB to service
 resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
   security_group_id            = aws_security_group.teamcity_service_sg.id
@@ -232,7 +220,6 @@ resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "TCP"
-
 }
 
 # Egress rule for HTTP traffic from ALB to service
@@ -243,7 +230,6 @@ resource "aws_vpc_security_group_egress_rule" "service_outbound_alb" {
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "TCP"
-
 }
 
 # Grant TeamCity service access to internet
@@ -254,10 +240,10 @@ resource "aws_vpc_security_group_egress_rule" "internet_outbound" {
   ip_protocol       = "-1"
 }
 
-
 #############################################
 # IAM Roles for TeamCity Module
 #############################################
+
 data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
   statement {
     effect  = "Allow"
@@ -268,6 +254,7 @@ data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
     }
   }
 }
+
 data "aws_iam_policy_document" "teamcity_default_policy" {
   # ECS
   statement {
@@ -284,6 +271,7 @@ data "aws_iam_policy_document" "teamcity_default_policy" {
     ]
   }
 }
+
 resource "aws_iam_policy" "teamcity_default_policy" {
   name        = "teamcity-default-policy"
   description = "Policy granting permissions for Unreal Horde."
@@ -314,7 +302,6 @@ resource "aws_cloudwatch_log_group" "teamcity_log_group" {
   retention_in_days = var.teamcity_cloudwatch_log_retention_in_days
   tags              = local.tags
 }
-
 
 # Load Balancer for TeamCity Service
 resource "aws_lb" "teamcity_external_lb" {
@@ -362,9 +349,6 @@ resource "aws_lb_listener" "teamcity_listener" {
   }
   tags = local.tags
 }
-
-
-
 
 # #######################################
 # # TeamCity Aurora Serverless Database #
@@ -456,7 +440,6 @@ resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
       owner_uid   = 0
       permissions = 0775
     }
-
   }
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-efs-access-point"
