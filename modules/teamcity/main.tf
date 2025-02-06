@@ -13,7 +13,6 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
   tags = local.tags
 }
 
-
 # TeamCity Task Definition
 resource "aws_ecs_task_definition" "teamcity_task_definition" {
   family                   = var.name
@@ -21,7 +20,6 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
   network_mode             = "awsvpc"
   cpu                      = var.container_cpu
   memory                   = var.container_memory
-
 
   container_definitions = jsonencode([
     {
@@ -43,7 +41,7 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "[APP]"
         }
-      },
+      }
       mountPoints = [
         {
           sourceVolume  = "teamcity_data",
@@ -56,9 +54,27 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
           readOnly      = false
         }
       ]
+      # Set environment variables for database connection string
+      environment = [
+        {
+          name  = "TEAMCITY_DB_URL"
+          value = local.database_connection_string
+        },
+        {
+          name  = "TEAMCITY_DB_USER"
+          value = local.database_user
+        },
+        {
+          name  = "TEAMCITY_DB_PASSWORD"
+          value = local.database_password
+        },
+        {
+          name  = "TEAMCITY_LOGS_PATH"
+          value = "/data/teamcity_server/logs"
+        }
+      ]
     }
   ])
-
   tags = {
     Name = var.name
   }
@@ -81,8 +97,9 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
   volume {
     name = "teamcity_logs"
     efs_volume_configuration {
-      file_system_id     = aws_efs_file_system.teamcity_efs_file_system.id
-      transit_encryption = "ENABLED"
+      file_system_id          = aws_efs_file_system.teamcity_efs_file_system.id
+      transit_encryption      = "ENABLED"
+      transit_encryption_port = 2998
       authorization_config {
         access_point_id = aws_efs_access_point.teamcity_efs_logs_access_point.id
         iam             = "ENABLED"
@@ -157,8 +174,42 @@ resource "aws_vpc_security_group_ingress_rule" "efs_service" {
   to_port                      = 2049
 }
 
+# TeamCity Aurora Serverless PostgreSQL security group
+resource "aws_security_group" "teamcity_db_sg" {
+  name        = "${local.name_prefix}-db-sg"
+  description = "TeamCity DB security group"
+  vpc_id      = var.vpc_id
 
+  tags = local.tags
+}
 
+# Ingress rule for PostgreSQL from service to database cluster
+resource "aws_vpc_security_group_ingress_rule" "service_db" {
+  security_group_id            = aws_security_group.teamcity_db_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_service_sg.id
+  description                  = "Allow inbound access from TeamCity service containers to DB"
+  ip_protocol                  = "TCP"
+  from_port                    = 5432
+  to_port                      = 5432
+}
+
+# Ingress rule for PostgreSQL from database cluster to service
+resource "aws_vpc_security_group_ingress_rule" "db_service" {
+  security_group_id            = aws_security_group.teamcity_service_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_db_sg.id
+  description                  = "Allow inbound access from DB to TeamCity service containers"
+  ip_protocol                  = "TCP"
+  from_port                    = 5432
+  to_port                      = 5432
+}
+
+# Egress rule for database to let all traffic out
+resource "aws_vpc_security_group_egress_rule" "db_outbound" {
+
+  security_group_id = aws_security_group.teamcity_db_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
 
 # TeamCity ALB security group
 resource "aws_security_group" "teamcity_alb_sg" {
@@ -168,10 +219,21 @@ resource "aws_security_group" "teamcity_alb_sg" {
   tags = local.tags
 }
 
+# Ingress rule to allow ALB to send health checks to service
+resource "aws_vpc_security_group_ingress_rule" "alb_service_healthcheck" {
+  security_group_id            = aws_security_group.teamcity_service_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_alb_sg.id
+  description                  = "Allow health checks from ALB to service containers"
+  ip_protocol                  = "TCP"
+  from_port                    = 80
+  to_port                      = 80
+}
+
 # Ingress rule for HTTP traffic from ALB to service
 resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
   security_group_id            = aws_security_group.teamcity_service_sg.id
   referenced_security_group_id = aws_security_group.teamcity_alb_sg.id
+  description                  = "Allow inbound HTTP traffic from ALB to service containers"
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "TCP"
@@ -182,6 +244,7 @@ resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
 resource "aws_vpc_security_group_egress_rule" "service_outbound_alb" {
   security_group_id            = aws_security_group.teamcity_alb_sg.id
   referenced_security_group_id = aws_security_group.teamcity_service_sg.id
+  description                  = "Allow outbound HTTP traffic from ALB to service containers"
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "TCP"
@@ -190,11 +253,12 @@ resource "aws_vpc_security_group_egress_rule" "service_outbound_alb" {
 
 # Grant TeamCity service access to internet
 resource "aws_vpc_security_group_egress_rule" "internet_outbound" {
-
   security_group_id = aws_security_group.teamcity_service_sg.id
+  description       = "Allow outbound internet access from TeamCity service containers"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
 }
+
 
 #############################################
 # IAM Roles for TeamCity Module
@@ -233,8 +297,8 @@ resource "aws_iam_policy" "teamcity_default_policy" {
 
 resource "aws_iam_role" "teamcity_default_role" {
   name               = "teamcity-default-role"
+  description        = "Default role for TeamCity ECS task."
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
   managed_policy_arns = [
     aws_iam_policy.teamcity_default_policy.arn
   ]
@@ -277,13 +341,16 @@ resource "aws_lb_target_group" "teamcity_target_group" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
-  # health_check {
-  #   path                = "/"
-  #   interval            = 30
-  #   timeout             = 5
-  #   healthy_threshold   = 2
-  #   unhealthy_threshold = 2
-  # }
+  health_check {
+    path                = "/healthCheck/healthy"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+    port                = var.container_port
+    protocol            = "HTTP"
+    matcher             = "200"
+  }
 
   tags = local.tags
 }
@@ -308,32 +375,43 @@ resource "aws_lb_listener" "teamcity_listener" {
 # #######################################
 # # TeamCity Aurora Serverless Database #
 # #######################################
+# Subnet group
+resource "aws_db_subnet_group" "teamcity_db_subnet_group" {
+  name       = "${local.name_prefix}-db-subnet-group"
+  subnet_ids = var.service_subnets
+  tags       = local.tags
+}
 
 # # RDS instance with Aurora serverless engine
-# resource "aws_rds_cluster" "teamcity_db_cluster" {
-#   cluster_identifier = "teamcity-cluster"
-#   engine             = "aurora-postgresql"
-#   engine_mode        = "provisioned"
-#   engine_version     = "16.6"
-#   database_name      = "teamcity"
-#   master_username    = "teamcity"
-#   master_password    = "teamcity2025"
-#   storage_encrypted  = true
+resource "aws_rds_cluster" "teamcity_db_cluster" {
+  cluster_identifier   = "teamcity-cluster"
+  engine               = "aurora-postgresql"
+  engine_mode          = "provisioned"
+  engine_version       = "16.6"
+  database_name        = "teamcity"
+  master_username      = "teamcity"
+  master_password      = "teamcity2025"
+  storage_encrypted    = true
+  db_subnet_group_name = aws_db_subnet_group.teamcity_db_subnet_group.id
+  vpc_security_group_ids = [
+    aws_security_group.teamcity_db_sg.id
+  ]
 
-#   serverlessv2_scaling_configuration {
-#     max_capacity             = 1.0
-#     min_capacity             = 0.0
-#     seconds_until_auto_pause = 3600
-#   }
-# }
 
-# resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
-#   cluster_identifier = aws_rds_cluster.teamcity_db_cluster.id
-#   instance_class     = "db.serverless"
-#   engine             = aws_rds_cluster.teamcity_db_cluster.engine
-#   engine_version     = aws_rds_cluster.teamcity_db_cluster.engine_version
-#   skip_final_snapshot = true
-# }
+  serverlessv2_scaling_configuration {
+    max_capacity             = 1.0
+    min_capacity             = 0.0
+    seconds_until_auto_pause = 3600
+  }
+}
+
+resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
+  cluster_identifier = aws_rds_cluster.teamcity_db_cluster.id
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.teamcity_db_cluster.engine
+  engine_version     = aws_rds_cluster.teamcity_db_cluster.engine_version
+
+}
 
 # ################
 # # TeamCity EFS #
@@ -361,10 +439,11 @@ resource "aws_efs_file_system" "teamcity_efs_file_system" {
   })
 }
 
-# Mount Point for teamcity file system
+# # Mount Point for teamcity file system
 resource "aws_efs_mount_target" "teamcity_efs_mount_target" {
+  count          = length(var.service_subnets)
   file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
-  subnet_id      = var.service_subnets[0]
+  subnet_id      = var.service_subnets[count.index]
   security_groups = [
     aws_security_group.teamcity_efs_sg.id
   ]
@@ -375,15 +454,15 @@ resource "aws_efs_mount_target" "teamcity_efs_mount_target" {
 resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
   file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
   posix_user {
-    gid = 1000
-    uid = 1000
+    gid = 0
+    uid = 0
   }
   root_directory {
     path = "/data/teamcity_server/datadir"
     creation_info {
-      owner_gid   = 1000
-      owner_uid   = 1000
-      permissions = 755
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = 0775
     }
 
   }
@@ -396,15 +475,15 @@ resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
 resource "aws_efs_access_point" "teamcity_efs_logs_access_point" {
   file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
   posix_user {
-    gid = 1000
-    uid = 1000
+    gid = 0
+    uid = 0
   }
   root_directory {
     path = "/data/teamcity_server/logs"
     creation_info {
-      owner_gid   = 1000
-      owner_uid   = 1000
-      permissions = 755
+      owner_gid   = 0
+      owner_uid   = 0
+      permissions = 0775
     }
   }
   tags = merge(local.tags, {
