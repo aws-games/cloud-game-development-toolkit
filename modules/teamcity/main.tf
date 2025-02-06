@@ -108,9 +108,6 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
   }
 }
 
-
-
-
 # ECS Service
 resource "aws_ecs_service" "teamcity" {
   name = local.name_prefix
@@ -139,10 +136,10 @@ resource "aws_ecs_service" "teamcity" {
 
 # TeamCity service security group
 resource "aws_security_group" "teamcity_service_sg" {
-  name   = "${local.name_prefix}-service-sg"
-  vpc_id = var.vpc_id
-
-  tags = local.tags
+  name        = "${local.name_prefix}-service-sg"
+  vpc_id      = var.vpc_id
+  description = "TeamCity service security group"
+  tags        = local.tags
 }
 
 # TeamCity EFS security group
@@ -150,8 +147,7 @@ resource "aws_security_group" "teamcity_efs_sg" {
   name        = "${local.name_prefix}-efs-sg"
   description = "TeamCity EFS mount target security group"
   vpc_id      = var.vpc_id
-
-  tags = local.tags
+  tags        = local.tags
 }
 
 # Ingress rule for NFS traffic from service to EFS
@@ -179,8 +175,7 @@ resource "aws_security_group" "teamcity_db_sg" {
   name        = "${local.name_prefix}-db-sg"
   description = "TeamCity DB security group"
   vpc_id      = var.vpc_id
-
-  tags = local.tags
+  tags        = local.tags
 }
 
 # Ingress rule for PostgreSQL from service to database cluster
@@ -205,18 +200,18 @@ resource "aws_vpc_security_group_ingress_rule" "db_service" {
 
 # Egress rule for database to let all traffic out
 resource "aws_vpc_security_group_egress_rule" "db_outbound" {
-
   security_group_id = aws_security_group.teamcity_db_sg.id
+  description       = "Allow outbound access from DB to all"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
 }
 
 # TeamCity ALB security group
 resource "aws_security_group" "teamcity_alb_sg" {
-  name   = "${local.name_prefix}-alb-sg"
-  vpc_id = var.vpc_id
-
-  tags = local.tags
+  name        = "${local.name_prefix}-alb-sg"
+  vpc_id      = var.vpc_id
+  description = "TeamCity ALB security group"
+  tags        = local.tags
 }
 
 # Ingress rule to allow ALB to send health checks to service
@@ -323,9 +318,8 @@ resource "aws_cloudwatch_log_group" "teamcity_log_group" {
 
 # Load Balancer for TeamCity Service
 resource "aws_lb" "teamcity_external_lb" {
-  name            = "${local.name_prefix}-lb"
-  security_groups = [aws_security_group.teamcity_alb_sg.id]
-
+  name                       = "${local.name_prefix}-lb"
+  security_groups            = [aws_security_group.teamcity_alb_sg.id]
   load_balancer_type         = "application"
   internal                   = false
   subnets                    = var.alb_subnets
@@ -410,7 +404,6 @@ resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.teamcity_db_cluster.engine
   engine_version     = aws_rds_cluster.teamcity_db_cluster.engine_version
-
 }
 
 # ################
@@ -450,7 +443,6 @@ resource "aws_efs_mount_target" "teamcity_efs_mount_target" {
 }
 
 # TeamCity data directory
-
 resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
   file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
   posix_user {
