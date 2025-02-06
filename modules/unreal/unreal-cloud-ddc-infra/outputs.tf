@@ -34,7 +34,7 @@ output "peer_security_group_id" {
 }
 
 output "scylla_ips" {
-  value       = tolist(aws_instance.scylla_ec2_instance[*].private_ip)
+  value       = tolist(concat([aws_instance.scylla_ec2_instance_seed[0].private_ip], flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)))
   description = "IPs of the Scylla EC2 instances"
 }
 
