@@ -41,6 +41,20 @@ locals {
         instance_id = instance.id
         subnet_id = instance.subnet_id
         vpc_id = var.server_configuration[index(var.server_configuration.*.type, server_type)].vpc_id
+        volumes = {
+          depot = {
+            device = aws_volume_attachment.depot_attachment[server_type].device_name
+            id = aws_ebs_volume.depot[server_type].id
+          }
+          metadata = {
+            device = aws_volume_attachment.metadata_attachment[server_type].device_name
+            id = aws_ebs_volume.metadata[server_type].id
+          }
+          logs = {
+            device = aws_volume_attachment.logs_attachment[server_type].device_name
+            id = aws_ebs_volume.logs[server_type].id
+          }
+        }
       }
     }
     connections = [
@@ -52,11 +66,17 @@ locals {
       if server_type != "commit"
     ]
   }
+
+
   
   # Calculate relative path from the module to the playbook
   playbook_path = "${path.module}/../../../assets/ansible-playbooks/perforce/helix-core/${var.playbook_file_name}"
   # Generate bucket name with random suffix
   bucket_name   = "ansible-playbook-bucket-${random_string.bucket_suffix.result}"
+
+  helix_core_super_user_username_secret_arn = var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn
+  
+  helix_core_super_user_password_secret_arn = var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn
 
   
 }

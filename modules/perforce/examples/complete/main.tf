@@ -65,9 +65,6 @@ module "perforce_helix_core" {
   helix_core_super_user_password_secret_name = "example-password-secret-name"
   helix_core_super_user_username_secret_name = "example-username-secret-name"
 
-  playbook_file_name = ""
-  s3_bucket_name = ""
-
 }
 
 ##########################################

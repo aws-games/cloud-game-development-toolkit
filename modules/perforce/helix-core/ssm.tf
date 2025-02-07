@@ -57,10 +57,10 @@ resource "aws_ssm_document" "ansible_playbook" {
       }
       ExtraVariables = {
         type           = "String"
-        description    = "(Optional) Additional variables to pass to Ansible at runtime. Enter key/value pairs separated by a space. For example: color=red flavor=cherry"
+        description    = "(Optional) Additional variables to pass to Ansible at runtime. Enter key/value pairs separated by a space. For example: color=red flavor=cherry arn='arn:aws:service:region:account:resource'"
         default        = "SSM=True"
         displayType    = "textarea"
-        allowedPattern = "^$|^\\w+\\=(([^\\s|:();&]+)|('[^|:();&]+'))(\\s+\\w+\\=(([^\\s|:();&]+)|('[^|:();&]+')))*$"
+        allowedPattern = "^$|^\\w+\\=(([^\\s;&]+)|('[^;&]+'))(\\s+\\w+\\=(([^\\s;&]+)|('[^;&]+')))*$"
       }
       Check = {
         type          = "String"
@@ -100,18 +100,19 @@ resource "aws_ssm_document" "ansible_playbook" {
             "  echo \"Installing and/or updating required tools: Ansible, wget, unzip ...\" >&2",
             "  if [ -f \"/etc/system-release\" ] ; then",
             "    if grep -q 'Amazon Linux release 2023' /etc/system-release ; then",
-            "      sudo dnf install -y ansible wget unzip",
+            "      sudo dnf install -y ansible wget unzip python3-pip cronie && pip3 install --user boto3",
             "    elif grep -q 'Amazon Linux release 2' /etc/system-release ; then",
-            "      sudo yum install -y ansible wget unzip",
+            "      sudo yum install -y ansible wget unzip python3-pip && pip3 install --user boto3",
             "    elif grep -q 'Red Hat Enterprise Linux' /etc/system-release ; then",
-            "      sudo dnf install -y ansible wget unzip",
+            "      sudo dnf install -y ansible wget unzip python3-pip && pip3 install --user boto3",
             "    else",
             "      echo \"Unsupported Amazon Linux or RHEL version. Please install Ansible, wget, and unzip manually.\" >&2",
             "      exit 1",
             "    fi",
             "  elif grep -qi ubuntu /etc/issue ; then",
             "    sudo apt-get update",
-            "    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ansible wget unzip",
+            "    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ansible wget unzip python3-pip",
+            "    pip3 install --user boto3",
             "  else",
             "    echo \"Unsupported operating system. Please install Ansible, wget, and unzip manually.\" >&2",
             "    exit 1",
@@ -155,7 +156,7 @@ resource "aws_ssm_association" "toolkitdoc" {
       "path" = "https://s3.amazonaws.com/${aws_s3_bucket.ansible_bucket.id}/${aws_s3_object.playbook.key}"
     })
     PlaybookFile = var.playbook_file_name
-    ExtraVariables = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment}"
+    ExtraVariables = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment} p4d_admin_username_secret_id='${local.helix_core_super_user_username_secret_arn}' p4d_admin_pass_secret_id='${local.helix_core_super_user_password_secret_arn}'"
   }
 
   depends_on = [aws_s3_object.playbook]

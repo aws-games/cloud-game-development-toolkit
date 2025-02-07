@@ -5,39 +5,44 @@
   collections:
     - amazon.aws
   vars:
+    # File paths and directories
     log_file: "/var/log/p4_setup.log"
     sdp_root: "/hxdepots/sdp/helix_binaries"
     sdp: "/hxdepots/sdp"
+    stage_bin_dir: "/hxdepots/sdp/helix_binaries"
+    topology_file: "/etc/perforce/topology.json"
+    flag_file: "/var/run/p4_configure_ran.flag"
+
+    # Package requirements
     package: "policycoreutils-python-utils"
     required_binaries:
       - p4
       - p4broker
       - p4d
       - p4p
+
+    # Perforce configuration
     default_helix_version: "r23.1"
     default_bin_list: "p4,p4d,p4p,p4broker"
     perforce_ftp_base_url: "https://ftp.perforce.com/perforce"
-    stage_bin_dir: "/hxdepots/sdp/helix_binaries"
     download_apis: false
-    flag_file: "/var/run/p4_configure_ran.flag"
-    p4d_type: "{{ p4d_type | default('p4d_master') }}"
-    p4d_admin_username_secret_id: "{{ p4d_admin_username_secret_id }}"
-    p4d_admin_pass_secret_id: "{{ p4d_admin_pass_secret_id }}"
-    helix_auth_service_url: "{{ helix_auth_service_url | default('') }}"
-    fqdn: "{{ fqdn | default('') }}"
-    ebs_logs: "{{ ebs_logs }}"
-    ebs_metadata: "{{ ebs_metadata }}"
-    ebs_depots: "{{ ebs_depots }}"
-    case_sensitive: "{{ case_sensitive | default('1') }}"
+    perforce_case_sensitive: "1"
+
+    # Server configuration
+    p4d_type: "{{ p4d_type | default('p4d_master') }}"  # This might cause recursive reference - needs more tests
+    fqdn: "{{ ansible_fqdn | default(ansible_hostname) }}"  # This has a fallback and might cause recursive reference
     unicode: "{{ unicode | default('false') }}"
-    topology_file: "/etc/perforce/topology.json"
+
+    # Authentication and security
+    p4d_admin_username_secret_id: "{{ p4d_admin_username_secret_id }}"  # Required external var
+    p4d_admin_pass_secret_id: "{{ p4d_admin_pass_secret_id }}"  # Required external var
+    helix_auth_service_url: "{{ helix_auth_service_url | default('') }}"
 
   pre_tasks:
     - name: Ensure pip is installed
       package:
         name: python3-pip
         state: present
-      become: yes
 
     - name: Install required Python libraries
       pip:
@@ -46,7 +51,7 @@
           - botocore
 
   tasks:
-    - name: Example task
+    - name: Take information from variables
       debug:
         msg: "Project Prefix: {{ PROJECT_PREFIX }}, Environment: {{ ENVIRONMENT }}"
 
@@ -73,20 +78,12 @@
         - "/etc/perforce"
         - "/var/log/perforce"
 
-    - name: Get IMDSv2 token
-      shell: |
-        TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-        echo $TOKEN
-      register: imdsv2_token
+    - name: Gather EC2 facts
+      amazon.aws.ec2_metadata_facts:
 
-    - name: Get AWS Region
-      shell: |
-        curl -H "X-aws-ec2-metadata-token: {{ imdsv2_token.stdout }}" http://169.254.169.254/latest/meta-data/placement/region
-      register: aws_region
-
-    - name: Debug AWS region
-      debug:
-        msg: "AWS Region: {{ aws_region.stdout }}"
+    - name: Set AWS region for secret lookup
+      set_fact:
+        aws_region_name: "{{ ansible_ec2_placement_region }}"
     
     - name: Set SSM parameter name
       set_fact:
@@ -98,7 +95,7 @@
 
     - name: Fetch topology from AWS Parameter Store
       set_fact:
-        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', ssm_param_name, region=aws_region.stdout) }}"        
+        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', ssm_param_name, region=aws_region_name) }}"        
 
     - name: Parse fetched topology
       set_fact:
@@ -147,10 +144,6 @@
         dest: "{{ topology_file }}"
       when: not topology_stat.stat.exists
 
-    - name: Fetch instance metadata
-      ec2_metadata_facts:
-      no_log: true
-
     - name: Check if ServerType tag exists
       set_fact:
         server_type_tag_exists: "{{ 'ServerType' in ansible_ec2_instance_tags_keys }}"
@@ -161,7 +154,18 @@
 
     - name: Set facts based on instance metadata
       set_fact:
-        server_type: "{{ 'ServerType' in ansible_ec2_instance_tags_keys }}"
+        server_type: "{{ ansible_ec2_tags_instance_ServerType | lower }}"
+    
+    - name: Extract volume information from topology
+      set_fact:
+        server_volumes: "{{ new_topology.servers[server_type].volumes }}"
+
+    - name: Set volume device paths
+      set_fact:
+        ebs_volumes:
+          logs: "{{ server_volumes.logs.device }}"
+          metadata: "{{ server_volumes.metadata.device }}"
+          depots: "{{ server_volumes.depot.device }}"
 
     - name: Set server-specific facts
       set_fact:
@@ -320,22 +324,35 @@
         owner: perforce
         group: perforce
 
+    - name: Debug secrets information
+      debug:
+        msg: 
+          - "AWS Region: {{ aws_region_name }}"
+          - "Username Secret ID: {{ p4d_admin_username_secret_id }}"
+          - "Password Secret ID: {{ p4d_admin_pass_secret_id }}"
+
     - name: Resolve AWS secrets
-      amazon.aws.aws_secret:
-        name: "{{ item.secret_id }}"
-        region: "{{ aws_region }}"
-      register: aws_secrets
+      block:
+        - name: Get username from Secrets Manager
+          set_fact:
+            p4d_admin_username: "{{ lookup('amazon.aws.aws_secret', p4d_admin_username_secret_id, region=aws_region_name) }}"
+
+        - name: Get password from Secrets Manager
+          set_fact:
+            p4d_admin_pass: "{{ lookup('amazon.aws.aws_secret', p4d_admin_pass_secret_id, region=aws_region_name) }}"
+      rescue:
+        - name: Handle secrets retrieval failure
+          fail:
+            msg: "Failed to retrieve secrets from AWS Secrets Manager. Ensure the instance has proper IAM permissions and the secrets exist in region {{ aws_region_name }}"
+
+    - name: Verify secrets were retrieved
+      fail:
+        msg: "Failed to retrieve {{ item.name }}. The value is empty or undefined."
+      when: not item.value | default('')
       loop:
-        - { secret_id: "{{ p4d_admin_username_secret_id }}", var_name: "p4d_admin_username" }
-        - { secret_id: "{{ p4d_admin_pass_secret_id }}", var_name: "p4d_admin_pass" }
-      no_log: true
-
-    - name: Set secret values as facts
-      set_fact:
-        "{{ item.item.var_name }}": "{{ item.secret }}"
-      loop: "{{ aws_secrets.results }}"
-      no_log: true
-
+        - { name: "admin username", value: "{{ p4d_admin_username | default('') }}" }
+        - { name: "admin password", value: "{{ p4d_admin_pass | default('') }}" }
+      no_log: false
 
     - name: Prepare EBS volumes or mount FSx
       block:
@@ -352,11 +369,11 @@
       set_fact:
         device_info:
           - path: "/mnt/temp_hxlogs"
-            src: "{{ ebs_logs }}"
+            src: "{{ ebs_volumes.logs }}"
           - path: "/mnt/temp_hxmetadata"
-            src: "{{ ebs_metadata }}"
+            src: "{{ ebs_volumes.metadata }}"
           - path: "/mnt/temp_hxdepots"
-            src: "{{ ebs_depots }}"
+            src: "{{ ebs_volumes.depots }}"
 
     - name: Identify device types and prepare for mounting
       set_fact:
@@ -382,10 +399,11 @@
 
     - name: Get actual device names for EBS volumes
       shell: |
-        lsblk -nlo NAME,SERIAL | grep "{{ item.src | regex_replace('/dev/', '') }}" | awk '{print $1}'
+        realpath $(readlink -f {{ item.src }}) || echo {{ item.src }}
       register: actual_device_names
       when: not item.is_nfs
       loop: "{{ mount_info }}"
+
 
     - name: Update mount info with actual device names
       set_fact:
@@ -445,16 +463,83 @@
         - /hxdepots
 
     - name: Mount EBS volumes or FSx to final destinations
-      mount:
-        path: "{{ item.path }}"
-        src: "{{ item.src }}"
-        fstype: "{{ 'nfs' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
-        opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src | regex_search('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
-        state: mounted
-      loop:
-        - { path: "/hxlogs", src: "{{ ebs_logs }}" }
-        - { path: "/hxmetadata", src: "{{ ebs_metadata }}" }
-        - { path: "/hxdepots", src: "{{ ebs_depots }}" }
+      block:
+        - name: Format volumes if needed
+          filesystem:
+            fstype: xfs
+            dev: "{{ item.src }}"
+          when: not (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/'))
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+
+        - name: Mount volumes
+          mount:
+            path: "{{ item.path }}"
+            src: "{{ item.src }}"
+            fstype: "{{ 'nfs' if item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
+            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
+            state: mounted
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+      rescue:
+        - name: Debug mount failure
+          debug:
+            msg: "Failed to mount {{ item.path }} from {{ item.src }}. Checking device info..."
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+
+        - name: Show device information
+          shell: |
+            lsblk -f
+            ls -l /dev/disk/by-id/
+          register: device_debug
+          
+        - name: Display device debug info
+          debug:
+            var: device_debug.stdout_lines
+
+        - name: Fail with meaningful message
+          fail:
+            msg: "Failed to mount volumes. See device debug information above."
+
+    - name: Validate perforce_case_sensitive value
+      fail:
+        msg: "perforce_case_sensitive must be either '0' or '1', got '{{ perforce_case_sensitive }}'"
+      when: perforce_case_sensitive not in ['0', '1']
+
+    - name: Debug perforce_case_sensitive value
+      debug:
+        msg: "Using perforce_case_sensitive value: {{ perforce_case_sensitive }}"
+
+    - name: Backup original crontab template
+      copy:
+        src: /hxdepots/sdp/Server/Unix/p4/common/etc/cron.d/template.crontab.combined
+        dest: /hxdepots/sdp/Server/Unix/p4/common/etc/cron.d/template.crontab.combined.bak
+        remote_src: yes
+      when: server_type == "commit"
+
+    - name: Fix crontab template
+      replace:
+        path: /hxdepots/sdp/Server/Unix/p4/common/etc/cron.d/template.crontab.combined
+        regexp: '\*/60'
+        replace: '0'
+      when: server_type == "commit"
+
+    - name: Display fixed template content
+      shell: cat /hxdepots/sdp/Server/Unix/p4/common/etc/cron.d/template.crontab.combined
+      register: template_content
+      when: server_type == "commit"
+
+    - name: Show fixed template
+      debug:
+        var: template_content.stdout_lines
+      when: server_type == "commit"
 
     - name: Update mkdirs.cfg
       lineinfile:
@@ -464,34 +549,110 @@
       loop:
         - { regexp: '^P4ADMINPASS=', line: 'P4ADMINPASS={{ p4d_admin_pass }}' }
         - { regexp: '^ADMINUSER=', line: 'ADMINUSER={{ p4d_admin_username }}' }
-        - { regexp: '^P4MASTERHOST=', line: 'P4MASTERHOST={{ ansible_hostname }}' }
-        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE=CASE_SENSITIVE' }
+        - { regexp: '^P4MASTERHOST=', line: 'P4MASTERHOST={{ commit_server_dns }}' }
+        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE={{ perforce_case_sensitive }}' }
+
+    - name: Set p4d_type based on server_type
+      set_fact:
+        p4d_type: >-
+          {% if server_type == 'commit' %}
+          p4d_master
+          {% elif server_type == 'replica' %}
+          p4d_replica
+          {% elif server_type == 'edge' %}
+          p4d_edge
+          {% else %}
+          p4d_master
+          {% endif %}
+
+    - name: Debug p4d_type
+      debug:
+        msg: "Server Type: {{ server_type }}, P4D Type: {{ p4d_type }}"
 
     - name: Execute mkdirs.sh
-      command: /hxdepots/sdp/Server/Unix/setup/mkdirs.sh 1 -t {{ p4d_type }}
+      command: /hxdepots/sdp/Server/Unix/setup/mkdirs.sh 1 -t {{ p4d_type }} -no_cron -no_firewall
       args:
         chdir: /hxdepots/sdp/Server/Unix/setup
 
-    - name: Update SSL config with EC2 DNS name
+    - name: Fix crontab
       lineinfile:
-        path: /p4/ssl/config.txt
-        regexp: '^REPL_DNSNAME'
-        line: "{{ fqdn | default(ansible_ec2_public_hostname) }}"
+        path: /p4/p4.crontab.1
+        regexp: '\*/60'
+        line: '0'
+    
+    - name: Check for existing SSL certificate
+      stat:
+        path: /p4/ssl/certificate.txt
+      register: ssl_cert
 
-    - name: Generate SSL certificate
-      command: /p4/common/bin/p4master_run 1 /p4/1/bin/p4d_1 -Gc
+    - name: Display SSL certificate status
+      debug:
+        msg: "SSL certificate {{ 'exists' if ssl_cert.stat.exists else 'does not exist' }}"
+
+    - name: Configure and generate SSL certificate
+      block:
+        - name: Update SSL config with EC2 DNS name
+          lineinfile:
+            path: /p4/ssl/config.txt
+            regexp: '^REPL_DNSNAME'
+            line: "{{ fqdn | default(ansible_ec2_public_hostname) }}"
+          register: ssl_config_update
+
+        - name: Display SSL config update status
+          debug:
+            var: ssl_config_update
+
+        - name: Generate SSL certificate
+          command: /p4/common/bin/p4master_run 1 /p4/1/bin/p4d_1 -Gc
+          register: ssl_gen_result
+
+        - name: Display SSL generation result
+          debug:
+            var: ssl_gen_result.stdout_lines
+      when: not ssl_cert.stat.exists
 
     - name: Configure systemd service
-      template:
-        src: "{{ sdp }}/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t"
-        dest: /etc/systemd/system/p4d_1.service
-        owner: root
-        group: root
-        mode: '0644'
+      block:
+        - name: Create systemd service file using sed
+          shell: |
+            cd /etc/systemd/system
+            sed -e "s:__INSTANCE__:1:g" -e "s:__OSUSER__:perforce:g" \
+                "{{ sdp }}/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t" > p4d_1.service
+          args:
+            creates: /etc/systemd/system/p4d_1.service
 
-    - name: Reload systemd
-      systemd:
-        daemon_reload: yes
+        - name: Set correct permissions on service file
+          file:
+            path: /etc/systemd/system/p4d_1.service
+            owner: root
+            group: root
+            mode: '0644'
+
+        - name: Verify service file content
+          shell: cat /etc/systemd/system/p4d_1.service
+          register: service_content
+          changed_when: false
+
+        - name: Display service file content
+          debug:
+            var: service_content.stdout_lines
+
+        - name: Reload systemd daemon
+          systemd:
+            daemon_reload: yes
+
+        - name: Verify service is recognized by systemd
+          systemd:
+            name: p4d_1
+            enabled: yes
+          register: systemd_status
+          ignore_errors: yes
+
+        - name: Show systemd service status
+          debug:
+            var: systemd_status
+      become: yes
+
 
     - name: Start p4d service
       systemd:
@@ -510,7 +671,7 @@
         state: link
 
     - name: Trust p4 server
-      command: p4 -p ssl:{{ ansible_hostname }}:1666 trust -y
+      command: p4 -p ssl:{{ new_topology.servers[server_type].private_dns }}:1666 trust -y
 
     - name: Execute configure_new_server.sh
       command: /p4/sdp/Server/setup/configure_new_server.sh 1
@@ -525,21 +686,8 @@
       become: yes
       become_user: perforce
 
-    - name: Fix crontab
-      lineinfile:
-        path: /p4/p4.crontab.1
-        regexp: '\*/60'
-        line: '0'
-
-    - name: Initialize crontab for perforce user
-      cron:
-        name: "Perforce cron jobs"
-        user: perforce
-        cron_file: /p4/p4.crontab.1
-
     - name: Verify SDP installation
       command: /hxdepots/p4/common/bin/verify_sdp.sh 1
-
 
     - name: Create SiteTags file
       template:
@@ -549,4 +697,4 @@
     - name: Append AWS region to SiteTags
       lineinfile:
         path: /hxdepots/p4/common/config/SiteTags.cfg
-        line: "aws{{ aws_region.stdout | replace('-', '') }}"
+        line: "aws{{ aws_region_name | replace('-', '') }}"

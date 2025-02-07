@@ -16,7 +16,7 @@ resource "aws_ssm_document" "ansible_playbook" {
   target_type = "/AWS::EC2::Instance"
   content       = jsonencode({
     schemaVersion = "2.2"
-    description   = "Use this document to run Ansible Playbooks on Systems Manager managed instances. For more information, see https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager-ansible.html."
+    description   = "Use this document to run Ansible Playbooks on Systems Manager managed instances. For more information, see https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager-ansible.html however this document is modified updated version of the original AWS document."
     parameters = {
       SourceType = {
         description   = "(Optional) Specify the source type."
