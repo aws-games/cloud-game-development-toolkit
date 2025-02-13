@@ -97,10 +97,10 @@ resource "aws_ssm_document" "ansible_playbook" {
           runCommand     = [
             "#!/bin/bash",
             "if [[ \"{{InstallDependencies}}\" == True ]] ; then",
-            "  echo \"Installing and/or updating required tools: Ansible, wget, unzip ...\" >&2",
+            "  echo \"Installing and/or updating required tools: Ansible, wget, unzip, python libraries boto3 and sendmail ...\" >&2",
             "  if [ -f \"/etc/system-release\" ] ; then",
             "    if grep -q 'Amazon Linux release 2023' /etc/system-release ; then",
-            "      sudo dnf install -y ansible wget unzip python3-pip cronie && pip3 install --user boto3",
+            "      sudo dnf install -y ansible wget unzip python3-pip cronie sendmail s-nail && pip3 install --user boto3",
             "    elif grep -q 'Amazon Linux release 2' /etc/system-release ; then",
             "      sudo yum install -y ansible wget unzip python3-pip && pip3 install --user boto3",
             "    elif grep -q 'Red Hat Enterprise Linux' /etc/system-release ; then",

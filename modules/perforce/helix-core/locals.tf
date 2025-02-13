@@ -24,6 +24,7 @@ locals {
   }
 
   server_private_ips = {for k, v in aws_instance.helix_core_instance : k => v.private_ip}
+  server_cidrs = {for k, v in local.server_private_ips : k => "${v}/32"}
 
 ##########################################
 # Perforce Helix Core Instance Topology Structure

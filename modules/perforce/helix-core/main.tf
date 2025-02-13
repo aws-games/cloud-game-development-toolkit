@@ -164,19 +164,101 @@ resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
   description       = "Helix Core out to Internet"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_1666" {
-  for_each = { for idx, server in var.server_configuration : server.type => server }
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_rpc" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
 
-  security_group_id = aws_security_group.helix_core_security_group[each.key].id
-  
-  from_port   = 1666
-  to_port     = 1669
-  ip_protocol = "tcp"
-  
-  referenced_security_group_id = aws_security_group.helix_core_security_group[each.key].id
-  
-  description = "Allow incoming traffic on port 1666-1669 from other Perforce servers"
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 111
+  to_port          = 111
+  ip_protocol      = "tcp"
+  description      = "Allow RPC from ${split("_from_", each.key)[1]}"
 }
+
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_1666" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
+
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 1666
+  to_port          = 1669
+  ip_protocol      = "tcp"
+  description      = "Allow Perforce traffic from ${split("_from_", each.key)[1]}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_nfs" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
+
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 2049
+  to_port          = 2049
+  ip_protocol      = "tcp"
+  description      = "Allow NFS from ${split("_from_", each.key)[1]}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_mountd" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
+
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 20048
+  to_port          = 20048
+  ip_protocol      = "tcp"
+  description      = "Allow mountd from ${split("_from_", each.key)[1]}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_icmp" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
+
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 8
+  to_port          = 0
+  ip_protocol      = "icmp"
+  description      = "Allow ICMP from ${split("_from_", each.key)[1]}"
+}
+
 
 ##########################################
 # Systems Manager Parameter Store - Add facts about Helix Core servers

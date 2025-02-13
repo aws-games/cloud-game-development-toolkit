@@ -44,12 +44,6 @@
         name: python3-pip
         state: present
 
-    - name: Install required Python libraries
-      pip:
-        name:
-          - boto3
-          - botocore
-
   tasks:
     - name: Take information from variables
       debug:
@@ -574,11 +568,42 @@
       args:
         chdir: /hxdepots/sdp/Server/Unix/setup
 
-    - name: Fix crontab
-      lineinfile:
+    - name: Fix generated crontab
+      replace:
         path: /p4/p4.crontab.1
-        regexp: '\*/60'
-        line: '0'
+        regexp: '^\s*\*/60\s+'
+        replace: '0 '
+      register: crontab_fix
+
+    - name: Show crontab content before installation
+      shell: cat /p4/p4.crontab.1
+      register: crontab_content
+      changed_when: false
+
+    - name: Display crontab content
+      debug:
+        var: crontab_content.stdout_lines
+    
+    - name: Validate crontab file
+      command: crontab -u perforce -T /p4/p4.crontab.1
+      register: crontab_validate
+      changed_when: false
+      failed_when: false
+
+    - name: Display validation results
+      debug:
+        var: crontab_validate
+
+    - name: Initialize crontab for perforce user
+      shell: crontab -u perforce /p4/p4.crontab.1
+      become: yes
+      when: crontab_validate.rc == 0
+      register: crontab_result
+
+    - name: Handle crontab installation failure
+      fail:
+        msg: "Failed to install crontab: {{ crontab_validate.stderr }}"
+      when: crontab_validate.rc != 0
     
     - name: Check for existing SSL certificate
       stat:
@@ -653,7 +678,6 @@
             var: systemd_status
       become: yes
 
-
     - name: Start p4d service
       systemd:
         name: p4d_1
@@ -680,21 +704,165 @@
       command: /p4/sdp/Server/Unix/p4/common/bin/live_checkpoint.sh 1
       become: yes
       become_user: perforce
+      when: server_type == "commit"
 
     - name: Execute recreate_offline_db.sh
       command: /p4/sdp/Server/Unix/p4/common/bin/recreate_offline_db.sh 1
       become: yes
       become_user: perforce
+      when: server_type == "commit"
 
     - name: Verify SDP installation
       command: /hxdepots/p4/common/bin/verify_sdp.sh 1
+      when: server_type == "commit"
 
     - name: Create SiteTags file
       template:
         src: /hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample
         dest: /hxdepots/p4/common/config/SiteTags.cfg
+      when: server_type == "commit"
 
     - name: Append AWS region to SiteTags
       lineinfile:
         path: /hxdepots/p4/common/config/SiteTags.cfg
-        line: "aws{{ aws_region_name | replace('-', '') }}"
+        line: "aws{{ aws_region_name | replace('-', '') }}: AWS {{ aws_region_name | upper }}"
+      when: server_type == "commit"
+      register: sitetag_result
+
+    - name: Set fact based on SiteTags line
+      set_fact:
+        sitetag: "aws{{ aws_region_name | replace('-', '') }}"
+      when: server_type == "commit" and sitetag_result.changed
+
+    - name: Get non-commit server IPs from topology
+      set_fact:
+        target_servers: "{{ new_topology.servers | dict2items | 
+                          selectattr('key', 'ne', 'commit') | 
+                          map(attribute='value') | 
+                          map(attribute='private_ip') | 
+                          list }}"
+      when: server_type == "commit"
+
+    - name: Debug target servers
+      debug:
+        msg: "Target servers for NFS export: {{ target_servers }}"
+      when: server_type == "commit"
+
+    - name: Ensure exports.d directory exists
+      file:
+        path: /etc/exports.d
+        state: directory
+        mode: '0755'
+      when: server_type == "commit"
+
+    - name: Create NFS exports file
+      template:
+        src: perforce_exports.j2
+        dest: /etc/exports.d/perforce.exports
+        mode: '0644'
+      vars:
+        export_entries: "{{ target_servers | map('regex_replace', '^(.*)$', nfs_share_path ~ ' \\1(' ~ nfs_options ~ ')') | join('\n') }}"
+      register: nfs_exports
+      when: server_type == "commit"
+
+    - name: Ensure rpcbind service is running and enabled
+      systemd:
+        name: rpcbind
+        state: started
+        enabled: yes
+      when: server_type == "commit"
+
+    - name: Ensure nfs-server service is running and enabled
+      systemd:
+        name: nfs-server
+        state: started
+        enabled: yes
+      when: server_type == "commit"
+
+    - name: Export NFS shares
+      command: exportfs -ra
+      when: 
+        - server_type == "commit"
+        - nfs_exports.changed
+
+    - name: Verify NFS setup
+      block:
+        - name: Show current exports
+          command: exportfs -v
+          register: exports_result
+          changed_when: false
+
+        - name: Display exports
+          debug:
+            var: exports_result.stdout_lines
+
+        - name: Check rpcbind service status
+          command: systemctl status rpcbind
+          register: rpcbind_status
+          changed_when: false
+          failed_when: false
+
+        - name: Display rpcbind status
+          debug:
+            var: rpcbind_status.stdout_lines
+
+        - name: Check nfs-server service status
+          command: systemctl status nfs-server
+          register: nfs_status
+          changed_when: false
+          failed_when: false
+
+        - name: Display nfs-server status
+          debug:
+            var: nfs_status.stdout_lines
+
+        - name: Show rpcinfo
+          command: rpcinfo -p
+          register: rpcinfo_result
+          changed_when: false
+
+        - name: Display rpcinfo
+          debug:
+            var: rpcinfo_result.stdout_lines
+      when: server_type == "commit"
+
+    - name: Configure Perforce Replica
+      block:
+        - name: Configure replica server on Commit first
+          command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ sitetag }}
+          when: server_type == "commit"
+          
+        - name: Configure edge
+          command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t edge -r {{ replica_server_dns }} -s {{ sitetag }}
+          when: server_type == "edge"
+
+      when: server_type in ["replica", "edge"]
+
+    - name: Configure NFS mount on replica/edge
+      block:
+        - name: Ensure mount point exists
+          file:
+            path: "{{ nfs_share_path }}"
+            state: directory
+            owner: perforce
+            group: perforce
+            mode: '0755'
+
+        - name: Mount NFS share
+          mount:
+            path: "{{ nfs_share_path }}"
+            src: "{{ commit_server_dns }}:{{ nfs_share_path }}"
+            fstype: nfs
+            opts: rw,sync
+            state: mounted
+            
+        - name: Verify NFS mount
+          shell: df -h {{ nfs_share_path }}
+          register: mount_check
+          changed_when: false
+
+        - name: Display mount status
+          debug:
+            var: mount_check.stdout_lines
+      when: server_type in ["replica", "edge"]
+
