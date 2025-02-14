@@ -28,6 +28,7 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
       cpu       = var.container_cpu
       memory    = var.container_memory
       essential = true
+
       portMappings = [
         {
           containerPort = var.container_port
@@ -42,35 +43,36 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
           awslogs-stream-prefix = "[APP]"
         }
       }
+
       mountPoints = [
         {
           sourceVolume  = "teamcity_data",
           containerPath = "/data/teamcity_server/datadir"
           readOnly      = false
-        },
-        {
-          sourceVolume  = "teamcity_logs",
-          containerPath = "/data/teamcity_server/logs"
-          readOnly      = false
         }
       ]
+
       # Set environment variables for database connection string
       environment = [
         {
           name  = "TEAMCITY_DB_URL"
-          value = local.database_connection_string
+          value = var.database_connection_string
         },
         {
           name  = "TEAMCITY_DB_USER"
-          value = local.database_user
+          value = var.database_master_username
         },
         {
           name  = "TEAMCITY_DB_PASSWORD"
-          value = local.database_password
+          value = var.database_master_password
         },
+        # {
+        #   name  = "TEAMCITY_LOGS_PATH"
+        #   value = "/data/teamcity_server/logs"
+        # },
         {
-          name  = "TEAMCITY_LOGS_PATH"
-          value = "/data/teamcity_server/logs"
+          name  = "TEAMCITY_DATA_PATH"
+          value = "/data/teamcity_server/datadir"
         }
       ]
     }
@@ -93,19 +95,6 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
       }
     }
   }
-
-  volume {
-    name = "teamcity_logs"
-    efs_volume_configuration {
-      file_system_id          = aws_efs_file_system.teamcity_efs_file_system.id
-      transit_encryption      = "ENABLED"
-      transit_encryption_port = 2998
-      authorization_config {
-        access_point_id = aws_efs_access_point.teamcity_efs_logs_access_point.id
-        iam             = "ENABLED"
-      }
-    }
-  }
 }
 
 # ECS Service
@@ -114,10 +103,10 @@ resource "aws_ecs_service" "teamcity" {
   cluster                = aws_ecs_cluster.teamcity_cluster.name
   task_definition        = aws_ecs_task_definition.teamcity_task_definition.arn
   launch_type            = "FARGATE"
-  desired_count          = 1    #TODO: make this configurable
-  force_new_deployment   = true #TODO: make this configurable
-  enable_execute_command = true #TODO: make this configurable
-  wait_for_steady_state  = true
+  desired_count          = 1     #TODO: make this configurable
+  force_new_deployment   = true  #TODO: make this configurable
+  enable_execute_command = true  #TODO: make this configurable
+  wait_for_steady_state  = false #TODO: make this configurable
 
   network_configuration {
     subnets         = var.service_subnets
@@ -270,6 +259,28 @@ data "aws_iam_policy_document" "teamcity_default_policy" {
       "*"
     ]
   }
+
+  #grant the task necessary EFS permissions to be able to modify directories
+  statement {
+    sid    = "EFS"
+    effect = "Allow"
+    actions = [
+      "elasticfilesystem:ClientWrite",
+      "elasticfilesystem:ClientRootAccess",
+      "elasticfilesystem:ClientMount"
+    ]
+    resources = [
+      aws_efs_file_system.teamcity_efs_file_system.arn
+    ]
+    # condition {
+    #   test     = "StringEquals"
+    #   variable = "elasticfilesystem:AccessPointArn"
+    #   values = [
+    #     aws_efs_access_point.teamcity_efs_data_access_point.arn,
+    #     aws_efs_access_point.teamcity_efs_logs_access_point.arn
+    #   ]
+    # }
+  }
 }
 
 resource "aws_iam_policy" "teamcity_default_policy" {
@@ -362,6 +373,8 @@ resource "aws_db_subnet_group" "teamcity_db_subnet_group" {
 
 # # RDS instance with Aurora serverless engine
 resource "aws_rds_cluster" "teamcity_db_cluster" {
+  #count = var.database_connection_string == null ? var.teamcity_instance_count : 0
+
   cluster_identifier   = "teamcity-cluster"
   engine               = "aurora-postgresql"
   engine_mode          = "provisioned"
@@ -375,7 +388,6 @@ resource "aws_rds_cluster" "teamcity_db_cluster" {
     aws_security_group.teamcity_db_sg.id
   ]
 
-
   serverlessv2_scaling_configuration {
     max_capacity             = 1.0
     min_capacity             = 0.0
@@ -384,6 +396,8 @@ resource "aws_rds_cluster" "teamcity_db_cluster" {
 }
 
 resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
+  #count = var.database_connection_string == null ? 1 : 0
+
   cluster_identifier = aws_rds_cluster.teamcity_db_cluster.id
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.teamcity_db_cluster.engine
@@ -430,38 +444,18 @@ resource "aws_efs_mount_target" "teamcity_efs_mount_target" {
 resource "aws_efs_access_point" "teamcity_efs_data_access_point" {
   file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
   posix_user {
-    gid = 0
-    uid = 0
+    gid = 1000
+    uid = 1000
   }
   root_directory {
-    path = "/data/teamcity_server/datadir"
+    path = "/data/teamcity_user/datadir"
     creation_info {
-      owner_gid   = 0
-      owner_uid   = 0
-      permissions = 0775
+      owner_gid   = 1000
+      owner_uid   = 1000
+      permissions = 0755
     }
   }
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-efs-access-point"
-  })
-}
-
-# TeamCity Log directory
-resource "aws_efs_access_point" "teamcity_efs_logs_access_point" {
-  file_system_id = aws_efs_file_system.teamcity_efs_file_system.id
-  posix_user {
-    gid = 0
-    uid = 0
-  }
-  root_directory {
-    path = "/data/teamcity_server/logs"
-    creation_info {
-      owner_gid   = 0
-      owner_uid   = 0
-      permissions = 0775
-    }
-  }
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-efs-logs-access-point"
   })
 }
