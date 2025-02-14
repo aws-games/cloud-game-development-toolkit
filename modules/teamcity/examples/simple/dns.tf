@@ -1,6 +1,6 @@
 variable "root_domain_name" {
   type        = string
-  description = "The root domain name for the Hosted Zone where the Horde record should be created."
+  description = "The root domain name for the Hosted Zone where the TeamCity record should be created."
 }
 
 ##########################################

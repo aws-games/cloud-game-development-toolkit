@@ -88,3 +88,23 @@ variable "alb_certificate_arn" {
   description = "The ARN of the SSL certificate to use for the ALB"
 }
 
+variable "teamcity_instance_count" {
+  type        = number
+  description = "The number of instances to provision for the TeamCity Aurora cluster"
+  default     = 1
+}
+variable "database_connection_string" {
+  type        = string
+  description = "The database connection string for TeamCity"
+}
+
+variable "database_master_username" {
+  type        = string
+  description = "The master username for the database"
+}
+
+variable "database_master_password" {
+  type        = string
+  description = "The master password for the database"
+  sensitive   = true
+}
