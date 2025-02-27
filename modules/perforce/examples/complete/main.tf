@@ -155,6 +155,12 @@ resource "aws_lb_target_group" "perforce_web_services" {
   vpc_id      = aws_vpc.perforce_vpc.id
 }
 
+resource "aws_lb_target_group_attachment" "perforce_web_services" {
+  target_group_arn = aws_lb_target_group.perforce_web_services.arn
+  target_id        = aws_lb.perforce_web_services.arn
+  port = 443
+}
+
 # Default rule redirects to Helix Swarm
 resource "aws_lb_listener" "perforce_web_services" {
   load_balancer_arn = aws_lb.perforce_web_services.arn
