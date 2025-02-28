@@ -376,8 +376,7 @@
           'src': item.src,
           'is_nfs': item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/'),
           'fstype': 'nfs' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'xfs',
-          'opts': 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'defaults'
-        }] }}"
+          'opts': 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'defaults'}] }}"
       loop: "{{ device_info }}"
 
     - name: Debug mount info
@@ -756,14 +755,17 @@
       when: server_type == "commit"
 
     - name: Create NFS exports file
-      template:
-        src: perforce_exports.j2
+      copy:
+        content: |
+          # Perforce checkpoint exports for replica and edge servers
+          {% for server in target_servers %}
+          /hxdepots/p4/1/checkpoints {{ server }}(ro,sync)
+          {% endfor %}
         dest: /etc/exports.d/perforce.exports
         mode: '0644'
-      vars:
-        export_entries: "{{ target_servers | map('regex_replace', '^(.*)$', nfs_share_path ~ ' \\1(' ~ nfs_options ~ ')') | join('\n') }}"
       register: nfs_exports
       when: server_type == "commit"
+
 
     - name: Ensure rpcbind service is running and enabled
       systemd:
@@ -826,43 +828,168 @@
             var: rpcinfo_result.stdout_lines
       when: server_type == "commit"
 
-    - name: Configure Perforce Replica
-      block:
-        - name: Configure replica server on Commit first
-          command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ sitetag }}
-          when: server_type == "commit"
-          
-        - name: Configure edge
-          command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t edge -r {{ replica_server_dns }} -s {{ sitetag }}
-          when: server_type == "edge"
 
-      when: server_type in ["replica", "edge"]
+    - name: Configure replica server on Commit first
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ sitetag }}
+      when: server_type == "commit"
+          
+    - name: Configure edge
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t edge -r {{ replica_server_dns }} -s {{ sitetag }}
+      when: server_type == "edge"
 
     - name: Configure NFS mount on replica/edge
       block:
-        - name: Ensure mount point exists
-          file:
-            path: "{{ nfs_share_path }}"
-            state: directory
-            owner: perforce
-            group: perforce
-            mode: '0755'
+        - name: Wait for NFS server and mount share
+          block:
+            - name: Check NFS server availability
+              wait_for:
+                host: "{{ commit_server_dns }}"
+                port: 2049
+                timeout: 5
+              register: nfs_check
+              retries: 5
+              delay: 10
+              until: nfs_check is success
+              
+            - name: Attempt NFS mount
+              mount:
+                path: /hxdepots/p4/1/checkpoints
+                src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
+                fstype: nfs
+                opts: rw,sync,soft,timeo=900,retrans=5
+                state: mounted
+              register: mount_result
+              retries: 5
+              delay: 10
+              until: mount_result is success
+          rescue:
+            - name: Handle mount failure
+              block:
+                - name: Force unmount if stuck
+                  command: umount -f /hxdepots/p4/1/checkpoints
+                  ignore_errors: yes
 
-        - name: Mount NFS share
-          mount:
-            path: "{{ nfs_share_path }}"
-            src: "{{ commit_server_dns }}:{{ nfs_share_path }}"
-            fstype: nfs
-            opts: rw,sync
-            state: mounted
-            
+                - name: Retry mount with different options
+                  mount:
+                    path: /hxdepots/p4/1/checkpoints
+                    src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
+                    fstype: nfs
+                    opts: rw,sync,soft,timeo=900,retrans=5,nolock
+                    state: mounted
+                  register: retry_mount
+                  retries: 5
+                  delay: 10
+                  until: retry_mount is success
+
+            - name: Final mount verification
+              command: mountpoint -q /hxdepots/p4/1/checkpoints
+              register: mount_verify
+              failed_when: mount_verify.rc != 0
+              
         - name: Verify NFS mount
-          shell: df -h {{ nfs_share_path }}
+          shell: df -h /hxdepots/p4/1/checkpoints
           register: mount_check
           changed_when: false
 
         - name: Display mount status
           debug:
             var: mount_check.stdout_lines
+
       when: server_type in ["replica", "edge"]
+
+
+    - name: Manage checkpoint for replica setup
+      block:
+
+        - name: Create checkpoint on commit server
+          block:
+            - name: Set perforce environment
+              shell: |
+                cd /p4/common/bin
+                source p4_vars 1
+              args:
+                executable: /bin/bash
+              become: yes
+              become_user: perforce
+
+            - name: Create new checkpoint
+              shell: |
+                nohup daily_checkpoint.sh 1 < /dev/null > /dev/null 2>&1 &
+              async: 3600
+              poll: 0
+              become: yes
+              become_user: perforce
+
+            - name: Wait for checkpoint completion
+              shell: tail -n 20 $LOGS/checkpoint.log
+              register: checkpoint_status
+              until: "'End p4_1 Checkpoint' in checkpoint_status.stdout"
+              retries: 30
+              delay: 60
+              become: yes
+              become_user: perforce
+          when: server_type == "commit"
+
+        - name: Load checkpoint on replica
+          block:
+            - name: Find latest checkpoint
+              shell: |
+                ls -t /hxdepots/p4/1/checkpoints/p4_1.ckp.*.gz | head -1
+              register: latest_checkpoint
+              changed_when: false
+
+            - name: Verify disk space
+              shell: df -h /p4/1/root
+              register: disk_space
+              failed_when: false
+
+            - name: Display disk space
+              debug:
+                var: disk_space.stdout_lines
+            
+            - name: Trust commit server
+              command: p4 -p ssl:{{ commit_server_dns }}:1666 trust -y
+              become: yes
+              become_user: perforce
+
+            - name: Login to commit server
+              shell: |
+                p4 -p ssl:{{ commit_server_dns }}:1666 login -a < /p4/common/config/.p4passwd.p4_1.admin
+              become: yes
+              become_user: perforce
+
+            - name: Load checkpoint
+              shell: |
+                nohup load_checkpoint.sh {{ latest_checkpoint.stdout }} -i 1 -y < /dev/null > /p4/1/logs/load.log 2>&1 &
+              async: 3600
+              poll: 0
+              become: yes
+              become_user: perforce
+
+            - name: Monitor checkpoint load
+              shell: tail -n 20 /p4/1/logs/load.log
+              register: load_status
+              until: "'Checkpoint load completed successfully' in load_status.stdout"
+              retries: 30
+              delay: 60
+              become: yes
+              become_user: perforce
+
+            - name: Start p4verify
+              shell: |
+                nohup p4verify.sh 1 < /dev/null > /dev/null 2>&1 &
+              async: 3600
+              poll: 0
+              become: yes
+              become_user: perforce
+
+            - name: Check p4verify progress
+              shell: |
+                sleep 60 && tail -n 20 $LOGS/p4verify.log
+              register: verify_status
+              changed_when: false
+              become: yes
+              become_user: perforce
+          when: server_type in ["replica", "edge"]
+
 
