@@ -68,7 +68,7 @@ resource "aws_route53_record" "perforce_helix_core_pvt" {
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
-  records = [module.perforce_helix_core.helix_core_eip_private_ip]
+  records = [module.perforce_helix_core.helix_core_private_ip]
 }
 
 ##########################################
