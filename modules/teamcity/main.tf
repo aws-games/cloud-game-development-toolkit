@@ -54,18 +54,6 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
 
       # Set environment variables for database connection string
       environment = [
-        {
-          name  = "TEAMCITY_DB_URL"
-          value = var.database_connection_string
-        },
-        {
-          name  = "TEAMCITY_DB_USER"
-          value = var.database_master_username
-        },
-        {
-          name  = "TEAMCITY_DB_PASSWORD"
-          value = var.database_master_password
-        },
         # {
         #   name  = "TEAMCITY_LOGS_PATH"
         #   value = "/data/teamcity_server/logs"
