@@ -19,7 +19,7 @@ If you do not have a domain yet you can [register one through Route53](https://d
 
 If you already have a domain with a different domain registrar you can leverage Route53 for DNS services. [Please review the documentation for migrating to Route53 as your DNS provider.](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html)
 
-If you own the domain: "example.com" this example will deploy Helix Core to "core.helix.example.com" and Helix Swarm to "swarm.helix.example.com" - this can be modified from the `dns.tf` file.
+If you own the domain: "example.com" this example will deploy Horde to "horde.example.com" - this can be modified from the `dns.tf` file.
 
 ### `github_credentials_secret_arn`
 
