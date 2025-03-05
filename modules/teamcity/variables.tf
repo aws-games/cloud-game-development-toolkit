@@ -22,9 +22,22 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "debug" {
+  type        = bool
+  description = "Set this flag to enable ECS execute permissions on the TeamCity server container and force new service deployments on Terraform apply."
+  default     = false
+}
+
 ########################################
-# TeamCity SERVICE CONFIGURATION
+# TeamCity SERVICE CONFIGURATION (ECS)
 ########################################
+
+variable "cluster_name" {
+  type        = string
+  description = "The name of the ECS cluster to deploy TeamCity to."
+  default     = null
+
+}
 
 variable "container_cpu" {
   type        = number
@@ -49,6 +62,17 @@ variable "container_port" {
   description = "The port on which the TeamCity server container listens"
 }
 
+variable "desired_container_count" {
+  type        = number
+  description = "The desired number of containers running TeamCity server."
+  default     = 1
+  nullable    = false
+}
+
+########################################
+# Networking
+########################################
+
 variable "service_subnets" {
   type        = list(string)
   description = "The subnets in which the TeamCity server service will be deployed"
@@ -65,7 +89,9 @@ variable "teamcity_cloudwatch_log_retention_in_days" {
   default     = 365
 }
 
-# Filesystem
+########################################
+# EFS
+########################################
 variable "teamcity_efs_performance_mode" {
   type        = string
   description = "The performance mode of the EFS file system used by the TeamCity service. Defaults to general purpose."
@@ -78,6 +104,15 @@ variable "teamcity_efs_throughput_mode" {
   default     = "bursting"
 }
 
+########################################
+# Load Balancing
+########################################
+variable "create_external_alb" {
+  type        = bool
+  description = "Set this flag to true to create an external load balancer for TeamCity."
+  default     = true
+}
+
 variable "alb_subnets" {
   type        = list(string)
   description = "The subnets in which the ALB will be deployed"
@@ -88,8 +123,68 @@ variable "alb_certificate_arn" {
   description = "The ARN of the SSL certificate to use for the ALB"
 }
 
+variable "enable_teamcity_alb_access_logs" {
+  type        = bool
+  description = "Enables access logging for the TeamCity ALB. Defaults to true."
+  default     = true
+}
+
+variable "teamcity_alb_access_logs_bucket" {
+  type        = string
+  description = "ID of the S3 bucket for TeamCity ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
+  default     = null
+}
+
+variable "teamcity_alb_access_logs_prefix" {
+  type        = string
+  description = "Log prefix for TeamCity ALB access logs. If null the project prefix and module name are used."
+  default     = null
+}
+
+variable "enable_teamcity_alb_deletion_protection" {
+  type        = bool
+  description = "Enables deletion protection for the TeamCity ALB. Defaults to true."
+  default     = false
+}
+########################################
+# EFS Configuration
+########################################
+
+variable "efs_id" {
+  type        = string
+  description = "The ID of the EFS file system to use for the TeamCity service."
+  default     = null
+}
+
+########################################
+# Aurora Cluster
+########################################
 variable "teamcity_instance_count" {
   type        = number
   description = "The number of instances to provision for the TeamCity Aurora cluster"
   default     = 1
+}
+
+variable "database_connection_string" {
+  type        = string
+  description = "The database connection string for TeamCity"
+  default     = null
+}
+
+variable "database_master_username" {
+  type        = string
+  description = "The master username for the database"
+  default     = "teamcity"
+}
+
+variable "aurora_skip_final_snapshot" {
+  type        = bool
+  description = "Flag for whether a final snapshot should be created when the cluster is destroyed."
+  default     = true
+}
+
+variable "aurora_instance_count" {
+  type        = number
+  description = "Number of instances to provision for the Aurora cluster"
+  default     = 2
 }

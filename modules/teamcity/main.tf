@@ -1,9 +1,14 @@
 ###################################
 # ECS Cluster for TeamCity Server #
 ###################################
-
+# If cluster name is provided use a data source to access existing resource
+data "aws_ecs_cluster" "teamcity_cluster" {
+  count        = var.cluster_name != null ? 1 : 0
+  cluster_name = var.cluster_name
+}
 resource "aws_ecs_cluster" "teamcity_cluster" {
-  name = "${local.name_prefix}-cluster"
+  count = var.cluster_name != null ? 1 : 0
+  name  = "${local.name_prefix}-cluster"
 
   setting {
     name  = "containerInsights"
@@ -54,6 +59,14 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
 
       # Set environment variables for database connection string
       environment = [
+        {
+          name  = "TEAMCITY_DB_URL"
+          value = "jdbc:postgresql://${aws_rds_cluster.teamcity_db_cluster.endpoint}/teamcity"
+        },
+        {
+          name  = "TEAMCITY_DB_USER"
+          value = aws_rds_cluster.teamcity_db_cluster.master_username
+        },
         # {
         #   name  = "TEAMCITY_LOGS_PATH"
         #   value = "/data/teamcity_server/logs"
@@ -61,6 +74,12 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
         {
           name  = "TEAMCITY_DATA_PATH"
           value = "/data/teamcity_server/datadir"
+        }
+      ]
+      secrets = [
+        {
+          name      = "TEAMCITY_DB_PASSWORD"
+          valueFrom = "${aws_rds_cluster.teamcity_db_cluster.master_user_secret[0].secret_arn}:password::"
         }
       ]
     }
@@ -91,23 +110,32 @@ resource "aws_ecs_service" "teamcity" {
   cluster                = aws_ecs_cluster.teamcity_cluster.name
   task_definition        = aws_ecs_task_definition.teamcity_task_definition.arn
   launch_type            = "FARGATE"
-  desired_count          = 1     #TODO: make this configurable
-  force_new_deployment   = true  #TODO: make this configurable
-  enable_execute_command = true  #TODO: make this configurable
-  wait_for_steady_state  = false #TODO: make this configurable
+  desired_count          = var.desired_container_count
+  force_new_deployment   = var.debug
+  enable_execute_command = var.debug
+
+  wait_for_steady_state = false #TODO: make this configurable
 
   network_configuration {
     subnets         = var.service_subnets
     security_groups = [aws_security_group.teamcity_service_sg.id]
   }
-  load_balancer {
-    target_group_arn = aws_lb_target_group.teamcity_target_group.arn
-    container_name   = var.container_name
-    container_port   = var.container_port
+  dynamic "load_balancer" {
+    for_each = var.create_external_alb ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.teamcity_target_group[0].arn
+      container_name   = var.container_name
+      container_port   = var.container_port
+
+    }
   }
 
   tags = local.tags
 }
+
+###################################
+# Security Groups                 #
+###################################
 
 # TeamCity service security group
 resource "aws_security_group" "teamcity_service_sg" {
@@ -119,6 +147,7 @@ resource "aws_security_group" "teamcity_service_sg" {
 
 # TeamCity EFS security group
 resource "aws_security_group" "teamcity_efs_sg" {
+  count       = var.efs_id == null ? 1 : 0
   name        = "${local.name_prefix}-efs-sg"
   description = "TeamCity EFS mount target security group"
   vpc_id      = var.vpc_id
@@ -127,6 +156,7 @@ resource "aws_security_group" "teamcity_efs_sg" {
 
 # Ingress rule for NFS traffic from service to EFS
 resource "aws_vpc_security_group_ingress_rule" "service_efs" {
+  count                        = var.efs_id == null ? 1 : 0
   security_group_id            = aws_security_group.teamcity_efs_sg.id
   referenced_security_group_id = aws_security_group.teamcity_service_sg.id
   description                  = "Allow inbound access from TeamCity service containers to EFS"
@@ -137,6 +167,7 @@ resource "aws_vpc_security_group_ingress_rule" "service_efs" {
 
 # Ingress rule for NFS traffic from EFS to service
 resource "aws_vpc_security_group_ingress_rule" "efs_service" {
+  count                        = var.efs_id == null ? 1 : 0
   security_group_id            = aws_security_group.teamcity_service_sg.id
   referenced_security_group_id = aws_security_group.teamcity_efs_sg.id
   description                  = "Allow inbound access from EFS to TeamCity service containers"
@@ -147,6 +178,7 @@ resource "aws_vpc_security_group_ingress_rule" "efs_service" {
 
 # TeamCity Aurora Serverless PostgreSQL security group
 resource "aws_security_group" "teamcity_db_sg" {
+  count       = var.database_connection_string == null ? 1 : 0
   name        = "${local.name_prefix}-db-sg"
   description = "TeamCity DB security group"
   vpc_id      = var.vpc_id
@@ -155,6 +187,7 @@ resource "aws_security_group" "teamcity_db_sg" {
 
 # Ingress rule for PostgreSQL from service to database cluster
 resource "aws_vpc_security_group_ingress_rule" "service_db" {
+  count                        = var.database_connection_string == null ? 1 : 0
   security_group_id            = aws_security_group.teamcity_db_sg.id
   referenced_security_group_id = aws_security_group.teamcity_service_sg.id
   description                  = "Allow inbound access from TeamCity service containers to DB"
@@ -165,6 +198,7 @@ resource "aws_vpc_security_group_ingress_rule" "service_db" {
 
 # Ingress rule for PostgreSQL from database cluster to service
 resource "aws_vpc_security_group_ingress_rule" "db_service" {
+  count                        = var.database_connection_string == null ? 1 : 0
   security_group_id            = aws_security_group.teamcity_service_sg.id
   referenced_security_group_id = aws_security_group.teamcity_db_sg.id
   description                  = "Allow inbound access from DB to TeamCity service containers"
@@ -175,6 +209,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_service" {
 
 # Egress rule for database to let all traffic out
 resource "aws_vpc_security_group_egress_rule" "db_outbound" {
+  count             = var.database_connection_string == null ? 1 : 0
   security_group_id = aws_security_group.teamcity_db_sg.id
   description       = "Allow outbound access from DB to all"
   cidr_ipv4         = "0.0.0.0/0"
@@ -183,6 +218,7 @@ resource "aws_vpc_security_group_egress_rule" "db_outbound" {
 
 # TeamCity ALB security group
 resource "aws_security_group" "teamcity_alb_sg" {
+  count       = var.create_external_alb ? 1 : 0
   name        = "${local.name_prefix}-alb-sg"
   vpc_id      = var.vpc_id
   description = "TeamCity ALB security group"
@@ -191,8 +227,9 @@ resource "aws_security_group" "teamcity_alb_sg" {
 
 # Ingress rule for HTTP traffic from ALB to service
 resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
+  count                        = var.create_external_alb ? 1 : 0
   security_group_id            = aws_security_group.teamcity_service_sg.id
-  referenced_security_group_id = aws_security_group.teamcity_alb_sg.id
+  referenced_security_group_id = aws_security_group.teamcity_alb_sg[0].id
   description                  = "Allow inbound HTTP traffic from ALB to service containers"
   from_port                    = var.container_port
   to_port                      = var.container_port
@@ -201,7 +238,8 @@ resource "aws_vpc_security_group_ingress_rule" "service_inbound_alb" {
 
 # Egress rule for HTTP traffic from ALB to service
 resource "aws_vpc_security_group_egress_rule" "service_outbound_alb" {
-  security_group_id            = aws_security_group.teamcity_alb_sg.id
+  count                        = var.create_external_alb ? 1 : 0
+  security_group_id            = aws_security_group.teamcity_alb_sg[0].id
   referenced_security_group_id = aws_security_group.teamcity_service_sg.id
   description                  = "Allow outbound HTTP traffic from ALB to service containers"
   from_port                    = var.container_port
@@ -292,7 +330,27 @@ resource "aws_iam_role" "teamcity_task_execution_role" {
 
   assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+
+  inline_policy {
+    name = "teamcity-secrets-access"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Sid    = "SecretsManager"
+          Effect = "Allow"
+          Action = [
+            "secretsmanager:GetSecretValue"
+          ]
+          Resource = [
+            aws_rds_cluster.teamcity_db_cluster.master_user_secret[0].secret_arn
+          ]
+        }
+      ]
+    })
+  }
 }
+
 
 # CloudWatch Logs
 resource "aws_cloudwatch_log_group" "teamcity_log_group" {
@@ -304,17 +362,34 @@ resource "aws_cloudwatch_log_group" "teamcity_log_group" {
 
 # Load Balancer for TeamCity Service
 resource "aws_lb" "teamcity_external_lb" {
-  name                       = "${local.name_prefix}-lb"
-  security_groups            = [aws_security_group.teamcity_alb_sg.id]
-  load_balancer_type         = "application"
-  internal                   = false
-  subnets                    = var.alb_subnets
+  count              = var.create_external_alb ? 1 : 0
+  name               = "${local.name_prefix}-lb"
+  security_groups    = [aws_security_group.teamcity_alb_sg[0].id]
+  load_balancer_type = "application"
+  internal           = false
+  subnets            = var.alb_subnets
+
+
+  # dynamic "access_logs" {
+  #   for_each = var.enable_teamcity_alb_access_logs ? [1] : []
+  #   content {
+  #     enabled = var.enable_teamcity_alb_access_logs
+  #     bucket  = var.teamcity_alb_access_logs_bucket != null ? var.teamcity_alb_access_logs_bucket : aws_s3_bucket.teamcity_alb_access_logs_bucket[0].id
+  #     prefix  = var.teamcity_alb_access_logs_prefix != null ? var.teamcity_alb_access_logs_prefix : "${local.name_prefix}-alb"
+  #   }
+  # }
+  #checkov:skip=CKV_AWS_150:Deletion protection disabled by default
+  enable_deletion_protection = var.enable_teamcity_alb_deletion_protection
+
+  #checkov:skip=CKV2_AWS_28: ALB access is managed with SG allow listing
+
   drop_invalid_header_fields = true
   tags                       = local.tags
 }
 
 # TeamCity target group for ALB
 resource "aws_lb_target_group" "teamcity_target_group" {
+  count       = var.create_external_alb ? 1 : 0
   name        = "${local.name_prefix}-tg"
   port        = var.container_port
   protocol    = "HTTP"
@@ -337,14 +412,15 @@ resource "aws_lb_target_group" "teamcity_target_group" {
 
 # ALB HTTPS Listener
 resource "aws_lb_listener" "teamcity_listener" {
-  load_balancer_arn = aws_lb.teamcity_external_lb.arn
+  count             = var.create_external_alb ? 1 : 0
+  load_balancer_arn = aws_lb.teamcity_external_lb[0].arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.alb_certificate_arn
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.teamcity_target_group.arn
+    target_group_arn = aws_lb_target_group.teamcity_target_group[0].arn
   }
   tags = local.tags
 }
@@ -354,6 +430,7 @@ resource "aws_lb_listener" "teamcity_listener" {
 # #######################################
 # Subnet group
 resource "aws_db_subnet_group" "teamcity_db_subnet_group" {
+  count      = var.database_connection_string == null ? 1 : 0
   name       = "${local.name_prefix}-db-subnet-group"
   subnet_ids = var.service_subnets
   tags       = local.tags
@@ -361,17 +438,18 @@ resource "aws_db_subnet_group" "teamcity_db_subnet_group" {
 
 # # RDS instance with Aurora serverless engine
 resource "aws_rds_cluster" "teamcity_db_cluster" {
-  #count = var.database_connection_string == null ? var.teamcity_instance_count : 0
+  count = var.database_connection_string == null ? 1 : 0
 
-  cluster_identifier   = "teamcity-cluster"
-  engine               = "aurora-postgresql"
-  engine_mode          = "provisioned"
-  engine_version       = "16.6"
-  database_name        = "teamcity"
-  master_username      = "teamcity"
-  master_password      = "teamcity2025"
-  storage_encrypted    = true
-  db_subnet_group_name = aws_db_subnet_group.teamcity_db_subnet_group.id
+  cluster_identifier          = "teamcity-cluster"
+  engine                      = "aurora-postgresql"
+  engine_mode                 = "provisioned"
+  engine_version              = "16.6" #check for latest as option
+  database_name               = "teamcity"
+  master_username             = "teamcity"
+  manage_master_user_password = true #using AWS Secrets Manager
+  storage_encrypted           = true
+  skip_final_snapshot         = var.aurora_skip_final_snapshot
+  db_subnet_group_name        = aws_db_subnet_group.teamcity_db_subnet_group.id
   vpc_security_group_ids = [
     aws_security_group.teamcity_db_sg.id
   ]
@@ -384,7 +462,7 @@ resource "aws_rds_cluster" "teamcity_db_cluster" {
 }
 
 resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
-  #count = var.database_connection_string == null ? 1 : 0
+  count = var.database_connection_string == null ? var.aurora_instance_count : 0
 
   cluster_identifier = aws_rds_cluster.teamcity_db_cluster.id
   instance_class     = "db.serverless"
@@ -398,6 +476,7 @@ resource "aws_rds_cluster_instance" "teamcity_db_cluster" {
 
 # File system for teamcity
 resource "aws_efs_file_system" "teamcity_efs_file_system" {
+  count            = var.efs_id == null ? 1 : 0
   creation_token   = "${local.name_prefix}-efs-file-system"
   performance_mode = var.teamcity_efs_performance_mode
   throughput_mode  = var.teamcity_efs_throughput_mode
