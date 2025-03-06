@@ -90,8 +90,15 @@ variable "teamcity_cloudwatch_log_retention_in_days" {
 }
 
 ########################################
-# EFS
+# EFS Configuration
 ########################################
+
+variable "efs_id" {
+  type        = string
+  description = "The ID of the EFS file system to use for the TeamCity service."
+  default     = null
+}
+
 variable "teamcity_efs_performance_mode" {
   type        = string
   description = "The performance mode of the EFS file system used by the TeamCity service. Defaults to general purpose."
@@ -102,6 +109,12 @@ variable "teamcity_efs_throughput_mode" {
   type        = string
   description = "The throughput mode of the EFS file system used by the TeamCity service. Defaults to bursting."
   default     = "bursting"
+}
+
+variable "efs_access_point_id" {
+  type        = string
+  description = "The ID of the EFS access point to use for the TeamCity data volume."
+  default     = null
 }
 
 ########################################
@@ -146,24 +159,10 @@ variable "enable_teamcity_alb_deletion_protection" {
   description = "Enables deletion protection for the TeamCity ALB. Defaults to true."
   default     = false
 }
-########################################
-# EFS Configuration
-########################################
-
-variable "efs_id" {
-  type        = string
-  description = "The ID of the EFS file system to use for the TeamCity service."
-  default     = null
-}
 
 ########################################
 # Aurora Cluster
 ########################################
-variable "teamcity_instance_count" {
-  type        = number
-  description = "The number of instances to provision for the TeamCity Aurora cluster"
-  default     = 1
-}
 
 variable "database_connection_string" {
   type        = string
@@ -175,6 +174,11 @@ variable "database_master_username" {
   type        = string
   description = "The master username for the database"
   default     = "teamcity"
+}
+variable "database_master_password" {
+  type        = string
+  description = "The master password for the database"
+  default     = null
 }
 
 variable "aurora_skip_final_snapshot" {
