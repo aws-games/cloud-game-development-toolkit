@@ -1,0 +1,781 @@
+---
+- name: Install and Configure Perforce Edge Server
+  hosts: all
+  become: yes
+  collections:
+    - amazon.aws
+  vars:
+    # File paths and directories
+    log_file: "/var/log/p4_setup.log"
+    sdp_root: "/hxdepots/sdp/helix_binaries"
+    sdp: "/hxdepots/sdp"
+    stage_bin_dir: "/hxdepots/sdp/helix_binaries"
+    topology_file: "/etc/perforce/topology.json"
+    flag_file: "/var/run/p4_configure_ran.flag"
+
+    # Package requirements
+    package: "policycoreutils-python-utils"
+    required_binaries:
+      - p4
+      - p4broker
+      - p4d
+      - p4p
+
+    # Perforce configuration
+    default_helix_version: "r23.1"
+    default_bin_list: "p4,p4d,p4p,p4broker"
+    perforce_ftp_base_url: "https://ftp.perforce.com/perforce"
+    download_apis: false
+    perforce_case_sensitive: "1"
+
+    # Server configuration
+    p4d_type: "p4d_edge"
+    fqdn: "{{ ansible_fqdn | default(ansible_hostname) }}"
+    unicode: "{{ unicode | default('false') }}"
+
+    # Authentication and security
+    p4d_admin_username_secret_id: "{{ p4d_admin_username_secret_id }}"  # Required external var
+    p4d_admin_pass_secret_id: "{{ p4d_admin_pass_secret_id }}"  # Required external var
+    helix_auth_service_url: "{{ helix_auth_service_url | default('') }}"
+
+    # Server type - hardcoded for this playbook
+    server_type: "edge"
+
+  pre_tasks:
+    - name: Ensure pip is installed
+      package:
+        name: python3-pip
+        state: present
+
+  tasks:
+    - name: Take information from variables
+      debug:
+        msg: "Project Prefix: {{ PROJECT_PREFIX }}, Environment: {{ ENVIRONMENT }}"
+
+    - name: Check if playbook has already run
+      stat:
+        path: "{{ flag_file }}"
+      register: flag_file_stat
+
+    - name: Exit if playbook has already run
+      meta: end_play
+      when: flag_file_stat.stat.exists
+
+    - name: Ensure running as root
+      fail:
+        msg: "This playbook must be run as root"
+      when: ansible_user_id != "root"
+
+    - name: Ensure required directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "/etc/perforce"
+        - "/var/log/perforce"
+
+    - name: Gather EC2 facts
+      amazon.aws.ec2_metadata_facts:
+
+    - name: Set AWS region for secret lookup
+      set_fact:
+        aws_region_name: "{{ ansible_ec2_placement_region }}"
+    
+    - name: Set SSM parameter name
+      set_fact:
+        ssm_param_name: "/{{ PROJECT_PREFIX }}/{{ ENVIRONMENT }}/perforce/topology"
+
+    - name: Debug SSM parameter name
+      debug:
+        msg: "SSM Parameter Name: {{ ssm_param_name }}"
+
+    - name: Fetch topology from AWS Parameter Store
+      set_fact:
+        ssm_topology: "{{ lookup('amazon.aws.ssm_parameter', ssm_param_name, region=aws_region_name) }}"        
+
+    - name: Parse fetched topology
+      set_fact:
+        new_topology: "{{ ssm_topology }}"
+
+    - name: Check if local topology file was previously written
+      stat:
+        path: "{{ topology_file }}"
+      register: topology_stat
+
+    - name: Read existing topology if it exists
+      block:
+        - name: Read existing topology
+          slurp:
+            src: "{{ topology_file }}"
+          register: existing_topology_raw
+
+        - name: Parse existing topology
+          set_fact:
+            existing_topology: "{{ existing_topology_raw['content'] | b64decode | from_json }}"
+      when: topology_stat.stat.exists
+
+    - name: Compare topologies and update if necessary
+      block:
+        - name: Check if topology has changed
+          set_fact:
+            topology_changed: "{{ new_topology.version != existing_topology.version }}"
+
+        - name: Log topology change
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Topology change detected. New version: {{ new_topology.version }}"
+            create: yes
+          when: topology_changed
+
+        - name: Update local topology file
+          copy:
+            content: "{{ new_topology | to_nice_json }}"
+            dest: "{{ topology_file }}"
+          when: topology_changed
+      when: topology_stat.stat.exists
+      
+    - name: Store new topology if it doesn't exist locally
+      copy:
+        content: "{{ new_topology | to_nice_json }}"
+        dest: "{{ topology_file }}"
+      when: not topology_stat.stat.exists
+
+    - name: Extract volume information from topology
+      set_fact:
+        server_volumes: "{{ new_topology.servers[server_type].volumes }}"
+
+    - name: Set volume device paths
+      set_fact:
+        ebs_volumes:
+          logs: "{{ server_volumes.logs.device }}"
+          metadata: "{{ server_volumes.metadata.device }}"
+          depots: "{{ server_volumes.depot.device }}"
+
+    - name: Set server-specific facts
+      set_fact:
+        commit_server_dns: "{{ new_topology.servers.commit.private_dns }}"
+        replica_server_dns: "{{ new_topology.servers.replica.private_dns | default('') }}"
+        edge_server_dns: "{{ new_topology.servers.edge.private_dns | default('') }}"
+
+    - name: Display server information
+      debug:
+        msg: 
+          - "Server Type: {{ server_type }}"
+          - "Commit Server DNS: {{ commit_server_dns }}"
+          - "Replica Server DNS: {{ replica_server_dns }}"
+          - "Edge Server DNS: {{ edge_server_dns }}"
+
+    - name: Ensure perforce group exists
+      group:
+        name: perforce
+        state: present
+
+    - name: Ensure perforce user exists
+      user:
+        name: perforce
+        group: perforce
+        home: /home/perforce
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Set up sudoers for perforce user
+      copy:
+        content: "perforce ALL=(ALL) NOPASSWD:ALL"
+        dest: /etc/sudoers.d/perforce
+        mode: '0400'
+
+    - name: Create required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: perforce
+        group: perforce
+        mode: '0755'
+      loop:
+        - /hxdepots
+        - /hxlogs
+        - /hxmetadata
+
+    - name: Download SDP
+      get_url:
+        url: https://swarm.workshop.perforce.com/download/guest/perforce_software/sdp/downloads/sdp.Unix.tgz
+        dest: /hxdepots/sdp.Unix.tgz
+
+    - name: Extract SDP
+      unarchive:
+        src: /hxdepots/sdp.Unix.tgz
+        dest: /hxdepots
+        remote_src: yes
+
+    - name: Set permissions for SDP
+      file:
+        path: "{{ sdp }}"
+        state: directory
+        recurse: yes
+        mode: 'u+w'
+
+    - name: Check for required binaries
+      stat:
+        path: "{{ sdp_root }}/{{ item }}"
+      register: binary_stats
+      loop: "{{ required_binaries }}"
+
+    - name: Ensure the target directory exists
+      file:
+        path: "{{ stage_bin_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Set Helix version
+      set_fact:
+        helix_version: "{{ helix_version | default(default_helix_version) }}"
+
+    - name: Set binary list
+      set_fact:
+        bin_list: "{{ bin_list | default(default_bin_list) }}"
+
+    - name: Determine OS and architecture
+      set_fact:
+        os_name: "{{ ansible_system | lower }}"
+        os_arch: "{{ ansible_architecture }}"
+
+    - name: Set platform for each binary
+      set_fact:
+        platform: >-
+          {%- if os_name == 'linux' -%}
+          linux26{{ 'x86_64' if os_arch == 'x86_64' else '' }}
+          {%- else -%}
+          {{ os_name }}{{ '64' if os_arch == 'x86_64' else '' }}
+          {%- endif -%}
+
+    - name: Download binaries
+      get_url:
+        url: "{{ perforce_ftp_base_url }}/{{ helix_version }}/bin.{{ platform | trim }}/{{ item }}"
+        dest: "{{ stage_bin_dir }}/{{ item }}"
+        mode: '0755'
+      loop: "{{ bin_list.split(',') }}"
+      register: download_result
+      retries: 3
+      delay: 5
+      until: download_result is success
+
+    - name: Get binary versions
+      command: "{{ stage_bin_dir }}/{{ item }} -V"
+      register: version_info
+      changed_when: false
+      loop: "{{ bin_list.split(',') }}"
+
+    - name: Display binary versions
+      debug:
+        msg: "Version of {{ item.item }}: {{ item.stdout_lines[0] }}"
+      loop: "{{ version_info.results }}"
+
+    - name: Download APIs
+      block:
+        - name: Get API directory listing
+          uri:
+            url: "{{ perforce_ftp_base_url }}/{{ helix_version }}/bin.{{ platform }}/"
+            return_content: yes
+          register: api_dir_content
+
+        - name: Extract API filenames
+          set_fact:
+            api_files: "{{ api_dir_content.content | regex_findall('href=\"(p4api-.*?.tgz)\"') }}"
+
+        - name: Download API files
+          get_url:
+            url: "{{ perforce_ftp_base_url }}/{{ helix_version }}/bin.{{ platform }}/{{ item }}"
+            dest: "{{ stage_bin_dir }}/{{ item }}"
+          loop: "{{ api_files }}"
+
+        - name: Display API versions
+          command: tar -tzf {{ stage_bin_dir }}/{{ item }} | head -1
+          register: api_versions
+          changed_when: false
+          loop: "{{ api_files }}"
+
+        - name: Show API versions
+          debug:
+            msg: "Version of {{ item.item }}: {{ item.stdout.split('/')[0] }}"
+          loop: "{{ api_versions.results }}"
+      when: download_apis | bool
+
+    - name: Set ownership of SDP_Root
+      file:
+        path: "{{ sdp_root }}"
+        state: directory
+        recurse: yes
+        owner: perforce
+        group: perforce
+
+    - name: Debug secrets information
+      debug:
+        msg: 
+          - "AWS Region: {{ aws_region_name }}"
+          - "Username Secret ID: {{ p4d_admin_username_secret_id }}"
+          - "Password Secret ID: {{ p4d_admin_pass_secret_id }}"
+
+    - name: Resolve AWS secrets
+      block:
+        - name: Get username from Secrets Manager
+          set_fact:
+            p4d_admin_username: "{{ lookup('amazon.aws.aws_secret', p4d_admin_username_secret_id, region=aws_region_name) }}"
+
+        - name: Get password from Secrets Manager
+          set_fact:
+            p4d_admin_pass: "{{ lookup('amazon.aws.aws_secret', p4d_admin_pass_secret_id, region=aws_region_name) }}"
+      rescue:
+        - name: Handle secrets retrieval failure
+          fail:
+            msg: "Failed to retrieve secrets from AWS Secrets Manager. Ensure the instance has proper IAM permissions and the secrets exist in region {{ aws_region_name }}"
+
+    - name: Verify secrets were retrieved
+      fail:
+        msg: "Failed to retrieve {{ item.name }}. The value is empty or undefined."
+      when: not item.value | default('')
+      loop:
+        - { name: "admin username", value: "{{ p4d_admin_username | default('') }}" }
+        - { name: "admin password", value: "{{ p4d_admin_pass | default('') }}" }
+      no_log: false
+
+    - name: Prepare EBS volumes or mount FSx
+      block:
+        - name: Create temporary mount points
+          file:
+            path: "{{ item }}"
+            state: directory
+          loop:
+            - /mnt/temp_hxlogs
+            - /mnt/temp_hxmetadata
+            - /mnt/temp_hxdepots
+
+    - name: Get device information
+      set_fact:
+        device_info:
+          - path: "/mnt/temp_hxlogs"
+            src: "{{ ebs_volumes.logs }}"
+          - path: "/mnt/temp_hxmetadata"
+            src: "{{ ebs_volumes.metadata }}"
+          - path: "/mnt/temp_hxdepots"
+            src: "{{ ebs_volumes.depots }}"
+
+    - name: Identify device types and prepare for mounting
+      set_fact:
+        mount_info: "{{ mount_info | default([]) + [{ 
+          'path': item.path, 
+          'src': item.src,
+          'is_nfs': item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/'),
+          'fstype': 'nfs' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'xfs',
+          'opts': 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/')) else 'defaults'}] }}"
+      loop: "{{ device_info }}"
+
+    - name: Debug mount info
+      debug:
+        var: mount_info
+
+    - name: Ensure mount directories exist
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ mount_info }}"
+
+    - name: Get actual device names for EBS volumes
+      shell: |
+        realpath $(readlink -f {{ item.src }}) || echo {{ item.src }}
+      register: actual_device_names
+      when: not item.is_nfs
+      loop: "{{ mount_info }}"
+
+    - name: Update mount info with actual device names
+      set_fact:
+        mount_info: "{{ mount_info | map('combine', {'actual_src': item.stdout if item.stdout else item.item.src}) | list }}"
+      loop: "{{ actual_device_names.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check if EBS filesystems are formatted
+      command: "blkid {{ item.actual_src }}"
+      register: blkid_results
+      failed_when: false
+      changed_when: false
+      when: not item.is_nfs
+      loop: "{{ mount_info }}"
+
+    - name: Format EBS filesystems if needed
+      filesystem:
+        fstype: xfs
+        dev: "{{ item.item.actual_src }}"
+      when: not item.item.is_nfs and item.rc != 0
+      loop: "{{ blkid_results.results }}"
+
+    - name: Mount volumes or FSx
+      mount:
+        path: "{{ item.path }}"
+        src: "{{ item.actual_src | default(item.src) }}"
+        fstype: "{{ item.fstype }}"
+        opts: "{{ item.opts }}"
+        state: mounted
+      loop: "{{ mount_info }}"
+
+    - name: Sync directories
+      synchronize:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { src: "/hxlogs/", dest: "/mnt/temp_hxlogs/" }
+        - { src: "/hxmetadata/", dest: "/mnt/temp_hxmetadata/" }
+        - { src: "/hxdepots/", dest: "/mnt/temp_hxdepots/" }
+
+    - name: Unmount temporary mounts
+      mount:
+        path: "{{ item }}"
+        state: unmounted
+      loop:
+        - /mnt/temp_hxlogs
+        - /mnt/temp_hxmetadata
+        - /mnt/temp_hxdepots
+
+    - name: Clear destination directories
+      file:
+        path: "{{ item }}/*"
+        state: absent
+      loop:
+        - /hxlogs
+        - /hxmetadata
+        - /hxdepots
+
+    - name: Mount EBS volumes or FSx to final destinations
+      block:
+        - name: Format volumes if needed
+          filesystem:
+            fstype: xfs
+            dev: "{{ item.src }}"
+          when: not (item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/'))
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+
+        - name: Mount volumes
+          mount:
+            path: "{{ item.path }}"
+            src: "{{ item.src }}"
+            fstype: "{{ 'nfs' if item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'xfs' }}"
+            opts: "{{ 'nconnect=16,rsize=1048576,wsize=1048576,timeo=600' if item.src is regex('fs-[0-9a-f]{17}\\.fsx\\.[a-z0-9-]+\\.amazonaws\\.com:/') else 'defaults' }}"
+            state: mounted
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+      rescue:
+        - name: Debug mount failure
+          debug:
+            msg: "Failed to mount {{ item.path }} from {{ item.src }}. Checking device info..."
+          loop:
+            - { path: "/hxlogs", src: "{{ ebs_volumes.logs }}" }
+            - { path: "/hxmetadata", src: "{{ ebs_volumes.metadata }}" }
+            - { path: "/hxdepots", src: "{{ ebs_volumes.depots }}" }
+
+        - name: Show device information
+          shell: |
+            lsblk -f
+            ls -l /dev/disk/by-id/
+          register: device_debug
+          
+        - name: Display device debug info
+          debug:
+            var: device_debug.stdout_lines
+
+        - name: Fail with meaningful message
+          fail:
+            msg: "Failed to mount volumes. See device debug information above."
+
+    - name: Validate perforce_case_sensitive value
+      fail:
+        msg: "perforce_case_sensitive must be either '0' or '1', got '{{ perforce_case_sensitive }}'"
+      when: perforce_case_sensitive not in ['0', '1']
+
+    - name: Debug perforce_case_sensitive value
+      debug:
+        msg: "Using perforce_case_sensitive value: {{ perforce_case_sensitive }}"
+
+    - name: Update mkdirs.cfg
+      lineinfile:
+        path: /hxdepots/sdp/Server/Unix/setup/mkdirs.cfg
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^P4ADMINPASS=', line: 'P4ADMINPASS={{ p4d_admin_pass }}' }
+        - { regexp: '^ADMINUSER=', line: 'ADMINUSER={{ p4d_admin_username }}' }
+        - { regexp: '^P4MASTERHOST=', line: 'P4MASTERHOST={{ commit_server_dns }}' }
+        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE={{ perforce_case_sensitive }}' }
+
+    - name: Execute mkdirs.sh
+      command: /hxdepots/sdp/Server/Unix/setup/mkdirs.sh 1 -t {{ p4d_type }} -no_cron -no_firewall
+      args:
+        chdir: /hxdepots/sdp/Server/Unix/setup
+
+    - name: Fix generated crontab
+      replace:
+        path: /p4/p4.crontab.1
+        regexp: '^\s*\*/60\s+'
+        replace: '0 '
+      register: crontab_fix
+
+    - name: Show crontab content before installation
+      shell: cat /p4/p4.crontab.1
+      register: crontab_content
+      changed_when: false
+
+    - name: Display crontab content
+      debug:
+        var: crontab_content.stdout_lines
+    
+    - name: Validate crontab file
+      command: crontab -u perforce -T /p4/p4.crontab.1
+      register: crontab_validate
+      changed_when: false
+      failed_when: false
+
+    - name: Display validation results
+      debug:
+        var: crontab_validate
+
+    - name: Initialize crontab for perforce user
+      shell: crontab -u perforce /p4/p4.crontab.1
+      become: yes
+      when: crontab_validate.rc == 0
+      register: crontab_result
+
+    - name: Handle crontab installation failure
+      fail:
+        msg: "Failed to install crontab: {{ crontab_validate.stderr }}"
+      when: crontab_validate.rc != 0
+    
+    - name: Check for existing SSL certificate
+      stat:
+        path: /p4/ssl/certificate.txt
+      register: ssl_cert
+
+    - name: Display SSL certificate status
+      debug:
+        msg: "SSL certificate {{ 'exists' if ssl_cert.stat.exists else 'does not exist' }}"
+
+    - name: Configure and generate SSL certificate
+      block:
+        - name: Update SSL config with EC2 DNS name
+          lineinfile:
+            path: /p4/ssl/config.txt
+            regexp: '^REPL_DNSNAME'
+            line: "{{ fqdn | default(ansible_ec2_public_hostname) }}"
+          register: ssl_config_update
+
+        - name: Display SSL config update status
+          debug:
+            var: ssl_config_update
+
+        - name: Generate SSL certificate
+          command: /p4/common/bin/p4master_run 1 /p4/1/bin/p4d_1 -Gc
+          register: ssl_gen_result
+
+        - name: Display SSL generation result
+          debug:
+            var: ssl_gen_result.stdout_lines
+      when: not ssl_cert.stat.exists
+
+    - name: Configure systemd service
+      block:
+        - name: Create systemd service file using sed
+          shell: |
+            cd /etc/systemd/system
+            sed -e "s:__INSTANCE__:1:g" -e "s:__OSUSER__:perforce:g" \
+                "{{ sdp }}/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t" > p4d_1.service
+          args:
+            creates: /etc/systemd/system/p4d_1.service
+
+        - name: Set correct permissions on service file
+          file:
+            path: /etc/systemd/system/p4d_1.service
+            owner: root
+            group: root
+            mode: '0644'
+
+        - name: Verify service file content
+          shell: cat /etc/systemd/system/p4d_1.service
+          register: service_content
+          changed_when: false
+
+        - name: Display service file content
+          debug:
+            var: service_content.stdout_lines
+
+        - name: Reload systemd daemon
+          systemd:
+            daemon_reload: yes
+
+        - name: Verify service is recognized by systemd
+          systemd:
+            name: p4d_1
+            enabled: yes
+          register: systemd_status
+          ignore_errors: yes
+
+        - name: Show systemd service status
+          debug:
+            var: systemd_status
+      become: yes
+
+    - name: Start p4d service
+      systemd:
+        name: p4d_1
+        state: started
+
+    - name: Wait for p4d service to start
+      wait_for:
+        port: 1666
+        timeout: 300
+
+    - name: Create symlink for p4 binary
+      file:
+        src: "{{ sdp_root }}/p4"
+        dest: /usr/bin/p4
+        state: link
+
+    - name: Trust p4 server
+      command: p4 -p ssl:{{ new_topology.servers[server_type].private_dns }}:1666 trust -y
+
+    - name: Execute configure_new_server.sh
+      command: /p4/sdp/Server/setup/configure_new_server.sh 1
+
+    # Edge-specific tasks
+    - name: Configure NFS mount on edge
+      block:
+        - name: Create checkpoint directory if it doesn't exist
+          file:
+            path: /hxdepots/p4/1/checkpoints
+            state: directory
+            mode: '0755'
+            owner: perforce
+            group: perforce
+
+        - name: Check NFS server availability
+          wait_for:
+            host: "{{ commit_server_dns }}"
+            port: 2049
+            timeout: 5
+          register: nfs_check
+          retries: 5
+          delay: 10
+          until: nfs_check is success
+              
+        - name: Attempt NFS mount
+          mount:
+            path: /hxdepots/p4/1/checkpoints
+            src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
+            fstype: nfs
+            opts: rw,sync,soft,timeo=900,retrans=5
+            state: mounted
+          register: mount_result
+          retries: 5
+          delay: 10
+          until: mount_result is success
+      rescue:
+        - name: Handle mount failure
+          block:
+            - name: Force unmount if stuck
+              command: umount -f /hxdepots/p4/1/checkpoints
+              ignore_errors: yes
+
+            - name: Retry mount with different options
+              mount:
+                path: /hxdepots/p4/1/checkpoints
+                src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
+                fstype: nfs
+                opts: rw,sync,soft,timeo=900,retrans=5,nolock
+                state: mounted
+              register: retry_mount
+              retries: 5
+              delay: 10
+              until: retry_mount is success
+
+        - name: Final mount verification
+          command: mountpoint -q /hxdepots/p4/1/checkpoints
+          register: mount_verify
+          failed_when: mount_verify.rc != 0
+          
+    - name: Verify NFS mount
+      shell: df -h /hxdepots/p4/1/checkpoints
+      register: mount_check
+      changed_when: false
+
+    - name: Display mount status
+      debug:
+        var: mount_check.stdout_lines
+
+    # Configure edge server
+    - name: Configure edge server
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t edge -r {{ replica_server_dns }} -s {{ sitetag | default('awsregion') }}
+
+    # Load checkpoint on edge server
+    - name: Trust commit server
+      command: p4 -p ssl:{{ commit_server_dns }}:1666 trust -y
+      become: yes
+      become_user: perforce
+
+    - name: Login to commit server
+      shell: |
+        p4 -p ssl:{{ commit_server_dns }}:1666 login -a < /p4/common/config/.p4passwd.p4_1.admin
+      become: yes
+      become_user: perforce
+
+    - name: Find latest checkpoint
+      shell: |
+        ls -t /hxdepots/p4/1/checkpoints/p4_1.ckp.*.gz | head -1
+      register: latest_checkpoint
+      changed_when: false
+
+    - name: Load checkpoint if found
+      block:
+        - name: Verify disk space
+          shell: df -h /p4/1/root
+          register: disk_space
+          failed_when: false
+
+        - name: Display disk space
+          debug:
+            var: disk_space.stdout_lines
+
+        - name: Load checkpoint
+          shell: |
+            nohup load_checkpoint.sh {{ latest_checkpoint.stdout }} -i 1 -y < /dev/null > /p4/1/logs/load.log 2>&1 &
+          async: 3600
+          poll: 0
+          become: yes
+          become_user: perforce
+          when: latest_checkpoint.stdout | length > 0
+
+        - name: Monitor checkpoint load
+          shell: tail -n 20 /p4/1/logs/load.log
+          register: load_status
+          until: "'Checkpoint load completed successfully' in load_status.stdout"
+          retries: 30
+          delay: 60
+          become: yes
+          become_user: perforce
+          when: latest_checkpoint.stdout | length > 0
+      when: latest_checkpoint.stdout | length > 0
+      
+    - name: Start p4verify
+      shell: |
+        nohup p4verify.sh 1 < /dev/null > /dev/null 2>&1 &
+      async: 3600
+      poll: 0
+      become: yes
+      become_user: perforce
+
+    - name: Create flag file to indicate playbook has run
+      file:
+        path: "{{ flag_file }}"
+        state: touch
+        mode: '0644'

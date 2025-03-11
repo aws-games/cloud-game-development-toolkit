@@ -1,33 +1,52 @@
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-
+# Keep the original variable for backward compatibility
 variable "playbook_file_name" {
-  description = "The name of the playbook yaml on s3"
+  description = "The name of the playbook yaml on s3 (legacy variable)"
   type        = string
   default     = "p4_configure_playbook.yml"
 }
 
+# Updated to have separate variables for each server type playbook
+variable "playbook_file_names" {
+  description = "The names of the playbook yaml files for each server type"
+  type        = map(string)
+  default     = {
+    commit  = "p4_configure_commit_playbook.yml"
+    replica = "p4_configure_replica_playbook.yml"
+    edge    = "p4_configure_edge_playbook.yml"
+  }
+}
+
+# Updated to include local paths for each playbook - using the correct base path
+locals {
+  # Use the same base directory as the original playbook_path
+  playbook_base_dir = "${path.module}/../../../assets/ansible-playbooks/perforce/helix-core"
+  
+  playbook_paths = {
+    commit  = "${local.playbook_base_dir}/${var.playbook_file_names.commit}"
+    replica = "${local.playbook_base_dir}/${var.playbook_file_names.replica}"
+    edge    = "${local.playbook_base_dir}/${var.playbook_file_names.edge}"
+  }
+}
+
 resource "aws_s3_bucket" "ansible_bucket" {
-  bucket = local.bucket_name
+  bucket        = local.bucket_name
   force_destroy = true
 }
 
-resource "aws_s3_object" "playbook" {
+# Updated to create S3 objects for each playbook
+resource "aws_s3_object" "playbooks" {
+  for_each = var.playbook_file_names
+
   bucket = aws_s3_bucket.ansible_bucket.id
-  key    = var.playbook_file_name
-  source = local.playbook_path
-  etag   = filemd5(local.playbook_path)
+  key    = each.value
+  source = local.playbook_paths[each.key]
+  etag   = filemd5(local.playbook_paths[each.key])
 }
-
-
 
 resource "aws_ssm_document" "ansible_playbook" {
   name          = "Toolkit-AnsiblePlaybook"
   document_type = "Command"
-  target_type = "/AWS::EC2::Instance"
+  target_type   = "/AWS::EC2::Instance"
   content       = jsonencode({
     schemaVersion = "2.2"
     description   = "Use this document to run Ansible Playbooks on Systems Manager managed instances. For more information, see https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-state-manager-ansible.html however this document is modified updated version of the original AWS document."
@@ -140,29 +159,31 @@ resource "aws_ssm_document" "ansible_playbook" {
   })
 }
 
-resource "aws_ssm_association" "toolkitdoc" {
-  name = aws_ssm_document.ansible_playbook.name
-  association_name = "Toolkit-AnsibleAssociation"
+# Updated to create separate associations for each server type
+resource "aws_ssm_association" "playbook_associations" {
+  for_each = var.playbook_file_names
+
+  name             = aws_ssm_document.ansible_playbook.name
+  association_name = "Toolkit-AnsibleAssociation-${each.key}"
 
   targets {
-    key = "tag:ServerType"
-    values = distinct([
-      for tags in values(local.p4_server_type_tags) : tags.ServerType
-    ])
+    key    = "tag:ServerType"
+    values = [local.p4_server_type_tags[each.key].ServerType]  # Properly capitalized ServerType values
   }
+
   parameters = {
     SourceType = "S3"
     SourceInfo = jsonencode({
-      "path" = "https://s3.amazonaws.com/${aws_s3_bucket.ansible_bucket.id}/${aws_s3_object.playbook.key}"
+      "path" = "https://s3.amazonaws.com/${aws_s3_bucket.ansible_bucket.id}/${each.value}"
     })
-    PlaybookFile = var.playbook_file_name
-    ExtraVariables = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment} p4d_admin_username_secret_id='${local.helix_core_super_user_username_secret_arn}' p4d_admin_pass_secret_id='${local.helix_core_super_user_password_secret_arn}'"
+    PlaybookFile    = each.value
+    ExtraVariables  = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment} p4d_admin_username_secret_id='${local.helix_core_super_user_username_secret_arn}' p4d_admin_pass_secret_id='${local.helix_core_super_user_password_secret_arn}'"
   }
 
-  depends_on = [aws_s3_object.playbook]
+  depends_on = [aws_s3_object.playbooks]
 
   output_location {
     s3_bucket_name = aws_s3_bucket.ansible_bucket.id
-    s3_key_prefix  = "ssm-output/"
+    s3_key_prefix  = "ssm-output/${each.key}/"
   }
 }

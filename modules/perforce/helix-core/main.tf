@@ -240,6 +240,25 @@ resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_mountd" 
   description      = "Allow mountd from ${split("_from_", each.key)[1]}"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_8080" {
+  for_each = merge([
+    for server_type, server_ip in local.server_cidrs : {
+      for target_type, target_ip in local.server_cidrs : 
+      "${server_type}_from_${target_type}" => {
+        sg_id = aws_security_group.helix_core_security_group[server_type].id
+        cidr  = target_ip
+      } if server_type != target_type
+    }
+  ]...)
+
+  security_group_id = each.value.sg_id
+  cidr_ipv4        = each.value.cidr
+  from_port        = 8080
+  to_port          = 8080
+  ip_protocol      = "tcp"
+  description      = "Allow port 8080 traffic from ${split("_from_", each.key)[1]}"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "helix_core_inter_server_icmp" {
   for_each = merge([
     for server_type, server_ip in local.server_cidrs : {
