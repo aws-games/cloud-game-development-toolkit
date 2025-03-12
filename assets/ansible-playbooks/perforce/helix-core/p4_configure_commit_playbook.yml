@@ -157,6 +157,14 @@
         commit_server_dns: "{{ new_topology.servers.commit.private_dns }}"
         replica_server_dns: "{{ new_topology.servers.replica.private_dns | default('') }}"
         edge_server_dns: "{{ new_topology.servers.edge.private_dns | default('') }}"
+        commit_region: "{{ new_topology.servers.commit.region }}"
+        replica_region: "{{ new_topology.servers.replica.region | default('') }}"
+        edge_region: "{{ new_topology.servers.edge.region | default('') }}"
+
+    - name: Extract all unique regions from topology
+      set_fact:
+        unique_regions: "{{ new_topology.servers | dict2items | map(attribute='value.region') | list | unique }}"
+
 
     - name: Display server information
       debug:
@@ -165,6 +173,10 @@
           - "Commit Server DNS: {{ commit_server_dns }}"
           - "Replica Server DNS: {{ replica_server_dns }}"
           - "Edge Server DNS: {{ edge_server_dns }}"
+          - "Commit Region: {{ commit_region }}"
+          - "Replica Region: {{ replica_region }}"
+          - "Edge Region: {{ edge_region }}"
+  
 
     - name: Ensure perforce group exists
       group:
@@ -683,21 +695,22 @@
     - name: Verify SDP installation
       command: /hxdepots/p4/common/bin/verify_sdp.sh 1
 
+    - name: Create region to sitetag mapping
+      set_fact:
+        region_to_sitetag: "{{ region_to_sitetag | default({}) | combine({item: 'aws' + item | replace('-', '')}) }}"
+      loop: "{{ unique_regions }}" 
+
     - name: Create SiteTags file
       template:
         src: /hxdepots/sdp/Server/Unix/p4/common/config/SiteTags.cfg.sample
         dest: /hxdepots/p4/common/config/SiteTags.cfg
-
-    - name: Append AWS region to SiteTags
+    #Add region to the topology, add all found regions in topology to sitetags
+    - name: Add all unique regions to SiteTags
       lineinfile:
         path: /hxdepots/p4/common/config/SiteTags.cfg
-        line: "aws{{ aws_region_name | replace('-', '') }}: AWS {{ aws_region_name | upper }}"
-      register: sitetag_result
+        line: "aws{{ item | replace('-', '') }}: AWS {{ item | upper }}"
+      loop: "{{ unique_regions }}"
 
-    - name: Set fact based on SiteTags line
-      set_fact:
-        sitetag: "aws{{ aws_region_name | replace('-', '') }}"
-      when: sitetag_result.changed
 
     # NFS export configuration
     - name: Get non-commit server IPs from topology
@@ -787,7 +800,13 @@
 
     # Configure replica on commit server
     - name: Configure replica server on Commit
-      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ sitetag }}
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ region_to_sitetag[replica_region] }}
+      when: replica_server_dns | default('') | length > 0
+
+     # Configure edge on commit server
+    - name: Configure edge server on Commit
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t edge -r {{ edge_server_dns }} -s {{ region_to_sitetag[edge_region] }}
+      when: edge_server_dns | default('') | length > 0
 
     # Fix .p4tickets permissions
     - name: Ensure .p4tickets has correct ownership
@@ -798,6 +817,19 @@
         mode: '0600'
         state: file
       ignore_errors: yes  # In case file doesn't exist yet
+
+    - name: Source p4 environment and get server information
+      shell: |
+        source /p4/common/bin/p4_vars 1
+        p4 servers
+      register: p4_servers_output
+      changed_when: false
+
+    - name: Extract server IDs
+      set_fact:
+        replica_server_id: "{{ (p4_servers_output.stdout_lines | select('search', 'replica') | list | first).split(' ')[0] if (p4_servers_output.stdout_lines | select('search', 'replica') | list) else '' }}"
+        edge_server_id: "{{ (p4_servers_output.stdout_lines | select('search', 'edge-server') | list | first).split(' ')[0] if (p4_servers_output.stdout_lines | select('search', 'edge-server') | list) else '' }}"
+
 
     # Create checkpoint for replicas to use
     - name: Create checkpoint on commit server
@@ -823,6 +855,33 @@
           become: yes
           become_user: perforce
 
+        # Create edge seed for edges to use
+    - name: Create edge seed on commit server
+      block:
+        - name: Set perforce environment
+          shell: |
+            cd /p4/common/bin
+            source p4_vars 1
+            # need to rotate journal first otherwise edge id will not be recognized
+            nohup rotate_journal.sh 1
+            sleep 5
+            nohup edge_dump.sh 1 {{ edge_server_id }}
+          args:
+            executable: /bin/bash
+          async: 3600
+          poll: 0
+          become: yes
+          become_user: perforce
+
+        - name: Wait for seed for edge completion
+          shell: tail -n 20 /p4/1/logs/edge_dump.log #The log path to be changed to dynamic, that includes the instance ID as variable
+          register: seed_status
+          until: "'Edge seed checkpoint complete.' in seed_status.stdout"
+          retries: 5
+          delay: 15
+          become: yes
+          become_user: perforce
+      when: edge_server_dns | default('') | length > 0
 
     - name: Ensure status directory exists
       file:
@@ -830,35 +889,19 @@
         state: directory
         mode: '0755'
 
-    - name: Source p4 environment and get server information
-      shell: |
-        source /p4/common/bin/p4_vars 1
-        p4 servers | grep replica
-      register: p4_servers_output
-      changed_when: false
-
-    - name: Extract replica server ID
-      set_fact:
-        replica_server_id: "{{ p4_servers_output.stdout.split(' ')[0] }}"
-      when: p4_servers_output.stdout is defined and p4_servers_output.stdout != ""
-
     - name: Create status JSON file
       copy:
         content: |
           {
             "status": "success",
             "replica_server_id": "{{ replica_server_id | default('unknown') }}",
+            "edge_server_id": "{{ edge_server_id | default('unknown') }}",
             "timestamp": "{{ ansible_date_time.iso8601 }}",
             "commit_server_ip": "{{ ansible_default_ipv4.address }}",
             "commit_hostname": "{{ ansible_hostname }}"
           }
         dest: "/tmp/perforce_status/commit_status.json"
         mode: '0644'
-
-    - name: Install simple HTTP server packages
-      package:
-        name: python3
-        state: present
 
     - name: Kill existing HTTP servers (if any)
       command: "pkill -f 'python3 -m http.server 8080' || true"

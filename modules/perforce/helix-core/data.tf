@@ -33,3 +33,5 @@ data "aws_ami" "helix_core_ami" {
     values = [var.instance_architecture]
   }
 }
+
+data "aws_region" "current" {}

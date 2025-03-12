@@ -1,6 +1,6 @@
 ---
 - name: Install and Configure Perforce Replica Server
-  hosts: all
+  hosts: localhost
   become: yes
   collections:
     - amazon.aws
@@ -173,7 +173,7 @@
         return_content: yes
       register: commit_status
       until: commit_status.status is defined and commit_status.status == 200 and commit_status.json.status is defined and commit_status.json.status == "success"
-      retries: 30
+      retries: 10
       delay: 15
       failed_when: false
 
@@ -286,8 +286,8 @@
         mode: '0755'
       loop: "{{ bin_list.split(',') }}"
       register: download_result
-      retries: 3
-      delay: 5
+      retries: 10
+      delay: 15
       until: download_result is success
 
     - name: Get binary versions
@@ -683,7 +683,7 @@
       block:
         - name: Create checkpoint directory if it doesn't exist
           file:
-            path: /hxdepots/p4/1/checkpoints
+            path: /mnt/checkpoints
             state: directory
             mode: '0755'
             owner: perforce
@@ -695,47 +695,47 @@
             port: 2049
             timeout: 5
           register: nfs_check
-          retries: 5
-          delay: 10
+          retries: 10
+          delay: 15
           until: nfs_check is success
               
         - name: Attempt NFS mount
           mount:
-            path: /hxdepots/p4/1/checkpoints
+            path: /mnt/checkpoints
             src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
             fstype: nfs
             opts: rw,sync,soft,timeo=900,retrans=5
             state: mounted
           register: mount_result
-          retries: 5
-          delay: 10
+          retries: 10
+          delay: 15
           until: mount_result is success
       rescue:
         - name: Handle mount failure
           block:
             - name: Force unmount if stuck
-              command: umount -f /hxdepots/p4/1/checkpoints
+              command: umount -f /mnt/checkpoints
               ignore_errors: yes
 
             - name: Retry mount with different options
               mount:
-                path: /hxdepots/p4/1/checkpoints
+                path: /mnt/checkpoints
                 src: "{{ commit_server_dns }}:/hxdepots/p4/1/checkpoints"
                 fstype: nfs
                 opts: rw,sync,soft,timeo=900,retrans=5,nolock
                 state: mounted
               register: retry_mount
-              retries: 5
-              delay: 10
+              retries: 10
+              delay: 15
               until: retry_mount is success
 
         - name: Final mount verification
-          command: mountpoint -q /hxdepots/p4/1/checkpoints
+          command: mountpoint -q /mnt/checkpoints
           register: mount_verify
           failed_when: mount_verify.rc != 0
           
     - name: Verify NFS mount
-      shell: df -h /hxdepots/p4/1/checkpoints
+      shell: df -h /mnt/checkpoints
       register: mount_check
       changed_when: false
 
@@ -758,18 +758,6 @@
       command: p4 -p ssl:{{ commit_server_dns }}:1666 trust -y
       become: yes
       become_user: perforce
-
-    - name: Login to commit server as perforce super user
-      shell: |
-        p4 -p ssl:{{ commit_server_dns }}:1666 login -a < /p4/common/config/.p4passwd.p4_1.admin
-      become: yes
-      become_user: perforce
-    
-    - name: Login to commit server as replica service user created by the mkrep.sh on commit
-      shell: |
-        p4 -p ssl:{{ commit_server_dns }}:1666 login svc_p4d_fr_awsuswest2
-      become: yes
-      become_user: perforce
     
     - name: Alter server.id file to represent commit server configuration after running mkrep.sh on commit
       copy:
@@ -781,7 +769,7 @@
 
     - name: Find latest checkpoint
       shell: |
-        ls -t /hxdepots/p4/1/checkpoints/p4_1.ckp.*.gz | head -1
+        ls -t /mnt/checkpoints/p4_1.ckp.*.gz | head -1
       become: yes
       become_user: perforce  
       register: latest_checkpoint
@@ -792,30 +780,82 @@
         - name: Verify disk space
           shell: df -h /p4/1/root
           register: disk_space
-          failed_when: false
+          changed_when: false
 
         - name: Display disk space
           debug:
             var: disk_space.stdout_lines
+        
+        - name: Set service user name
+          set_fact:
+            replica_service_user: "svc_{{ replica_server_id }}"
 
         - name: Load checkpoint
           shell: |
-            nohup load_checkpoint.sh {{ latest_checkpoint.stdout }} -i 1 -L /p4/1/logs/load.log -y
+            # Login to both admin and service user accounts
+            source /p4/common/bin/p4_vars 1
+            echo "Sourced vars for P4"
+            p4 -p ssl:{{ commit_server_dns }}:1666 login -a < /p4/common/config/.p4passwd.p4_1.admin
+            p4 -p ssl:{{ commit_server_dns }}:1666 login {{ replica_service_user }}
+            echo "Logged in to both admin and service user accounts"
+            /p4/common/bin/load_checkpoint.sh {{ latest_checkpoint.stdout }} -i 1 -y
+            echo "Loading checkpoint"
+          args:
+            executable: /bin/bash
           async: 3600
           poll: 0
           become: yes
           become_user: perforce
+          register: load_job
           when: latest_checkpoint.stdout | length > 0
 
         - name: Monitor checkpoint load
-          shell: tail -n 20 /p4/1/logs/load.log
+          shell: |
+            # Find the newest load_checkpoint log file
+            LOG_FILE=$(ls -t /p4/1/logs/load_checkpoint.*.log 2>/dev/null | head -1)
+            
+            # If log file exists, check for completion message
+            if [ -f "$LOG_FILE" ]; then
+              if grep -q "All processing completed successfully" "$LOG_FILE"; then
+                echo "SUCCESS: Checkpoint load completed successfully"
+                exit 0
+              else
+                echo "IN PROGRESS: Checkpoint load still running"
+                tail -n 10 "$LOG_FILE"
+                exit 2
+              fi
+            else
+              echo "WAITING: Log file not found yet"
+              exit 2
+            fi
+          args:
+            executable: /bin/bash
           register: load_status
-          until: "'All processing completed successfully' in load_status.stdout or 'Processing completed successfully with no errors' in load_status.stdout or 'Checkpoint load processing on' in load_status.stdout"
-          retries: 30
-          delay: 60
+          until: load_status.rc == 0
+          retries: 10
+          delay: 15
           become: yes
           become_user: perforce
           when: latest_checkpoint.stdout | length > 0
+
+        - name: Log checkpoint load result
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Checkpoint load {{ 'completed successfully' if load_status.rc == 0 else 'failed' }}"
+            create: yes
+          when: latest_checkpoint.stdout | length > 0 and load_status is defined
+ 
+      rescue:
+        - name: Log checkpoint load failure
+          lineinfile:
+            path: "{{ log_file }}"
+            line: "{{ ansible_date_time.iso8601 }} - Checkpoint load process encountered an error"
+            create: yes
+
+        - name: Display error information
+          debug:
+            msg: "Failed to load checkpoint. Check /p4/1/logs for detailed error information."
+      
       when: latest_checkpoint.stdout | length > 0
       
     - name: Start p4verify

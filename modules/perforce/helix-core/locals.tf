@@ -42,6 +42,7 @@ locals {
         instance_id = instance.id
         subnet_id = instance.subnet_id
         vpc_id = var.server_configuration[index(var.server_configuration.*.type, server_type)].vpc_id
+        region = instance.availability_zone != null ? regex("^([a-z]+-[a-z]+-[0-9]+)[a-z]$", instance.availability_zone)[0] : data.aws_region.current.name
         volumes = {
           depot = {
             device = aws_volume_attachment.depot_attachment[server_type].device_name
