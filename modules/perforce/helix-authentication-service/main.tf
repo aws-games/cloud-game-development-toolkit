@@ -134,7 +134,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
         },
         {
           name      = "ADMIN_PASSWD"
-          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_username_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
+          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_password_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
         },
       ] : [],
       logConfiguration = {

@@ -69,6 +69,7 @@ module "unreal_cloud_ddc_intra_cluster" {
     module.unreal_cloud_ddc_infra.oidc_provider_arn
   ]
 
+
   source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
