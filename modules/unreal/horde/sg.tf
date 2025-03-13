@@ -118,7 +118,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_external_al
 
 # Inbound access to Containers from Internal ALB on API port
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_alb_api" {
-  count                        = var.create_external_alb ? 1 : 0
+  count                        = var.create_internal_alb ? 1 : 0
   security_group_id            = aws_security_group.unreal_horde_sg.id
   description                  = "Allow inbound web service traffic from Unreal Horde internal ALB."
   referenced_security_group_id = aws_security_group.unreal_horde_internal_alb_sg[0].id
@@ -128,7 +128,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_al
 }
 
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_alb_grpc" {
-  count                        = var.create_external_alb ? 1 : 0
+  count                        = var.create_internal_alb ? 1 : 0
   security_group_id            = aws_security_group.unreal_horde_sg.id
   description                  = "Allow inbound GRPC traffic from Unreal Horde internal ALB."
   referenced_security_group_id = aws_security_group.unreal_horde_internal_alb_sg[0].id
