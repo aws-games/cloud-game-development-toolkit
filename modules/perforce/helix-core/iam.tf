@@ -28,10 +28,11 @@ data "aws_iam_policy_document" "helix_core_default_policy" {
       "secretsmanager:DescribeSecret",
       "secretsmanager:BatchGetSecretValue"
     ]
-    resources = [
+    resources = compact([
       var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn,
       var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn,
-    ]
+      var.storage_type == "FSxN" && var.protocol == "ISCSI" ? var.fsxn_password : null
+    ])
   }
 }
 
