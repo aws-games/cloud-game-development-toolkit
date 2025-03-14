@@ -36,7 +36,7 @@ module "unreal_cloud_ddc_vpc" {
 
 module "unreal_cloud_ddc_infra" {
   depends_on = [module.unreal_cloud_ddc_vpc]
-  source     = "../../modules/unreal/unreal-cloud-ddc-infra"
+  source     = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra"
   name       = "unreal-cloud-ddc"
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
@@ -69,7 +69,7 @@ module "unreal_cloud_ddc_intra_cluster" {
     module.unreal_cloud_ddc_infra.oidc_provider_arn
   ]
 
-  source                              = "../../modules/unreal/unreal-cloud-ddc-intra-cluster"
+  source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn
@@ -85,5 +85,3 @@ module "unreal_cloud_ddc_intra_cluster" {
     })
   ]
 }
-
-
