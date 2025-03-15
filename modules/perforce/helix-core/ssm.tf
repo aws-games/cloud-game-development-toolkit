@@ -177,7 +177,7 @@ resource "aws_ssm_association" "playbook_associations" {
       "path" = "https://s3.amazonaws.com/${aws_s3_bucket.ansible_bucket.id}/${each.value}"
     })
     PlaybookFile    = each.value
-    ExtraVariables  = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment} p4d_admin_username_secret_id='${local.helix_core_super_user_username_secret_arn}' p4d_admin_pass_secret_id='${local.helix_core_super_user_password_secret_arn}'"
+    ExtraVariables  = "PROJECT_PREFIX=${var.project_prefix} ENVIRONMENT=${var.environment} p4d_admin_username_secret_id='${local.helix_core_super_user_username_secret_arn}' p4d_admin_pass_secret_id='${local.helix_core_super_user_password_secret_arn}' unicode='${var.unicode}' perforce_case_sensitive='${var.helix_case_sensitive}' plaintext='${var.plaintext}' helix_auth_service_url='${var.helix_authentication_service_url}'"
   }
 
   depends_on = [aws_s3_object.playbooks]

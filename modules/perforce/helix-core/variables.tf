@@ -51,6 +51,12 @@ variable "unicode" {
   default     = false
 }
 
+variable "plaintext" {
+  type        = bool
+  description = "Whether to enable SSL configuration for p4d. Set to false to enable SSL support - it prevents SSL offloading on Network Load Balancer."
+  default     = true
+}
+
 
 ########################################
 # Networking and Security

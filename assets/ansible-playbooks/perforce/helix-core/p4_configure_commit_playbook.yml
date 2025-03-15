@@ -26,17 +26,26 @@
     default_bin_list: "p4,p4d,p4p,p4broker"
     perforce_ftp_base_url: "https://ftp.perforce.com/perforce"
     download_apis: false
-    perforce_case_sensitive: "1"
+    perforce_case_sensitive: "{{ perforce_case_sensitive | default('true') }}"
 
     # Server configuration
     p4d_type: "p4d_master"
     fqdn: "{{ ansible_fqdn | default(ansible_hostname) }}"
     unicode: "{{ unicode | default('false') }}"
+    plaintext_value: "{{ plaintext | default('true') }}"
 
     # Authentication and security
     p4d_admin_username_secret_id: "{{ p4d_admin_username_secret_id }}"  # Required external var
     p4d_admin_pass_secret_id: "{{ p4d_admin_pass_secret_id }}"  # Required external var
-    helix_auth_service_url: "{{ helix_auth_service_url | default('') }}"
+    
+
+    # Authentication Extension configuration
+    helix_auth_extension_version: "2024.1"
+    helix_auth_extension_url: "https://github.com/perforce/helix-authentication-extension/releases/download/{{ helix_auth_extension_version }}/{{ helix_auth_extension_version }}-signed.tar.gz"
+    helix_auth_default_proto: "{{ helix_auth_default_protocol | default('oidc') }}"
+    helix_auth_name_id: "{{ helix_auth_name_identifier | default('email') }}"
+    helix_auth_user_id: "{{ helix_auth_user_identifier | default('email') }}"
+    helix_auth_srv_url: "{{ helix_auth_service_url | default('') }}"
 
     # Server type - hardcoded for this playbook
     server_type: "commit"
@@ -48,9 +57,10 @@
         state: present
 
   tasks:
+
     - name: Take information from variables
       debug:
-        msg: "Project Prefix: {{ PROJECT_PREFIX }}, Environment: {{ ENVIRONMENT }}"
+        msg: "Project Prefix: {{ PROJECT_PREFIX }}, Environment: {{ ENVIRONMENT }}, unicode: {{ unicode }}, perforce_case_sensitive: {{ perforce_case_sensitive }}, helix_auth_service_url: {{ helix_auth_srv_url }}"
 
     - name: Check if playbook has already run
       stat:
@@ -503,15 +513,6 @@
           fail:
             msg: "Failed to mount volumes. See device debug information above."
 
-    - name: Validate perforce_case_sensitive value
-      fail:
-        msg: "perforce_case_sensitive must be either '0' or '1', got '{{ perforce_case_sensitive }}'"
-      when: perforce_case_sensitive not in ['0', '1']
-
-    - name: Debug perforce_case_sensitive value
-      debug:
-        msg: "Using perforce_case_sensitive value: {{ perforce_case_sensitive }}"
-
     # Commit server specific - fix crontab template
     - name: Backup original crontab template
       copy:
@@ -542,7 +543,8 @@
         - { regexp: '^P4ADMINPASS=', line: 'P4ADMINPASS={{ p4d_admin_pass }}' }
         - { regexp: '^ADMINUSER=', line: 'ADMINUSER={{ p4d_admin_username }}' }
         - { regexp: '^P4MASTERHOST=', line: 'P4MASTERHOST={{ commit_server_dns }}' }
-        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE={{ perforce_case_sensitive }}' }
+        - { regexp: '^CASE_SENSITIVE=', line: 'CASE_SENSITIVE={% if perforce_case_sensitive | string | lower == "true" %}1{% else %}0{% endif %}' }
+        - { regexp: '^SSL_PREFIX=', line: 'SSL_PREFIX={% if plaintext_value | string | lower != "true" %}ssl:{% else %}{% endif %}' }
 
     - name: Execute mkdirs.sh
       command: /hxdepots/sdp/Server/Unix/setup/mkdirs.sh 1 -t {{ p4d_type }} -no_cron -no_firewall
@@ -590,7 +592,7 @@
       stat:
         path: /p4/ssl/certificate.txt
       register: ssl_cert
-
+  
     - name: Display SSL certificate status
       debug:
         msg: "SSL certificate {{ 'exists' if ssl_cert.stat.exists else 'does not exist' }}"
@@ -615,7 +617,9 @@
         - name: Display SSL generation result
           debug:
             var: ssl_gen_result.stdout_lines
-      when: not ssl_cert.stat.exists
+      when: 
+        - not plaintext | bool
+        - not (ssl_cert.stat.exists | default(false))
 
     - name: Configure systemd service
       block:
@@ -676,7 +680,9 @@
         state: link
 
     - name: Trust p4 server
-      command: p4 -p ssl:{{ new_topology.servers[server_type].private_dns }}:1666 trust -y
+      command: p4 -p {% if plaintext_value | string | lower != "true" %}ssl:{% endif %}{{ new_topology.servers[server_type].private_dns }}:1666 trust -y
+      when: plaintext_value | string | lower != "true"
+
 
     - name: Execute configure_new_server.sh
       command: /p4/sdp/Server/setup/configure_new_server.sh 1
@@ -800,7 +806,7 @@
 
     # Configure replica on commit server
     - name: Configure replica server on Commit
-      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fr -r {{ replica_server_dns }} -s {{ region_to_sitetag[replica_region] }}
+      command: /p4/sdp/Server/Unix/p4/common/bin/mkrep.sh -v3 -i 1 -t fs -r {{ replica_server_dns }} -s {{ region_to_sitetag[replica_region] }}
       when: replica_server_dns | default('') | length > 0
 
      # Configure edge on commit server
@@ -825,9 +831,100 @@
       register: p4_servers_output
       changed_when: false
 
+    - name: Set unicode mode for p4d
+      block:
+        - name: Log unicode setting attempt
+          ansible.builtin.debug:
+            msg: "Setting unicode flag for p4d."
+
+        - name: Execute p4d command to set unicode mode
+          ansible.builtin.command:
+            cmd: su - perforce -c "source /p4/common/bin/p4_vars && /p4/common/bin/p4d -xi"
+          register: unicode_result
+          changed_when: unicode_result.stdout == "Server switched to Unicode mode."
+          failed_when: unicode_result.stdout != "Server switched to Unicode mode."
+        
+
+        - name: Log success
+          ansible.builtin.debug:
+            msg: "Successfully switched server to Unicode mode"
+          when: unicode_result.stdout == "Server switched to Unicode mode."
+
+        - name: Log failure
+          ansible.builtin.debug:
+            msg: "Unexpected output while setting Unicode mode: {{ unicode_result.stdout }}"
+          when: unicode_result.stdout != "Server switched to Unicode mode."
+      when: unicode | bool  
+
+    - name: Restart p4d service after setting -xi flag
+      systemd:
+        name: p4d_1
+        state: restarted  
+
+    # Install HAS Extension
+    - name: Install and Configure Helix Authentication Extension
+      block:
+        - name: Create temp directory for Helix Auth Extension
+          file:
+            path: /tmp/helix-auth-extension
+            state: directory
+            mode: '0755'
+
+        - name: Download Helix Authentication Extension
+          get_url:
+            url: "{{ helix_auth_extension_url }}"
+            dest: /tmp/helix-auth-extension.tar.gz
+            mode: '0644'
+          register: download_result
+
+        - name: Extract Helix Authentication Extension
+          unarchive:
+            src: /tmp/helix-auth-extension.tar.gz
+            dest: /tmp/helix-auth-extension
+            remote_src: yes
+          when: download_result is success
+
+        - name: Make configure-login-hook.sh executable
+          file:
+            path: /tmp/helix-auth-extension/helix-authentication-extension/bin/configure-login-hook.sh
+            mode: '0755'
+
+        - name: Run configure-login-hook.sh
+          command: >
+            /tmp/helix-auth-extension/helix-authentication-extension/bin/configure-login-hook.sh -n
+            --p4port "{% if plaintext_value | string | lower != 'true' %}ssl:{% endif %}{{ new_topology.servers[server_type].private_dns }}:1666"
+            --super "{{ p4d_admin_username }}"
+            --superpassword "{{ p4d_admin_pass }}"
+            --service-url "{{ helix_auth_srv_url }}"
+            --default-protocol "{{ helix_auth_default_proto }}"
+            --name-identifier "{{ helix_auth_name_id }}"
+            --user-identifier "{{ helix_auth_user_id }}"
+            --non-sso-users "{{ p4d_admin_username }}"
+            --enable-logging --debug --yes
+          register: auth_extension_result
+
+        - name: Display Helix Authentication Extension setup result
+          debug:
+            var: auth_extension_result.stdout_lines
+
+        - name: Clean up temporary files
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /tmp/helix-auth-extension.tar.gz
+            - /tmp/helix-auth-extension
+          ignore_errors: yes
+
+      when: helix_auth_srv_url is defined and helix_auth_srv_url | trim | length > 0
+      rescue:
+        - name: Handle Helix Authentication Extension setup failure
+          debug:
+            msg: "Failed to set up Helix Authentication Extension: {{ auth_extension_result.stderr if auth_extension_result is defined else 'Unknown error' }}"  
+
     - name: Extract server IDs
       set_fact:
-        replica_server_id: "{{ (p4_servers_output.stdout_lines | select('search', 'replica') | list | first).split(' ')[0] if (p4_servers_output.stdout_lines | select('search', 'replica') | list) else '' }}"
+        replica_server_id: "{{ (p4_servers_output.stdout_lines | select('search', 'forwarding') | list | first).split(' ')[0] if (p4_servers_output.stdout_lines | select('search', 'forwarding') | list) else '' }}"
         edge_server_id: "{{ (p4_servers_output.stdout_lines | select('search', 'edge-server') | list | first).split(' ')[0] if (p4_servers_output.stdout_lines | select('search', 'edge-server') | list) else '' }}"
 
 
