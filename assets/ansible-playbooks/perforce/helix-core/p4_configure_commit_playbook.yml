@@ -902,6 +902,7 @@
             --non-sso-users "{{ p4d_admin_username }}"
             --enable-logging --debug --yes
           register: auth_extension_result
+          become: yes
 
         - name: Display Helix Authentication Extension setup result
           debug:
