@@ -3,11 +3,73 @@
 
 
 <a name="latest"></a>
-## [latest] - 2024-12-20
+## [latest] - 2025-03-17
+
+<a name="v1.1.3-alpha"></a>
+## [v1.1.3-alpha] - 2025-03-14
+### Bug Fixes
+- create_external_alb shouldn't block internal SG Ingress rules
+- alb_subnet variables should not be required if create boolean is false
+- Attaching perforce web service ALB to target group
+- use provided admin password secret for Helix Authentication Service ADMIN_PASSWD, instead of the username secret
+- AMI version bump for Helix Core, region variable made optional
+
+### Chore
+- update dependabot configuration to include unreal modules
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump mkdocs-material from 9.6.4 to 9.6.7 in /docs
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material from 9.6.4 to 9.6.7 in /docs
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump actions/upload-artifact from 4.6.0 to 4.6.1
+- **deps:** bump ossf/scorecard-action from 2.4.0 to 2.4.1
+- **deps:** bump hashicorp/random
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material from 9.6.7 to 9.6.8 in /docs
+- **deps:** bump the random-provider group across 4 directories with 1 update
+- **deps:** bump mkdocs-material from 9.6.3 to 9.6.4 in /docs
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material from 9.6.2 to 9.6.4 in /docs
+- **deps:** bump actions/upload-artifact from 4.5.0 to 4.6.0
+- **deps:** bump mkdocs-material from 9.6.7 to 9.6.8 in /docs
+- **deps:** bump hashicorp/aws
+- **deps:** bump mkdocs-material from 9.6.2 to 9.6.3 in /docs
+- **deps:** bump squidfunk/mkdocs-material from 9.6.1 to 9.6.2 in /docs
+- **deps:** bump mkdocs-material from 9.5.50 to 9.6.2 in /docs
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump aws-actions/configure-aws-credentials
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump the awscc-provider group across 3 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump release-drafter/release-drafter from 6.0.0 to 6.1.0
+- **deps:** bump mkdocs-material from 9.5.49 to 9.5.50 in /docs
+- **deps:** bump the awscc-provider group across 3 directories with 1 update
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+- **deps:** bump aws-actions/configure-aws-credentials
+- **deps:** bump the aws-provider group across 5 directories with 1 update
+
+### Docs
+- fix broken link in readme
+- **Perforce:** Updating documentation for Perforce Complete example reference architecture
+
+### Features
+- **Helix Authentication Service:** Shifting ALB creation to support external networking configuration
+- **Helix Core:** Plaintext support for Helix Core, optional EIP creation
+- **Helix Core:** Adding plaintext variable to p4_configre.sh
+- **Helix Swarm:** Shifting ALB creation to support external networking configuration
+- **Perforce Example:** Update complete example for shared networking configuration across services
+- **TeamCity Example:** example terraform configuration for deploying TeamCity module
+- **TeamCity Server:** terraform module for deploying TeamCity server on ECS Fargate
+
 
 <a name="v1.1.2-alpha"></a>
 ## [v1.1.2-alpha] - 2024-12-20
 ### Chore
+- regenerate CHANGELOG.md for 2024-12-20
 - ignore tf backend.tf files in .gitignore
 - **deps:** bump the awscc-provider group across 3 directories with 1 update
 - **deps:** bump actions/upload-artifact from 4.4.3 to 4.5.0
@@ -232,7 +294,8 @@
 
 
 [Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...HEAD
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...latest
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...latest
+[v1.1.3-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...v1.1.3-alpha
 [v1.1.2-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha
 [v1.1.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.0-alpha...v1.1.1-alpha
 [v1.1.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.1-alpha...v1.1.0-alpha
