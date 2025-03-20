@@ -123,7 +123,7 @@ nav:
           - Unreal Engine Cloud DDC Infra:
               - Installation and Usage: modules/unreal/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
               - Module Docs: modules/unreal/unreal-cloud-ddc-infra/terraform-docs.md
-         - Unreal Engine Cloud DDC Intra Cluster:
+          - Unreal Engine Cloud DDC Intra Cluster:
               - Installation and Usage: modules/unreal/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
               - Module Docs: modules/unreal/unreal-cloud-ddc-intra-cluster/terraform-docs.md
          - Examples: modules/unreal/horde/examples/complete.md
