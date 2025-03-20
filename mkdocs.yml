@@ -126,7 +126,7 @@ nav:
           - Unreal Engine Cloud DDC Intra Cluster:
               - Installation and Usage: modules/unreal/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
               - Module Docs: modules/unreal/unreal-cloud-ddc-intra-cluster/terraform-docs.md
-         - Examples: modules/unreal/horde/examples/complete.md
+          - Examples: modules/unreal/horde/examples/complete.md
   - Samples:
       - Overview: samples/index.md
       - Simple Build Pipeline: samples/simple-build-pipeline.md
