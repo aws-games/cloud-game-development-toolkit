@@ -7,12 +7,9 @@ description: TeamCity Server Terraform module for game development on AWS
 
 [Jump to Terraform docs](./terraform-docs.md){ .md-button .md-button--primary }
 
-[Unreal Engine Horde](https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde) is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the [image available from the Epic Games Github organization.](https://github.com/orgs/EpicGames/packages/container/package/horde-server)
+[TeamCity](https://www.jetbrains.com/teamcity/) TeamCity is a user-friendly continuous integration (CI) server for developers and build engineers created by JetBrains. This module deploys a TeamCity server on [AWS Elastic Container Service](https://aws.amazon.com/ecs/).
 
-Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an [Amazon Elasticache with Redis OSS Compatibility](https://aws.amazon.com/elasticache/redis/) cluster and an [Amazon DocumentDB](https://aws.amazon.com/documentdb/) cluster.
+The TeamCity server relies on shared file system for persistent storage of configuration, build results, and current operation files. This module provides these services by provisioning an [Amazon Elastic File System](https://aws.amazon.com/efs/) and an [Amazon Amazon Aurora Serverless V2](https://aws.amazon.com/rds/aurora/serverless/) cluster running the PostgreSQL engine to store build history, user data, build results, and runtime data.
 
 ## Deployment Architecture
-![Unreal Engine Horde Module Architecture](../../../media/images/unreal-engine-horde-architecture.png)
-
-## Prerequisites
-Unreal Engine Horde is only available through the Epic Games Github organization's package registry or the Unreal Engine source code. In order to get access to this software you will need to [join the Epic Games organization](https://github.com/EpicGames/Signup) on Github and accept the Unreal Engine EULA.
+![TeamCity Module Architecture](../../../media/images/teamcity-server-architecture.png)
