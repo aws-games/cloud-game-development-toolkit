@@ -129,10 +129,10 @@ nav:
                   - Module Docs: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/terraform-docs.md
           - Examples:
               - Horde: modules/unreal/horde/examples/complete.md
-              - Cloud DDC: modules/unreal/unreal-cloud-ddc/examples/complete.md
   - Samples:
       - Overview: samples/index.md
       - Simple Build Pipeline: samples/simple-build-pipeline.md
+      - Unreal Cloud DDC Single Region: sample/unreal-cloud-ddc-single-region.md
   - Changelog: changelog.md
   - Security: security.md
   - Contributing: contributing.md
