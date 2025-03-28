@@ -124,13 +124,16 @@ nav:
           - Unreal Engine Horde:
               - Installation and Usage: modules/unreal/horde/unreal-engine-horde.md
               - Module Docs: modules/unreal/horde/terraform-docs.md
-          - Unreal Engine Cloud DDC Infra:
-              - Installation and Usage: modules/unreal/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
-              - Module Docs: modules/unreal/unreal-cloud-ddc-infra/terraform-docs.md
-          - Unreal Engine Cloud DDC Intra Cluster:
-              - Installation and Usage: modules/unreal/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
-              - Module Docs: modules/unreal/unreal-cloud-ddc-intra-cluster/terraform-docs.md
-          - Examples: modules/unreal/horde/examples/complete.md
+          - Unreal Cloud DDC:
+              - Unreal Engine Cloud DDC Infra:
+                  - Installation and Usage: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
+                  - Module Docs: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/terraform-docs.md
+              - Unreal Engine Cloud DDC Intra Cluster:
+                  - Installation and Usage: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
+                  - Module Docs: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/terraform-docs.md
+          - Examples:
+              - Horde: modules/unreal/horde/examples/complete.md
+              - Cloud DDC: modules/unreal/unreal-cloud-ddc/examples/complete.md
   - Samples:
       - Overview: samples/index.md
       - Simple Build Pipeline: samples/simple-build-pipeline.md
