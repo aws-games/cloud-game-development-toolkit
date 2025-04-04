@@ -30,7 +30,7 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 ##########################################
 
 module "jenkins" {
-  source = "../.."
+  source = "../../modules/jenkins"
 
   cluster_name                   = aws_ecs_cluster.jenkins_cluster.name
   vpc_id                         = aws_vpc.jenkins_vpc.id

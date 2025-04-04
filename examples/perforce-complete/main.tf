@@ -28,7 +28,7 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 ##########################################
 
 module "perforce_helix_core" {
-  source = "../../helix-core"
+  source = "../../modules/perforce/helix-core"
 
   # Networking
   vpc_id                      = aws_vpc.perforce_vpc.id
@@ -56,7 +56,7 @@ module "perforce_helix_core" {
 ##########################################
 
 module "perforce_helix_authentication_service" {
-  source = "../../helix-authentication-service"
+  source = "../../modules/perforce/helix-authentication-service"
 
   # Networking
   vpc_id                               = aws_vpc.perforce_vpc.id
@@ -77,7 +77,7 @@ module "perforce_helix_authentication_service" {
 # Perforce Helix Swarm
 ##########################################
 module "perforce_helix_swarm" {
-  source = "../../helix-swarm"
+  source = "../../modules/perforce/helix-swarm"
 
   # Networking
   vpc_id                           = aws_vpc.perforce_vpc.id

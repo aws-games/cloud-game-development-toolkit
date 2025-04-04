@@ -1,5 +1,5 @@
 module "teamcity" {
-  source              = "../../"
+  source              = "../../modules/teamcity"
   vpc_id              = aws_vpc.teamcity_vpc.id
   service_subnets     = aws_subnet.private_subnets[*].id
   alb_subnets         = aws_subnet.public_subnets[*].id

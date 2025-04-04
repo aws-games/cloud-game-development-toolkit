@@ -36,7 +36,6 @@ variable "cluster_name" {
   type        = string
   description = "The name of the ECS cluster to deploy TeamCity to."
   default     = null
-
 }
 
 variable "container_cpu" {

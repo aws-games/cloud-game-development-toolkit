@@ -9,7 +9,7 @@ locals {
 }
 
 module "unreal_engine_horde" {
-  source                            = "../../"
+  source                            = "../../modules/unreal/horde"
   unreal_horde_service_subnets      = aws_subnet.private_subnets[*].id
   unreal_horde_external_alb_subnets = aws_subnet.public_subnets[*].id  # External ALB used by developers
   unreal_horde_internal_alb_subnets = aws_subnet.private_subnets[*].id # Internal ALB used by agents
