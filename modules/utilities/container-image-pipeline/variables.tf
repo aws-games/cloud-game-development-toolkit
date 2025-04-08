@@ -25,19 +25,19 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
-variable "container_image" {
+variable "parent_container_image" {
   type        = string
-  description = "The container image to use."
+  description = "The parent container image to use in the container recipe."
 }
 
-variable "container_recipe_arn" {
+variable "container_recipe_version" {
   type        = string
-  description = "The ARN of the container recipe to use."
-}
+  description = "The version of the container recipe. Must follow semantic versioning (major.minor.patch)."
 
-variable "infrastructure_configuration_arn" {
-  description = "ARN of the container image pipeline infrastructure configuration"
-  type        = string
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.container_recipe_version))
+    error_message = "The container_recipe_version value must follow semantic versioning (major.minor.patch)."
+  }
 }
 
 variable "ecr_kms_key_id" {
@@ -49,5 +49,33 @@ variable "ecr_kms_key_id" {
 variable "imagebuilder_component_kms_key_id" {
   description = "Optional KMS key ARN/ID to encrypt the EC2 Image Builder component. Replace with your own KMS key ARN/ID if needed."
   type        = string
-  default     = "alias/aws/imagebuilder"
+  default     = null
+}
+
+variable "imagebuilder_instance_types" {
+  description = "The instance types to use for the EC2 Image Builder component."
+  type        = list(string)
+  default     = ["t3a.nano"]
+}
+
+variable "security_group_ids" {
+  description = "Optional list of security group IDs for the infrastructure configuration"
+  type        = list(string)
+  default     = null
+}
+
+variable "subnet_id" {
+  description = "Optional subnet ID for the infrastructure configuration"
+  type        = string
+  default     = null
+}
+
+variable "image_builder_base_component_version" {
+  type        = string
+  description = "The version of the base component to use in the container image pipeline. Must follow semantic versioning (major.minor.patch)."
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.image_builder_base_component_version))
+    error_message = "The image_builder_base_component_version value must follow semantic versioning (major.minor.patch)."
+  }
 }
