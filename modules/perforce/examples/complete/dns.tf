@@ -30,6 +30,16 @@ resource "aws_route53_record" "external_perforce_web_services" {
   }
 }
 
+# Route external web service traffic to the public EIP of the Helix Core server
+resource "aws_route53_record" "external_perforce_helix_core" {
+  #checkov:skip=CKV2_AWS_23: Attached to EIP public IP
+  zone_id = data.aws_route53_zone.root.id
+  name    = "perforce.${data.aws_route53_zone.root.name}"
+  type    = "A"
+  ttl     = 300
+  records = [module.perforce_helix_core.helix_core_eip_public_ip]
+}
+
 # Route all internal web service traffic to the ALB
 resource "aws_route53_record" "internal_perforce_web_services" {
   zone_id = aws_route53_zone.perforce_private_hosted_zone.id
@@ -38,18 +48,6 @@ resource "aws_route53_record" "internal_perforce_web_services" {
   alias {
     name                   = aws_lb.perforce_web_services.dns_name
     zone_id                = aws_lb.perforce_web_services.zone_id
-    evaluate_target_health = true
-  }
-}
-
-# Route all external Helix Core traffic to the NLB
-resource "aws_route53_record" "external_helix_core" {
-  zone_id = data.aws_route53_zone.root.zone_id
-  name    = "perforce.${data.aws_route53_zone.root.name}"
-  type    = "A"
-  alias {
-    name                   = aws_lb.perforce.dns_name
-    zone_id                = aws_lb.perforce.zone_id
     evaluate_target_health = true
   }
 }

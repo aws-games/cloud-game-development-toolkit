@@ -2,10 +2,17 @@
 # Perforce NLB Security Group
 ##########################################
 resource "aws_security_group" "perforce_network_load_balancer" {
-  name        = "perforce_network_load_balancer"
+  name        = "${local.project_prefix}-perforce-nlb"
   description = "Perforce Network Load Balancer"
   vpc_id      = aws_vpc.perforce_vpc.id
   #checkov:skip=CKV2_AWS_5:Security group is attached to Perforce NLB
+
+  tags = {
+    Name = "${local.project_prefix}-perforce-nlb"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Egress for Perforce NLB to Helix Core instance
@@ -42,10 +49,17 @@ resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_web_alb" {
 # Perforce Web Services ALB Security Group
 ##########################################
 resource "aws_security_group" "perforce_web_services_alb" {
-  name        = "perforce_web_services_alb"
+  name        = "${local.project_prefix}-perforce-web-services-alb"
   description = "Perforce Web Services ALB"
   vpc_id      = aws_vpc.perforce_vpc.id
   #checkov:skip=CKV2_AWS_5:Security group is attached to Perforce Web Services ALB
+
+  tags = {
+    Name = "${local.project_prefix}-perforce-web-services-alb"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # HTTPS Ingress from Perforce NLB to Perforce Web Services ALB
