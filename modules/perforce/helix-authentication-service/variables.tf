@@ -217,3 +217,27 @@ variable "debug" {
   description = "Set this flag to enable execute command on service containers and force redeploys."
   default     = false
 }
+
+variable "p4d_port" {
+  type        = string
+  description = "The P4D_PORT environment variable where Helix Authentication Service should look for Helix Core. Required if you want to use SCIM to provision users and groups. Defaults to 'ssl:perforce:1666'"
+  default     = "ssl:perforce:1666"
+}
+
+variable "p4d_super_user_arn" {
+  type        = string
+  description = "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user username for p4d."
+  default     = null
+}
+
+variable "p4d_super_user_password_arn" {
+  type        = string
+  description = "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user password for p4d."
+  default     = null
+}
+
+variable "scim_bearer_token_arn" {
+  type        = string
+  description = "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token."
+  default     = null
+}

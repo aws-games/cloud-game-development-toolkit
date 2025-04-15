@@ -45,3 +45,49 @@ module "perforce_helix_authentication_service" {
 ```
 
 If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere, and can be accessed from the AWS Secrets Manager console.
+
+## Enabling System for Cross-domain Identity Management (SCIM)
+
+Helix Authentication Service supports [System for Cross-domain Identity Management (SCIM)](https://en.wikipedia.org/wiki/System_for_Cross-domain_Identity_Management) for provisioning users and groups from an identity management system.
+
+To enable SCIM in the Terraform module, you need to:
+
+1. Set up a secret containing your SCIM Bearer Token in [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html).
+2. Provide the appropriate `scim_bearer_token_arn`, `p4d_super_user_arn`, `p4d_super_user_password_arn` and `p4d_port` variables to the module.
+3. Set up connectivity between Helix Authentication Service and Helix Core:
+```hcl
+resource "aws_vpc_security_group_ingress_rule" "perforce_helix_core_inbound_helix_auth" {
+  security_group_id            = module.perforce_helix_core.security_group_id
+  description                  = "Helix Core inbound from Helix Authentication Service"
+  ip_protocol                  = "TCP"
+  from_port                    = 1666
+  to_port                      = 1666
+  referenced_security_group_id = module.perforce_helix_authentication_service.service_security_group_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "perforce_helix_auth_outbound_helix_core" {
+  security_group_id            = module.perforce_helix_authentication_service.service_security_group_id
+  description                  = "Helix Authentiation Service outbound to Helix Core"
+  from_port                    = 1666
+  to_port                      = 1666
+  ip_protocol                  = "TCP"
+  referenced_security_group_id = module.perforce_helix_core.security_group_id
+}
+```
+
+Once this is set up, you can verify that SCIM works by making the following call to create a user:
+
+```bash
+curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
+  -H "Content-Type: application/scim+json" \
+  -d '{
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+    "userName": "example1",
+    "externalId": "example1",
+    "name": {
+      "formatted": "Example 1",
+      "familyName": "Example",
+      "givenName": "One"
+    }
+  }' \ -v -v -v https://<perforce helix auth domain name>/scim/v2/Users
+```
