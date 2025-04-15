@@ -7,7 +7,7 @@ resource "aws_lb" "helix_authentication_service_alb" {
   internal           = var.internal
   load_balancer_type = "application"
   subnets            = var.helix_authentication_service_alb_subnets
-  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_authentication_service_alb_sg.id])
+  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_authentication_service_alb_sg[0].id])
 
   dynamic "access_logs" {
     for_each = (var.create_application_load_balancer && var.enable_helix_authentication_service_alb_access_logs ? [1] :
