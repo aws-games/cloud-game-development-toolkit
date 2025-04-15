@@ -448,14 +448,16 @@ if [ "${PLAINTEXT,,}" = "false" ]; then
   # update cert config with ec2 DNS name
   FILE_PATH="/p4/ssl/config.txt"
 
-  # Check if the DNS name was successfully retrieved
-  if [ -z "$EC2_DNS_NAME" ]; then
+  # Check if EC2_DNS_PRIVATE was successfully retrieved
+
+
+  if [ -z "${EC2_DNS_PRIVATE}" ]; then
     log_message "Failed to retrieve EC2 instance DNS name."
     exit 1
   fi
 
   # Replace REPL_DNSNAME with the EC2 instance DNS name for ssl certificate generation
-  sed -i "s/REPL_DNSNAME/$EC2_DNS_NAME/" "$FILE_PATH"
+  sed -i "s/REPL_DNSNAME/$EC2_DNS_PRIVATE/" "$FILE_PATH"
 
   echo "File updated successfully."
 
