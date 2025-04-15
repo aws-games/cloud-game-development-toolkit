@@ -135,12 +135,16 @@ resource "aws_volume_attachment" "depot_attachment" {
 
 resource "aws_security_group" "helix_core_security_group" {
   count = var.create_default_sg ? 1 : 0
-  #checkov:skip=CKV2_AWS_5:SG is attahced to FSxZ file systems
+  #checkov:skip=CKV2_AWS_5:SG is attached to FSxZ file systems
 
   vpc_id      = var.vpc_id
   name        = "${local.name_prefix}-instance"
   description = "Security group for Helix Core machines."
-  tags        = local.tags
+  tags = merge(local.tags,
+    {
+      Name = "${local.name_prefix}-instance"
+    }
+  )
 }
 
 resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {

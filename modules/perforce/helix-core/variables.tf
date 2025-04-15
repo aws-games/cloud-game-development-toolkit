@@ -14,7 +14,7 @@ variable "name" {
 
 variable "project_prefix" {
   type        = string
-  description = "The project prefix for this workload. This is appeneded to the beginning of most resource names."
+  description = "The project prefix for this workload. This is appended to the beginning of most resource names."
   default     = "cgd"
 
 }
