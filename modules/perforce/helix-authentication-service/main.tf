@@ -93,7 +93,33 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
             name  = "ADMIN_PASSWD_FILE",
             value = "/var/has/password.txt"
           }
-        ] : []
+        ] : [],
+        var.p4d_port != null ? [
+          {
+            name  = "P4PORT"
+            value = var.p4d_port
+          }
+        ] : [],
+      )
+      secrets = concat([], 
+        var.p4d_super_user_password_arn != null ? [
+          {
+            name  = "P4PASSWD"
+            valueFrom = var.p4d_super_user_password_arn
+          }
+        ] : [],
+        var.p4d_super_user_arn != null ? [
+          {
+            name  = "P4USER"
+            valueFrom = var.p4d_super_user_arn
+          }
+        ] : [],
+        var.scim_bearer_token_arn != null ? [
+          {
+            name  = "BEARER_TOKEN"
+            valueFrom = var.scim_bearer_token_arn
+          }
+        ] : [],
       )
       logConfiguration = {
         logDriver = "awslogs"
