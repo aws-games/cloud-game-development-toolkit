@@ -5,7 +5,7 @@ output "service_security_group_id" {
 
 output "alb_security_group_id" {
   description = "Security group associated with the Helix Authentication Service load balancer"
-  value       = aws_security_group.helix_authentication_service_alb_sg.id
+  value       = var.create_application_load_balancer ? aws_security_group.helix_authentication_service_alb_sg[0].id : null
 }
 
 output "cluster_name" {
