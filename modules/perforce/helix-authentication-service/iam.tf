@@ -121,6 +121,33 @@ resource "aws_iam_policy" "helix_authentication_service_secrets_manager_policy" 
   )
 }
 
+data "aws_iam_policy_document" "helix_authentication_service_scim_secrets_manager_policy" {
+  count  = var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null && var.scim_bearer_token_arn != null ? 1 : 0
+  statement {
+    effect = "Allow"
+    actions = [
+      "secretsmanager:ListSecrets",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:GetRandomPassword",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:BatchGetSecretValue"
+    ]
+    resources = [
+      var.p4d_super_user_arn,
+      var.p4d_super_user_password_arn,
+      var.scim_bearer_token_arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "helix_authentication_service_scim_secrets_manager_policy" {
+  count  = var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null && var.scim_bearer_token_arn != null ? 1 : 0
+  name        = "${var.project_prefix}-helix-auth-scim-ssm-policy"
+  description = "Policy granting permissions for Helix Auth task execution role to access secrets in SSM required for enabling SCIM."
+  policy      = data.aws_iam_policy_document.helix_authentication_service_scim_secrets_manager_policy[0].json
+}
+
 resource "aws_iam_role" "helix_authentication_service_task_execution_role" {
   name               = "${var.project_prefix}-helix-authentication-service-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
@@ -138,4 +165,9 @@ resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_exe
 resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_secrets_manager" {
   role       = aws_iam_role.helix_authentication_service_task_execution_role.name
   policy_arn = aws_iam_policy.helix_authentication_service_secrets_manager_policy.arn
+}
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_scim_secrets_manager" {
+  count      = var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null && var.scim_bearer_token_arn != null ? 1 : 0
+  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
+  policy_arn = aws_iam_policy.helix_authentication_service_scim_secrets_manager_policy[0].arn
 }
