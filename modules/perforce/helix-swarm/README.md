@@ -6,15 +6,15 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.78.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.6.3 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.89.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.72.1 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.6.3 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.89.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
 
 ## Modules
 
@@ -24,42 +24,45 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_log_group.helix_swarm_redis_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_cloudwatch_log_group.helix_swarm_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_ecs_cluster.helix_swarm_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_cluster_capacity_providers.helix_swarm_cluster_fargate_providers](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ecs_cluster_capacity_providers) | resource |
-| [aws_ecs_service.helix_swarm_service](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.helix_swarm_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/ecs_task_definition) | resource |
-| [aws_elasticache_cluster.swarm](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/elasticache_cluster) | resource |
-| [aws_elasticache_subnet_group.swarm](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/elasticache_subnet_group) | resource |
-| [aws_iam_policy.helix_swarm_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.helix_swarm_ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.helix_swarm_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.helix_swarm_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/iam_role) | resource |
-| [aws_lb.helix_swarm_alb](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/lb) | resource |
-| [aws_lb_listener.swarm_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.helix_swarm_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/lb_target_group) | resource |
-| [aws_s3_bucket.helix_swarm_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_security_group.helix_swarm_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/security_group) | resource |
-| [aws_security_group.helix_swarm_elasticache_sg](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/security_group) | resource |
-| [aws_security_group.helix_swarm_service_sg](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.helix_swarm_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.helix_swarm_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.helix_swarm_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.helix_swarm_elasticache_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.helix_swarm_service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_string.helix_swarm](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
-| [random_string.helix_swarm_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.6.3/docs/resources/string) | resource |
-| [aws_ecs_cluster.helix_swarm_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/ecs_cluster) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.helix_swarm_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.helix_swarm_ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.78.0/docs/data-sources/region) | data source |
+| [aws_cloudwatch_log_group.helix_swarm_redis_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/cloudwatch_log_group) | resource |
+| [aws_cloudwatch_log_group.helix_swarm_service_log_group](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/cloudwatch_log_group) | resource |
+| [aws_ecs_cluster.helix_swarm_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/ecs_cluster) | resource |
+| [aws_ecs_cluster_capacity_providers.helix_swarm_cluster_fargate_providers](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/ecs_cluster_capacity_providers) | resource |
+| [aws_ecs_service.helix_swarm_service](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/ecs_service) | resource |
+| [aws_ecs_task_definition.helix_swarm_task_definition](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/ecs_task_definition) | resource |
+| [aws_elasticache_cluster.swarm](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/elasticache_cluster) | resource |
+| [aws_elasticache_subnet_group.swarm](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/elasticache_subnet_group) | resource |
+| [aws_iam_policy.helix_swarm_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.helix_swarm_ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.helix_swarm_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.helix_swarm_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.helix_swarm_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.helix_swarm_task_execution_role_ecs](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.helix_swarm_task_execution_role_ssm](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_lb.helix_swarm_alb](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/lb) | resource |
+| [aws_lb_listener.swarm_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/lb_listener) | resource |
+| [aws_lb_target_group.helix_swarm_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/lb_target_group) | resource |
+| [aws_s3_bucket.helix_swarm_alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_security_group.helix_swarm_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/security_group) | resource |
+| [aws_security_group.helix_swarm_elasticache_sg](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/security_group) | resource |
+| [aws_security_group.helix_swarm_service_sg](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.helix_swarm_alb_outbound_service](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.helix_swarm_service_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.helix_swarm_service_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_swarm_elasticache_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.helix_swarm_service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [random_string.helix_swarm](https://registry.terraform.io/providers/hashicorp/random/3.7.1/docs/resources/string) | resource |
+| [random_string.helix_swarm_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.1/docs/resources/string) | resource |
+| [aws_ecs_cluster.helix_swarm_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.helix_swarm_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.helix_swarm_ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/region) | data source |
 
 ## Inputs
 
