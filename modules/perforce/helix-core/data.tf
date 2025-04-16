@@ -2,6 +2,8 @@ data "aws_subnet" "instance_subnet" {
   id = var.instance_subnet_id
 }
 
+data "aws_region" "current" {}
+
 # Fetching custom Perforce Helix Core AMI
 data "aws_ami" "helix_core_ami" {
   most_recent = true

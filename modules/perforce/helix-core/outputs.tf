@@ -36,3 +36,8 @@ output "helix_core_private_ip" {
   value       = aws_instance.helix_core_instance.private_ip
   description = "Private IP for the Helix Core instance"
 }
+
+output "fsxn_link_security_group_id" {
+  value       = aws_security_group.fsxn_lambda_link_security_group.id
+  description = "The ID of the security group for the FSxN Link Lambda."
+}
