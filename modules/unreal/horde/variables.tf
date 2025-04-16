@@ -356,6 +356,12 @@ variable "docdb_storage_encrypted" {
 # ELASTICACHE CONFIG
 ######################
 
+variable "elasticache_engine" {
+  description = "The engine to use for ElastiCache (redis or valkey)"
+  type        = string
+  default     = "valkey"
+}
+
 variable "redis_connection_config" {
   type        = string
   description = "The redis connection configuration that Horde should use."
