@@ -335,6 +335,7 @@ resource "aws_lb" "teamcity_external_lb" {
   #checkov:skip=CKV_AWS_150:Deletion protection disabled by default
   enable_deletion_protection = var.enable_teamcity_alb_deletion_protection
 
+
   #checkov:skip=CKV2_AWS_28: ALB access is managed with SG allow listing
 
   drop_invalid_header_fields = true
@@ -494,8 +495,9 @@ resource "random_string" "teamcity_alb_access_logs_bucket_suffix" {
 }
 
 resource "aws_s3_bucket" "teamcity_alb_access_logs_bucket" {
-  count  = var.enable_teamcity_alb_access_logs && var.teamcity_alb_access_logs_bucket == null ? 1 : 0
-  bucket = "${local.name_prefix}-alb-access-logs-${random_string.teamcity_alb_access_logs_bucket_suffix[0].result}"
+  count         = var.enable_teamcity_alb_access_logs && var.teamcity_alb_access_logs_bucket == null ? 1 : 0
+  bucket        = "${local.name_prefix}-alb-access-logs-${random_string.teamcity_alb_access_logs_bucket_suffix[0].result}"
+  force_destroy = var.debug
 
   #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
   #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
