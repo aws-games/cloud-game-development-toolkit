@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "unreal_horde_default_policy" {
       "elasticache:Connect"
     ]
     resources = [
-      aws_elasticache_cluster.horde[0].arn,
+      aws_elasticache_replication_group.horde[0].arn,
     ]
   }
 }
