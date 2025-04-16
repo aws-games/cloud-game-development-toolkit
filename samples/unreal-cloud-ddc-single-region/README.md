@@ -1,8 +1,7 @@
-To use this example you will need to set up a secret with AWS Secrets Manager.
+To use this example run the following commands:
 ```
-terraform apply --target module.unreal_cloud_ddc_vpc
-terraform apply --target module.unreal_cloud_ddc_infra
-terraform apply --target module.unreal_cloud_ddc_intra_cluster
+terraform init
+terraform apply
 ```
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
