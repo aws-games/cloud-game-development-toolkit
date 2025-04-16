@@ -15,11 +15,16 @@ locals {
   })
 
   elasticache_redis_port                 = 6379
-  elasticache_redis_engine_version       = "7.0"
-  elasticache_redis_parameter_group_name = "default.redis7"
+  #elasticache_redis_engine_version       = "7.0"
+  #elasticache_redis_parameter_group_name = "default.redis7"
+  elasticache_engine = "valkey"
+  elasticache_redis_engine_version       = "7.2"
+  elasticache_redis_parameter_group_name = "default.valkey7"
 
-  elasticache_connection_strings = [for node in aws_elasticache_cluster.horde[0].cache_nodes : "${node.address}:${node.port}"]
-
+ 
+#elasticache_connection_strings = [for node in aws_elasticache_cluster.horde[0].cache_nodes : "${node.address}:${node.port}"]
+  elasticache_connection_strings = [for node in aws_elasticache_replication_group.horde.member_clusters : "${endpoint}:${aws_elasticache_replication_group.horde.port}"]
+  
   redis_connection_config    = var.redis_connection_config != null ? var.redis_connection_config : join(",", local.elasticache_connection_strings)
   database_connection_string = var.database_connection_string != null ? var.database_connection_string : "mongodb://${var.docdb_master_username}:${var.docdb_master_password}@${aws_docdb_cluster.horde[0].endpoint}:27017/?tls=true&tlsCAFile=/app/config/global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
 
