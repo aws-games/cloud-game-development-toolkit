@@ -8,7 +8,7 @@ variable "name" {
 
   validation {
     condition     = length(var.name) > 1 && length(var.name) <= 50
-    error_message = "The defined 'name' has too many characters (${length(var.name)}). This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
+    error_message = "The defined 'name' has too many characters. This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
   }
 }
 
@@ -108,16 +108,16 @@ variable "server_type" {
   description = "The Perforce Helix Core server type."
   validation {
     condition     = contains(["p4d_commit", "p4d_replica"], var.server_type)
-    error_message = "${var.server_type} is not one of p4d_commit or p4d_replica."
+    error_message = "Server type is not one of p4d_commit or p4d_replica."
   }
 }
 
 # tflint-ignore: terraform_unused_declarations
 variable "storage_type" {
   type        = string
-  description = "The type of backing store [EBS, FSxZ]"
+  description = "The type of backing store [EBS, FSxZ, FSxN]"
   validation {
-    condition     = contains(["EBS", "FSxZ"], var.storage_type)
+    condition     = contains(["EBS", "FSxZ", "FSxN"], var.storage_type)
     error_message = "Not a valid storage type."
   }
 }
@@ -140,8 +140,100 @@ variable "depot_volume_size" {
   default     = 128
 }
 
+variable "amazon_fsxn_filesystem_id" {
+  description = "The ID of the existing FSx ONTAP file system to use if storage type is FSxN."
+  type        = string
+  default     = ""
 
-########################################
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_filesystem_id) > 0
+    error_message = "The amazon_fsxn_filesystem_id variable must be provided when storage_type is FSxN."
+  }
+}
+
+variable "amazon_fsxn_svm_id" {
+  description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_svm_id) > 0
+    error_message = "The amazon_fsxn_svm_id variable must be provided when storage_type is FSxN."
+  }
+}
+
+variable "fsxn_region" {
+  description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
+  type        = string
+  default     = "us-west-2"
+
+  validation {
+    condition     = var.storage_type != "FSxN" || length(var.fsxn_region) > 0
+    error_message = "The fsxn_region variable must be provided when storage_type is FSxN."
+  }
+}
+
+variable "protocol" {
+  description = "Specify the protocol (NFS or ISCSI)"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || contains(["NFS", "ISCSI"], var.protocol)
+    error_message = "The protocol variable must be either 'NFS' or 'ISCSI'."
+  }
+}
+
+variable "fsxn_mgmt_ip" {
+  description = "FSxN management ip address"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_mgmt_ip) > 0
+    error_message = "The fsxn_mgmt_ip variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_svm_name" {
+  description = "FSxN storage virtual machine name"
+  type        = string
+  default     = "fsx"
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_svm_name) > 0
+    error_message = "The fsxn_svm_name variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_password" {
+  description = "FSxN admin user password AWS secret manager arn"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_password) > 0
+    error_message = "The fsxn_password variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_aws_profile" {
+  description = "FSxN admin user password AWS secret manager arn"
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_aws_profile) > 0
+    error_message = "The fsxn_aws_profile variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+variable "fsxn_filesystem_security_group_id" {
+  description = "The ID of the security group for the FSxN file system."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_filesystem_security_group_id) > 0
+    error_message = "The fsxn_filesystem_security_group_id variable must be provided when storage_type is FSxN and ISCSI protocol."
+  }
+}
+
+# ########################################
 # Helix Core Instance Roles
 ########################################
 variable "custom_helix_core_role" {
