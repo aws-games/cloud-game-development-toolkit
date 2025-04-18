@@ -109,6 +109,12 @@ variable "desired_container_count" {
   nullable    = false
 }
 
+variable "container_image" {
+  type        = string
+  description = "The container image to use for the Unreal Horde server."
+  default     = "ghcr.io/epicgames/unreal-horde:latest"
+}
+
 ########################################
 # LOAD BALANCING
 ########################################
