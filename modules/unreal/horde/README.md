@@ -115,7 +115,7 @@ No modules.
 | <a name="input_container_api_port"></a> [container\_api\_port](#input\_container\_api\_port) | The container port for the Unreal Horde web server. | `number` | `5000` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the Unreal Horde container. | `number` | `1024` | no |
 | <a name="input_container_grpc_port"></a> [container\_grpc\_port](#input\_container\_grpc\_port) | The container port for the Unreal Horde GRPC channel. | `number` | `5002` | no |
-| <a name="input_container_image"></a> [container\_image](#input\_container\_image) | The container image to use for the Unreal Horde server. | `string` | `"ghcr.io/epicgames/unreal-horde:latest"` | no |
+| <a name="input_container_image"></a> [container\_image](#input\_container\_image) | The container image to use for the Unreal Horde server. | `string` | `"ghcr.io/epicgames/unreal-horde:latest-bundled"` | no |
 | <a name="input_container_memory"></a> [container\_memory](#input\_container\_memory) | The memory allotment for the Unreal Horde container. | `number` | `4096` | no |
 | <a name="input_container_name"></a> [container\_name](#input\_container\_name) | The name of the Unreal Horde container. | `string` | `"unreal-horde-container"` | no |
 | <a name="input_create_external_alb"></a> [create\_external\_alb](#input\_create\_external\_alb) | Set this flag to true to create an external load balancer for Unreal Horde. | `bool` | `true` | no |
