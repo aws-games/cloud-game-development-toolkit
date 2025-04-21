@@ -376,17 +376,17 @@ while true; do
             ;;
         --hx_logs)
             EBS_LOGS="$2"
-            log_message "EBS_LOGS: $EBS_LOGS"
+            log_message "LOGS: $EBS_LOGS"
             shift 2
             ;;
         --hx_metadata)
             EBS_METADATA="$2"
-            log_message "EBS_METADATA: $EBS_METADATA"
+            log_message "METADATA: $EBS_METADATA"
             shift 2
             ;;
         --hx_depots)
             EBS_DEPOTS="$2"
-            log_message "EBS_DEPOTS: $EBS_DEPOTS"
+            log_message "DEPOTS: $EBS_DEPOTS"
             shift 2
             ;;
         --case_sensitive)

@@ -73,6 +73,7 @@ module "perforce_helix_core" {
   fsxn_mgmt_ip                      = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
   fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.name
   amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
+  amazon_fsxn_filesystem_id         = aws_fsx_ontap_file_system.helix_core_fs.id
   fsxn_filesystem_security_group_id = aws_security_group.fsx_ontap_file_system_sg.id
 
 
