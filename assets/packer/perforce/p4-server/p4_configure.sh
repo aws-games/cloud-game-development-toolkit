@@ -55,7 +55,7 @@ wait_for_service() {
   return 0
 }
 
-# Setup Helix Authentication Extension
+# Setup P4Auth Extension
 setup_helix_auth() {
   local p4port=$1
   local super=$2
@@ -65,7 +65,7 @@ setup_helix_auth() {
   local name_identifier=$6
   local user_identifier=$7
 
-  log_message "Starting Helix Authentication Extension setup."
+  log_message "Starting P4Auth Extension setup."
 
   curl -L https://github.com/perforce/helix-authentication-extension/releases/download/2024.1/2024.1-signed.tar.gz | tar zx -C /tmp
   chmod +x "/tmp/helix-authentication-extension/bin/configure-login-hook.sh"
@@ -315,16 +315,16 @@ log_message "Starting the p4 configure script."
 print_help() {
     echo "Usage: $0 [OPTIONS]"
     echo "Options:"
-    echo "  --p4d_type <type>        Specify the type of Helix Core server (p4d_master, p4d_replica, p4d_edge)"
-    echo "  --username <secret_id>   AWS Secrets Manager secret ID for the Helix Core admin username"
-    echo "  --password <secret_id>   AWS Secrets Manager secret ID for the Helix Core admin password"
-    echo "  --auth <url>             Helix Authentication Service URL"
-    echo "  --fqdn <hostname>        Fully Qualified Domain Name for the Helix Core server"
-    echo "  --hx_logs <path>         Path for Helix Core logs"
-    echo "  --hx_metadata <path>     Path for Helix Core metadata"
-    echo "  --hx_depots <path>       Path for Helix Core depots"
-    echo "  --case_sensitive <0/1>   Set the case sensitivity of the Helix Core server"
-    echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
+    echo "  --p4d_type <type>        Specify the type of P4 Server (p4d_master, p4d_replica, p4d_edge)"
+    echo "  --username <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin username"
+    echo "  --password <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin password"
+    echo "  --auth <url>             P4Auth URL"
+    echo "  --fqdn <hostname>        Fully Qualified Domain Name for the P4 Server"
+    echo "  --hx_logs <path>         Path for P4 Server logs"
+    echo "  --hx_metadata <path>     Path for P4 Server metadata"
+    echo "  --hx_depots <path>       Path for P4 Server depots"
+    echo "  --case_sensitive <0/1>   Set the case sensitivity of the P4 Server"
+    echo "  --unicode <true/false>   Set the P4 Server with -xi flag for Unicode"
     echo "  --selinux <true/false>   Update labels for SELinux"
     echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
     echo "  --fsxn_password <secret_id> AWS secret manager FSxN fsxadmin user password"
@@ -369,7 +369,7 @@ while true; do
             shift 2
             ;;
         --auth)
-            HELIX_AUTH_SERVICE_URL="$2"
+            P4_AUTH_URL="$2"
             shift 2
             ;;
         --fqdn)
@@ -742,12 +742,12 @@ else
     log_message "Created SiteTags file appended AWS Region of this instance"
 fi
 
-# Check if the HELIX_AUTH_SERVICE_URL is empty. if not, configure Helix Authentication Extension
-if [ -z $HELIX_AUTH_SERVICE_URL ]; then
-  log_message "Helix Authentication Service URL was not provided. Skipping configuration."
+# Check if the P4_AUTH_URL is empty. if not, configure P4 Auth Extension
+if [ -z $P4_AUTH_URL ]; then
+  log_message "P4 Auth URL was not provided. Skipping configuration."
 else
-  log_message "Configuring Helix Authentication Extension against $HELIX_AUTH_SERVICE_URL"
-  setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
+  log_message "Configuring P4 Auth Extension against $P4_AUTH_URL"
+  setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$P4_AUTH_URL" "oidc" "email" "email"
 fi
 
 if [ "${UNICODE,,}" = "true" ]; then

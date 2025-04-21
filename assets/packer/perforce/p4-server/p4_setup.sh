@@ -122,10 +122,10 @@ done
 
 # Download binaries if any are missing
 if [ $missing_binaries -eq 1 ]; then
-    echo "One or more Helix binaries are missing. Running get_helix_binaries.sh..."
+    echo "One or more Perforce binaries are missing. Running get_helix_binaries.sh..."
     /hxdepots/sdp/helix_binaries/get_helix_binaries.sh
 else
-    echo "All Helix binaries are present."
+    echo "All Perforce binaries are present."
 fi
 ###### previously each run got the binaries by: /hxdepots/sdp/helix_binaries/get_helix_binaries.sh
 
