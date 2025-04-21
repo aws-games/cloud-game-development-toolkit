@@ -141,42 +141,7 @@ resource "aws_volume_attachment" "depot_attachment" {
   instance_id = aws_instance.helix_core_instance.id
 }
 
-##########################################
-# Storage Configuration - FSxN
-##########################################
 
-// hxlogs
-resource "aws_fsx_ontap_volume" "logs" {
-  count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
-  name                       = "logs"
-  size_in_megabytes          = var.logs_volume_size * 1024
-  tags                       = local.tags
-  storage_efficiency_enabled = true
-  junction_path              = "/hxlogs"
-}
-
-// hxmetadata
-resource "aws_fsx_ontap_volume" "metadata" {
-  count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
-  name                       = "metadata"
-  size_in_megabytes          = var.metadata_volume_size * 1024
-  tags                       = local.tags
-  storage_efficiency_enabled = true
-  junction_path              = "/hxmetadata"
-}
-
-// hxdepot
-resource "aws_fsx_ontap_volume" "depot" {
-  count                      = var.storage_type == "FSxN" ? 1 : 0
-  storage_virtual_machine_id = var.amazon_fsxn_svm_id
-  name                       = "depot"
-  size_in_megabytes          = var.depot_volume_size * 1024
-  tags                       = local.tags
-  storage_efficiency_enabled = true
-  junction_path              = "/hxdepots"
-}
 
 ##########################################
 # Default SG for Internet Egress

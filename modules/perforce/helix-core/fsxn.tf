@@ -39,31 +39,24 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
+}
 
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-    "arn:aws:iam::aws:policy/service-role/AWSLambdaRole"
-  ]
+resource "aws_iam_role_policy_attachment" "lambda_service_basic_execution_role" {
+  count      = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.lambda_role[0].name
+}
 
-  inline_policy {
-    name = "LambdaPolicy"
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Effect = "Allow"
-          Action = [
-            "ec2:CreateNetworkInterface",
-            "ec2:DescribeNetworkInterfaces",
-            "ec2:DeleteNetworkInterface",
-            "ec2:AssignPrivateIpAddresses",
-            "ec2:UnassignPrivateIpAddresses"
-          ]
-          Resource = "*"
-        }
-      ]
-    })
-  }
+resource "aws_iam_role_policy_attachment" "lambda_service_role" {
+  count      = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaRole"
+  role       = aws_iam_role.lambda_role[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_vpc_access_role" {
+  count      = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+  role       = aws_iam_role.lambda_role[0].name
 }
 
 resource "aws_security_group" "fsxn_lambda_link_security_group" {
@@ -103,7 +96,44 @@ resource "aws_lambda_function" "lambda_function" {
   timeout = 10
 }
 
-resource "netapp-ontap_protocols_san_igroup_resource" "perforce_igroup" {
+##########################################
+# Storage Configuration - FSxN
+##########################################
+
+// hxlogs
+resource "aws_fsx_ontap_volume" "logs" {
+  count                      = var.storage_type == "FSxN" ? 1 : 0
+  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  name                       = "logs"
+  size_in_megabytes          = var.logs_volume_size * 1024
+  tags                       = local.tags
+  storage_efficiency_enabled = true
+  junction_path              = "/hxlogs"
+}
+
+// hxmetadata
+resource "aws_fsx_ontap_volume" "metadata" {
+  count                      = var.storage_type == "FSxN" ? 1 : 0
+  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  name                       = "metadata"
+  size_in_megabytes          = var.metadata_volume_size * 1024
+  tags                       = local.tags
+  storage_efficiency_enabled = true
+  junction_path              = "/hxmetadata"
+}
+
+// hxdepot
+resource "aws_fsx_ontap_volume" "depot" {
+  count                      = var.storage_type == "FSxN" ? 1 : 0
+  storage_virtual_machine_id = var.amazon_fsxn_svm_id
+  name                       = "depot"
+  size_in_megabytes          = var.depot_volume_size * 1024
+  tags                       = local.tags
+  storage_efficiency_enabled = true
+  junction_path              = "/hxdepots"
+}
+
+resource "netapp-ontap_san_igroup" "perforce_igroup" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   cx_profile_name = "aws"
   name            = "perforce"
@@ -114,26 +144,6 @@ resource "netapp-ontap_protocols_san_igroup_resource" "perforce_igroup" {
   protocol   = "iscsi"
   depends_on = [aws_lambda_function.lambda_function]
 }
-#
-# resource "netapp-ontap_volume" "logs_vol" {
-#   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
-#   cx_profile_name = "aws"
-#   name            = "logs"
-#   svm_name        = var.fsxn_svm_name
-#   aggregates = [
-#     {
-#       name = "aggr1"
-#     }
-#   ]
-#   space = {
-#     size      = var.logs_volume_size
-#     size_unit = "gb"
-#   }
-#   nas = {
-#     junction_path = "/hxlogs"
-#   }
-#   depends_on = [aws_lambda_function.lambda_function]
-# }
 
 resource "netapp-ontap_lun" "logs_volume_lun" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
@@ -146,7 +156,7 @@ resource "netapp-ontap_lun" "logs_volume_lun" {
   depends_on      = [aws_lambda_function.lambda_function]
 }
 
-resource "netapp-ontap_protocols_san_lun-maps_resource" "logs_lun_map" {
+resource "netapp-ontap_san_lun-map" "logs_lun_map" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   cx_profile_name = "aws"
   svm = {
@@ -156,30 +166,10 @@ resource "netapp-ontap_protocols_san_lun-maps_resource" "logs_lun_map" {
     name = netapp-ontap_lun.logs_volume_lun[count.index].name
   }
   igroup = {
-    name = netapp-ontap_protocols_san_igroup_resource.perforce_igroup[count.index].name
+    name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
   depends_on = [aws_lambda_function.lambda_function]
 }
-
-# resource "netapp-ontap_volume" "metadata_vol" {
-#   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
-#   cx_profile_name = "aws"
-#   name            = "metadata"
-#   svm_name        = var.fsxn_svm_name
-#   aggregates = [
-#     {
-#       name = "aggr1"
-#     }
-#   ]
-#   space = {
-#     size      = var.metadata_volume_size
-#     size_unit = "gb"
-#   }
-#   nas = {
-#     junction_path = "/hxmetadata"
-#   }
-#   depends_on = [aws_lambda_function.lambda_function]
-# }
 
 resource "netapp-ontap_lun" "metadata_volume_lun" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
@@ -192,7 +182,7 @@ resource "netapp-ontap_lun" "metadata_volume_lun" {
   depends_on      = [aws_lambda_function.lambda_function]
 }
 
-resource "netapp-ontap_protocols_san_lun-maps_resource" "metadata_lun_map" {
+resource "netapp-ontap_san_lun-map" "metadata_lun_map" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   cx_profile_name = "aws"
   svm = {
@@ -202,30 +192,10 @@ resource "netapp-ontap_protocols_san_lun-maps_resource" "metadata_lun_map" {
     name = netapp-ontap_lun.metadata_volume_lun[count.index].name
   }
   igroup = {
-    name = netapp-ontap_protocols_san_igroup_resource.perforce_igroup[count.index].name
+    name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
   depends_on = [aws_lambda_function.lambda_function]
 }
-
-# resource "netapp-ontap_volume" "depots_vol" {
-#   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
-#   cx_profile_name = "aws"
-#   name            = "depot"
-#   svm_name        = var.fsxn_svm_name
-#   aggregates = [
-#     {
-#       name = "aggr1"
-#     }
-#   ]
-#   space = {
-#     size      = var.depot_volume_size
-#     size_unit = "gb"
-#   }
-#   nas = {
-#     junction_path = "/hxdepots"
-#   }
-#   depends_on = [aws_lambda_function.lambda_function]
-# }
 
 resource "netapp-ontap_lun" "depots_volume_lun" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
@@ -238,7 +208,7 @@ resource "netapp-ontap_lun" "depots_volume_lun" {
   depends_on      = [aws_lambda_function.lambda_function]
 }
 
-resource "netapp-ontap_protocols_san_lun-maps_resource" "depots_lun_map" {
+resource "netapp-ontap_san_lun-map" "depots_lun_map" {
   count           = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   cx_profile_name = "aws"
   svm = {
@@ -248,7 +218,7 @@ resource "netapp-ontap_protocols_san_lun-maps_resource" "depots_lun_map" {
     name = netapp-ontap_lun.depots_volume_lun[count.index].name
   }
   igroup = {
-    name = netapp-ontap_protocols_san_igroup_resource.perforce_igroup[count.index].name
+    name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
   depends_on = [aws_lambda_function.lambda_function]
 }

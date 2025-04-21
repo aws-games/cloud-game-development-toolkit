@@ -12,5 +12,6 @@ resource "aws_route53_record" "external_helix_core" {
   zone_id = data.aws_route53_zone.root.zone_id
   name    = "perforce.${data.aws_route53_zone.root.name}"
   type    = "A"
+  ttl     = 300
   records = [module.perforce_helix_core.helix_core_eip_public_ip]
 }

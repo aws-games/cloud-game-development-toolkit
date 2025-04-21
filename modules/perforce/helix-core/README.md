@@ -17,7 +17,7 @@
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.89.0 |
 | <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.34.0 |
-| <a name="provider_netapp-ontap"></a> [netapp-ontap](#provider\_netapp-ontap) | 2.0.0 |
+| <a name="provider_netapp-ontap"></a> [netapp-ontap](#provider\_netapp-ontap) | 2.1.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
 
 ## Modules
@@ -41,6 +41,9 @@ No modules.
 | [aws_iam_role.lambda_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.helix_core_default_role_helix_core_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.helix_core_default_role_ssm_managed_instance_core](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_service_basic_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_service_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_vpc_access_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_instance.helix_core_instance](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/instance) | resource |
 | [aws_lambda_function.lambda_function](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/lambda_function) | resource |
 | [aws_security_group.fsxn_lambda_link_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/security_group) | resource |
@@ -55,10 +58,10 @@ No modules.
 | [netapp-ontap_lun.depots_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/lun) | resource |
 | [netapp-ontap_lun.logs_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/lun) | resource |
 | [netapp-ontap_lun.metadata_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/lun) | resource |
-| [netapp-ontap_protocols_san_igroup_resource.perforce_igroup](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/protocols_san_igroup_resource) | resource |
-| [netapp-ontap_protocols_san_lun-maps_resource.depots_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/protocols_san_lun-maps_resource) | resource |
-| [netapp-ontap_protocols_san_lun-maps_resource.logs_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/protocols_san_lun-maps_resource) | resource |
-| [netapp-ontap_protocols_san_lun-maps_resource.metadata_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/protocols_san_lun-maps_resource) | resource |
+| [netapp-ontap_san_igroup.perforce_igroup](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/san_igroup) | resource |
+| [netapp-ontap_san_lun-map.depots_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/san_lun-map) | resource |
+| [netapp-ontap_san_lun-map.logs_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/san_lun-map) | resource |
+| [netapp-ontap_san_lun-map.metadata_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/san_lun-map) | resource |
 | [random_string.helix_core](https://registry.terraform.io/providers/hashicorp/random/3.7.1/docs/resources/string) | resource |
 | [aws_ami.helix_core_ami](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/ami) | data source |
 | [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/iam_policy_document) | data source |
