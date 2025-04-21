@@ -1,12 +1,16 @@
+##########################################
+# Random Strings
+##########################################
 # - Random Strings to prevent naming conflicts -
-resource "random_string" "helix_authentication_service" {
-  length  = 4
+resource "random_string" "p4_auth" {
+  length  = 2
   special = false
   upper   = false
 }
 
-
-# - Trust Relationships -
+##########################################
+# Trust Relationships
+##########################################
 #  ECS - Tasks
 data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
   statement {
@@ -19,10 +23,12 @@ data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
   }
 }
 
-# - Policies -
-# helix_authentication_service
-data "aws_iam_policy_document" "helix_authentication_service_default_policy" {
-  count = var.create_helix_authentication_service_default_policy ? 1 : 0
+##########################################
+# Policies
+##########################################
+# Default Policy Document
+data "aws_iam_policy_document" "default_policy" {
+  count = var.create_default_role ? 1 : 0
   # ECS
   statement {
     sid    = "ECSExec"
@@ -48,50 +54,14 @@ data "aws_iam_policy_document" "helix_authentication_service_default_policy" {
       "secretsmanager:BatchGetSecretValue"
     ]
     resources = [
-      var.helix_authentication_service_admin_username_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id : var.helix_authentication_service_admin_username_secret_arn,
-      var.helix_authentication_service_admin_password_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id : var.helix_authentication_service_admin_password_secret_arn,
+      var.admin_username_secret_arn == null ? awscc_secretsmanager_secret.admin_username[0].secret_id : var.admin_username_secret_arn,
+      var.admin_password_secret_arn == null ? awscc_secretsmanager_secret.admin_password[0].secret_id : var.admin_password_secret_arn,
     ]
   }
 }
 
-
-resource "aws_iam_policy" "helix_authentication_service_default_policy" {
-  count = var.create_helix_authentication_service_default_policy ? 1 : 0
-
-  name        = "${var.project_prefix}-helix-authentication-service-default-policy"
-  description = "Policy granting permissions for helix-authentication-service."
-  policy      = data.aws_iam_policy_document.helix_authentication_service_default_policy[0].json
-
-  tags = merge(local.tags,
-    {
-      Name = "${var.project_prefix}-helix-authentication-service-default-policy"
-    }
-  )
-}
-
-
-
-# - Roles -
-# helix_authentication_service
-resource "aws_iam_role" "helix_authentication_service_default_role" {
-  count              = var.create_helix_authentication_service_default_role ? 1 : 0
-  name               = "${var.project_prefix}-helix-authentication-service-default-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
-  tags = merge(local.tags,
-    {
-      Name = "${var.project_prefix}-helix-authentication-service-default-role"
-    }
-  )
-}
-
-resource "aws_iam_role_policy_attachment" "helix_authentication_service_default_role" {
-  count      = var.create_helix_authentication_service_default_role ? 1 : 0
-  role       = aws_iam_role.helix_authentication_service_default_role[0].name
-  policy_arn = aws_iam_policy.helix_authentication_service_default_policy[0].arn
-}
-
-data "aws_iam_policy_document" "helix_authentication_service_secrets_manager_policy" {
+# Secrets Manager Policy Document
+data "aws_iam_policy_document" "secrets_manager_policy" {
   statement {
     effect = "Allow"
     actions = [
@@ -103,22 +73,10 @@ data "aws_iam_policy_document" "helix_authentication_service_secrets_manager_pol
       "secretsmanager:BatchGetSecretValue"
     ]
     resources = [
-      var.helix_authentication_service_admin_username_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id : var.helix_authentication_service_admin_username_secret_arn,
-      var.helix_authentication_service_admin_password_secret_arn == null ? awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id : var.helix_authentication_service_admin_password_secret_arn,
+      var.admin_username_secret_arn == null ? awscc_secretsmanager_secret.admin_username[0].secret_id : var.admin_username_secret_arn,
+      var.admin_password_secret_arn == null ? awscc_secretsmanager_secret.admin_password[0].secret_id : var.admin_password_secret_arn,
     ]
   }
-}
-
-resource "aws_iam_policy" "helix_authentication_service_secrets_manager_policy" {
-  name        = "${var.project_prefix}-helix-authentication-service-secrets-manager-policy"
-  description = "Policy granting permissions for helix-authentication-service task execution role to access SSM."
-  policy      = data.aws_iam_policy_document.helix_authentication_service_secrets_manager_policy.json
-
-  tags = merge(local.tags,
-    {
-      Name = "${var.project_prefix}-helix-authentication-service-secrets-manager-policy"
-    }
-  )
 }
 
 data "aws_iam_policy_document" "helix_authentication_service_scim_secrets_manager_policy" {
@@ -141,33 +99,88 @@ data "aws_iam_policy_document" "helix_authentication_service_scim_secrets_manage
   }
 }
 
-resource "aws_iam_policy" "helix_authentication_service_scim_secrets_manager_policy" {
+resource "aws_iam_policy" "scim_secrets_manager_policy" {
   count  = var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null && var.scim_bearer_token_arn != null ? 1 : 0
   name        = "${var.project_prefix}-helix-auth-scim-ssm-policy"
   description = "Policy granting permissions for Helix Auth task execution role to access secrets in SSM required for enabling SCIM."
   policy      = data.aws_iam_policy_document.helix_authentication_service_scim_secrets_manager_policy[0].json
 }
 
-resource "aws_iam_role" "helix_authentication_service_task_execution_role" {
-  name               = "${var.project_prefix}-helix-authentication-service-task-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+# Default Policy
+resource "aws_iam_policy" "default_policy" {
+  count = var.create_default_role ? 1 : 0
 
-  tags = merge(local.tags,
+  name        = "${local.name_prefix}-default-policy"
+  description = "Policy granting permissions for ${local.name_prefix}."
+  policy      = data.aws_iam_policy_document.default_policy[0].json
+
+  tags = merge(var.tags,
     {
-      Name = "${var.project_prefix}-helix-authentication-service-task-execution-role"
+      Name = "${local.name_prefix}-default-policy"
     }
   )
 }
-resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_ecs" {
-  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
+
+
+# Secrets Manager Policy
+resource "aws_iam_policy" "secrets_manager_policy" {
+  name        = "${local.name_prefix}-secrets-manager-policy"
+  description = "Policy granting permissions for ${local.name_prefix} task execution role to access Secrets Manager."
+  policy      = data.aws_iam_policy_document.secrets_manager_policy.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-secrets-manager-policy"
+    }
+  )
+}
+
+
+##########################################
+# Roles
+##########################################
+# Default Role
+resource "aws_iam_role" "default_role" {
+  count              = var.create_default_role ? 1 : 0
+  name               = "${local.name_prefix}-default-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-default-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "default_role" {
+  count      = var.create_default_role ? 1 : 0
+  role       = aws_iam_role.default_role[0].name
+  policy_arn = aws_iam_policy.default_policy[0].arn
+}
+
+# Task Execution Role
+resource "aws_iam_role" "task_execution_role" {
+  name               = "${local.name_prefix}-task-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-task-execution-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "task_execution_role_ecs" {
+  role       = aws_iam_role.task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
-resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_secrets_manager" {
-  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
-  policy_arn = aws_iam_policy.helix_authentication_service_secrets_manager_policy.arn
+
+resource "aws_iam_role_policy_attachment" "task_execution_role_secrets_manager" {
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.secrets_manager_policy.arn
 }
-resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_scim_secrets_manager" {
+resource "aws_iam_role_policy_attachment" "task_execution_role_scim_secrets_manager" {
   count      = var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null && var.scim_bearer_token_arn != null ? 1 : 0
-  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
-  policy_arn = aws_iam_policy.helix_authentication_service_scim_secrets_manager_policy[0].arn
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.scim_secrets_manager_policy[0].arn
 }

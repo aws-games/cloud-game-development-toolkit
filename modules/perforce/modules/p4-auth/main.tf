@@ -1,6 +1,8 @@
-
+##########################################
+# ECS | Cluster
+##########################################
 # If cluster name is not provided create a new cluster
-resource "aws_ecs_cluster" "helix_authentication_service_cluster" {
+resource "aws_ecs_cluster" "cluster" {
   count = var.cluster_name != null ? 0 : 1
   name  = "${local.name_prefix}-cluster"
 
@@ -9,12 +11,21 @@ resource "aws_ecs_cluster" "helix_authentication_service_cluster" {
     value = "enabled"
   }
 
-  tags = local.tags
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-cluster"
+    }
+  )
 }
 
-resource "aws_ecs_cluster_capacity_providers" "helix_authentication_service_cluster_fargate_providers" {
+
+##########################################
+# ECS Cluster | Capacity Providers
+##########################################
+# If cluster name is not provided create a new cluster capacity providers
+resource "aws_ecs_cluster_capacity_providers" "cluster_fargate_providers" {
   count        = var.cluster_name != null ? 0 : 1
-  cluster_name = aws_ecs_cluster.helix_authentication_service_cluster[0].name
+  cluster_name = aws_ecs_cluster.cluster[0].name
 
   capacity_providers = ["FARGATE"]
 
@@ -24,46 +35,26 @@ resource "aws_ecs_cluster_capacity_providers" "helix_authentication_service_clus
     capacity_provider = "FARGATE"
   }
 }
-resource "awscc_secretsmanager_secret" "helix_authentication_service_admin_username" {
-  count         = var.helix_authentication_service_admin_username_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
-  name          = "helixAuthServiceAdminUsername"
-  secret_string = "perforce"
-}
 
-resource "awscc_secretsmanager_secret" "helix_authentication_service_admin_password" {
-  count       = var.helix_authentication_service_admin_password_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
-  name        = "helixAuthServiceAdminUserPassword"
-  description = "The password for the created Helix Authentication Service administrator."
-  generate_secret_string = {
-    exclude_numbers     = false
-    exclude_punctuation = true
-    include_space       = false
-  }
-}
 
-resource "aws_cloudwatch_log_group" "helix_authentication_service_log_group" {
-  #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
-  name              = "${local.name_prefix}-log-group"
-  retention_in_days = var.helix_authentication_service_cloudwatch_log_retention_in_days
-  tags              = local.tags
-}
-
-# Define helix_authentication_service task definition
-resource "aws_ecs_task_definition" "helix_authentication_service_task_definition" {
-  family                   = var.name
+##########################################
+# ECS | Task Definition
+##########################################
+resource "aws_ecs_task_definition" "task_definition" {
+  family                   = "${local.name_prefix}-task-definition"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.container_cpu
   memory                   = var.container_memory
 
   volume {
-    name = "helix-auth-config"
+    name = local.data_volume_name
   }
 
   container_definitions = jsonencode([
     {
       name      = var.container_name,
-      image     = local.helix_authentication_service_image,
+      image     = local.image,
       cpu       = var.container_cpu,
       memory    = var.container_memory,
       essential = true,
@@ -124,15 +115,15 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.helix_authentication_service_log_group.name
+          awslogs-group         = aws_cloudwatch_log_group.log_group.name
           awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "helix-auth-svc"
+          awslogs-stream-prefix = "${local.name_prefix}-service"
         }
       }
       mountPoints = [
         {
-          sourceVolume  = "helix-auth-config"
-          containerPath = "/var/has"
+          sourceVolume  = local.data_volume_name
+          containerPath = local.data_path
         }
       ],
       healthCheck = {
@@ -142,13 +133,13 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       }
       dependsOn = [
         {
-          containerName = "helix-auth-svc-config"
+          containerName = "${var.container_name}-config"
           condition     = "COMPLETE"
         }
       ]
     },
     {
-      name                     = "helix-auth-svc-config"
+      name                     = "${var.container_name}-config"
       image                    = "bash"
       essential                = false
       command                  = ["sh", "-c", "echo $ADMIN_PASSWD | tee /var/has/password.txt"]
@@ -156,128 +147,181 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
       secrets = var.enable_web_based_administration ? [
         {
           name      = "ADMIN_USERNAME"
-          valueFrom = var.helix_authentication_service_admin_username_secret_arn != null ? var.helix_authentication_service_admin_username_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_username[0].secret_id
+          valueFrom = var.admin_username_secret_arn != null ? var.admin_username_secret_arn : awscc_secretsmanager_secret.admin_username[0].secret_id
         },
         {
           name      = "ADMIN_PASSWD"
-          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_password_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
+          valueFrom = var.admin_password_secret_arn != null ? var.admin_password_secret_arn : awscc_secretsmanager_secret.admin_password[0].secret_id
         },
       ] : [],
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.helix_authentication_service_log_group.name
+          awslogs-group         = aws_cloudwatch_log_group.log_group.name
           awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "helix-auth-svc-config"
+          awslogs-stream-prefix = "${local.name_prefix}-service-config"
         }
       }
       mountPoints = [
         {
-          sourceVolume  = "helix-auth-config"
-          containerPath = "/var/has"
+          sourceVolume  = local.data_volume_name
+          containerPath = local.data_path
         }
       ],
     }
   ])
 
-  task_role_arn      = var.custom_helix_authentication_service_role != null ? var.custom_helix_authentication_service_role : aws_iam_role.helix_authentication_service_default_role[0].arn
-  execution_role_arn = aws_iam_role.helix_authentication_service_task_execution_role.arn
+  task_role_arn      = var.custom_role != null ? var.custom_role : aws_iam_role.default_role[0].arn
+  execution_role_arn = aws_iam_role.task_execution_role.arn
 
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "X86_64"
   }
 
-  tags = local.tags
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-task-definition"
+    }
+  )
 }
 
-# Define helix_authentication_service service
-resource "aws_ecs_service" "helix_authentication_service" {
-  name = local.name_prefix
 
-  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.helix_authentication_service_cluster[0].arn : aws_ecs_cluster.helix_authentication_service_cluster[0].arn
-  task_definition        = aws_ecs_task_definition.helix_authentication_service_task_definition.arn
-  launch_type            = "FARGATE"
-  desired_count          = var.desired_container_count
+##########################################
+# ECS | Service
+##########################################
+resource "aws_ecs_service" "service" {
+  name = "${local.name_prefix}-service"
+
+  cluster         = var.cluster_name != null ? data.aws_ecs_cluster.cluster[0].arn : aws_ecs_cluster.cluster[0].arn
+  task_definition = aws_ecs_task_definition.task_definition.arn
+  launch_type     = "FARGATE"
+  # This is set to 0 because the aws_appautoscaling_target resource will be used. This will allow us to control the desired count, especially during the terraform destroy which prevents the error where a listener cannot be destroyed because the targets managed by ECS are still registered. This resource allows us to deregister these, giving more control over how ECS registers and deregisters targets.
+  desired_count = var.desired_container_count
+  # Allow ECS to delete a service even if deregistration is taking time. This is to prevent the ALB listener in the parent module from failing to be deleted in the event that all registered targets (ECS services) haven't been destroyed yet.
+  force_delete           = true
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
 
   wait_for_steady_state = true
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.helix_authentication_service_alb_target_group.arn
+    target_group_arn = aws_lb_target_group.alb_target_group.arn
     container_name   = var.container_name
     container_port   = var.container_port
   }
 
   network_configuration {
-    subnets         = var.helix_authentication_service_subnets
-    security_groups = [aws_security_group.helix_authentication_service_sg.id]
+    subnets         = var.subnets
+    security_groups = [aws_security_group.ecs_service.id]
   }
 
-  tags = local.tags
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-service"
+    }
+  )
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [desired_count] # Let Application Auto Scaling manage this
+  }
+
+  timeouts {
+    create = "20m"
+  }
+
+  depends_on = [aws_lb_target_group.alb_target_group]
 }
 
-########################################
-# helix_authentication_service LOAD BALANCER SECURITY GROUP
-########################################
 
-# helix_authentication_service Load Balancer Security Group (attached to ALB)
-resource "aws_security_group" "helix_authentication_service_alb_sg" {
-  #checkov:skip=CKV2_AWS_5: Attached to ALB on creation
-  count       = var.create_application_load_balancer ? 1 : 0
-  name        = "${local.name_prefix}-ALB"
-  vpc_id      = var.vpc_id
-  description = "helix_authentication_service ALB Security Group"
-  tags        = local.tags
+
+##########################################
+# Application Auto Scaling | Target
+##########################################
+# This is used
+resource "aws_appautoscaling_target" "ecs_target" {
+  max_capacity       = var.desired_container_count
+  min_capacity       = 0 # allow ECS to scale down to 0 targets to prevent listener in parent module from failing to be deleted
+  resource_id        = "service/${var.project_prefix}-perforce-web-services-shared-cluster/${aws_ecs_service.service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+
+  depends_on = [
+    aws_ecs_service.service
+  ]
 }
 
-# Outbound access from ALB to Containers
-resource "aws_vpc_security_group_egress_rule" "helix_authentication_service_alb_outbound_service" {
-  count                        = var.create_application_load_balancer ? 1 : 0
-  security_group_id            = aws_security_group.helix_authentication_service_alb_sg[0].id
-  description                  = "Allow outbound traffic from helix_authentication_service ALB to helix_authentication_service service"
-  referenced_security_group_id = aws_security_group.helix_authentication_service_sg.id
-  from_port                    = var.container_port
-  to_port                      = var.container_port
-  ip_protocol                  = "tcp"
+# Used to set dependency on ALB from parent module, since depends_on won't work upstream
+# This triggers during the first apply, or if the ALB ARN changes to a different value, such as null
+resource "null_resource" "parent_alb" {
+  # count = var.create_application_load_balancer
+  triggers = {
+    shared_alb_arn = var.existing_application_load_balancer_arn
+  }
+
 }
 
-########################################
-# helix_authentication_service SERVICE SECURITY GROUP
-########################################
+##########################################
+# Application Auto Scaling | Policy
+##########################################
+resource "aws_appautoscaling_policy" "scale_up" {
+  name               = "${local.name_prefix}-scale-up"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
 
-# helix_authentication_service Service Security Group (attached to containers)
-resource "aws_security_group" "helix_authentication_service_sg" {
-  name        = "${local.name_prefix}-service"
-  vpc_id      = var.vpc_id
-  description = "helix_authentication_service Service Security Group"
-  tags        = local.tags
+  step_scaling_policy_configuration {
+    adjustment_type         = "ExactCapacity"
+    cooldown                = 60
+    metric_aggregation_type = "Average"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      scaling_adjustment          = var.desired_container_count
+    }
+  }
+
+  depends_on = [
+    aws_lb_target_group.alb_target_group,
+    aws_ecs_service.service,
+    aws_appautoscaling_target.ecs_target,
+  ]
 }
 
-# Outbound access from Containers to Internet (IPV4)
-resource "aws_vpc_security_group_egress_rule" "helix_authentication_service_outbound_ipv4" {
-  security_group_id = aws_security_group.helix_authentication_service_sg.id
-  description       = "Allow outbound traffic from helix_authentication_service service to internet (ipv4)"
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1" # semantically equivalent to all ports
+
+##########################################
+# Secrets Manager
+##########################################
+resource "awscc_secretsmanager_secret" "admin_username" {
+  count         = var.admin_username_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
+  name          = "${local.name_prefix}-AdminUsername"
+  description   = "The username for the created P4Auth administrator."
+  secret_string = "perforce"
 }
 
-# Outbound access from Containers to Internet (IPV6)
-resource "aws_vpc_security_group_egress_rule" "helix_authentication_service_outbound_ipv6" {
-  security_group_id = aws_security_group.helix_authentication_service_sg.id
-  description       = "Allow outbound traffic from helix_authentication_service service to internet (ipv6)"
-  cidr_ipv6         = "::/0"
-  ip_protocol       = "-1" # semantically equivalent to all ports
+resource "awscc_secretsmanager_secret" "admin_password" {
+  count       = var.admin_password_secret_arn == null && var.enable_web_based_administration == true ? 1 : 0
+  name        = "${local.name_prefix}-AdminUserPassword"
+  description = "The password for the created P4Auth administrator."
+  generate_secret_string = {
+    exclude_numbers     = false
+    exclude_punctuation = true
+    include_space       = false
+  }
 }
 
-# Inbound access to Containers from ALB
-resource "aws_vpc_security_group_ingress_rule" "helix_authentication_service_inbound_alb" {
-  count                        = var.create_application_load_balancer ? 1 : 0
-  security_group_id            = aws_security_group.helix_authentication_service_sg.id
-  description                  = "Allow inbound traffic from helix_authentication_service ALB to service"
-  referenced_security_group_id = aws_security_group.helix_authentication_service_alb_sg[0].id
-  from_port                    = var.container_port
-  to_port                      = var.container_port
-  ip_protocol                  = "tcp"
+
+##########################################
+# CloudWatch
+##########################################
+resource "aws_cloudwatch_log_group" "log_group" {
+  #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
+  name              = "${local.name_prefix}-log-group"
+  retention_in_days = var.cloudwatch_log_retention_in_days
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-log-group"
+    }
+  )
 }

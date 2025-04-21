@@ -1,0 +1,323 @@
+##########################################
+# Perforce Network Load Balancer
+##########################################
+resource "aws_lb" "perforce" {
+  count                            = var.create_shared_network_load_balancer != false ? 1 : 0
+  name                             = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+  load_balancer_type               = "network"
+  subnets                          = var.public_subnets
+  security_groups                  = concat(var.existing_security_groups, [aws_security_group.perforce_network_load_balancer[0].id])
+  drop_invalid_header_fields       = true
+  enable_cross_zone_load_balancing = true
+
+  #checkov:skip=CKV_AWS_91: Access logging not required for example deployment
+  #checkov:skip=CKV_AWS_150: Load balancer deletion protection disabled for example deployment
+
+
+  dynamic "access_logs" {
+    for_each = (var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs ? [1] :
+    [])
+    content {
+      enabled = var.enable_shared_lb_access_logs
+      bucket = (var.shared_lb_access_logs_bucket != null ?
+        var.shared_lb_access_logs_bucket :
+      aws_s3_bucket.shared_lb_access_logs_bucket[0].id)
+      prefix = (var.shared_nlb_access_logs_prefix != null ?
+      var.shared_nlb_access_logs_prefix : "${var.project_prefix}--perforce-shared-nlb")
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      Name        = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      Type        = "Network Load Balancer"
+      Routability = "PUBLIC"
+    }
+  )
+}
+
+##########################################
+# Perforce NLB | Target Groups
+##########################################
+# Send traffic from NLB to ALB
+resource "aws_lb_target_group" "perforce" {
+  count       = var.create_shared_network_load_balancer != false ? 1 : 0
+  name        = "${var.project_prefix}-perforce-web-services"
+  target_type = "alb"
+  port        = 443
+  protocol    = "TCP"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTPS"
+    matcher             = "200"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 10
+    interval            = 30
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+    }
+  )
+
+  # Create only if the ALB has been created
+  depends_on = [aws_lb.perforce_web_services]
+}
+
+resource "aws_lb_target_group_attachment" "perforce" {
+  count            = var.create_shared_network_load_balancer != false ? 1 : 0
+  target_group_arn = aws_lb_target_group.perforce[0].arn
+  target_id        = aws_lb.perforce_web_services[0].arn
+  port             = 443
+}
+
+##########################################
+# Perforce NLB | Listeners
+##########################################
+# forward HTTPS traffic from Public NLB to Internal ALB
+resource "aws_lb_listener" "perforce" {
+  count             = var.create_shared_network_load_balancer != false ? 1 : 0
+  load_balancer_arn = aws_lb.perforce[0].arn
+  port              = 443
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.perforce[0].arn
+  }
+
+  #checkov:skip=CKV2_AWS_74: Ensure AWS Load Balancers use strong ciphers
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+    }
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+}
+
+
+###################################################
+# Perforce Web Services Application Load Balancer
+###################################################
+resource "aws_lb" "perforce_web_services" {
+  count                      = var.create_shared_application_load_balancer != false ? 1 : 0
+  name                       = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+  internal                   = true
+  load_balancer_type         = "application"
+  subnets                    = var.private_subnets
+  security_groups            = concat(var.existing_security_groups, [aws_security_group.perforce_web_services_alb[0].id])
+  enable_deletion_protection = var.enable_shared_alb_deletion_protection
+  drop_invalid_header_fields = true
+  #checkov:skip=CKV_AWS_91: Access logging not required for example deployment
+  #checkov:skip=CKV_AWS_150: Load balancer deletion protection disabled for example deployment
+
+  dynamic "access_logs" {
+    for_each = (var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs ? [1] :
+    [])
+    content {
+      enabled = var.enable_shared_lb_access_logs
+      bucket = (var.shared_lb_access_logs_bucket != null ?
+        var.shared_lb_access_logs_bucket :
+      aws_s3_bucket.shared_lb_access_logs_bucket[0].id)
+      prefix = (var.shared_alb_access_logs_prefix != null ?
+      var.shared_alb_access_logs_prefix : "${var.project_prefix}--perforce-shared-alb")
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      Name        = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      Type        = "Application Load Balancer"
+      Routability = "PRIVATE"
+    }
+  )
+}
+
+
+##########################################
+# Perforce Web Services (ALB) | Listeners
+##########################################
+# Default rule sends fixed response status code
+resource "aws_lb_listener" "perforce_web_services" {
+  count             = var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
+  load_balancer_arn = aws_lb.perforce_web_services[0].arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.certificate_arn
+
+  # This is to prevent the NLB's Target Group (the ALB) from failing health checks. This must be a fixed response so the NLB knows the ALB is reachable. It expects this instead of a redirect, which would give a 301 response. Otherwise the NLB's Target Group health check would need to expect a 301 (redirect).
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Fixed response content"
+      status_code  = "200"
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      TrafficDestination = "SELF"
+      Intent             = "Return fixed status code to confirm reachability."
+    }
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# P4Auth listener rule - forward from ALB to P4Auth Service
+resource "aws_lb_listener_rule" "perforce_p4_auth" {
+  count        = var.create_shared_application_load_balancer && var.p4_auth_config != null ? 1 : 0
+  listener_arn = aws_lb_listener.perforce_web_services[0].arn
+  priority     = 200
+  action {
+    type = "forward"
+    # Target group is created in the P4 Auth submodule
+    target_group_arn = module.p4_auth[0].target_group_arn
+  }
+  condition {
+    host_header {
+      values = ["${var.p4_auth_config.fully_qualified_domain_name}"]
+    }
+  }
+
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficDestination = "${var.project_prefix}-${var.p4_auth_config.name}-service"
+    }
+  )
+
+  # Delete this listener only after the ECS Cluster is deleted and all targets are deregistered
+  depends_on = [aws_ecs_cluster.perforce_web_services_cluster]
+
+}
+
+# P4 Code Review listener rule - forward from ALB to Code Review Service
+resource "aws_lb_listener_rule" "p4_code_review" {
+  count = var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
+  # count        = var.create_shared_application_load_balancer != false && var.p4_server_config != null ? 1 : 0
+  listener_arn = aws_lb_listener.perforce_web_services[0].arn
+  priority     = 100
+  action {
+    type = "forward"
+    # Target group is created in the P4 Auth submodule
+    target_group_arn = module.p4_code_review[0].target_group_arn
+  }
+  condition {
+    host_header {
+      values = ["${var.p4_code_review_config.fully_qualified_domain_name}"]
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficDestination = "${var.project_prefix}-${var.p4_code_review_config.name}-service"
+    }
+  )
+
+  # Delete this listener only after the ECS Cluster is deleted and all targets are deregistered
+  depends_on = [aws_ecs_cluster.perforce_web_services_cluster]
+}
+
+
+
+##########################################
+# Load Balancers | Logging
+##########################################
+resource "random_string" "shared_lb_access_logs_bucket" {
+  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+
+  length  = 2
+  special = false
+  upper   = false
+}
+
+resource "aws_s3_bucket" "shared_lb_access_logs_bucket" {
+  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+
+  bucket        = "${var.project_prefix}-perforce-lb-access-logs-${random_string.shared_lb_access_logs_bucket[0].result}"
+  force_destroy = var.s3_enable_force_destroy
+
+  #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
+  #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
+  #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
+  #checkov:skip=CKV_AWS_18: S3 access logs not necessary
+  #checkov:skip=CKV2_AWS_62: Event notifications not necessary
+  #checkov:skip=CKV2_AWS_61: S3 lifecycle configuration can be conditionally created
+  #checkov:skip=CKV2_AWS_6: S3 Buckets have public access blocked by default
+
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-perforce-lb-access-logs-${random_string.shared_lb_access_logs_bucket[0].result}"
+  })
+}
+
+
+data "aws_elb_service_account" "main" {}
+
+data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
+  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+
+  statement {
+    effect  = "Allow"
+    actions = ["s3:PutObject"]
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_elb_service_account.main.arn]
+    }
+    resources = [
+      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-alb"}/*",
+      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_nlb_access_logs_prefix != null ? var.shared_nlb_access_logs_prefix : "${var.project_prefix}-perforce-shared-nlb"}/*",
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
+  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+
+  bucket = (var.shared_lb_access_logs_bucket == null ?
+    aws_s3_bucket.shared_lb_access_logs_bucket[0].id :
+  var.shared_lb_access_logs_bucket)
+  policy = data.aws_iam_policy_document.shared_lb_access_logs_bucket_lb_write[0].json
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "shared_access_logs_bucket_lifecycle_configuration" {
+  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+
+
+  bucket = aws_s3_bucket.shared_lb_access_logs_bucket[0].id
+  rule {
+    id     = "access-logs-lifecycle"
+    status = "Enabled"
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+    expiration {
+      days = 90
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+  depends_on = [
+    aws_s3_bucket.shared_lb_access_logs_bucket[0]
+  ]
+}

@@ -1,11 +1,10 @@
 ##########################################
-# Perforce Helix Core Super User
+# Perforce P4 Server Super User
 ##########################################
-
-resource "awscc_secretsmanager_secret" "helix_core_super_user_password" {
-  count       = var.helix_core_super_user_password_secret_arn == null ? 1 : 0
-  name        = "perforceHelixCoreSuperUserPassword"
-  description = "The password for the created Helix Core super user."
+resource "awscc_secretsmanager_secret" "super_user_password" {
+  count       = var.super_user_username_secret_arn == null ? 1 : 0
+  name        = "${local.name_prefix}-SuperUserPassword"
+  description = "The password for the created P4 Server super user."
   generate_secret_string = {
     exclude_numbers     = false
     exclude_punctuation = true
@@ -13,16 +12,16 @@ resource "awscc_secretsmanager_secret" "helix_core_super_user_password" {
   }
 }
 
-resource "awscc_secretsmanager_secret" "helix_core_super_user_username" {
-  count         = var.helix_core_super_user_username_secret_arn == null ? 1 : 0
-  name          = "perforceHelixCoreSuperUserUsername"
+resource "awscc_secretsmanager_secret" "super_user_username" {
+  count         = var.super_user_password_secret_arn == null ? 1 : 0
+  name          = "${local.name_prefix}-SuperUserUsername"
+  description   = "The username for the created P4 Server super user."
   secret_string = "perforce"
 }
 
 ##########################################
-# Perforce Helix Core Instance
+# Perforce P4 Server Instance
 ##########################################
-
 locals {
   is_fsxn  = var.storage_type == "FSxN"
   is_iscsi = var.protocol == "ISCSI"
@@ -69,14 +68,14 @@ locals {
   )
 }
 
-resource "aws_instance" "helix_core_instance" {
-  ami           = data.aws_ami.helix_core_ami.id
+resource "aws_instance" "server_instance" {
+  ami           = var.lookup_existing_ami == true ? data.aws_ami.existing_server_ami[0].id : data.aws_ami.autogen_server_ami[0].id
   instance_type = var.instance_type
 
-  availability_zone = local.helix_core_az
+  availability_zone = local.p4_server_az
   subnet_id         = var.instance_subnet_id
 
-  iam_instance_profile = aws_iam_instance_profile.helix_core_instance_profile.id
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.id
 
   user_data = <<-EOT
     #!/bin/bash
@@ -86,23 +85,22 @@ resource "aws_instance" "helix_core_instance" {
     /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs $LOGS_VOLUME_NAME \
      --hx_metadata $METADATA_VOLUME_NAME \
      --hx_depots $DEPOT_VOLUME_NAME \
-     --p4d_type ${var.server_type} \
-     --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
-     --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
+     --p4d_type ${var.p4_server_type} \
+     --username ${var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_password_secret_arn} \
+     --password ${var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn} \
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
-     ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
+     ${var.auth_service_url == null ? "" : "--auth ${var.auth_service_url}"} \
      ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : null} \
      ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : null} \
      ${local.is_fsxn ? "--fsxn_management_ip ${var.fsxn_management_ip}" : null} \
-     --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
+     --case_sensitive ${var.case_sensitive ? 1 : 0} \
      --unicode ${var.unicode ? "true" : "false"} \
      --selinux ${var.selinux ? "true" : "false"} \
      --plaintext ${var.plaintext ? "true" : "false"}
-
   EOT
 
   vpc_security_group_ids = (var.create_default_sg ?
-    concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) :
+    concat(var.existing_security_groups, [aws_security_group.default_security_group[0].id]) :
   var.existing_security_groups)
 
   metadata_options {
@@ -115,14 +113,12 @@ resource "aws_instance" "helix_core_instance" {
   monitoring    = true
   ebs_optimized = true
 
-  user_data_replace_on_change = true
-
   root_block_device {
     encrypted = true
   }
 
   tags = merge(local.tags, {
-    Name = "${local.name_prefix}-${var.server_type}-${local.helix_core_az}"
+    Name = "${local.name_prefix}-${var.p4_server_type}-${local.p4_server_az}"
   })
 
   depends_on = [
@@ -132,94 +128,70 @@ resource "aws_instance" "helix_core_instance" {
   ]
 }
 
+
 ##########################################
 # EIP For Internet Access to Instance
 ##########################################
-
-resource "aws_eip" "helix_core_eip" {
+resource "aws_eip" "server_eip" {
   count    = var.internal ? 0 : 1
-  instance = aws_instance.helix_core_instance.id
+  instance = aws_instance.server_instance.id
   domain   = "vpc"
 }
 
 ##########################################
 # Storage Configuration - EBS
 ##########################################
-
-// hxlogs
-resource "aws_ebs_volume" "logs" {
+// hxdepot
+resource "aws_ebs_volume" "depot" {
   count             = var.storage_type == "EBS" ? 1 : 0
-  availability_zone = local.helix_core_az
-  size              = var.logs_volume_size
+  availability_zone = local.p4_server_az
+  size              = var.depot_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-depot-volume"
+  })
 }
-
-resource "aws_volume_attachment" "logs_attachment" {
+resource "aws_volume_attachment" "depot_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
-  device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.logs[count.index].id
-  instance_id = aws_instance.helix_core_instance.id
+  device_name = "/dev/sdh"
+  volume_id   = aws_ebs_volume.depot.id
+  instance_id = aws_instance.server_instance.id
 }
 
 // hxmetadata
 resource "aws_ebs_volume" "metadata" {
   count             = var.storage_type == "EBS" ? 1 : 0
-  availability_zone = local.helix_core_az
+  availability_zone = local.p4_server_az
   size              = var.metadata_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-metadata-volume"
+  })
 }
 
 resource "aws_volume_attachment" "metadata_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
   device_name = "/dev/sdg"
   volume_id   = aws_ebs_volume.metadata[count.index].id
-  instance_id = aws_instance.helix_core_instance.id
+  instance_id = aws_instance.server_instance.id
 }
 
-// hxdepot
-resource "aws_ebs_volume" "depot" {
+// hxlogs
+resource "aws_ebs_volume" "logs" {
   count             = var.storage_type == "EBS" ? 1 : 0
-  availability_zone = local.helix_core_az
-  size              = var.depot_volume_size
+  availability_zone = local.p4_server_az
+  size              = var.logs_volume_size
   encrypted         = true
   #checkov:skip=CKV_AWS_189: CMK encryption not supported currently
-  tags = local.tags
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-logs-volume"
+  })
 }
-
-resource "aws_volume_attachment" "depot_attachment" {
+resource "aws_volume_attachment" "logs_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
-  device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.depot[count.index].id
-  instance_id = aws_instance.helix_core_instance.id
-}
-
-
-##########################################
-# Default SG for Internet Egress
-##########################################
-
-resource "aws_security_group" "helix_core_security_group" {
-  count = var.create_default_sg ? 1 : 0
-  #checkov:skip=CKV2_AWS_5:SG is attached to FSxZ file systems
-
-  vpc_id      = var.vpc_id
-  name        = "${local.name_prefix}-instance"
-  description = "Security group for Helix Core machines."
-  tags = merge(local.tags,
-    {
-      Name = "${local.name_prefix}-instance"
-    }
-  )
-}
-
-resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
-  count             = var.create_default_sg ? 1 : 0
-  security_group_id = aws_security_group.helix_core_security_group[0].id
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = -1
-  description       = "Helix Core out to Internet"
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.logs.id
+  instance_id = aws_instance.server_instance.id
 }

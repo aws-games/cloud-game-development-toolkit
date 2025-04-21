@@ -1,12 +1,17 @@
+##########################################
+# Random Strings
+##########################################
 # - Random Strings to prevent naming conflicts -
-resource "random_string" "helix_swarm" {
-  length  = 4
+resource "random_string" "p4_code_review" {
+  length  = 2
   special = false
   upper   = false
 }
 
 
-# - Trust Relationships -
+##########################################
+# Trust Relationships
+##########################################
 #  ECS - Tasks
 data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
   statement {
@@ -19,10 +24,13 @@ data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
   }
 }
 
-# - Policies -
-# swarm
-data "aws_iam_policy_document" "helix_swarm_default_policy" {
-  count = var.create_helix_swarm_default_policy ? 1 : 0
+
+##########################################
+# Policies
+##########################################
+# Default Policy Document
+data "aws_iam_policy_document" "default_policy" {
+  count = var.create_default_role ? 1 : 0
   # ECS
   statement {
     sid    = "ECSExec"
@@ -37,73 +45,116 @@ data "aws_iam_policy_document" "helix_swarm_default_policy" {
       "*"
     ]
   }
-}
-
-data "aws_iam_policy_document" "helix_swarm_ssm_policy" {
-  # ssm
   statement {
     effect = "Allow"
     actions = [
-      "ssm:GetParameters",
-      "secretsmanager:GetSecretValue"
+      "secretsmanager:ListSecrets",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:GetRandomPassword",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:BatchGetSecretValue"
     ]
     resources = [
-      var.p4d_super_user_arn,
-      var.p4d_super_user_password_arn,
-      var.p4d_swarm_user_arn,
-      var.p4d_swarm_password_arn
+      var.super_user_username_secret_arn,
+      var.super_user_password_secret_arn,
+      var.p4_code_review_user_username_secret_arn,
+      var.p4_code_review_user_password_secret_arn,
     ]
   }
 }
 
-resource "aws_iam_policy" "helix_swarm_default_policy" {
-  count = var.create_helix_swarm_default_policy ? 1 : 0
-
-  name        = "${var.project_prefix}-helix-swarm-default-policy"
-  description = "Policy granting permissions for Helix Swarm."
-  policy      = data.aws_iam_policy_document.helix_swarm_default_policy[0].json
+# Secrets Manager Policy Document
+data "aws_iam_policy_document" "secrets_manager_policy" {
+  # ssm
+  statement {
+    effect = "Allow"
+    actions = [
+      "secretsmanager:ListSecrets",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:GetRandomPassword",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:BatchGetSecretValue"
+    ]
+    resources = [
+      var.super_user_username_secret_arn,
+      var.super_user_password_secret_arn,
+      var.p4_code_review_user_username_secret_arn,
+      var.p4_code_review_user_password_secret_arn,
+    ]
+  }
 }
 
-resource "aws_iam_policy" "helix_swarm_ssm_policy" {
-  name        = "${var.project_prefix}-helix-swarm-ssm-policy"
-  description = "Policy granting permissions for Helix Swarm task execution role to access SSM."
-  policy      = data.aws_iam_policy_document.helix_swarm_ssm_policy.json
-}
+# Default Policy
+resource "aws_iam_policy" "default_policy" {
+  count = var.create_default_role ? 1 : 0
 
-# - Roles -
-# swarm
-resource "aws_iam_role" "helix_swarm_default_role" {
-  count              = var.create_helix_swarm_default_role ? 1 : 0
-  name               = "${var.project_prefix}-helix-swarm-default-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+  name        = "${local.name_prefix}-default-policy"
+  description = "Policy granting permissions for ${local.name_prefix}."
+  policy      = data.aws_iam_policy_document.default_policy[0].json
 
-  tags = merge(local.tags,
+  tags = merge(var.tags,
     {
-      Name = "${var.project_prefix}-helix-swarm-default-role"
+      Name = "${local.name_prefix}-default-policy"
     }
   )
 }
 
-resource "aws_iam_role_policy_attachment" "helix_swarm_default_role" {
-  count      = var.create_helix_swarm_default_role ? 1 : 0
-  role       = aws_iam_role.helix_swarm_default_role[0].name
-  policy_arn = aws_iam_policy.helix_swarm_default_policy[0].arn
-}
+# Secrets Manager Policy
+resource "aws_iam_policy" "secrets_manager_policy" {
+  name        = "${local.name_prefix}-secrets-manager-policy"
+  description = "Policy granting permissions for ${local.name_prefix} task execution role to access Secrets Manager."
+  policy      = data.aws_iam_policy_document.secrets_manager_policy.json
 
-resource "aws_iam_role" "helix_swarm_task_execution_role" {
-  name               = "${var.project_prefix}-helix-swarm-task-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  tags = merge(local.tags,
+  tags = merge(var.tags,
     {
-      name = "${var.project_prefix}-helix-swarm-task-execution-role"
+      Name = "${local.name_prefix}-secrets-manager-policy"
     }
   )
 }
-resource "aws_iam_role_policy_attachment" "helix_swarm_task_execution_role_ecs" {
-  role       = aws_iam_role.helix_swarm_task_execution_role.name
+
+
+##########################################
+# Roles
+##########################################
+resource "aws_iam_role" "default_role" {
+  # Default Role
+  count              = var.create_default_role ? 1 : 0
+  name               = "${local.name_prefix}-default-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-default-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "default_role" {
+  count      = var.create_default_role ? 1 : 0
+  role       = aws_iam_role.default_role[0].name
+  policy_arn = aws_iam_policy.default_policy[0].arn
+}
+
+# Task Execution Role
+resource "aws_iam_role" "task_execution_role" {
+  name               = "${local.name_prefix}-task-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-task-execution-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "p4_auth_task_execution_role_ecs" {
+  role       = aws_iam_role.task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
-resource "aws_iam_role_policy_attachment" "helix_swarm_task_execution_role_ssm" {
-  role       = aws_iam_role.helix_swarm_task_execution_role.name
-  policy_arn = aws_iam_policy.helix_swarm_ssm_policy.arn
+
+resource "aws_iam_role_policy_attachment" "p4_auth_task_execution_role_secrets_manager" {
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.secrets_manager_policy.arn
 }

@@ -1,10 +1,10 @@
 ########################################
-# GENERAL CONFIGURATION
+# General
 ########################################
 variable "name" {
   type        = string
-  description = "The name attached to swarm module resources."
-  default     = "swarm"
+  description = "The name attached to P4 Code Review module resources."
+  default     = "p4-code-review"
 
   validation {
     condition     = length(var.name) > 1 && length(var.name) <= 50
@@ -14,7 +14,7 @@ variable "name" {
 
 variable "project_prefix" {
   type        = string
-  description = "The project prefix for this workload. This is appeneded to the beginning of most resource names."
+  description = "The project prefix for this workload. This is appended to the beginning of most resource names."
   default     = "cgd"
 
 }
@@ -25,62 +25,66 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "tags" {
-  type = map(any)
-  default = {
-    "iac-management" = "CGD-Toolkit"
-    "iac-module"     = "swarm"
-    "iac-provider"   = "Terraform"
-  }
-  description = "Tags to apply to resources."
+variable "fully_qualified_domain_name" {
+  type        = string
+  description = "The fully qualified domain name that P4 Code Review should use for internal URLs."
+  default     = null
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "The ID of the existing VPC you would like to deploy swarm into."
+variable "debug" {
+  type        = bool
+  default     = false
+  description = "Debug flag to enable execute command on service for container access."
 }
 
-########################################
-# ECS CONFIGURATION
-########################################
 
-variable "helix_swarm_container_name" {
+
+########################################
+# Compute
+########################################
+variable "cluster_name" {
   type        = string
-  description = "The name of the swarm container."
-  default     = "helix-swarm-container"
+  description = "The name of the cluster to deploy the P4 Code Review service into. Defaults to null and a cluster will be created."
+  default     = null
+}
+
+variable "container_name" {
+  type        = string
+  description = "The name of the P4 Code Review container."
+  default     = "p4-code-review-container"
   nullable    = false
 }
 
-variable "helix_swarm_container_port" {
+variable "container_port" {
   type        = number
-  description = "The container port that swarm runs on."
+  description = "The container port that P4 Code Review runs on."
   default     = 80
   nullable    = false
 }
 
-variable "helix_swarm_container_cpu" {
+variable "container_cpu" {
   type        = number
-  description = "The CPU allotment for the swarm container."
+  description = "The CPU allotment for the P4 Code Review container."
   default     = 1024
   nullable    = false
 }
 
-variable "helix_swarm_container_memory" {
+variable "container_memory" {
   type        = number
-  description = "The memory allotment for the swarm container."
+  description = "The memory allotment for the P4 Code Review container."
   default     = 2048
+}
+
+variable "desired_container_count" {
+  type        = number
+  description = "The desired number of containers running the P4 Code Review service."
+  default     = 1
 }
 
 variable "p4d_port" {
   type        = string
-  description = "The P4D_PORT environment variable where Swarm should look for Helix Core. Defaults to 'ssl:perforce:1666'"
+  description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666'"
   default     = "ssl:perforce:1666"
-}
-
-variable "fully_qualified_domain_name" {
-  type        = string
-  description = "The fully qualified domain name that Swarm should use for internal URLs."
-  default     = null
 }
 
 variable "existing_redis_connection" {
@@ -92,74 +96,118 @@ variable "existing_redis_connection" {
   default     = null
 }
 
-# - Existing Cluster -
-variable "cluster_name" {
+########################################
+# Storage & Logging
+########################################
+variable "enable_alb_access_logs" {
+  type        = bool
+  description = "Enables access logging for the P4 Code Review ALB. Defaults to false."
+  default     = false
+}
+
+variable "alb_access_logs_bucket" {
   type        = string
-  description = "The name of the cluster to deploy the Helix Swarm service into. Defaults to null and a cluster will be created."
+  description = "ID of the S3 bucket for P4 Code Review ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
   default     = null
 }
 
-# - Load Balancer -
+variable "alb_access_logs_prefix" {
+  type        = string
+  description = "Log prefix for P4 Code Review ALB access logs. If null the project prefix and module name are used."
+  default     = null
+}
+
+variable "s3_enable_force_destroy" {
+  type        = bool
+  description = "Enables force destroy for the S3 bucket for P4 Code Review access log storage. Defaults to true."
+  default     = true
+}
+variable "cloudwatch_log_retention_in_days" {
+  type        = string
+  description = "The log retention in days of the cloudwatch log group for P4 Code Review."
+  default     = 365
+}
+
+
+########################################
+# Networking & Security
+########################################
+
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the existing VPC you would like to deploy P4 Code Review into."
+}
+
+variable "alb_subnets" {
+  type        = list(string)
+  description = "A list of subnets to deploy the load balancer into. Public subnets are recommended."
+  default     = []
+  validation {
+    condition     = (length(var.alb_subnets) > 0) == var.create_application_load_balancer
+    error_message = "ALB subnets are only necessary if the create_application_load_balancer variable is set."
+  }
+}
+
+variable "subnets" {
+  type        = list(string)
+  description = "A list of subnets to deploy the P4 Code Review ECS Service into. Private subnets are recommended."
+}
+
+variable "existing_application_load_balancer_arn" {
+  type        = string
+  description = "The ARN of an existing P4 Code Review load balancer."
+  default     = null
+}
+
 variable "create_application_load_balancer" {
   type        = bool
   default     = true
   description = "This flag controls the creation of an application load balancer as part of the module."
 }
 
-variable "helix_swarm_alb_subnets" {
-  type        = list(string)
-  description = "A list of subnets to deploy the Helix Swarm load balancer into. Public subnets are recommended."
-  default     = []
+variable "application_load_balancer_name" {
+  type        = string
+  description = "The name of the P4 Code Review ALB. Defaults to the project prefix and module name."
+  default     = null
+}
+
+variable "enable_alb_deletion_protection" {
+  type        = bool
+  description = "Enables deletion protection for the P4 Code Review ALB. Defaults to true."
+  default     = false
+}
+
+variable "deregistration_delay" {
+  type        = number
+  default     = 30
+  description = "The amount of time to wait for in-flight requests to complete while deregistering a target. The range is 0-3600 seconds."
   validation {
-    condition     = length(var.helix_swarm_alb_subnets) > 0 == var.create_application_load_balancer
-    error_message = "Subnets are only necessary if the create_application_load_balancer variable is set."
+    condition     = var.deregistration_delay >= 0 && var.deregistration_delay <= 3600
+    error_message = "The deregistration delay must be in the range 0-3600."
   }
 }
 
-variable "enable_helix_swarm_alb_access_logs" {
+variable "create_default_sgs" {
   type        = bool
-  description = "Enables access logging for the Helix Swarm ALB. Defaults to true."
+  description = "This flag controls the creation of default security groups for P4 Code Review. Defaults to true."
   default     = true
-}
-
-variable "helix_swarm_alb_access_logs_bucket" {
-  type        = string
-  description = "ID of the S3 bucket for Helix Swarm ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
-  default     = null
-}
-
-variable "helix_swarm_alb_access_logs_prefix" {
-  type        = string
-  description = "Log prefix for Helix Swarm ALB access logs. If null the project prefix and module name are used."
-  default     = null
-}
-
-variable "enable_helix_swarm_alb_deletion_protection" {
-  type        = bool
-  description = "Enables deletion protection for the Helix Swarm ALB. Defaults to true."
-  default     = true
-}
-
-variable "helix_swarm_service_subnets" {
-  type        = list(string)
-  description = "A list of subnets to deploy the Helix Swarm service into. Private subnets are recommended."
 }
 
 variable "existing_security_groups" {
   type        = list(string)
-  description = "A list of existing security group IDs to attach to the Helix Swarm service load balancer."
+  description = "A list of existing security group IDs to attach to the P4 Code Review load balancer."
   default     = []
 }
 
 variable "internal" {
   type        = bool
-  description = "Set this flag to true if you do not want the Helix Swarm service load balancer to have a public IP."
+  description = "Set this flag to true if you do not want the P4 Code Review service load balancer to have a public IP."
   default     = false
 }
 
 variable "certificate_arn" {
   type        = string
-  description = "The TLS certificate ARN for the Helix Swarm service load balancer."
+  description = "The TLS certificate ARN for the P4 Code Review service load balancer."
   default     = null
   validation {
     condition     = var.create_application_load_balancer == (var.certificate_arn != null)
@@ -167,66 +215,46 @@ variable "certificate_arn" {
   }
 }
 
-# - Logging -
-variable "helix_swarm_cloudwatch_log_retention_in_days" {
-  type        = string
-  description = "The log retention in days of the cloudwatch log group for Helix Swarm."
-  default     = 365
+variable "create_default_role" {
+  type        = bool
+  description = "Optional creation of P4 Code Review Default IAM Role. Default is set to true."
+  default     = true
 }
 
-# - Security and Permissions -
-variable "custom_helix_swarm_role" {
+variable "custom_role" {
   type        = string
-  description = "ARN of the custom IAM Role you wish to use with Helix Swarm."
+  description = "ARN of the custom IAM Role you wish to use with P4 Code Review."
   default     = null
 }
 
-variable "create_helix_swarm_default_role" {
-  type        = bool
-  description = "Optional creation of Helix Swarm Default IAM Role. Default is set to true."
-  default     = true
-}
-
-variable "create_helix_swarm_default_policy" {
-  type        = bool
-  description = "Optional creation of Helix Swarm default IAM Policy. Default is set to true."
-  default     = true
-}
-
-variable "p4d_super_user_arn" {
+variable "super_user_username_secret_arn" {
   type        = string
-  description = "The ARN of the parameter or secret where the p4d super user username is stored."
+  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
 }
 
-variable "p4d_super_user_password_arn" {
+variable "super_user_password_secret_arn" {
   type        = string
-  description = "The ARN of the parameter or secret where the p4d super user password is stored."
+  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
 }
 
-variable "p4d_swarm_user_arn" {
+variable "p4_code_review_user_username_secret_arn" {
   type        = string
-  description = "The ARN of the parameter or secret where the swarm user username is stored."
+  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username."
 }
 
-variable "p4d_swarm_password_arn" {
+variable "p4_code_review_user_password_secret_arn" {
   type        = string
-  description = "The ARN of the parameter or secret where the swarm user password is stored."
-}
-
-variable "debug" {
-  type        = bool
-  default     = false
-  description = "Debug flag to enable execute command on service for container access."
+  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password."
 }
 
 variable "enable_sso" {
   type        = bool
   default     = false
-  description = "Set this to true if using SSO for Helix Swarm authentication."
+  description = "Set this to true if using SSO for P4 Code Review authentication."
 }
 
 ######################
-# ELASTICACHE CONFIG
+# Caching
 ######################
 
 variable "elasticache_node_count" {
@@ -243,4 +271,17 @@ variable "elasticache_node_type" {
   type        = string
   description = "The type of nodes provisioned in the Elasticache cluster."
   default     = "cache.t4g.micro"
+}
+
+
+variable "tags" {
+  type        = map(any)
+  description = "Tags to apply to resources."
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "terraform-aws-perforce"
+    "ModuleName"     = "p4-code-review"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce"
+  }
 }

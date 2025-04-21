@@ -1,7 +1,6 @@
 ##########################################
 # VPC
 ##########################################
-
 resource "aws_vpc" "perforce_vpc" {
   cidr_block           = local.vpc_cidr_block
   enable_dns_hostnames = true
@@ -29,7 +28,6 @@ resource "aws_default_security_group" "default" {
 ##########################################
 # Subnets
 ##########################################
-
 resource "aws_subnet" "public_subnets" {
   count             = length(local.public_subnet_cidrs)
   vpc_id            = aws_vpc.perforce_vpc.id
@@ -59,7 +57,6 @@ resource "aws_subnet" "private_subnets" {
 ##########################################
 # Internet Gateway
 ##########################################
-
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.perforce_vpc.id
   tags = merge(local.tags,
@@ -72,7 +69,6 @@ resource "aws_internet_gateway" "igw" {
 ##########################################
 # Route Tables & NAT Gateway
 ##########################################
-
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.perforce_vpc.id
 

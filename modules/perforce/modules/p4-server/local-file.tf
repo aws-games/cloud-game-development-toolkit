@@ -1,3 +1,119 @@
+resource "random_string" "packer_template" {
+  length  = 4
+  special = false
+  upper   = false
+}
+
+resource "local_file" "packer_template" {
+  count    = var.enable_auto_ami_creation != false ? 1 : 0
+  filename = "${path.root}/autogen-packer/${var.instance_architecture}/perforce_${var.instance_architecture}.pkr.hcl"
+  content  = <<-EOF
+packer {
+  required_plugins {
+    amazon = {
+      version = ">= 1.3.6"
+      source  = "github.com/hashicorp/amazon"
+    }
+  }
+}
+
+variable "vpc_id" {
+  type = string
+  default = null
+}
+
+variable "subnet_id" {
+    type = string
+    default = null
+}
+
+variable "associate_public_ip_address" {
+  type = bool
+  default = true
+}
+
+variable "ssh_interface" {
+  type = string
+  default = "public_ip"
+}
+
+source "amazon-ebs" "al2023" {
+  ami_name      = "${var.ami_prefix}_${var.instance_architecture}_{{timestamp}}"
+  instance_type = "${var.instance_type}"
+
+  vpc_id = var.vpc_id
+  subnet_id = var.subnet_id
+
+  associate_public_ip_address = var.associate_public_ip_address
+  ssh_interface = var.ssh_interface
+
+  source_ami_filter {
+    filters = {
+      name                = "al2023-ami-2023.*"
+      architecture        = "${var.instance_architecture}"
+      root-device-type    = "ebs"
+      virtualization-type = "hvm"
+    }
+    most_recent = true
+    owners      = ["amazon"]
+  }
+
+  ssh_username = "ec2-user"
+
+  tags = {
+    OS_Version = "Amazon Linux 2023"
+    Release = "Latest"
+    Base_AMI_Name = "{{ .SourceAMIName }}"
+  }
+}
+
+build {
+  name = "P4_SDP_AWS"
+  sources = [
+    "source.amazon-ebs.al2023"
+  ]
+
+    provisioner "shell" {
+      inline = [
+        "cloud-init status --wait",
+        "sudo dnf install -y git sendmail nfs-utils s-nail unzip cronie"
+      ]
+    }
+
+    provisioner "shell" {
+      script = "${path.root}/p4_setup.sh"
+      execute_command = "sudo sh {{.Path}}"
+    }
+
+    provisioner "file" {
+      source      = "${path.root}/p4_configure.sh"
+      destination = "/tmp/p4_configure.sh"
+    }
+
+    provisioner "shell" {
+      inline = ["mkdir -p /home/ec2-user/gpic_scripts",
+                "sudo mv /tmp/p4_configure.sh /home/ec2-user/gpic_scripts"
+      ]
+    }
+
+    provisioner "shell" {
+      inline = ["sudo chmod +x /home/ec2-user/gpic_scripts/p4_configure.sh"]
+    }
+
+}
+
+  EOF
+
+  depends_on = [
+    local_file.p4_configure,
+    local_file.p4_setup
+  ]
+}
+
+resource "local_file" "p4_configure" {
+  count    = var.enable_auto_ami_creation != false ? 1 : 0
+  filename = "${path.root}/autogen-packer/${var.instance_architecture}/p4_configure.sh"
+  content  = <<-EOF
 #!/bin/bash
 
 # Log file location
@@ -18,12 +134,7 @@ log_message() {
 
 # Function to check if path is an FSx mount point
 is_fsx_mount() {
-    echo "$1" | grep -qE '(fs|svm)-[0-9a-f]{17}\.fsx\.[a-z0-9-]+\.amazonaws\.com:/' #to be verified if catches all fsxes
-    return $?
-}
-
-is_iscsi_device() {
-    echo "$1" | grep -qE '^/dev/mapper/'
+    echo "$1" | grep -qE 'fs-[0-9a-f]{17}\.fsx\.[a-z0-9-]+\.amazonaws\.com:/' #to be verified if catches all fsxes
     return $?
 }
 
@@ -99,163 +210,6 @@ prepare_ebs_volume() {
     mount "$ebs_volume" "$mount_point"
 }
 
-check_command() {
-    if [ $? -ne 0 ]; then
-        log_message "$1 failed. Exiting."
-        exit 1
-    fi
-}
-
-# Function to prepare iSCSI Installation
-prepare_iscsi() {
-    local IGROUP_NAME="perforce"
-    local FLAG_FILE="/var/run/iscsi_prepared.flag"
-    if [ -f "$FLAG_FILE" ]; then
-        echo "iSCSI preparation has already been done. Skipping."
-        return 0
-    fi
-    # Install necessary packages
-    log_message "Installing necessary packages."
-    sudo yum install -y device-mapper-multipath iscsi-initiator-utils sshpass
-    check_command "Package installation"
-
-    # Test connection to ONTAP
-    log_message "Testing connection to ONTAP."
-
-    sshpass -p $FSXN_PASSWORD ssh -o StrictHostKeyChecking=no $ONTAP_USER@$FSXN_IP "version"
-    check_command "Testing connection to ONTAP"
-
-    # Update iSCSI configuration
-    log_message "Updating iSCSI configuration."
-    sudo sed -i 's/node.session.timeo.replacement_timeout = .*/node.session.timeo.replacement_timeout = 5/' /etc/iscsi/iscsid.conf
-    check_command "Updating iSCSI configuration"
-
-    # Start iSCSI service
-    log_message "Starting iSCSI service."
-    sudo service iscsid start
-    check_command "Starting iSCSI service"
-
-    # Enable and start multipath
-    log_message "Enabling and starting multipath."
-    sudo mpathconf --enable --with_multipathd y
-    check_command "Enabling and starting multipath"
-
-    # Get the IQN from the initiatorname.iscsi file
-    INITIATOR_IQN=$(grep -oP 'iqn.\S+' /etc/iscsi/initiatorname.iscsi)
-    log_message "Retrieved initiator IQN: $INITIATOR_IQN"
-
-    log_message "Mapping the IQN to existing igroup"
-    sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "igroup add -igroup $IGROUP_NAME -vserver $FSXN_SVM -initiator $INITIATOR_IQN"
-    check_command "Mapping LUN to iGroup"
-
-    # Retrieve the iSCSI IP address from ONTAP
-    log_message "Retrieving iSCSI IP address from ONTAP."
-    ISCSI_IP=$(sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "network interface show -vserver $FSXN_SVM -fields address" | grep iscsi_1 | awk '{print $3}')
-    check_command "Retrieving iSCSI IP address from ONTAP"
-    log_message "Retrieved iSCSI IP address: $ISCSI_IP"
-
-    # Discover the iSCSI target and get the target IQN
-    log_message "Discovering iSCSI target."
-    TARGET_IQN=$(sudo iscsiadm --mode discovery --op update --type sendtargets --portal $ISCSI_IP | grep $ISCSI_IP | awk '{print $2}')
-    check_command "Discovering iSCSI target"
-    log_message "Discovered target IQN: $TARGET_IQN"
-
-    # Log in to the iSCSI target
-    log_message "Logging in to the iSCSI target."
-    sudo iscsiadm --mode node -T $TARGET_IQN --login
-    check_command "Logging in to the iSCSI target"
-
-    log_message "Creating flag file at $FLAG_FILE"
-    sudo touch "$FLAG_FILE"
-
-}
-
-prepare_iscsi_volume() {
-    local VOLUME_NAME=$1
-    local mount_point=$2
-    timeout=90
-    interval=5
-    elapsed=0
-
-
-    # Set VOLUME based on volume path
-    if [[ "$VOLUME_NAME" == *"log"* ]]; then
-        VOLUME="logs"
-    elif [[ "$VOLUME_NAME" == *"metadata"* ]]; then
-        VOLUME="metadata"
-    else
-        VOLUME="depot"
-    fi
-
-    # Check if iSCSI preparation is needed
-    prepare_iscsi
-
-    log_message "configuring ISCSI for $VOLUME"
-
-    local fs_type=$(lsblk -no FSTYPE "$VOLUME_NAME")
-    if [ -z "$fs_type" ]; then
-        # Retrieve the serial-hex value from the LUN
-        log_message "Retrieving serial-hex value from the LUN."
-        SERIAL_HEX=$(sshpass -p $FSXN_PASSWORD ssh $ONTAP_USER@$FSXN_IP "lun show -vserver $FSXN_SVM -path /vol/$VOLUME/$VOLUME -fields serial-hex" | grep /vol/$VOLUME/$VOLUME | awk '{print $3}')
-        check_command "Retrieving serial-hex value from the LUN"
-        log_message "Retrieved serial-hex value: $SERIAL_HEX"
-
-        # Check if serial-hex is empty
-        if [ -z "$SERIAL_HEX" ]; then
-            log_message "Serial-hex value is empty. Exiting."
-            exit 1
-        fi
-
-        # Rescan iSCSI sessions to detect new LUNs
-        log_message "Rescanning iSCSI sessions."
-        sudo iscsiadm -m session --rescan
-        check_command "Rescanning iSCSI sessions"
-
-        # Configure multipath
-        log_message "Configuring multipath."
-        CONF=/etc/multipath.conf
-        grep -q '^multipaths {' $CONF
-        UNCOMMENTED=$?
-        if [ $UNCOMMENTED -eq 0 ]
-        then
-                sed -i '/^multipaths {/a\\tmultipath {\n\t\twwid 3600a0980'"${SERIAL_HEX}"'\n\t\talias '"${VOLUME}"'\n\t}\n' $CONF
-        else
-                printf "multipaths {\n\tmultipath {\n\t\twwid 3600a0980$SERIAL_HEX\n\t\talias $VOLUME\n\t}\n}" >> $CONF
-        fi
-        check_command "Configuring multipath"
-
-        # Restart multipathd service
-        log_message "Restarting multipathd service."
-        sudo systemctl restart multipathd.service
-        check_command "Restarting multipathd service"
-
-        log_message "Checking if the new partition exists."
-        while [ $elapsed -lt $timeout ]; do
-        if [ -e $VOLUME ]; then
-        log_message "The device $VOLUME exists."
-        break
-        fi
-        sleep $interval
-        elapsed=$((elapsed + interval))
-        done
-        if [ ! -e $VOLUME]; then
-        log_message "The device $VOLUME does not exist. Exiting."
-        exit 1
-        fi
-            log_message "Creating the file system on the new partition."
-            sudo mkfs.ext4 $VOLUME_NAME
-            check_command "Creating the file system on the new partition"
-    fi
-
-    # Mount the iSCSI disk
-    log_message "Mounting the iSCSI disk."
-    sudo mount $VOLUME_NAME $mount_point
-    check_command "Mounting the iSCSI disk"
-
-    log_message "iSCSI setup script completed for ${VOLUME_NAME}"
-
-}
-
 # Function to copy SiteTags template and update with AWS regions -> This file will be updated by Ansible with replica AWS regions.
 prepare_site_tags() {
   log_message "Setting up SiteTags for installation"
@@ -276,7 +230,7 @@ prepare_site_tags() {
   fi
 
   # Remove hyphens from the region string for aws_info
-  local aws_info="aws${region//-/}"
+  local aws_info="aws$${region//-/}"
 
   # Append the AWS info to the target file with the original region format
   # Using printf to handle the new line correctly across different shells
@@ -327,14 +281,11 @@ print_help() {
     echo "  --unicode <true/false>   Set the Helix Core Server with -xi flag for Unicode"
     echo "  --selinux <true/false>   Update labels for SELinux"
     echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
-    echo "  --fsxn_password <secret_id> AWS secret manager FSxN fsxadmin user password"
-    echo "  --fsxn_svm_name <secret_id> FSxN storage virtual name"
-    echo "  --fsxn_management_ip <ip_address> FSxN managment ip address"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -342,8 +293,6 @@ if [ $? != 0 ]; then
 fi
 
 eval set -- "$OPTS"
-
-
 
 while true; do
     case "$1" in
@@ -377,18 +326,18 @@ while true; do
             shift 2
             ;;
         --hx_logs)
-            LOGS_VOLUME="$2"
-            log_message "LOGS: $LOGS_VOLUME"
+            EBS_LOGS="$2"
+            log_message "EBS_LOGS: $EBS_LOGS"
             shift 2
             ;;
         --hx_metadata)
-            METADATA_VOLUME="$2"
-            log_message "METADATA: $METADATA_VOLUME"
+            EBS_METADATA="$2"
+            log_message "EBS_METADATA: $EBS_METADATA"
             shift 2
             ;;
         --hx_depots)
-            DEPOTS_VOLUME="$2"
-            log_message "DEPOTS: $DEPOTS_VOLUME"
+            EBS_DEPOTS="$2"
+            log_message "EBS_DEPOTS: $EBS_DEPOTS"
             shift 2
             ;;
         --case_sensitive)
@@ -397,7 +346,7 @@ while true; do
             shift 2
             ;;
         --unicode)
-            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+            if [ "$${2,,}" = "true" ] || [ "$${2,,}" = "false" ]; then
                 UNICODE="$2"
                 log_message "UNICODE: $UNICODE"
                 shift 2
@@ -407,7 +356,7 @@ while true; do
             fi
             ;;
         --selinux)
-            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+            if [ "$${2,,}" = "true" ] || [ "$${2,,}" = "false" ]; then
                 SELINUX="$2"
                 log_message "SELINUX: $SELINUX"
                 shift 2
@@ -417,7 +366,7 @@ while true; do
             fi
             ;;
         --plaintext)
-            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
+            if [ "$${2,,}" = "true" ] || [ "$${2,,}" = "false" ]; then
                 PLAINTEXT="$2"
                 log_message "PLAINTEXT: $PLAINTEXT"
                 shift 2
@@ -425,20 +374,6 @@ while true; do
                 log_message "Error: --plaintext flag must be either 'true' or 'false'"
                 exit 1
             fi
-            ;;
-        --fsxn_password)
-            FSXN_PASS="$2"
-            shift 2
-            ;;
-        --fsxn_svm_name)
-            FSXN_SVM="$2"
-            log_message "FSXN SVM NAME: $FSXN_SVM"
-            shift 2
-            ;;
-        --fsxn_management_ip)
-            FSXN_IP="$2"
-            log_message "FSXN IP: $FSXN_IP"
-            shift 2
             ;;
         --help)
             print_help
@@ -465,8 +400,6 @@ fi
 # Fetch credentials for admin user from secrets manager
 P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
 P4D_ADMIN_PASS=$(resolve_aws_secret $P4D_ADMIN_PASS_SECRET_ID)
-FSXN_PASSWORD=$(resolve_aws_secret $FSXN_PASS)
-ONTAP_USER="fsxadmin"
 
 # Function to perform operations
 perform_operations() {
@@ -478,22 +411,16 @@ perform_operations() {
         local dest_dir=$2
         local mount_options=""
         local fs_type=""
+
         if is_fsx_mount "$mount_point"; then
             # Mount as FSx
-            log_message "nfs device detected: $mount_point"
             mount -t nfs -o nconnect=16,rsize=1048576,wsize=1048576,timeo=600 "$mount_point" "$dest_dir"
             mount_options="nfs nconnect=16,rsize=1048576,wsize=1048576,timeo=600"
             fs_type="nfs"
-        elif is_iscsi_device "$mount_point"; then
-            # Handle iSCSI device
-            log_message "iSCSI device detected: $mount_point"
-            prepare_iscsi_volume "$mount_point" "$dest_dir"
-            mount_options="defaults,_netdev"
-            fs_type="ext4"
         else
             # Mount as EBS the called function also creates XFS on EBS
-            log_message "ebs device detected: $mount_point"
             prepare_ebs_volume "$mount_point" "$dest_dir"
+
             mount_options="defaults"
             fs_type="xfs"
 
@@ -507,14 +434,9 @@ perform_operations() {
     mkdir -p /mnt/temp_hxmetadata
     mkdir -p /mnt/temp_hxdepots
 
-    mount_fs_or_ebs $LOGS_VOLUME /mnt/temp_hxlogs
-    mount_fs_or_ebs $METADATA_VOLUME /mnt/temp_hxmetadata
-    mount_fs_or_ebs $DEPOTS_VOLUME /mnt/temp_hxdepots
-
-    # Create temporary directories and mount
-    mkdir -p /hxlogs
-    mkdir -p /hxmetadata
-    mkdir -p /hxdepots
+    mount_fs_or_ebs $EBS_LOGS /mnt/temp_hxlogs
+    mount_fs_or_ebs $EBS_METADATA /mnt/temp_hxmetadata
+    mount_fs_or_ebs $EBS_DEPOTS /mnt/temp_hxdepots
 
     # Syncing directories
     rsync -av /hxlogs/ /mnt/temp_hxlogs/
@@ -532,9 +454,9 @@ perform_operations() {
     rm -rf /hxdepots/*
 
     # Mount EBS volumes or FSx to final destinations
-    mount_fs_or_ebs $LOGS_VOLUME /hxlogs
-    mount_fs_or_ebs $METADATA_VOLUME /hxmetadata
-    mount_fs_or_ebs $DEPOTS_VOLUME /hxdepots
+    mount_fs_or_ebs $EBS_LOGS /hxlogs
+    mount_fs_or_ebs $EBS_METADATA /hxmetadata
+    mount_fs_or_ebs $EBS_DEPOTS /hxdepots
 
     log_message "Operation completed successfully."
 }
@@ -551,9 +473,9 @@ condition_met=false
 
 while [ $attempt -le $MAX_ATTEMPTS ] && [ "$condition_met" = false ]; do
     # Check if EBS volumes or FSx mount points are provided for all required paths
-    if ( [ -e "$LOGS_VOLUME" ] || is_fsx_mount "$LOGS_VOLUME" || is_iscsi_device "$LOGS_VOLUME") && \
-       ( [ -e "$METADATA_VOLUME" ] || is_fsx_mount "$METADATA_VOLUME" || is_iscsi_device "$METADATA_VOLUME" ) && \
-       ( [ -e "$DEPOTS_VOLUME" ] || is_fsx_mount "$DEPOTS_VOLUME" || is_iscsi_device "$DEPOTS_VOLUME"); then
+    if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" ) && \
+       ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" ) && \
+       ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" ); then
         condition_met=true
         perform_operations
     else
@@ -617,7 +539,7 @@ sed -i "s/^CASE_SENSITIVE=.*/CASE_SENSITIVE=$CASE_SENSITIVE/" "$SDP_Setup_Script
 log_message "Updated CASE_SENSITIVE in $SDP_Setup_Script_Config."
 
 # Update SSL prefix in configuration if plaintext is true
-if [ "${PLAINTEXT,,}" = "true" ]; then
+if [ "$${PLAINTEXT,,}" = "true" ]; then
   sed -i "s/^SSL_PREFIX=.*/SSL_PREFIX=/" "$SDP_Setup_Script_Config"
   log_message "SSL_PREFIX removed from $SDP_Setup_Script_Config. Server will be configured to use plaintext."
 else
@@ -637,15 +559,13 @@ fi
 I=1
 
 # Create self signed certificate if plaintext is false
-if [ "${PLAINTEXT,,}" = "false" ]; then
+if [ "$${PLAINTEXT,,}" = "false" ]; then
   log_message "Generating self signed certificate"
   # update cert config with ec2 DNS name
   FILE_PATH="/p4/ssl/config.txt"
 
   # Check if EC2_DNS_PRIVATE was successfully retrieved
-
-
-  if [ -z "${EC2_DNS_PRIVATE}" ]; then
+  if [ -z "$EC2_DNS_PRIVATE" ]; then
     log_message "Failed to retrieve EC2 instance DNS name."
     exit 1
   fi
@@ -656,21 +576,21 @@ if [ "${PLAINTEXT,,}" = "false" ]; then
   echo "File updated successfully."
 
   # generate certificate
-  /p4/common/bin/p4master_run ${I} /p4/${I}/bin/p4d_${I} -Gc
+  /p4/common/bin/p4master_run $${I} /p4/$${I}/bin/p4d_$${I} -Gc
 else
   log_message "Skipping self signed certificate generation due to --plaintext true"
 fi
 
 # Configure systemd service to start p4d
 cd /etc/systemd/system
-sed -e "s:__INSTANCE__:$I:g" -e "s:__OSUSER__:perforce:g" $SDP/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t > p4d_${I}.service
-chmod 644 p4d_${I}.service
+sed -e "s:__INSTANCE__:$I:g" -e "s:__OSUSER__:perforce:g" $SDP/Server/Unix/p4/common/etc/systemd/system/p4d_N.service.t > p4d_$${I}.service
+chmod 644 p4d_$${I}.service
 systemctl daemon-reload
 
-if [ "${SELINUX,,}" = "true" ]; then
+if [ "$${SELINUX,,}" = "true" ]; then
     set_selinux
     log_message "SELinux labels updated"
-elif [ "${SELINUX,,}" = "false" ]; then
+elif [ "$${SELINUX,,}" = "false" ]; then
     log_message "Skipping SELinux label update"
 fi
 
@@ -681,7 +601,7 @@ systemctl start p4d_1
 wait_for_service "p4d_1"
 
 # Set P4PORT depending on plaintext variable
-if [ "${PLAINTEXT,,}" = "true" ]; then
+if [ "$${PLAINTEXT,,}" = "true" ]; then
   P4PORT=:1666
 else
   P4PORT=ssl:1666
@@ -750,10 +670,10 @@ else
   setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
 fi
 
-if [ "${UNICODE,,}" = "true" ]; then
+if [ "$${UNICODE,,}" = "true" ]; then
     set_unicode
     log_message "Unicode configuration applied"
-elif [ "${UNICODE,,}" = "false" ]; then
+elif [ "$${UNICODE,,}" = "false" ]; then
     log_message "Skipping Unicode configuration"
 fi
 
@@ -763,3 +683,147 @@ touch "$FLAG_FILE"
 
 # Ending the script
 log_message "EC2 mount script finished."
+
+  EOF
+}
+
+resource "local_file" "p4_setup" {
+  count    = var.enable_auto_ami_creation != false ? 1 : 0
+  filename = "${path.root}/autogen-packer/${var.instance_architecture}/p4_setup.sh"
+  content  = <<-EOF
+#!/bin/bash
+
+# Log file location
+LOG_FILE="/var/log/p4_setup.log"
+
+# Function to log messages
+log_message() {
+    echo "$(date) - $1" >> $LOG_FILE
+}
+
+# Constants
+ROOT_UID=0
+
+# Check if script is run as root
+if [ "$UID" -ne "$ROOT_UID" ]; then
+  echo "Must be root to run this script."
+  log_message "Function not run as a root."
+  exit 1
+fi
+
+# Set local variables
+SDP_Root=/hxdepots/sdp/helix_binaries
+SDP=/hxdepots/sdp
+PACKAGE="policycoreutils-python-utils" # Required in both
+
+# Function to check SELinux status
+check_selinux_status() {
+    SELINUX_STATUS=$(getenforce)
+    if [ "$SELINUX_STATUS" = "Enforcing" ] || [ "$SELINUX_STATUS" = "Permissive" ]; then
+        log_message "SELinux is enabled."
+        return 0  # Return 0 for enabled
+    else
+        log_message "SELinux is not enabled."
+        return 1  # Return 1 for disabled
+    fi
+}
+
+# Function to check if a group exists
+group_exists() {
+  getent group $1 > /dev/null 2>&1
+}
+
+# Function to check if a user exists
+user_exists() {
+  id -u $1 > /dev/null 2>&1
+}
+
+# Function to check if a directory exists
+directory_exists() {
+  [ -d "$1" ]
+}
+
+log_message "Installing Perforce"
+
+# Check if SELinux is enabled
+if check_selinux_status; then
+    if ! dnf list installed "$PACKAGE" &> /dev/null; then
+        log_message "Package $PACKAGE is not installed. Installing..."
+        sudo dnf install -y $PACKAGE
+        if [ $? -eq 0 ]; then
+            log_message "$PACKAGE installed successfully."
+        else
+            log_message "Failed to install $PACKAGE."
+        fi
+    else
+        log_message "Package $PACKAGE is already installed."
+    fi
+else
+    log_message "SELinux is not enabled. Skipping package installation."
+fi
+
+# Check if group 'perforce' exists, if not, add it
+if ! group_exists perforce; then
+  groupadd perforce
+fi
+
+# Check if user 'perforce' exists, if not, add it
+if ! user_exists perforce; then
+  useradd -d /home/perforce -s /bin/bash -m perforce -g perforce
+fi
+
+# Set up sudoers for perforce user
+if [ ! -f /etc/sudoers.d/perforce ]; then
+  touch /etc/sudoers.d/perforce
+  chmod 0600 /etc/sudoers.d/perforce
+  echo "perforce ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/perforce
+  chmod 0400 /etc/sudoers.d/perforce
+fi
+
+# Create directories if they don't exist
+for dir in /hxdepots /hxlogs /hxmetadata; do
+  if ! directory_exists $dir; then
+    mkdir $dir
+  fi
+done
+
+# Change ownership
+chown -R perforce:perforce /hx*
+
+# Download and extract SDP
+cd /hxdepots
+if [ ! -f sdp.Unix.tgz ]; then
+  log_message "Downloading SDP..."
+  curl -L -O https://swarm.workshop.perforce.com/download/guest/perforce_software/sdp/downloads/sdp.Unix.tgz
+  tar -xzf sdp.Unix.tgz
+fi
+
+chmod -R +w $SDP
+cd $SDP_Root
+# checking if required binaries are in the folder.
+required_binaries=(p4 p4broker p4d p4p)
+missing_binaries=0
+
+# Check each binary
+for binary in "$${required_binaries[@]}"; do
+    if [ ! -f "/hxdepots/sdp/helix_binaries/$binary" ]; then
+        echo "Missing binary: $binary"
+        missing_binaries=1
+        break
+    fi
+done
+
+# Download binaries if any are missing
+if [ $missing_binaries -eq 1 ]; then
+    echo "One or more Helix binaries are missing. Running get_helix_binaries.sh..."
+    /hxdepots/sdp/helix_binaries/get_helix_binaries.sh
+else
+    echo "All Helix binaries are present."
+fi
+###### previously each run got the binaries by: /hxdepots/sdp/helix_binaries/get_helix_binaries.sh
+
+chown -R perforce:perforce $SDP_Root
+
+  EOF
+
+}
