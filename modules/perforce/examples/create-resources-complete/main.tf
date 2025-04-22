@@ -4,14 +4,15 @@ module "terraform-aws-perforce" {
   # version = "v1.0.0"
 
   # - Shared -
-  project_prefix       = local.project_prefix
-  vpc_id               = aws_vpc.perforce_vpc.id
-  public_subnets       = aws_subnet.public_subnets[*].id
-  public_subnets_cidrs = local.public_subnet_cidrs
-  private_subnets      = aws_subnet.private_subnets[*].id
+  project_prefix               = local.project_prefix
+  vpc_id                       = aws_vpc.perforce_vpc.id
+  public_subnets               = aws_subnet.public_subnets[*].id
+  public_subnets_cidrs         = local.public_subnet_cidrs
+  private_subnets              = aws_subnet.private_subnets[*].id
+  enable_shared_lb_access_logs = true
 
   create_route53_private_hosted_zone = true
-  route53_private_hosted_zone_name   = local.fully_qualified_domain_name
+  route53_private_hosted_zone_name   = "${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
   certificate_arn                    = local.certificate_arn
   existing_security_groups           = [aws_security_group.allow_my_ip.id]
 

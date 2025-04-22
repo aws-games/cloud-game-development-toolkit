@@ -11,7 +11,7 @@ data "aws_lb" "shared_services_nlb" {
 # Fetch Route53 Public Hosted Zone for FQDN
 ##########################################
 data "aws_route53_zone" "root" {
-  name         = local.fully_qualified_domain_name
+  name         = var.route53_public_hosted_zone_name
   private_zone = false
 }
 
@@ -45,9 +45,7 @@ resource "aws_route53_record" "external_perforce_p4_server" {
 # P4 Code Review Certificate Management
 ##########################################
 resource "aws_acm_certificate" "perforce" {
-  # domain_name               = "*.${local.fully_qualified_domain_name}"
-  domain_name               = "${local.perforce_subdomain}.${local.fully_qualified_domain_name}"
-  subject_alternative_names = ["*.${local.perforce_subdomain}.${local.fully_qualified_domain_name}"]
+  domain_name = "*.${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
 
   validation_method = "DNS"
 
@@ -80,9 +78,14 @@ resource "aws_route53_record" "perforce_cert" {
 }
 
 resource "aws_acm_certificate_validation" "perforce" {
+  certificate_arn         = aws_acm_certificate.perforce.arn
+  validation_record_fqdns = [for record in aws_route53_record.perforce_cert : record.fqdn]
+
+
+  lifecycle {
+    create_before_destroy = true
+  }
   timeouts {
     create = "15m"
   }
-  certificate_arn         = aws_acm_certificate.perforce.arn
-  validation_record_fqdns = [for record in aws_route53_record.perforce_cert : record.fqdn]
 }

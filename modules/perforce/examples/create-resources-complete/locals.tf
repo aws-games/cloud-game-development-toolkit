@@ -4,26 +4,23 @@ locals {
   project_prefix = "cgd"
   azs            = slice(data.aws_availability_zones.available.names, 0, 2)
 
-  # Domain name
-  fully_qualified_domain_name = "Replace with your domain" # Ensure this domain already exists and is hosted using Amazon Route53 (has a public hosted zone in your target AWS account).
-
   # Subdomains
   perforce_subdomain       = "perforce"
   p4_auth_subdomain        = "auth"
   p4_code_review_subdomain = "review"
 
   # P4 Server Domain
-  p4_server_fully_qualified_domain_name = "${local.perforce_subdomain}.${local.fully_qualified_domain_name}"
+  p4_server_fully_qualified_domain_name = "${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
 
   # P4Auth Domain
-  p4_auth_fully_qualified_domain_name = "${local.p4_auth_subdomain}.${local.perforce_subdomain}.${local.fully_qualified_domain_name}"
+  p4_auth_fully_qualified_domain_name = "${local.p4_auth_subdomain}.${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
 
   # P4 Code Review
-  p4_code_review_fully_qualified_domain_name = "${local.p4_code_review_subdomain}.${local.perforce_subdomain}.${local.fully_qualified_domain_name}"
+  p4_code_review_fully_qualified_domain_name = "${local.p4_code_review_subdomain}.${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
 
 
   # Amazon Certificate Manager (ACM)
-  certificate_arn               = aws_acm_certificate.perforce.arn
+  certificate_arn = aws_acm_certificate.perforce.arn
 
 
   # VPC Configuration

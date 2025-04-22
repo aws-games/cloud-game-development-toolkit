@@ -23,7 +23,7 @@ resource "aws_lb" "perforce" {
         var.shared_lb_access_logs_bucket :
       aws_s3_bucket.shared_lb_access_logs_bucket[0].id)
       prefix = (var.shared_nlb_access_logs_prefix != null ?
-      var.shared_nlb_access_logs_prefix : "${var.project_prefix}--perforce-shared-nlb")
+      var.shared_nlb_access_logs_prefix : "${var.project_prefix}-perforce-shared-nlb")
     }
   }
 
@@ -130,7 +130,7 @@ resource "aws_lb" "perforce_web_services" {
         var.shared_lb_access_logs_bucket :
       aws_s3_bucket.shared_lb_access_logs_bucket[0].id)
       prefix = (var.shared_alb_access_logs_prefix != null ?
-      var.shared_alb_access_logs_prefix : "${var.project_prefix}--perforce-shared-alb")
+      var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-alb")
     }
   }
 
@@ -147,6 +147,16 @@ resource "aws_lb" "perforce_web_services" {
 ##########################################
 # Perforce Web Services (ALB) | Listeners
 ##########################################
+# Used to set dependency on ALB from parent module, since depends_on won't work upstream
+# This triggers during the first apply, or if the ALB ARN changes to a different value, such as null
+resource "null_resource" "parent_module_certificate" {
+  # count = var.create_application_load_balancer
+  triggers = {
+    certificate_arn = var.certificate_arn
+  }
+
+}
+
 # Default rule sends fixed response status code
 resource "aws_lb_listener" "perforce_web_services" {
   count             = var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
@@ -177,6 +187,7 @@ resource "aws_lb_listener" "perforce_web_services" {
   lifecycle {
     create_before_destroy = true
   }
+
 }
 
 # P4Auth listener rule - forward from ALB to P4Auth Service
@@ -278,14 +289,19 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
     effect  = "Allow"
     actions = ["s3:PutObject"]
     principals {
-      type        = "AWS"
-      identifiers = [data.aws_elb_service_account.main.arn]
+      type = "AWS"
+      # Allow the ELB service account to create the logs
+      identifiers = [data.aws_elb_service_account.main.id]
     }
     resources = [
-      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-alb"}/*",
-      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_nlb_access_logs_prefix != null ? var.shared_nlb_access_logs_prefix : "${var.project_prefix}-perforce-shared-nlb"}/*",
+      # If user provides existing S3 bucket to user for logging, grant access to that bucket, and the specific path they provide. Otherwise, grant access to the bucket that the module will conditionally create, and the optional user provided path or the default path defined
+      "${var.shared_lb_access_logs_bucket != null ? "${var.shared_lb_access_logs_bucket}/${var.shared_alb_access_logs_prefix}" : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-alb"}/*",
+
+      # If user provides existing S3 bucket to user for logging, grant access to that bucket, and the specific path they provide. Otherwise, grant access to the bucket that the module will conditionally create, and the optional user provided path or the default path defined
+      "${var.shared_lb_access_logs_bucket != null ? "${var.shared_lb_access_logs_bucket}/${var.shared_alb_access_logs_prefix}" : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-nlb"}/*",
     ]
   }
+
 }
 
 resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
