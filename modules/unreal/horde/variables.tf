@@ -129,7 +129,7 @@ variable "unreal_horde_external_alb_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Unreal Horde load balancer into. Public subnets are recommended."
   validation {
-    condition     = var.create_external_alb && length(var.unreal_horde_external_alb_subnets) > 0
+    condition     = var.create_external_alb ? length(var.unreal_horde_external_alb_subnets) > 0 : true
     error_message = "You must provide subnets for the external ALB."
   }
   default = []
@@ -139,7 +139,7 @@ variable "unreal_horde_internal_alb_subnets" {
   type        = list(string)
   description = "A list of subnets to deploy the Unreal Horde internal load balancer into. Private subnets are recommended."
   validation {
-    condition     = var.create_internal_alb && length(var.unreal_horde_internal_alb_subnets) > 0
+    condition     = var.create_internal_alb ? length(var.unreal_horde_internal_alb_subnets) > 0 : true
     error_message = "You must provide subnets for the internal ALB."
   }
   default = []

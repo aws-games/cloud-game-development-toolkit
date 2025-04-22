@@ -11,6 +11,7 @@ output "helix_core_eip_public_ips" {
 output "helix_core_eip_ids" {
   value       = { for k, v in aws_eip.helix_core_eip : k => v.id }
   description = "Map of server types to their Elastic IP IDs."
+
 }
 
 output "security_group_ids" {
@@ -19,12 +20,16 @@ output "security_group_ids" {
 }
 
 output "helix_core_super_user_username_secret_arn" {
-  value       = var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn
+  value = (var.helix_core_super_user_username_secret_arn == null ?
+    awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id :
+  var.helix_core_super_user_username_secret_arn)
   description = "The ARN of the AWS Secrets Manager secret holding your Helix Core super user's username."
 }
 
 output "helix_core_super_user_password_secret_arn" {
-  value       = var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn
+  value = (var.helix_core_super_user_password_secret_arn == null ?
+    awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id :
+  var.helix_core_super_user_password_secret_arn)
   description = "The ARN of the AWS Secrets Manager secret holding your Helix Core super user's password."
 }
 
@@ -50,4 +55,5 @@ output "ebs_volume_ids" {
 output "bucket_name" {
   value = aws_s3_bucket.ansible_bucket.id
   description = "The name of the created S3 bucket that stores the P4 ansible playbooks"
+
 }

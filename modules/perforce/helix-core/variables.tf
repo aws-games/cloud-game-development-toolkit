@@ -14,7 +14,7 @@ variable "name" {
 
 variable "project_prefix" {
   type        = string
-  description = "The project prefix for this workload. This is appeneded to the beginning of most resource names."
+  description = "The project prefix for this workload. This is appended to the beginning of most resource names."
   default     = "cgd"
 
 }
@@ -158,7 +158,6 @@ variable "create_helix_core_default_role" {
 }
 
 
-
 ########################################
 # Super User Credentials
 ########################################
@@ -202,6 +201,7 @@ variable "helix_case_sensitive" {
   default     = true
 }
 
+
 variable "server_configuration" {
   description = "Perforce Helix Core topology configuration i.e server types to create: commit, replica, edge. Each server requires VPC and Subnet"
   type = list(object({
@@ -214,3 +214,4 @@ variable "server_configuration" {
     error_message = "Only one commit server is allowed in configuration."
   }
 }
+

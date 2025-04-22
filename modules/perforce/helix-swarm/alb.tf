@@ -2,18 +2,21 @@
 # Load Balancer
 ################################################################################
 resource "aws_lb" "helix_swarm_alb" {
+  count              = var.create_application_load_balancer ? 1 : 0
   name               = "${local.name_prefix}-alb"
   internal           = var.internal
   load_balancer_type = "application"
   subnets            = var.helix_swarm_alb_subnets
-  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_swarm_alb_sg.id])
+  security_groups    = concat(var.existing_security_groups, [aws_security_group.helix_swarm_alb_sg[0].id])
 
   dynamic "access_logs" {
-    for_each = var.enable_helix_swarm_alb_access_logs ? [1] : []
+    for_each = (var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs ? [1] : [])
     content {
       enabled = var.enable_helix_swarm_alb_access_logs
-      bucket  = var.helix_swarm_alb_access_logs_bucket != null ? var.helix_swarm_alb_access_logs_bucket : aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id
-      prefix  = var.helix_swarm_alb_access_logs_prefix != null ? var.helix_swarm_alb_access_logs_prefix : "${local.name_prefix}-alb"
+      bucket = (var.helix_swarm_alb_access_logs_bucket != null ? var.helix_swarm_alb_access_logs_bucket :
+      aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id)
+      prefix = (var.helix_swarm_alb_access_logs_prefix != null ? var.helix_swarm_alb_access_logs_prefix :
+      "${local.name_prefix}-alb")
     }
   }
 
@@ -27,14 +30,18 @@ resource "aws_lb" "helix_swarm_alb" {
 }
 
 resource "random_string" "helix_swarm_alb_access_logs_bucket_suffix" {
-  count   = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+  ? 1 : 0)
   length  = 8
   special = false
   upper   = false
 }
 
 resource "aws_s3_bucket" "helix_swarm_alb_access_logs_bucket" {
-  count  = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+  ? 1 : 0)
   bucket = "${local.name_prefix}-alb-access-logs-${random_string.helix_swarm_alb_access_logs_bucket_suffix[0].result}"
 
   #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
@@ -51,7 +58,9 @@ resource "aws_s3_bucket" "helix_swarm_alb_access_logs_bucket" {
 data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
-  count = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+  ? 1 : 0)
   statement {
     effect  = "Allow"
     actions = ["s3:PutObject"]
@@ -59,20 +68,26 @@ data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
       type        = "AWS"
       identifiers = [data.aws_elb_service_account.main.arn]
     }
-    resources = ["${var.helix_swarm_alb_access_logs_bucket != null ? var.helix_swarm_alb_access_logs_bucket : aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].arn}/${var.helix_swarm_alb_access_logs_prefix != null ? var.helix_swarm_alb_access_logs_prefix : "${local.name_prefix}-alb"}/*"
+    resources = [
+      "${var.helix_swarm_alb_access_logs_bucket != null ? var.helix_swarm_alb_access_logs_bucket : aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].arn}/${var.helix_swarm_alb_access_logs_prefix != null ? var.helix_swarm_alb_access_logs_prefix : "${local.name_prefix}-alb"}/*"
     ]
   }
 }
 
 resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {
-  count  = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
-  bucket = var.helix_swarm_alb_access_logs_bucket == null ? aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id : var.helix_swarm_alb_access_logs_bucket
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+  ? 1 : 0)
+  bucket = (var.helix_swarm_alb_access_logs_bucket == null ? aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id :
+  var.helix_swarm_alb_access_logs_bucket)
   policy = data.aws_iam_policy_document.access_logs_bucket_alb_write[0].json
 }
 
 
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
-  count  = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+  ? 1 : 0)
   bucket = aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id
   rule {
     id     = "access-logs-lifecycle"
@@ -91,7 +106,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
 }
 
 resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
-  count                   = var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_application_load_balancer && var.enable_helix_swarm_alb_access_logs && var.helix_swarm_alb_access_logs_bucket == null
+    ? 1
+  : 0)
   bucket                  = aws_s3_bucket.helix_swarm_alb_access_logs_bucket[0].id
   block_public_acls       = true
   block_public_policy     = true
@@ -123,7 +141,8 @@ resource "aws_lb_target_group" "helix_swarm_alb_target_group" {
 
 # HTTPS listener for swarm ALB
 resource "aws_lb_listener" "swarm_alb_https_listener" {
-  load_balancer_arn = aws_lb.helix_swarm_alb.arn
+  count             = var.create_application_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.helix_swarm_alb[0].arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"

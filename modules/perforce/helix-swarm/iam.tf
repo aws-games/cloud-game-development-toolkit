@@ -73,11 +73,9 @@ resource "aws_iam_policy" "helix_swarm_ssm_policy" {
 # - Roles -
 # swarm
 resource "aws_iam_role" "helix_swarm_default_role" {
-  count = var.create_helix_swarm_default_role ? 1 : 0
-
+  count              = var.create_helix_swarm_default_role ? 1 : 0
   name               = "${var.project_prefix}-helix-swarm-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
   tags = local.tags
 }
 
@@ -86,6 +84,7 @@ resource "aws_iam_role_policy_attachment" "helix_swarm_default_policy_attachment
   role       = aws_iam_role.helix_swarm_default_role[0].name
   policy_arn = aws_iam_policy.helix_swarm_default_policy[0].arn
 }
+
 
 resource "aws_iam_role" "helix_swarm_task_execution_role" {
   name               = "${var.project_prefix}-helix-swarm-task-execution-role"

@@ -9,7 +9,7 @@ packer {
 
 variable "region" {
     type = string
-    default = "us-west-2"
+    default = null
 }
 
 variable "vpc_id" {
@@ -24,7 +24,7 @@ variable "subnet_id" {
 
 variable "instance_type" {
   type = string
-  default = "t3.small"
+  default = "m5.large"
 }
 
 variable "associate_public_ip_address" {

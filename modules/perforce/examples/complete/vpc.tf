@@ -3,19 +3,27 @@
 ##########################################
 
 resource "aws_vpc" "perforce_vpc" {
-  cidr_block = local.vpc_cidr_block
-  tags = merge(local.tags,
-    {
-      Name = "perforce-vpc"
-    }
-  )
+  cidr_block           = local.vpc_cidr_block
   enable_dns_hostnames = true
   #checkov:skip=CKV2_AWS_11: VPC flow logging disabled by design
+
+  tags = merge(local.tags,
+    {
+      Name = "${local.project_prefix}-perforce-vpc"
+    }
+  )
 }
 
 # Set default SG to restrict all traffic
 resource "aws_default_security_group" "default" {
   vpc_id = aws_vpc.perforce_vpc.id
+
+  tags = merge(local.tags,
+    {
+      Name = "${local.project_prefix}-perforce-vpc-default-security-group"
+    }
+  )
+
 }
 
 ##########################################
@@ -30,7 +38,7 @@ resource "aws_subnet" "public_subnets" {
 
   tags = merge(local.tags,
     {
-      Name = "pub-subnet-${count.index + 1}"
+      Name = "${local.project_prefix}-pub-subnet-${count.index + 1}"
     }
   )
 }
@@ -43,7 +51,7 @@ resource "aws_subnet" "private_subnets" {
 
   tags = merge(local.tags,
     {
-      Name = "pvt-subnet-${count.index + 1}"
+      Name = "${local.project_prefix}-pvt-subnet-${count.index + 1}"
     }
   )
 }
@@ -56,7 +64,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.perforce_vpc.id
   tags = merge(local.tags,
     {
-      Name = "perforce-igw"
+      Name = "${local.project_prefix}-perforce-igw"
     }
   )
 }
@@ -76,7 +84,7 @@ resource "aws_route_table" "public_rt" {
 
   tags = merge(local.tags,
     {
-      Name = "perforce-public-rt"
+      Name = "${local.project_prefix}-perforce-public-rt"
     }
   )
 }
@@ -92,7 +100,7 @@ resource "aws_eip" "nat_gateway_eip" {
   #checkov:skip=CKV2_AWS_19:EIP associated with NAT Gateway through association ID
   tags = merge(local.tags,
     {
-      Name = "perforce-nat-eip"
+      Name = "${local.project_prefix}-perforce-nat-eip"
     }
   )
 }
@@ -102,16 +110,16 @@ resource "aws_route_table" "private_rt" {
 
   tags = merge(local.tags,
     {
-      Name = "perforce-private-rt"
+      Name = "${local.project_prefix}-perforce-private-rt"
     }
   )
 }
 
 # route to the internet through NAT gateway
 resource "aws_route" "private_rt_nat_gateway" {
-  route_table_id            = aws_route_table.private_rt.id
-  destination_cidr_block    = "0.0.0.0/0"
-  nat_gateway_id            = aws_nat_gateway.nat_gateway.id
+  route_table_id         = aws_route_table.private_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat_gateway.id
 }
 
 resource "aws_route_table_association" "private_rt_asso" {
@@ -125,7 +133,7 @@ resource "aws_nat_gateway" "nat_gateway" {
   subnet_id     = aws_subnet.public_subnets[0].id
   tags = merge(local.tags,
     {
-      Name = "perforce-nat"
+      Name = "${local.project_prefix}-perforce-nat"
     }
   )
 }

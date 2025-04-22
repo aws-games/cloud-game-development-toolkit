@@ -134,7 +134,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
         },
         {
           name      = "ADMIN_PASSWD"
-          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_username_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
+          valueFrom = var.helix_authentication_service_admin_password_secret_arn != null ? var.helix_authentication_service_admin_password_secret_arn : awscc_secretsmanager_secret.helix_authentication_service_admin_password[0].secret_id
         },
       ] : [],
       logConfiguration = {
@@ -198,6 +198,8 @@ resource "aws_ecs_service" "helix_authentication_service" {
 
 # helix_authentication_service Load Balancer Security Group (attached to ALB)
 resource "aws_security_group" "helix_authentication_service_alb_sg" {
+  #checkov:skip=CKV2_AWS_5: Attached to ALB on creation
+  count       = var.create_application_load_balancer ? 1 : 0
   name        = "${local.name_prefix}-ALB"
   vpc_id      = var.vpc_id
   description = "helix_authentication_service ALB Security Group"
@@ -206,7 +208,8 @@ resource "aws_security_group" "helix_authentication_service_alb_sg" {
 
 # Outbound access from ALB to Containers
 resource "aws_vpc_security_group_egress_rule" "helix_authentication_service_alb_outbound_service" {
-  security_group_id            = aws_security_group.helix_authentication_service_alb_sg.id
+  count                        = var.create_application_load_balancer ? 1 : 0
+  security_group_id            = aws_security_group.helix_authentication_service_alb_sg[0].id
   description                  = "Allow outbound traffic from helix_authentication_service ALB to helix_authentication_service service"
   referenced_security_group_id = aws_security_group.helix_authentication_service_sg.id
   from_port                    = var.container_port
@@ -244,9 +247,10 @@ resource "aws_vpc_security_group_egress_rule" "helix_authentication_service_outb
 
 # Inbound access to Containers from ALB
 resource "aws_vpc_security_group_ingress_rule" "helix_authentication_service_inbound_alb" {
+  count                        = var.create_application_load_balancer ? 1 : 0
   security_group_id            = aws_security_group.helix_authentication_service_sg.id
   description                  = "Allow inbound traffic from helix_authentication_service ALB to service"
-  referenced_security_group_id = aws_security_group.helix_authentication_service_alb_sg.id
+  referenced_security_group_id = aws_security_group.helix_authentication_service_alb_sg[0].id
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "tcp"

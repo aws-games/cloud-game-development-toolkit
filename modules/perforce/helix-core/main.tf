@@ -45,7 +45,7 @@ resource "aws_instance" "helix_core_instance" {
  #    ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
  #    --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
  #    --unicode ${var.unicode ? "true" : "false"}
- # EOT
+ # EOT kept for legacy reasons.
 
 
  # vpc_security_group_ids = var.create_default_sg ? concat(var.existing_security_groups, [aws_security_group.helix_core_security_group[0].id]) : var.existing_security_groups
@@ -145,6 +145,7 @@ resource "aws_volume_attachment" "depot_attachment" {
 ##########################################
 
 resource "aws_security_group" "helix_core_security_group" {
+
   for_each = { for idx, server in var.server_configuration : server.type => server}
   #count = var.create_default_sg ? 1 : 0
   #checkov:skip=CKV2_AWS_5:SG is attahced to FSxZ file systems
@@ -153,6 +154,7 @@ resource "aws_security_group" "helix_core_security_group" {
   name        = "${local.name_prefix}-${each.key}-instance"
   description = "Security group for Helix Core ${each.key} machine."
   tags        = local.tags
+
 }
 
 resource "aws_vpc_security_group_egress_rule" "helix_core_internet" {
