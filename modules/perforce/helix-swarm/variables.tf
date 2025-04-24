@@ -92,12 +92,6 @@ variable "existing_redis_connection" {
   default     = null
 }
 
-variable "helix_swarm_desired_container_count" {
-  type        = number
-  description = "The desired number of containers running the Helix Swarm service."
-  default     = 1
-}
-
 # - Existing Cluster -
 variable "cluster_name" {
   type        = string

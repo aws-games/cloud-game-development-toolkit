@@ -176,7 +176,7 @@ resource "aws_ecs_service" "helix_swarm_service" {
   cluster                = var.cluster_name != null ? data.aws_ecs_cluster.helix_swarm_cluster[0].arn : aws_ecs_cluster.helix_swarm_cluster[0].arn
   task_definition        = aws_ecs_task_definition.helix_swarm_task_definition.arn
   launch_type            = "FARGATE"
-  desired_count          = var.helix_swarm_desired_container_count
+  desired_count          = 1 # Helix Swarm does not scale horizontally, so desired container count is fixed at 1
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
 
