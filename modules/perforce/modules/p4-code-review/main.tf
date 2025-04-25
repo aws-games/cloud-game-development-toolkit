@@ -185,7 +185,7 @@ resource "aws_ecs_service" "service" {
   cluster         = var.cluster_name != null ? data.aws_ecs_cluster.cluster[0].arn : aws_ecs_cluster.cluster[0].arn
   task_definition = aws_ecs_task_definition.task_definition.arn
   launch_type     = "FARGATE"
-  desired_count   = "1" # P4 Code Review does not support horizontal scaling
+  desired_count   = "1" # P4 Code Review does not support horizontal scaling, so desired container count is fixed at 1
   # Allow ECS to delete a service even if deregistration is taking time. This is to prevent the ALB listener in the parent module from failing to be deleted in the event that all registered targets (ECS services) haven't been destroyed yet.
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
