@@ -1,8 +1,8 @@
 ##########################################
-# Fetch Shared ALB DNS Name and Zone ID
+# Fetch Shared NLB DNS Name and Zone ID
 ##########################################
 data "aws_lb" "shared_services_nlb" {
-  name = "${local.project_prefix}-perforce-shared-nlb"
+  arn = module.terraform-aws-perforce.shared_network_load_balancer_arn
 
   depends_on = [module.terraform-aws-perforce]
 }

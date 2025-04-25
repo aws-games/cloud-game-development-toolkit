@@ -1,9 +1,56 @@
+# 1. Create the NLB Target Group. This target will be the ALB
+##########################################
+# Perforce NLB | Target Groups
+##########################################
+# Send traffic from NLB to ALB
+resource "aws_lb_target_group" "perforce" {
+  count       = var.create_shared_network_load_balancer != false ? 1 : 0
+  name        = "${var.project_prefix}-nlb-to-perforce-web-services"
+  target_type = "alb"
+  port        = 443
+  protocol    = "TCP"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTPS"
+    matcher             = "200"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 10
+    interval            = 30
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+    }
+  )
+
+  depends_on = [
+    module.p4_auth,                       # Wait for auth module and its target group
+    module.p4_code_review,                # Wait for code review module and its target group
+    aws_lb_listener.perforce_web_services # Wait for ALB listener
+  ]
+}
+
+resource "aws_lb_target_group_attachment" "perforce" {
+  count            = var.create_shared_network_load_balancer != false ? 1 : 0
+  target_group_arn = aws_lb_target_group.perforce[0].arn
+  target_id        = aws_lb.perforce_web_services[0].arn
+  port             = 443
+
+}
+
+# 2. Create the NLB only if the NLB Target Group has been created
 ##########################################
 # Perforce Network Load Balancer
 ##########################################
 resource "aws_lb" "perforce" {
   count                            = var.create_shared_network_load_balancer != false ? 1 : 0
-  name                             = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+  name_prefix                      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "cgdnlb"
   load_balancer_type               = "network"
   subnets                          = var.public_subnets
   security_groups                  = concat(var.existing_security_groups, [aws_security_group.perforce_network_load_balancer[0].id])
@@ -34,49 +81,10 @@ resource "aws_lb" "perforce" {
       Routability = "PUBLIC"
     }
   )
+
 }
 
-##########################################
-# Perforce NLB | Target Groups
-##########################################
-# Send traffic from NLB to ALB
-resource "aws_lb_target_group" "perforce" {
-  count       = var.create_shared_network_load_balancer != false ? 1 : 0
-  name        = "${var.project_prefix}-perforce-web-services"
-  target_type = "alb"
-  port        = 443
-  protocol    = "TCP"
-  vpc_id      = var.vpc_id
-
-  health_check {
-    path                = "/"
-    protocol            = "HTTPS"
-    matcher             = "200"
-    port                = "traffic-port"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 10
-    interval            = 30
-  }
-
-  tags = merge(var.tags,
-    {
-      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
-      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
-    }
-  )
-
-  # Create only if the ALB has been created
-  depends_on = [aws_lb.perforce_web_services]
-}
-
-resource "aws_lb_target_group_attachment" "perforce" {
-  count            = var.create_shared_network_load_balancer != false ? 1 : 0
-  target_group_arn = aws_lb_target_group.perforce[0].arn
-  target_id        = aws_lb.perforce_web_services[0].arn
-  port             = 443
-}
-
+# 3. Create the NLB Listeners only if the Target Group and NLB have been created
 ##########################################
 # Perforce NLB | Listeners
 ##########################################
@@ -99,19 +107,28 @@ resource "aws_lb_listener" "perforce" {
     }
   )
 
+  # Force replacement of this listener if changes are made to the NLB, the NLB Target Group (or its attachment), then the destroy the target group. Then recreate them in the reverse order
   lifecycle {
-    create_before_destroy = true
+    replace_triggered_by = [
+      aws_lb.perforce[0].arn,
+      aws_lb_target_group.perforce[0],
+      aws_lb_target_group_attachment.perforce[0]
+    ]
   }
 
 }
 
 
+
+# 1. Create the Target Group (this is done in p4-auth, and p4-code-review submodules)
+# 2. Create the Target Group Attachment (this is not necessary as ECS handles this automatically. This is handled in the p4-auth, and p4-code-review submodules in the load_balancers block)
+# 3. Create the ALB only if the target group (in submodules) has been created
 ###################################################
 # Perforce Web Services Application Load Balancer
 ###################################################
 resource "aws_lb" "perforce_web_services" {
   count                      = var.create_shared_application_load_balancer != false ? 1 : 0
-  name                       = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+  name_prefix                = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "cgdalb"
   internal                   = true
   load_balancer_type         = "application"
   subnets                    = var.private_subnets
@@ -141,6 +158,7 @@ resource "aws_lb" "perforce_web_services" {
       Routability = "PRIVATE"
     }
   )
+
 }
 
 
@@ -157,6 +175,7 @@ resource "null_resource" "parent_module_certificate" {
 
 }
 
+# 4. Create the ALB Listeners only if null_resource has completed, and target groups (in submodules) exist
 # Default rule sends fixed response status code
 resource "aws_lb_listener" "perforce_web_services" {
   count             = var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
@@ -183,10 +202,6 @@ resource "aws_lb_listener" "perforce_web_services" {
       Intent             = "Return fixed status code to confirm reachability."
     }
   )
-
-  lifecycle {
-    create_before_destroy = true
-  }
 
 }
 
@@ -286,19 +301,49 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
   count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
 
   statement {
+    sid     = "AllowELBRootAccount"
     effect  = "Allow"
     actions = ["s3:PutObject"]
     principals {
       type = "AWS"
       # Allow the ELB service account to create the logs
-      identifiers = [data.aws_elb_service_account.main.id]
+      identifiers = ["arn:aws:iam::${data.aws_elb_service_account.main.id}:root"]
     }
     resources = [
-      # If user provides existing S3 bucket to user for logging, grant access to that bucket, and the specific path they provide. Otherwise, grant access to the bucket that the module will conditionally create, and the optional user provided path or the default path defined
-      "${var.shared_lb_access_logs_bucket != null ? "${var.shared_lb_access_logs_bucket}/${var.shared_alb_access_logs_prefix}" : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-alb"}/*",
+      # Grant access to bucket root
+      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*",
 
-      # If user provides existing S3 bucket to user for logging, grant access to that bucket, and the specific path they provide. Otherwise, grant access to the bucket that the module will conditionally create, and the optional user provided path or the default path defined
-      "${var.shared_lb_access_logs_bucket != null ? "${var.shared_lb_access_logs_bucket}/${var.shared_alb_access_logs_prefix}" : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/${var.shared_alb_access_logs_prefix != null ? var.shared_alb_access_logs_prefix : "${var.project_prefix}-perforce-shared-nlb"}/*",
+    ]
+  }
+
+  statement {
+    sid    = "AWSLogDeliveryWrite"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+    actions = ["s3:PutObject"]
+    resources = [
+      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*"
+    ]
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
+
+  statement {
+    sid    = "AWSLogDeliveryAclCheck"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+    actions = ["s3:GetBucketAcl"]
+    resources = [
+      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}"
     ]
   }
 

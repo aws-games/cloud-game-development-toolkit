@@ -196,8 +196,7 @@ resource "aws_ecs_service" "service" {
   cluster         = var.cluster_name != null ? data.aws_ecs_cluster.cluster[0].arn : aws_ecs_cluster.cluster[0].arn
   task_definition = aws_ecs_task_definition.task_definition.arn
   launch_type     = "FARGATE"
-  # This is set to 0 because the aws_appautoscaling_target resource will be used. This will allow us to control the desired count, especially during the terraform destroy which prevents the error where a listener cannot be destroyed because the targets managed by ECS are still registered. This resource allows us to deregister these, giving more control over how ECS registers and deregisters targets.
-  desired_count = var.desired_container_count
+  desired_count   = "1" # P4Auth does not support horizontal scaling
   # Allow ECS to delete a service even if deregistration is taking time. This is to prevent the ALB listener in the parent module from failing to be deleted in the event that all registered targets (ECS services) haven't been destroyed yet.
   force_delete           = true
   force_new_deployment   = var.debug
@@ -223,8 +222,8 @@ resource "aws_ecs_service" "service" {
   )
 
   lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [desired_count] # Let Application Auto Scaling manage this
+    # create_before_destroy = true
+    ignore_changes = [desired_count] # Let Application Auto Scaling manage this
   }
 
   timeouts {
@@ -232,61 +231,6 @@ resource "aws_ecs_service" "service" {
   }
 
   depends_on = [aws_lb_target_group.alb_target_group]
-}
-
-
-
-##########################################
-# Application Auto Scaling | Target
-##########################################
-# This is used
-resource "aws_appautoscaling_target" "ecs_target" {
-  max_capacity       = var.desired_container_count
-  min_capacity       = 0 # allow ECS to scale down to 0 targets to prevent listener in parent module from failing to be deleted
-  resource_id        = "service/${var.project_prefix}-perforce-web-services-shared-cluster/${aws_ecs_service.service.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-  service_namespace  = "ecs"
-
-  depends_on = [
-    aws_ecs_service.service
-  ]
-}
-
-# Used to set dependency on ALB from parent module, since depends_on won't work upstream
-# This triggers during the first apply, or if the ALB ARN changes to a different value, such as null
-resource "null_resource" "parent_alb" {
-  # count = var.create_application_load_balancer
-  triggers = {
-    shared_alb_arn = var.existing_application_load_balancer_arn
-  }
-
-}
-
-##########################################
-# Application Auto Scaling | Policy
-##########################################
-resource "aws_appautoscaling_policy" "scale_up" {
-  name               = "${local.name_prefix}-scale-up"
-  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
-  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
-
-  step_scaling_policy_configuration {
-    adjustment_type         = "ExactCapacity"
-    cooldown                = 60
-    metric_aggregation_type = "Average"
-
-    step_adjustment {
-      metric_interval_lower_bound = 0
-      scaling_adjustment          = var.desired_container_count
-    }
-  }
-
-  depends_on = [
-    aws_lb_target_group.alb_target_group,
-    aws_ecs_service.service,
-    aws_appautoscaling_target.ecs_target,
-  ]
 }
 
 

@@ -63,6 +63,7 @@ resource "aws_lb_target_group" "alb_target_group" {
       Name = "${local.name_prefix}-tg"
     }
   )
+
 }
 
 
