@@ -75,12 +75,6 @@ variable "container_memory" {
   default     = 2048
 }
 
-variable "desired_container_count" {
-  type        = number
-  description = "The desired number of containers running the P4 Code Review service."
-  default     = 1
-}
-
 variable "p4d_port" {
   type        = string
   description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666'"

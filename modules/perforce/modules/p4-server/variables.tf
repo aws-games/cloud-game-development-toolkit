@@ -62,13 +62,13 @@ variable "ami_prefix" {
 variable "instance_type" {
   type        = string
   description = "The instance type for Perforce P4 Server. Defaults to c6g.large."
-  default     = "c6g.large"
+  default     = "c6i.large"
 }
 
 variable "instance_architecture" {
   type        = string
   description = "The architecture of the P4 Server instance. Allowed values are 'arm64' or 'x86_64'."
-  default     = "arm64"
+  default     = "x86_64"
   validation {
     condition     = var.instance_architecture == "arm64" || var.instance_architecture == "x86_64"
     error_message = "The instance_architecture variable must be either 'arm64' or 'x86_64'."

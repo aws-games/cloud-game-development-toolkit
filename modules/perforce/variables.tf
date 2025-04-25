@@ -198,8 +198,8 @@ variable "p4_server_config" {
     enable_auto_ami_creation = optional(bool, false)
     ami_prefix               = optional(string, "p4_al2023")
 
-    instance_type         = optional(string, "c6g.large")
-    instance_architecture = optional(string, "arm64")
+    instance_type         = optional(string, "c6i.large")
+    instance_architecture = optional(string, "x86_64")
     p4_server_type        = optional(string, null)
 
     unicode        = optional(bool, false)
@@ -244,13 +244,13 @@ variable "p4_server_config" {
 
     enable_auto_ami_creation: "Whether to automatically create an AMI for the P4 Server instance. This will create an AMI on first apply."
 
-    IMPORTANT: "Ensure the instance family of the instance type you select supports the instance_architecture you select. For example, 'c6in' instance family only works for 'x86_64' architecture, not 'arm64'. For a full list of this mapping, see the AWS Docs for EC2 Naming Conventions: https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html"
-
     ami_prefix: "The AMI prefix to use for the AMI that will be created for P4 Server."
 
     instance_type: "The instance type for Perforce P4 Server. Defaults to c6g.large."
 
     instance_architecture: "The architecture of the P4 Server instance. Allowed values are 'arm64' or 'x86_64'."
+
+    IMPORTANT: "Ensure the instance family of the instance type you select supports the instance_architecture you select. For example, 'c6in' instance family only works for 'x86_64' architecture, not 'arm64'. For a full list of this mapping, see the AWS Docs for EC2 Naming Conventions: https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html"
 
     p4_server_type: "The Perforce P4 Server server type. Valid values are 'p4d_commit' or 'p4d_replica'."
 
@@ -332,12 +332,11 @@ variable "p4_auth_config" {
     fully_qualified_domain_name     = string
 
     # - Compute -
-    cluster_name            = optional(string, null)
-    container_name          = optional(string, "p4-auth-container")
-    container_port          = optional(number, 3000)
-    container_cpu           = optional(number, 1024)
-    container_memory        = optional(number, 4096)
-    desired_container_count = optional(number, 1)
+    cluster_name     = optional(string, null)
+    container_name   = optional(string, "p4-auth-container")
+    container_port   = optional(number, 3000)
+    container_cpu    = optional(number, 1024)
+    container_memory = optional(number, 4096)
 
     # - Storage & Logging -
     enable_alb_access_logs           = optional(bool, false)
@@ -393,7 +392,6 @@ variable "p4_auth_config" {
 
     container_memory : "The number of CPU units to reserve for the P4Auth service container. Default is '4096'."
 
-    desired_container_count : "The number of P4Auth service tasks to run in the ECS cluster. Default is '1'."
 
     # Storage & Logging
     enable_alb_access_logs: "Whether to enable access logs for the P4Auth service. Only use this variable if you are not using the default shared load balancers."
@@ -454,13 +452,12 @@ variable "p4_code_review_config" {
     fully_qualified_domain_name = string
 
     # Compute
-    cluster_name            = optional(string, null)
-    container_name          = optional(string, "p4-code-review-container")
-    container_port          = optional(number, 80)
-    container_cpu           = optional(number, 1024)
-    container_memory        = optional(number, 4096)
-    desired_container_count = optional(number, 1)
-    p4d_port                = optional(string, null)
+    cluster_name     = optional(string, null)
+    container_name   = optional(string, "p4-code-review-container")
+    container_port   = optional(number, 80)
+    container_cpu    = optional(number, 1024)
+    container_memory = optional(number, 4096)
+    p4d_port         = optional(string, null)
     existing_redis_connection = optional(object({
       host = string
     port = number }), null)
@@ -522,8 +519,6 @@ variable "p4_code_review_config" {
     container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."
 
     container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."
-
-    desired_container_count : "The number of P4 Code Review service tasks to run in the ECS cluster. Default is '1'."
 
     pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
 

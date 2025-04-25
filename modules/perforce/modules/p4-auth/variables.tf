@@ -80,13 +80,6 @@ variable "container_memory" {
   nullable    = false
 }
 
-variable "desired_container_count" {
-  type        = number
-  description = "The desired number of containers running the P4Auth."
-  default     = 1
-  nullable    = false
-}
-
 
 ########################################
 # Storage & Logging
