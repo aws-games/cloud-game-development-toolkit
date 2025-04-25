@@ -4,12 +4,11 @@ module "terraform-aws-perforce" {
   # version = "v1.0.0"
 
   # - Shared -
-  project_prefix               = local.project_prefix
-  vpc_id                       = aws_vpc.perforce_vpc.id
-  public_subnets               = aws_subnet.public_subnets[*].id
-  public_subnets_cidrs         = local.public_subnet_cidrs
-  private_subnets              = aws_subnet.private_subnets[*].id
-  enable_shared_lb_access_logs = true
+  project_prefix       = local.project_prefix
+  vpc_id               = aws_vpc.perforce_vpc.id
+  public_subnets       = aws_subnet.public_subnets[*].id
+  public_subnets_cidrs = local.public_subnet_cidrs
+  private_subnets      = aws_subnet.private_subnets[*].id
 
   create_route53_private_hosted_zone = true
   route53_private_hosted_zone_name   = "${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
@@ -21,6 +20,7 @@ module "terraform-aws-perforce" {
     # General
     name                        = "p4-server"
     fully_qualified_domain_name = local.p4_server_fully_qualified_domain_name
+    auth_service_url            = "https://${local.p4_auth_fully_qualified_domain_name}"
 
     # Compute
     lookup_existing_ami      = false
@@ -44,7 +44,7 @@ module "terraform-aws-perforce" {
     fully_qualified_domain_name = local.p4_auth_fully_qualified_domain_name
     existing_security_groups    = [aws_security_group.allow_my_ip.id]
     debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0
+    deregistration_delay        = 0    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
   }
 
 
@@ -54,11 +54,10 @@ module "terraform-aws-perforce" {
     fully_qualified_domain_name = local.p4_code_review_fully_qualified_domain_name
     existing_security_groups    = [aws_security_group.allow_my_ip.id]
     debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0
+    deregistration_delay        = 0    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
 
     # Configuration
     enable_sso = true
-
   }
 
 }

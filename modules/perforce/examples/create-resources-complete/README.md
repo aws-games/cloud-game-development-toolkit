@@ -70,7 +70,9 @@ If this occurs, it is because Terraform is attempting to attach the certificate 
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_route53_public_hosted_zone_name"></a> [route53\_public\_hosted\_zone\_name](#input\_route53\_public\_hosted\_zone\_name) | The name of your existing Route53 Public Hosted Zone. This is required to create the ACM certificate and Route53 records. | `string` | n/a | yes |
 
 ## Outputs
 

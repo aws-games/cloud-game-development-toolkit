@@ -1,7 +1,6 @@
 # P4 Server Module
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
 | Name | Version |
@@ -18,8 +17,8 @@
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.89.0 |
 | <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.34.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.5.2 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.3 |
+| <a name="provider_local"></a> [local](#provider\_local) | n/a |
+| <a name="provider_null"></a> [null](#provider\_null) | n/a |
 | <a name="provider_netapp-ontap"></a> [netapp-ontap](#provider\_netapp-ontap) | 2.1.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
 
@@ -96,6 +95,7 @@ No modules.
 | <a name="input_amazon_fsxn_filesystem_id"></a> [amazon\_fsxn\_filesystem\_id](#input\_amazon\_fsxn\_filesystem\_id) | The ID of the existing FSx ONTAP file system to use if storage type is FSxN. | `string` | `""` | no |
 | <a name="input_amazon_fsxn_svm_id"></a> [amazon\_fsxn\_svm\_id](#input\_amazon\_fsxn\_svm\_id) | The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem. | `string` | `""` | no |
 | <a name="input_ami_prefix"></a> [ami\_prefix](#input\_ami\_prefix) | The AMI prefix to use for the AMI that will be created for P4 Server. | `string` | `"p4_al2023"` | no |
+| <a name="input_auth_service_url"></a> [auth\_service\_url](#input\_auth\_service\_url) | The URL for the P4Auth Service. | `string` | `null` | no |
 | <a name="input_case_sensitive"></a> [case\_sensitive](#input\_case\_sensitive) | Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode | `bool` | `true` | no |
 | <a name="input_create_default_role"></a> [create\_default\_role](#input\_create\_default\_role) | Optional creation of P4 Server default IAM Role with SSM managed instance core policy attached. Default is set to true. | `bool` | `true` | no |
 | <a name="input_create_default_sg"></a> [create\_default\_sg](#input\_create\_default\_sg) | Whether to create a default security group for the P4 Server instance. | `bool` | `true` | no |
@@ -113,7 +113,7 @@ No modules.
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where P4 Server will be available. This is used to generate self-signed certificates on the P4 Server. | `string` | `null` | no |
 | <a name="input_instance_architecture"></a> [instance\_architecture](#input\_instance\_architecture) | The architecture of the P4 Server instance. Allowed values are 'arm64' or 'x86\_64'. | `string` | `"x86_64"` | no |
 | <a name="input_instance_subnet_id"></a> [instance\_subnet\_id](#input\_instance\_subnet\_id) | The subnet where the P4 Server instance will be deployed. | `string` | n/a | yes |
-| <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | The instance type for Perforce P4 Server. Defaults to c6in.large. | `string` | `"c6in.large"` | no |
+| <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | The instance type for Perforce P4 Server. Defaults to c6g.large. | `string` | `"c6i.large"` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the P4 Server instance to have a public IP. | `bool` | `false` | no |
 | <a name="input_logs_volume_size"></a> [logs\_volume\_size](#input\_logs\_volume\_size) | The size of the logs volume in GiB. Defaults to 32 GiB. | `number` | `32` | no |
 | <a name="input_lookup_existing_ami"></a> [lookup\_existing\_ami](#input\_lookup\_existing\_ami) | Whether to lookup the existing Perforce AMI. | `bool` | `false` | no |
@@ -124,7 +124,6 @@ No modules.
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_protocol"></a> [protocol](#input\_protocol) | Specify the protocol (NFS or ISCSI) | `string` | `""` | no |
 | <a name="input_selinux"></a> [selinux](#input\_selinux) | Whether to apply SELinux label updates for P4 Server. Don't enable this if SELinux is disabled on your target operating system. | `bool` | `false` | no |
-| <a name="input_service_url"></a> [service\_url](#input\_service\_url) | The URL for the P4Auth Service. | `string` | `null` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | The type of backing store [EBS, FSxZ, FSxN] | `string` | n/a | yes |
 | <a name="input_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#input\_super\_user\_password\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used. | `string` | `null` | no |
 | <a name="input_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#input\_super\_user\_username\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here. | `string` | `null` | no |
