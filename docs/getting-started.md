@@ -50,7 +50,7 @@ packer build ./assets/packer/perforce/helix-core/perforce_arm64.pkr.hcl
 This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/helix-core/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
 ???+ Note
-    The Perforce Helix Core template will default to the _us-west-2_ (Oregon) region, if a region is not provided.
+    The Perforce Helix Core template will default to the user's CLI configured region, if a region is not provided.
 
 ???+ Note
     The AWS Region where this AMI is created _must_ be the same Region where you intend to deploy the Simple Build Pipeline.
@@ -60,21 +60,29 @@ This will use your AWS credentials to provision an [EC2 instance](https://aws.am
 This section covers the creation of Amazon Machine Images used to provision Jenkins build agents. Different studios have different needs at this stage, so we'll cover the creation of three different build agent AMIs.
 
 ???+ Note
-    The Build Agent templates will default to the _us-west-2_ (Oregon) region, if a region is not provided.
+    The Build Agent templates will default to the user's CLI configured region, if a region is not provided.
 
-#### Amazon Linux 2023 ARM based Amazon Machine Image
+#### Amazon Linux 2023 Amazon Machine Image
 
 This Amazon Machine Image is provisioned using the [Amazon Linux 2023](https://aws.amazon.com/linux/amazon-linux-2023/) base operating system. It is highly configurable through variables, but there is only one variable that is required: A public SSH key. This public SSH key is used by the Jenkins orchestration service to establish an initial connection to the agent.
 
 This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
 
+#### There are separate ARM and x86 based Packer scripts available for Amazon Linux 2023
+
+#### ARM Based Image
+
 ``` bash
 packer build -var "public_key=<include public key here>" amazon-linux-2023-arm64.pkr.hcl
+```
 
+#### x86 Based Image
+``` bash
+packer build -var "public_key=<include public key here>" amazon-linux-2023-x86_64.pkr.hcl
 ```
 
 ???+ Note
-    The above command assumes you are running `packer` from the `/assets/packer/build-agents/linux` directory.
+    The above commands assume you are running `packer` from the `/assets/packer/build-agents/linux` directory.
 
 Then securely store the private key value as a secret in AWS Secrets Manager.
 
@@ -88,18 +96,25 @@ aws secretsmanager create-secret \
 
 Take note of the output of this CLI command. You will need the ARN later.
 
-#### Ubuntu Jammy 22.04 X86 based Amazon Machine Image
+#### Ubuntu Jammy 22.04 Amazon Machine Images
 
-This Amazon Machine Image is provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. To build this AMI with a variables file called `linux.pkrvars.hcl` you would use the following command:
+These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields.
+
+#### There are separate AMD64 and ARM based Packer scripts available for Ubuntu Jammy 22.04
+
+#### AMD64 Based Image
 
 ``` bash
-# This command fails if not run from the '/assets/packer/build-agents/linux' directory.
 packer build -var "public_key=<include public key here>" ubuntu-jammy-22.04-amd64-server.pkr.hcl
+```
+#### ARM Based Image
 
+``` bash
+packer build -var "public_key=<include public key here>" ubuntu-jammy-22.04-arm64-server.pkr.hcl
 ```
 
-???+ Warning
-    The above command assumes you are running `packer` from the `/assets/packer/build-agents/linux` directory.
+???+ Note
+    The above commands assume you are running `packer` from the `/assets/packer/build-agents/linux` directory.
 
 Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.
 
@@ -110,6 +125,9 @@ aws secretsmanager create-secret \
     --secret-string "<insert private SSH key here>" \
     --tags 'Key=jenkins:credentials:type,Value=sshUserPrivateKey' 'Key=jenkins:credentials:username,Value=ubuntu'
 ```
+
+???+ Note
+    If you have already created a secret for any of the previous Amazon Linux images, please remember to change the name of this secret to avoid a naming conflict.
 
 Take note of the output of this CLI command. You will need the ARN later.
 
@@ -135,6 +153,9 @@ aws secretsmanager create-secret \
     --secret-string "<insert private SSH key here>" \
     --tags 'Key=jenkins:credentials:type,Value=sshUserPrivateKey' 'Key=jenkins:credentials:username,Value=jenkins'
 ```
+
+???+ Note
+    If you have already created a secret for any of the previous Amazon Linux or Ubuntu Jammy based images, please remember to change the name of this secret to avoid a naming conflict.
 
 Take note of the output of this CLI command. You will need the ARN later.
 
