@@ -4,8 +4,14 @@ variable "github_credential_arn" {
   description = "Github Credential ARN"
 }
 
-variable "eks_cluster_ip_allow_list" {
+variable "allow_my_ip" {
+  type        = bool
+  default     = true
+  description = "Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers"
+}
+
+variable "existing_security_groups" {
   type        = list(string)
-  default     = null
-  description = "IPs that will be allow listed to access cluster over internet"
+  default     = []
+  description = "List of existing security groups to attach to the load balancer"
 }

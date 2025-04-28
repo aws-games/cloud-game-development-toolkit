@@ -15,4 +15,6 @@ locals {
     Environment = "cgd"
     Application = "unreal-cloud-ddc"
   }
+
+  existing_security_groups = var.allow_my_ip ? concat(var.existing_security_groups, [aws_security_group.unreal_ddc_load_balancer_access_security_group.id]) : var.existing_security_groups
 }
