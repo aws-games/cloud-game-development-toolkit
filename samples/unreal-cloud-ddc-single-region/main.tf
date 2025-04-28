@@ -91,7 +91,6 @@ module "scylla_monitoring" {
   source             = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-monitoring" # Adjust path as needed
   vpc_id             = module.unreal_cloud_ddc_vpc.vpc_id
   monitoring_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
-
 }
 # add ingress rules to scylladb security group for monitoring
 resource "aws_security_group_rule" "scylla_monitoring_ingress_prometheus" {
