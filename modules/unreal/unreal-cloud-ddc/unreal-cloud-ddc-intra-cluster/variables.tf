@@ -1,3 +1,33 @@
+########################################
+# GENERAL CONFIGURATION
+########################################
+
+variable "name" {
+  description = "Unreal Cloud DDC Workload Name"
+  type        = string
+  default     = "unreal-cloud-ddc"
+  validation {
+    condition     = length(var.name) > 1 && length(var.name) <= 50
+    error_message = "The defined 'name' has too many characters. This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
+  }
+}
+
+variable "project_prefix" {
+  type        = string
+  description = "The project prefix for this workload. This is appended to the beginning of most resource names."
+  default     = "cgd"
+}
+
+variable "tags" {
+  type = map(any)
+  default = {
+    "ModuleBy"   = "CGD-Toolkit"
+    "ModuleName" = "Unreal DDC"
+    "IaC"        = "Terraform"
+  }
+  description = "Tags to apply to resources."
+}
+
 variable "cluster_name" {
   type        = string
   description = "Name of the EKS Cluster"

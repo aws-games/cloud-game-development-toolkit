@@ -52,3 +52,13 @@ output "system_node_group_label" {
   value       = var.system_node_group_label
   description = "Label for the System node group"
 }
+
+output "external_alb_dns_name" {
+  value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].dns_name : null
+  description = "DNS endpoint of Application Load Balancer (ALB)"
+}
+
+output "external_alb_zone_id" {
+  value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].zone_id : null
+  description = "Zone ID for internet facing load balancer"
+}
