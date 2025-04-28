@@ -149,9 +149,9 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.91.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.36.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.37.1 |
 
 ## Modules
 
@@ -176,6 +176,7 @@ No outputs.
 | [aws_eks_cluster.unreal_cloud_ddc_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
 | [aws_iam_openid_connect_provider.oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider) | data source |
 | [aws_iam_policy_document.unreal_cloud_ddc_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_lb.unreal_cloud_ddc_load_balancer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lb) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_s3_bucket.unreal_cloud_ddc_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 
@@ -188,8 +189,11 @@ No outputs.
 | <a name="input_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#input\_cluster\_oidc\_provider\_arn) | ARN of the OIDC Provider from EKS Cluster | `string` | n/a | yes |
 | <a name="input_enable_certificate_manager"></a> [enable\_certificate\_manager](#input\_enable\_certificate\_manager) | Enable Certificate Manager for Ingress. Required for TLS termination. | `bool` | `false` | no |
 | <a name="input_ghcr_credentials_secret_manager_arn"></a> [ghcr\_credentials\_secret\_manager\_arn](#input\_ghcr\_credentials\_secret\_manager\_arn) | Arn for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. | `string` | n/a | yes |
+| <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_oidc_credentials_secret_manager_arn"></a> [oidc\_credentials\_secret\_manager\_arn](#input\_oidc\_credentials\_secret\_manager\_arn) | Arn for oidc credentials stored in secret manager. | `string` | `null` | no |
+| <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of the S3 Bucket for Unreal Cloud DDC to use | `string` | n/a | yes |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
 | <a name="input_unreal_cloud_ddc_helm_values"></a> [unreal\_cloud\_ddc\_helm\_values](#input\_unreal\_cloud\_ddc\_helm\_values) | List of YAML files for Unreal Cloud DDC | `list(string)` | `[]` | no |
 | <a name="input_unreal_cloud_ddc_namespace"></a> [unreal\_cloud\_ddc\_namespace](#input\_unreal\_cloud\_ddc\_namespace) | Namespace for Unreal Cloud DDC | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_unreal_cloud_ddc_service_account_name"></a> [unreal\_cloud\_ddc\_service\_account\_name](#input\_unreal\_cloud\_ddc\_service\_account\_name) | Name of Unreal Cloud DDC service account. | `string` | `"unreal-cloud-ddc-sa"` | no |
@@ -197,5 +201,8 @@ No outputs.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_unreal_cloud_ddc_load_balancer_name"></a> [unreal\_cloud\_ddc\_load\_balancer\_name](#output\_unreal\_cloud\_ddc\_load\_balancer\_name) | n/a |
+| <a name="output_unreal_cloud_ddc_load_balancer_zone_id"></a> [unreal\_cloud\_ddc\_load\_balancer\_zone\_id](#output\_unreal\_cloud\_ddc\_load\_balancer\_zone\_id) | n/a |
 <!-- END_TF_DOCS -->
