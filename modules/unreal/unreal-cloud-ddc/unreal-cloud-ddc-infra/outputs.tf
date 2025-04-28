@@ -52,3 +52,8 @@ output "system_node_group_label" {
   value       = var.system_node_group_label
   description = "Label for the System node group"
 }
+
+output "scylla_security_group_id" {
+  value       = aws_security_group.scylla_security_group.id
+  description = "ID of the Scylla Security Group"
+}

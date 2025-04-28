@@ -119,7 +119,7 @@ No modules.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.91.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.94.1 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.6 |
 
 ## Modules
@@ -175,7 +175,7 @@ No modules.
 | <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
 | <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
 | <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
-| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `null` | no |
+| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
 | <a name="input_eks_node_group_subnets"></a> [eks\_node\_group\_subnets](#input\_eks\_node\_group\_subnets) | A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
@@ -215,6 +215,7 @@ No modules.
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
 | <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
+| <a name="output_scylla_security_group_id"></a> [scylla\_security\_group\_id](#output\_scylla\_security\_group\_id) | ID of the Scylla Security Group |
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->

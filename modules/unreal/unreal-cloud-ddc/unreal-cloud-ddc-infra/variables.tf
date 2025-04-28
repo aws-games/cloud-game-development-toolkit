@@ -192,7 +192,7 @@ variable "system_managed_node_min_size" {
 variable "eks_cluster_public_endpoint_access_cidr" {
   type        = list(string)
   description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint."
-  default     = null
+  default     = [] #CHANGED: changed default to empty list from null because the condition in eks_cluster_public_access checks for length of CIDRs for the EKS public endpoint which if you don't want to make the EKS publically accessible you leave blank and the validation errors
 }
 
 variable "kubernetes_version" {
@@ -229,7 +229,7 @@ variable "eks_cluster_public_access" {
   default     = false
   description = "Allows public access of EKS Control Plane should be used with "
   validation {
-    condition     = (var.eks_cluster_public_access == true) && (length(var.eks_cluster_public_endpoint_access_cidr) > 0) && !contains(["0.0.0.0"], var.eks_cluster_public_access)
+    condition     = !var.eks_cluster_public_access || ((var.eks_cluster_public_access == true) && (length(var.eks_cluster_public_endpoint_access_cidr) > 0) && !contains(["0.0.0.0"], var.eks_cluster_public_access))
     error_message = "If public access is allowed need to set up eks_cluster_access_cidr with at least a single value."
   }
 }

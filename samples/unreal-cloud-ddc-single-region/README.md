@@ -68,14 +68,15 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.85.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.27.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.94.1 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.36.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.4.5 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_scylla_monitoring"></a> [scylla\_monitoring](#module\_scylla\_monitoring) | ../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-monitoring | n/a |
 | <a name="module_unreal_cloud_ddc_infra"></a> [unreal\_cloud\_ddc\_infra](#module\_unreal\_cloud\_ddc\_infra) | ../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra | n/a |
 | <a name="module_unreal_cloud_ddc_intra_cluster"></a> [unreal\_cloud\_ddc\_intra\_cluster](#module\_unreal\_cloud\_ddc\_intra\_cluster) | ../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster | n/a |
 | <a name="module_unreal_cloud_ddc_vpc"></a> [unreal\_cloud\_ddc\_vpc](#module\_unreal\_cloud\_ddc\_vpc) | ./vpc | n/a |
@@ -84,6 +85,8 @@ No outputs.
 
 | Name | Type |
 |------|------|
+| [aws_security_group_rule.scylla_monitoring_ingress_node_exporter](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.scylla_monitoring_ingress_prometheus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [awscc_secretsmanager_secret.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -101,7 +104,5 @@ No outputs.
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_token"></a> [token](#output\_token) | n/a |
+No outputs.
 <!-- END_TF_DOCS -->
