@@ -22,8 +22,8 @@ config:
 global:
    #AWS specific configuration
    cloudProvider: "AWS"
-   awsRegion: ${region}
-   siteName: ${region}
+   awsRegion: ${aws_region}
+   siteName: ${aws_region}
    awsRole: AssumeRoleWebIdentity # service accounts are IAM mapped
 
    auth:
@@ -105,9 +105,10 @@ nginx:
 
 service:
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-name: "unreal-cloud-ddc"
+    service.beta.kubernetes.io/aws-load-balancer-name: "cgd-unreal-cloud-ddc"
     service.beta.kubernetes.io/aws-load-balancer-type: "external"
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-security-groups: ${security_group_ids}
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"

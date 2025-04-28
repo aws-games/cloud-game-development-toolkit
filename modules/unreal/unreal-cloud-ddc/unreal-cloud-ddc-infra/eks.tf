@@ -7,7 +7,7 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   #checkov:skip=CKV_AWS_58:Secrets encryption will be enabled in a future update
   #checkov:skip=CKV_AWS_38:IP restriction set in module variables with a conditional
   #checkov:skip=CKV_AWS_339:Checkov not picking up supported version correctly. Added validation to check for correct version
-  name                      = var.name
+  name                      = "${local.name_prefix}-cluster"
   role_arn                  = aws_iam_role.eks_cluster_role.arn
   version                   = var.kubernetes_version
   enabled_cluster_log_types = var.eks_cluster_logging_types
@@ -27,7 +27,8 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
     security_group_ids = [
       aws_security_group.system_security_group.id,
       aws_security_group.worker_security_group.id,
-      aws_security_group.nvme_security_group.id
+      aws_security_group.nvme_security_group.id,
+      aws_security_group.cluster_security_group.id
     ]
   }
 }
@@ -43,7 +44,7 @@ resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
 ################################################################################
 resource "aws_eks_node_group" "worker_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "unreal-cloud-ddc-worker-ng"
+  node_group_name = "${local.name_prefix}-worker-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.worker_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
@@ -65,20 +66,22 @@ resource "aws_eks_node_group" "worker_node_group" {
     id      = aws_launch_template.worker_launch_template.id
     version = aws_launch_template.worker_launch_template.latest_version
   }
-  tags = {
-    Name = "unreal-cloud-ddc-worker-instance"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-worker-instance"
+    }
+  )
 }
 
 #Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "worker_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "unreal-ddc-worker-launch-template"
+  name_prefix   = "${local.name_prefix}-worker-launch-template"
   instance_type = var.worker_managed_node_instance_type
   vpc_security_group_ids = [
     aws_security_group.worker_security_group.id,
-    aws_eks_cluster.unreal_cloud_ddc_eks_cluster.vpc_config[0].cluster_security_group_id,
-    aws_security_group.scylla_security_group.id
+    aws_security_group.scylla_security_group.id,
+    aws_security_group.cluster_security_group.id
   ]
 
   //In line with best practices for container environments
@@ -96,9 +99,11 @@ resource "aws_launch_template" "worker_launch_template" {
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Name = "unreal-ddc-worker-instance"
-    }
+    tags = merge(var.tags,
+      {
+        Name = "${local.name_prefix}-worker-instance"
+      }
+    )
   }
 }
 
@@ -107,7 +112,7 @@ resource "aws_launch_template" "worker_launch_template" {
 ################################################################################
 resource "aws_eks_node_group" "nvme_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "unreal-cloud-ddc-nvme-ng"
+  node_group_name = "${local.name_prefix}-nvme-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.nvme_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
@@ -130,19 +135,23 @@ resource "aws_eks_node_group" "nvme_node_group" {
     id      = aws_launch_template.nvme_launch_template.id
     version = aws_launch_template.nvme_launch_template.latest_version
   }
-
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-nvme-instance"
+    }
+  )
 }
 
 #Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "nvme_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "unreal-ddc-nvme-launch-template"
+  name_prefix   = "${local.name_prefix}-nvme-launch-template"
   instance_type = var.nvme_managed_node_instance_type
   user_data     = base64encode(local.nvme-pre-bootstrap-userdata)
   vpc_security_group_ids = [
     aws_security_group.nvme_security_group.id,
-    aws_eks_cluster.unreal_cloud_ddc_eks_cluster.vpc_config[0].cluster_security_group_id,
-    aws_security_group.scylla_security_group.id
+    aws_security_group.scylla_security_group.id,
+    aws_security_group.cluster_security_group.id
   ]
 
   //In line with our recommendation for container environments
@@ -160,9 +169,11 @@ resource "aws_launch_template" "nvme_launch_template" {
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Name = "unreal-ddc-nvme-instance"
-    }
+    tags = merge(var.tags,
+      {
+        Name = "${local.name_prefix}-nvme-instance"
+      }
+    )
   }
 }
 
@@ -171,7 +182,7 @@ resource "aws_launch_template" "nvme_launch_template" {
 ################################################################################
 resource "aws_eks_node_group" "system_node_group" {
   cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "unreal-cloud-ddc-system-ng"
+  node_group_name = "${local.name_prefix}-system-ng"
   version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   node_role_arn   = aws_iam_role.system_node_group_role.arn
   subnet_ids      = var.eks_node_group_subnets
@@ -187,15 +198,18 @@ resource "aws_eks_node_group" "system_node_group" {
     max_size     = var.system_managed_node_max_size
     min_size     = var.system_managed_node_min_size
   }
-  tags = {
-    Name = "unreal-cloud-ddc-system-instance"
-  }
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-system-instance"
+    }
+  )
 }
 
 #Launch Templates default to intel based amazon linux need to fix
 resource "aws_launch_template" "system_launch_template" {
   #checkov:skip=CKV_AWS_341:Hop limit 2 required for the load balancer controller. Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "unreal-ddc-system-launch-template"
+  name_prefix   = "${local.name_prefix}-system-launch-template"
   instance_type = var.system_managed_node_instance_type
 
   //In line with best practices for container environments
@@ -209,7 +223,7 @@ resource "aws_launch_template" "system_launch_template" {
 
   vpc_security_group_ids = [
     aws_security_group.system_security_group.id,
-    aws_eks_cluster.unreal_cloud_ddc_eks_cluster.vpc_config[0].cluster_security_group_id
+    aws_security_group.cluster_security_group.id
   ]
 
   monitoring {
@@ -218,9 +232,11 @@ resource "aws_launch_template" "system_launch_template" {
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Name = "unreal-ddc-system-instance"
-    }
+    tags = merge(var.tags,
+      {
+        Name = "${local.name_prefix}-system-instance"
+      }
+    )
   }
 }
 ################################################################################
