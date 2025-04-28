@@ -3,7 +3,7 @@
 ################################################################################
 
 resource "aws_iam_instance_profile" "scylla_instance_profile" {
-  name = "scylladb_instance_profile"
+  name = "${local.name_prefix}-scylladb-instance-profile"
   role = aws_iam_role.scylla_role.name
 }
 ################################################################################
@@ -38,9 +38,11 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
     http_tokens                 = "required"
   }
 
-  tags = {
-    Name = "${var.name}-scylla-db"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-db"
+    }
+  )
 }
 
 resource "aws_instance" "scylla_ec2_instance_other_nodes" {
@@ -72,7 +74,9 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
     http_tokens                 = "required"
   }
 
-  tags = {
-    Name = "${var.name}-scylla-db"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-db"
+    }
+  )
 }

@@ -3,7 +3,7 @@
 ################################################################################
 
 resource "aws_iam_role" "ebs_csi_iam_role" {
-  name_prefix = "ebs-csi-sa-role-"
+  name_prefix = "${local.name_prefix}-ebs-csi-sa-role-"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -22,6 +22,11 @@ resource "aws_iam_role" "ebs_csi_iam_role" {
       }
     }]
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-ebs-csi-sa-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachment" "ebs_csi_policy_attacment" {
@@ -32,7 +37,7 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_policy_attacment" {
 resource "aws_iam_policy" "s3_secrets_manager_iam_policy" {
   depends_on = [data.aws_s3_bucket.unreal_cloud_ddc_bucket]
 
-  name_prefix = "unreal-ddc-s3-secrets-manager-policy-"
+  name_prefix = "${local.name_prefix}-s3-secrets-manager-policy-"
   path        = "/"
   description = "Policy to grant access to unreal cloud ddc bucket"
 
@@ -40,7 +45,7 @@ resource "aws_iam_policy" "s3_secrets_manager_iam_policy" {
 }
 
 resource "aws_iam_role" "unreal_cloud_ddc_sa_iam_role" {
-  name_prefix = "unreal-ddc-sa-role-"
+  name_prefix = "${local.name_prefix}-sa-role-"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -59,6 +64,11 @@ resource "aws_iam_role" "unreal_cloud_ddc_sa_iam_role" {
       }
     }]
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-sa-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachment" "unreal_cloud_ddc_sa_iam_role_s3_secrets_policy_attachment" {
