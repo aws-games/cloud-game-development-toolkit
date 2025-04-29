@@ -19,10 +19,55 @@ resource "awscc_secretsmanager_secret" "helix_core_super_user_username" {
   secret_string = "perforce"
 }
 
-
 ##########################################
 # Perforce Helix Core Instance
 ##########################################
+
+locals {
+  is_fsxn  = var.storage_type == "FSxN"
+  is_iscsi = var.protocol == "ISCSI"
+  iscsi_depot_volume = (local.is_iscsi ?
+    "/dev/mapper/${aws_fsx_ontap_volume.depot[0].name}" :
+    null
+  )
+  nfs_depot_volume = (!local.is_iscsi ?
+    "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.depot[0].junction_path}"
+    : null
+  )
+  ebs_depot_volume = var.storage_type == "EBS" ? "/dev/sdf" : null
+  iscsi_metadata_volume = (local.is_iscsi ?
+    "/dev/mapper/${aws_fsx_ontap_volume.metadata[0].name}" :
+    null
+  )
+  nfs_metadata_volume = (!local.is_iscsi ?
+    "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.metadata[0].junction_path}"
+    :
+    null
+  )
+  ebs_metadata_volume = var.storage_type == "EBS" ? "/dev/sdg" : null
+  iscsi_logs_volume = (local.is_iscsi ?
+    "/dev/mapper/${aws_fsx_ontap_volume.logs[0].name}" :
+    null
+  )
+  nfs_logs_volume = (!local.is_iscsi ?
+    "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.logs[0].junction_path}"
+    :
+    null
+  )
+  ebs_logs_volume = var.storage_type == "EBS" ? "/dev/sdh" : null
+  depot_volume_name = (local.is_fsxn ?
+    (local.is_iscsi ? local.iscsi_depot_volume : local.nfs_depot_volume) :
+    local.ebs_depot_volume
+  )
+  metadata_volume_name = (local.is_fsxn ?
+    (local.is_iscsi ? local.iscsi_metadata_volume : local.nfs_metadata_volume) :
+    local.ebs_metadata_volume
+  )
+  logs_volume_name = (local.is_fsxn ?
+    (local.is_iscsi ? local.iscsi_logs_volume : local.nfs_logs_volume) :
+    local.ebs_logs_volume
+  )
+}
 
 resource "aws_instance" "helix_core_instance" {
   ami           = data.aws_ami.helix_core_ami.id
@@ -35,17 +80,20 @@ resource "aws_instance" "helix_core_instance" {
 
   user_data = <<-EOT
     #!/bin/bash
-    EBS_LOGS_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxlogs" : "/dev/sdf"}"
-    EBS_METADATA_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxmetadata" : "/dev/sdg"}"
-    EBS_DEPOTS_NAME="${var.storage_type == "FSxN" ? "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:/hxdepots" : "/dev/sdh"}"
-    /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs $EBS_LOGS_NAME \
-     --hx_metadata $EBS_METADATA_NAME \
-     --hx_depots $EBS_DEPOTS_NAME \
+    DEPOT_VOLUME_NAME=${local.depot_volume_name}
+    METADATA_VOLUME_NAME=${local.metadata_volume_name}
+    LOGS_VOLUME_NAME=${local.logs_volume_name}
+    /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs $LOGS_VOLUME_NAME \
+     --hx_metadata $METADATA_VOLUME_NAME \
+     --hx_depots $DEPOT_VOLUME_NAME \
      --p4d_type ${var.server_type} \
      --username ${var.helix_core_super_user_username_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_username[0].secret_id : var.helix_core_super_user_username_secret_arn} \
      --password ${var.helix_core_super_user_password_secret_arn == null ? awscc_secretsmanager_secret.helix_core_super_user_password[0].secret_id : var.helix_core_super_user_password_secret_arn} \
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
      ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
+     ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : null} \
+     ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : null} \
+     ${local.is_fsxn ? "--fsxn_mgmt_ip ${var.fsxn_mgmt_ip}" : null} \
      --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
      --unicode ${var.unicode ? "true" : "false"} \
      --selinux ${var.selinux ? "true" : "false"} \
@@ -67,6 +115,8 @@ resource "aws_instance" "helix_core_instance" {
   monitoring    = true
   ebs_optimized = true
 
+  user_data_replace_on_change = true
+
   root_block_device {
     encrypted = true
   }
@@ -74,6 +124,12 @@ resource "aws_instance" "helix_core_instance" {
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-${var.server_type}-${local.helix_core_az}"
   })
+
+  depends_on = [
+    netapp-ontap_san_lun-map.depots_lun_map,
+    netapp-ontap_san_lun-map.logs_lun_map,
+    netapp-ontap_san_lun-map.metadata_lun_map
+  ]
 }
 
 ##########################################
@@ -140,7 +196,6 @@ resource "aws_volume_attachment" "depot_attachment" {
   volume_id   = aws_ebs_volume.depot[count.index].id
   instance_id = aws_instance.helix_core_instance.id
 }
-
 
 
 ##########################################

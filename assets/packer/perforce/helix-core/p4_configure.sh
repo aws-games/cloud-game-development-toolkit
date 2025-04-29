@@ -190,6 +190,8 @@ prepare_iscsi_volume() {
     # Check if iSCSI preparation is needed
     prepare_iscsi
 
+    log_message "configuring ISCSI for $VOLUME"
+
     local fs_type=$(lsblk -no FSTYPE "$VOLUME_NAME")
     if [ -z "$fs_type" ]; then
         # Retrieve the serial-hex value from the LUN
@@ -229,15 +231,15 @@ prepare_iscsi_volume() {
 
         log_message "Checking if the new partition exists."
         while [ $elapsed -lt $timeout ]; do
-        if [ -e $VOLUME_NAME ]; then
-        log_message "The device $VOLUME_NAME exists."
+        if [ -e $VOLUME ]; then
+        log_message "The device $VOLUME exists."
         break
         fi
         sleep $interval
         elapsed=$((elapsed + interval))
         done
-        if [ ! -e $VOLUME_NAME ]; then
-        log_message "The device $VOLUME_NAME does not exist. Exiting."
+        if [ ! -e $VOLUME]; then
+        log_message "The device $VOLUME does not exist. Exiting."
         exit 1
         fi
             log_message "Creating the file system on the new partition."
@@ -327,12 +329,12 @@ print_help() {
     echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
     echo "  --fsxn_password <secret_id> AWS secret manager FSxN fsxadmin user password"
     echo "  --fsxn_svm_name <secret_id> FSxN storage virtual name"
-    echo "  --fsxn_ip_mgmt <ip_address> FSxN managment ip address"
+    echo "  --fsxn_mgmt_ip <ip_address> FSxN managment ip address"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_ip_mgmt:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_mgmt_ip:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -375,18 +377,18 @@ while true; do
             shift 2
             ;;
         --hx_logs)
-            EBS_LOGS="$2"
-            log_message "LOGS: $EBS_LOGS"
+            LOGS_VOLUME="$2"
+            log_message "LOGS: $LOGS_VOLUME"
             shift 2
             ;;
         --hx_metadata)
-            EBS_METADATA="$2"
-            log_message "METADATA: $EBS_METADATA"
+            METADATA_VOLUME="$2"
+            log_message "METADATA: $METADATA_VOLUME"
             shift 2
             ;;
         --hx_depots)
-            EBS_DEPOTS="$2"
-            log_message "DEPOTS: $EBS_DEPOTS"
+            DEPOTS_VOLUME="$2"
+            log_message "DEPOTS: $DEPOTS_VOLUME"
             shift 2
             ;;
         --case_sensitive)
@@ -433,7 +435,7 @@ while true; do
             log_message "FSXN SVM NAME: $FSXN_SVM"
             shift 2
             ;;
-        --fsxn_ip_mgmt)
+        --fsxn_mgmt_ip)
             FSXN_IP="$2"
             log_message "FSXN IP: $FSXN_IP"
             shift 2
@@ -505,9 +507,9 @@ perform_operations() {
     mkdir -p /mnt/temp_hxmetadata
     mkdir -p /mnt/temp_hxdepots
 
-    mount_fs_or_ebs $EBS_LOGS /mnt/temp_hxlogs
-    mount_fs_or_ebs $EBS_METADATA /mnt/temp_hxmetadata
-    mount_fs_or_ebs $EBS_DEPOTS /mnt/temp_hxdepots
+    mount_fs_or_ebs $LOGS_VOLUME /mnt/temp_hxlogs
+    mount_fs_or_ebs $METADATA_VOLUME /mnt/temp_hxmetadata
+    mount_fs_or_ebs $DEPOTS_VOLUME /mnt/temp_hxdepots
 
     # Create temporary directories and mount
     mkdir -p /hxlogs
@@ -530,9 +532,9 @@ perform_operations() {
     rm -rf /hxdepots/*
 
     # Mount EBS volumes or FSx to final destinations
-    mount_fs_or_ebs $EBS_LOGS /hxlogs
-    mount_fs_or_ebs $EBS_METADATA /hxmetadata
-    mount_fs_or_ebs $EBS_DEPOTS /hxdepots
+    mount_fs_or_ebs $LOGS_VOLUME /hxlogs
+    mount_fs_or_ebs $METADATA_VOLUME /hxmetadata
+    mount_fs_or_ebs $DEPOTS_VOLUME /hxdepots
 
     log_message "Operation completed successfully."
 }
@@ -549,9 +551,9 @@ condition_met=false
 
 while [ $attempt -le $MAX_ATTEMPTS ] && [ "$condition_met" = false ]; do
     # Check if EBS volumes or FSx mount points are provided for all required paths
-    if ( [ -e "$EBS_LOGS" ] || is_fsx_mount "$EBS_LOGS" || is_iscsi_device "$EBS_LOGS") && \
-       ( [ -e "$EBS_METADATA" ] || is_fsx_mount "$EBS_METADATA" || is_iscsi_device "$EBS_METADATA" ) && \
-       ( [ -e "$EBS_DEPOTS" ] || is_fsx_mount "$EBS_DEPOTS" || is_iscsi_device "$EBS_DEPOTS"); then
+    if ( [ -e "$LOGS_VOLUME" ] || is_fsx_mount "$LOGS_VOLUME" || is_iscsi_device "$LOGS_VOLUME") && \
+       ( [ -e "$METADATA_VOLUME" ] || is_fsx_mount "$METADATA_VOLUME" || is_iscsi_device "$METADATA_VOLUME" ) && \
+       ( [ -e "$DEPOTS_VOLUME" ] || is_fsx_mount "$DEPOTS_VOLUME" || is_iscsi_device "$DEPOTS_VOLUME"); then
         condition_met=true
         perform_operations
     else
