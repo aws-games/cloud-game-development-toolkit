@@ -9,7 +9,7 @@ packer {
 
 variable "region" {
     type = string
-    default = "us-west-2"
+    default = null
 }
 
 variable "vpc_id" {
