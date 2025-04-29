@@ -7,28 +7,10 @@ resource "aws_security_group" "perforce_network_load_balancer" {
   vpc_id      = aws_vpc.perforce_vpc.id
   #checkov:skip=CKV2_AWS_5:Security group is attached to Perforce NLB
 
-  tags = {
-    Name = "${local.project_prefix}-perforce-nlb"
-  }
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Egress for Perforce NLB to Helix Core instance
-resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_helix_core" {
-  security_group_id            = aws_security_group.perforce_network_load_balancer.id
-  description                  = "Perforce NLB outbound to Helix Core"
-  from_port                    = 1666
-  to_port                      = 1666
-  ip_protocol                  = "TCP"
-  referenced_security_group_id = module.perforce_helix_core.security_group_id
-}
-
-# Ingress from Perforce NLB to Helix Core instance
-resource "aws_vpc_security_group_ingress_rule" "perforce_nlb_inbound_helix_core" {
-  security_group_id            = module.perforce_helix_core.security_group_id
-  description                  = "Perforce NLB inbound to Helix Core"
+# Helix Swarm -> Helix Core
+resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_swarm" {
+  for_each = module.perforce_helix_core.security_group_ids
+  security_group_id            = each.value
   ip_protocol                  = "TCP"
   from_port                    = 1666
   to_port                      = 1666
@@ -90,56 +72,31 @@ resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_helix_swarm
   to_port                      = 80
   ip_protocol                  = "TCP"
   referenced_security_group_id = module.perforce_helix_swarm.service_security_group_id
+  description                  = "Enables Helix Swarm to access Helix Core ${each.key}."
 }
 
-# Ingress from Perforce Web Services ALB to Helix Swarm service
-resource "aws_vpc_security_group_ingress_rule" "perforce_alb_inbound_helix_swarm" {
-  security_group_id            = module.perforce_helix_swarm.service_security_group_id
-  description                  = "Perforce ALB inbound to Helix Swarm"
-  ip_protocol                  = "TCP"
-  from_port                    = 80
-  to_port                      = 80
-  referenced_security_group_id = aws_security_group.perforce_web_services_alb.id
-  #checkov:skip=CKV_AWS_260:Access restricted to Perforce Web Services ALB
+# Helix Core -> Helix Swarm
+resource "aws_vpc_security_group_ingress_rule" "helix_swarm_inbound_core" {
+  for_each = module.perforce_helix_core.helix_core_eip_public_ips
+
+  security_group_id = module.perforce_helix_swarm.alb_security_group_id
+  ip_protocol       = "TCP"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "${each.value}/32"
+  description       = "Enables Helix Core ${each.key} to access Helix Swarm"
 }
 
-# Egress for Perforce Web Services ALB to Helix Authentication service
-resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_helix_auth" {
-  security_group_id            = aws_security_group.perforce_web_services_alb.id
-  description                  = "Perforce ALB outbound to Helix Auth"
-  from_port                    = 3000
-  to_port                      = 3000
-  ip_protocol                  = "TCP"
-  referenced_security_group_id = module.perforce_helix_authentication_service.service_security_group_id
+# Helix Core -> Helix Authentication Service
+resource "aws_vpc_security_group_ingress_rule" "helix_auth_inbound_core" {
+  for_each = module.perforce_helix_core.helix_core_eip_public_ips
+
+  security_group_id = module.perforce_helix_authentication_service.alb_security_group_id
+  ip_protocol       = "TCP"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "${each.value}/32"
+  description       = "Enables Helix Core ${each.key} to access Helix Authentication Service"
+
 }
 
-# Ingress from Perforce Web Services ALB to Helix Authentication service
-resource "aws_vpc_security_group_ingress_rule" "perforce_alb_inbound_helix_auth" {
-  security_group_id            = module.perforce_helix_authentication_service.service_security_group_id
-  description                  = "Perforce ALB inbound to Helix Auth"
-  ip_protocol                  = "TCP"
-  from_port                    = 3000
-  to_port                      = 3000
-  referenced_security_group_id = aws_security_group.perforce_web_services_alb.id
-}
-
-##########################################
-# Helix Swarm to Helix Core
-##########################################
-resource "aws_vpc_security_group_ingress_rule" "perforce_helix_core_inbound_helix_swarm" {
-  security_group_id            = module.perforce_helix_core.security_group_id
-  description                  = "Helix Core inbound to Helix Swarm"
-  ip_protocol                  = "TCP"
-  from_port                    = 1666
-  to_port                      = 1666
-  referenced_security_group_id = module.perforce_helix_swarm.service_security_group_id
-}
-
-resource "aws_vpc_security_group_egress_rule" "perforce_helix_swarm_outbound_helix_core" {
-  security_group_id            = module.perforce_helix_swarm.service_security_group_id
-  description                  = "Helix Swarm outbound to Helix Core"
-  from_port                    = 1666
-  to_port                      = 1666
-  ip_protocol                  = "TCP"
-  referenced_security_group_id = module.perforce_helix_core.security_group_id
-}

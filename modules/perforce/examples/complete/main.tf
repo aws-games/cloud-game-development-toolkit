@@ -28,27 +28,37 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 ##########################################
 
 module "perforce_helix_core" {
-  source = "../../helix-core"
+  source                = "../../helix-core"
+  server_type           = "p4d_commit"
+  instance_type         = "c8g.large"
+  instance_architecture = "arm64"
+  server_configuration = [
+    {
+    type = "commit"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.public_subnets[0].id
+    },
+        {
+    type = "replica"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.private_subnets[0].id
+    },
+    {
+    type = "edge"
+    vpc_id                = aws_vpc.perforce_vpc.id
+    subnet_id    = aws_subnet.private_subnets[0].id
+    }
+  ]
 
   # Networking
   vpc_id                      = aws_vpc.perforce_vpc.id
   instance_subnet_id          = aws_subnet.public_subnets[0].id
   internal                    = false # public
   fully_qualified_domain_name = "perforce.${var.root_domain_name}"
-
-
-  # Compute and Storage
-  instance_type         = "c8g.large"
-  instance_architecture = "arm64"
-  storage_type          = "EBS"
-  depot_volume_size     = 64
-  metadata_volume_size  = 32
-  logs_volume_size      = 32
-
-  # Configuration
-  plaintext                        = false
-  server_type                      = "p4d_commit"
   helix_authentication_service_url = "https://auth.${aws_route53_zone.perforce_private_hosted_zone.name}"
+  helix_core_super_user_password_secret_name = "example-password-secret-name"
+  helix_core_super_user_username_secret_name = "example-username-secret-name"
+
 }
 
 ##########################################
@@ -77,17 +87,16 @@ module "perforce_helix_authentication_service" {
 # Perforce Helix Swarm
 ##########################################
 module "perforce_helix_swarm" {
-  source = "../../helix-swarm"
-
-  # Networking
-  vpc_id                           = aws_vpc.perforce_vpc.id
-  create_application_load_balancer = false # Shared Perforce web services application load balancer
-  helix_swarm_service_subnets      = aws_subnet.private_subnets[*].id
+  source                      = "../../helix-swarm"
+  vpc_id                      = aws_vpc.perforce_vpc.id
+  cluster_name                = aws_ecs_cluster.perforce_cluster.name
+  helix_swarm_alb_subnets     = aws_subnet.public_subnets[*].id
+  helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
+  certificate_arn             = aws_acm_certificate.helix.arn
+  p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt[var.helix_core_server_type].name}:1666"
+  create_application_load_balancer = false
   fully_qualified_domain_name      = "swarm.perforce.${var.root_domain_name}"
-
-  # Compute
   cluster_name = aws_ecs_cluster.perforce_cluster.name
-
   # Configuration
   p4d_port                    = "ssl:${aws_route53_record.internal_helix_core.name}:1666"
   p4d_super_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn

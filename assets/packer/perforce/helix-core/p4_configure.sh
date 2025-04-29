@@ -140,12 +140,6 @@ set_unicode() {
     fi
 }
 
-set_selinux() {
-    # update label for SELinux -> This is optional as by default in some operating systems like Amazon Linux SELinux is disabled - Permissive
-    semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
-    restorecon -vF /p4/1/bin/p4d_1_init
-}
-
 # Starting the script
 log_message "Starting the p4 configure script."
 
@@ -231,22 +225,12 @@ while true; do
             ;;
         --unicode)
             if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
-                UNICODE="$2"
-                log_message "UNICODE: $UNICODE"
-                shift 2
+              UNICODE="$2"
+              log_message "UNICODE: $UNICODE"
+              shift 2
             else
-                log_message "Error: --unicode flag must be either 'true' or 'false'"
-                exit 1
-            fi
-            ;;
-        --selinux)
-            if [ "${2,,}" = "true" ] || [ "${2,,}" = "false" ]; then
-                SELINUX="$2"
-                log_message "SELINUX: $SELINUX"
-                shift 2
-            else
-                log_message "Error: --selinux flag must be either 'true' or 'false'"
-                exit 1
+              log_message "Error: --unicode flag must be either 'true' or 'false'"
+              exit 1
             fi
             ;;
         --plaintext)
@@ -473,12 +457,10 @@ sed -e "s:__INSTANCE__:$I:g" -e "s:__OSUSER__:perforce:g" $SDP/Server/Unix/p4/co
 chmod 644 p4d_${I}.service
 systemctl daemon-reload
 
-if [ "${SELINUX,,}" = "true" ]; then
-    set_selinux
-    log_message "SELinux labels updated"
-elif [ "${SELINUX,,}" = "false" ]; then
-    log_message "Skipping SELinux label update"
-fi
+
+# update label for selinux -> This should be optional as by defualt in Amazon Linux selinux is disabled - Permissive
+# semanage fcontext -a -t bin_t /p4/1/bin/p4d_1_init
+# restorecon -vF /p4/1/bin/p4d_1_init
 
 # start service
 systemctl start p4d_1
@@ -555,6 +537,14 @@ else
   log_message "Configuring Helix Authentication Extension against $HELIX_AUTH_SERVICE_URL"
   setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$HELIX_AUTH_SERVICE_URL" "oidc" "email" "email"
 fi
+
+if [ "${UNICODE,,}" = "true" ]; then
+    set_unicode
+    log_message "Unicode configuration applied"
+elif [ "${UNICODE,,}" = "false" ]; then
+    log_message "Skipping Unicode configuration"
+fi
+
 
 if [ "${UNICODE,,}" = "true" ]; then
     set_unicode

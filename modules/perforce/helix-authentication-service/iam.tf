@@ -91,6 +91,14 @@ resource "aws_iam_role_policy_attachment" "helix_authentication_service_default_
   policy_arn = aws_iam_policy.helix_authentication_service_default_policy[0].arn
 }
 
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_default_policy_attachment" {
+  count = var.create_helix_authentication_service_default_role ? 1 : 0
+
+  role       = aws_iam_role.helix_authentication_service_default_role[0].name
+  policy_arn = aws_iam_policy.helix_authentication_service_default_policy[0].arn 
+  
+}
+
 data "aws_iam_policy_document" "helix_authentication_service_secrets_manager_policy" {
   statement {
     effect = "Allow"
@@ -124,18 +132,24 @@ resource "aws_iam_policy" "helix_authentication_service_secrets_manager_policy" 
 resource "aws_iam_role" "helix_authentication_service_task_execution_role" {
   name               = "${var.project_prefix}-helix-authentication-service-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
   tags = merge(local.tags,
     {
       Name = "${var.project_prefix}-helix-authentication-service-task-execution-role"
     }
   )
 }
+
 resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_ecs" {
   role       = aws_iam_role.helix_authentication_service_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
 resource "aws_iam_role_policy_attachment" "helix_authentication_service_task_execution_role_secrets_manager" {
+  role       = aws_iam_role.helix_authentication_service_task_execution_role.name
+  policy_arn = aws_iam_policy.helix_authentication_service_secrets_manager_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "helix_authentication_service_secrets_manager_policy_attachment" {
   role       = aws_iam_role.helix_authentication_service_task_execution_role.name
   policy_arn = aws_iam_policy.helix_authentication_service_secrets_manager_policy.arn
 }

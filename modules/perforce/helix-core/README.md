@@ -1,5 +1,52 @@
 # Perforce Helix Core Module
 
+This Terraform module deploys Perforce Helix Core servers in AWS, supporting various server configurations including commit servers, edge servers, and replicas. The module handles the provisioning of EC2 instances, EBS volumes, security groups, and necessary AWS resources to create a complete Helix Core environment.
+
+## Features
+
+- Supports multiple server types (commit, edge, replica) in a single deployment
+- Configurable storage volumes for logs, metadata, and depot
+- Automatic security group creation with proper inter-server communication rules
+- Secrets management for Helix Core credentials
+- Support for both internal and internet-facing deployments
+- Customizable instance types and storage sizes
+
+## Usage
+
+```hcl
+module "helix_core" {
+  source = "path/to/modules/perforce/helix-core"
+  
+  server_configuration = [
+    {
+      type      = "commit"
+      subnet_id = "subnet-12345678"
+      vpc_id    = "vpc-12345678"
+    },
+    {
+      type      = "edge"
+      subnet_id = "subnet-87654321"
+      vpc_id    = "vpc-12345678"
+    },
+    {
+      type      = "replica"
+      subnet_id = "subnet-abcdef12"
+      vpc_id    = "vpc-12345678"
+    }
+  ]
+  
+  instance_type      = "c6in.xlarge"
+  depot_volume_size  = 256
+  metadata_volume_size = 64
+  logs_volume_size   = 64
+  
+  # Optional configurations
+  internal = false
+  unicode  = true
+  helix_case_sensitive = true
+}
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

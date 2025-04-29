@@ -76,34 +76,27 @@ resource "aws_iam_role" "helix_swarm_default_role" {
   count              = var.create_helix_swarm_default_role ? 1 : 0
   name               = "${var.project_prefix}-helix-swarm-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-
-  tags = merge(local.tags,
-    {
-      Name = "${var.project_prefix}-helix-swarm-default-role"
-    }
-  )
+  tags = local.tags
 }
 
-resource "aws_iam_role_policy_attachment" "helix_swarm_default_role" {
+resource "aws_iam_role_policy_attachment" "helix_swarm_default_policy_attachment" {
   count      = var.create_helix_swarm_default_role ? 1 : 0
   role       = aws_iam_role.helix_swarm_default_role[0].name
   policy_arn = aws_iam_policy.helix_swarm_default_policy[0].arn
 }
 
+
 resource "aws_iam_role" "helix_swarm_task_execution_role" {
   name               = "${var.project_prefix}-helix-swarm-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  tags = merge(local.tags,
-    {
-      name = "${var.project_prefix}-helix-swarm-task-execution-role"
-    }
-  )
 }
-resource "aws_iam_role_policy_attachment" "helix_swarm_task_execution_role_ecs" {
+
+resource "aws_iam_role_policy_attachment" "helix_swarm_task_execution_policy_attachment" {
   role       = aws_iam_role.helix_swarm_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
-resource "aws_iam_role_policy_attachment" "helix_swarm_task_execution_role_ssm" {
+
+resource "aws_iam_role_policy_attachment" "helix_swarm_ssm_policy_attachment" {
   role       = aws_iam_role.helix_swarm_task_execution_role.name
   policy_arn = aws_iam_policy.helix_swarm_ssm_policy.arn
 }

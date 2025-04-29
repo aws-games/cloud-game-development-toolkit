@@ -40,17 +40,22 @@ resource "aws_route53_record" "external_perforce_helix_core" {
   records = [module.perforce_helix_core.helix_core_eip_public_ip]
 }
 
-# Route all internal web service traffic to the ALB
-resource "aws_route53_record" "internal_perforce_web_services" {
-  zone_id = aws_route53_zone.perforce_private_hosted_zone.id
-  name    = "*.${aws_route53_zone.perforce_private_hosted_zone.name}"
+resource "aws_route53_record" "perforce_helix_core" {
+  for_each = module.perforce_helix_core.helix_core_eip_public_ips
+
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = "${each.key}.core.helix.${data.aws_route53_zone.root.name}"
   type    = "A"
-  alias {
-    name                   = aws_lb.perforce_web_services.dns_name
-    zone_id                = aws_lb.perforce_web_services.zone_id
-    evaluate_target_health = true
-  }
+  ttl     = 300
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
+  records = [each.value]
 }
+
+resource "aws_route53_record" "perforce_helix_core_pvt" {
+  for_each = module.perforce_helix_core.helix_core_private_ips
+
+  zone_id = aws_route53_zone.helix_private_zone.zone_id
+  name    = "${each.key}.core.${aws_route53_zone.helix_private_zone.name}"
 
 # Route all internal Helix Core traffic to the instance
 resource "aws_route53_record" "internal_helix_core" {
@@ -59,6 +64,8 @@ resource "aws_route53_record" "internal_helix_core" {
   type    = "A"
   records = [module.perforce_helix_core.helix_core_private_ip]
   ttl     = 300
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
+  records = [each.value]
 }
 
 ##########################################
