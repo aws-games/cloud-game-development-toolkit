@@ -68,13 +68,22 @@ resource "aws_security_group" "fsxn_lambda_link_security_group" {
   }
 }
 
-resource "aws_vpc_security_group_egress_rule" "fsxn_lambda_link_security_group_egress_rule" {
+resource "aws_vpc_security_group_egress_rule" "link_outbound_fsxn" {
   ip_protocol                  = "TCP"
   security_group_id            = aws_security_group.fsxn_lambda_link_security_group.id
   description                  = "Grants outbound access from FSxN Lambda to FSxN filesystem"
   from_port                    = 443
   to_port                      = 443
   referenced_security_group_id = var.fsxn_filesystem_security_group_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_link" {
+  ip_protocol                  = "tcp"
+  security_group_id            = var.fsxn_filesystem_security_group_id
+  description                  = "Allows inbound access from FSxN Lambda Link to Filesystem."
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = aws_security_group.fsxn_lambda_link_security_group.id
 }
 
 resource "aws_lambda_function" "lambda_function" {
@@ -140,9 +149,13 @@ resource "netapp-ontap_san_igroup" "perforce_igroup" {
   svm = {
     name = var.fsxn_svm_name
   }
-  os_type    = "linux"
-  protocol   = "iscsi"
-  depends_on = [aws_lambda_function.lambda_function]
+  os_type  = "linux"
+  protocol = "iscsi"
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_lun" "logs_volume_lun" {
@@ -153,7 +166,11 @@ resource "netapp-ontap_lun" "logs_volume_lun" {
   svm_name        = var.fsxn_svm_name
   volume_name     = aws_fsx_ontap_volume.logs[0].name
   name            = "/vol/${aws_fsx_ontap_volume.logs[0].name}/${aws_fsx_ontap_volume.logs[0].name}"
-  depends_on      = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_san_lun-map" "logs_lun_map" {
@@ -168,7 +185,11 @@ resource "netapp-ontap_san_lun-map" "logs_lun_map" {
   igroup = {
     name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
-  depends_on = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_lun" "metadata_volume_lun" {
@@ -179,7 +200,11 @@ resource "netapp-ontap_lun" "metadata_volume_lun" {
   svm_name        = var.fsxn_svm_name
   volume_name     = aws_fsx_ontap_volume.metadata[0].name
   name            = "/vol/${aws_fsx_ontap_volume.metadata[0].name}/${aws_fsx_ontap_volume.metadata[0].name}"
-  depends_on      = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_san_lun-map" "metadata_lun_map" {
@@ -194,7 +219,11 @@ resource "netapp-ontap_san_lun-map" "metadata_lun_map" {
   igroup = {
     name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
-  depends_on = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_lun" "depots_volume_lun" {
@@ -205,7 +234,11 @@ resource "netapp-ontap_lun" "depots_volume_lun" {
   svm_name        = var.fsxn_svm_name
   volume_name     = aws_fsx_ontap_volume.depot[0].name
   name            = "/vol/${aws_fsx_ontap_volume.depot[0].name}/${aws_fsx_ontap_volume.depot[0].name}"
-  depends_on      = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
 
 resource "netapp-ontap_san_lun-map" "depots_lun_map" {
@@ -220,5 +253,9 @@ resource "netapp-ontap_san_lun-map" "depots_lun_map" {
   igroup = {
     name = netapp-ontap_san_igroup.perforce_igroup[count.index].name
   }
-  depends_on = [aws_lambda_function.lambda_function]
+  depends_on = [
+    aws_lambda_function.lambda_function,
+    aws_vpc_security_group_egress_rule.link_outbound_fsxn,
+    aws_vpc_security_group_ingress_rule.fsxn_inbound_link
+  ]
 }
