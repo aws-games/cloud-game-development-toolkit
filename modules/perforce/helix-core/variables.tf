@@ -228,7 +228,7 @@ variable "fsxn_filesystem_security_group_id" {
   type        = string
   default     = null
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_filesystem_security_group_id) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || var.fsxn_filesystem_security_group_id != null
     error_message = "The fsxn_filesystem_security_group_id variable must be provided when storage_type is FSxN and ISCSI protocol."
   }
 }

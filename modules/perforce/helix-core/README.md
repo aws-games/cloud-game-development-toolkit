@@ -51,8 +51,9 @@ No modules.
 | [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/volume_attachment) | resource |
 | [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/volume_attachment) | resource |
 | [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/volume_attachment) | resource |
-| [aws_vpc_security_group_egress_rule.fsxn_lambda_link_security_group_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.helix_core_internet](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.link_outbound_fsxn](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.fsxn_inbound_link](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [awscc_secretsmanager_secret.helix_core_super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.34.0/docs/resources/secretsmanager_secret) | resource |
 | [awscc_secretsmanager_secret.helix_core_super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.34.0/docs/resources/secretsmanager_secret) | resource |
 | [netapp-ontap_lun.depots_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.1/docs/resources/lun) | resource |
