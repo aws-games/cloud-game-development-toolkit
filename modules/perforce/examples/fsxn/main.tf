@@ -12,15 +12,17 @@ resource "aws_security_group" "fsx_ontap_file_system_sg" {
   }
 }
 
-# TODO: Restrict Security groups to allow access only from Helix Core server.
-resource "aws_vpc_security_group_ingress_rule" "fsxn_ibound_helix_core_link" {
-  ip_protocol       = "-1"
-  description       = "Allows all inbound access from the VPC."
-  security_group_id = aws_security_group.fsx_ontap_file_system_sg.id
-  cidr_ipv4         = aws_vpc.perforce_vpc.cidr_block
+resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_helix_core" {
+  ip_protocol                  = "-1"
+  description                  = "Allows all inbound access from the VPC."
+  security_group_id            = aws_security_group.fsx_ontap_file_system_sg.id
+  referenced_security_group_id = module.perforce_helix_core.security_group_id
   lifecycle {
     create_before_destroy = true
   }
+  depends_on = [
+    module.perforce_helix_core
+  ]
 }
 
 resource "aws_fsx_ontap_file_system" "helix_core_fs" {
@@ -75,7 +77,6 @@ module "perforce_helix_core" {
   amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
   amazon_fsxn_filesystem_id         = aws_fsx_ontap_file_system.helix_core_fs.id
   fsxn_filesystem_security_group_id = aws_security_group.fsx_ontap_file_system_sg.id
-
 
   # Configuration
   server_type = "p4d_commit"
