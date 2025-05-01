@@ -14,7 +14,7 @@ resource "aws_elasticache_cluster" "horde" {
   num_cache_nodes      = var.elasticache_node_count
   parameter_group_name = local.elasticache_redis_parameter_group_name
   engine_version       = local.elasticache_redis_engine_version
-  port                 = local.elasticache_redis_port
+  port                 = local.elasticache_port
   security_group_ids   = [aws_security_group.unreal_horde_elasticache_sg[0].id]
   subnet_group_name    = aws_elasticache_subnet_group.horde[0].name
 
@@ -27,11 +27,11 @@ resource "aws_elasticache_replication_group" "horde" {
   engine               = "valkey"
   engine_version       = "7.2"
   replication_group_id = "${var.name}-elasticache-valkey-rep-grp"
-  description          = "example description"
+  description          = "valkey for horde"
   node_type            = var.elasticache_node_type
   num_cache_clusters   = var.elasticache_cluster_count
   parameter_group_name = local.elasticache_valkey_parameter_group_name
-  port                 = local.elasticache_redis_port
+  port                 = local.elasticache_port
   security_group_ids   = [aws_security_group.unreal_horde_elasticache_sg[0].id]
   subnet_group_name    = aws_elasticache_subnet_group.horde[0].name
 }

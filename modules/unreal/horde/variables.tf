@@ -359,7 +359,7 @@ variable "docdb_storage_encrypted" {
 variable "elasticache_engine" {
   description = "The engine to use for ElastiCache (redis or valkey)"
   type        = string
-  default     = "valkey"
+  default     = "redis"
   validation {
     condition     = contains(["redis", "valkey"], var.elasticache_engine)
     error_message = "Invalid engine. Must be one of: redis, valkey"
