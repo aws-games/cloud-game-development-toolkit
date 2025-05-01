@@ -14,18 +14,18 @@ locals {
     "environment" = var.environment
   })
 
-  elasticache_redis_port                 = 6379
+  elasticache_port                       = 6379
   elasticache_redis_engine_version       = "7.0"
   elasticache_redis_parameter_group_name = "default.redis7"
 
-  #code for valkey, might be better as a variable later
+
   elasticache_valkey_engine_version       = "7.2"
   elasticache_valkey_parameter_group_name = "default.valkey7"
 
 
-  elasticache_redis_connection_strings = [for node in aws_elasticache_cluster.horde[0].cache_nodes : "${node.address}:${node.port}"]
+  elasticache_redis_connection_strings = var.elasticache_engine == "redis" ? [for node in aws_elasticache_cluster.horde[0].cache_nodes : "${node.address}:${node.port}"] : null
 
-  elasticache_valkey_connection_strings = var.elasticache_engine == "valkey" ? "${aws_elasticache_replication_group.horde[0].primary_endpoint_address}:${local.elasticache_redis_port}" : null
+  elasticache_valkey_connection_strings = var.elasticache_engine == "valkey" ? "${aws_elasticache_replication_group.horde[0].primary_endpoint_address}:${local.elasticache_port}" : null
 
   redis_connection_config = var.redis_connection_config != null ? var.redis_connection_config : (var.elasticache_engine == "redis" ? join(",", local.elasticache_redis_connection_strings) : local.elasticache_valkey_connection_strings)
 
