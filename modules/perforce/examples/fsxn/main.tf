@@ -72,7 +72,7 @@ module "perforce_helix_core" {
   # FSxN configuration - FSxN ISCSI
   fsxn_aws_profile                  = var.fsxn_aws_profile
   fsxn_password                     = awscc_secretsmanager_secret.fsxn_user_password.secret_id
-  fsxn_mgmt_ip                      = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
+  fsxn_management_ip                = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
   fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.name
   amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
   amazon_fsxn_filesystem_id         = aws_fsx_ontap_file_system.helix_core_fs.id

@@ -93,7 +93,7 @@ resource "aws_instance" "helix_core_instance" {
      ${var.helix_authentication_service_url == null ? "" : "--auth ${var.helix_authentication_service_url}"} \
      ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : null} \
      ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : null} \
-     ${local.is_fsxn ? "--fsxn_mgmt_ip ${var.fsxn_mgmt_ip}" : null} \
+     ${local.is_fsxn ? "--fsxn_management_ip ${var.fsxn_management_ip}" : null} \
      --case_sensitive ${var.helix_case_sensitive ? 1 : 0} \
      --unicode ${var.unicode ? "true" : "false"} \
      --selinux ${var.selinux ? "true" : "false"} \
