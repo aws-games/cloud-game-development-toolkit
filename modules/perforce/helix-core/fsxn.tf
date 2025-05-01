@@ -11,7 +11,7 @@ provider "netapp-ontap" {
   connection_profiles = [
     {
       name     = "aws"
-      hostname = var.fsxn_mgmt_ip
+      hostname = var.fsxn_management_ip
       username = "fsxadmin"
       password = data.aws_secretsmanager_secret_version.fsxn_password.secret_string
       aws_lambda = {

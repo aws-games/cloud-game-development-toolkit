@@ -86,7 +86,7 @@ No modules.
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Helix Core load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fsxn_aws_profile"></a> [fsxn\_aws\_profile](#input\_fsxn\_aws\_profile) | FSxN admin user password AWS secret manager arn | `string` | `""` | no |
 | <a name="input_fsxn_filesystem_security_group_id"></a> [fsxn\_filesystem\_security\_group\_id](#input\_fsxn\_filesystem\_security\_group\_id) | The ID of the security group for the FSxN file system. | `string` | `null` | no |
-| <a name="input_fsxn_mgmt_ip"></a> [fsxn\_mgmt\_ip](#input\_fsxn\_mgmt\_ip) | FSxN management ip address | `string` | `""` | no |
+| <a name="input_fsxn_management_ip"></a> [fsxn\_management\_ip](#input\_fsxn\_management\_ip) | FSxN management ip address | `string` | `""` | no |
 | <a name="input_fsxn_password"></a> [fsxn\_password](#input\_fsxn\_password) | FSxN admin user password AWS secret manager arn | `string` | `""` | no |
 | <a name="input_fsxn_region"></a> [fsxn\_region](#input\_fsxn\_region) | The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem. | `string` | `"us-west-2"` | no |
 | <a name="input_fsxn_svm_name"></a> [fsxn\_svm\_name](#input\_fsxn\_svm\_name) | FSxN storage virtual machine name | `string` | `"fsx"` | no |

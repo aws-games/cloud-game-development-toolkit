@@ -183,12 +183,12 @@ variable "protocol" {
   }
 }
 
-variable "fsxn_mgmt_ip" {
+variable "fsxn_management_ip" {
   description = "FSxN management ip address"
   type        = string
   default     = ""
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_mgmt_ip) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_management_ip) > 0
     error_message = "The fsxn_mgmt_ip variable must be provided when storage_type is FSxN and ISCSI protocol."
   }
 }
