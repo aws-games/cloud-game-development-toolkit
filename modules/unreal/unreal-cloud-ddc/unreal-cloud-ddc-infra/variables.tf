@@ -8,6 +8,27 @@ variable "name" {
   }
 }
 
+variable "tags" {
+  type = map(any)
+  default = {
+    "iac-management" = "CGD-Toolkit"
+    "iac-module"     = "TeamCity"
+    "iac-provider"   = "Terraform"
+  }
+  description = "Tags to apply to resources."
+}
+variable "environment" {
+  type        = string
+  description = "The current environment (e.g. dev, prod, etc.)"
+  default     = "dev"
+}
+
+variable "debug" {
+  description = "Enable debug mode"
+  type        = bool
+  default     = false
+}
+
 variable "vpc_id" {
   description = "String for VPC ID"
   type        = string
@@ -17,6 +38,12 @@ variable "scylla_subnets" {
   type        = list(string)
   default     = []
   description = "A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended."
+}
+
+variable "monitoring_lb_subnets" {
+  type        = list(string)
+  default     = []
+  description = "A list of subnet IDs where the monitoring load balancer will be deployed. Private subnets are strongly recommended."
 }
 
 variable "eks_node_group_subnets" {
@@ -69,6 +96,13 @@ variable "scylla_db_throughput" {
   type        = number
   default     = 200
   description = "Throughput of gp3 ebs volumes attached to Scylla DBs"
+  nullable    = false
+}
+
+variable "create_scylla_monitoring_stack" {
+  type        = bool
+  default     = true
+  description = "Whether to create the Scylla monitoring stack"
   nullable    = false
 }
 
@@ -262,4 +296,34 @@ variable "system_node_group_label" {
     "pool" = "system-pool"
   }
   description = "Label applied to system node group"
+}
+
+variable "scylla_monitoring_dashboard_access_cidrs" {
+  type        = list(string)
+  description = "List of CIDR ranges allowed to access the Scylla monitoring dashboard (port 3000). Leave empty to restrict all public access."
+  default     = []
+}
+
+variable "enable_scylla_monitoring_lb_deletion_protection" {
+  type        = bool
+  description = "Whether to enable deletion protection for the Scylla monitoring load balancer."
+  default     = false
+
+}
+variable "enable_scylla_monitoring_lb_access_logs" {
+  type        = bool
+  description = "Whether to enable access logs for the Scylla monitoring load balancer."
+  default     = false
+}
+
+variable "scylla_monitoring_lb_access_logs_bucket" {
+  type        = string
+  description = "Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer."
+  default     = null
+}
+
+variable "scylla_monitoring_lb_access_logs_prefix" {
+  type        = string
+  description = "Prefix to use for the access logs for the Scylla monitoring load balancer."
+  default     = null
 }

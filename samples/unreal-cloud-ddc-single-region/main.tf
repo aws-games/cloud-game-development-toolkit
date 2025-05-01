@@ -53,6 +53,9 @@ module "unreal_cloud_ddc_infra" {
   scylla_db_throughput = 200
   scylla_db_storage    = 100
 
+  scylla_monitoring_dashboard_access_cidrs = var.scylla_monitoring_ip_allow_list != null ? var.scylla_monitoring_ip_allow_list : ["${chomp(data.http.public_ip.response_body)}/32"]
+  monitoring_lb_subnets                    = module.unreal_cloud_ddc_vpc.public_subnet_ids
+
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
 
@@ -85,30 +88,4 @@ module "unreal_cloud_ddc_intra_cluster" {
       token = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
     })
   ]
-}
-
-module "scylla_monitoring" {
-  source             = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-monitoring" # Adjust path as needed
-  vpc_id             = module.unreal_cloud_ddc_vpc.vpc_id
-  monitoring_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
-}
-# add ingress rules to scylladb security group for monitoring
-resource "aws_security_group_rule" "scylla_monitoring_ingress_prometheus" {
-  type                     = "ingress"
-  from_port                = 9180
-  to_port                  = 9180
-  protocol                 = "tcp"
-  source_security_group_id = module.scylla_monitoring.scylla_monitoring_security_group_id
-  security_group_id        = module.unreal_cloud_ddc_infra.scylla_security_group_id
-  description              = "Allow the Scylla monitoring stack to access the cluster using Prometheus API"
-}
-
-resource "aws_security_group_rule" "scylla_monitoring_ingress_node_exporter" {
-  type                     = "ingress"
-  from_port                = 9100
-  to_port                  = 9100
-  protocol                 = "tcp"
-  source_security_group_id = module.scylla_monitoring.scylla_monitoring_security_group_id
-  security_group_id        = module.unreal_cloud_ddc_infra.scylla_security_group_id
-  description              = "Allow the Scylla monitoring stack to access the cluster using node_exporter"
 }
