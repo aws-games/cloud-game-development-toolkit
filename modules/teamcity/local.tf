@@ -31,6 +31,10 @@ locals {
     {
       name  = "TEAMCITY_DATA_PATH"
       value = "/data/teamcity_server/datadir"
+    },
+    {
+      name  = "TEAMCITY_SERVER_URL"
+      value = var.fully_qualified_domain_name
     }
   ]
   # Define password environment variable if provided

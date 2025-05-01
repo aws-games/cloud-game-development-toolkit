@@ -225,3 +225,8 @@ variable "aurora_instance_count" {
   description = "Number of instances to provision for the Aurora cluster"
   default     = 2
 }
+
+variable "fully_qualified_domain_name" {
+  type        = string
+  description = "The fully qualified domain name for the TeamCity server"
+}
