@@ -29,6 +29,9 @@ data "aws_iam_policy_document" "unreal_horde_default_policy" {
       "*"
     ]
   }
+}
+data "aws_iam_policy_document" "unreal_horde_elasticache_policy" {
+  count = var.redis_connection_config == null ? 1 : 0
   # Elasticache
   statement {
     sid    = "ElasticacheConnect"
@@ -36,11 +39,13 @@ data "aws_iam_policy_document" "unreal_horde_default_policy" {
     actions = [
       "elasticache:Connect"
     ]
-    resources = [
-      aws_elasticache_replication_group.horde[0].arn,
-    ]
+    resources = (var.elasticache_engine == "redis" ?
+      [aws_elasticache_cluster.horde[0].arn] :
+    [aws_elasticache_replication_group.horde[0].arn])
+
   }
 }
+
 
 resource "aws_iam_policy" "unreal_horde_default_policy" {
   count = var.create_unreal_horde_default_policy ? 1 : 0
@@ -48,6 +53,14 @@ resource "aws_iam_policy" "unreal_horde_default_policy" {
   name        = "${var.project_prefix}-unreal_horde-default-policy"
   description = "Policy granting permissions for Unreal Horde."
   policy      = data.aws_iam_policy_document.unreal_horde_default_policy[0].json
+}
+
+resource "aws_iam_policy" "unreal_horde_elasticache_policy" {
+  count = var.redis_connection_config == null ? 1 : 0
+
+  name        = "${var.project_prefix}-unreal_horde-elasticache-policy"
+  description = "Policy granting elasticache connect permissions for Unreal Horde."
+  policy      = data.aws_iam_policy_document.unreal_horde_elasticache_policy[0].json
 }
 
 resource "aws_iam_role" "unreal_horde_default_role" {
@@ -62,6 +75,15 @@ resource "aws_iam_role" "unreal_horde_default_role" {
 
   tags = local.tags
 }
+
+#conditionally attach elasticache policy to default role
+resource "aws_iam_role_policy_attachment" "unreal_horde_elasticache_policy_attachment" {
+  count = var.redis_connection_config == null ? 1 : 0
+
+  role       = aws_iam_role.unreal_horde_default_role[0].name
+  policy_arn = aws_iam_policy.unreal_horde_elasticache_policy[0].arn
+}
+
 
 data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
   statement {

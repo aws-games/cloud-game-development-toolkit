@@ -353,6 +353,16 @@ variable "elasticache_engine" {
   description = "The engine to use for ElastiCache (redis or valkey)"
   type        = string
   default     = "valkey"
+  validation {
+    condition     = contains(["redis", "valkey"], var.elasticache_engine)
+    error_message = "Invalid engine. Must be one of: redis, valkey"
+  }
+}
+
+variable "elasticache_cluster_count" {
+  type        = number
+  description = "Number of cache cluster to provision in the Elasticache valkey cluster."
+  default     = 2
 }
 
 variable "redis_connection_config" {
