@@ -329,12 +329,12 @@ print_help() {
     echo "  --plaintext <true/false> Remove the SSL prefix and do not create self signed certificate"
     echo "  --fsxn_password <secret_id> AWS secret manager FSxN fsxadmin user password"
     echo "  --fsxn_svm_name <secret_id> FSxN storage virtual name"
-    echo "  --fsxn_mgmt_ip <ip_address> FSxN managment ip address"
+    echo "  --fsxn_management_ip <ip_address> FSxN managment ip address"
     echo "  --help                   Display this help and exit"
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_mgmt_ip:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -435,7 +435,7 @@ while true; do
             log_message "FSXN SVM NAME: $FSXN_SVM"
             shift 2
             ;;
-        --fsxn_mgmt_ip)
+        --fsxn_management_ip)
             FSXN_IP="$2"
             log_message "FSXN IP: $FSXN_IP"
             shift 2
