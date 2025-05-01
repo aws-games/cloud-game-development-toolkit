@@ -12,27 +12,25 @@ resource "aws_security_group" "scylla_security_group" {
 }
 
 # Allow port 9180 from monitoring to scylla
-resource "aws_security_group_rule" "scylla_monitoring_ingress_prometheus" {
-  count                    = var.create_scylla_monitoring_stack ? 1 : 0
-  type                     = "ingress"
-  from_port                = 9180
-  to_port                  = 9180
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.scylla_monitoring_sg[count.index].id
-  security_group_id        = aws_security_group.scylla_security_group.id
-  description              = "Allow the Scylla monitoring stack to access the cluster using Prometheus API"
+resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_prometheus" {
+  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  from_port                    = 9180
+  to_port                      = 9180
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.scylla_monitoring_sg[count.index].id
+  security_group_id            = aws_security_group.scylla_security_group.id
+  description                  = "Allow the Scylla monitoring stack to access the cluster using Prometheus API"
 }
 
 # Allow port 9100 from monitoring to scylla
-resource "aws_security_group_rule" "scylla_monitoring_ingress_node_exporter" {
-  count                    = var.create_scylla_monitoring_stack ? 1 : 0
-  type                     = "ingress"
-  from_port                = 9100
-  to_port                  = 9100
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.scylla_monitoring_sg[count.index].id
-  security_group_id        = aws_security_group.scylla_security_group.id
-  description              = "Allow the Scylla monitoring stack to access the cluster using node_exporter"
+resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_node_exporter" {
+  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  from_port                    = 9100
+  to_port                      = 9100
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.scylla_monitoring_sg[count.index].id
+  security_group_id            = aws_security_group.scylla_security_group.id
+  description                  = "Allow the Scylla monitoring stack to access the cluster using node_exporter"
 }
 
 ################################################################################
@@ -51,27 +49,23 @@ resource "aws_security_group" "scylla_monitoring_sg" {
 }
 
 # Allow port 3000 for Grafana from load balancer to monitoring
-resource "aws_security_group_rule" "scylla_monitoring_lb_monitoring" {
-  count                    = var.create_scylla_monitoring_stack ? 1 : 0
-  type                     = "ingress"
-  from_port                = 3000
-  to_port                  = 3000
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
-  security_group_id        = aws_security_group.scylla_monitoring_sg[count.index].id
-  description              = "Allow traffic from the NLB to the Grafana UI"
+resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_monitoring" {
+  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  ip_protocol                  = "tcp"
+  from_port                    = 3000
+  to_port                      = 3000
+  security_group_id            = aws_security_group.scylla_monitoring_sg[count.index].id
+  referenced_security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
+  description                  = "Allow traffic from the NLB to the Grafana UI"
 }
 
 # Scylla monitoring security group egress rule allowing outbound traffic to the internet
-resource "aws_security_group_rule" "scylla_monitoring_sg_egress_rule" {
+resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_sg_egress_rule" {
   count             = var.create_scylla_monitoring_stack ? 1 : 0
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.scylla_monitoring_sg[count.index].id
-  description       = "Allow all outbound traffic"
+  description       = "Egress All"
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 # Scylla monitoring load balancer security group
@@ -81,32 +75,28 @@ resource "aws_security_group" "scylla_monitoring_lb_sg" {
   name        = "${var.name}-scylla-monitoring-lb-sg"
   description = "Scylla monitoring load balancer security group"
   vpc_id      = var.vpc_id
-
-  #checkov:skip=CKV2_AWS_5:Security groups are attached to their resources
-  #checkov:skip=CKV_AWS_2:Supporting port 80 for simplicity for now locked down by only leaving it open to the allowlisted IP addresses
-
-  dynamic "ingress" {
-    for_each = var.scylla_monitoring_dashboard_access_cidrs
-    content {
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = [ingress.value]
-      description = "Allow access to the Scylla monitoring dashboard from ${ingress.value}"
-    }
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
-  }
-
   tags = {
     Name = "unreal-cloud-ddc-scylla-monitoring-lb-sg"
   }
+  #checkov:skip=CKV2_AWS_5:Security groups are attached to their resources
+  #checkov:skip=CKV_AWS_2:Supporting port 80 for simplicity for now locked down by only leaving it open to the allowlisted IP addresses
+}
+resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
+  count             = var.create_scylla_monitoring_stack ? length(var.scylla_monitoring_dashboard_access_cidrs) : 0
+  security_group_id = aws_security_group.scylla_monitoring_lb_sg[0].id
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  cidr_ipv4         = var.scylla_monitoring_dashboard_access_cidrs[count.index]
+  description       = "Allow traffic from allow listed IPs to the NLB"
+}
+
+resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_lb_sg_egress_rule" {
+  count             = var.create_scylla_monitoring_stack ? 1 : 0
+  security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
+  description       = "Egress All"
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 ################################################################################
