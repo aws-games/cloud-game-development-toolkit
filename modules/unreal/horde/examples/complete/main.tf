@@ -17,7 +17,7 @@ module "unreal_engine_horde" {
   certificate_arn                   = aws_acm_certificate.unreal_engine_horde.arn
   github_credentials_secret_arn     = var.github_credentials_secret_arn
   tags                              = local.tags
-
+  elasticache_engine                = "redis"
   agents = {
     ubuntu-x86 = {
       ami           = data.aws_ami.ubuntu_noble_amd.id
