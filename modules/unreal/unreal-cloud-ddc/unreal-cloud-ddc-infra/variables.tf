@@ -12,7 +12,7 @@ variable "tags" {
   type = map(any)
   default = {
     "iac-management" = "CGD-Toolkit"
-    "iac-module"     = "TeamCity"
+    "iac-module"     = "Unreal DDC"
     "iac-provider"   = "Terraform"
   }
   description = "Tags to apply to resources."
@@ -226,7 +226,7 @@ variable "system_managed_node_min_size" {
 variable "eks_cluster_public_endpoint_access_cidr" {
   type        = list(string)
   description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint."
-  default     = [] #CHANGED: changed default to empty list from null because the condition in eks_cluster_public_access checks for length of CIDRs for the EKS public endpoint which if you don't want to make the EKS publically accessible you leave blank and the validation errors
+  default     = []
 }
 
 variable "kubernetes_version" {

@@ -230,7 +230,7 @@ No modules.
 | <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
 | <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
 | <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "TeamCity",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "Unreal DDC",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
 | <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
@@ -251,7 +251,6 @@ No modules.
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
 | <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
-| <a name="output_scylla_security_group_id"></a> [scylla\_security\_group\_id](#output\_scylla\_security\_group\_id) | ID of the Scylla Security Group |
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
