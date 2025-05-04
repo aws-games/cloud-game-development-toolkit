@@ -90,6 +90,8 @@ To use this example, you must have an existing **public Amazon Route53 Hosted Zo
 | [aws_vpc_security_group_ingress_rule.perforce_helix_core_inbound_web_alb_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_nlb_inbound_helix_core](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_nlb_inbound_web_alb_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.private_perforce_helix_core_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.private_perforce_https_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/route53_zone) | data source |
 
@@ -97,6 +99,7 @@ To use this example, you must have an existing **public Amazon Route53 Hosted Zo
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_enable_private_access_perforce"></a> [enable\_private\_access\_perforce](#input\_enable\_private\_access\_perforce) | Enable private access to Perforce and specify allowlisted CIDR range. | <pre>object({<br/>    enabled = bool<br/>    cidr    = string<br/>  })</pre> | `null` | no |
 | <a name="input_root_domain_name"></a> [root\_domain\_name](#input\_root\_domain\_name) | The root domain name you would like to use for DNS. | `string` | n/a | yes |
 
 ## Outputs

@@ -41,33 +41,13 @@ reference architecture. The deployment steps below will get you up and running.
 4. Review the plan provided by the above command. When you are ready to deploy you can confirm by typing "yes" on the
    command line. Terraform will take a few minutes to provision everything. When it completes, you are ready to proceed
    with testing.
-5. By default, none of the deployed resources are available on the public internet. This is to prevent unintended
-   security violations. You can update the security group for the Perforce Network Load balancer through the console, or
-   add the following rules to the example configuration in [
-   `security.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/modules/perforce/examples/complete/security.tf):
-
-    ```terraform
-   # Grants access on HTTPS port for Helix Swarm and Helix Authentication
-   resource "aws_vpc_security_group_ingress_rule" "private_perforce_https_ingress" {
-      security_group_id = aws_security_group.perforce_network_load_balancer.id
-      description = "Enables private access to Perforce web services."
-      from_port = 443
-      to_port = 443
-      ip_protocol = "TCP"
-      cidr_ipv4 = "<YOUR IP>/32"
-   }
-
-   # Grants access on Helix Core port
-   resource "aws_vpc_security_group_ingress_rule" "private_perforce_https_ingress" {
-      security_group_id = aws_security_group.perforce_network_load_balancer.id
-      description = "Enables private access to Perforce Helix Core."
-      from_port = 1666
-      to_port = 1666
-      ip_protocol = "TCP"
-      cidr_ipv4 = "<YOUR IP>/32"
-
-   }
-    ```
+5. By default, none of the deployed resources are available on the public internet. This is to prevent unintended access to your resources. The perforce example includes a variable `enable_private_access_perforce` that you can configure to allowlist a CIDR to access the deployed Helix Core, Helix Auth, and Helix Swarm servers:
+```
+enable_private_access_perforce = {
+  enabled = true
+  cidr = "x.x.x.x/32"
+}
+```
 6. You should now have access to your deployed resources. The URLs for Helix Swarm and Helix Authentication Service are
    provided as Terraform outputs and should be visible in your console after a successful deployment. The connection
    string for Helix Core is also provided as an output. Use the Helix Core CLI or the P4V application to connect to your
