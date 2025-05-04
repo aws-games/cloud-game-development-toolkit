@@ -90,6 +90,7 @@ To use this example, you must have an existing **public Amazon Route53 Hosted Zo
 | [aws_vpc_security_group_ingress_rule.perforce_helix_core_inbound_web_alb_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_nlb_inbound_helix_core](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_nlb_inbound_web_alb_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.private_perforce_https_ingress](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/route53_zone) | data source |
 
@@ -98,6 +99,7 @@ To use this example, you must have an existing **public Amazon Route53 Hosted Zo
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_dockerhub_secret_arn"></a> [dockerhub\_secret\_arn](#input\_dockerhub\_secret\_arn) | The ARN of the AWS Secret for Docker Hub credentials used to pull the Perforce container image. This variable is used directly by the module. | `string` | `null` | no |
+| <a name="input_perforce_web_services_nlb_allowlist_cidr_ipv4"></a> [perforce\_web\_services\_nlb\_allowlist\_cidr\_ipv4](#input\_perforce\_web\_services\_nlb\_allowlist\_cidr\_ipv4) | The CIDR block to allow access to the Perforce Web Services NLB. This variable is used directly by the module. | `string` | `null` | no |
 | <a name="input_root_domain_name"></a> [root\_domain\_name](#input\_root\_domain\_name) | The root domain name you would like to use for DNS. | `string` | n/a | yes |
 
 ## Outputs

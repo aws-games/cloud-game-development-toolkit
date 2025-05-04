@@ -143,3 +143,14 @@ resource "aws_vpc_security_group_egress_rule" "perforce_helix_swarm_outbound_hel
   ip_protocol                  = "TCP"
   referenced_security_group_id = module.perforce_helix_core.security_group_id
 }
+
+# Configure the allowlist for the Perforce Web Services NLB if cidr is provided
+resource "aws_vpc_security_group_ingress_rule" "private_perforce_https_ingress" {
+  count             = var.perforce_web_services_nlb_allowlist_cidr_ipv4 != null ? 1 : 0
+  security_group_id = aws_security_group.perforce_network_load_balancer.id
+  description       = "Enables private access to Perforce web services."
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "TCP"
+  cidr_ipv4         = var.perforce_web_services_nlb_allowlist_cidr_ipv4
+}
