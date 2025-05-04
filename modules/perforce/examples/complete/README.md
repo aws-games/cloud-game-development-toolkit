@@ -97,6 +97,7 @@ To use this example, you must have an existing **public Amazon Route53 Hosted Zo
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_dockerhub_secret_arn"></a> [dockerhub\_secret\_arn](#input\_dockerhub\_secret\_arn) | The ARN of the AWS Secret for Docker Hub credentials used to pull the Perforce container image. This variable is used directly by the module. | `string` | `null` | no |
 | <a name="input_root_domain_name"></a> [root\_domain\_name](#input\_root\_domain\_name) | The root domain name you would like to use for DNS. | `string` | n/a | yes |
 
 ## Outputs

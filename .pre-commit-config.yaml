@@ -19,7 +19,7 @@ repos:
       - id: checkov
         args: ["--config-file", ".config/.checkov.yml"]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: "v1.89.1"
+    rev: "v1.99.0"
     hooks:
       - id: terraform_docs
         args:
@@ -27,5 +27,10 @@ repos:
           - --hook-config=--create-file-if-not-exist=false
           - --hook-config=--use-standard-markers=true
       - id: terraform_validate
+        name: terraform validate
+        entry: bash -c 'cd $(dirname "$0") && terraform init -upgrade && terraform validate'
+        language: system
+        files: \.tf$
+        pass_filenames: false
       - id: terraform_fmt
       - id: terraform_tflint

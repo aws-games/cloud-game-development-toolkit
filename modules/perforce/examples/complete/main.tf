@@ -57,12 +57,15 @@ module "perforce_helix_core" {
 
 module "perforce_helix_authentication_service" {
   source = "../../helix-authentication-service"
-
+  debug  = true
   # Networking
   vpc_id                               = aws_vpc.perforce_vpc.id
   create_application_load_balancer     = false # Shared Perforce web services application load balancer
   helix_authentication_service_subnets = aws_subnet.private_subnets[*].id
   fully_qualified_domain_name          = "auth.perforce.${var.root_domain_name}"
+
+  # Docker Hub credentials
+  dockerhub_secret_arn = var.dockerhub_secret_arn
 
   # Compute
   cluster_name = aws_ecs_cluster.perforce_cluster.name
