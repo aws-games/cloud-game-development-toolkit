@@ -206,25 +206,3 @@ resource "aws_lb_listener" "perforce_web_services_alb" {
     target_group_arn = aws_lb_target_group.perforce_web_services.arn
   }
 }
-
-# Grants access on HTTPS port for Helix Swarm and Helix Authentication
-resource "aws_vpc_security_group_ingress_rule" "private_perforce_https_ingress" {
-  count             = var.enable_private_access_perforce.enabled ? 1 : 0
-  security_group_id = aws_security_group.perforce_network_load_balancer.id
-  description       = "Enables private access to Perforce web services."
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "TCP"
-  cidr_ipv4         = var.enable_private_access_perforce.cidr
-}
-
-# Grants access on Helix Core port
-resource "aws_vpc_security_group_ingress_rule" "private_perforce_helix_core_ingress" {
-  count             = var.enable_private_access_perforce.enabled ? 1 : 0
-  security_group_id = aws_security_group.perforce_network_load_balancer.id
-  description       = "Enables private access to Perforce Helix Core."
-  from_port         = 1666
-  to_port           = 1666
-  ip_protocol       = "TCP"
-  cidr_ipv4         = var.enable_private_access_perforce.cidr
-}
