@@ -132,7 +132,7 @@ resource "aws_s3_bucket" "ansible_playbooks" {
   #checkov:skip=CKV_AWS_21: Versioning enabled conditionally
 
   tags                = local.tags
-  object_lock_enabled = true
+  #object_lock_enabled = true
   force_destroy       = true
 
 }

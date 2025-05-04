@@ -10,6 +10,13 @@ data "aws_region" "current" {}
 locals {
   image       = var.container_image
   name_prefix = "${var.project_prefix}-${var.name}"
+  dockerfile_content = templatefile(
+    "${path.module}/Dockerfile.tpl",
+    {
+      base_image = local.image
+    }
+  )
+
   tags = merge(var.tags, {
     "environment" = var.environment
   })

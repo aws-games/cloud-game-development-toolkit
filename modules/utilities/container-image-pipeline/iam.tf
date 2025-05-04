@@ -20,7 +20,16 @@ resource "aws_iam_role_policy" "codebuild_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
+      {
+        Effect   = "Allow"
+        Resource = ["*"]
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+      },
       {
         Effect = "Allow"
         Resource = [
@@ -45,19 +54,57 @@ resource "aws_iam_role_policy" "codebuild_policy" {
         Action = [
           "ecr:GetAuthorizationToken"
         ]
+      }
+    ],
+    var.source_image.auth.secret_arn != null ? [{
+      Effect = "Allow"
+      Resource = [
+        var.source_image.auth.secret_arn
+      ]
+      Action = [
+        "secretsmanager:GetSecretValue"
+      ]
+    }] : [])
+  })
+}
+
+
+# Lambda IAM Role
+resource "aws_iam_role" "lambda_role" {
+  name = "${local.name_prefix}-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+
+  tags = local.tags
+}
+
+# Lambda IAM Policy
+resource "aws_iam_role_policy" "lambda_policy" {
+  role = aws_iam_role.lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Resource = "*"
+        Action = [
+          "codebuild:StartBuild",
+          "codebuild:BatchGetBuilds"
+        ]
       },
       {
         Effect = "Allow"
-        Resource = [
-          var.ghcr_credentials_secret_manager_arn
-        ]
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-      },
-      {
-        Effect   = "Allow"
-        Resource = ["*"]
+        Resource = "arn:aws:logs:*:*:*"
         Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",

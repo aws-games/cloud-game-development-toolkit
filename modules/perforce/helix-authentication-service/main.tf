@@ -63,7 +63,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
   container_definitions = jsonencode([
     {
       name      = var.container_name,
-      image     = local.helix_authentication_service_image,
+      image     = "${module.custom_container_image.ecr_repository_url}:latest"
       cpu       = var.container_cpu,
       memory    = var.container_memory,
       essential = true,
@@ -108,7 +108,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           sourceVolume  = "helix-auth-config"
           containerPath = "/var/has"
         }
-      ],
+      ]
       healthCheck = {
         command = [
           "CMD-SHELL", "curl http://localhost:${var.container_port} || exit 1"
@@ -150,7 +150,7 @@ resource "aws_ecs_task_definition" "helix_authentication_service_task_definition
           sourceVolume  = "helix-auth-config"
           containerPath = "/var/has"
         }
-      ],
+      ]
     }
   ])
 
@@ -254,4 +254,21 @@ resource "aws_vpc_security_group_ingress_rule" "helix_authentication_service_inb
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "tcp"
+}
+
+########################################
+# Build custom container image of p4 auth
+########################################
+module "custom_container_image" {
+  source                            = "../../utilities/container-image-pipeline"
+  name                              = local.name_prefix
+  source_image = local.source_image
+  image_tags = ["latest"]
+  dockerfile_template = {
+    template_path = "${path.module}/Dockerfile.tpl"
+    variables = {
+      image = local.source_image.image
+      tag = local.source_image.tag
+    }
+  }
 }

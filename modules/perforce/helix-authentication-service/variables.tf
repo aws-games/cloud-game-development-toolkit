@@ -91,6 +91,12 @@ variable "desired_container_count" {
   nullable    = false
 }
 
+variable "container_image" {
+  type        = string
+  description = "The container image to use for P4 Auth."
+  default     = "perforce/helix-auth-svc"
+}
+
 # - Environment Variables -
 
 variable "fully_qualified_domain_name" {
@@ -120,7 +126,6 @@ variable "helix_authentication_service_alb_subnets" {
     condition     = (length(var.helix_authentication_service_alb_subnets) > 0) == var.create_application_load_balancer
     error_message = "Subnets are only necessary if the create_application_load_balancer variable is set."
   }
-
 }
 
 variable "enable_helix_authentication_service_alb_access_logs" {
@@ -216,4 +221,10 @@ variable "debug" {
   type        = bool
   description = "Set this flag to enable execute command on service containers and force redeploys."
   default     = false
+}
+
+variable "dockerhub_secret_arn" {
+  type        = string
+  description = "The ARN of the AWS Secret for Docker Hub credentials used to pull the Perforce container image. This variable is used directly by the module."
+  default     = null
 }
