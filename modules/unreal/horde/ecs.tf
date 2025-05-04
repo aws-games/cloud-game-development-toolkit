@@ -25,7 +25,7 @@ resource "aws_cloudwatch_log_group" "unreal_horde_log_group" {
 }
 
 resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
-  depends_on = [module.custom_container_image]
+  depends_on               = [module.custom_container_image]
   family                   = var.name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
@@ -38,8 +38,8 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
 
   container_definitions = jsonencode([
     {
-      name  = var.container_name
-      image = "${module.custom_container_image.ecr_repository_url}:latest"
+      name      = var.container_name
+      image     = "${module.custom_container_image.ecr_repository_url}:latest"
       cpu       = var.container_cpu
       memory    = var.container_memory
       essential = true
@@ -140,7 +140,7 @@ resource "aws_ecs_service" "unreal_horde" {
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
   deployment_circuit_breaker {
-    enable = true
+    enable   = true
     rollback = true
   }
 
@@ -197,11 +197,11 @@ resource "aws_ecs_service" "unreal_horde" {
 }
 
 module "custom_container_image" {
-  source                            = "../../utilities/container-image-pipeline"  
-  github_credentials_secret_arn     = var.github_credentials_secret_arn
-  name                              = local.name_prefix
-  source_image                      = var.container_image
-  image_tags                        = ["latest"]
+  source                        = "../../utilities/container-image-pipeline"
+  github_credentials_secret_arn = var.github_credentials_secret_arn
+  name                          = local.name_prefix
+  source_image                  = var.container_image
+  image_tags                    = ["latest"]
   dockerfile_template = {
     template_path = "${path.module}/Dockerfile.tpl"
     variables = {

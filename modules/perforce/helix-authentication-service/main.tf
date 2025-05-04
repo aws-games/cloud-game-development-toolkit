@@ -260,15 +260,15 @@ resource "aws_vpc_security_group_ingress_rule" "helix_authentication_service_inb
 # Build custom container image of p4 auth
 ########################################
 module "custom_container_image" {
-  source                            = "../../utilities/container-image-pipeline"
-  name                              = local.name_prefix
+  source       = "../../utilities/container-image-pipeline"
+  name         = local.name_prefix
   source_image = local.source_image
-  image_tags = ["latest"]
+  image_tags   = ["latest"]
   dockerfile_template = {
     template_path = "${path.module}/Dockerfile.tpl"
     variables = {
       image = local.source_image.image
-      tag = local.source_image.tag
+      tag   = local.source_image.tag
     }
   }
 }

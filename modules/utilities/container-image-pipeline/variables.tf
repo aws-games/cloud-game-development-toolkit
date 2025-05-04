@@ -110,9 +110,9 @@ variable "source_image" {
   # ECR validation
   validation {
     condition = var.source_image.provider == "amazon_ecr" ? (
-      var.source_image.auth.secret_arn == null &&                   # ECR doesn't use secret_arn
-      (var.source_image.auth.role_arn != null ||                    # Must have either role_arn
-       var.source_image.auth.account_id != null)                    # or account_id for cross-account
+      var.source_image.auth.secret_arn == null && # ECR doesn't use secret_arn
+      (var.source_image.auth.role_arn != null ||  # Must have either role_arn
+      var.source_image.auth.account_id != null)   # or account_id for cross-account
     ) : true
     error_message = "For amazon_ecr provider: secret_arn must be null, and either role_arn or account_id must be provided for cross-account access"
   }
@@ -120,10 +120,10 @@ variable "source_image" {
   # Docker Hub validation
   validation {
     condition = var.source_image.provider == "dockerhub" ? (
-      var.source_image.auth.secret_arn != null &&                  # Must have secret_arn
-      var.source_image.auth.role_arn == null &&                    # Shouldn't have role_arn
-      var.source_image.auth.account_id == null &&                  # Shouldn't have account_id
-      var.source_image.auth.region == null                         # Shouldn't have region
+      var.source_image.auth.secret_arn != null && # Must have secret_arn
+      var.source_image.auth.role_arn == null &&   # Shouldn't have role_arn
+      var.source_image.auth.account_id == null && # Shouldn't have account_id
+      var.source_image.auth.region == null        # Shouldn't have region
     ) : true
     error_message = "For dockerhub provider: only secret_arn should be provided, other auth fields must be null"
   }
@@ -131,12 +131,11 @@ variable "source_image" {
   # GitHub Container Registry validation
   validation {
     condition = var.source_image.provider == "ghcr" ? (
-      var.source_image.auth.secret_arn != null &&                  # Must have secret_arn
-      var.source_image.auth.role_arn == null &&                    # Shouldn't have role_arn
-      var.source_image.auth.account_id == null &&                  # Shouldn't have account_id
-      var.source_image.auth.region == null                         # Shouldn't have region
+      var.source_image.auth.secret_arn != null && # Must have secret_arn
+      var.source_image.auth.role_arn == null &&   # Shouldn't have role_arn
+      var.source_image.auth.account_id == null && # Shouldn't have account_id
+      var.source_image.auth.region == null        # Shouldn't have region
     ) : true
     error_message = "For ghcr provider: only secret_arn should be provided, other auth fields must be null"
   }
 }
-

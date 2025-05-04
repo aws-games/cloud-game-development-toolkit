@@ -131,9 +131,9 @@ resource "aws_s3_bucket" "ansible_playbooks" {
   #checkov:skip=CKV2_AWS_6: Public access block conditionally defined
   #checkov:skip=CKV_AWS_21: Versioning enabled conditionally
 
-  tags                = local.tags
+  tags = local.tags
   #object_lock_enabled = true
-  force_destroy       = true
+  force_destroy = true
 
 }
 

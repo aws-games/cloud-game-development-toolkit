@@ -20,7 +20,9 @@
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_custom_container_image"></a> [custom\_container\_image](#module\_custom\_container\_image) | ../../utilities/container-image-pipeline | n/a |
 
 ## Resources
 
@@ -70,6 +72,7 @@ No modules.
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Helix Authentication Service load balancer. | `string` | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the Helix Authentication Service into. Defaults to null and a cluster will be created. | `string` | `null` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the Helix Authentication Service container. | `number` | `1024` | no |
+| <a name="input_container_image"></a> [container\_image](#input\_container\_image) | The container image to use for P4 Auth. | `string` | `"perforce/helix-auth-svc"` | no |
 | <a name="input_container_memory"></a> [container\_memory](#input\_container\_memory) | The memory allotment for the Helix Authentication Service container. | `number` | `4096` | no |
 | <a name="input_container_name"></a> [container\_name](#input\_container\_name) | The name of the Helix Authentication Service container. | `string` | `"helix-auth-container"` | no |
 | <a name="input_container_port"></a> [container\_port](#input\_container\_port) | The container port that Helix Authentication Service runs on. | `number` | `3000` | no |
@@ -79,6 +82,7 @@ No modules.
 | <a name="input_custom_helix_authentication_service_role"></a> [custom\_helix\_authentication\_service\_role](#input\_custom\_helix\_authentication\_service\_role) | ARN of the custom IAM Role you wish to use with Helix Authentication Service. | `string` | `null` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Set this flag to enable execute command on service containers and force redeploys. | `bool` | `false` | no |
 | <a name="input_desired_container_count"></a> [desired\_container\_count](#input\_desired\_container\_count) | The desired number of containers running the Helix Authentication Service. | `number` | `1` | no |
+| <a name="input_dockerhub_secret_arn"></a> [dockerhub\_secret\_arn](#input\_dockerhub\_secret\_arn) | The ARN of the AWS Secret for Docker Hub credentials used to pull the Perforce container image. This variable is used directly by the module. | `string` | `null` | no |
 | <a name="input_enable_helix_authentication_service_alb_access_logs"></a> [enable\_helix\_authentication\_service\_alb\_access\_logs](#input\_enable\_helix\_authentication\_service\_alb\_access\_logs) | Enables access logging for the Helix Authentication Service ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_helix_authentication_service_alb_deletion_protection"></a> [enable\_helix\_authentication\_service\_alb\_deletion\_protection](#input\_enable\_helix\_authentication\_service\_alb\_deletion\_protection) | Enables deletion protection for the Helix Authentication Service ALB. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_web_based_administration"></a> [enable\_web\_based\_administration](#input\_enable\_web\_based\_administration) | Flag for enabling web based administration of Helix Authentication Service. | `bool` | `false` | no |
@@ -95,7 +99,7 @@ No modules.
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the Helix Authentication Service load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Helix Authentication Service module resources. | `string` | `"helix-auth-svc"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "helix-authentication-service",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "helix-authentication-service",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy Helix Authentication Service into. | `string` | n/a | yes |
 
 ## Outputs

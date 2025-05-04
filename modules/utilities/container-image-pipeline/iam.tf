@@ -55,15 +55,15 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "ecr:GetAuthorizationToken"
         ]
       }
-    ],
-    var.source_image.auth.secret_arn != null ? [{
-      Effect = "Allow"
-      Resource = [
-        var.source_image.auth.secret_arn
-      ]
-      Action = [
-        "secretsmanager:GetSecretValue"
-      ]
+      ],
+      var.source_image.auth.secret_arn != null ? [{
+        Effect = "Allow"
+        Resource = [
+          var.source_image.auth.secret_arn
+        ]
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
     }] : [])
   })
 }
@@ -95,7 +95,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "*"
         Action = [
           "codebuild:StartBuild",
@@ -103,7 +103,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ]
       },
       {
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "arn:aws:logs:*:*:*"
         Action = [
           "logs:CreateLogGroup",
