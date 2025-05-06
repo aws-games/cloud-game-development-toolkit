@@ -44,7 +44,8 @@ module "terraform-aws-perforce" {
     fully_qualified_domain_name = local.p4_auth_fully_qualified_domain_name
     existing_security_groups    = [aws_security_group.allow_my_ip.id]
     debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
+    deregistration_delay        = 0
+    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
   }
 
 
@@ -54,10 +55,22 @@ module "terraform-aws-perforce" {
     fully_qualified_domain_name = local.p4_code_review_fully_qualified_domain_name
     existing_security_groups    = [aws_security_group.allow_my_ip.id]
     debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
+    deregistration_delay        = 0
+    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
 
     # Configuration
     enable_sso = true
   }
+}
 
+# placeholder since provider is "required" by the module
+provider "netapp-ontap" {
+  connection_profiles = [
+    {
+      name     = "null"
+      hostname = "null"
+      username = "null"
+      password = "null"
+    }
+  ]
 }

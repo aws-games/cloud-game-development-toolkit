@@ -46,6 +46,22 @@ resource "awscc_secretsmanager_secret" "fsxn_user_password" {
 ##########################################
 # Perforce Helix Core
 ##########################################
+provider "netapp-ontap" {
+  connection_profiles = [
+    {
+      name     = "aws"
+      hostname = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
+      username = "fsxadmin"
+      password = var.fsxn_password
+      aws_lambda = {
+        function_name         = module.perforce.p4_server_lambda_link_name
+        region                = data.aws_region.current.name
+        shared_config_profile = var.fsxn_aws_profile
+      }
+    }
+  ]
+}
+
 
 module "perforce" {
   source = "../../"

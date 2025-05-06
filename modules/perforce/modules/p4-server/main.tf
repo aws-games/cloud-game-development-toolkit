@@ -30,16 +30,16 @@ locals {
     "/dev/mapper/${aws_fsx_ontap_volume.depot[0].name}" :
     null
   )
-  nfs_depot_volume = (!local.is_iscsi ?
+  nfs_depot_volume = (local.is_fsxn && !local.is_iscsi ?
     "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.depot[0].junction_path}"
     : null
   )
   ebs_depot_volume = var.storage_type == "EBS" ? "/dev/sdf" : null
-  iscsi_metadata_volume = (local.is_iscsi ?
+  iscsi_metadata_volume = (local.is_fsxn && local.is_iscsi ?
     "/dev/mapper/${aws_fsx_ontap_volume.metadata[0].name}" :
     null
   )
-  nfs_metadata_volume = (!local.is_iscsi ?
+  nfs_metadata_volume = (local.is_fsxn && !local.is_iscsi ?
     "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.metadata[0].junction_path}"
     :
     null
@@ -49,7 +49,7 @@ locals {
     "/dev/mapper/${aws_fsx_ontap_volume.logs[0].name}" :
     null
   )
-  nfs_logs_volume = (!local.is_iscsi ?
+  nfs_logs_volume = (local.is_fsxn && !local.is_iscsi ?
     "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.logs[0].junction_path}"
     :
     null
@@ -92,9 +92,9 @@ resource "aws_instance" "server_instance" {
      --password ${var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn} \
      ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
      ${var.auth_service_url == null ? "" : "--auth ${var.auth_service_url}"} \
-     ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : null} \
-     ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : null} \
-     ${local.is_fsxn ? "--fsxn_management_ip ${var.fsxn_management_ip}" : null} \
+     ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : ""} \
+     ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : ""} \
+     ${local.is_fsxn ? "--fsxn_management_ip ${var.fsxn_management_ip}" : ""} \
      --case_sensitive ${var.case_sensitive ? 1 : 0} \
      --unicode ${var.unicode ? "true" : "false"} \
      --selinux ${var.selinux ? "true" : "false"} \

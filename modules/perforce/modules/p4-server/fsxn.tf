@@ -38,6 +38,7 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access_role" {
 }
 
 resource "aws_security_group" "fsxn_lambda_link_security_group" {
+  count       = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   name        = "fsxn-link-sg"
   description = "Security group for the FSxN Link Lambda."
   vpc_id      = var.vpc_id
@@ -47,8 +48,9 @@ resource "aws_security_group" "fsxn_lambda_link_security_group" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "link_outbound_fsxn" {
+  count                        = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   ip_protocol                  = "TCP"
-  security_group_id            = aws_security_group.fsxn_lambda_link_security_group.id
+  security_group_id            = aws_security_group.fsxn_lambda_link_security_group[0].id
   description                  = "Grants outbound access from FSxN Lambda to FSxN filesystem"
   from_port                    = 443
   to_port                      = 443
@@ -56,12 +58,13 @@ resource "aws_vpc_security_group_egress_rule" "link_outbound_fsxn" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_link" {
+  count                        = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   ip_protocol                  = "tcp"
   security_group_id            = var.fsxn_filesystem_security_group_id
   description                  = "Allows inbound access from FSxN Lambda Link to Filesystem."
   from_port                    = 443
   to_port                      = 443
-  referenced_security_group_id = aws_security_group.fsxn_lambda_link_security_group.id
+  referenced_security_group_id = aws_security_group.fsxn_lambda_link_security_group[0].id
 }
 
 resource "aws_lambda_function" "lambda_function" {
@@ -76,7 +79,7 @@ resource "aws_lambda_function" "lambda_function" {
   package_type  = "Image"
   image_uri     = "052582346341.dkr.ecr.${var.fsxn_region}.amazonaws.com/fsx_link:production"
   vpc_config {
-    security_group_ids = [aws_security_group.fsxn_lambda_link_security_group.id]
+    security_group_ids = [aws_security_group.fsxn_lambda_link_security_group[0].id]
     subnet_ids         = [var.instance_subnet_id]
   }
   environment {

@@ -14,10 +14,6 @@ terraform {
       source  = "hashicorp/random"
       version = "3.7.1"
     }
-    netapp-ontap = {
-      source  = "NetApp/netapp-ontap"
-      version = "2.1.0"
-    }
     null = {
       source  = "hashicorp/null"
       version = "3.2.4"

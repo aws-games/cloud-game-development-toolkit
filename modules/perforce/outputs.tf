@@ -107,3 +107,9 @@ output "p4_code_review_target_group_arn" {
   value       = module.p4_code_review[0].target_group_arn
   description = "The service target group for the P4 Code Review."
 }
+
+output "p4_server_lambda_link_name" {
+  value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
+  module.p4_server.lambda_link_name : null)
+  description = "The name of the Lambda link for the P4 Server instance to use with FSxN."
+}

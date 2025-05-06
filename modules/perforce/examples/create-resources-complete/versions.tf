@@ -18,5 +18,9 @@ terraform {
       source  = "hashicorp/http"
       version = "3.5.0"
     }
+    netapp-ontap = {
+      source  = "NetApp/netapp-ontap"
+      version = "2.1.0"
+    }
   }
 }

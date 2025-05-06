@@ -201,34 +201,3 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
     capacity_provider = "FARGATE"
   }
 }
-
-###################################################################
-# Conditional FSxN Resources
-###################################################################
-data "aws_region" "current" {}
-
-data "aws_secretsmanager_secret" "fsxn_password" {
-  count = var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ? 1 : 0
-  name  = var.p4_server_config.fsxn_password
-}
-
-data "aws_secretsmanager_secret_version" "fsxn_password" {
-  count     = var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.fsxn_password[0].id
-}
-
-provider "netapp-ontap" {
-  connection_profiles = [
-    {
-      name     = "aws"
-      hostname = var.p4_server_config.fsxn_management_ip
-      username = "fsxadmin"
-      password = data.aws_secretsmanager_secret_version.fsxn_password[0].secret_string
-      aws_lambda = {
-        function_name         = module.p4_server[0].lambda_link_name
-        region                = data.aws_region.current.name
-        shared_config_profile = var.p4_server_config.fsxn_aws_profile
-      }
-    }
-  ]
-}
