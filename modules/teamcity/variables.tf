@@ -226,7 +226,16 @@ variable "aurora_instance_count" {
   default     = 2
 }
 
-variable "fully_qualified_domain_name" {
-  type        = string
-  description = "The fully qualified domain name for the TeamCity server"
-}
+# variable "teamcity_url" {
+#   type        = string
+#   description = "The fully qualified domain name for the TeamCity server"
+# }
+
+# variable "project_name" {
+#
+# }
+#
+# variable "project_id" {
+#
+# }
+
