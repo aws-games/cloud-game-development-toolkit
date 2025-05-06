@@ -31,6 +31,15 @@ module "p4_server" {
   metadata_volume_size = var.p4_server_config.metadata_volume_size
   logs_volume_size     = var.p4_server_config.logs_volume_size
 
+  # FSxN
+  protocol                          = var.p4_server_config.protocol
+  amazon_fsxn_svm_id                = var.p4_server_config.amazon_fsxn_svm_id
+  fsxn_filesystem_security_group_id = var.p4_server_config.fsxn_filesystem_security_group_id
+  fsxn_svm_name                     = var.p4_server_config.fsxn_svm_name
+  fsxn_password                     = var.p4_server_config.fsxn_password
+  fsxn_region                       = var.p4_server_config.fsxn_region
+  fsxn_management_ip                = var.p4_server_config.fsxn_management_ip
+
   # Networking & Security
   vpc_id                         = var.vpc_id
   instance_subnet_id             = var.p4_server_config.instance_subnet_id

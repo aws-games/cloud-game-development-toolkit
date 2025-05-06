@@ -42,7 +42,6 @@ resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_to_perforce
 }
 
 
-
 ####################################################
 # Perforce Web Services ALB Security Group
 ###################################################
@@ -89,7 +88,9 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_fr
 # Perforce Web Services ALB <-- Public Subnet 1 (where Perforce NLB is deployed)
 # Allows Perforce Web Services ALB to receive inbound traffic from the first public subnets where the Public Perforce NLB is deployed.
 resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_from_perforce_nlb_subnets_1" {
-  count             = var.create_default_sgs != false && var.public_subnets_cidrs != null || var.create_default_sgs != false && var.private_subnets_cidrs != null ? 1 : 0
+  count = (
+    var.create_default_sgs != false && var.public_subnets_cidrs != null || var.create_default_sgs != false && var.private_subnets_cidrs != null
+  ? 1 : 0)
   security_group_id = aws_security_group.perforce_web_services_alb[0].id
   description       = "Allows Perforce Web Services ALB to receive inbound traffic from the first subnet where the Perforce NLB is deployed."
   ip_protocol       = "TCP"
@@ -106,7 +107,9 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_fr
 # Perforce Web Services ALB <-- Public Subnet 2 (where Perforce NLB is deployed)
 # Allows Perforce Web Services ALB to receive inbound traffic from the second public subnets where the Public Perforce NLB is deployed.
 resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_from_perforce_nlb_subnets_2" {
-  count             = var.create_default_sgs != false && var.public_subnets_cidrs != null || var.create_default_sgs != false && var.private_subnets_cidrs != null ? 1 : 0
+  count = (
+    var.create_default_sgs != false && var.public_subnets_cidrs != null || var.create_default_sgs != false && var.private_subnets_cidrs != null
+  ? 1 : 0)
   security_group_id = aws_security_group.perforce_web_services_alb[0].id
   description       = "Allows Perforce Web Services ALB to receive inbound traffic from the second subnet where the Perforce NLB is deployed."
   ip_protocol       = "TCP"
@@ -124,7 +127,8 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_fr
 # Perforce Web Services ALB <-- P4 Server
 # Allows Perforce Web Services ALB to receive inbound traffic from P4 Server (needed for authentication using P4Auth extension)
 resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_from_p4_server" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count = (var.create_shared_application_load_balancer != null && var.create_default_sgs != false
+  ? 1 : 0)
   security_group_id            = aws_security_group.perforce_web_services_alb[0].id
   description                  = "Allows Perforce Web Services ALB to receive inbound traffic from P4 Server. This is used for authentication using the P4Auth extension."
   ip_protocol                  = "TCP"
@@ -141,7 +145,10 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_fr
 # Perforce Web Services --> P4Auth
 # Allows Perforce Web Services ALB to send outbound traffic to P4Auth
 resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_to_p4_auth" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count = (
+    var.p4_auth_config != null && var.create_shared_application_load_balancer != null && var.create_default_sgs != false
+    ?
+  1 : 0)
   security_group_id            = aws_security_group.perforce_web_services_alb[0].id
   description                  = "Allows Perforce Web Services ALB to send outbound traffic to P4Auth."
   from_port                    = 3000
@@ -153,7 +160,9 @@ resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_to_p4_auth"
 # Perforce Web Services --> P4 Code Review
 # Allows Perforce Web Services ALB to send outbound traffic to P4 Code Review
 resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_to_p4_code_review" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count = (
+    var.p4_code_review_config != null && var.create_shared_application_load_balancer != null && var.create_default_sgs != false
+  ? 1 : 0)
   security_group_id            = aws_security_group.perforce_web_services_alb[0].id
   description                  = "Allows Perforce Web Services ALB to send outbound traffic to P4 Code Review."
   from_port                    = 80
@@ -162,14 +171,13 @@ resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_to_p4_code_
   referenced_security_group_id = module.p4_code_review[0].service_security_group_id
 }
 
-
 #######################################################################################
 # P4 Server Security Group | Rules (security group itself is created in the submodule)
 #######################################################################################
 # P4 Server <-- P4 Code Review
 # Allows P4 Server to receive inbound traffic from P4 Code Review
 resource "aws_vpc_security_group_ingress_rule" "p4_server_inbound_from_p4_code_review" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count                        = var.p4_code_review_config != null && var.create_default_sgs != false ? 1 : 0
   security_group_id            = module.p4_server[0].security_group_id
   description                  = "Allows P4 Server to receive inbound traffic from P4 Code Review."
   ip_protocol                  = "TCP"
@@ -185,7 +193,7 @@ resource "aws_vpc_security_group_ingress_rule" "p4_server_inbound_from_p4_code_r
 # P4Auth <-- Perforce Web Services ALB
 # Allows P4Auth to receive inbound traffic from Perforce Web Services ALB.
 resource "aws_vpc_security_group_ingress_rule" "p4_auth_inbound_from_perforce_web_services_alb" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count                        = var.p4_auth_config != null && var.create_default_sgs != false ? 1 : 0
   security_group_id            = module.p4_auth[0].service_security_group_id
   description                  = "Allows P4Auth to receive inbound traffic from Perforce Web Services ALB."
   ip_protocol                  = "TCP"
@@ -201,7 +209,7 @@ resource "aws_vpc_security_group_ingress_rule" "p4_auth_inbound_from_perforce_we
 # P4 Code Review <-- Perforce Web Services
 # Allows P4 Code Review to receive inbound traffic from Perforce Web Services ALB
 resource "aws_vpc_security_group_ingress_rule" "p4_code_review_inbound_from_perforce_web_services_alb" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count                        = var.p4_code_review_config != null && var.create_default_sgs != false ? 1 : 0
   security_group_id            = module.p4_code_review[0].service_security_group_id
   description                  = "Allows P4 Code Review to receive inbound traffic from Perforce Web Services ALB."
   ip_protocol                  = "TCP"
@@ -214,7 +222,7 @@ resource "aws_vpc_security_group_ingress_rule" "p4_code_review_inbound_from_perf
 # P4 Code Review --> P4 Server
 # Allows P4 Code Review to send outbound traffic to P4 Server.
 resource "aws_vpc_security_group_egress_rule" "p4_code_review_outbound_to_p4_server" {
-  count                        = var.create_default_sgs != false ? 1 : 0
+  count                        = var.p4_code_review_config != null && var.create_default_sgs != false ? 1 : 0
   security_group_id            = module.p4_code_review[0].service_security_group_id
   description                  = "Allows P4 Code Review to send outbound traffic to P4 Server."
   from_port                    = 1666
@@ -222,16 +230,6 @@ resource "aws_vpc_security_group_egress_rule" "p4_code_review_outbound_to_p4_ser
   ip_protocol                  = "TCP"
   referenced_security_group_id = module.p4_server[0].security_group_id
 }
-
-
-
-
-
-
-
-
-
-
 
 
 # # Outbound from the P4 Code Review Security Group to the P4 Server Security Group

@@ -92,16 +92,16 @@ module "perforce" {
     metadata_volume_size = 32
     logs_volume_size     = 32
 
-    storage_type                   = "FSxN"
-    protocol                       = "ISCSI"
-    fsxn_filesystem_security_group = aws_security_group.fsx_ontap_file_system_sg.id
-    fsxn_file_system_id            = aws_fsx_ontap_file_system.helix_core_fs.id
-    fsxn_password                  = awscc_secretsmanager_secret.fsxn_user_password.id
-    fsxn_management_ip             = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
-    fsxn_svm_name                  = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.name
-    amazon_fsxn_svm_id             = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
-    fsxn_region                    = data.aws_region.current
-    fsxn_aws_profile               = var.fsxn_aws_profile
+    storage_type                      = "FSxN"
+    protocol                          = "ISCSI"
+    fsxn_filesystem_security_group_id = aws_security_group.fsx_ontap_file_system_sg.id
+    fsxn_file_system_id               = aws_fsx_ontap_file_system.helix_core_fs.id
+    fsxn_password                     = awscc_secretsmanager_secret.fsxn_user_password.id
+    fsxn_management_ip                = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
+    fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.name
+    amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
+    fsxn_aws_profile                  = var.fsxn_aws_profile
+    fsxn_region                       = data.aws_region.current.name
 
     # Networking & Security
     instance_subnet_id = aws_subnet.public_subnets[0].id
