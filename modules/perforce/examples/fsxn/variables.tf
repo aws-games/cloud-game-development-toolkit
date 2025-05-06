@@ -1,6 +1,6 @@
-variable "root_domain_name" {
+variable "route53_public_hosted_zone_name" {
+  description = "The name of your existing Route53 Public Hosted Zone. This is required to create the ACM certificate and Route53 records."
   type        = string
-  description = "The root domain name you would like to use for DNS."
 }
 
 variable "fsxn_password" {

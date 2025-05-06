@@ -1,28 +1,6 @@
-# Fetch FSxN Password Value from Secrets Manager
-data "aws_secretsmanager_secret" "fsxn_password" {
-  arn = var.fsxn_password
-}
-
-data "aws_secretsmanager_secret_version" "fsxn_password" {
-  secret_id = data.aws_secretsmanager_secret.fsxn_password.id
-}
-
-provider "netapp-ontap" {
-  connection_profiles = [
-    {
-      name     = "aws"
-      hostname = var.fsxn_management_ip
-      username = "fsxadmin"
-      password = data.aws_secretsmanager_secret_version.fsxn_password.secret_string
-      aws_lambda = {
-        function_name         = aws_lambda_function.lambda_function[0].function_name
-        region                = data.aws_region.current.name
-        shared_config_profile = var.fsxn_aws_profile
-      }
-    }
-  ]
-}
-
+##########################################
+# Storage Configuration - FSxN
+##########################################
 resource "aws_iam_role" "lambda_role" {
   count = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   name  = "LambdaLinkRole-link-perforce"
@@ -87,6 +65,11 @@ resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_link" {
 }
 
 resource "aws_lambda_function" "lambda_function" {
+  #checkov:skip=CKV_AWS_50: X-Ray tracing not required
+  #checkov:skip=CKV_AWS_116: DLQ not required
+  #checkov:skip=CKV_AWS_173: Environment variables nonsensitive
+  #$checkov:skip=CKV_AWS_272: AWS Lambda function code-signing not required
+
   count         = var.storage_type == "FSxN" && var.protocol == "ISCSI" ? 1 : 0
   function_name = "link-perforce"
   role          = aws_iam_role.lambda_role[count.index].arn
@@ -102,12 +85,10 @@ resource "aws_lambda_function" "lambda_function" {
       LATEST                       = "1.0.0"
     }
   }
-  timeout = 10
+  reserved_concurrent_executions = 20 # Low reserved concurrency since this function is only used for FSxN calls from TF
+  timeout                        = 10
 }
 
-##########################################
-# Storage Configuration - FSxN
-##########################################
 
 // hxlogs
 resource "aws_fsx_ontap_volume" "logs" {

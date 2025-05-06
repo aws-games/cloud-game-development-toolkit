@@ -92,22 +92,22 @@ resource "aws_ecs_task_definition" "task_definition" {
           }
         ] : [],
       )
-      secrets = concat([], 
+      secrets = concat([],
         var.p4d_super_user_password_arn != null ? [
           {
-            name  = "P4PASSWD"
+            name      = "P4PASSWD"
             valueFrom = var.p4d_super_user_password_arn
           }
         ] : [],
         var.p4d_super_user_arn != null ? [
           {
-            name  = "P4USER"
+            name      = "P4USER"
             valueFrom = var.p4d_super_user_arn
           }
         ] : [],
         var.scim_bearer_token_arn != null ? [
           {
-            name  = "BEARER_TOKEN"
+            name      = "BEARER_TOKEN"
             valueFrom = var.scim_bearer_token_arn
           }
         ] : [],

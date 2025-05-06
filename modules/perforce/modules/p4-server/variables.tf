@@ -12,16 +12,16 @@ variable "name" {
   }
 }
 
+variable "environment" {
+  type        = string
+  description = "The environment attached to P4 Server module resources."
+  default     = "dev"
+}
+
 variable "project_prefix" {
   type        = string
   description = "The project prefix for this workload. This is appended to the beginning of most resource names."
   default     = "cgd"
-}
-
-variable "environment" {
-  type        = string
-  description = "The current environment (e.g. dev, prod, etc.)"
-  default     = "dev"
 }
 
 variable "fully_qualified_domain_name" {
@@ -35,8 +35,6 @@ variable "auth_service_url" {
   description = "The URL for the P4Auth Service."
   default     = null
 }
-
-
 
 ########################################
 # Compute
@@ -108,7 +106,6 @@ variable "plaintext" {
   default     = false
 }
 
-
 ########################################
 # Storage
 ########################################
@@ -143,21 +140,31 @@ variable "logs_volume_size" {
 variable "amazon_fsxn_filesystem_id" {
   description = "The ID of the existing FSx ONTAP file system to use if storage type is FSxN."
   type        = string
-  default     = ""
+  default     = null
 
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_filesystem_id) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || var.amazon_fsxn_filesystem_id != null
     error_message = "The amazon_fsxn_filesystem_id variable must be provided when storage_type is FSxN."
+  }
+}
+
+variable "fsxn_filesystem_security_group_id" {
+  description = "The ID of the security group for the FSx ONTAP filesystem."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || var.fsxn_filesystem_security_group_id != null
+    error_message = "The fsxn_filesystem_security_group_id variable must be provided when storage_type is FSxN."
   }
 }
 
 variable "amazon_fsxn_svm_id" {
   description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
   type        = string
-  default     = ""
+  default     = null
 
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || length(var.amazon_fsxn_svm_id) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "NFS" || var.amazon_fsxn_svm_id != null
     error_message = "The amazon_fsxn_svm_id variable must be provided when storage_type is FSxN."
   }
 }
@@ -165,9 +172,9 @@ variable "amazon_fsxn_svm_id" {
 variable "fsxn_region" {
   description = "The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem."
   type        = string
-  default     = "us-west-2"
+  default     = null
   validation {
-    condition     = var.storage_type != "FSxN" || length(var.fsxn_region) > 0
+    condition     = var.storage_type != "FSxN" || var.fsxn_region != null
     error_message = "The fsxn_region variable must be provided when storage_type is FSxN."
   }
 }
@@ -175,9 +182,10 @@ variable "fsxn_region" {
 variable "protocol" {
   description = "Specify the protocol (NFS or ISCSI)"
   type        = string
-  default     = ""
+  default     = null
+  # validate that protocol is not null and valid if storage_type is FSxN
   validation {
-    condition     = var.storage_type != "FSxN" || contains(["NFS", "ISCSI"], var.protocol)
+    condition     = var.storage_type != "FSxN" || contains(["NFS", "ISCSI"], var.protocol != null ? var.protocol : "")
     error_message = "The protocol variable must be either 'NFS' or 'ISCSI'."
   }
 }
@@ -185,9 +193,9 @@ variable "protocol" {
 variable "fsxn_management_ip" {
   description = "FSxN management ip address"
   type        = string
-  default     = ""
+  default     = null
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_management_ip) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || var.fsxn_management_ip != null
     error_message = "The fsxn_mgmt_ip variable must be provided when storage_type is FSxN and ISCSI protocol."
   }
 }
@@ -195,9 +203,9 @@ variable "fsxn_management_ip" {
 variable "fsxn_svm_name" {
   description = "FSxN storage virtual machine name"
   type        = string
-  default     = "fsx"
+  default     = null
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_svm_name) > 0
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || var.fsxn_svm_name != null
     error_message = "The fsxn_svm_name variable must be provided when storage_type is FSxN and ISCSI protocol."
   }
 }
@@ -205,30 +213,10 @@ variable "fsxn_svm_name" {
 variable "fsxn_password" {
   description = "FSxN admin user password AWS secret manager arn"
   type        = string
-  default     = ""
-  validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_password) > 0
-    error_message = "The fsxn_password variable must be provided when storage_type is FSxN and ISCSI protocol."
-  }
-}
-
-variable "fsxn_aws_profile" {
-  description = "FSxN admin user password AWS secret manager arn"
-  type        = string
-  default     = ""
-  validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || length(var.fsxn_aws_profile) > 0
-    error_message = "The fsxn_aws_profile variable must be provided when storage_type is FSxN and ISCSI protocol."
-  }
-}
-
-variable "fsxn_filesystem_security_group_id" {
-  description = "The ID of the security group for the FSxN file system."
-  type        = string
   default     = null
   validation {
-    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || var.fsxn_filesystem_security_group_id != null
-    error_message = "The fsxn_filesystem_security_group_id variable must be provided when storage_type is FSxN and ISCSI protocol."
+    condition     = var.storage_type != "FSxN" || var.protocol != "ISCSI" || var.fsxn_password != null
+    error_message = "The fsxn_password variable must be provided when storage_type is FSxN and ISCSI protocol."
   }
 }
 

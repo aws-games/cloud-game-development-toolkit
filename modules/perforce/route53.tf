@@ -3,7 +3,7 @@
 ##########################################
 resource "aws_route53_zone" "perforce_private_hosted_zone" {
   count = var.create_route53_private_hosted_zone != false ? 1 : 0
-  name  = var.p4_server_config.fully_qualified_domain_name
+  name  = var.route53_private_hosted_zone_name
   #checkov:skip=CKV2_AWS_38: Hosted zone is private (vpc association)
   #checkov:skip=CKV2_AWS_39: Query logging disabled by design
   vpc {

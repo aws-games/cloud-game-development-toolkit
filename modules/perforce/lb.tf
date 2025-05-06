@@ -24,8 +24,11 @@ resource "aws_lb_target_group" "perforce" {
 
   tags = merge(var.tags,
     {
-      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
-      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficSource = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name :
+      "${var.project_prefix}-perforce-shared-nlb")
+      TrafficDestination = (var.shared_application_load_balancer_name != null ?
+        var.shared_application_load_balancer_name
+      : "${var.project_prefix}-perforce-shared-alb")
     }
   )
 
@@ -49,8 +52,10 @@ resource "aws_lb_target_group_attachment" "perforce" {
 # Perforce Network Load Balancer
 ##########################################
 resource "aws_lb" "perforce" {
-  count                            = var.create_shared_network_load_balancer != false ? 1 : 0
-  name_prefix                      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "cgdnlb"
+  count = var.create_shared_network_load_balancer != false ? 1 : 0
+  name_prefix = (var.shared_network_load_balancer_name != null ?
+    var.shared_network_load_balancer_name :
+  var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "cgdnlb")
   load_balancer_type               = "network"
   subnets                          = var.public_subnets
   security_groups                  = concat(var.existing_security_groups, [aws_security_group.perforce_network_load_balancer[0].id])
@@ -62,7 +67,9 @@ resource "aws_lb" "perforce" {
 
 
   dynamic "access_logs" {
-    for_each = (var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs ? [1] :
+    for_each = (
+      var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs
+      ? [1] :
     [])
     content {
       enabled = var.enable_shared_lb_access_logs
@@ -76,7 +83,8 @@ resource "aws_lb" "perforce" {
 
   tags = merge(var.tags,
     {
-      Name        = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      Name = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name :
+      "${var.project_prefix}-perforce-shared-nlb")
       Type        = "Network Load Balancer"
       Routability = "PUBLIC"
     }
@@ -102,8 +110,11 @@ resource "aws_lb_listener" "perforce" {
   #checkov:skip=CKV2_AWS_74: Ensure AWS Load Balancers use strong ciphers
   tags = merge(var.tags,
     {
-      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
-      TrafficDestination = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficSource = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name :
+      "${var.project_prefix}-perforce-shared-nlb")
+      TrafficDestination = (var.shared_application_load_balancer_name != null ?
+        var.shared_application_load_balancer_name
+      : "${var.project_prefix}-perforce-shared-alb")
     }
   )
 
@@ -119,7 +130,6 @@ resource "aws_lb_listener" "perforce" {
 }
 
 
-
 # 1. Create the Target Group (this is done in p4-auth, and p4-code-review submodules)
 # 2. Create the Target Group Attachment (this is not necessary as ECS handles this automatically. This is handled in the p4-auth, and p4-code-review submodules in the load_balancers block)
 # 3. Create the ALB only if the target group (in submodules) has been created
@@ -127,8 +137,9 @@ resource "aws_lb_listener" "perforce" {
 # Perforce Web Services Application Load Balancer
 ###################################################
 resource "aws_lb" "perforce_web_services" {
-  count                      = var.create_shared_application_load_balancer != false ? 1 : 0
-  name_prefix                = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "cgdalb"
+  count = var.create_shared_application_load_balancer != false ? 1 : 0
+  name_prefix = (var.shared_application_load_balancer_name != null ?
+  var.shared_application_load_balancer_name : "cgdalb")
   internal                   = true
   load_balancer_type         = "application"
   subnets                    = var.private_subnets
@@ -139,7 +150,9 @@ resource "aws_lb" "perforce_web_services" {
   #checkov:skip=CKV_AWS_150: Load balancer deletion protection disabled for example deployment
 
   dynamic "access_logs" {
-    for_each = (var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs ? [1] :
+    for_each = (
+      var.create_shared_application_load_balancer && var.create_shared_application_load_balancer && var.enable_shared_lb_access_logs
+      ? [1] :
     [])
     content {
       enabled = var.enable_shared_lb_access_logs
@@ -153,7 +166,8 @@ resource "aws_lb" "perforce_web_services" {
 
   tags = merge(var.tags,
     {
-      Name        = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      Name = (var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name :
+      "${var.project_prefix}-perforce-shared-alb")
       Type        = "Application Load Balancer"
       Routability = "PRIVATE"
     }
@@ -178,7 +192,9 @@ resource "null_resource" "parent_module_certificate" {
 # 4. Create the ALB Listeners only if null_resource has completed, and target groups (in submodules) exist
 # Default rule sends fixed response status code
 resource "aws_lb_listener" "perforce_web_services" {
-  count             = var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null
+  ? 1 : 0)
   load_balancer_arn = aws_lb.perforce_web_services[0].arn
   port              = "443"
   protocol          = "HTTPS"
@@ -197,7 +213,8 @@ resource "aws_lb_listener" "perforce_web_services" {
 
   tags = merge(var.tags,
     {
-      TrafficSource      = var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb"
+      TrafficSource = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name :
+      "${var.project_prefix}-perforce-shared-nlb")
       TrafficDestination = "SELF"
       Intent             = "Return fixed status code to confirm reachability."
     }
@@ -217,14 +234,15 @@ resource "aws_lb_listener_rule" "perforce_p4_auth" {
   }
   condition {
     host_header {
-      values = ["${var.p4_auth_config.fully_qualified_domain_name}"]
+      values = [var.p4_auth_config.fully_qualified_domain_name]
     }
   }
 
 
   tags = merge(var.tags,
     {
-      TrafficSource      = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficSource = (var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name
+      : "${var.project_prefix}-perforce-shared-alb")
       TrafficDestination = "${var.project_prefix}-${var.p4_auth_config.name}-service"
     }
   )
@@ -247,13 +265,16 @@ resource "aws_lb_listener_rule" "p4_code_review" {
   }
   condition {
     host_header {
-      values = ["${var.p4_code_review_config.fully_qualified_domain_name}"]
+      values = [var.p4_code_review_config.fully_qualified_domain_name]
     }
   }
 
   tags = merge(var.tags,
     {
-      TrafficSource      = var.shared_application_load_balancer_name != null ? var.shared_application_load_balancer_name : "${var.project_prefix}-perforce-shared-alb"
+      TrafficSource = (var.shared_application_load_balancer_name != null ?
+        var.shared_application_load_balancer_name :
+        "${var.project_prefix}-perforce-shared-alb"
+      )
       TrafficDestination = "${var.project_prefix}-${var.p4_code_review_config.name}-service"
     }
   )
@@ -263,12 +284,13 @@ resource "aws_lb_listener_rule" "p4_code_review" {
 }
 
 
-
 ##########################################
 # Load Balancers | Logging
 ##########################################
 resource "random_string" "shared_lb_access_logs_bucket" {
-  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+  ? 1 : 0)
 
   length  = 2
   special = false
@@ -276,7 +298,9 @@ resource "random_string" "shared_lb_access_logs_bucket" {
 }
 
 resource "aws_s3_bucket" "shared_lb_access_logs_bucket" {
-  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+  ? 1 : 0)
 
   bucket        = "${var.project_prefix}-perforce-lb-access-logs-${random_string.shared_lb_access_logs_bucket[0].result}"
   force_destroy = var.s3_enable_force_destroy
@@ -298,7 +322,9 @@ resource "aws_s3_bucket" "shared_lb_access_logs_bucket" {
 data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
-  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+  ? 1 : 0)
 
   statement {
     sid     = "AllowELBRootAccount"
@@ -342,15 +368,17 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
       identifiers = ["delivery.logs.amazonaws.com"]
     }
     actions = ["s3:GetBucketAcl"]
-    resources = [
-      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}"
-    ]
+    resources = (var.shared_lb_access_logs_bucket != null ? [var.shared_lb_access_logs_bucket] :
+      [aws_s3_bucket.shared_lb_access_logs_bucket[0].arn]
+    )
   }
 
 }
 
 resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
-  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+  ? 1 : 0)
 
   bucket = (var.shared_lb_access_logs_bucket == null ?
     aws_s3_bucket.shared_lb_access_logs_bucket[0].id :
@@ -359,7 +387,9 @@ resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "shared_access_logs_bucket_lifecycle_configuration" {
-  count = var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null ? 1 : 0
+  count = (
+    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+  ? 1 : 0)
 
 
   bucket = aws_s3_bucket.shared_lb_access_logs_bucket[0].id

@@ -19,12 +19,6 @@ variable "project_prefix" {
 
 }
 
-variable "environment" {
-  type        = string
-  description = "The current environment (e.g. dev, prod, etc.)"
-  default     = "dev"
-}
-
 variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name that P4 Code Review should use for internal URLs."
@@ -36,7 +30,6 @@ variable "debug" {
   default     = false
   description = "Debug flag to enable execute command on service for container access."
 }
-
 
 
 ########################################
@@ -147,12 +140,6 @@ variable "subnets" {
   description = "A list of subnets to deploy the P4 Code Review ECS Service into. Private subnets are recommended."
 }
 
-variable "existing_application_load_balancer_arn" {
-  type        = string
-  description = "The ARN of an existing P4 Code Review load balancer."
-  default     = null
-}
-
 variable "create_application_load_balancer" {
   type        = bool
   default     = true
@@ -179,12 +166,6 @@ variable "deregistration_delay" {
     condition     = var.deregistration_delay >= 0 && var.deregistration_delay <= 3600
     error_message = "The deregistration delay must be in the range 0-3600."
   }
-}
-
-variable "create_default_sgs" {
-  type        = bool
-  description = "This flag controls the creation of default security groups for P4 Code Review. Defaults to true."
-  default     = true
 }
 
 variable "existing_security_groups" {

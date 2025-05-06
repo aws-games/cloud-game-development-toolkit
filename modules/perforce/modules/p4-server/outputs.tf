@@ -37,7 +37,8 @@ output "private_ip" {
   description = "Private IP for the P4 Server instance"
 }
 
-output "fsxn_link_security_group_id" {
-  value       = aws_security_group.fsxn_lambda_link_security_group.id
-  description = "The ID of the security group for the FSxN Link Lambda."
+output "lambda_link_name" {
+  value = (var.storage_type == "FSxN" && var.protocol == "ISCSI" ?
+  aws_lambda_function.lambda_function[0].function_name : null)
+  description = "Lambda function name for the FSxN Link"
 }

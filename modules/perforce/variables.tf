@@ -1,12 +1,6 @@
 ########################################
 # General
 ########################################
-variable "region" {
-  type        = string
-  description = "The AWS region where the P4 Server instance is deployed. If omitted the region for your current AWS profile will be used."
-  default     = null
-}
-
 variable "project_prefix" {
   type        = string
   description = "The project prefix for this workload. This is appended to the beginning of most resource names."
@@ -16,18 +10,6 @@ variable "project_prefix" {
     condition     = length(var.project_prefix) > 1 && length(var.project_prefix) <= 10
     error_message = "The defined 'project_prefix' has too many characters (${length(var.project_prefix)}). This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
   }
-}
-
-variable "environment" {
-  type        = string
-  description = "The current environment (e.g. dev, prod, etc.)"
-  default     = "dev"
-}
-
-variable "enable_shared_alb_access_logs" {
-  type        = bool
-  description = "Whether to enable access logs for the shared ALB."
-  default     = true
 }
 
 ########################################
@@ -138,12 +120,6 @@ variable "shared_network_load_balancer_name" {
   default     = null
 }
 
-variable "enable_shared_nlb_deletion_protection" {
-  type        = bool
-  description = "Enables deletion protection for the shared Network Load Balancer for the Perforce resources."
-  default     = false
-}
-
 variable "create_shared_application_load_balancer" {
   type        = bool
   description = "Whether to create a shared Application Load Balancer for the Perforce resources."
@@ -178,7 +154,7 @@ variable "create_route53_private_hosted_zone" {
 variable "route53_private_hosted_zone_name" {
   type        = string
   description = "The name of the private Route53 Hosted Zone for the Perforce resources."
-  default     = "perforce.example.com"
+  default     = null
 }
 
 ########################################
@@ -225,6 +201,15 @@ variable "p4_server_config" {
     create_default_role = optional(bool, true)
     custom_role         = optional(string, null)
 
+    # FSxN
+    fsxn_password                     = optional(string, null)
+    fsxn_filesystem_security_group_id = optional(string, null)
+    protocol                          = optional(string, null)
+    fsxn_region                       = optional(string, null)
+    fsxn_management_ip                = optional(string, null)
+    fsxn_svm_name                     = optional(string, null)
+    amazon_fsxn_svm_id                = optional(string, null)
+    fsxn_aws_profile                  = optional(string, null)
   })
   description = <<EOT
     # - General -
@@ -264,7 +249,7 @@ variable "p4_server_config" {
 
 
     # - Storage -
-    storage_type: "The type of backing store. Valid values are either 'EBS' or 'FSxZ'"
+    storage_type: "The type of backing store. Valid values are either 'EBS' or 'FSxN'"
 
     depot_volume_size: "The size of the depot volume in GiB. Defaults to 128 GiB."
 
@@ -311,8 +296,8 @@ variable "p4_server_config" {
   }
 
   validation {
-    condition     = contains(["EBS", "FSxZ"], var.p4_server_config.storage_type)
-    error_message = "Not a valid storage type. Valid values are either 'EBS' or 'FSxZ'."
+    condition     = contains(["EBS", "FSxN"], var.p4_server_config.storage_type)
+    error_message = "Not a valid storage type. Valid values are either 'EBS' or 'FSxN'."
   }
 
 }
@@ -460,7 +445,8 @@ variable "p4_code_review_config" {
     p4d_port         = optional(string, null)
     existing_redis_connection = optional(object({
       host = string
-    port = number }), null)
+      port = number
+    }), null)
 
     # Storage & Logging
     enable_alb_access_logs           = optional(bool, false)

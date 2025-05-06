@@ -2,7 +2,7 @@
 # Route53 Hosted Zone for FQDN
 ##########################################
 data "aws_route53_zone" "root" {
-  name         = var.root_domain_name
+  name         = var.route53_public_hosted_zone_name
   private_zone = false
 }
 
@@ -13,5 +13,5 @@ resource "aws_route53_record" "external_helix_core" {
   name    = "perforce.${data.aws_route53_zone.root.name}"
   type    = "A"
   ttl     = 300
-  records = [module.perforce_helix_core.helix_core_eip_public_ip]
+  records = [module.perforce.p4_server_eip_public_ip]
 }

@@ -18,12 +18,6 @@ variable "project_prefix" {
   default     = "cgd"
 }
 
-variable "environment" {
-  type        = string
-  description = "The current environment (e.g. dev, prod, etc.)"
-  default     = "dev"
-}
-
 variable "enable_web_based_administration" {
   type        = bool
   description = "Flag for enabling web based administration of P4Auth."
@@ -137,12 +131,6 @@ variable "subnets" {
   description = "A list of subnets to deploy the P4Auth ECS Service into. Private subnets are recommended."
 }
 
-variable "existing_application_load_balancer_arn" {
-  type        = string
-  description = "The ARN of an existing P4 Code Review load balancer."
-  default     = null
-}
-
 variable "create_application_load_balancer" {
   type        = bool
   default     = true
@@ -169,12 +157,6 @@ variable "deregistration_delay" {
     condition     = var.deregistration_delay >= 0 && var.deregistration_delay <= 3600
     error_message = "The deregistration delay must be in the range 0-3600."
   }
-}
-
-variable "create_default_sgs" {
-  type        = bool
-  description = "This flag controls the creation of default security groups for P4Auth. Defaults to true."
-  default     = true
 }
 
 variable "existing_security_groups" {

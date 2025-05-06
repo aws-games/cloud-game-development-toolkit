@@ -19,6 +19,7 @@ resource "awscc_secretsmanager_secret" "super_user_username" {
   secret_string = "perforce"
 }
 
+
 ##########################################
 # Perforce P4 Server Instance
 ##########################################
@@ -69,7 +70,8 @@ locals {
 }
 
 resource "aws_instance" "server_instance" {
-  ami           = var.lookup_existing_ami == true ? data.aws_ami.existing_server_ami[0].id : data.aws_ami.autogen_server_ami[0].id
+  ami = (var.lookup_existing_ami == true ? data.aws_ami.existing_server_ami[0].id :
+  data.aws_ami.autogen_server_ami[0].id)
   instance_type = var.instance_type
 
   availability_zone = local.p4_server_az
@@ -155,7 +157,7 @@ resource "aws_ebs_volume" "depot" {
 resource "aws_volume_attachment" "depot_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
   device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.depot.id
+  volume_id   = aws_ebs_volume.depot[count.index].id
   instance_id = aws_instance.server_instance.id
 }
 
@@ -192,6 +194,6 @@ resource "aws_ebs_volume" "logs" {
 resource "aws_volume_attachment" "logs_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
   device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.logs.id
+  volume_id   = aws_ebs_volume.logs[count.index].id
   instance_id = aws_instance.server_instance.id
 }

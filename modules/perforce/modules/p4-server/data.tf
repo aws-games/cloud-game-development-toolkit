@@ -1,17 +1,7 @@
-data "aws_region" "current" {}
-
-data "aws_caller_identity" "current" {}
-
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
 # Lookup of subnet that module creates
 data "aws_subnet" "instance_subnet" {
   id = var.instance_subnet_id
 }
-
-data "aws_region" "current" {}
 
 # Conditionally fetch exist P4 Server AMI that unless using the auto-generated AMI
 data "aws_ami" "existing_server_ami" {
