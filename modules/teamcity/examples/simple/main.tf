@@ -4,5 +4,5 @@ module "teamcity" {
   service_subnets             = aws_subnet.private_subnets[*].id
   alb_subnets                 = aws_subnet.public_subnets[*].id
   alb_certificate_arn         = aws_acm_certificate.teamcity.arn
-  fully_qualified_domain_name = "https://teamcity.ayatanb.people.aws.dev"
+  # fully_qualified_domain_name = "https://teamcity.ayatanb.people.aws.dev"
 }
