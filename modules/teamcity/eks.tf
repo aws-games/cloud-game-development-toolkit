@@ -120,7 +120,7 @@ resource "aws_iam_role" "eks_cluster" {
   })
 }
 
-# create IAM user to create a Kubernetes Connection with TeamCity
+# create IAM user to establish a Kubernetes Connection with TeamCity
 resource "aws_iam_user" "eks_user" {
   #checkov:skip=CKV_AWS_273:need IAM user for TeamCity
   name = "teamcity-eks-user"
@@ -131,6 +131,7 @@ resource "aws_iam_access_key" "eks_iam_access_key" {
   user = aws_iam_user.eks_user.name
 }
 
+# Output secret... work in progress
 output "secret" {
   value     = aws_iam_access_key.eks_iam_access_key.secret
   sensitive = true
