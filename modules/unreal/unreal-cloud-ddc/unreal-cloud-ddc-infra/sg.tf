@@ -56,7 +56,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_monitoring"
   to_port                      = 3000
   security_group_id            = aws_security_group.scylla_monitoring_sg[count.index].id
   referenced_security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
-  description                  = "Allow traffic from the NLB to the Grafana UI"
+  description                  = "Allow traffic from the ALB to the Grafana UI"
 }
 
 # Scylla monitoring security group egress rule allowing outbound traffic to the internet
@@ -88,7 +88,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
   from_port         = 80
   to_port           = 80
   cidr_ipv4         = var.scylla_monitoring_dashboard_access_cidrs[count.index]
-  description       = "Allow traffic from allow listed IPs to the NLB"
+  description       = "Allow traffic from allow listed IPs to the ALB"
 }
 
 resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_lb_sg_egress_rule" {

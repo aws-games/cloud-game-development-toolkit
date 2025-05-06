@@ -69,9 +69,9 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.94.1 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.36.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.4.5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.39.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
 
