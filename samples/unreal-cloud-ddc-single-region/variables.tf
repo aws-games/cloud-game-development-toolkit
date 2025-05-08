@@ -9,3 +9,9 @@ variable "eks_cluster_ip_allow_list" {
   default     = null
   description = "IPs that will be allow listed to access cluster over internet"
 }
+
+variable "scylla_monitoring_ip_allow_list" {
+  type        = list(string)
+  description = "List of IP addresses allowed to access the Scylla monitoring dashboard (port 3000). Leave empty to restrict all public access."
+  default     = []
+}
