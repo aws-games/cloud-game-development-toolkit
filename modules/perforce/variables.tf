@@ -194,9 +194,8 @@ variable "p4_server_config" {
     fully_qualified_domain_name = string
 
     # Compute
-    lookup_existing_ami      = optional(bool, true)
-    enable_auto_ami_creation = optional(bool, false)
-    ami_prefix               = optional(string, "p4_al2023")
+    lookup_existing_ami = optional(bool, true)
+    ami_prefix          = optional(string, "p4_al2023")
 
     instance_type         = optional(string, "c6i.large")
     instance_architecture = optional(string, "x86_64")
@@ -250,8 +249,6 @@ variable "p4_server_config" {
 
     # - Compute -
     lookup_existing_ami : "Whether to lookup the existing Perforce P4 Server AMI."
-
-    enable_auto_ami_creation: "Whether to automatically create an AMI for the P4 Server instance. This will create an AMI on first apply."
 
     ami_prefix: "The AMI prefix to use for the AMI that will be created for P4 Server."
 
