@@ -1,10 +1,10 @@
 # Shared
 output "shared_network_load_balancer_arn" {
-  value       = aws_lb.perforce[0].arn
+  value       = var.create_shared_network_load_balancer ? aws_lb.perforce[0].arn : null
   description = "The ARN of the shared network load balancer."
 }
 output "shared_application_load_balancer_arn" {
-  value       = aws_lb.perforce[0].arn
+  value       = var.create_shared_application_load_balancer ? aws_lb.perforce[0].arn : null
   description = "The ARN of the shared application load balancer."
 }
 

@@ -69,9 +69,12 @@ locals {
   )
 }
 
+locals {
+  username_secret = var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_password_secret_arn
+  password_secret = var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn
+}
 resource "aws_instance" "server_instance" {
-  ami = (var.lookup_existing_ami == true ? data.aws_ami.existing_server_ami[0].id :
-  data.aws_ami.autogen_server_ami[0].id)
+  ami           = data.aws_ami.existing_server_ami.id
   instance_type = var.instance_type
 
   availability_zone = local.p4_server_az
@@ -79,27 +82,24 @@ resource "aws_instance" "server_instance" {
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
 
-  user_data = <<-EOT
-    #!/bin/bash
-    DEPOT_VOLUME_NAME=${local.depot_volume_name}
-    METADATA_VOLUME_NAME=${local.metadata_volume_name}
-    LOGS_VOLUME_NAME=${local.logs_volume_name}
-    /home/ec2-user/gpic_scripts/p4_configure.sh --hx_logs $LOGS_VOLUME_NAME \
-     --hx_metadata $METADATA_VOLUME_NAME \
-     --hx_depots $DEPOT_VOLUME_NAME \
-     --p4d_type ${var.p4_server_type} \
-     --username ${var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_password_secret_arn} \
-     --password ${var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn} \
-     ${var.fully_qualified_domain_name == null ? "" : "--fqdn ${var.fully_qualified_domain_name}"} \
-     ${var.auth_service_url == null ? "" : "--auth ${var.auth_service_url}"} \
-     ${local.is_fsxn ? "--fsxn_password ${var.fsxn_password}" : ""} \
-     ${local.is_fsxn ? "--fsxn_svm_name ${var.fsxn_svm_name}" : ""} \
-     ${local.is_fsxn ? "--fsxn_management_ip ${var.fsxn_management_ip}" : ""} \
-     --case_sensitive ${var.case_sensitive ? 1 : 0} \
-     --unicode ${var.unicode ? "true" : "false"} \
-     --selinux ${var.selinux ? "true" : "false"} \
-     --plaintext ${var.plaintext ? "true" : "false"}
-  EOT
+  user_data = templatefile("${path.module}/templates/user_data.tftpl", {
+    depot_volume_name    = local.depot_volume_name
+    metadata_volume_name = local.metadata_volume_name
+    logs_volume_name     = local.logs_volume_name
+    p4_server_type       = var.p4_server_type
+    username_secret      = local.username_secret
+    password_secret      = local.password_secret
+    fqdn                 = var.fully_qualified_domain_name != null ? var.fully_qualified_domain_name : ""
+    auth_url             = var.auth_service_url != null ? var.auth_service_url : ""
+    is_fsxn              = local.is_fsxn
+    fsxn_password        = var.fsxn_password
+    fsxn_svm_name        = var.fsxn_svm_name
+    fsxn_management_ip   = var.fsxn_management_ip
+    case_sensitive       = var.case_sensitive ? 1 : 0
+    unicode              = var.unicode ? "true" : "false"
+    selinux              = var.selinux ? "true" : "false"
+    plaintext            = var.plaintext ? "true" : "false"
+  })
 
   vpc_security_group_ids = (var.create_default_sg ?
     concat(var.existing_security_groups, [aws_security_group.default_security_group[0].id]) :

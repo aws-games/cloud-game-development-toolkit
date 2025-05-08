@@ -15,22 +15,24 @@ variable "project_prefix" {
 ########################################
 # Compute
 ########################################
+
+# If an existing cluster is provided this will be used to run any ECS compatible services (Auth, Review)
 variable "existing_ecs_cluster_name" {
   type        = string
   description = "The name of an existing ECS cluster to use for the Perforce server. If omitted a new cluster will be created."
   default     = null
+  # This is mutually exclusive with shared_ecs_cluster_name which creates a new cluster
+  validation {
+    condition     = (var.existing_ecs_cluster_name == null || var.shared_ecs_cluster_name == null)
+    error_message = "You must not provide both an existing ECS cluster name and a shared ECS cluster name."
+  }
 }
-variable "create_shared_ecs_cluster" {
-  type        = bool
-  description = "Whether to create an ECS cluster to use for the shared ECS Cluster."
-  default     = true
-}
+
 variable "shared_ecs_cluster_name" {
   type        = string
   description = "The name of the ECS cluster to use for the shared ECS Cluster."
-  default     = null
+  default     = "perforce-cluster"
 }
-
 
 ########################################
 # Storage & Logging
@@ -45,23 +47,43 @@ variable "shared_lb_access_logs_bucket" {
   type        = string
   description = "ID of the S3 bucket for both the shared NLB and shared ALB access log storage. If access logging is enabled and this is null the module creates a bucket."
   default     = null
+  # This should not be provided if access logging is disabled
+  validation {
+    condition     = var.enable_shared_lb_access_logs ? var.shared_lb_access_logs_bucket != null : true
+    error_message = "If access logging is disabled, the variable 'shared_lb_access_logs_bucket' must not be provided."
+  }
 }
 
 variable "shared_nlb_access_logs_prefix" {
   type        = string
   description = "Log prefix for shared NLB access logs."
-  default     = null
+  default     = "perforce-nlb-"
+  # This should not be provided if access logging is disabled
+  validation {
+    condition     = var.enable_shared_lb_access_logs ? var.shared_nlb_access_logs_prefix != null : true
+    error_message = "If access logging is disabled, the variable 'shared_nlb_access_logs_prefix' must not be provided."
+  }
 }
 variable "shared_alb_access_logs_prefix" {
   type        = string
   description = "Log prefix for shared ALB access logs."
-  default     = null
+  default     = "perforce-alb-"
+  # This should not be provided if access logging is disabled
+  validation {
+    condition     = var.enable_shared_lb_access_logs ? var.shared_alb_access_logs_prefix != null : true
+    error_message = "If access logging is disabled, the variable 'shared_alb_access_logs_prefix' must not be provided."
+  }
 }
 
 variable "s3_enable_force_destroy" {
   type        = bool
   description = "Enables force destroy for the S3 bucket for both the shared NLB and shared ALB access log storage. Defaults to true."
   default     = true
+  # This should not be provided if access logging is disabled
+  validation {
+    condition     = var.enable_shared_lb_access_logs ? var.s3_enable_force_destroy != null : true
+    error_message = "If access logging is disabled, the variable 's3_enable_force_destroy' must not be provided."
+  }
 }
 
 
@@ -73,30 +95,6 @@ variable "vpc_id" {
   description = "The VPC ID where the Perforce resources will be deployed."
 }
 
-variable "public_subnets" {
-  type        = list(string)
-  description = "The list of public subnet IDs where the Perforce resources will be deployed."
-  default     = null
-}
-
-variable "public_subnets_cidrs" {
-  type        = list(string)
-  description = "The list of public subnet CIDR blocks for the Public Subnets"
-  default     = []
-}
-
-variable "private_subnets" {
-  type        = list(string)
-  description = "The list of private subnet IDs where the Perforce resources will be deployed."
-  default     = null
-}
-
-variable "private_subnets_cidrs" {
-  type        = list(string)
-  description = "The list of public subnet CIDR blocks for the Public Subnets"
-  default     = null
-}
-
 variable "create_default_sgs" {
   type        = bool
   description = "Whether to create default security groups for the Perforce resources."
@@ -105,8 +103,30 @@ variable "create_default_sgs" {
 
 variable "existing_security_groups" {
   type        = list(string)
-  description = "A list of existing security group IDs to attach to the P4Auth load balancer."
+  description = "A list of existing security group IDs to attach to the shared network load balancer."
   default     = []
+}
+
+variable "shared_alb_subnets" {
+  type        = list(string)
+  description = "A list of subnets to attach to the shared application load balancer."
+  default     = null
+  # must be provided if create_shared_application_load_balancer is true
+  validation {
+    condition     = var.shared_alb_subnets != null ? length(var.shared_alb_subnets) > 0 : true
+    error_message = "If create_shared_application_load_balancer is false, the variable 'shared_alb_subnets' must not be provided."
+  }
+}
+
+variable "shared_nlb_subnets" {
+  type        = list(string)
+  description = "A list of subnets to attach to the shared network load balancer."
+  default     = null
+  # must be provided if create_shared_network_load_balancer is true
+  validation {
+    condition     = var.shared_nlb_subnets != null ? length(var.shared_nlb_subnets) > 0 : true
+    error_message = "If create_shared_network_load_balancer is false, the variable 'shared_nlb_subnets' must not be provided."
+  }
 }
 
 variable "create_shared_network_load_balancer" {
@@ -117,7 +137,7 @@ variable "create_shared_network_load_balancer" {
 variable "shared_network_load_balancer_name" {
   type        = string
   description = "The name of the shared Network Load Balancer for the Perforce resources."
-  default     = null
+  default     = "p4nlb"
 }
 
 variable "create_shared_application_load_balancer" {
@@ -129,7 +149,7 @@ variable "create_shared_application_load_balancer" {
 variable "shared_application_load_balancer_name" {
   type        = string
   description = "The name of the shared Application Load Balancer for the Perforce resources."
-  default     = null
+  default     = "p4alb"
 }
 
 variable "enable_shared_alb_deletion_protection" {
@@ -137,7 +157,6 @@ variable "enable_shared_alb_deletion_protection" {
   description = "Enables deletion protection for the shared Application Load Balancer for the Perforce resources."
   default     = false
 }
-
 
 variable "certificate_arn" {
   type        = string
@@ -155,6 +174,11 @@ variable "route53_private_hosted_zone_name" {
   type        = string
   description = "The name of the private Route53 Hosted Zone for the Perforce resources."
   default     = null
+  # Should only be provided if create_route53_private_hosted_zone is set to true
+  validation {
+    condition     = var.create_route53_private_hosted_zone ? var.route53_private_hosted_zone_name != null : true
+    error_message = "If create_route53_private_hosted_zone is false, the variable 'route53_private_hosted_zone_name' must not be provided."
+  }
 }
 
 ########################################
@@ -336,6 +360,7 @@ variable "p4_auth_config" {
     create_application_load_balancer       = optional(bool, false)
     application_load_balancer_name         = optional(string, null)
     enable_alb_deletion_protection         = optional(bool, false)
+    service_subnets                        = optional(list(string), null)
     deregistration_delay                   = optional(number, 30)
     create_default_sgs                     = optional(bool, true)
     existing_security_groups               = optional(list(string), [])
@@ -464,6 +489,7 @@ variable "p4_code_review_config" {
     create_default_sgs                     = optional(bool, true)
     existing_security_groups               = optional(list(string), [])
     internal                               = optional(bool, false)
+    service_subnets                        = optional(list(string), null)
 
     certificate_arn     = optional(string, null)
     create_default_role = optional(bool, true)

@@ -52,12 +52,10 @@ resource "aws_lb_target_group_attachment" "perforce" {
 # Perforce Network Load Balancer
 ##########################################
 resource "aws_lb" "perforce" {
-  count = var.create_shared_network_load_balancer != false ? 1 : 0
-  name_prefix = (var.shared_network_load_balancer_name != null ?
-    var.shared_network_load_balancer_name :
-  var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "cgdnlb")
+  count                            = var.create_shared_network_load_balancer != false ? 1 : 0
+  name_prefix                      = var.shared_network_load_balancer_name
   load_balancer_type               = "network"
-  subnets                          = var.public_subnets
+  subnets                          = var.shared_nlb_subnets
   security_groups                  = concat(var.existing_security_groups, [aws_security_group.perforce_network_load_balancer[0].id])
   drop_invalid_header_fields       = true
   enable_cross_zone_load_balancing = true
@@ -137,12 +135,11 @@ resource "aws_lb_listener" "perforce" {
 # Perforce Web Services Application Load Balancer
 ###################################################
 resource "aws_lb" "perforce_web_services" {
-  count = var.create_shared_application_load_balancer != false ? 1 : 0
-  name_prefix = (var.shared_application_load_balancer_name != null ?
-  var.shared_application_load_balancer_name : "cgdalb")
+  count                      = var.create_shared_application_load_balancer != false ? 1 : 0
+  name_prefix                = var.shared_application_load_balancer_name
   internal                   = true
   load_balancer_type         = "application"
-  subnets                    = var.private_subnets
+  subnets                    = var.shared_alb_subnets
   security_groups            = concat(var.existing_security_groups, [aws_security_group.perforce_web_services_alb[0].id])
   enable_deletion_protection = var.enable_shared_alb_deletion_protection
   drop_invalid_header_fields = true

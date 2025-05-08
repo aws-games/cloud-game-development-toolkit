@@ -39,24 +39,6 @@ variable "auth_service_url" {
 ########################################
 # Compute
 ########################################
-variable "lookup_existing_ami" {
-  type        = bool
-  description = "Whether to lookup the existing Perforce AMI."
-  default     = false
-}
-
-variable "enable_auto_ami_creation" {
-  type        = bool
-  description = "Whether to automatically create an AMI for the P4 Server instance. This will create an AMI on first apply."
-  default     = false
-}
-
-variable "ami_prefix" {
-  type        = string
-  description = "The AMI prefix to use for the AMI that will be created for P4 Server."
-  default     = "p4_al2023"
-}
-
 variable "instance_type" {
   type        = string
   description = "The instance type for Perforce P4 Server. Defaults to c6g.large."

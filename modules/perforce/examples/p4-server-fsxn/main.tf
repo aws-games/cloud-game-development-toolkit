@@ -67,14 +67,13 @@ module "perforce" {
   source = "../../"
 
   # - Shared -
-  project_prefix       = local.project_prefix
-  vpc_id               = aws_vpc.perforce_vpc.id
-  public_subnets       = aws_subnet.public_subnets[*].id
-  public_subnets_cidrs = local.public_subnet_cidrs
-  private_subnets      = aws_subnet.private_subnets[*].id
+  project_prefix = local.project_prefix
+  vpc_id         = aws_vpc.perforce_vpc.id
 
-  create_route53_private_hosted_zone = true
-  route53_private_hosted_zone_name   = "${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
+  create_route53_private_hosted_zone      = true
+  route53_private_hosted_zone_name        = "${local.perforce_subdomain}.${var.route53_public_hosted_zone_name}"
+  create_shared_application_load_balancer = false
+  create_shared_network_load_balancer     = false
 
   # - P4 Server Configuration -
   p4_server_config = {
@@ -83,9 +82,8 @@ module "perforce" {
     fully_qualified_domain_name = local.p4_server_fully_qualified_domain_name
 
     # Compute
-    lookup_existing_ami      = false
-    enable_auto_ami_creation = true
-    p4_server_type           = "p4d_commit"
+    lookup_existing_ami = false
+    p4_server_type      = "p4d_commit"
 
     # Storage
     depot_volume_size    = 128

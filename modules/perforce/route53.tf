@@ -13,7 +13,7 @@ resource "aws_route53_zone" "perforce_private_hosted_zone" {
 
 # Route all internal web service traffic (e.g. auth.perforce.example.com, review.perforce.example.com) to the Private ALB
 resource "aws_route53_record" "internal_perforce_web_services" {
-  count   = var.create_route53_private_hosted_zone != false ? 1 : 0
+  count   = var.create_shared_application_load_balancer && var.create_route53_private_hosted_zone ? 1 : 0
   zone_id = aws_route53_zone.perforce_private_hosted_zone[0].id
   name    = "*.${aws_route53_zone.perforce_private_hosted_zone[0].name}"
   type    = "A"
@@ -26,7 +26,7 @@ resource "aws_route53_record" "internal_perforce_web_services" {
 
 # Route all internal P4 Server traffic to the instance
 resource "aws_route53_record" "internal_p4_server" {
-  count   = var.create_route53_private_hosted_zone != false ? 1 : 0
+  count   = var.p4_server_config != null && var.create_route53_private_hosted_zone ? 1 : 0
   zone_id = aws_route53_zone.perforce_private_hosted_zone[0].zone_id
   name    = aws_route53_zone.perforce_private_hosted_zone[0].name
   type    = "A"
