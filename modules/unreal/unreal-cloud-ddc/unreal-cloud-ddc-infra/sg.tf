@@ -85,8 +85,8 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
   count             = var.create_scylla_monitoring_stack ? length(var.scylla_monitoring_dashboard_access_cidrs) : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[0].id
   ip_protocol       = "tcp"
-  from_port         = 80
-  to_port           = 80
+  from_port         = 443
+  to_port           = 443
   cidr_ipv4         = var.scylla_monitoring_dashboard_access_cidrs[count.index]
   description       = "Allow traffic from allow listed IPs to the ALB"
 }

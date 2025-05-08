@@ -1,3 +1,7 @@
+########################################
+# GENERAL CONFIGURATION
+########################################
+
 variable "name" {
   description = "Unreal Cloud DDC Workload Name"
   type        = string
@@ -34,22 +38,14 @@ variable "vpc_id" {
   type        = string
 }
 
+########################################
+# ScyllaDB Configuration
+########################################
+
 variable "scylla_subnets" {
   type        = list(string)
   default     = []
   description = "A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended."
-}
-
-variable "monitoring_lb_subnets" {
-  type        = list(string)
-  default     = []
-  description = "A list of subnet IDs where the monitoring load balancer will be deployed. Private subnets are strongly recommended."
-}
-
-variable "eks_node_group_subnets" {
-  type        = list(string)
-  default     = []
-  description = "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
 }
 
 variable "scylla_ami_name" {
@@ -104,6 +100,16 @@ variable "create_scylla_monitoring_stack" {
   default     = true
   description = "Whether to create the Scylla monitoring stack"
   nullable    = false
+}
+
+########################################
+# EKS Configurations
+########################################
+
+variable "eks_node_group_subnets" {
+  type        = list(string)
+  default     = []
+  description = "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
 }
 
 variable "nvme_managed_node_instance_type" {
@@ -296,6 +302,37 @@ variable "system_node_group_label" {
     "pool" = "system-pool"
   }
   description = "Label applied to system node group"
+}
+
+########################################
+# Load Balancing
+########################################
+variable "create_external_alb" {
+  type        = bool
+  description = "Whether to create an external ALB for the Scylla monitoring dashboard."
+  default     = true
+}
+
+variable "monitoring_lb_subnets" {
+  type        = list(string)
+  description = "The subnets in which the ALB will be deployed"
+
+  validation {
+    condition     = var.create_external_alb == true && length(var.monitoring_lb_subnets) > 0
+    error_message = "The alb_subnets variable must be set if create_external_alb is true."
+  }
+  default = []
+}
+
+variable "alb_certificate_arn" {
+  type        = string
+  description = "The ARN of the certificate to use on the ALB"
+  default     = null
+
+  validation {
+    condition     = (var.create_external_alb == true && var.alb_certificate_arn != null) || (!var.create_external_alb && var.alb_certificate_arn == null)
+    error_message = "The alb_certificate_arn variable must be set if create_external_alb is true."
+  }
 }
 
 variable "scylla_monitoring_dashboard_access_cidrs" {

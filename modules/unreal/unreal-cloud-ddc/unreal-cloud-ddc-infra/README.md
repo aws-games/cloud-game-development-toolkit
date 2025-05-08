@@ -197,6 +197,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
+| <a name="input_create_external_alb"></a> [create\_external\_alb](#input\_create\_external\_alb) | Whether to create an external ALB for the Scylla monitoring dashboard. | `bool` | `true` | no |
 | <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
@@ -209,7 +211,7 @@ No modules.
 | <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
-| <a name="input_monitoring_lb_subnets"></a> [monitoring\_lb\_subnets](#input\_monitoring\_lb\_subnets) | A list of subnet IDs where the monitoring load balancer will be deployed. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
+| <a name="input_monitoring_lb_subnets"></a> [monitoring\_lb\_subnets](#input\_monitoring\_lb\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `[]` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
@@ -246,6 +248,8 @@ No modules.
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
+| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
 | <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
 | <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | OIDC provider for the EKS Cluster |
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |

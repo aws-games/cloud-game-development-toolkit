@@ -42,8 +42,8 @@ resource "aws_instance" "scylla_monitoring" {
 
 # Network Load Balancer for Scylla Monitoring
 resource "aws_lb" "scylla_monitoring_alb" {
-  count                            = var.create_scylla_monitoring_stack ? 1 : 0
-  name                             = "scylla-monitoring-alb"
+  count                            = var.create_scylla_monitoring_stack && var.create_external_alb ? 1 : 0
+  name                             = "scylla-monitoring-lb"
   load_balancer_type               = "application"
   subnets                          = var.monitoring_lb_subnets
   security_groups                  = [aws_security_group.scylla_monitoring_lb_sg[count.index].id]
@@ -66,14 +66,14 @@ resource "aws_lb" "scylla_monitoring_alb" {
 }
 
 resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
-  count       = var.create_scylla_monitoring_stack ? 1 : 0
+  #checkov:skip=CKV_AWS_378: TLS termination at ALB
+  count       = var.create_scylla_monitoring_stack && var.create_external_alb ? 1 : 0
   name        = "scylla-monitoring-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "instance"
 
-  #checkov:skip=CKV_AWS_378:Using HTTP for now
   health_check {
     enabled             = true
     path                = "/api/health"
@@ -90,12 +90,13 @@ resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
 
 # Listeners for Scylla Monitoring
 resource "aws_lb_listener" "scylla_monitoring_listener" {
-  count             = var.create_scylla_monitoring_stack ? 1 : 0
+  count             = var.create_scylla_monitoring_stack && var.create_external_alb ? 1 : 0
   load_balancer_arn = aws_lb.scylla_monitoring_alb[count.index].arn
-  port              = 80
-  protocol          = "HTTP"
-  #checkov:skip=CKV_AWS_2:Using HTTP for now
-  #checkov:skip=CKV_AWS_103:Using HTTP for now
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.alb_certificate_arn
+
 
   default_action {
     type             = "forward"
@@ -106,7 +107,7 @@ resource "aws_lb_listener" "scylla_monitoring_listener" {
 
 # Attach the monitoring instance to the target group
 resource "aws_lb_target_group_attachment" "scylla_monitoring" {
-  count            = var.create_scylla_monitoring_stack ? 1 : 0
+  count            = var.create_scylla_monitoring_stack && var.create_external_alb ? 1 : 0
   target_group_arn = aws_lb_target_group.scylla_monitoring_alb_target_group[count.index].arn
   target_id        = aws_instance.scylla_monitoring[0].id
   port             = 3000

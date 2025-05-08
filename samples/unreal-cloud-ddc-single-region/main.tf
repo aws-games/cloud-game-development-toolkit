@@ -1,5 +1,5 @@
 resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-token"
+  name        = "unreal-cloud-ddc-token-2"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
     exclude_punctuation = true
@@ -55,6 +55,7 @@ module "unreal_cloud_ddc_infra" {
 
   scylla_monitoring_dashboard_access_cidrs = var.scylla_monitoring_ip_allow_list != null ? var.scylla_monitoring_ip_allow_list : ["${chomp(data.http.public_ip.response_body)}/32"]
   monitoring_lb_subnets                    = module.unreal_cloud_ddc_vpc.public_subnet_ids
+  alb_certificate_arn                      = aws_acm_certificate.scylla_monitoring.arn
 
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
