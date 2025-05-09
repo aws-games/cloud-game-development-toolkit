@@ -12,7 +12,7 @@ resource "aws_security_group" "fsx_ontap_file_system_sg" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_helix_core" {
+resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_p4_server" {
   ip_protocol                  = "-1"
   description                  = "Allows all inbound access from the VPC."
   security_group_id            = aws_security_group.fsx_ontap_file_system_sg.id
@@ -22,7 +22,7 @@ resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_helix_core" {
   }
 }
 
-resource "aws_fsx_ontap_file_system" "helix_core_fs" {
+resource "aws_fsx_ontap_file_system" "p4_server_fs" {
   #checkov:skip=CKV_AWS_178: CMK is out of scope.
   storage_capacity    = 1024
   subnet_ids          = [aws_subnet.private_subnets[0].id]
@@ -33,9 +33,9 @@ resource "aws_fsx_ontap_file_system" "helix_core_fs" {
   security_group_ids  = [aws_security_group.fsx_ontap_file_system_sg.id]
 }
 
-resource "aws_fsx_ontap_storage_virtual_machine" "helix_core_svm" {
-  file_system_id = aws_fsx_ontap_file_system.helix_core_fs.id
-  name           = "helix_core_svm"
+resource "aws_fsx_ontap_storage_virtual_machine" "p4_server_svm" {
+  file_system_id = aws_fsx_ontap_file_system.p4_server_fs.id
+  name           = "p4_server_svm"
 }
 
 resource "awscc_secretsmanager_secret" "fsxn_user_password" {
@@ -50,7 +50,7 @@ provider "netapp-ontap" {
   connection_profiles = [
     {
       name     = "aws"
-      hostname = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
+      hostname = aws_fsx_ontap_file_system.p4_server_fs.endpoints[0].management[0].dns_name
       username = "fsxadmin"
       password = var.fsxn_password
       aws_lambda = {
@@ -93,11 +93,11 @@ module "perforce" {
     storage_type                      = "FSxN"
     protocol                          = "ISCSI"
     fsxn_filesystem_security_group_id = aws_security_group.fsx_ontap_file_system_sg.id
-    fsxn_file_system_id               = aws_fsx_ontap_file_system.helix_core_fs.id
+    fsxn_file_system_id               = aws_fsx_ontap_file_system.p4_server_fs.id
     fsxn_password                     = awscc_secretsmanager_secret.fsxn_user_password.id
-    fsxn_management_ip                = aws_fsx_ontap_file_system.helix_core_fs.endpoints[0].management[0].dns_name
-    fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.name
-    amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.helix_core_svm.id
+    fsxn_management_ip                = aws_fsx_ontap_file_system.p4_server_fs.endpoints[0].management[0].dns_name
+    fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.p4_server_svm.name
+    amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.p4_server_svm.id
     fsxn_aws_profile                  = var.fsxn_aws_profile
     fsxn_region                       = data.aws_region.current.name
 
