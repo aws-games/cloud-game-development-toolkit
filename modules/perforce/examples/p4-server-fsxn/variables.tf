@@ -4,7 +4,7 @@ variable "route53_public_hosted_zone_name" {
 }
 
 variable "fsxn_password" {
-  description = "FSxN admin user password AWS secret manager arn"
+  description = "Admin password to be used with FSxN"
   type        = string
 }
 
