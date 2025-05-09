@@ -1,0 +1,26 @@
+#!/bin/bash
+DEPOT_VOLUME_NAME=${depot_volume_name}
+METADATA_VOLUME_NAME=${metadata_volume_name}
+LOGS_VOLUME_NAME=${logs_volume_name}
+/home/ec2-user/gpic_scripts/p4_configure.sh \
+    --hx_logs $LOGS_VOLUME_NAME \
+    --hx_metadata $METADATA_VOLUME_NAME \
+    --hx_depots $DEPOT_VOLUME_NAME \
+    --p4d_type ${p4_server_type} \
+    --username ${username_secret} \
+    --password ${password_secret} \
+    %{ if fqdn != "" ~}
+    --fqdn ${fqdn} \
+    %{ endif ~}
+    %{ if auth_url != "" ~}
+    --auth ${auth_url} \
+    %{ endif ~}
+    %{ if is_fsxn ~}
+    --fsxn_password ${fsxn_password} \
+    --fsxn_svm_name ${fsxn_svm_name} \
+    --fsxn_management_ip ${fsxn_management_ip} \
+    %{ endif ~}
+    --case_sensitive ${case_sensitive} \
+    --unicode ${unicode} \
+    --selinux ${selinux} \
+    --plaintext ${plaintext}
