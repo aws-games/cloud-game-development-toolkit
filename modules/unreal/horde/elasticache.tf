@@ -1,13 +1,13 @@
 # Subnet Group for Horde Elasticache
 resource "aws_elasticache_subnet_group" "horde" {
-  count      = var.redis_connection_config == null ? 1 : 0
+  count      = var.custom_cache_connection_config == null ? 1 : 0
   name       = "${var.name}-elasticache-subnet-group"
   subnet_ids = var.unreal_horde_service_subnets
 }
 
 # Single Node Elasticache Cluster for Horde
 resource "aws_elasticache_cluster" "horde" {
-  count                = var.elasticache_engine == "redis" && var.redis_connection_config == null ? 1 : 0
+  count                = var.elasticache_engine == "redis" && var.custom_cache_connection_config == null ? 1 : 0
   cluster_id           = "${var.name}-elasticache-redis-cluster"
   engine               = "redis"
   node_type            = var.elasticache_node_type
@@ -23,7 +23,7 @@ resource "aws_elasticache_cluster" "horde" {
 
 # Valkey Cluster Mode Disabled
 resource "aws_elasticache_replication_group" "horde" {
-  count                = var.elasticache_engine == "valkey" && var.redis_connection_config == null ? 1 : 0
+  count                = var.elasticache_engine == "valkey" && var.custom_cache_connection_config == null ? 1 : 0
   engine               = "valkey"
   engine_version       = "7.2"
   replication_group_id = "${var.name}-elasticache-valkey-rep-grp"
