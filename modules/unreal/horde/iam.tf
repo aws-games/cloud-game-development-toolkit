@@ -31,7 +31,7 @@ data "aws_iam_policy_document" "unreal_horde_default_policy" {
   }
 }
 data "aws_iam_policy_document" "unreal_horde_elasticache_policy" {
-  count = var.redis_connection_config == null ? 1 : 0
+  count = var.custom_cache_connection_config == null ? 1 : 0
   # Elasticache
   statement {
     sid    = "ElasticacheConnect"
@@ -56,7 +56,7 @@ resource "aws_iam_policy" "unreal_horde_default_policy" {
 }
 
 resource "aws_iam_policy" "unreal_horde_elasticache_policy" {
-  count = var.redis_connection_config == null ? 1 : 0
+  count = var.custom_cache_connection_config == null ? 1 : 0
 
   name        = "${var.project_prefix}-unreal_horde-elasticache-policy"
   description = "Policy granting elasticache connect permissions for Unreal Horde."
@@ -78,7 +78,7 @@ resource "aws_iam_role" "unreal_horde_default_role" {
 
 #conditionally attach elasticache policy to default role
 resource "aws_iam_role_policy_attachment" "unreal_horde_elasticache_policy_attachment" {
-  count = var.redis_connection_config == null ? 1 : 0
+  count = var.custom_cache_connection_config == null ? 1 : 0
 
   role       = aws_iam_role.unreal_horde_default_role[0].name
   policy_arn = aws_iam_policy.unreal_horde_elasticache_policy[0].arn

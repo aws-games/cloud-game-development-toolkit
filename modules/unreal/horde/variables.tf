@@ -365,9 +365,9 @@ variable "elasticache_cluster_count" {
   default     = 2
 }
 
-variable "redis_connection_config" {
+variable "custom_cache_connection_config" {
   type        = string
-  description = "The redis connection configuration that Horde should use."
+  description = "The redis-compatible connection configuration that Horde should use."
   default     = null
 }
 
