@@ -139,7 +139,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_al
 
 # unreal_horde Elasticache Redis Security Group
 resource "aws_security_group" "unreal_horde_elasticache_sg" {
-  count = var.redis_connection_config == null ? 1 : 0
+  count = var.custom_cache_connection_config == null ? 1 : 0
   #checkov:skip=CKV2_AWS_5:Security group is attached to Elasticache cluster
   name        = "${local.name_prefix}-elasticache"
   vpc_id      = var.vpc_id
@@ -147,7 +147,7 @@ resource "aws_security_group" "unreal_horde_elasticache_sg" {
   tags        = local.tags
 }
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_elasticache_ingress" {
-  count = var.redis_connection_config == null ? 1 : 0
+  count = var.custom_cache_connection_config == null ? 1 : 0
 
   security_group_id            = aws_security_group.unreal_horde_elasticache_sg[0].id
   description                  = "Allow inbound traffic from unreal_horde service to Redis"
