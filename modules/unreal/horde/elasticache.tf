@@ -23,15 +23,16 @@ resource "aws_elasticache_cluster" "horde" {
 
 # Valkey Cluster Mode Disabled
 resource "aws_elasticache_replication_group" "horde" {
-  count                = var.elasticache_engine == "valkey" && var.custom_cache_connection_config == null ? 1 : 0
-  engine               = "valkey"
-  engine_version       = "7.2"
-  replication_group_id = "${var.name}-elasticache-valkey-rep-grp"
-  description          = "valkey for horde"
-  node_type            = var.elasticache_node_type
-  num_cache_clusters   = var.elasticache_cluster_count
-  parameter_group_name = local.elasticache_valkey_parameter_group_name
-  port                 = local.elasticache_port
-  security_group_ids   = [aws_security_group.unreal_horde_elasticache_sg[0].id]
-  subnet_group_name    = aws_elasticache_subnet_group.horde[0].name
+  automatic_failover_enabled = true
+  count                      = var.elasticache_engine == "valkey" && var.custom_cache_connection_config == null ? 1 : 0
+  engine                     = "valkey"
+  engine_version             = "7.2"
+  replication_group_id       = "${var.name}-elasticache-valkey-rep-grp"
+  description                = "valkey for horde"
+  node_type                  = var.elasticache_node_type
+  num_cache_clusters         = var.elasticache_cluster_count
+  parameter_group_name       = local.elasticache_valkey_parameter_group_name
+  port                       = local.elasticache_port
+  security_group_ids         = [aws_security_group.unreal_horde_elasticache_sg[0].id]
+  subnet_group_name          = aws_elasticache_subnet_group.horde[0].name
 }
