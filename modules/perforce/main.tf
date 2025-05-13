@@ -91,9 +91,6 @@ module "p4_auth" {
   vpc_id  = var.vpc_id
   subnets = var.p4_auth_config.service_subnets
 
-
-  # existing_application_load_balancer_arn = aws_lb.perforce_web_services[0].arn
-  # existing_application_load_balancer_arn = var.p4_auth_config.existing_application_load_balancer_arn
   create_application_load_balancer = var.p4_auth_config.create_application_load_balancer
   application_load_balancer_name   = var.p4_auth_config.application_load_balancer_name
   enable_alb_deletion_protection   = var.p4_auth_config.enable_alb_deletion_protection

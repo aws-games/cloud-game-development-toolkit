@@ -1,7 +1,5 @@
 module "terraform-aws-perforce" {
   source = "../../"
-  # source = "aws-games/perforce/aws" # remote example
-  # version = "v1.0.0"
 
   # - Shared -
   project_prefix = local.project_prefix
