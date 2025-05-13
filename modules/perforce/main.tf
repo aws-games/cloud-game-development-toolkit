@@ -9,8 +9,19 @@ module "p4_server" {
   name           = var.p4_server_config.name
   project_prefix = var.p4_server_config.project_prefix
   environment    = var.p4_server_config.environment
-  # TODO: Determine mechanism for handling the case where auth service provisions its own ALB
-  auth_service_url            = var.p4_server_config.auth_service_url != null ? var.p4_server_config.auth_service_url : (local.create_shared_alb ? "https://auth.${aws_route53_record.internal_perforce_web_services[0].name}" : null)
+  auth_service_url = (
+    var.p4_server_config.auth_service_url != null ?
+    var.p4_server_config.auth_service_url :
+    (
+      var.p4_auth_config != null ?
+      (
+        var.create_route53_private_hosted_zone ?
+        "auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
+        module.p4_auth.alb_dns_name
+      ) :
+      null
+    )
+  )
   fully_qualified_domain_name = var.p4_server_config.fully_qualified_domain_name
 
   # Compute
@@ -47,6 +58,7 @@ module "p4_server" {
   super_user_username_secret_arn = var.p4_server_config.super_user_username_secret_arn
   create_default_role            = var.p4_server_config.create_default_role
   custom_role                    = var.p4_server_config.custom_role
+  depends_on                     = [module.p4_auth]
 }
 
 
@@ -68,11 +80,7 @@ module "p4_auth" {
   cluster_name = (
     var.existing_ecs_cluster_name != null ?
     var.existing_ecs_cluster_name :
-    (
-      local.shared_ecs_cluster ?
-      aws_ecs_cluster.perforce_web_services_cluster[0].name :
-      null # if null is passed the module creates a cluster
-    )
+    aws_ecs_cluster.perforce_web_services_cluster[0].name
   )
 
   container_name   = var.p4_auth_config.container_name
@@ -81,23 +89,15 @@ module "p4_auth" {
   container_memory = var.p4_auth_config.container_memory
 
   # Storage & Logging
-  enable_alb_access_logs           = var.p4_auth_config.enable_alb_access_logs
-  alb_access_logs_bucket           = var.p4_auth_config.alb_access_logs_bucket
-  alb_access_logs_prefix           = var.p4_auth_config.alb_access_logs_prefix
-  s3_enable_force_destroy          = var.p4_auth_config.s3_enable_force_destroy
+  enable_alb_access_logs           = false
   cloudwatch_log_retention_in_days = var.p4_auth_config.cloudwatch_log_retention_in_days
 
   # Networking & Security
   vpc_id  = var.vpc_id
   subnets = var.p4_auth_config.service_subnets
 
-  create_application_load_balancer = var.p4_auth_config.create_application_load_balancer
-  application_load_balancer_name   = var.p4_auth_config.application_load_balancer_name
-  enable_alb_deletion_protection   = var.p4_auth_config.enable_alb_deletion_protection
-  deregistration_delay             = var.p4_auth_config.deregistration_delay
-  existing_security_groups         = var.p4_auth_config.existing_security_groups
+  create_application_load_balancer = false
   internal                         = var.p4_auth_config.internal
-  certificate_arn                  = var.p4_auth_config.certificate_arn
   create_default_role              = var.p4_auth_config.create_default_role
   custom_role                      = var.p4_auth_config.custom_role
 
@@ -124,11 +124,7 @@ module "p4_code_review" {
   cluster_name = (
     var.existing_ecs_cluster_name != null ?
     var.existing_ecs_cluster_name :
-    (
-      local.shared_ecs_cluster ?
-      aws_ecs_cluster.perforce_web_services_cluster[0].name :
-      null # if null is passed the module creates a cluster
-    )
+    aws_ecs_cluster.perforce_web_services_cluster[0].name
   )
   container_name   = var.p4_code_review_config.container_name
   container_port   = var.p4_code_review_config.container_port
@@ -137,29 +133,20 @@ module "p4_code_review" {
   p4d_port = (
     var.p4_code_review_config.p4d_port != null ?
     var.p4_code_review_config.p4d_port :
-    "ssl:${aws_route53_zone.perforce_private_hosted_zone[0].name}:1666"
+    "ssl:${var.create_route53_private_hosted_zone ? aws_route53_zone.perforce_private_hosted_zone[0].name : module.p4_server.private_ip}:1666"
   )
   existing_redis_connection = var.p4_code_review_config.existing_redis_connection
 
   # Storage & Logging
-  enable_alb_access_logs           = var.p4_code_review_config.enable_alb_access_logs
-  alb_access_logs_bucket           = var.p4_code_review_config.alb_access_logs_bucket
-  alb_access_logs_prefix           = var.p4_code_review_config.alb_access_logs_prefix
-  s3_enable_force_destroy          = var.p4_code_review_config.s3_enable_force_destroy
+  enable_alb_access_logs           = false
   cloudwatch_log_retention_in_days = var.p4_code_review_config.cloudwatch_log_retention_in_days
 
   # Networking & Security
   vpc_id  = var.vpc_id
   subnets = var.p4_code_review_config.service_subnets
 
-  # existing_application_load_balancer_arn = aws_lb.perforce_web_services[0].arn
-  create_application_load_balancer = var.p4_code_review_config.create_application_load_balancer
-  application_load_balancer_name   = var.p4_code_review_config.application_load_balancer_name
-  enable_alb_deletion_protection   = var.p4_code_review_config.enable_alb_deletion_protection
-  deregistration_delay             = var.p4_code_review_config.deregistration_delay
-  existing_security_groups         = var.p4_code_review_config.existing_security_groups
+  create_application_load_balancer = false
   internal                         = var.p4_code_review_config.internal
-  certificate_arn                  = var.p4_code_review_config.certificate_arn
 
   create_default_role = var.p4_code_review_config.create_default_role
   custom_role         = var.p4_code_review_config.custom_role

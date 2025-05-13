@@ -135,7 +135,7 @@ resource "aws_lb_listener" "perforce" {
 # Perforce Web Services Application Load Balancer
 ###################################################
 resource "aws_lb" "perforce_web_services" {
-  count                      = var.create_shared_application_load_balancer != false ? 1 : 0
+  count                      = var.create_shared_application_load_balancer ? 1 : 0
   name_prefix                = var.shared_application_load_balancer_name
   internal                   = true
   load_balancer_type         = "application"
@@ -190,7 +190,7 @@ resource "null_resource" "parent_module_certificate" {
 # Default rule sends fixed response status code
 resource "aws_lb_listener" "perforce_web_services" {
   count = (
-    var.create_shared_application_load_balancer != false && var.p4_auth_config != null || var.create_shared_application_load_balancer != false && var.p4_code_review_config != null
+    var.create_shared_application_load_balancer && (var.p4_auth_config != null || var.p4_code_review_config != null)
   ? 1 : 0)
   load_balancer_arn = aws_lb.perforce_web_services[0].arn
   port              = "443"
@@ -203,7 +203,7 @@ resource "aws_lb_listener" "perforce_web_services" {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
-      message_body = "Fixed response content"
+      message_body = "Please use a valid subdomain."
       status_code  = "200"
     }
   }
@@ -251,7 +251,7 @@ resource "aws_lb_listener_rule" "perforce_p4_auth" {
 
 # P4 Code Review listener rule - forward from ALB to Code Review Service
 resource "aws_lb_listener_rule" "p4_code_review" {
-  count = var.create_shared_application_load_balancer != false && var.p4_code_review_config != null ? 1 : 0
+  count = var.create_shared_application_load_balancer && var.p4_code_review_config != null ? 1 : 0
   # count        = var.create_shared_application_load_balancer != false && var.p4_server_config != null ? 1 : 0
   listener_arn = aws_lb_listener.perforce_web_services[0].arn
   priority     = 100
@@ -286,7 +286,8 @@ resource "aws_lb_listener_rule" "p4_code_review" {
 ##########################################
 resource "random_string" "shared_lb_access_logs_bucket" {
   count = (
-    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+    (var.create_shared_application_load_balancer || var.create_shared_network_load_balancer) &&
+    var.enable_shared_lb_access_logs && var.shared_lb_access_logs_bucket == null
   ? 1 : 0)
 
   length  = 2
@@ -296,7 +297,8 @@ resource "random_string" "shared_lb_access_logs_bucket" {
 
 resource "aws_s3_bucket" "shared_lb_access_logs_bucket" {
   count = (
-    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+    (var.create_shared_application_load_balancer || var.create_shared_network_load_balancer) &&
+    var.enable_shared_lb_access_logs && var.shared_lb_access_logs_bucket == null
   ? 1 : 0)
 
   bucket        = "${var.project_prefix}-perforce-lb-access-logs-${random_string.shared_lb_access_logs_bucket[0].result}"
@@ -320,7 +322,8 @@ data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
   count = (
-    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+    (var.create_shared_application_load_balancer || var.create_shared_network_load_balancer) &&
+    var.enable_shared_lb_access_logs && var.shared_lb_access_logs_bucket == null
   ? 1 : 0)
 
   statement {
@@ -334,8 +337,7 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
     }
     resources = [
       # Grant access to bucket root
-      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*",
-
+      "${aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*",
     ]
   }
 
@@ -348,7 +350,7 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
     }
     actions = ["s3:PutObject"]
     resources = [
-      "${var.shared_lb_access_logs_bucket != null ? var.shared_lb_access_logs_bucket : aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*"
+      "${aws_s3_bucket.shared_lb_access_logs_bucket[0].arn}/*"
     ]
     condition {
       test     = "StringEquals"
@@ -364,17 +366,16 @@ data "aws_iam_policy_document" "shared_lb_access_logs_bucket_lb_write" {
       type        = "Service"
       identifiers = ["delivery.logs.amazonaws.com"]
     }
-    actions = ["s3:GetBucketAcl"]
-    resources = (var.shared_lb_access_logs_bucket != null ? [var.shared_lb_access_logs_bucket] :
-      [aws_s3_bucket.shared_lb_access_logs_bucket[0].arn]
-    )
+    actions   = ["s3:GetBucketAcl"]
+    resources = [aws_s3_bucket.shared_lb_access_logs_bucket[0].arn]
   }
 
 }
 
 resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
   count = (
-    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+    (var.create_shared_application_load_balancer || var.create_shared_network_load_balancer) &&
+    var.enable_shared_lb_access_logs && var.shared_lb_access_logs_bucket == null
   ? 1 : 0)
 
   bucket = (var.shared_lb_access_logs_bucket == null ?
@@ -385,12 +386,14 @@ resource "aws_s3_bucket_policy" "shared_lb_access_logs_bucket_policy" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "shared_access_logs_bucket_lifecycle_configuration" {
   count = (
-    var.create_shared_application_load_balancer != false && var.create_shared_network_load_balancer != false && var.enable_shared_lb_access_logs != false && var.shared_lb_access_logs_bucket == null
+    (var.create_shared_application_load_balancer || var.create_shared_network_load_balancer) &&
+    var.enable_shared_lb_access_logs && var.shared_lb_access_logs_bucket == null
   ? 1 : 0)
 
 
   bucket = aws_s3_bucket.shared_lb_access_logs_bucket[0].id
   rule {
+    filter {}
     id     = "access-logs-lifecycle"
     status = "Enabled"
     transition {

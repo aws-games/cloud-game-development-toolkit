@@ -323,7 +323,6 @@ variable "p4_server_config" {
 
 }
 
-
 ########################################
 # P4Auth
 ########################################
@@ -338,37 +337,25 @@ variable "p4_auth_config" {
     fully_qualified_domain_name     = string
 
     # - Compute -
-    cluster_name     = optional(string, null)
     container_name   = optional(string, "p4-auth-container")
     container_port   = optional(number, 3000)
     container_cpu    = optional(number, 1024)
     container_memory = optional(number, 4096)
 
     # - Storage & Logging -
-    enable_alb_access_logs           = optional(bool, false)
-    alb_access_logs_bucket           = optional(string, null)
-    alb_access_logs_prefix           = optional(string, null)
-    s3_enable_force_destroy          = optional(bool, false)
     cloudwatch_log_retention_in_days = optional(number, 365)
 
-
     # - Networking & Security -
-    existing_application_load_balancer_arn = optional(string, null)
-    create_application_load_balancer       = optional(bool, false)
-    application_load_balancer_name         = optional(string, null)
-    enable_alb_deletion_protection         = optional(bool, false)
-    service_subnets                        = optional(list(string), null)
-    deregistration_delay                   = optional(number, 30)
-    create_default_sgs                     = optional(bool, true)
-    existing_security_groups               = optional(list(string), [])
-    internal                               = optional(bool, false)
+    service_subnets          = optional(list(string), null)
+    create_default_sgs       = optional(bool, true)
+    existing_security_groups = optional(list(string), [])
+    internal                 = optional(bool, false)
 
     certificate_arn           = optional(string, null)
     create_default_role       = optional(bool, true)
     custom_role               = optional(string, null)
     admin_username_secret_arn = optional(string, null)
     admin_password_secret_arn = optional(string, null)
-
   })
 
   default = null
@@ -401,36 +388,13 @@ variable "p4_auth_config" {
 
 
     # Storage & Logging
-    enable_alb_access_logs: "Whether to enable access logs for the P4Auth service. Only use this variable if you are not using the default shared load balancers."
-
-    alb_access_logs_bucket: "The name of the S3 bucket where the P4Auth service access logs will be stored. Only use this variable if you are not using the default shared load balancers."
-
-    alb_access_logs_prefix: "The prefix for the P4Auth service access logs. Only use this variable if you are not using the default shared load balancers."
-
-    s3_enable_force_destroy : "Whether to allow the S3 bucket to be deleted even if it contains objects. Only use this variable if you are not using the default shared load balancers."
-
     cloudwatch_log_retention_in_days : "The number of days to retain the P4Auth service logs in CloudWatch. Default is 365 days."
 
 
     # Networking
-    existing_application_load_balancer_arn : "The name of the existing Application Load Balancer for the P4Auth service."
-
-    create_application_load_balancer : "Whether to create the Application Load Balancer for the P4Auth service. Only use this variable if you are not using the default shared load balancers."
-
-
-    application_load_balancer_name : "The name of the Application Load Balancer for the P4Auth service. Only use this variable if you are not using the default shared load balancer."
-
-    enable_alb_deletion_protection : "Whether to enable deletion protection for the P4Auth service. Only use this variable if you are not using the default shared load balancer."
-
-    deregistration_delay : "The amount of time to wait for the load balancer to deregister the instance from the target group. Default is 30 seconds."
-
     create_defaults_sgs : "Whether to create default security groups for the P4Auth service."
 
-    existing_security_groups : "A list of existing security group IDs to attach to the P4Auth service load balancer. Only use this variable if you are not using the default shared load balancers."
-
-    internal : "Set this flag to true if you do not want the P4Auth service to have a public IP. Only use this variable if you are not using the default shared load balancers."
-
-    certificate_arn : "The ARN of the ACM certificate to use for the P4Auth service. Only use this variable if you are not using the default shared load balancers."
+    internal : "Set this flag to true if you do not want the P4Auth service to have a public IP."
 
     create_default_role : "Whether to create the P4Auth default IAM Role. Default is set to true."
 
@@ -459,7 +423,6 @@ variable "p4_code_review_config" {
     fully_qualified_domain_name = string
 
     # Compute
-    cluster_name     = optional(string, null)
     container_name   = optional(string, "p4-code-review-container")
     container_port   = optional(number, 80)
     container_cpu    = optional(number, 1024)
@@ -471,24 +434,14 @@ variable "p4_code_review_config" {
     }), null)
 
     # Storage & Logging
-    enable_alb_access_logs           = optional(bool, false)
-    alb_access_logs_bucket           = optional(string, null)
-    alb_access_logs_prefix           = optional(string, null)
-    s3_enable_force_destroy          = optional(bool, false)
     cloudwatch_log_retention_in_days = optional(number, 365)
 
     # Networking & Security
-    existing_application_load_balancer_arn = optional(string, null)
-    create_application_load_balancer       = optional(bool, false)
-    application_load_balancer_name         = optional(string, null)
-    enable_alb_deletion_protection         = optional(bool, false)
-    deregistration_delay                   = optional(number, 30)
-    create_default_sgs                     = optional(bool, true)
-    existing_security_groups               = optional(list(string), [])
-    internal                               = optional(bool, false)
-    service_subnets                        = optional(list(string), null)
+    create_default_sgs       = optional(bool, true)
+    existing_security_groups = optional(list(string), [])
+    internal                 = optional(bool, false)
+    service_subnets          = optional(list(string), null)
 
-    certificate_arn     = optional(string, null)
     create_default_role = optional(bool, true)
     custom_role         = optional(string, null)
 
@@ -519,8 +472,6 @@ variable "p4_code_review_config" {
 
 
     # Compute
-    cluster_name : "The name of the ECS cluster where the P4 Code Review service will be deployed."
-
     container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."
 
     container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."
@@ -535,35 +486,13 @@ variable "p4_code_review_config" {
 
 
     # Storage & Logging
-    enable_alb_access_logs: "Whether to enable access logs for the P4 Code Review service. Only use this variable if you are not using the default shared load balancers."
-
-    alb_access_logs_bucket: "The name of the S3 bucket where the P4 Code Review service access logs will be stored. Only use this variable if you are not using the default shared load balancers."
-
-    alb_access_logs_prefix: "The prefix for the P4 Code Review service access logs. Only use this variable if you are not using the default shared load balancers."
-
-    s3_enable_force_destroy : "Whether to allow the S3 bucket to be deleted even if it contains objects. Only use this variable if you are not using the default shared load balancers."
-
     cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."
 
 
     # Networking & Security
-    existing_application_load_balancer_arn : "The name of the existing Application Load Balancer for the P4 Code Review service."
-
-    create_application_load_balancer : "Whether to create the Application Load Balancer for the P4 Code Review service. Only use this variable if you are not using the default shared load balancers."
-
-    application_load_balancer_name : "The name of the Application Load Balancer for the P4 Code Review service. Only use this variable if you are not using the default shared load balancers."
-
-    enable_alb_deletion_protection : "Whether to enable deletion protection for the P4 Code Review service. Only use this variable if you are not using the default shared load balancers."
-
-    deregistration_delay : "The amount of time to wait for the load balancer to deregister the instance from the target group. Default is 30 seconds."
-
     create_default_sgs : "Whether to create default security groups for the P4 Code Review service."
 
-    existing_security_groups : "A list of existing security group IDs to attach to the P4 Code Review service load balancer. Only use this variable if you are not using the default shared load balancers."
-
-    internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP. Only use this variable if you are not using the default shared load balancers."
-
-    certificate_arn : "The ARN of the ACM certificate to use for the P4 Code Review service. Only use this variable if you are not using the default shared load balancers."
+    internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."
 
     create_default_role : "Whether to create the P4 Code Review default IAM Role. Default is set to true."
 
@@ -584,6 +513,7 @@ variable "p4_code_review_config" {
 
     # Caching
     elasticache_node_count : "The number of Elasticache nodes to create for the P4 Code Review service. Default is '1'."
+
     elasticache_node_type : "The type of Elasticache node to create for the P4 Code Review service. Default is 'cache.t4g.micro'."
 
   EOT
