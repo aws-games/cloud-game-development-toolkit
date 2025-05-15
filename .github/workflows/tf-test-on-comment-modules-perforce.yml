@@ -13,12 +13,8 @@ jobs:
   terraform-testing:
     # TODO: scope these permissions down
     permissions: write-all
-    # permissions:
-    #   id-token: write # This is required for AWS OIDC connection
-    #   contents: read # This is required for actions/checkout
-    #   pull-requests: write # This is required for GitHub bot to comment on PR
     name: Terraform Testing
-    # Only run if it#s a PR and the comment contains '/run-perforce-module-tf-tests'
+    # Only run if it is a PR and the comment contains '/run-perforce-module-tf-tests'
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/run-perforce-module-tf-tests')
     runs-on: ubuntu-latest
     environment: aws-ci
