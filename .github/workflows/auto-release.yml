@@ -40,6 +40,7 @@ jobs:
           git push -f origin latest
 
   update-changelog:
+    needs: [tag-latest-commit]
     runs-on: ubuntu-latest
     steps:
       - name: update-changelog
@@ -83,6 +84,7 @@ jobs:
           git branch -D $BRANCH_NAME
 
   update-tags:
+    needs: [update-changelog]
     runs-on: ubuntu-latest
     steps:
       - name: checkout-latest
@@ -109,6 +111,7 @@ jobs:
             --draft=false
 
   release-documentation:
+    needs: [update-tags]
     runs-on: ubuntu-latest
     steps:
       - name: checkout-latest
