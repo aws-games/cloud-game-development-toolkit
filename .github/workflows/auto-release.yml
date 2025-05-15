@@ -39,18 +39,9 @@ jobs:
           git tag -f -a latest -m "Latest release"
           git push -f origin latest
 
-  update-changelog:
-    needs: [tag-latest-commit]
-    runs-on: ubuntu-latest
-    steps:
       - name: update-changelog
         id: changelog
         uses: ./.github/workflows/changelog.yml
-
-      - name: Setup Git Config
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
 
       - name: Handle Changelog PR
         run: |
@@ -83,15 +74,6 @@ jobs:
           git pull origin main
           git branch -D $BRANCH_NAME
 
-  update-tags:
-    needs: [update-changelog]
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout-latest
-        uses: actions/checkout@v4.2.2
-        with:
-          ref: main
-          fetch-depth: 1
       - name: update-tags
         run: |
           git pull
@@ -99,6 +81,7 @@ jobs:
           git push -f origin ${{ inputs.release-version }}
           git tag -f -a latest -m "Latest release"
           git push -f origin latest
+
       - name: Edit and publish release
         run: |
           # Get the latest draft release
@@ -110,10 +93,6 @@ jobs:
             --latest
             --draft=false
 
-  release-documentation:
-    needs: [update-tags]
-    runs-on: ubuntu-latest
-    steps:
       - name: checkout-latest
         uses: ./.github/workflows/docs.yml
         with:
