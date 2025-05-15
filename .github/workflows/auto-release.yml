@@ -26,6 +26,10 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
+      - name: Setup Git Config
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
       - name: tag-version
         run: |
           git tag ${{ inputs.release-version }}
