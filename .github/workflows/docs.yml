@@ -2,8 +2,7 @@
 ## Process
 # 1. When changes are made to documentation files and pushed to the main branch, the workflow in this file is triggered.
 # 2. Copy the repository's contents to the runner, so the workflow can access them.
-# 3. `make docs-deploy-prod` is run inside Docker container to deploy the documentation to GitHub Pages.
-# Currently using fixed version and alias until release
+# 3. Build and deploy the documentation
 #====================================================================================================
 name: Build Docs and Publish to gh-pages
 on:
@@ -17,6 +16,21 @@ on:
   #    - "**/README.md"
   #    - ".github/workflows/docs.yml"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build and publish docs (i.e. v0.1.0-alpha.1, v1.0.0)"
+        required: true
+        type: string
+      alias:
+        description: "Alias to associate version (latest, stage)"
+        required: true
+        type: string
+      git_ref:
+        description: "Branch or commit ID to checkout from"
+        required: false
+        type: string
+        default: main
+  workflow_call:
     inputs:
       version:
         description: "Version to build and publish docs (i.e. v0.1.0-alpha.1, v1.0.0)"
@@ -46,7 +60,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
           ref: ${{ inputs.git_ref }}
@@ -58,7 +72,5 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install dependencies
-        run: make docs-install-dependencies
       - name: Deploy Docs
         run: make docs-deploy-github VERSION=${{ inputs.VERSION }} ALIAS=${{ inputs.ALIAS }}

@@ -1,0 +1,116 @@
+name: Auto Release
+
+env:
+  TF_VAR_fully_qualified_domain_name: ${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}
+
+# push on: PR when jenkin's files are changed
+on:
+  schedule:
+    - cron: "0 0 1,15 * *"
+  workflow_dispatch:
+    - release-version:
+        description: "Version to release"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+jobs:
+  tag-latest-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: tag-version
+        run: |
+          git tag ${{ inputs.release-version }}
+          git push origin ${{ inputs.release-version }}
+      - name: tag-latest
+        run: |
+          git tag -s -f -a latest -m "Latest release"
+          git push -f origin latest
+
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: update-changelog
+        id: changelog
+        uses: ./.github/workflows/changelog.yml
+
+      - name: Setup Git Config
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Handle Changelog PR
+        run: |
+          # Find the PR using its id
+          PR_NUMBER=${{ steps.changelog.outputs.pr_number }}
+          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
+
+          # Checkout the PR branch
+          git fetch origin $BRANCH_NAME
+          git checkout $BRANCH_NAME
+
+          # Rebase on main
+          git fetch origin main
+          git rebase origin/main
+
+          # Force push the rebased branch
+          git push --force-with-lease origin $BRANCH_NAME
+
+          # Switch back to main
+          git checkout main
+
+          # Enable auto-merge and approve (use --admin to force merge)
+          gh pr merge $PR_NUMBER --auto --merge
+          gh pr review $PR_NUMBER --approve
+
+          # Wait for merge
+          gh pr checks $PR_NUMBER --watch
+
+          # Clean up
+          git pull origin main
+          git branch -D $BRANCH_NAME
+
+  update-tags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: update-tags
+        run: |
+          git pull
+          git tag -s -f ${{ inputs.release-version }} -m "Release ${{ inputs.release-version }}"
+          git push -f origin ${{ inputs.release-version }}
+          git tag -s -f -a latest -m "Latest release"
+          git push -f origin latest
+      - name: Edit and publish release
+        run: |
+          # Get the latest draft release
+          RELEASE_ID=$(gh release list --limit 1 --exclude-pre-releases --draft | cut -f 3)
+
+          # Edit release content if needed
+          gh release edit ${{ inputs.release-version }} \
+            --tag ${{ inputs.release-version }}
+            --latest
+            --draft=false
+
+  release-documentation:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-latest
+        uses: ./.github/workflows/docs.yml
+        with:
+          version: ${{ inputs.release-version }}
+          alias:  latest

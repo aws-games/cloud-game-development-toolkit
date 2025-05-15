@@ -17,17 +17,17 @@ jobs:
       actions: read  # Uncomment the permissions if installing in a private repository.
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@3b9b8c884f6b4bb4d5be2779c26374abadae0871 # v4.1.6
         with:
           persist-credentials: false
       - name: "Run analysis"
-        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.3.2
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186 # v2.3.2
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true # Publish results to OpenSSF REST API for easy access by consumers
       - name: "Upload artifact"
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: SARIF file
           path: results.sarif

@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '0 0 * * *'  # This will run the action every day at midnight
   workflow_dispatch: # If we need to run the action manually
+  workflow_call: # Allows this workflow to be invoked from other workflows
+    outputs:
+      pr_number:
+        description: The number of the created pull request
+        value: ${{ jobs.update-changelog.steps.create-pr.outputs.pr_number }}
 permissions:
   contents: read
 jobs:
@@ -16,42 +21,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+      uses: actions/checkout@v4.2.2
       with:
         fetch-depth: 0
+        token: ${{ secrets.BOT_PAT }}
     - name: Update Changelog
+      env:
+        GH_TOKEN: ${{ secrets.BOT_PAT }}
+        FILE_TO_COMMIT: CHANGELOG.md
+        DESTINATION_BRANCH: changelog-${{ github.run_id }}
       run: |
         git fetch --tags origin
         docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
-    # - name: Create Pull Request
-    #   env:
-    #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    #   run: |
-    #     git config user.name github-actions[bot]
-    #     git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-    #     git config user.signingkey
-    #     git config commit.gpgsign true
-    #     git checkout -b changelog-update-${{ github.run_id }}
-    #     git add .
-    #     git commit -m "Update Changelog"
-    #     git push origin changelog-update-${{ github.run_id }}
-    #     gh version
-    #     gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head changelog-update-${{ github.run_id }}
-    - name: Commit changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        FILE_TO_COMMIT: CHANGELOG.md
-        DESTINATION_BRANCH: changelog
-      run: |
         export TODAY=$( date -u '+%Y-%m-%d' )
         export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
-        export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
         export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+        export BRANCH_SHA=$( gh api /repos/:owner/:repo/git/ref/heads/main | jq .object.sha | tr -d '"')
+        gh api --method POST /repos/:owner/:repo/git/refs \
+          --field "ref=refs/heads/$DESTINATION_BRANCH" \
+          --field "sha=$BRANCH_SHA"
+        export SHA=$( gh api -XGET /repos/:owner/:repo/contents/$FILE_TO_COMMIT -F ref=refs/heads/$DESTINATION_BRANCH  | jq .sha | tr -d '"')
         gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
           --field message="$MESSAGE" \
           --field content="$CONTENT" \
           --field encoding="base64" \
           --field branch="$DESTINATION_BRANCH" \
-          --field sha="$SHA"
-        gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH
+          --field sha=$SHA
+        PR_URL=$(gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH)
+        PR_NUMBER=${PR_URL##*/}
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
