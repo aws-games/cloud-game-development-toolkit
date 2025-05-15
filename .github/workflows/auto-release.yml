@@ -36,7 +36,7 @@ jobs:
           git push origin ${{ inputs.release-version }}
       - name: tag-latest
         run: |
-          git tag -s -f -a latest -m "Latest release"
+          git tag -f -a latest -m "Latest release"
           git push -f origin latest
 
   update-changelog:
@@ -95,9 +95,9 @@ jobs:
       - name: update-tags
         run: |
           git pull
-          git tag -s -f ${{ inputs.release-version }} -m "Release ${{ inputs.release-version }}"
+          git tag -f ${{ inputs.release-version }} -m "Release ${{ inputs.release-version }}"
           git push -f origin ${{ inputs.release-version }}
-          git tag -s -f -a latest -m "Latest release"
+          git tag -f -a latest -m "Latest release"
           git push -f origin latest
       - name: Edit and publish release
         run: |
