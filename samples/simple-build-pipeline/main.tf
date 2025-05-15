@@ -24,71 +24,69 @@ resource "aws_ecs_cluster_capacity_providers" "providers" {
 }
 
 ##########################################
-# Perforce Helix Core
+# Perforce
 ##########################################
 
-module "perforce_helix_core" {
-  source                = "../../modules/perforce/helix-core"
-  vpc_id                = aws_vpc.build_pipeline_vpc.id
-  server_type           = "p4d_commit"
-  instance_subnet_id    = aws_subnet.public_subnets[0].id
-  instance_type         = "c6g.large"
-  instance_architecture = "arm64"
+module "terraform-aws-perforce" {
+  source = "../../modules/perforce"
 
-  storage_type         = "EBS"
-  depot_volume_size    = 64
-  metadata_volume_size = 32
-  logs_volume_size     = 32
+  # - Shared -
+  project_prefix = "cgd"
+  vpc_id         = aws_vpc.build_pipeline_vpc.id
 
-  fully_qualified_domain_name = "core.helix.perforce.${var.root_domain_name}"
+  create_route53_private_hosted_zone      = false # shared private hosted zone with Jenkins
+  create_shared_application_load_balancer = false # shared ALB with Jenkins
+  create_shared_network_load_balancer     = false # shared NLB with Jenkins
+  existing_ecs_cluster_name               = aws_ecs_cluster.build_pipeline_cluster.name
 
-  helix_authentication_service_url = "https://${aws_route53_record.helix_authentication_service.name}"
+  # - P4 Server Configuration -
+  p4_server_config = {
+    # General
+    name                        = "p4-server"
+    fully_qualified_domain_name = "perforce.${var.route53_public_hosted_zone_name}"
 
-  depends_on = [module.perforce_helix_authentication_service]
+    # Compute
+    p4_server_type = "p4d_commit"
+
+    # Storage
+    depot_volume_size    = 128
+    metadata_volume_size = 32
+    logs_volume_size     = 32
+
+    # Networking & Security
+    instance_subnet_id       = aws_subnet.public_subnets[0].id
+    existing_security_groups = [aws_security_group.allow_my_ip.id] # grants end user access
+
+    auth_service_url = "https://${local.p4_auth_fully_qualified_domain_name}"
+  }
+
+  # - P4Auth Configuration -
+  p4_auth_config = {
+    # General
+    name                        = "p4-auth"
+    fully_qualified_domain_name = local.p4_auth_fully_qualified_domain_name
+    debug                       = true # optional to use for debugging. Default is false if omitted
+    deregistration_delay        = 0
+    service_subnets             = aws_subnet.private_subnets[*].id
+    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
+  }
+
+
+  # - P4 Code Review Configuration -
+  p4_code_review_config = {
+    name                        = "p4-code-review"
+    fully_qualified_domain_name = local.p4_code_review_fully_qualified_domain_name
+    debug                       = true # optional to use for debugging. Default is false if omitted
+    deregistration_delay        = 0
+    service_subnets             = aws_subnet.private_subnets[*].id
+    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
+
+    # Configuration
+    enable_sso = true
+
+    p4d_port = "ssl:${local.p4_server_fully_qualified_domain_name}:1666"
+  }
 }
-
-##########################################
-# Perforce Helix Authentication Service
-##########################################
-
-module "perforce_helix_authentication_service" {
-  source                                   = "../../modules/perforce/helix-authentication-service"
-  vpc_id                                   = aws_vpc.build_pipeline_vpc.id
-  cluster_name                             = aws_ecs_cluster.build_pipeline_cluster.name
-  helix_authentication_service_alb_subnets = aws_subnet.public_subnets[*].id
-  helix_authentication_service_subnets     = aws_subnet.private_subnets[*].id
-  certificate_arn                          = aws_acm_certificate.helix.arn
-
-  enable_web_based_administration = true
-  fully_qualified_domain_name     = "auth.helix.${var.root_domain_name}"
-
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
-}
-
-##########################################
-# Perforce Helix Swarm
-##########################################
-
-module "perforce_helix_swarm" {
-  source                      = "../../modules/perforce/helix-swarm"
-  vpc_id                      = aws_vpc.build_pipeline_vpc.id
-  cluster_name                = aws_ecs_cluster.build_pipeline_cluster.name
-  helix_swarm_alb_subnets     = aws_subnet.public_subnets[*].id
-  helix_swarm_service_subnets = aws_subnet.private_subnets[*].id
-  certificate_arn             = aws_acm_certificate.helix.arn
-  p4d_port                    = "ssl:${aws_route53_record.perforce_helix_core_pvt.name}:1666"
-  p4d_super_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
-  p4d_super_user_password_arn = module.perforce_helix_core.helix_core_super_user_password_secret_arn
-  p4d_swarm_user_arn          = module.perforce_helix_core.helix_core_super_user_username_secret_arn
-  p4d_swarm_password_arn      = module.perforce_helix_core.helix_core_super_user_password_secret_arn
-
-  fully_qualified_domain_name = "swarm.helix.${var.root_domain_name}"
-
-  enable_sso = true
-
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.helix]
-}
-
 ##########################################
 # Jenkins
 ##########################################
@@ -96,15 +94,13 @@ module "perforce_helix_swarm" {
 module "jenkins" {
   source = "../../modules/jenkins"
 
-  cluster_name                   = aws_ecs_cluster.build_pipeline_cluster.name
-  vpc_id                         = aws_vpc.build_pipeline_vpc.id
-  jenkins_alb_subnets            = aws_subnet.public_subnets[*].id
-  jenkins_service_subnets        = aws_subnet.private_subnets[*].id
-  existing_security_groups       = []
-  internal                       = false
-  certificate_arn                = aws_acm_certificate.jenkins.arn
-  jenkins_agent_secret_arns      = local.jenkins_agent_secret_arns
-  create_ec2_fleet_plugin_policy = true
+  cluster_name                     = aws_ecs_cluster.build_pipeline_cluster.name
+  vpc_id                           = aws_vpc.build_pipeline_vpc.id
+  jenkins_alb_subnets              = aws_subnet.public_subnets[*].id
+  jenkins_service_subnets          = aws_subnet.private_subnets[*].id
+  jenkins_agent_secret_arns        = local.jenkins_agent_secret_arns
+  create_ec2_fleet_plugin_policy   = true
+  create_application_load_balancer = false
 
   # Build Farms
   build_farm_subnets = aws_subnet.private_subnets[*].id
@@ -112,6 +108,7 @@ module "jenkins" {
   build_farm_compute = local.build_farm_compute
 
   build_farm_fsx_openzfs_storage = local.build_farm_fsx_openzfs_storage
+
   # Artifacts
   artifact_buckets = {
     builds : {
@@ -124,5 +121,17 @@ module "jenkins" {
     },
   }
 
-  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.jenkins]
+  depends_on = [aws_ecs_cluster.build_pipeline_cluster, aws_acm_certificate_validation.shared_certificate]
+}
+
+# placeholder since provider is "required" by the module
+provider "netapp-ontap" {
+  connection_profiles = [
+    {
+      name     = "null"
+      hostname = "null"
+      username = "null"
+      password = "null"
+    }
+  ]
 }

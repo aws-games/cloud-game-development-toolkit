@@ -1,91 +1,161 @@
-##########################################
-# Internet Access (restricted)
-##########################################
-
-# Jenkins
-resource "aws_vpc_security_group_ingress_rule" "jenkins_access" {
-  for_each          = toset(local.allowlist)
-  security_group_id = module.jenkins.alb_security_group
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = each.value
-  description       = "Allows internet access to Jenkins."
+# Public NLB Security Group
+resource "aws_security_group" "public_network_load_balancer" {
+  name        = "${local.project_prefix}-public-nlb"
+  description = "Security group attached to the public NLB."
+  vpc_id      = aws_vpc.build_pipeline_vpc.id
+  tags        = local.tags
 }
 
-# Helix Core
-resource "aws_vpc_security_group_ingress_rule" "helix_core_access" {
-  for_each          = toset(local.allowlist)
-  security_group_id = module.perforce_helix_core.security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 8085
-  to_port           = 8085
-  cidr_ipv4         = each.value
-  description       = "Allows internet access to Helix Core."
+# Internal shared ALB Security Group
+resource "aws_security_group" "internal_shared_application_load_balancer" {
+  name        = "${local.project_prefix}-internal-shared-alb"
+  description = "Security group attached to the internal shared ALB."
+  vpc_id      = aws_vpc.build_pipeline_vpc.id
+  tags        = local.tags
 }
 
-# Helix Swarm
-resource "aws_vpc_security_group_ingress_rule" "helix_swarm_access" {
-  for_each          = toset(local.allowlist)
-  security_group_id = module.perforce_helix_swarm.alb_security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = each.value
-  description       = "Allows internet access to Helix Swarm."
-}
-
-# Helix Authentication Service
-resource "aws_vpc_security_group_ingress_rule" "helix_auth_access" {
-  for_each          = toset(local.allowlist)
-  security_group_id = module.perforce_helix_authentication_service.alb_security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = each.value
-  description       = "Allows internet access to Helix Authentication Service."
-}
-
-##########################################
-# Internal Access - service to service
-##########################################
-
-# Jenkins Build Agents -> Perforce Helix Core
-resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_build_farm" {
-  security_group_id            = module.perforce_helix_core.security_group_id
+# Grant outbound 443 access from public NLB to shared internal ALB
+resource "aws_vpc_security_group_egress_rule" "public_nlb_https_to_internal_alb" {
   ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.public_network_load_balancer.id
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = aws_security_group.internal_shared_application_load_balancer.id
+  description                  = "Allows HTTPS access to internal shared ALB from public NLB."
+}
+
+# Grant ingress 443 access from public NLB to shared internal ALB
+resource "aws_vpc_security_group_ingress_rule" "internal_alb_https_from_public_nlb" {
+  ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.internal_shared_application_load_balancer.id
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = aws_security_group.public_network_load_balancer.id
+  description                  = "Allows HTTPS access to internal shared ALB from public NLB."
+}
+
+# Grant inbound HTTPS access from P4 Server to Shared ALB
+resource "aws_vpc_security_group_ingress_rule" "internal_alb_https_from_p4_server" {
+  ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.internal_shared_application_load_balancer.id
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = module.terraform-aws-perforce.p4_server_security_group_id
+  description                  = "Allows HTTPS access to internal shared ALB from P4 Server."
+}
+
+# Grant outbound HTTP access from shared internal ALB to Jenkins service
+resource "aws_vpc_security_group_egress_rule" "internal_alb_http_to_jenkins" {
+  ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.internal_shared_application_load_balancer.id
+  from_port                    = 8080
+  to_port                      = 8080
+  referenced_security_group_id = module.jenkins.service_security_group_id
+  description                  = "Allows HTTP access to Jenkins service from internal shared ALB."
+}
+
+# Grant inbound HTTP access from shared internal ALB to Jenkins service
+resource "aws_vpc_security_group_ingress_rule" "jenkins_http_from_internal_alb" {
+  # checkov:skip=CKV_AWS_260: False positive. Restricts access to referenced security group.
+  ip_protocol                  = "TCP"
+  security_group_id            = module.jenkins.service_security_group_id
+  from_port                    = 8080
+  to_port                      = 8080
+  referenced_security_group_id = aws_security_group.internal_shared_application_load_balancer.id
+  description                  = "Allows HTTP access to Jenkins service from internal shared ALB."
+}
+
+# Grant outbound HTTP access from shared internal ALB to P4 Auth service
+resource "aws_vpc_security_group_egress_rule" "internal_alb_http_to_p4_auth" {
+  ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.internal_shared_application_load_balancer.id
+  from_port                    = 3000
+  to_port                      = 3000
+  referenced_security_group_id = module.terraform-aws-perforce.p4_auth_service_security_group_id
+  description                  = "Allows HTTP access to P4 Auth service from internal shared ALB."
+}
+
+# Grant inbound HTTP access from shared internal ALB to P4 Auth Service
+resource "aws_vpc_security_group_ingress_rule" "p4_auth_http_from_internal_alb" {
+  # checkov:skip=CKV_AWS_260: False positive. Restricts access to referenced security group.
+  ip_protocol                  = "TCP"
+  security_group_id            = module.terraform-aws-perforce.p4_auth_service_security_group_id
+  from_port                    = 3000
+  to_port                      = 3000
+  referenced_security_group_id = aws_security_group.internal_shared_application_load_balancer.id
+  description                  = "Allows HTTP access to P4 Auth service from internal shared ALB."
+}
+
+# Grant outbound HTTP access from shared internal ALB to P4 Code Review service
+resource "aws_vpc_security_group_egress_rule" "internal_alb_http_to_p4_code_review" {
+  ip_protocol                  = "TCP"
+  security_group_id            = aws_security_group.internal_shared_application_load_balancer.id
+  from_port                    = 80
+  to_port                      = 80
+  referenced_security_group_id = module.terraform-aws-perforce.p4_code_review_service_security_group_id
+  description                  = "Allows HTTP access to P4 Code Review service from internal shared ALB."
+}
+
+# Grant inbound HTTP access from shared internal ALB to P4 Code Review servic
+resource "aws_vpc_security_group_ingress_rule" "p4_code_review_http_from_internal_alb" {
+  # checkov:skip=CKV_AWS_260: False positive. Restricts access to referenced security group.
+  ip_protocol                  = "TCP"
+  security_group_id            = module.terraform-aws-perforce.p4_code_review_service_security_group_id
+  from_port                    = 80
+  to_port                      = 80
+  referenced_security_group_id = aws_security_group.internal_shared_application_load_balancer.id
+  description                  = "Allows HTTP access to P4 Code Review service from internal shared ALB."
+}
+
+# Grant inbound access to P4 server from Jenkins build farm
+resource "aws_vpc_security_group_ingress_rule" "p4_server_from_jenkins_build_farm" {
+  ip_protocol                  = "TCP"
+  security_group_id            = module.terraform-aws-perforce.p4_server_security_group_id
   from_port                    = 1666
   to_port                      = 1666
-  referenced_security_group_id = module.jenkins.build_farm_security_group
-  description                  = "Enables build farm to access Helix Core."
+  referenced_security_group_id = module.jenkins.build_farm_security_group_id
+  description                  = "Allows access to P4 server from Jenkins build farm."
 }
 
-# Helix Swarm -> Helix Core
-resource "aws_vpc_security_group_ingress_rule" "helix_core_inbound_swarm" {
-  security_group_id            = module.perforce_helix_core.security_group_id
+# Grant inbound access to P4 Server from Jenkins service
+resource "aws_vpc_security_group_ingress_rule" "p4_server_from_jenkins_service" {
   ip_protocol                  = "TCP"
+  security_group_id            = module.terraform-aws-perforce.p4_server_security_group_id
   from_port                    = 1666
   to_port                      = 1666
-  referenced_security_group_id = module.perforce_helix_swarm.service_security_group_id
-  description                  = "Enables Helix Swarm to access Helix Core."
+  referenced_security_group_id = module.jenkins.service_security_group_id
+  description                  = "Allows access to P4 server from Jenkins service."
 }
 
-# Helix Core -> Helix Swarm
-resource "aws_vpc_security_group_ingress_rule" "helix_swarm_inbound_core" {
-  security_group_id = module.perforce_helix_swarm.alb_security_group_id
-  ip_protocol       = "TCP"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
-  description       = "Enables Helix Core to access Helix Swarm"
+# Security group
+resource "aws_security_group" "allow_my_ip" {
+  name        = "allow_my_ip"
+  description = "Allow inbound traffic from my IP"
+  vpc_id      = aws_vpc.build_pipeline_vpc.id
+
+  tags = {
+    Name = "allow_my_ip"
+  }
 }
 
-# Helix Core -> Helix Authentication Service
-resource "aws_vpc_security_group_ingress_rule" "helix_auth_inbound_core" {
-  security_group_id = module.perforce_helix_authentication_service.alb_security_group_id
-  ip_protocol       = "TCP"
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com/"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_https" {
+  security_group_id = aws_security_group.allow_my_ip.id
+  description       = "Allow HTTPS traffic from personal IP."
   from_port         = 443
   to_port           = 443
-  cidr_ipv4         = "${module.perforce_helix_core.helix_core_eip_public_ip}/32"
-  description       = "Enables Helix Core to access Helix Authentication Service"
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_perforce" {
+  security_group_id = aws_security_group.allow_my_ip.id
+  description       = "Allow Perforce traffic from personal IP."
+  from_port         = 1666
+  to_port           = 1666
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
 }

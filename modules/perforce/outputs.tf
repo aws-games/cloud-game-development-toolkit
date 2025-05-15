@@ -19,7 +19,7 @@ output "p4_server_eip_id" {
   description = "The ID of the Elastic IP associated with your P4 Server instance."
 }
 
-output "security_group_id" {
+output "p4_server_security_group_id" {
   value       = var.p4_server_config != null ? module.p4_server[0].security_group_id : null
   description = "The default security group of your P4 Server instance."
 }
