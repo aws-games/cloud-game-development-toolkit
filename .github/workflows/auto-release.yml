@@ -1,8 +1,5 @@
 name: Auto Release
 
-env:
-  TF_VAR_fully_qualified_domain_name: ${{ secrets.CI_FULLY_QUALIFIED_DOMAIN_NAME }}
-
 # Trigger workflow twice a month
 on:
 #  schedule:
@@ -15,8 +12,9 @@ on:
         type: string
 
 permissions:
+  actions: write
   id-token: write
-  contents: read
+  contents: write
   issues: write
 
 jobs:
