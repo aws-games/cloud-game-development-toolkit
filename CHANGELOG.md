@@ -6,7 +6,7 @@
 ## [latest] - 2025-05-16
 
 <a name="1.0.0"></a>
-## [1.0.0] - 2025-05-15
+## [1.0.0] - 2025-05-16
 ### Bug Fixes
 - adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
 - adds dependency between deploy-docs and update-tags jobs
@@ -23,6 +23,7 @@
 - **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
 
 ### Chore
+- regenerate CHANGELOG.md for 2025-05-16
 - **deps:** bump python from 3.12 to 3.12.6 in /docs ([#243](https://github.com/aws-games/cloud-game-development-toolkit/issues/243))
 - **deps:** bump mkdocs-material from 9.5.33 to 9.5.34 in /docs ([#236](https://github.com/aws-games/cloud-game-development-toolkit/issues/236))
 - **deps:** bump actions/upload-artifact from 4.3.6 to 4.4.0 ([#235](https://github.com/aws-games/cloud-game-development-toolkit/issues/235))
@@ -50,6 +51,9 @@
 - add openssf scorecard badge to readme ([#219](https://github.com/aws-games/cloud-game-development-toolkit/issues/219))
 - link to installation instructions for required tools, fix packer command invocation instructions ([#194](https://github.com/aws-games/cloud-game-development-toolkit/issues/194))
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
+
+### Pull Requests
+- Merge pull request [#12](https://github.com/aws-games/cloud-game-development-toolkit/issues/12) from gabebatista/changelog-15059481341
 
 
 <a name="v1.0.0-alpha"></a>
