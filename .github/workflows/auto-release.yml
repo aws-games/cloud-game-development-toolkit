@@ -2,8 +2,8 @@ name: Auto Release
 
 # Trigger workflow twice a month
 on:
-#  schedule:
-#    - cron: "0 0 1,15 * *"
+  #  schedule:
+  #    - cron: "0 0 1,15 * *"
   workflow_dispatch:
     inputs:
       release-version:
@@ -44,21 +44,15 @@ jobs:
           git push -f origin latest
 
   generate-changelog:
-    needs: [tag-latest-commit]
+    needs: [ tag-latest-commit ]
     uses: ./.github/workflows/changelog.yml
     secrets: inherit
 
 
   update-tags:
-    needs: [generate-changelog]
+    needs: [ generate-changelog ]
     runs-on: ubuntu-latest
     steps:
-      - name: checkout-latest
-        uses: ./.github/workflows/docs.yml
-        with:
-          version: ${{ inputs.release-version }}
-          alias:
-            latest
       - name: Handle Changelog PR
         run: |
           # Find the PR using its id
@@ -108,3 +102,9 @@ jobs:
             --tag ${{ inputs.release-version }}
             --latest
             --draft=false
+  deploy-docs:
+    uses: ./.github/workflows/docs.yml
+    with:
+      version: ${{ inputs.release-version }}
+      alias:
+        latest

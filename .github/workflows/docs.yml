@@ -49,7 +49,7 @@ permissions:
   contents: read
 jobs:
   publish_docs:
-    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    if: github.repository == 'gabebatista/cloud-game-development-toolkit'
     permissions:
       contents: write
       pages: write
@@ -73,4 +73,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Deploy Docs
-        run: make docs-deploy-github VERSION=${{ inputs.VERSION }} ALIAS=${{ inputs.ALIAS }}
+        run: make docs-deploy-github VERSION=${{ inputs.version }} ALIAS=${{ inputs.alias }}
