@@ -18,6 +18,9 @@ permissions:
   issues: write
   pull-requests: write
 
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   tag-latest-commit:
     runs-on: ubuntu-latest
