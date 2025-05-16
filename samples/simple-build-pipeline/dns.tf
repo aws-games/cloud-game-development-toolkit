@@ -1,29 +1,17 @@
 
 ##########################################
-# Route53 Hosted Zone for FQDN
+# Route53 DNS Records
 ##########################################
+
+# Public route53 hosted zone for external DNS resolution
 data "aws_route53_zone" "root" {
-  name         = var.root_domain_name
+  name         = var.route53_public_hosted_zone_name
   private_zone = false
 }
 
-resource "aws_route53_record" "jenkins" {
-  zone_id = data.aws_route53_zone.root.id
-  name    = "jenkins.${data.aws_route53_zone.root.name}"
-  type    = "A"
-  alias {
-    name                   = module.jenkins.jenkins_alb_dns_name
-    zone_id                = module.jenkins.jenkins_alb_zone_id
-    evaluate_target_health = true
-  }
-}
-
-##########################################
-# Perforce Helix DNS
-##########################################
-
-resource "aws_route53_zone" "helix_private_zone" {
-  name = "helix.perforce.internal"
+# Internal private hosted zone for DNS resolution
+resource "aws_route53_zone" "private_zone" {
+  name = var.route53_public_hosted_zone_name
   #checkov:skip=CKV2_AWS_38: Hosted zone is private (vpc association)
   #checkov:skip=CKV2_AWS_39: Query logging disabled by design
   vpc {
@@ -31,52 +19,87 @@ resource "aws_route53_zone" "helix_private_zone" {
   }
 }
 
-resource "aws_route53_record" "helix_swarm" {
+# Public P4 Web Services Record resolves to public NLB
+resource "aws_route53_record" "p4_web_services_public" {
   zone_id = data.aws_route53_zone.root.id
-  name    = "swarm.helix.${data.aws_route53_zone.root.name}"
+  name    = "*.${local.perforce_subdomain}.${data.aws_route53_zone.root.name}"
   type    = "A"
   alias {
-    name                   = module.perforce_helix_swarm.alb_dns_name
-    zone_id                = module.perforce_helix_swarm.alb_zone_id
+    name                   = aws_lb.service_nlb.dns_name
+    zone_id                = aws_lb.service_nlb.zone_id
     evaluate_target_health = true
   }
 }
 
-resource "aws_route53_record" "helix_authentication_service" {
+# Public Jenkins Record resolves to public NLB
+resource "aws_route53_record" "jenkins_public" {
   zone_id = data.aws_route53_zone.root.zone_id
-  name    = "auth.helix.${data.aws_route53_zone.root.name}"
+  name    = local.jenkins_fully_qualified_domain_name
   type    = "A"
   alias {
-    name                   = module.perforce_helix_authentication_service.alb_dns_name
-    zone_id                = module.perforce_helix_authentication_service.alb_zone_id
+    name                   = aws_lb.service_nlb.dns_name
+    zone_id                = aws_lb.service_nlb.zone_id
     evaluate_target_health = true
   }
 }
 
-resource "aws_route53_record" "perforce_helix_core" {
+# Internal P4 Web Services Record resolves to internal ALB
+resource "aws_route53_record" "p4_web_services_private" {
+  zone_id = aws_route53_zone.private_zone.zone_id
+  name    = "*.${local.perforce_subdomain}.${aws_route53_zone.private_zone.name}"
+  type    = "A"
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
+  alias {
+    name                   = aws_lb.web_alb.dns_name
+    zone_id                = aws_lb.web_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Internal Jenkins Record resolves to internal ALB
+resource "aws_route53_record" "jenkins_private" {
+  zone_id = aws_route53_zone.private_zone.zone_id
+  name    = local.jenkins_fully_qualified_domain_name
+  type    = "A"
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
+  alias {
+    name                   = aws_lb.web_alb.dns_name
+    zone_id                = aws_lb.web_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Public P4 Server Record
+resource "aws_route53_record" "p4_server_public" {
   zone_id = data.aws_route53_zone.root.zone_id
-  name    = "core.helix.${data.aws_route53_zone.root.name}"
+  name    = local.p4_server_fully_qualified_domain_name
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
-  records = [module.perforce_helix_core.helix_core_eip_public_ip]
+  records = [module.terraform-aws-perforce.p4_server_eip_public_ip]
 }
 
-resource "aws_route53_record" "perforce_helix_core_pvt" {
-  zone_id = aws_route53_zone.helix_private_zone.zone_id
-  name    = "core.${aws_route53_zone.helix_private_zone.name}"
+# Internal P4 Server Record
+resource "aws_route53_record" "p4_server_private" {
+  zone_id = aws_route53_zone.private_zone.zone_id
+  name    = local.p4_server_fully_qualified_domain_name
   type    = "A"
   ttl     = 300
   #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
-  records = [module.perforce_helix_core.helix_core_private_ip]
+  records = [module.terraform-aws-perforce.p4_server_private_ip]
 }
 
 ##########################################
-# Jenkins Certificate Management
+# Certificate Management
 ##########################################
 
-resource "aws_acm_certificate" "jenkins" {
-  domain_name       = "jenkins.${var.root_domain_name}"
+resource "aws_acm_certificate" "shared" {
+  domain_name = var.route53_public_hosted_zone_name
+  subject_alternative_names = [
+    local.jenkins_fully_qualified_domain_name,
+    local.p4_auth_fully_qualified_domain_name,
+    local.p4_code_review_fully_qualified_domain_name
+  ]
   validation_method = "DNS"
 
   tags = {
@@ -88,9 +111,9 @@ resource "aws_acm_certificate" "jenkins" {
   }
 }
 
-resource "aws_route53_record" "jenkins_cert" {
+resource "aws_route53_record" "shared_certificate" {
   for_each = {
-    for dvo in aws_acm_certificate.jenkins.domain_validation_options : dvo.domain_name => {
+    for dvo in aws_acm_certificate.shared.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -105,53 +128,10 @@ resource "aws_route53_record" "jenkins_cert" {
   zone_id         = data.aws_route53_zone.root.id
 }
 
-resource "aws_acm_certificate_validation" "jenkins" {
+resource "aws_acm_certificate_validation" "shared_certificate" {
   timeouts {
     create = "15m"
   }
-  certificate_arn         = aws_acm_certificate.jenkins.arn
-  validation_record_fqdns = [for record in aws_route53_record.jenkins_cert : record.fqdn]
-}
-##########################################
-# Helix Certificate Management
-##########################################
-
-resource "aws_acm_certificate" "helix" {
-  domain_name               = "helix.${var.root_domain_name}"
-  subject_alternative_names = ["*.helix.${var.root_domain_name}"]
-
-  validation_method = "DNS"
-
-  tags = {
-    environment = "dev"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_route53_record" "helix_cert" {
-  for_each = {
-    for dvo in aws_acm_certificate.helix.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
-
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.root.id
-}
-
-resource "aws_acm_certificate_validation" "helix" {
-  timeouts {
-    create = "15m"
-  }
-  certificate_arn         = aws_acm_certificate.helix.arn
-  validation_record_fqdns = [for record in aws_route53_record.helix_cert : record.fqdn]
+  certificate_arn         = aws_acm_certificate.shared.arn
+  validation_record_fqdns = [for record in aws_route53_record.shared_certificate : record.fqdn]
 }

@@ -103,6 +103,12 @@ resource "aws_iam_policy" "jenkins_default_policy" {
   name        = "${var.project_prefix}-jenkins-default-policy"
   description = "Policy granting permissions for Jenkins."
   policy      = data.aws_iam_policy_document.jenkins_default_policy[0].json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-default-policy"
+    }
+  )
 }
 
 # EC2 Fleet Plugin
@@ -236,17 +242,34 @@ resource "aws_iam_role" "jenkins_default_role" {
   name               = "${var.project_prefix}-jenkins-default-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
 
-  managed_policy_arns = [
-    aws_iam_policy.jenkins_default_policy[0].arn
-  ]
-  tags = local.tags
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-default-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "default_role" {
+  count      = var.create_jenkins_default_role ? 1 : 0
+  role       = aws_iam_role.jenkins_default_role[0].name
+  policy_arn = aws_iam_policy.jenkins_default_policy[0].arn
 }
 
 resource "aws_iam_role" "jenkins_task_execution_role" {
   name = "${var.project_prefix}-jenkins-task-execution-role"
 
-  assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-task-execution-role"
+    }
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "task_execution" {
+  role       = aws_iam_role.jenkins_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 # conditionally attach ec2 fleet plugin policy
@@ -261,12 +284,17 @@ resource "aws_iam_role" "build_farm_role" {
   name               = "${var.project_prefix}-${var.name}-${random_string.build_farm.result}-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_trust_relationship.json
 
-  managed_policy_arns = [
-    aws_iam_policy.build_farm_s3_policy.arn,
-    aws_iam_policy.build_farm_fsxz_policy.arn
-  ]
-
   tags = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "build_farm_role_fsxz_attachment" {
+  role       = aws_iam_role.build_farm_role.name
+  policy_arn = aws_iam_policy.build_farm_fsxz_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "build_farm_role_s3_attachment" {
+  policy_arn = aws_iam_policy.build_farm_s3_policy.arn
+  role       = aws_iam_role.build_farm_role.name
 }
 
 # Instance Profiles

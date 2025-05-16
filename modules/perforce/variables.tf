@@ -21,11 +21,6 @@ variable "existing_ecs_cluster_name" {
   type        = string
   description = "The name of an existing ECS cluster to use for the Perforce server. If omitted a new cluster will be created."
   default     = null
-  # This is mutually exclusive with shared_ecs_cluster_name which creates a new cluster
-  validation {
-    condition     = (var.existing_ecs_cluster_name == null || var.shared_ecs_cluster_name == null)
-    error_message = "You must not provide both an existing ECS cluster name and a shared ECS cluster name."
-  }
 }
 
 variable "shared_ecs_cluster_name" {
