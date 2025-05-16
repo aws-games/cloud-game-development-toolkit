@@ -92,7 +92,7 @@ jobs:
 
           # Clean up
           git pull origin main
-          git branch -D $BRANCH_NAME
+          git branch -D $BRANCH_NAME || true
 
       - name: update-tags
         run: |
@@ -104,10 +104,7 @@ jobs:
 
       - name: Edit and publish release
         run: |
-          # Get the latest draft release
-          RELEASE_ID=$(gh release list --limit 1 --exclude-pre-releases --draft | cut -f 3)
-
-          # Edit release content if needed
+          # Edit release content
           gh release edit ${{ inputs.release-version }} \
             --tag ${{ inputs.release-version }} \
             --latest \
