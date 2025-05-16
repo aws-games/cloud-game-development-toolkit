@@ -104,6 +104,7 @@ jobs:
             --latest
             --draft=false
   deploy-docs:
+    needs: [ update-tags ]
     uses: ./.github/workflows/docs.yml
     with:
       version: ${{ inputs.release-version }}
