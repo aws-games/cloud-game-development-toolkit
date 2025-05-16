@@ -1,2 +1,2 @@
 # Terraform Module Docs
---8<-- "modules/perforce/helix-authentication-service/README.md"
+--8<-- "modules/perforce/modules/p4-auth/README.md"
