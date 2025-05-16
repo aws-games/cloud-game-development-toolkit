@@ -104,14 +104,16 @@ jobs:
 
       - name: create-release
         uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5
+        with:
+          tag: ${{ inputs.release-version }}
+          name: ${{ inputs.release-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: edit-publish-release
         run: |
           # Edit release content
-          gh release edit "staged-for-release" \
-            --tag ${{ inputs.release-version }} \
+          gh release edit ${{ inputs.release-version }} \
             --latest \
             --draft=false
 
