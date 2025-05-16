@@ -110,7 +110,7 @@ jobs:
       - name: edit-publish-release
         run: |
           # Edit release content
-          gh release edit ${{ inputs.release-version }} \
+          gh release edit "staged-for-release" \
             --tag ${{ inputs.release-version }} \
             --latest \
             --draft=false
