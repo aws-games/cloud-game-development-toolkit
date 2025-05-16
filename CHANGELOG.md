@@ -6,23 +6,25 @@
 ## [latest] - 2025-05-16
 
 <a name="1.0.0"></a>
-## [1.0.0] - 2025-05-16
+## [1.0.0] - 2025-05-15
 ### Bug Fixes
-- adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
+- changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
+- adds git user config step to update-tags job
 - adds dependency between deploy-docs and update-tags jobs
 - adds appropriate permissions to deploy docs
 - correct invocation of docs.yml
 - correct PR number output handling between workflows
-- changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
 - adds checkout step to update-tags job
-- dependabot grouping terraform providers ([#228](https://github.com/aws-games/cloud-game-development-toolkit/issues/228))
+- adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
 - wait for cloud-init to complete prior to installing packages during Perforce Helix Core AMI creation ([#193](https://github.com/aws-games/cloud-game-development-toolkit/issues/193))
+- dependabot grouping terraform providers ([#228](https://github.com/aws-games/cloud-game-development-toolkit/issues/228))
 - **changelog:** GHA bot committer ([#255](https://github.com/aws-games/cloud-game-development-toolkit/issues/255))
 - **changelog:** Add automated PR creation ([#252](https://github.com/aws-games/cloud-game-development-toolkit/issues/252))
 - **fsx_automounter:** when FSx automounter can't list tags for an FSx volume, the AccessDenied exception is now treated as a warning ([#226](https://github.com/aws-games/cloud-game-development-toolkit/issues/226))
 - **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
 
 ### Chore
+- regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - **deps:** bump python from 3.12 to 3.12.6 in /docs ([#243](https://github.com/aws-games/cloud-game-development-toolkit/issues/243))
 - **deps:** bump mkdocs-material from 9.5.33 to 9.5.34 in /docs ([#236](https://github.com/aws-games/cloud-game-development-toolkit/issues/236))
@@ -53,6 +55,7 @@
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 ### Pull Requests
+- Merge pull request [#13](https://github.com/aws-games/cloud-game-development-toolkit/issues/13) from gabebatista/changelog-15059553025
 - Merge pull request [#12](https://github.com/aws-games/cloud-game-development-toolkit/issues/12) from gabebatista/changelog-15059481341
 
 
