@@ -102,12 +102,12 @@ jobs:
           git tag -f -a latest -m "Latest release"
           git push -f origin latest
 
-      - name: Create release
+      - name: create-release
         uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Edit and publish release
+      - name: edit-publish-release
         run: |
           # Edit release content
           gh release edit ${{ inputs.release-version }} \
