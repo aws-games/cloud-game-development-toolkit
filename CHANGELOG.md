@@ -6,7 +6,7 @@
 ## [latest] - 2025-05-16
 
 <a name="1.0.0"></a>
-## [1.0.0] - 2025-05-15
+## [1.0.0] - 2025-05-16
 ### Bug Fixes
 - correct PR number output handling between workflows
 - adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
@@ -25,6 +25,7 @@
 - **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
 
 ### Chore
+- regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
@@ -58,6 +59,7 @@
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 ### Pull Requests
+- Merge pull request [#16](https://github.com/aws-games/cloud-game-development-toolkit/issues/16) from gabebatista/changelog-15059858293
 - Merge pull request [#15](https://github.com/aws-games/cloud-game-development-toolkit/issues/15) from gabebatista/changelog-15059756625
 - Merge pull request [#14](https://github.com/aws-games/cloud-game-development-toolkit/issues/14) from gabebatista/changelog-15059618160
 - Merge pull request [#13](https://github.com/aws-games/cloud-game-development-toolkit/issues/13) from gabebatista/changelog-15059553025
