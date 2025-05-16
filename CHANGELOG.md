@@ -8,16 +8,17 @@
 <a name="1.0.0"></a>
 ## [1.0.0] - 2025-05-16
 ### Bug Fixes
-- changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
-- correct invocation of docs.yml
-- adds git user config step to update-tags job
-- adds checkout step to update-tags job
-- adds missing step to create release in auto-release
-- adds appropriate permissions to deploy docs
-- remove unused RELEASE_ID
 - correct PR number output handling between workflows
+- adds checkout step to update-tags job
+- adds tag to draft release for later quering
+- adds git user config step to update-tags job
+- changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
 - adds dependency between deploy-docs and update-tags jobs
+- adds appropriate permissions to deploy docs
 - adding branch creation to workflow ([#259](https://github.com/aws-games/cloud-game-development-toolkit/issues/259))
+- remove unused RELEASE_ID
+- adds missing step to create release in auto-release
+- correct invocation of docs.yml
 - wait for cloud-init to complete prior to installing packages during Perforce Helix Core AMI creation ([#193](https://github.com/aws-games/cloud-game-development-toolkit/issues/193))
 - dependabot grouping terraform providers ([#228](https://github.com/aws-games/cloud-game-development-toolkit/issues/228))
 - **changelog:** Add automated PR creation ([#252](https://github.com/aws-games/cloud-game-development-toolkit/issues/252))
@@ -26,6 +27,7 @@
 - **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
 
 ### Chore
+- regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
@@ -61,6 +63,7 @@
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 ### Pull Requests
+- Merge pull request [#18](https://github.com/aws-games/cloud-game-development-toolkit/issues/18) from gabebatista/changelog-15072316303
 - Merge pull request [#17](https://github.com/aws-games/cloud-game-development-toolkit/issues/17) from gabebatista/changelog-15072104516
 - Merge pull request [#16](https://github.com/aws-games/cloud-game-development-toolkit/issues/16) from gabebatista/changelog-15059858293
 - Merge pull request [#15](https://github.com/aws-games/cloud-game-development-toolkit/issues/15) from gabebatista/changelog-15059756625
