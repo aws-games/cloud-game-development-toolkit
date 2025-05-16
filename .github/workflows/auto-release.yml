@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4.2.2
         with:
           ref: main
-          fetch-depth: 1
+          fetch-depth: 0
       - name: Setup Git Config
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -54,6 +54,11 @@ jobs:
     needs: [ generate-changelog ]
     runs-on: ubuntu-latest
     steps:
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
       - name: Handle Changelog PR
         run: |
           # Find the PR using its id
@@ -100,13 +105,14 @@ jobs:
 
           # Edit release content if needed
           gh release edit ${{ inputs.release-version }} \
-            --tag ${{ inputs.release-version }}
-            --latest
+            --tag ${{ inputs.release-version }} \
+            --latest \
             --draft=false
+
+
   deploy-docs:
     needs: [ update-tags ]
     uses: ./.github/workflows/docs.yml
     with:
       version: ${{ inputs.release-version }}
-      alias:
-        latest
+      alias: latest
