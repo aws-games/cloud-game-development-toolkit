@@ -106,6 +106,7 @@ nav:
           - Installation and Usage: modules/jenkins/jenkins.md
           - Module Docs: modules/jenkins/terraform-docs.md
       - Perforce:
+          - modules/perforce/perforce.md
           - Helix Authentication Service:
               - Installation and Usage: modules/perforce/helix-authentication-service/helix-authentication-service.md
               - Module Docs: modules/perforce/helix-authentication-service/terraform-docs.md
