@@ -116,20 +116,27 @@ nav:
               - Installation and Usage: modules/perforce/helix-swarm/helix-swarm.md
               - Module Docs: modules/perforce/helix-swarm/terraform-docs.md
           - Examples: modules/perforce/examples/complete.md
+      - TeamCity:
+          - Installation and Usage: modules/teamcity/teamcity.md
+          - Module Docs: modules/teamcity/terraform-docs.md
+          - Examples: modules/teamcity/examples/complete.md
       - Unreal Engine:
           - Unreal Engine Horde:
               - Installation and Usage: modules/unreal/horde/unreal-engine-horde.md
               - Module Docs: modules/unreal/horde/terraform-docs.md
-          - Unreal Engine Cloud DDC Infra:
-              - Installation and Usage: modules/unreal/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
-              - Module Docs: modules/unreal/unreal-cloud-ddc-infra/terraform-docs.md
-          - Unreal Engine Cloud DDC Intra Cluster:
-              - Installation and Usage: modules/unreal/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
-              - Module Docs: modules/unreal/unreal-cloud-ddc-intra-cluster/terraform-docs.md
-          - Examples: modules/unreal/horde/examples/complete.md
+          - Unreal Cloud DDC:
+              - Unreal Engine Cloud DDC Infra:
+                  - Installation and Usage: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
+                  - Module Docs: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/terraform-docs.md
+              - Unreal Engine Cloud DDC Intra Cluster:
+                  - Installation and Usage: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
+                  - Module Docs: modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/terraform-docs.md
+          - Examples:
+              - Horde: modules/unreal/horde/examples/complete.md
   - Samples:
       - Overview: samples/index.md
       - Simple Build Pipeline: samples/simple-build-pipeline.md
+      - Unreal Cloud DDC Single Region: sample/unreal-cloud-ddc-single-region.md
   - Changelog: changelog.md
   - Security: security.md
   - Contributing: contributing.md

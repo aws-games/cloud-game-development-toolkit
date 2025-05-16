@@ -1,8 +1,7 @@
-To use this example you will need to set up a secret with AWS Secrets Manager.
+To use this example run the following commands:
 ```
-terraform apply --target module.unreal_cloud_ddc_vpc
-terraform apply --target module.unreal_cloud_ddc_infra
-terraform apply --target module.unreal_cloud_ddc_intra_cluster
+terraform init
+terraform apply
 ```
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
@@ -69,16 +68,16 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.84.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.26.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.85.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.27.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.4.5 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_unreal_cloud_ddc_infra"></a> [unreal\_cloud\_ddc\_infra](#module\_unreal\_cloud\_ddc\_infra) | ../../modules/unreal/unreal-cloud-ddc-infra | n/a |
-| <a name="module_unreal_cloud_ddc_intra_cluster"></a> [unreal\_cloud\_ddc\_intra\_cluster](#module\_unreal\_cloud\_ddc\_intra\_cluster) | ../../modules/unreal/unreal-cloud-ddc-intra-cluster | n/a |
+| <a name="module_unreal_cloud_ddc_infra"></a> [unreal\_cloud\_ddc\_infra](#module\_unreal\_cloud\_ddc\_infra) | ../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra | n/a |
+| <a name="module_unreal_cloud_ddc_intra_cluster"></a> [unreal\_cloud\_ddc\_intra\_cluster](#module\_unreal\_cloud\_ddc\_intra\_cluster) | ../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster | n/a |
 | <a name="module_unreal_cloud_ddc_vpc"></a> [unreal\_cloud\_ddc\_vpc](#module\_unreal\_cloud\_ddc\_vpc) | ./vpc | n/a |
 
 ## Resources
