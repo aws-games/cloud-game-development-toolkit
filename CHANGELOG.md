@@ -6,7 +6,7 @@
 ## [latest] - 2025-05-16
 
 <a name="1.0.0"></a>
-## [1.0.0] - 2025-05-15
+## [1.0.0] - 2025-05-16
 ### Bug Fixes
 - changelog automation ([#261](https://github.com/aws-games/cloud-game-development-toolkit/issues/261))
 - adds git user config step to update-tags job
@@ -24,6 +24,7 @@
 - **p4_configure:** resolve script execution errors and repair broken … ([#232](https://github.com/aws-games/cloud-game-development-toolkit/issues/232))
 
 ### Chore
+- regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - regenerate CHANGELOG.md for 2025-05-16
 - **deps:** bump python from 3.12 to 3.12.6 in /docs ([#243](https://github.com/aws-games/cloud-game-development-toolkit/issues/243))
@@ -55,6 +56,7 @@
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 ### Pull Requests
+- Merge pull request [#14](https://github.com/aws-games/cloud-game-development-toolkit/issues/14) from gabebatista/changelog-15059618160
 - Merge pull request [#13](https://github.com/aws-games/cloud-game-development-toolkit/issues/13) from gabebatista/changelog-15059553025
 - Merge pull request [#12](https://github.com/aws-games/cloud-game-development-toolkit/issues/12) from gabebatista/changelog-15059481341
 
