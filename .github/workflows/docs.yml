@@ -72,5 +72,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install dependencies
+        run: make docs-install-dependencies
       - name: Deploy Docs
         run: make docs-deploy-github VERSION=${{ inputs.version }} ALIAS=${{ inputs.alias }}
