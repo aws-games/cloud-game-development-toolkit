@@ -7,9 +7,11 @@ on:
     outputs:
       pr_number:
         description: The number of the created pull request
-        value: ${{ jobs.update-changelog.steps.create-pr.outputs.pr_number }}
+        value: ${{ jobs.update-changelog.outputs.pr_number }}
+
 permissions:
   contents: read
+
 jobs:
   update-changelog:
     if: github.repository == 'gabebatista/cloud-game-development-toolkit'
@@ -19,34 +21,37 @@ jobs:
       contents: write # Used to create temporary branch for changelog updates
       pull-requests: write # Used to create PRs for changelog updates
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.set-pr-number.outputs.pr_number }}
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4.2.2
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.BOT_PAT }}
-    - name: Update Changelog
-      env:
-        GH_TOKEN: ${{ secrets.BOT_PAT }}
-        FILE_TO_COMMIT: CHANGELOG.md
-        DESTINATION_BRANCH: changelog-${{ github.run_id }}
-      run: |
-        git fetch --tags origin
-        docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
-        export TODAY=$( date -u '+%Y-%m-%d' )
-        export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
-        export CONTENT=$( base64 -i $FILE_TO_COMMIT )
-        export BRANCH_SHA=$( gh api /repos/:owner/:repo/git/ref/heads/main | jq .object.sha | tr -d '"')
-        gh api --method POST /repos/:owner/:repo/git/refs \
-          --field "ref=refs/heads/$DESTINATION_BRANCH" \
-          --field "sha=$BRANCH_SHA"
-        export SHA=$( gh api -XGET /repos/:owner/:repo/contents/$FILE_TO_COMMIT -F ref=refs/heads/$DESTINATION_BRANCH  | jq .sha | tr -d '"')
-        gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
-          --field message="$MESSAGE" \
-          --field content="$CONTENT" \
-          --field encoding="base64" \
-          --field branch="$DESTINATION_BRANCH" \
-          --field sha=$SHA
-        PR_URL=$(gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH)
-        PR_NUMBER=${PR_URL##*/}
-        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PAT }}
+      - name: Update Changelog
+        id: set-pr-number
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          FILE_TO_COMMIT: CHANGELOG.md
+          DESTINATION_BRANCH: changelog-${{ github.run_id }}
+        run: |
+          git fetch --tags origin
+          docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
+          export TODAY=$( date -u '+%Y-%m-%d' )
+          export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+          export CONTENT=$( base64 -i $FILE_TO_COMMIT )
+          export BRANCH_SHA=$( gh api /repos/:owner/:repo/git/ref/heads/main | jq .object.sha | tr -d '"')
+          gh api --method POST /repos/:owner/:repo/git/refs \
+            --field "ref=refs/heads/$DESTINATION_BRANCH" \
+            --field "sha=$BRANCH_SHA"
+          export SHA=$( gh api -XGET /repos/:owner/:repo/contents/$FILE_TO_COMMIT -F ref=refs/heads/$DESTINATION_BRANCH  | jq .sha | tr -d '"')
+          gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+            --field message="$MESSAGE" \
+            --field content="$CONTENT" \
+            --field encoding="base64" \
+            --field branch="$DESTINATION_BRANCH" \
+            --field sha=$SHA
+          PR_URL=$(gh pr create --title "chore: update changelog" --body "This is an auto-generated PR to update the changelog." --base main --head $DESTINATION_BRANCH)
+          PR_NUMBER=${PR_URL##*/}
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT

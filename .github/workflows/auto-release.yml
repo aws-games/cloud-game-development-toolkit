@@ -53,10 +53,16 @@ jobs:
     needs: [generate-changelog]
     runs-on: ubuntu-latest
     steps:
+      - name: checkout-latest
+        uses: ./.github/workflows/docs.yml
+        with:
+          version: ${{ inputs.release-version }}
+          alias:
+            latest
       - name: Handle Changelog PR
         run: |
           # Find the PR using its id
-          PR_NUMBER=${{ steps.generate-changelog.outputs.pr_number }}
+          PR_NUMBER=${{ needs.generate-changelog.outputs.pr_number }}
           BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
 
           # Checkout the PR branch
@@ -102,9 +108,3 @@ jobs:
             --tag ${{ inputs.release-version }}
             --latest
             --draft=false
-
-      - name: checkout-latest
-        uses: ./.github/workflows/docs.yml
-        with:
-          version: ${{ inputs.release-version }}
-          alias:  latest
