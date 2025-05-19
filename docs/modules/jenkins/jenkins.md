@@ -186,7 +186,7 @@ terraform init
 terraform plan -var-file=deployment-variables.tfvars
 
 # Deploy terraform module
-# It is recommended that you use a .tfvars file to pass variables to the module when deploying
+# We recommend enabling the debug flag for the first deployment - it force deletes all data on destroy.
 terraform deploy -var-file=deployment-variables.tfvars
 ```
 

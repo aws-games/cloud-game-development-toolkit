@@ -36,6 +36,13 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+# - Debug -
+variable "debug" {
+  type        = bool
+  description = "This value disables certain protections to accelerate testing (note that by enabling this variable, data will not be saved between destroys)"
+  default     = false
+}
+
 # - Networking -
 variable "vpc_id" {
   type        = string
