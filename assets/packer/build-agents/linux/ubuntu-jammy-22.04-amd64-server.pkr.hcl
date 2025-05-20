@@ -38,7 +38,8 @@ variable "ami_prefix" {
 }
 
 variable "public_key" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "install_wine" {
@@ -106,9 +107,13 @@ build {
 
   # add the public key
   provisioner "shell" {
+    only             = var.public_key != null ? ["amazon-ebs.base"] : []
+    environment_vars = var.public_key != null ? [
+      "PUBLIC_KEY=${var.public_key}"
+    ] : []
     inline = [
       <<-EOF
-      echo "${var.public_key}" >> ~/.ssh/authorized_keys
+      echo $PUBLIC_KEY >> ~/.ssh/authorized_keys
       chmod 700 ~/.ssh
       chmod 600 ~/.ssh/authorized_keys
       EOF
@@ -234,30 +239,23 @@ build {
     ]
   }
 
-  provisioner "file" {
-    source      = "install_dotnet.ubuntu.x86_64.sh"
-    destination = "/tmp/install_dotnet.ubuntu.x86_64.sh"
-    only_if     = var.install_dotnet
-  }
-
   provisioner "shell" {
-    only_if = var.install_dotnet
+    only = var.install_dotnet ? ["amazon-ebs.base"] : []
+
     inline = [
-      <<-EOF
-      sudo chmod 755 /tmp/install_dotnet.ubuntu.x86_64.sh
-      /tmp/install_dotnet.ubuntu.x86_64.sh
-      EOF
+      "sudo apt-get install -y dotnet-runtime-6.0"
     ]
   }
 
   provisioner "file" {
     source      = "install_wine.ubuntu.x86_64.sh"
     destination = "/tmp/install_wine.ubuntu.x86_64.sh"
-    only_if     = var.install_wine
+    only        = var.install_wine ? ["amazon-ebs.base"] : []
+
   }
 
   provisioner "shell" {
-    only_if = var.install_wine
+    only = var.install_wine ? ["amazon-ebs.base"] : []
     inline = [
       <<-EOF
       sudo chmod 755 /tmp/install_wine.ubuntu.x86_64.sh
