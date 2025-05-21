@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Perforce Helix Core Packer Template
 description: Perforce Helix Core Packer Template for game development on AWS
 ---
@@ -54,4 +54,4 @@ As you can see, there are quite a few configurables that need to be passed to th
 
 - This script is designed for a specific use-case and might require modifications for different environments or requirements.
 - Ensure you have a backup of your system before running the script, as it makes significant changes to users, groups, and services.
-- The script assumes an internet connection for downloading packages and binaries.
+- The script assumes an internet connection for downloading packages and binaries. -->

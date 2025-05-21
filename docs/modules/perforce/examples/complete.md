@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Perforce Complete Example
 description: Automated deployment of Helix Core, Helix Swarm, and Helix Authentication Service on AWS
 ---
@@ -71,4 +71,4 @@ reference architecture. The deployment steps below will get you up and running.
 6. You should now have access to your deployed resources. The URLs for Helix Swarm and Helix Authentication Service are
    provided as Terraform outputs and should be visible in your console after a successful deployment. The connection
    string for Helix Core is also provided as an output. Use the Helix Core CLI or the P4V application to connect to your
-   Helix Core server.
+   Helix Core server. -->

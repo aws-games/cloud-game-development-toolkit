@@ -1,2 +1,2 @@
-# Terraform Module Docs
---8<-- "modules/perforce/modules/p4-auth/README.md"
+<!-- # Terraform Module Docs
+--8<-- "modules/perforce/modules/p4-auth/README.md" -->
