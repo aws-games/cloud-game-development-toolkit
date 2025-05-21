@@ -6,7 +6,7 @@ on:
   workflow_call: # Allows this workflow to be invoked from other workflows
     outputs:
       pr_number:
-        description: The number of the created pull request
+        description: The id of the created pull request
         value: ${{ jobs.update-changelog.outputs.pr_number }}
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   update-changelog:
-    if: github.repository == 'gabebatista/cloud-game-development-toolkit'
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
     concurrency:
       group: changelog-build
     permissions:

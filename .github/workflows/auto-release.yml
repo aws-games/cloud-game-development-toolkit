@@ -26,6 +26,13 @@ jobs:
   tag-latest-commit:
     runs-on: ubuntu-latest
     steps:
+      - name: validate-version-name
+        run: |
+          # Checks that release-version input follows semantic versioning
+          if [[ ! ${{ inputs.release-version }} =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid version format, version should looks like 'v1.0.0'."
+            exit 1
+          fi
       - name: checkout-latest
         uses: actions/checkout@v4.2.2
         with:
@@ -83,11 +90,13 @@ jobs:
           # Switch back to main
           git checkout main
 
-          # Enable auto-merge and approve (use --admin to force merge)
-          gh pr merge $PR_NUMBER --auto --merge
+          # Enable auto-merge and approve
+          gh pr merge $PR_NUMBER --auto --rebase
           gh pr review $PR_NUMBER --approve
 
           # Wait for merge
+          # Human approval is required to merge changelog PR. The workflow will wait for approval indefinitely.
+          echo "::notice:: The workflow will wait for human approval of the changelog PR."
           gh pr checks $PR_NUMBER --watch
 
           # Clean up
