@@ -2,9 +2,7 @@
 
 For a video walkthrough demonstrating how to use this module, see this YouTube Video:
 
-<div style="text-align: center;">
-  <iframe src="https://www.youtube.com/embed/4UEoX-oP918?si=Wtymu0FRPrDh522J" frameborder="0" allowfullscreen style="width: 30rem; max-width: 100%; height: 16.875rem;"></iframe>
-</div>
+[![Watch the video](https://img.youtube.com/vi/4UEoX-oP918/0.jpg)](https://youtu.be/4UEoX-oP918)
 
 ## Features
 
