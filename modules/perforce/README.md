@@ -2,7 +2,9 @@
 
 For a video walkthrough demonstrating how to use this module, see this YouTube Video:
 
-[![Deploying Perforce on AWS](./assets/media/image/deploying-perforce-with-cgdtk-thumbnail-with-icon.jpg)](https://www.youtube.com/watch?v=4UEoX-oP918)
+<div style="text-align: center;">
+  <iframe src="https://www.youtube.com/embed/4UEoX-oP918?si=Wtymu0FRPrDh522J" frameborder="0" allowfullscreen style="width: 30rem; max-width: 100%; height: 16.875rem;"></iframe>
+</div>
 
 ## Features
 

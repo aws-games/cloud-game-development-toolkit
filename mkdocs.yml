@@ -6,6 +6,8 @@ repo_name: aws-games/cloud-game-development-toolkit
 site_url: https://aws-games.github.io/cloud-game-development-toolkit/
 edit_uri: edit/main/docs/
 docs_dir: .
+# use_directory_urls: false
+# strict: true
 
 theme:
   name: material
@@ -99,11 +101,13 @@ nav:
       - Packer Templates:
           - Overview: docs/assets/packer/index.md
           - Build Agents:
-              - Linux Build Agents: docs/assets/packer/build-agents/linux.md
-              - Windows Build Agent: docs/assets/packer/build-agents/windows.md
+              - Linux Build Agents:
+                - assets/packer/build-agents/linux/README.md
+              - Windows Build Agent:
+                - assets/packer/build-agents/windows/README.md
           - P4 Server: assets/packer/perforce/p4-server/README.md
-      - Jenkins Pipelines: docs/assets/jenkins-pipelines/jenkins-pipelines.md
-      - Ansible Playbooks: docs/assets/ansible-playbooks/ansible-playbooks.md
+      - Jenkins Pipelines: assets/jenkins-pipelines/README.md
+      - Ansible Playbooks: assets/ansible-playbooks/perforce/p4-server/README.md
       - Dockerfiles: docs/assets/dockerfiles.md
   - Modules:
       - Overview: docs/modules/index.md
@@ -120,33 +124,29 @@ nav:
                     - modules/perforce/modules/p4-code-review/README.md
       - TeamCity: # Section
           - TeamCity: # Dropdown
-              - Installation and Usage: docs/modules/teamcity/teamcity.md
-              - Module Docs: docs/modules/teamcity/terraform-docs.md
-              - Examples: docs/modules/teamcity/examples/complete.md
+              - Installation and Usage:
+                - modules/teamcity/README.md
       - Jenkins: # Section
           - Jenkins: # Dropdown
-              - Installation and Usage: docs/modules/jenkins/jenkins.md
-              - Module Docs: docs/modules/jenkins/terraform-docs.md
+              - Installation and Usage:
+                - modules/jenkins/README.md
       - Unreal Engine:
           - Unreal Engine Horde:
-              - Installation and Usage: docs/modules/unreal/horde/unreal-engine-horde.md
-              - Module Docs: docs/modules/unreal/horde/terraform-docs.md
-              - Examples: docs/modules/unreal/horde/examples/complete.md
+              - Installation and Usage:
+                - modules/unreal/horde/README.md
           - Unreal Cloud DDC:
               - Unreal Engine Cloud DDC Infra:
-                  - Installation and Usage: docs/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/unreal-cloud-ddc-infra.md
-                  - Module Docs: docs/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/terraform-docs.md
+                  - Installation and Usage:
+                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md
               - Unreal Engine Cloud DDC Intra Cluster:
-                  - Installation and Usage: docs/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/unreal-cloud-ddc-intra-cluster.md
-                  - Module Docs: docs/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/terraform-docs.md
-          # - Examples:
-          #     - Horde: docs/modules/unreal/horde/examples/complete.md
+                  - Installation and Usage:
+                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md
   - Samples:
-      - Overview: docs/samples/index.md
+      - Overview: samples/README.md
       - Simple Build Pipeline: samples/simple-build-pipeline/README.md
-      - Unreal Cloud DDC Single Region: docs/samples/unreal-cloud-ddc-single-region.md
-  - Changelog: docs/changelog.md
-  - Security: docs/security.md
+      - Unreal Cloud DDC Single Region: samples/unreal-cloud-ddc-single-region/README.md
+  - Changelog: CHANGELOG.md
+  - Security: SECURITY.md
   - Contributing: CONTRIBUTING.md
   - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
@@ -156,6 +156,9 @@ plugins:
   - git-revision-date
   - offline
   - open-in-new-tab
+  - redirects:
+      redirect_maps:
+        'index.md': 'docs/index.md'
 
 extra:
   version:
