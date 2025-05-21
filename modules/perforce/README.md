@@ -1,5 +1,9 @@
 # Perforce on AWS Terraform Module
 
+For a video walkthrough demonstrating how to use this module, see this YouTube Video:
+
+[![Deploying Perforce on AWS](./assets/media/image/deploying-perforce-with-cgdtk-thumbnail-with-icon.jpg)](https://www.youtube.com/watch?v=4UEoX-oP918)
+
 ## Features
 
 - Dynamic creation and configuration of [P4 Server (formerly Helix Core)](https://www.perforce.com/products/helix-core)
@@ -12,6 +16,7 @@
 
 ### Full example using AWS Route53 Public Hosted Zone
 
+<!-- ![perforce-complete-arch](https://github.com/aws-games/cloud-game-development-toolkit/raw/main/docs/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png) -->
 ![perforce-complete-arch](./assets/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png)
 
 ## Prerequisites
@@ -51,6 +56,10 @@
       `p4_configure.sh` and `p4_setup.sh` files that are in this directory, as these are used to configure the P4 Commit
       Server. These are already referenced in the `perforce_arm64.pkr.hcl` and `perforce_x86.pkr.hcl` packer templates
       that are available for use.
+
+## Examples
+
+For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples).
 
 ## Deployment Instructions
 
@@ -126,10 +135,6 @@ packer build perforce_x86.pkr.hcl
    Manager to gain access to the commit server.
 8. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
    Code Review) and P4Auth (P4Auth).
-
-## Examples
-
-For example configurations, please see the examples at `/examples`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -251,4 +256,4 @@ For example configurations, please see the examples at `/examples`.
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your P4 Server instance. |
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
-<!-- END_TF_DOCS -->
+END_TF_DOCS
