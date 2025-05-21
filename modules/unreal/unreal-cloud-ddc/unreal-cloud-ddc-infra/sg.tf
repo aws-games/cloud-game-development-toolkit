@@ -2,18 +2,20 @@
 # Scylla SG
 ################################################################################
 resource "aws_security_group" "scylla_security_group" {
-  name        = "${var.name}-scylla-sg"
+  name        = "${local.name_prefix}-scylla-sg"
   description = "Security group for ScyllaDB"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Name = "unreal-cloud-ddc-scylla-sg"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-sg"
+    }
+  )
 }
 
 # Allow port 9180 from monitoring to scylla
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_prometheus" {
-  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
   from_port                    = 9180
   to_port                      = 9180
   ip_protocol                  = "tcp"
@@ -24,7 +26,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_promet
 
 # Allow port 9100 from monitoring to scylla
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_node_exporter" {
-  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
   from_port                    = 9100
   to_port                      = 9100
   ip_protocol                  = "tcp"
@@ -39,18 +41,21 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_node_e
 
 resource "aws_security_group" "scylla_monitoring_sg" {
   count       = var.create_scylla_monitoring_stack ? 1 : 0
-  name        = "${var.name}-scylla-monitoring-sg"
+  name        = "${local.name_prefix}-scylla-monitoring-sg"
   description = "Scylla monitoring security group"
   vpc_id      = var.vpc_id
-  tags = {
-    Name = "unreal-cloud-ddc-scylla-monitoring-sg"
-  }
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-monitoring-sg"
+    }
+  )
   #checkov:skip=CKV2_AWS_5:Security groups are attached to their resources
 }
 
 # Allow port 3000 for Grafana from load balancer to monitoring
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_monitoring" {
-  count                        = var.create_scylla_monitoring_stack ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
   ip_protocol                  = "tcp"
   from_port                    = 3000
   to_port                      = 3000
@@ -71,18 +76,20 @@ resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_sg_egress_rule"
 # Scylla monitoring load balancer security group
 
 resource "aws_security_group" "scylla_monitoring_lb_sg" {
-  count       = var.create_scylla_monitoring_stack ? 1 : 0
-  name        = "${var.name}-scylla-monitoring-lb-sg"
+  count       = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  name        = "${local.name_prefix}-scylla-monitoring-lb-sg"
   description = "Scylla monitoring load balancer security group"
   vpc_id      = var.vpc_id
   tags = {
     Name = "unreal-cloud-ddc-scylla-monitoring-lb-sg"
   }
+
+
   #checkov:skip=CKV2_AWS_5:Security groups are attached to their resources
   #checkov:skip=CKV_AWS_2:Supporting port 80 for simplicity for now locked down by only leaving it open to the allowlisted IP addresses
 }
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
-  count             = var.create_scylla_monitoring_stack ? length(var.scylla_monitoring_dashboard_access_cidrs) : 0
+  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? length(var.scylla_monitoring_dashboard_access_cidrs) : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[0].id
   ip_protocol       = "tcp"
   from_port         = 443
@@ -92,7 +99,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_lb_sg_egress_rule" {
-  count             = var.create_scylla_monitoring_stack ? 1 : 0
+  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
   description       = "Egress All"
   ip_protocol       = "-1"
@@ -103,13 +110,15 @@ resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_lb_sg_egress_ru
 # NVME Security Group
 ################################################################################
 resource "aws_security_group" "nvme_security_group" {
-  name        = "${var.name}-nvme-sg"
+  name        = "${local.name_prefix}-nvme-sg"
   description = "Security group for nvme node group"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Name = "unreal-cloud-ddc-nvme-sg"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-nvme-sg"
+    }
+  )
 }
 
 resource "aws_vpc_security_group_egress_rule" "nvme_egress_sg_rules" {
@@ -122,13 +131,15 @@ resource "aws_vpc_security_group_egress_rule" "nvme_egress_sg_rules" {
 # Worker Security Group
 ################################################################################
 resource "aws_security_group" "worker_security_group" {
-  name        = "${var.name}-worker-sg"
+  name        = "${local.name_prefix}-worker-sg"
   description = "Security group for nvme node group"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Name = "unreal-cloud-ddc-worker-sg"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-worker-sg"
+    }
+  )
 }
 
 resource "aws_vpc_security_group_egress_rule" "worker_egress_sg_rules" {
@@ -177,13 +188,15 @@ resource "aws_vpc_security_group_egress_rule" "self_scylla_egress_sg_rules" {
 # System Security Group
 ################################################################################
 resource "aws_security_group" "system_security_group" {
-  name        = "${var.name}-system-sg"
+  name        = "${local.name_prefix}-system-sg"
   description = "Security group for system node group"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Name = "unreal-cloud-ddc-system-sg"
-  }
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-system-sg"
+    }
+  )
 }
 
 resource "aws_vpc_security_group_egress_rule" "system_egress_sg_rules" {

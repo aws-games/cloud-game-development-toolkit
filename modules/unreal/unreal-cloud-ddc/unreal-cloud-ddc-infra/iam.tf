@@ -6,7 +6,7 @@
 # System Role
 ################################################################################
 resource "aws_iam_role" "system_node_group_role" {
-  name_prefix = "system-node-group-role-"
+  name_prefix = "${local.name_prefix}-system-ng-role-"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -18,6 +18,11 @@ resource "aws_iam_role" "system_node_group_role" {
     }]
     Version = "2012-10-17"
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-system-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "system_policy_attachement" {
@@ -34,7 +39,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "system_policy_attachement"
 # NVME Role
 ################################################################################
 resource "aws_iam_role" "nvme_node_group_role" {
-  name_prefix = "nvme-node-group-role-"
+  name_prefix = "${local.name_prefix}-nvme-ng-role-"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -46,6 +51,11 @@ resource "aws_iam_role" "nvme_node_group_role" {
     }]
     Version = "2012-10-17"
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-nvme-role"
+    }
+  )
 }
 
 #checkov:skip=CKV_AWS_290: Permissions are needed for NVME policy
@@ -63,7 +73,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "nvme_policy_attachement" {
 # Worker Node Role
 ################################################################################
 resource "aws_iam_role" "worker_node_group_role" {
-  name_prefix = "unreal-cloud-ddc-eks-node-group-role-"
+  name_prefix = "${local.name_prefix}-eks-ng-role-"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -75,6 +85,11 @@ resource "aws_iam_role" "worker_node_group_role" {
     }]
     Version = "2012-10-17"
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-eks-ng-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "worker_policy_attachement" {
@@ -90,7 +105,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "worker_policy_attachement"
 # EKS Role
 ################################################################################
 resource "aws_iam_role" "eks_cluster_role" {
-  name_prefix = "unreal-cloud-ddc-eks-cluster-role-"
+  name_prefix = "${local.name_prefix}-eks-cluster-role-"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -102,6 +117,11 @@ resource "aws_iam_role" "eks_cluster_role" {
     }]
     Version = "2012-10-17"
   })
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-eks-cluster-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "eks_cluster_policy_attachement" {
@@ -129,6 +149,11 @@ resource "aws_iam_role" "scylla_role" {
     ]
   })
   name_prefix = "scylla-db-"
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-role"
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "scylla_policy_attachement" {
@@ -142,47 +167,49 @@ resource "aws_iam_role_policy_attachments_exclusive" "scylla_policy_attachement"
 # Scylla Monitoring Role
 ################################################################################
 
+data "aws_iam_policy_document" "scylla_monitoring_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role" "scylla_monitoring_role" {
-  count = var.create_scylla_monitoring_stack ? 1 : 0
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      }
+  count              = var.create_scylla_monitoring_stack ? 1 : 0
+  assume_role_policy = data.aws_iam_policy_document.scylla_monitoring_assume_role.json
+  name_prefix        = "scylla-monitoring-"
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-scylla-monitoring-role"
+    }
+  )
+}
+
+data "aws_iam_policy_document" "scylla_monitoring_policy_doc" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:DescribeTags"
     ]
-  })
-  name_prefix = "scylla-monitoring-"
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:ResourceTag/Name"
+      values   = ["scylla-node*"] # Adjust this tag to match your Scylla node naming
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "scylla_monitoring_policy" {
-  count = var.create_scylla_monitoring_stack ? 1 : 0
-  name  = "scylla-monitoring-policy"
-  role  = aws_iam_role.scylla_monitoring_role[count.index].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:DescribeInstances",
-          "ec2:DescribeTags"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "aws:ResourceTag/Name" : "scylla-node*" # Adjust this tag to match your Scylla node naming
-          }
-
-        }
-      }
-    ]
-  })
+  count  = var.create_scylla_monitoring_stack ? 1 : 0
+  name   = "${local.name_prefix}-scylla-monitoring-policy"
+  role   = aws_iam_role.scylla_monitoring_role[count.index].id
+  policy = data.aws_iam_policy_document.scylla_monitoring_policy_doc.json
 }
 
 ################################################################################

@@ -1,5 +1,5 @@
 resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-token-2"
+  name        = "unreal-cloud-ddc-token"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
     exclude_punctuation = true
@@ -85,7 +85,8 @@ module "unreal_cloud_ddc_intra_cluster" {
       scylla_ips  = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       bucket_name = module.unreal_cloud_ddc_infra.s3_bucket_id
       region      = data.aws_region.current.name
-      #substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2)
+      # replace the region value with the line below if deploying this in any AWS region ending in -1
+      #region = substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2)
       token = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
     })
   ]

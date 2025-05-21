@@ -12,15 +12,22 @@ variable "name" {
   }
 }
 
+variable "project_prefix" {
+  type        = string
+  description = "The project prefix for this workload. This is appended to the beginning of most resource names."
+  default     = "cgd"
+}
+
 variable "tags" {
   type = map(any)
   default = {
-    "iac-management" = "CGD-Toolkit"
-    "iac-module"     = "Unreal DDC"
-    "iac-provider"   = "Terraform"
+    "ModuleBy"   = "CGD-Toolkit"
+    "ModuleName" = "Unreal DDC"
+    "IaC"        = "Terraform"
   }
   description = "Tags to apply to resources."
 }
+
 variable "environment" {
   type        = string
   description = "The current environment (e.g. dev, prod, etc.)"
@@ -37,6 +44,7 @@ variable "vpc_id" {
   description = "String for VPC ID"
   type        = string
 }
+
 
 ########################################
 # ScyllaDB Configuration
@@ -100,6 +108,12 @@ variable "create_scylla_monitoring_stack" {
   default     = true
   description = "Whether to create the Scylla monitoring stack"
   nullable    = false
+}
+
+variable "create_monitoring_alb" {
+  type        = bool
+  default     = true
+  description = "Whether to create the monitoring stack ALB"
 }
 
 ########################################

@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
   #checkov:skip=CKV_AWS_144:This bucket hosts ephemeral recreatable assets
   #checkov:skip=CKV_AWS_18:Logging bucket cna be configured by customer
   #checkov:skip=CKV_AWS_145:Causes issue with helm chart interacting with objects
-  bucket_prefix = "${var.name}-s3-bucket"
+  bucket_prefix = "${local.name_prefix}-s3-bucket"
   force_destroy = true
 }
 
@@ -32,7 +32,7 @@ resource "random_string" "scylla_monitoring_lb_access_logs_bucket_suffix" {
 }
 resource "aws_s3_bucket" "scylla_monitoring_lb_access_logs_bucket" {
   count         = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
-  bucket        = "${var.name}-alb-access-logs-${random_string.scylla_monitoring_lb_access_logs_bucket_suffix[0].result}"
+  bucket        = "${local.name_prefix}-alb-access-logs-${random_string.scylla_monitoring_lb_access_logs_bucket_suffix[0].result}"
   force_destroy = var.debug
 
   #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
@@ -42,7 +42,7 @@ resource "aws_s3_bucket" "scylla_monitoring_lb_access_logs_bucket" {
   #checkov:skip=CKV2_AWS_62: Event notifications not necessary
 
   tags = merge(local.tags, {
-    Name = "${var.name}-alb-access-logs-${random_string.scylla_monitoring_lb_access_logs_bucket_suffix[0].result}"
+    Name = "${local.name_prefix}-alb-access-logs-${random_string.scylla_monitoring_lb_access_logs_bucket_suffix[0].result}"
   })
 }
 resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {

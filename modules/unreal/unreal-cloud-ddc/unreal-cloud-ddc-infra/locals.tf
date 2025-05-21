@@ -3,6 +3,8 @@ locals {
   tags = merge(var.tags, {
     "environment" = var.environment
   })
+
+  name_prefix = "${var.project_prefix}-${var.name}"
   sg_rules_all = [
     { port : 7000, description : "ScyllaDB Inter-node communication (RPC)", protocol : "tcp" },
     { port : 7001, description : "ScyllaDB SSL inter-node communication (RPC)", protocol : "tcp" },

@@ -15,7 +15,6 @@ on:
   #    - "CHANGELOG.md"
   #    - "**/README.md"
   #    - ".github/workflows/docs.yml"
-  #checkov:skip=CKV_GHA_7:skip this for now
   workflow_dispatch:
     inputs:
       version:
