@@ -4,10 +4,7 @@
 
 Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde module:
 
-
-<div style="text-align: center;">
-  <iframe src="https://www.youtube.com/embed/kIP4wsVprYY?si=4aembH2MV3N5-ZEh" frameborder="0" allowfullscreen style="width: 30rem; max-width: 100%; height: 16.875rem;"></iframe>
-</div>
+[![Watch the video](https://img.youtube.com/vi/kIP4wsVprYY/0.jpg)](https://www.youtube.com/watch?v=kIP4wsVprYY)
 
 ## Deployment Architecture
 ![Unreal Engine Horde Module Architecture](./assets/media/diagrams/unreal-engine-horde-architecture.png)
