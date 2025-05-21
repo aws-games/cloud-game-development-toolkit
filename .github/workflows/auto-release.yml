@@ -1,0 +1,135 @@
+name: Auto Release
+
+on:
+  #  schedule:
+  #    - cron: "0 0 1,15 * *"  ## Twice a month
+  workflow_dispatch:
+    inputs:
+      #checkov:skip=CKV_GHA_7:Version number required from user
+      release-version:
+        description: "Version number to use for release"
+        required: true
+        type: string
+
+permissions:
+  actions: write
+  id-token: write
+  contents: write
+  issues: write
+  pull-requests: write
+  pages: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  tag-latest-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: validate-version-name
+        run: |
+          # Checks that release-version input follows semantic versioning
+          if [[ ! ${{ inputs.release-version }} =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid version format, version should looks like 'v1.0.0'."
+            exit 1
+          fi
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Setup Git Config
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+      - name: tag-version
+        run: |
+          git tag ${{ inputs.release-version }}
+          git push origin ${{ inputs.release-version }}
+      - name: tag-latest
+        run: |
+          git tag -f -a latest -m "Latest release"
+          git push -f origin latest
+
+  generate-changelog:
+    needs: [ tag-latest-commit ]
+    uses: ./.github/workflows/changelog.yml
+    secrets: inherit
+
+
+  update-tags:
+    needs: [ generate-changelog ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Setup Git Config
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+      - name: Handle Changelog PR
+        run: |
+          # Find the PR using its id
+          PR_NUMBER=${{ needs.generate-changelog.outputs.pr_number }}
+          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
+
+          # Checkout the PR branch
+          git fetch origin $BRANCH_NAME
+          git checkout $BRANCH_NAME
+
+          # Rebase on main
+          git fetch origin main
+          git rebase origin/main
+
+          # Force push the rebased branch
+          git push --force-with-lease origin $BRANCH_NAME
+
+          # Switch back to main
+          git checkout main
+
+          # Enable auto-merge and approve
+          gh pr merge $PR_NUMBER --auto --rebase
+          gh pr review $PR_NUMBER --approve
+
+          # Wait for merge
+          # Human approval is required to merge changelog PR. The workflow will wait for approval indefinitely.
+          echo "::notice:: The workflow will wait for human approval of the changelog PR."
+          gh pr checks $PR_NUMBER --watch
+
+          # Clean up
+          git pull origin main
+          git branch -D $BRANCH_NAME || true
+
+      - name: update-tags
+        run: |
+          git pull
+          git tag -f ${{ inputs.release-version }} -m "Release ${{ inputs.release-version }}"
+          git push -f origin ${{ inputs.release-version }}
+          git tag -f -a latest -m "Latest release"
+          git push -f origin latest
+
+      - name: create-release
+        uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5
+        with:
+          tag: ${{ inputs.release-version }}
+          name: ${{ inputs.release-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: edit-publish-release
+        run: |
+          # Edit release content
+          gh release edit ${{ inputs.release-version }} \
+            --latest \
+            --draft=false
+
+
+  deploy-docs:
+    needs: [ update-tags ]
+    uses: ./.github/workflows/docs.yml
+    with:
+      version: ${{ inputs.release-version }}
+      alias: latest
