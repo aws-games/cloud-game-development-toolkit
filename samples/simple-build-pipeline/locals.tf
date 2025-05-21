@@ -56,7 +56,7 @@ locals {
   build_farm_compute = {
     ubuntu_builders : {
       ami           = data.aws_ami.ubuntu_noble_amd.image_id
-      instance_type = "c7a.large"
+      instance_type = "t3a.small"
     }
   }
 

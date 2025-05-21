@@ -113,7 +113,7 @@ resource "aws_iam_policy" "jenkins_default_policy" {
 
 # EC2 Fleet Plugin
 data "aws_iam_policy_document" "ec2_fleet_plugin_policy" {
-  count = var.create_ec2_fleet_plugin_policy ? 1 : 0
+  count = var.create_ec2_fleet_plugin_policy && var.build_farm_compute != null ? 1 : 0
 
   # EC2
   #checkov:skip=CKV_AWS_111:Required permissions from EC2 Fleet
