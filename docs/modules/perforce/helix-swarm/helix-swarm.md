@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Perforce Helix Swarm
 description: Helix Swarm Terraform Module for AWS
 ---
@@ -46,4 +46,4 @@ module "perforce_helix_swarm" {
     p4d_super_user_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:username::"
     p4d_super_user_password_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixSwarmSuperUser-a1b2c3:password::"
 }
-```
+``` -->

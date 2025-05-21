@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Simple Build Pipeline Sample
 description: Game build pipeline sample implementation on AWS
 ---
@@ -161,4 +161,4 @@ resource "aws_vpc_security_group_ingress_rule" "swarm_inbound_personal" {
 }
 ```
 
-Now that you have access to Helix Core and Helix Swarm you should be able to log in with the super user credentials specified or created during deployment. This will enable you to provision other users that leverage Helix Authentication Service for single-sign-on. For more information please consult the [Helix Core documentation](../modules/perforce/helix-core/helix-core.md).
+Now that you have access to Helix Core and Helix Swarm you should be able to log in with the super user credentials specified or created during deployment. This will enable you to provision other users that leverage Helix Authentication Service for single-sign-on. For more information please consult the [Helix Core documentation](../modules/perforce/helix-core/helix-core.md). -->

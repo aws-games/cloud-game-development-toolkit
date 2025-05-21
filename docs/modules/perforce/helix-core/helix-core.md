@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Perforce Helix Core
 description: Helix Core Terraform Module for AWS
 ---
@@ -40,4 +40,4 @@ module "perforce_helix_core" {
 }
 ```
 
-If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere.
+If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere. -->
