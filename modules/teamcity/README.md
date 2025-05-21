@@ -1,4 +1,18 @@
-# TeamCity
+# TeamCity Module
+
+[TeamCity](https://www.jetbrains.com/teamcity/) is a user-friendly continuous integration (CI) server for developers and build engineers created by JetBrains. This module deploys a TeamCity server on [AWS Elastic Container Service](https://aws.amazon.com/ecs/).
+
+The TeamCity server relies on shared file system for persistent storage of configuration, build results, and current operation files as well as a SQL database to store build history, user data, build results, and runtime data. This module provides these services by provisioning an [Amazon Elastic File System](https://aws.amazon.com/efs/) and an [Amazon Amazon Aurora Serverless V2](https://aws.amazon.com/rds/aurora/serverless/) cluster running the PostgreSQL engine.
+
+## Deployment Architecture
+![TeamCity Module Architecture](./assets/media/diagrams/teamcity-server-architecture.png)
+
+## Examples
+
+For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/teamcity/examples).
+
+<!-- TODO -->
+<!-- ## Deployment Instructions -->
 
 
 <!-- BEGIN_TF_DOCS -->

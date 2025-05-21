@@ -12,16 +12,15 @@ A module is an automated deployment of a game development workload (i.e. Jenkins
 > Note: While the project focuses on Terraform modules today, this project may expand to provide options for implementations built in other IaC tools such as AWS CDK in the future.
 
 !!! info
-    **Don't see a module listed?** Create a [feature request](https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE) for a new module or learn [how to contribute new modules to the project](../contributing.md)
-
+    **Don't see a module listed?** Create a [feature request](https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&labels=feature-request&projects=&template=feature_request.yml&title=Feature+request%3A+TITLE) for a new module. If you'd like to contribute new modules to the project, see the [general docs on contributing](../../CONTRIBUTING.md), as well as the module specific contribution docs below.
 
 | Module | Description |
 | :--------------------------------------------------------------- | :- |
 | [:simple-perforce: __Perforce__](../../modules/perforce/README.md)              | This module allows for deployment of Perforce resources on AWS. These are currently P4 Server (formerly Helix Core), P4Auth (formerly Helix Authentication Service), and P4 Code Review (formerly Helix Swarm). |
-| [:simple-unrealengine: __Unreal Horde__](../modules/unreal/horde/unreal-engine-horde.md)         | This module allows for deployment of Unreal Horde on AWS. |
-| [:simple-unrealengine: __Unreal Cloud DDC__](../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/terraform-docs.md)              | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS. |
-| [:simple-teamcity: __TeamCity__](../modules/teamcity/teamcity.md) | This module allows for deployment of TeamCity resources on AWS. |
-[:simple-jenkins: __Jenkins__](../modules/jenkins/jenkins.md)              | This module allows for deployment of Jenkins on AWS.
+| [:simple-unrealengine: __Unreal Horde__](../../modules/unreal/horde/README.md)         | This module allows for deployment of Unreal Horde on AWS. |
+| [:simple-unrealengine: __Unreal Cloud DDC__](../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md)              | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS. |
+| [:simple-teamcity: __TeamCity__](../../modules/teamcity/README.md) | This module allows for deployment of TeamCity resources on AWS. |
+[:simple-jenkins: __Jenkins__](../../modules/jenkins/README.md)              | This module allows for deployment of Jenkins on AWS.
 
 
 ## How to include these modules
@@ -52,7 +51,7 @@ terraform {
 
 It is fine if your module needs to declare significant networking or compute resources to run - the *Cloud Game Development Toolkit* is intended to be highly opinionated. At the same time, we require that modules support a significant level of dependency injection through variables to support diverse use cases. This is a simple consideration that is easier to incorporate from the beginning of module development rather than retroactively.
 
-For example, the [Jenkins module](./jenkins/jenkins.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
+For example, the [Jenkins module](../../modules/jenkins/README.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
 
 ### 3. Assumptions and Guarantees
 

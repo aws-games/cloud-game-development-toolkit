@@ -6,7 +6,7 @@ Welcome to the **Cloud Game Development Toolkit**. There are a number of ways to
 
 ### Assets
 
-An _asset_ is a singular template, script, or automation document that may prove useful in isolation. Currently, the **Toolkit** contains three types of _assets_: [Ansible playbooks](./docs/assets/ansible-playbooks/ansible-playbooks.md), [Jenkins pipelines](./docs/assets/jenkins-pipelines/jenkins-pipelines.md), and [Packer templates](./docs/assets/packer/index.md). Each of these _assets_ can be used in isolation.
+An _asset_ is a singular template, script, or automation document that may prove useful in isolation. Currently, the **Toolkit** contains three types of _assets_: [Ansible playbooks](./assets/ansible-playbooks/perforce/p4-server/README.md), [Jenkins pipelines](./assets/jenkins-pipelines/README.md), and [Packer templates](./docs/assets/packer/index.md). Each of these _assets_ can be used in isolation.
 
 For more information about _assets_, consult the [detailed documentation](./docs/assets/index.md).
 
@@ -23,4 +23,7 @@ A _sample_ is a complete reference architecture that stitches together [modules]
 > **Note:**
 Because samples may deploy resources that have unique name constraints, we cannot guarantee that two different samples can be deployed into the same AWS account without modifying either of the samples to integrate shared infrastructure or resolve conflicts. If you're interested in using functionality from multiple samples, we recommend that you use them as reference material to base your own infrastructure off of.
 
-For more information about _samples_, consult the [detailed documentation](./docs/samples/index.md).
+For more information about _samples_, consult the [detailed documentation](./samples/README.md).
+
+
+If you're new to the project, we recommend starting by deploying one of the samples, such as the [Simple Build Pipeline](./samples/simple-build-pipeline/README.md).
