@@ -15,7 +15,7 @@ There are a couple of important steps you need to complete before deploying this
 
 ### 1. Allowlist your IP
 
-The [Unreal Cloud DDC Infrastructure Module](../modules/) requires you to place the IP of the machine interacting with the EKS Cluster within an allow list. You can hard code this in the ```var.eks_cluster_allow_list``` if you have more than 1 IP you want to allow list or utilize the data block within the sample.
+The [Unreal Cloud DDC Infrastructure Module](../modules/unreal-cloud-ddc-infra) requires you to place the IP of the machine interacting with the EKS Cluster within an allow list. You can hard code this in the ```var.eks_cluster_allow_list``` if you have more than 1 IP you want to allow list or utilize the data block within the sample.
 
 ### 2. Set Up Github Content Repository Credentials
 
