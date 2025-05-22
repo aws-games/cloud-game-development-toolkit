@@ -45,6 +45,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "cidr_allow_list" {
+  type        = list(string)
+  description = "List of CIDR ranges allowed to access the EKS cluster and Scylla monitoring dashboard. Leave empty to restrict all public access."
+  default     = []
+}
 
 ########################################
 # ScyllaDB Configuration
@@ -243,12 +248,6 @@ variable "system_managed_node_min_size" {
   }
 }
 
-variable "eks_cluster_public_endpoint_access_cidr" {
-  type        = list(string)
-  description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint."
-  default     = []
-}
-
 variable "kubernetes_version" {
   type        = string
   default     = "1.31"
@@ -283,7 +282,7 @@ variable "eks_cluster_public_access" {
   default     = false
   description = "Allows public access of EKS Control Plane should be used with "
   validation {
-    condition     = !var.eks_cluster_public_access || ((var.eks_cluster_public_access == true) && (length(var.eks_cluster_public_endpoint_access_cidr) > 0) && !contains(["0.0.0.0"], var.eks_cluster_public_access))
+    condition     = !var.eks_cluster_public_access || (var.eks_cluster_public_access && (length(var.cidr_allow_list) > 0) && !contains(["0.0.0.0"], var.eks_cluster_public_access))
     error_message = "If public access is allowed need to set up eks_cluster_access_cidr with at least a single value."
   }
 }
@@ -347,12 +346,6 @@ variable "alb_certificate_arn" {
     condition     = (var.create_external_alb == true && var.alb_certificate_arn != null) || (!var.create_external_alb && var.alb_certificate_arn == null)
     error_message = "The alb_certificate_arn variable must be set if create_external_alb is true."
   }
-}
-
-variable "scylla_monitoring_dashboard_access_cidrs" {
-  type        = list(string)
-  description = "List of CIDR ranges allowed to access the Scylla monitoring dashboard (port 3000). Leave empty to restrict all public access."
-  default     = []
 }
 
 variable "enable_scylla_monitoring_lb_deletion_protection" {

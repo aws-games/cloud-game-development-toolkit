@@ -69,8 +69,8 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.39.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.98.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.41.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
@@ -102,10 +102,10 @@ No outputs.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_eks_cluster_ip_allow_list"></a> [eks\_cluster\_ip\_allow\_list](#input\_eks\_cluster\_ip\_allow\_list) | IPs that will be allow listed to access cluster over internet | `list(string)` | `null` | no |
+| <a name="input_allow_my_ip"></a> [allow\_my\_ip](#input\_allow\_my\_ip) | Automatically add your IP to the allowlist | `bool` | `true` | no |
+| <a name="input_cidr_allow_list"></a> [cidr\_allow\_list](#input\_cidr\_allow\_list) | IPs that will be allow listed to access cluster over internet | `list(string)` | `[]` | no |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_root_domain_name"></a> [root\_domain\_name](#input\_root\_domain\_name) | The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created. | `string` | n/a | yes |
-| <a name="input_scylla_monitoring_ip_allow_list"></a> [scylla\_monitoring\_ip\_allow\_list](#input\_scylla\_monitoring\_ip\_allow\_list) | List of IP addresses allowed to access the Scylla monitoring dashboard (port 3000). Leave empty to restrict all public access. | `list(string)` | `[]` | no |
 
 ## Outputs
 

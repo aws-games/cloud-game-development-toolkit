@@ -89,12 +89,12 @@ resource "aws_security_group" "scylla_monitoring_lb_sg" {
   #checkov:skip=CKV_AWS_2:Supporting port 80 for simplicity for now locked down by only leaving it open to the allowlisted IP addresses
 }
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
-  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? length(var.scylla_monitoring_dashboard_access_cidrs) : 0
+  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? length(var.cidr_allow_list) : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[0].id
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
-  cidr_ipv4         = var.scylla_monitoring_dashboard_access_cidrs[count.index]
+  cidr_ipv4         = var.cidr_allow_list[count.index]
   description       = "Allow traffic from allow listed IPs to the ALB"
 }
 

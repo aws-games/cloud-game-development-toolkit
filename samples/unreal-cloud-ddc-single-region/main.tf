@@ -1,5 +1,5 @@
 resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-token"
+  name        = "unreal-cloud-ddc-bearer-token"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
     exclude_punctuation = true
@@ -40,10 +40,10 @@ module "unreal_cloud_ddc_infra" {
   name       = "unreal-cloud-ddc"
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
-  eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = var.eks_cluster_ip_allow_list != null ? var.eks_cluster_ip_allow_list : ["${chomp(data.http.public_ip.response_body)}/32"]
-  eks_cluster_private_access              = true
-  eks_cluster_public_access               = true
+  eks_node_group_subnets     = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  cidr_allow_list            = var.allow_my_ip ? concat(var.cidr_allow_list, ["${chomp(data.http.public_ip.response_body)}/32"]) : var.cidr_allow_list
+  eks_cluster_private_access = true
+  eks_cluster_public_access  = true
 
   scylla_subnets       = module.unreal_cloud_ddc_vpc.private_subnet_ids
   scylla_ami_name      = "ScyllaDB 6.2.1"
@@ -53,9 +53,8 @@ module "unreal_cloud_ddc_infra" {
   scylla_db_throughput = 200
   scylla_db_storage    = 100
 
-  scylla_monitoring_dashboard_access_cidrs = var.scylla_monitoring_ip_allow_list != null ? var.scylla_monitoring_ip_allow_list : ["${chomp(data.http.public_ip.response_body)}/32"]
-  monitoring_lb_subnets                    = module.unreal_cloud_ddc_vpc.public_subnet_ids
-  alb_certificate_arn                      = aws_acm_certificate.scylla_monitoring.arn
+  monitoring_lb_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
+  alb_certificate_arn   = aws_acm_certificate.scylla_monitoring.arn
 
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2

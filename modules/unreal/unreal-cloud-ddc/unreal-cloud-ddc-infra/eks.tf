@@ -23,7 +23,7 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
     subnet_ids              = var.eks_node_group_subnets
     endpoint_private_access = var.eks_cluster_private_access
     endpoint_public_access  = var.eks_cluster_public_access
-    public_access_cidrs     = var.eks_cluster_public_endpoint_access_cidr
+    public_access_cidrs     = var.cidr_allow_list
     security_group_ids = [
       aws_security_group.system_security_group.id,
       aws_security_group.worker_security_group.id,

@@ -200,6 +200,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
+| <a name="input_cidr_allow_list"></a> [cidr\_allow\_list](#input\_cidr\_allow\_list) | List of CIDR ranges allowed to access the EKS cluster and Scylla monitoring dashboard. Leave empty to restrict all public access. | `list(string)` | `[]` | no |
 | <a name="input_create_external_alb"></a> [create\_external\_alb](#input\_create\_external\_alb) | Whether to create an external ALB for the Scylla monitoring dashboard. | `bool` | `true` | no |
 | <a name="input_create_monitoring_alb"></a> [create\_monitoring\_alb](#input\_create\_monitoring\_alb) | Whether to create the monitoring stack ALB | `bool` | `true` | no |
 | <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
@@ -208,7 +209,6 @@ No modules.
 | <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
 | <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
 | <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
-| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
 | <a name="input_eks_node_group_subnets"></a> [eks\_node\_group\_subnets](#input\_eks\_node\_group\_subnets) | A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
 | <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
@@ -227,7 +227,6 @@ No modules.
 | <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
 | <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
 | <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
-| <a name="input_scylla_monitoring_dashboard_access_cidrs"></a> [scylla\_monitoring\_dashboard\_access\_cidrs](#input\_scylla\_monitoring\_dashboard\_access\_cidrs) | List of CIDR ranges allowed to access the Scylla monitoring dashboard (port 3000). Leave empty to restrict all public access. | `list(string)` | `[]` | no |
 | <a name="input_scylla_monitoring_lb_access_logs_bucket"></a> [scylla\_monitoring\_lb\_access\_logs\_bucket](#input\_scylla\_monitoring\_lb\_access\_logs\_bucket) | Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
 | <a name="input_scylla_monitoring_lb_access_logs_prefix"></a> [scylla\_monitoring\_lb\_access\_logs\_prefix](#input\_scylla\_monitoring\_lb\_access\_logs\_prefix) | Prefix to use for the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
 | <a name="input_scylla_subnets"></a> [scylla\_subnets](#input\_scylla\_subnets) | A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
