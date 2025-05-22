@@ -39,7 +39,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       # Checkout Repository
       - name: Checkout Git Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       # Install Terraform
@@ -103,7 +103,7 @@ jobs:
     steps:
       # Checkout Repository
       - name: Checkout Git Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
@@ -150,7 +150,7 @@ jobs:
     steps:
       # Checkout Repository
       - name: Checkout Git Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
