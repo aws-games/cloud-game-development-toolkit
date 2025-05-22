@@ -1,0 +1,1 @@
+--8<-- "GETTING_STARTED.md"

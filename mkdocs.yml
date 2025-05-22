@@ -95,7 +95,7 @@ markdown_extensions:
 
 nav:
   - Home: docs/index.md
-  - Getting Started: GETTING_STARTED.md
+  - Getting Started: docs/getting-started.md
   - Assets:
       - Overview: docs/assets/index.md
       - Packer Templates:
@@ -145,9 +145,9 @@ nav:
       - Overview: samples/README.md
       - Simple Build Pipeline: samples/simple-build-pipeline/README.md
       - Unreal Cloud DDC Single Region: samples/unreal-cloud-ddc-single-region/README.md
-  - Changelog: CHANGELOG.md
-  - Security: SECURITY.md
-  - Contributing: CONTRIBUTING.md
+  - Changelog: docs/changelog.md
+  - Security: docs/security.md
+  - Contributing: docs/contributing.md
   - Roadmap: https://github.com/orgs/aws-games/projects/1/views/1
 
 plugins:
@@ -159,6 +159,7 @@ plugins:
   - redirects:
       redirect_maps:
         'index.md': 'docs/index.md'
+
 
 extra:
   version:
