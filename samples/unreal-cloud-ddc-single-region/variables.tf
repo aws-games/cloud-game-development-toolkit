@@ -4,8 +4,14 @@ variable "github_credential_arn" {
   description = "Github Credential ARN"
 }
 
-variable "eks_cluster_ip_allow_list" {
+variable "cidr_allow_list" {
   type        = list(string)
-  default     = null
+  default     = []
   description = "IPs that will be allow listed to access cluster over internet"
+}
+
+variable "allow_my_ip" {
+  type        = bool
+  default     = true
+  description = "Automatically add your IP to the allowlist"
 }
