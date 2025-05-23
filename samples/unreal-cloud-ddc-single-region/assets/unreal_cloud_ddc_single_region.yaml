@@ -104,15 +104,15 @@ nginx:
 service:
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-name: "unreal-cloud-ddc"
-    service.beta.kubernetes.io/aws-load-balancer-type: "external"
-    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-type: "application"
+    service.beta.kubernetes.io/aws-load-balancer-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
-    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health/live"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
-    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: application=unreal-cloud-ddc
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: application=cgd-unreal-cloud-ddc
 
   type: LoadBalancer
   portName: http

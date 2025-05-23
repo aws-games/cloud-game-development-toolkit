@@ -115,12 +115,6 @@ variable "create_scylla_monitoring_stack" {
   nullable    = false
 }
 
-variable "create_monitoring_alb" {
-  type        = bool
-  default     = true
-  description = "Whether to create the monitoring stack ALB"
-}
-
 ########################################
 # EKS Configurations
 ########################################
@@ -320,10 +314,16 @@ variable "system_node_group_label" {
 ########################################
 # Load Balancing
 ########################################
-variable "create_external_alb" {
+variable "create_application_load_balancer" {
   type        = bool
-  description = "Whether to create an external ALB for the Scylla monitoring dashboard."
+  description = "Whether to create an application load balancer for the Scylla monitoring dashboard."
   default     = true
+}
+
+variable "internal_facing_application_load_balancer" {
+  type        = bool
+  description = "Whether the application load balancer should be internal-facing."
+  default     = false
 }
 
 variable "monitoring_lb_subnets" {
@@ -331,10 +331,10 @@ variable "monitoring_lb_subnets" {
   description = "The subnets in which the ALB will be deployed"
 
   validation {
-    condition     = var.create_external_alb == true && length(var.monitoring_lb_subnets) > 0
-    error_message = "The alb_subnets variable must be set if create_external_alb is true."
+    condition     = (var.create_application_load_balancer && var.monitoring_lb_subnets != null) || (!var.create_application_load_balancer && var.monitoring_lb_subnets == null)
+    error_message = "The alb_subnets variable must be set if create_application_load_balancer is true."
   }
-  default = []
+  default = null
 }
 
 variable "alb_certificate_arn" {
@@ -343,7 +343,7 @@ variable "alb_certificate_arn" {
   default     = null
 
   validation {
-    condition     = (var.create_external_alb == true && var.alb_certificate_arn != null) || (!var.create_external_alb && var.alb_certificate_arn == null)
+    condition     = (var.create_application_load_balancer && var.alb_certificate_arn != null) || (!var.create_application_load_balancer && var.alb_certificate_arn == null)
     error_message = "The alb_certificate_arn variable must be set if create_external_alb is true."
   }
 }

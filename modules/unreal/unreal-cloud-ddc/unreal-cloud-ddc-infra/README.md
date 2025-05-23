@@ -201,8 +201,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
 | <a name="input_cidr_allow_list"></a> [cidr\_allow\_list](#input\_cidr\_allow\_list) | List of CIDR ranges allowed to access the EKS cluster and Scylla monitoring dashboard. Leave empty to restrict all public access. | `list(string)` | `[]` | no |
-| <a name="input_create_external_alb"></a> [create\_external\_alb](#input\_create\_external\_alb) | Whether to create an external ALB for the Scylla monitoring dashboard. | `bool` | `true` | no |
-| <a name="input_create_monitoring_alb"></a> [create\_monitoring\_alb](#input\_create\_monitoring\_alb) | Whether to create the monitoring stack ALB | `bool` | `true` | no |
+| <a name="input_create_application_load_balancer"></a> [create\_application\_load\_balancer](#input\_create\_application\_load\_balancer) | Whether to create an application load balancer for the Scylla monitoring dashboard. | `bool` | `true` | no |
 | <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
@@ -213,8 +212,9 @@ No modules.
 | <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
+| <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
-| <a name="input_monitoring_lb_subnets"></a> [monitoring\_lb\_subnets](#input\_monitoring\_lb\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `[]` | no |
+| <a name="input_monitoring_lb_subnets"></a> [monitoring\_lb\_subnets](#input\_monitoring\_lb\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |

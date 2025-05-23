@@ -15,7 +15,7 @@ resource "aws_security_group" "scylla_security_group" {
 
 # Allow port 9180 from monitoring to scylla
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_prometheus" {
-  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   from_port                    = 9180
   to_port                      = 9180
   ip_protocol                  = "tcp"
@@ -26,7 +26,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_promet
 
 # Allow port 9100 from monitoring to scylla
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_ingress_node_exporter" {
-  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   from_port                    = 9100
   to_port                      = 9100
   ip_protocol                  = "tcp"
@@ -55,7 +55,7 @@ resource "aws_security_group" "scylla_monitoring_sg" {
 
 # Allow port 3000 for Grafana from load balancer to monitoring
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_monitoring" {
-  count                        = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  count                        = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   ip_protocol                  = "tcp"
   from_port                    = 3000
   to_port                      = 3000
@@ -76,7 +76,7 @@ resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_sg_egress_rule"
 # Scylla monitoring load balancer security group
 
 resource "aws_security_group" "scylla_monitoring_lb_sg" {
-  count       = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  count       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   name        = "${local.name_prefix}-scylla-monitoring-lb-sg"
   description = "Scylla monitoring load balancer security group"
   vpc_id      = var.vpc_id
@@ -89,7 +89,7 @@ resource "aws_security_group" "scylla_monitoring_lb_sg" {
   #checkov:skip=CKV_AWS_2:Supporting port 80 for simplicity for now locked down by only leaving it open to the allowlisted IP addresses
 }
 resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
-  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? length(var.cidr_allow_list) : 0
+  count             = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? length(var.cidr_allow_list) : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[0].id
   ip_protocol       = "tcp"
   from_port         = 443
@@ -99,10 +99,12 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_monitoring_lb_ingress" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "scylla_monitoring_lb_sg_egress_rule" {
-  count             = var.create_scylla_monitoring_stack && var.create_monitoring_alb ? 1 : 0
+  count             = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   security_group_id = aws_security_group.scylla_monitoring_lb_sg[count.index].id
-  description       = "Egress All"
-  ip_protocol       = "-1"
+  description       = "Egress for Grafana port"
+  ip_protocol       = "tcp"
+  from_port         = 3000
+  to_port           = 3000
   cidr_ipv4         = "0.0.0.0/0"
 }
 
