@@ -31,7 +31,7 @@ terraform {
 
 It is fine if your module needs to declare significant networking or compute resources to run - the *Cloud Game Development Toolkit* is intended to be highly opinionated. At the same time, we require that modules support a significant level of dependency injection through variables to support diverse use cases. This is a simple consideration that is easier to incorporate from the beginning of module development rather than retroactively.
 
-For example, the [Jenkins module](./jenkins/jenkins.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
+For example, the [Jenkins module](./jenkins/README.md) can provision its own [Elastic Container Service](https://aws.amazon.com/ecs/) cluster, or it can deploy the Jenkins service onto an existing cluster passed via the `cluster_name` variable.
 
 ### 3. Assumptions and Guarantees
 

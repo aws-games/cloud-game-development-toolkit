@@ -1,5 +1,9 @@
 # Perforce on AWS Terraform Module
 
+For a video walkthrough demonstrating how to use this module, see this YouTube Video:
+
+[![Watch the video](https://img.youtube.com/vi/4UEoX-oP918/0.jpg)](https://youtu.be/4UEoX-oP918)
+
 ## Features
 
 - Dynamic creation and configuration of [P4 Server (formerly Helix Core)](https://www.perforce.com/products/helix-core)
@@ -12,6 +16,7 @@
 
 ### Full example using AWS Route53 Public Hosted Zone
 
+<!-- ![perforce-complete-arch](https://github.com/aws-games/cloud-game-development-toolkit/raw/main/docs/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png) -->
 ![perforce-complete-arch](./assets/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png)
 
 ## Prerequisites
@@ -52,6 +57,10 @@
       Server. These are already referenced in the `perforce_arm64.pkr.hcl` and `perforce_x86.pkr.hcl` packer templates
       that are available for use.
 
+## Examples
+
+For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples).
+
 ## Deployment Instructions
 
 1. Create the Perforce AMI in your AWS account using one of the supplied Packer templates. Ensure you use the Packer
@@ -70,15 +79,15 @@ deploy resources into.
 
 To deploy the template (`x86_64`) with Packer, do the following (while in the `/assets/perforce/p4-server directory`)
 
-```
+```sh
 packer init perforce_x86.pkr.hcl
 ```
 
-```
+```sh
 packer validate perforce_x86.pkr.hcl
 ```
 
-```
+```sh
 packer build perforce_x86.pkr.hcl
 ```
 
@@ -105,13 +114,13 @@ packer build perforce_x86.pkr.hcl
    the resources that will be created, and finally `terraform apply` to create the resources in your AWS Account.
 4. Once the resources have finished provisioning successfully, you will need to modify your inbound Security Group Rules
    on the P4 Commit Server Instance to allow TCP traffic from your public IP on port 1666 (the perforce default port).
-   This is necessary to allow your local machine(s) to connect to the P4 Commit Server.
+   This is necessary to allow your local machine(s) to connect to the P4 Commit Server. Optionally, you can pass in an entire security group to also add to the resource. The [complete example](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete) demonstrates how to use the `existing_security_groups` variable to accomplish this.
     - **Note:** You may use other means to allow traffic to reach this EC2 Instance (Customer-managed prefix list, VPN
       to the VPC that the instance is running in, etc.) but regardless, it is essential that you have the security group
       rules set configured correctly to allow access.
 5. Next, modify your inbound Security Group rules for the Perforce Network Load Balancer (NLB) to allow traffic from
    HTTPS (port 443) from your public IP address/ This is to provide access to the P4 Code Review and P4Auth services
-   that are running behind the Application Load Balancer (ALB).
+   that are running behind the Application Load Balancer (ALB). Optionally, you can pass in an entire security group to also add to the resource. The [complete example](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete) demonstrates how to use the `existing_security_groups` variable to accomplish this.
     - **Note:** You may use other means to allow traffic to reach this the Network Load Balancer (Customer-managed
       prefix list, VPN to the VPC that the instance is running in, etc.) but regardless, it is essential that you have
       the security group rules set configured correctly to allow access.
@@ -126,10 +135,6 @@ packer build perforce_x86.pkr.hcl
    Manager to gain access to the commit server.
 8. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
    Code Review) and P4Auth (P4Auth).
-
-## Examples
-
-For example configurations, please see the examples at `/examples`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -251,4 +256,4 @@ For example configurations, please see the examples at `/examples`.
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your P4 Server instance. |
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
-<!-- END_TF_DOCS -->
+END_TF_DOCS
