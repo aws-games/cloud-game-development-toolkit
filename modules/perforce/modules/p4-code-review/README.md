@@ -1,4 +1,45 @@
-# Perforce P4 Code Review
+# P4 Code Review Submodule
+
+[P4 Code Review](https://www.perforce.com/products/helix-swarm) is a free code review tool for projects hosted in [P4 Server](https://www.perforce.com/products/helix-core/aws). This module deploys P4 Code Review as a service on AWS Elastic Container Service using the [publicly available image from Dockerhub](https://hub.docker.com/r/perforce/helix-swarm).
+
+P4 Code Review also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and configures connectivity for the P4 Code Review service.
+
+This module deploys the following resources:
+
+- An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in via the `cluster_name` variable.
+- An ECS service running the latest P4 Code Review container ([perforce/helix-swarm](https://hub.docker.com/r/perforce/helix-swarm)) available.
+- An Application Load Balancer for TLS termination of the P4 Code Review service.
+- A single node [AWS Elasticache Redis OSS](https://aws.amazon.com/elasticache/redis/) cluster.
+- Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
+
+## Architecture
+![P4 Code Review Submodule Architecture](../../assets/media/diagrams/p4-code-review-architecture.png)
+
+## Prerequisites
+
+P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically, but P4 Code Review requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the P4 Code Review container during startup. See the `p4d_super_user_arn`, `p4d_super_user_password_arn`, `p4d_swarm_user_arn`, and `p4d_swarm_password_arn` variables below for more details.
+
+The [P4 Server submodule](../p4-server/README.md) creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere. The is done by default by the parent Perforce module.
+
+Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:
+
+```bash
+aws secretsmanager create-secret \
+    --name P4CodeReviewSuperUser \
+    --description "P4 Code Review Super User" \
+    --secret-string "{\"username\":\"swarm\",\"password\":\"EXAMPLE-PASSWORD\"}"
+```
+
+You can then provide these credentials as variables when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):
+
+```hcl
+module "p4_code_review" {
+    source = "modules/perforce/modules/p4-code-review"
+    ...
+    p4d_super_user_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4CodeReviewSuperUser-a1b2c3:username::"
+    p4d_super_user_password_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4CodeReviewSuperUser-a1b2c3:password::"
+}
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
