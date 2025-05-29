@@ -1,0 +1,23 @@
+variable "github_credential_arn" {
+  type        = string
+  sensitive   = true
+  description = "Github Credential ARN"
+}
+
+variable "allow_my_ip" {
+  type        = bool
+  default     = true
+  description = "Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers"
+}
+
+variable "existing_security_groups_us_west_2" {
+  type        = list(string)
+  default     = []
+  description = "List of existing security groups to attach to the load balancer"
+}
+
+variable "existing_security_groups_us_east_2" {
+  type        = list(string)
+  default     = []
+  description = "List of existing security groups to attach to the load balancer"
+}

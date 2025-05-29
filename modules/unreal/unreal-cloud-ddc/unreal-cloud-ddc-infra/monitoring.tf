@@ -1,6 +1,6 @@
 resource "aws_iam_instance_profile" "scylla_monitoring_profile" {
   count = var.create_scylla_monitoring_stack ? 1 : 0
-  name  = "${local.name_prefix}-scylla-monitoring-profile"
+  name  = "${local.name_prefix}-scylla-monitoring-profile-${var.region}"
   role  = aws_iam_role.scylla_monitoring_role[count.index].name
 }
 
@@ -11,6 +11,7 @@ resource "aws_iam_instance_profile" "scylla_monitoring_profile" {
 #Scylla monitoring instance
 resource "aws_instance" "scylla_monitoring" {
   count                       = var.create_scylla_monitoring_stack ? 1 : 0
+  region                      = var.region
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.xlarge"
   subnet_id                   = element(var.scylla_subnets, count.index + 1)
@@ -43,6 +44,7 @@ resource "aws_instance" "scylla_monitoring" {
 # Network Load Balancer for Scylla Monitoring
 resource "aws_lb" "scylla_monitoring_alb" {
   count                            = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
+  region                           = var.region
   name                             = "${var.project_prefix}-monitoring-alb"
   load_balancer_type               = "application"
   subnets                          = var.monitoring_application_load_balancer_subnets
@@ -72,6 +74,7 @@ resource "aws_lb" "scylla_monitoring_alb" {
 resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
   #checkov:skip=CKV_AWS_378: TLS termination at ALB
   count       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
+  region      = var.region
   name        = "${var.project_prefix}-scylla-monitoring-tg"
   port        = 3000
   protocol    = "HTTP"
@@ -99,6 +102,7 @@ resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
 # Listeners for Scylla Monitoring
 resource "aws_lb_listener" "scylla_monitoring_listener" {
   count             = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
+  region            = var.region
   load_balancer_arn = aws_lb.scylla_monitoring_alb[count.index].arn
   port              = "443"
   protocol          = "HTTPS"
@@ -120,6 +124,7 @@ resource "aws_lb_listener" "scylla_monitoring_listener" {
 # Attach the monitoring instance to the target group
 resource "aws_lb_target_group_attachment" "scylla_monitoring" {
   count            = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
+  region           = var.region
   target_group_arn = aws_lb_target_group.scylla_monitoring_alb_target_group[count.index].arn
   target_id        = aws_instance.scylla_monitoring[0].id
   port             = 3000

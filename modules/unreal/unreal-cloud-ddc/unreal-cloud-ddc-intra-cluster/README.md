@@ -141,7 +141,7 @@ No outputs.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=5.73.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | = 6.0.0-beta1 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.16.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >=2.33.0 |
 
@@ -149,9 +149,9 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.0.0-beta1 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.36.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.37.1 |
 
 ## Modules
 
@@ -163,21 +163,20 @@ No outputs.
 
 | Name | Type |
 |------|------|
-| [aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_pull_through_cache_rule) | resource |
-| [aws_iam_policy.s3_secrets_manager_iam_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.ebs_csi_iam_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.unreal_cloud_ddc_sa_iam_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.ebs_csi_policy_attacment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.unreal_cloud_ddc_sa_iam_role_s3_secrets_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/ecr_pull_through_cache_rule) | resource |
+| [aws_iam_policy.s3_secrets_manager_iam_policy](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/iam_policy) | resource |
+| [aws_iam_role.ebs_csi_iam_role](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/iam_role) | resource |
+| [aws_iam_role.unreal_cloud_ddc_sa_iam_role](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.ebs_csi_policy_attacment](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.unreal_cloud_ddc_sa_iam_role_s3_secrets_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/resources/iam_role_policy_attachment) | resource |
 | [helm_release.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [kubernetes_namespace.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |
 | [kubernetes_service_account.unreal_cloud_ddc_service_account](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_eks_cluster.unreal_cloud_ddc_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
-| [aws_iam_openid_connect_provider.oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider) | data source |
-| [aws_iam_policy_document.unreal_cloud_ddc_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
-| [aws_s3_bucket.unreal_cloud_ddc_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/data-sources/caller_identity) | data source |
+| [aws_eks_cluster.unreal_cloud_ddc_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/data-sources/eks_cluster) | data source |
+| [aws_iam_openid_connect_provider.oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/data-sources/iam_openid_connect_provider) | data source |
+| [aws_iam_policy_document.unreal_cloud_ddc_policy](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/data-sources/iam_policy_document) | data source |
+| [aws_s3_bucket.unreal_cloud_ddc_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.0.0-beta1/docs/data-sources/s3_bucket) | data source |
 
 ## Inputs
 
@@ -191,6 +190,7 @@ No outputs.
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_oidc_credentials_secret_manager_arn"></a> [oidc\_credentials\_secret\_manager\_arn](#input\_oidc\_credentials\_secret\_manager\_arn) | Arn for oidc credentials stored in secret manager. | `string` | `null` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
+| <a name="input_region"></a> [region](#input\_region) | AWS region for the workload | `string` | `"us-west-2"` | no |
 | <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of the S3 Bucket for Unreal Cloud DDC to use | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
 | <a name="input_unreal_cloud_ddc_helm_values"></a> [unreal\_cloud\_ddc\_helm\_values](#input\_unreal\_cloud\_ddc\_helm\_values) | List of YAML files for Unreal Cloud DDC | `list(string)` | `[]` | no |

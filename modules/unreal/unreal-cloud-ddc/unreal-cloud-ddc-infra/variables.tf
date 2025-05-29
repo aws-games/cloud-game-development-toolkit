@@ -51,6 +51,12 @@ variable "existing_security_groups" {
   default     = []
 }
 
+variable "region" {
+  description = "The region for the deployment"
+  type        = string
+  default     = "us-west-2"
+}
+
 ########################################
 # ScyllaDB Configuration
 ########################################

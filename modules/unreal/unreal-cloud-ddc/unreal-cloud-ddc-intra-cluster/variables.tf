@@ -28,6 +28,12 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region for the workload"
+  default     = "us-west-2"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Name of the EKS Cluster"
