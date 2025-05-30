@@ -2,11 +2,12 @@
 # Load Balancer
 ################################################################################
 resource "aws_lb" "jenkins_alb" {
+  count              = var.create_application_load_balancer ? 1 : 0
   name               = "${local.name_prefix}-alb"
   internal           = var.internal
   load_balancer_type = "application"
   subnets            = var.jenkins_alb_subnets
-  security_groups    = concat(var.existing_security_groups, [aws_security_group.jenkins_alb_sg.id])
+  security_groups    = concat(var.existing_security_groups, [aws_security_group.jenkins_alb_sg[0].id])
 
   dynamic "access_logs" {
     for_each = var.enable_jenkins_alb_access_logs ? [1] : []
@@ -27,14 +28,14 @@ resource "aws_lb" "jenkins_alb" {
 }
 
 resource "random_string" "jenkins_alb_access_logs_bucket_suffix" {
-  count   = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count   = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   length  = 8
   special = false
   upper   = false
 }
 
 resource "aws_s3_bucket" "jenkins_alb_access_logs_bucket" {
-  count         = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count  = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   bucket        = "${local.name_prefix}-alb-access-logs-${random_string.jenkins_alb_access_logs_bucket_suffix[0].result}"
   force_destroy = var.debug
 
@@ -52,7 +53,7 @@ resource "aws_s3_bucket" "jenkins_alb_access_logs_bucket" {
 data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
-  count = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   statement {
     effect  = "Allow"
     actions = ["s3:PutObject"]
@@ -67,18 +68,21 @@ data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
 }
 
 resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {
-  count  = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count  = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   bucket = var.jenkins_alb_access_logs_bucket == null ? aws_s3_bucket.jenkins_alb_access_logs_bucket[0].id : var.jenkins_alb_access_logs_bucket
   policy = data.aws_iam_policy_document.access_logs_bucket_alb_write[0].json
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
-  count = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   depends_on = [
     aws_s3_bucket.jenkins_alb_access_logs_bucket[0]
   ]
   bucket = aws_s3_bucket.jenkins_alb_access_logs_bucket[0].id
   rule {
+    filter {
+      prefix = ""
+    }
     id     = "access-logs-lifecycle"
     status = "Enabled"
     transition {
@@ -95,7 +99,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
 }
 
 resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
-  count = var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   depends_on = [
     aws_s3_bucket.jenkins_alb_access_logs_bucket[0]
   ]
@@ -130,7 +134,8 @@ resource "aws_lb_target_group" "jenkins_alb_target_group" {
 
 # HTTPS listener for Jenkins ALB
 resource "aws_lb_listener" "jenkins_alb_https_listener" {
-  load_balancer_arn = aws_lb.jenkins_alb.arn
+  count             = var.create_application_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.jenkins_alb[0].arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
