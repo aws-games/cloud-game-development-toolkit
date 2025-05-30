@@ -251,9 +251,9 @@ packer build perforce_x86.pkr.hcl
 | <a name="output_p4_server_instance_id"></a> [p4\_server\_instance\_id](#output\_p4\_server\_instance\_id) | Instance ID for the P4 Server instance |
 | <a name="output_p4_server_lambda_link_name"></a> [p4\_server\_lambda\_link\_name](#output\_p4\_server\_lambda\_link\_name) | The name of the Lambda link for the P4 Server instance to use with FSxN. |
 | <a name="output_p4_server_private_ip"></a> [p4\_server\_private\_ip](#output\_p4\_server\_private\_ip) | Private IP for the P4 Server instance |
+| <a name="output_p4_server_security_group_id"></a> [p4\_server\_security\_group\_id](#output\_p4\_server\_security\_group\_id) | The default security group of your P4 Server instance. |
 | <a name="output_p4_server_super_user_password_secret_arn"></a> [p4\_server\_super\_user\_password\_secret\_arn](#output\_p4\_server\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
 | <a name="output_p4_server_super_user_username_secret_arn"></a> [p4\_server\_super\_user\_username\_secret\_arn](#output\_p4\_server\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
-| <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your P4 Server instance. |
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 END_TF_DOCS

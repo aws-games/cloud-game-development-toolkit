@@ -91,6 +91,12 @@ variable "cluster_name" {
   default     = null
 }
 
+variable "create_application_load_balancer" {
+  type        = bool
+  description = "Controls creation of an application load balancer within the module. Defaults to true."
+  default     = true
+}
+
 # - Load Balancer -
 variable "jenkins_alb_subnets" {
   type        = list(string)
@@ -141,6 +147,12 @@ variable "internal" {
 variable "certificate_arn" {
   type        = string
   description = "The TLS certificate ARN for the Jenkins service load balancer."
+  default     = null
+  # If create_application_load_balancer is false this can be null. Otherwise it must be set.
+  validation {
+    condition     = var.create_application_load_balancer ? var.certificate_arn != null : true
+    error_message = "Certificate ARN must be set if an application load balancer is created."
+  }
 }
 
 # - Filesystem -
