@@ -1,9 +1,9 @@
 repos:
   - repo: https://github.com/terraform-docs/terraform-docs
-    rev: "v0.20.0" TAG, OR SHA TO USE>"             # e.g. "v0.11.2"
+    rev: "v0.20.0"
     hooks:
       - id: terraform-docs-go
-        args: ["ARGS", "TO PASS", "INCLUDING PATH"]  # e.g. ["--output-file", "README.md", "./mymodule/path"]
+        args: [ "--output-file", "README.md", "." ]
   - repo: https://github.com/gitleaks/gitleaks
     rev: "v8.25.1"
     hooks:
@@ -22,7 +22,7 @@ repos:
     rev: "3.2.414"
     hooks:
       - id: checkov
-        args: ["--config-file", ".config/.checkov.yml"]
+        args: [ "--config-file", ".config/.checkov.yml" ]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.99.0"
     hooks:
