@@ -166,6 +166,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
   ]
   bucket = aws_s3_bucket.alb_access_logs_bucket[0].id
   rule {
+    filter {
+      prefix = ""
+    }
     id     = "access-logs-lifecycle"
     status = "Enabled"
     transition {

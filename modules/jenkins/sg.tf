@@ -4,6 +4,8 @@
 
 # Jenkins Load Balancer Security Group (attached to ALB)
 resource "aws_security_group" "jenkins_alb_sg" {
+  # checkov:skip=CKV2_AWS_5: False-positive, SG is attached to ALB
+  count       = var.create_application_load_balancer ? 1 : 0
   name        = "${local.name_prefix}-ALB"
   vpc_id      = var.vpc_id
   description = "Jenkins ALB Security Group"
@@ -12,7 +14,8 @@ resource "aws_security_group" "jenkins_alb_sg" {
 
 # Outbound access from ALB to Containers
 resource "aws_vpc_security_group_egress_rule" "jenkins_alb_outbound_service" {
-  security_group_id            = aws_security_group.jenkins_alb_sg.id
+  count                        = var.create_application_load_balancer ? 1 : 0
+  security_group_id            = aws_security_group.jenkins_alb_sg[0].id
   description                  = "Allow outbound traffic from Jenkins ALB to Jenkins service"
   referenced_security_group_id = aws_security_group.jenkins_service_sg.id
   from_port                    = var.container_port
@@ -50,9 +53,10 @@ resource "aws_vpc_security_group_egress_rule" "jenkins_service_outbound_ipv6" {
 
 # Inbound access to Containers from ALB
 resource "aws_vpc_security_group_ingress_rule" "jenkins_service_inbound_alb" {
+  count                        = var.create_application_load_balancer ? 1 : 0
   security_group_id            = aws_security_group.jenkins_service_sg.id
   description                  = "Allow inbound traffic from Jenkins ALB to service"
-  referenced_security_group_id = aws_security_group.jenkins_alb_sg.id
+  referenced_security_group_id = aws_security_group.jenkins_alb_sg[0].id
   from_port                    = var.container_port
   to_port                      = var.container_port
   ip_protocol                  = "tcp"
