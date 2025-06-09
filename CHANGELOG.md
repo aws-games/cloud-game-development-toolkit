@@ -3,10 +3,58 @@
 
 
 <a name="latest"></a>
-## [latest] - 2025-03-17
+## [latest] - 2025-06-09
+
+<a name="v1.1.4"></a>
+## [v1.1.4] - 2025-04-28
+### Bug Fixes
+- Remove commented out NetApp volume resources and cleanup IAM managed policies
+- Resolved EC2 DNS self-signed certificate bug in P4 Server packer template
+- Adding cloud DDC sample for mkdocs.yml
+- **helix swarm:** helix swarm does not support horizontal scaling, so helix swarm container count is now set to 1
+
+### Chore
+- Add Terraform tests for new Perforce module ([#604](https://github.com/aws-games/cloud-game-development-toolkit/issues/604))
+- regenerate CHANGELOG.md for 2025-03-19
+- Minor maintenance to Helix Core module
+- Minor Helix Authentication fixes
+- Addressed IAM policy warnings for Helix Swarm
+- **deps:** bump xt0rted/pull-request-comment-branch from 1 to 3
+- **deps:** bump mkdocs-material from 9.6.11 to 9.6.12 in /docs
+- **deps:** bump mkdocs-material from 9.6.12 to 9.6.14 in /docs
+- **deps:** bump actions/github-script from 6 to 7
+- **deps:** bump actions/checkout from 3 to 4
+- **deps:** bump mkdocs-material from 9.6.9 to 9.6.11 in /docs
+- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump aquasecurity/trivy-action from 0.29.0 to 0.30.0
+- **deps:** bump mkdocs-material from 9.6.8 to 9.6.9 in /docs
+- **deps:** bump squidfunk/mkdocs-material from 9.6.8 to 9.6.9 in /docs
+- **deps:** bump actions/upload-artifact from 4.6.1 to 4.6.2
+- **deps:** bump the awscc-provider group across 2 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material in /docs
+
+### Code Refactoring
+- Update Simple Build Pipeline sample to use new Perforce parent module ([#608](https://github.com/aws-games/cloud-game-development-toolkit/issues/608))
+- Perforce modules consolidated to simplify shared resource creation ([#585](https://github.com/aws-games/cloud-game-development-toolkit/issues/585))
+- Updated Perforce complete example to remove NLB front for Helix Core
+- reorganize unreal cloud ddc module structure
+
+### Docs
+- Adjustments to mkdocs structure, and updates to "getting started" and Perforce documentation. ([#612](https://github.com/aws-games/cloud-game-development-toolkit/issues/612))
+- updates and expands on `unreal-cloud-ddc-intra-cluster` installation and usage docs
+- fixes relative path for `unreal-cloud-ddc-infra` and `unreal-cloud-ddc-intra-cluster` Terraform module docs
+- add unreal fest video to horde module
+- **TeamCity:** Adding TeamCity module docs and example architecture
+
+### Features
+- Adds debug variable and flag
+- Simple example deployment of Helix Core backed by FSxN
+- FSxN ISCSI provisioning for Helix Core module
+- Modified p4_configure.sh to mount ISCSI volumes from FSxN
+
 
 <a name="v1.1.3-alpha"></a>
-## [v1.1.3-alpha] - 2025-03-14
+## [v1.1.3-alpha] - 2025-03-19
 ### Bug Fixes
 - create_external_alb shouldn't block internal SG Ingress rules
 - alb_subnet variables should not be required if create boolean is false
@@ -294,7 +342,8 @@
 
 
 [Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...HEAD
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...latest
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...latest
+[v1.1.4]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...v1.1.4
 [v1.1.3-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...v1.1.3-alpha
 [v1.1.2-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha
 [v1.1.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.0-alpha...v1.1.1-alpha
