@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   update-changelog:
-    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    if: github.repository == 'gabebatista/cloud-game-development-toolkit'
     concurrency:
       group: changelog-build
     permissions:
