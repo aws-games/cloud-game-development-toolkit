@@ -5,11 +5,6 @@ on:
   #  schedule:
   #    - cron: "0 0 1,15 * *"
   workflow_dispatch:
-    inputs:
-      release-version:
-        description: "Version to release"
-        required: true
-        type: string
 
 permissions:
   actions: write
@@ -26,13 +21,13 @@ jobs:
   tag-latest-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: validate-version-name
+      - name: Get Semantic Version
         run: |
-          # Checks that release-version input follows semantic versioning
-          if [[ ! ${{ inputs.release-version }} =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
-            echo "::error::Invalid version format, version should looks like 'v1.0.0'."
-            exit 1
-          fi
+          IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
+          echo "VERSION_MAJOR=${VERSION_MAJOR}" >> $GITHUB_ENV
+          echo "VERSION_MINOR=${VERSION_MINOR}" >> $GITHUB_ENV
+          echo "VERSION_PATCH=${VERSION_PATCH}" >> $GITHUB_ENV
+          echo "NEW_VERSION="v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}" >> $GITHUB_ENV
       - name: checkout-latest
         uses: actions/checkout@v4.2.2
         with:
@@ -44,92 +39,30 @@ jobs:
           git config --global user.name "github-actions[bot]"
       - name: tag-version
         run: |
-          git tag ${{ inputs.release-version }}
-          git push origin ${{ inputs.release-version }}
+          git tag $NEW_VERSION
+          git push origin $NEW_VERSION
       - name: tag-latest
         run: |
           git tag -f -a latest -m "Latest release"
           git push -f origin latest
-
-  generate-changelog:
-    needs: [ tag-latest-commit ]
-    uses: ./.github/workflows/changelog.yml
-    secrets: inherit
-
-
-  update-tags:
-    needs: [ generate-changelog ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout-latest
-        uses: actions/checkout@v4.2.2
-        with:
-          ref: main
-          fetch-depth: 0
-      - name: Setup Git Config
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-      - name: Handle Changelog PR
-        run: |
-          # Find the PR using its id
-          PR_NUMBER=${{ needs.generate-changelog.outputs.pr_number }}
-          BRANCH_NAME=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
-
-          # Checkout the PR branch
-          git fetch origin $BRANCH_NAME
-          git checkout $BRANCH_NAME
-
-          # Rebase on main
-          git fetch origin main
-          git rebase origin/main
-
-          # Force push the rebased branch
-          git push --force-with-lease origin $BRANCH_NAME
-
-          # Switch back to main
-          git checkout main
-
-          # Enable auto-merge and approve
-          gh pr merge $PR_NUMBER --auto --rebase
-          gh pr review $PR_NUMBER --approve
-
-          # Wait for merge
-          # Human approval is required to merge changelog PR. The workflow will wait for approval indefinitely.
-          echo "::notice:: The workflow will wait for human approval of the changelog PR."
-          gh pr checks $PR_NUMBER --watch
-
-          # Clean up
-          git pull origin main
-          git branch -D $BRANCH_NAME || true
-
-      - name: update-tags
-        run: |
-          git pull
-          git tag -f ${{ inputs.release-version }} -m "Release ${{ inputs.release-version }}"
-          git push -f origin ${{ inputs.release-version }}
-          git tag -f -a latest -m "Latest release"
-          git push -f origin latest
-
       - name: create-release
         uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5
         with:
-          tag: ${{ inputs.release-version }}
-          name: ${{ inputs.release-version }}
+          tag: ${{ env.NEW_VERSION }}
+          name: ${{ env.NEW_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: edit-publish-release
         run: |
           # Edit release content
           gh release edit ${{ inputs.release-version }} \
             --latest \
             --draft=false
-
-
-  deploy-docs:
-    needs: [ update-tags ]
-    uses: ./.github/workflows/docs.yml
-    with:
-      version: ${{ inputs.release-version }}
-      alias: latest
+      - name: update-repository-variable
+        run: |
+          gh api \
+          --method PATCH \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/gabebatista/cloud-game-development-toolkit/actions/variables/SEMANTIC_VERSION \
+          -f "name=SEMANTIC_VERSION" -f "value=${{ env.NEW_VERSION }}"

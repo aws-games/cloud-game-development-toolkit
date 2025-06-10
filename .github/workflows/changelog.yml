@@ -1,7 +1,8 @@
 name: Update Changelog
 on:
-  schedule:
-    - cron: '0 0 * * *'  # This will run the action every day at midnight
+  push:
+    branches:
+      - main
   workflow_dispatch: # If we need to run the action manually
   workflow_call: # Allows this workflow to be invoked from other workflows
     outputs:
@@ -36,8 +37,10 @@ jobs:
           FILE_TO_COMMIT: CHANGELOG.md
           DESTINATION_BRANCH: changelog-${{ github.run_id }}
         run: |
+          IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
+          NEW_VERSION="v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}"
           git fetch --tags origin
-          docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md
+          docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog --next-tag $NEW_VERSION -o CHANGELOG.md
           export TODAY=$( date -u '+%Y-%m-%d' )
           export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
           export CONTENT=$( base64 -i $FILE_TO_COMMIT )

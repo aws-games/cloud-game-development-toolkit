@@ -15,6 +15,9 @@ on:
   #    - "CHANGELOG.md"
   #    - "**/README.md"
   #    - ".github/workflows/docs.yml"
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
       version:
@@ -30,21 +33,7 @@ on:
         required: false
         type: string
         default: main
-  workflow_call:
-    inputs:
-      version:
-        description: "Version to build and publish docs (i.e. v0.1.0-alpha.1, v1.0.0)"
-        required: true
-        type: string
-      alias:
-        description: "Alias to associate version (latest, stage)"
-        required: true
-        type: string
-      git_ref:
-        description: "Branch or commit ID to checkout from"
-        required: false
-        type: string
-        default: main
+
 permissions:
   contents: read
 jobs:
