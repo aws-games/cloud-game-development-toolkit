@@ -39,6 +39,7 @@ jobs:
         run: |
           echo 'base:${{ github.base_ref }}'
           echo 'ref:${{ github.ref }}'
+          echo 'headref:${{ github.head_ref }}'
           IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
           NEW_VERSION="v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}"
           git fetch --tags origin
