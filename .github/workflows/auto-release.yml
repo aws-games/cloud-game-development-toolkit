@@ -52,7 +52,7 @@ jobs:
       - name: edit-publish-release
         run: |
           # Edit release content
-          gh release edit ${{ inputs.release-version }} \
+          gh release edit $NEW_VERSION \
             --latest \
             --draft=false
       - name: update-repository-variable
