@@ -24,10 +24,7 @@ jobs:
       - name: Get Semantic Version
         run: |
           IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
-          echo "VERSION_MAJOR=${VERSION_MAJOR}" >> $GITHUB_ENV
-          echo "VERSION_MINOR=${VERSION_MINOR}" >> $GITHUB_ENV
-          echo "VERSION_PATCH=${VERSION_PATCH}" >> $GITHUB_ENV
-          echo "NEW_VERSION='v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}'" >> $GITHUB_ENV
+          NEW_VERSION='v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}
       - name: checkout-latest
         uses: actions/checkout@v4.2.2
         with:
