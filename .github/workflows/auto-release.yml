@@ -11,11 +11,9 @@ permissions:
   id-token: write
   contents: write
   issues: write
-  pull-requests: write
-  pages: write
 
 env:
-  GH_TOKEN: ${{ github.token }}
+  GH_TOKEN: ${{ secrets.BOT_PAT }}
 
 jobs:
   tag-latest-commit:
@@ -24,7 +22,8 @@ jobs:
       - name: Get Semantic Version
         run: |
           IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
-          NEW_VERSION=v$VERSION_MAJOR.$VERSION_MINOR.$(($VERSION_PATCH+1))
+          VERSION_MAJOR=${VERSION_MAJOR#v} # Remove leading 'v'
+          echo "NEW_VERSION=v$VERSION_MAJOR.$VERSION_MINOR.$(($VERSION_PATCH+1))" >> $GITHUB_ENV
       - name: checkout-latest
         uses: actions/checkout@v4.2.2
         with:
@@ -37,7 +36,7 @@ jobs:
       - name: tag-version
         run: |
           git tag $NEW_VERSION
-          git push origin $NEW_VERSION
+          git push origin ${{ env.NEW_VERSION }}
       - name: tag-latest
         run: |
           git tag -f -a latest -m "Latest release"
@@ -48,18 +47,15 @@ jobs:
           tag: ${{ env.NEW_VERSION }}
           name: ${{ env.NEW_VERSION }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
       - name: edit-publish-release
         run: |
           # Edit release content
-          gh release edit $NEW_VERSION \
+          gh release edit ${{ env.NEW_VERSION }} \
             --latest \
             --draft=false
       - name: update-repository-variable
         run: |
-          gh api \
-          --method PATCH \
-          -H "Accept: application/vnd.github+json" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          /repos/gabebatista/cloud-game-development-toolkit/actions/variables/SEMANTIC_VERSION \
-          -f "name=SEMANTIC_VERSION" -f "value=${{ env.NEW_VERSION }}"
+          gh variable set SEMANTIC_VERSION -b $NEW_VERSION
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
