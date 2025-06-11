@@ -27,7 +27,7 @@ jobs:
           echo "VERSION_MAJOR=${VERSION_MAJOR}" >> $GITHUB_ENV
           echo "VERSION_MINOR=${VERSION_MINOR}" >> $GITHUB_ENV
           echo "VERSION_PATCH=${VERSION_PATCH}" >> $GITHUB_ENV
-          echo "NEW_VERSION="v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}" >> $GITHUB_ENV
+          echo "NEW_VERSION='v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}'" >> $GITHUB_ENV
       - name: checkout-latest
         uses: actions/checkout@v4.2.2
         with:
