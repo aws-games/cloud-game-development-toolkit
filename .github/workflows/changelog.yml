@@ -38,7 +38,7 @@ jobs:
           DESTINATION_BRANCH: changelog-${{ github.run_id }}
         run: |
           IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
-          NEW_VERSION="v${{ env.VERSION_MAJOR }}.${{env.VERSION_MINOR}}.${{env.VERSION_PATCH}}"
+          NEW_VERSION=v$VERSION_MAJOR.$VERSION_MINOR.$(($VERSION_PATCH+1))
           git fetch --tags origin
           docker run --rm -v $(pwd):/workdir quay.io/git-chglog/git-chglog --next-tag $NEW_VERSION -o CHANGELOG.md
           export TODAY=$( date -u '+%Y-%m-%d' )
