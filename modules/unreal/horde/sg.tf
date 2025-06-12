@@ -152,8 +152,8 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_elasticache_ingress
   security_group_id            = aws_security_group.unreal_horde_elasticache_sg[0].id
   description                  = "Allow inbound traffic from unreal_horde service to Redis"
   referenced_security_group_id = aws_security_group.unreal_horde_sg.id
-  from_port                    = local.elasticache_port
-  to_port                      = local.elasticache_port
+  from_port                    = var.elasticache_port
+  to_port                      = var.elasticache_port
   ip_protocol                  = "tcp"
 }
 
