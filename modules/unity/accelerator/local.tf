@@ -20,7 +20,7 @@ locals {
   base_env = [
     {
       name  = "UNITY_ACCELERATOR_DEBUG"
-      value = "true"
+      value = var.unity_accelerator_debug_mode
     },
     {
       name  = "UNITY_ACCELERATOR_AUTO_UPDATES"

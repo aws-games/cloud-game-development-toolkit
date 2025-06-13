@@ -4,14 +4,14 @@
 
 variable "name" {
   type        = string
-  description = "The name applied to resources in the Unity Accelerator module"
+  description = "The name applied to resources in the Unity Accelerator module."
   default     = "unity-accelerator"
 }
 variable "tags" {
   type = map(any)
   default = {
     "iac-management" = "CGD-Toolkit"
-    "iac-module"     = "Unity"
+    "iac-module"     = "UnityAccelerator"
     "iac-provider"   = "Terraform"
   }
   description = "Tags to apply to resources."
@@ -90,17 +90,21 @@ variable "unity_accelerator_log_stdout" {
   default     = "true"
 }
 
-variable "unity_accelerator_dashboard_username" {
-  description = "Username for the Unity Accelerator dashboard"
+variable "unity_accelerator_debug_mode" {
   type        = string
-  default     = null
+  description = "Enables debug output for the Unity Accelerator service."
+  default     = "true"
+}
+
+variable "unity_accelerator_dashboard_username" {
+  description = "Username for the Unity Accelerator dashboard."
+  type        = string
 }
 
 variable "unity_accelerator_dashboard_password" {
-  description = "Password for the Unity Accelerator dashboard"
+  description = "Password for the Unity Accelerator dashboard."
   type        = string
   sensitive   = true
-  default     = null
 }
 
 ####################################################
@@ -115,31 +119,31 @@ variable "cluster_name" {
 
 variable "container_cpu" {
   type        = number
-  description = "The number of CPU units to allocate to the Unity Accelerator container"
+  description = "The number of CPU units to allocate to the Unity Accelerator container."
   default     = 1024
 }
 variable "container_memory" {
   type        = number
-  description = "The number of MB of memory to allocate to the Unity Accelerator container"
+  description = "The number of MB of memory to allocate to the Unity Accelerator container."
   default     = 4096
 }
 
 variable "container_name" {
   type        = string
-  description = "The name of the Unity Accelerator container"
+  description = "The name of the Unity Accelerator container."
   default     = "unity-accelerator"
 }
 
 variable "unity_accelerator_dashboard_port" {
   type        = number
   default     = 80
-  description = "The port to reach the Unity Accelerator dashboard"
+  description = "The port to reach the Unity Accelerator dashboard."
 }
 
 variable "unity_accelerator_cache_port" {
   type        = number
   default     = 10080
-  description = "The port to reach the Unity Accelerator cache, used by the Unity client"
+  description = "The port to reach the Unity Accelerator cache, used by the Unity client."
 }
 
 variable "desired_container_count" {
@@ -155,12 +159,12 @@ variable "desired_container_count" {
 
 variable "vpc_id" {
   type        = string
-  description = "The ID of the VPC in which the service will be deployed"
+  description = "The ID of the VPC in which the service will be deployed."
 }
 
 variable "service_subnets" {
   type        = list(string)
-  description = "The subnets in which the Unity Accelerator service will be deployed"
+  description = "The subnets in which the Unity Accelerator service will be deployed."
 }
 
 # Logging
@@ -179,7 +183,7 @@ variable "cloudwatch_log_retention_in_days" {
 ##########
 variable "lb_subnets" {
   type        = list(string)
-  description = "The subnets in which the Application Load Balancer and Network Load Balancer will be deployed"
+  description = "The subnets in which the Application Load Balancer and Network Load Balancer will be deployed."
 
   validation {
     condition     = (var.create_external_alb == true || var.create_external_nlb == true) && length(var.lb_subnets) > 0
@@ -203,7 +207,7 @@ variable "unity_accelerator_lb_access_logs_bucket" {
 variable "enable_unity_accelerator_lb_deletion_protection" {
   type        = bool
   description = "Enables deletion protection for the Unity Accelerator Application Load Balancer and Network Load Balancer. Defaults to true."
-  default     = false
+  default     = true
 }
 
 ######
@@ -217,7 +221,7 @@ variable "create_external_alb" {
 
 variable "alb_certificate_arn" {
   type        = string
-  description = "The ARN of the SSL certificate to use for the Application Load Balancer"
+  description = "The ARN of the SSL certificate to use for the Application Load Balancer."
 
   validation {
     condition     = var.create_external_alb == true && var.alb_certificate_arn != null
