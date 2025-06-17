@@ -20,7 +20,7 @@ resource "aws_route53_record" "unity_accelerator_cache" {
   alias {
     name                   = module.unity_accelerator.external_nlb_dns_name
     zone_id                = module.unity_accelerator.external_nlb_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = true
   }
 }
 
