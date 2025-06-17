@@ -107,18 +107,8 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
           protocol      = "TCP"
         },
         {
-          containerPort = 443
-          hostPort      = 443
-          protocol      = "TCP"
-        },
-        {
           containerPort = 10080
           hostPort      = 10080
-          protocol      = "TCP"
-        },
-        {
-          containerPort = 10443
-          hostPort      = 10443
           protocol      = "TCP"
         }
       ]
@@ -138,8 +128,8 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
 
       mountPoints = [
         {
-          sourceVolume  = "agent-storage"
-          containerPath = var.unity_accelerator_persist
+          sourceVolume  = "unity-cache-data"
+          containerPath = "/agent"
           readOnly      = false
         }
       ]
@@ -156,7 +146,7 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
   ])
 
   volume {
-    name = "agent-storage"
+    name = "unity-cache-data"
     efs_volume_configuration {
       file_system_id          = local.efs_file_system_id
       transit_encryption      = "ENABLED"
@@ -197,14 +187,14 @@ resource "aws_ecs_service" "unity_accelerator" {
   load_balancer {
     target_group_arn = aws_lb_target_group.unity_accelerator_dashboard_target_group[0].arn
     container_name   = var.container_name
-    container_port   = var.unity_accelerator_dashboard_port
+    container_port   = 80
   }
 
   # Cache
   load_balancer {
     target_group_arn = aws_lb_target_group.unity_accelerator_cache_target_group[0].arn
     container_name   = var.container_name
-    container_port   = var.unity_accelerator_cache_port
+    container_port   = 10080
   }
 
   depends_on = [
@@ -279,8 +269,8 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
   security_group_id            = aws_security_group.unity_accelerator_service_sg.id
   referenced_security_group_id = aws_security_group.unity_accelerator_alb_sg[0].id
   description                  = "Allows HTTP traffic on port 80 (dashboard) from the Application Load Balancer"
-  from_port                    = var.unity_accelerator_dashboard_port
-  to_port                      = var.unity_accelerator_dashboard_port
+  from_port                    = 80
+  to_port                      = 80
   ip_protocol                  = "TCP"
 }
 
@@ -289,8 +279,8 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
   count             = var.create_external_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description       = "Allows HTTP traffic on port 10080 (cache)"
-  from_port         = var.unity_accelerator_cache_port
-  to_port           = var.unity_accelerator_cache_port
+  from_port         = 10080
+  to_port           = 10080
   ip_protocol       = "TCP"
   cidr_ipv4         = "0.0.0.0/0"
 }
@@ -300,8 +290,8 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
   for_each          = var.create_external_nlb ? data.aws_subnet.nlb_subnets : {}
   security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description       = "Allows inbound HTTP health checks from NLB"
-  from_port         = var.unity_accelerator_dashboard_port
-  to_port           = var.unity_accelerator_dashboard_port
+  from_port         = 80
+  to_port           = 80
   ip_protocol       = "TCP"
   cidr_ipv4         = each.value.cidr_block
 }
@@ -343,8 +333,8 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_alb_ingress_ht
   count             = var.create_external_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_alb_sg[0].id
   description       = "Allows HTTP traffic (dashboard) from the internet"
-  from_port         = var.unity_accelerator_dashboard_port
-  to_port           = var.unity_accelerator_dashboard_port
+  from_port         = 80
+  to_port           = 80
   ip_protocol       = "TCP"
   cidr_ipv4         = "0.0.0.0/0"
 }
@@ -366,8 +356,8 @@ resource "aws_vpc_security_group_egress_rule" "unity_accelerator_alb_egress_serv
   security_group_id            = aws_security_group.unity_accelerator_alb_sg[0].id
   referenced_security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description                  = "Allows HTTP traffic (dashboard) to the Unity Accelerator service"
-  from_port                    = var.unity_accelerator_dashboard_port
-  to_port                      = var.unity_accelerator_dashboard_port
+  from_port                    = 80
+  to_port                      = 80
   ip_protocol                  = "TCP"
 }
 
@@ -517,7 +507,7 @@ resource "aws_lb_target_group" "unity_accelerator_dashboard_target_group" {
 
   count       = var.create_external_alb ? 1 : 0
   name        = "${local.name_prefix}-dashboard-tg"
-  port        = var.unity_accelerator_dashboard_port
+  port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -528,7 +518,7 @@ resource "aws_lb_target_group" "unity_accelerator_dashboard_target_group" {
     timeout             = 5
     healthy_threshold   = 5
     unhealthy_threshold = 2
-    port                = var.unity_accelerator_dashboard_port
+    port                = 80
     protocol            = "HTTP"
     matcher             = "200"
   }
@@ -600,7 +590,7 @@ resource "aws_lb" "unity_accelerator_external_nlb" {
 resource "aws_lb_target_group" "unity_accelerator_cache_target_group" {
   count       = var.create_external_nlb ? 1 : 0
   name        = "${local.name_prefix}-cache-tg"
-  port        = var.unity_accelerator_cache_port
+  port        = 10080
   protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -611,7 +601,7 @@ resource "aws_lb_target_group" "unity_accelerator_cache_target_group" {
     timeout             = 5
     healthy_threshold   = 5
     unhealthy_threshold = 2
-    port                = var.unity_accelerator_dashboard_port
+    port                = 80
     protocol            = "HTTP"
     matcher             = "200"
   }
@@ -623,7 +613,7 @@ resource "aws_lb_target_group" "unity_accelerator_cache_target_group" {
 resource "aws_lb_listener" "unity_accelerator_cache_listener" {
   count             = var.create_external_nlb ? 1 : 0
   load_balancer_arn = aws_lb.unity_accelerator_external_nlb[0].arn
-  port              = var.unity_accelerator_cache_port
+  port              = 10080
   protocol          = "TCP"
 
   default_action {

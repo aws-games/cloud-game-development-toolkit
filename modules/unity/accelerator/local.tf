@@ -28,7 +28,7 @@ locals {
     },
     {
       name  = "UNITY_ACCELERATOR_PERSIST"
-      value = var.unity_accelerator_persist
+      value = "/agent"
     },
     {
       name  = "UNITY_ACCELERATOR_LOG_STDOUT"

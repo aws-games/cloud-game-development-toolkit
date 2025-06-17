@@ -78,12 +78,6 @@ variable "unity_accelerator_docker_image" {
   default     = "unitytechnologies/accelerator:latest"
 }
 
-variable "unity_accelerator_persist" {
-  type        = string
-  description = "Directory where unity-accelerator.cfg resides as well as other persisted data."
-  default     = "/agent"
-}
-
 variable "unity_accelerator_log_stdout" {
   type        = string
   description = "When true, outputs logs to stdout only. When false, writes logs to the persist directory."
@@ -132,18 +126,6 @@ variable "container_name" {
   type        = string
   description = "The name of the Unity Accelerator container."
   default     = "unity-accelerator"
-}
-
-variable "unity_accelerator_dashboard_port" {
-  type        = number
-  default     = 80
-  description = "The port to reach the Unity Accelerator dashboard."
-}
-
-variable "unity_accelerator_cache_port" {
-  type        = number
-  default     = 10080
-  description = "The port to reach the Unity Accelerator cache, used by the Unity client."
 }
 
 variable "desired_container_count" {
