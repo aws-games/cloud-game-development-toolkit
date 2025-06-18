@@ -1,5 +1,5 @@
 #====================================================================================================
-## Process
+## Processs5
 # 1. When changes are made to documentation files and pushed to the main branch, the workflow in this file is triggered.
 # 2. Copy the repository's contents to the runner, so the workflow can access them.
 # 3. Build and deploy the documentation
@@ -15,6 +15,9 @@ on:
   #    - "CHANGELOG.md"
   #    - "**/README.md"
   #    - ".github/workflows/docs.yml"
+  release:
+    types: [published]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -30,6 +33,7 @@ on:
         required: false
         type: string
         default: main
+
 permissions:
   contents: read
 jobs:
@@ -48,14 +52,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ inputs.git_ref }}
+          ref: ${{ github.ref }}
       - name: Git client setup
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.name cloud-game-development-toolkit-bot
+          git config user.email cloud-game-development-toolkit-bot@users.noreply.github.com
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install dependencies
+        run: make docs-install-dependencies
       - name: Deploy Docs
-        run: make docs-deploy-github VERSION=${{ inputs.VERSION }} ALIAS=${{ inputs.ALIAS }}
+        run: make docs-deploy-github VERSION=${{ vars.SEMANTIC_VERSION }} ALIAS=latest
