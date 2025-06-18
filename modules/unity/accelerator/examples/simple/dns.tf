@@ -1,8 +1,3 @@
-variable "root_domain_name" {
-  type        = string
-  description = "The root domain name for the Hosted Zone where Unity Accelerator record should be created."
-}
-
 ##########################################
 # Route53 Hosted Zone for Root
 ##########################################
@@ -42,9 +37,8 @@ resource "aws_acm_certificate" "unity_accelerator" {
   domain_name       = "dashboard.unity.${data.aws_route53_zone.root.name}"
   validation_method = "DNS"
 
-  tags = {
-    Environment = "test"
-  }
+  tags = local.tags
+
   lifecycle {
     create_before_destroy = true
   }

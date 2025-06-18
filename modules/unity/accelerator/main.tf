@@ -113,14 +113,21 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
         }
       ]
 
-      environment = concat(local.base_env, local.password_env)
+      environment = local.base_env
 
       entryPoint = ["/bin/sh", "-c"]
+
+      secrets = [
+        {
+          name      = "DASHBOARD_PASSWORD"
+          valueFrom = var.unity_accelerator_dashboard_password_arn
+        }
+      ]
 
       command = [
         <<-EOT
         /usr/local/bin/unity-accelerator register adbv2 &&
-        /usr/local/bin/unity-accelerator dashboard password ${var.unity_accelerator_dashboard_username} --password '${var.unity_accelerator_dashboard_password}' &&
+        /usr/local/bin/unity-accelerator dashboard password ${var.unity_accelerator_dashboard_username} --password "$DASHBOARD_PASSWORD" &&
         /usr/local/bin/unity-accelerator dashboard list &&
         /usr/local/bin/unity-accelerator run
         EOT
@@ -427,6 +434,32 @@ resource "aws_iam_role_policy_attachment" "unity_accelerator_task_execution_role
   role       = aws_iam_role.unity_accelerator_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
+# Adding permission to access dashboard password in Secrets Manager to ECS task execution role
+resource "aws_iam_policy" "secret_access_policy" {
+  name        = "${local.name_prefix}-secret-access-policy"
+  description = "Policy to allow access to Unity Accelerator dashboard password secret"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [var.unity_accelerator_dashboard_password_arn]
+      }
+    ]
+  })
+}
+
+# New policy attachment for the secrets access
+resource "aws_iam_role_policy_attachment" "task_execution_role_secret_policy" {
+  role       = aws_iam_role.unity_accelerator_task_execution_role.name
+  policy_arn = aws_iam_policy.secret_access_policy.arn
+}
+
 
 # CloudWatch Logs
 resource "aws_cloudwatch_log_group" "unity_accelerator_log_group" {

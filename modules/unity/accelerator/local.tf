@@ -39,15 +39,6 @@ locals {
       value = var.unity_accelerator_dashboard_username
     }
   ]
-
-  # Unity Accelerator dashboard password environment variable if provided
-  password_env = var.unity_accelerator_dashboard_password != null ? [
-    {
-      name  = "PASSWORD"
-      value = var.unity_accelerator_dashboard_password
-    }
-  ] : []
-
 }
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}

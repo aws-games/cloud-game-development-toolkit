@@ -59,7 +59,6 @@ variable "efs_access_point_id" {
     error_message = "The efs_access_point_id variable must be set if efs_id is set."
   }
   default = null
-
 }
 
 variable "efs_encryption_enabled" {
@@ -87,7 +86,7 @@ variable "unity_accelerator_log_stdout" {
 variable "unity_accelerator_debug_mode" {
   type        = string
   description = "Enables debug output for the Unity Accelerator service."
-  default     = "true"
+  default     = "false"
 }
 
 variable "unity_accelerator_dashboard_username" {
@@ -95,10 +94,15 @@ variable "unity_accelerator_dashboard_username" {
   type        = string
 }
 
-variable "unity_accelerator_dashboard_password" {
-  description = "Password for the Unity Accelerator dashboard."
+variable "unity_accelerator_dashboard_password_arn" {
+  description = "ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard password. Password must be the only value and stored as text, not as key/value JSON."
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = can(regex("^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+$", var.unity_accelerator_dashboard_password_arn))
+    error_message = "The secret ARN must be a valid AWS Secrets Manager ARN format."
+  }
 }
 
 ####################################################
