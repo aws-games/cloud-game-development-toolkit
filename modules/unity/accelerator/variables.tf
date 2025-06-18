@@ -128,13 +128,6 @@ variable "container_name" {
   default     = "unity-accelerator"
 }
 
-variable "desired_container_count" {
-  type        = number
-  description = "The desired number of containers running Unity Accelerator."
-  default     = 1
-  nullable    = false
-}
-
 ########################################
 # Networking
 ########################################
@@ -168,8 +161,8 @@ variable "lb_subnets" {
   description = "The subnets in which the Application Load Balancer and Network Load Balancer will be deployed."
 
   validation {
-    condition     = (var.create_external_alb == true || var.create_external_nlb == true) && length(var.lb_subnets) > 0
-    error_message = "The lb_subnets variable must be set if create_external_alb or create_external_nlb is true."
+    condition     = (var.create_alb == true || var.create_nlb == true) && length(var.lb_subnets) > 0
+    error_message = "The lb_subnets variable must be set if create_alb or create_nlb is true."
   }
   default = []
 }
@@ -195,10 +188,16 @@ variable "enable_unity_accelerator_lb_deletion_protection" {
 ######
 # ALB
 ######
-variable "create_external_alb" {
+variable "create_alb" {
   type        = bool
-  description = "Set this flag to true to create an external Application Load Balancer for the Unity Accelerator dashboard."
+  description = "Set this flag to true to create an Application Load Balancer for the Unity Accelerator dashboard."
   default     = true
+}
+
+variable "internal_alb" {
+  type        = bool
+  description = "Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false)."
+  default     = false
 }
 
 variable "alb_certificate_arn" {
@@ -206,7 +205,7 @@ variable "alb_certificate_arn" {
   description = "The ARN of the SSL certificate to use for the Application Load Balancer."
 
   validation {
-    condition     = var.create_external_alb == true && var.alb_certificate_arn != null
+    condition     = var.create_alb == true && var.alb_certificate_arn != null
     error_message = "The alb_certificate_arn variable must be set if create_external_alb is true."
   }
   default = null
@@ -221,10 +220,16 @@ variable "unity_accelerator_alb_access_logs_prefix" {
 ######
 # NLB
 ######
-variable "create_external_nlb" {
+variable "create_nlb" {
   type        = bool
   description = "Set this flag to true to create an external Network Load Balancer for the Unity Accelerator protobuf traffic."
   default     = true
+}
+
+variable "internal_nlb" {
+  type        = bool
+  description = "Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false)."
+  default     = false
 }
 
 variable "unity_accelerator_nlb_access_logs_prefix" {

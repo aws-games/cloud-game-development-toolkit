@@ -172,7 +172,7 @@ resource "aws_ecs_service" "unity_accelerator" {
   cluster                = var.cluster_name != null ? data.aws_ecs_cluster.unity_accelerator_cluster[0].arn : aws_ecs_cluster.unity_accelerator_cluster[0].arn
   task_definition        = aws_ecs_task_definition.unity_accelerator_task_definition.arn
   launch_type            = "FARGATE"
-  desired_count          = var.desired_container_count
+  desired_count          = 1
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
 
@@ -185,14 +185,14 @@ resource "aws_ecs_service" "unity_accelerator" {
 
   # Dashboard
   load_balancer {
-    target_group_arn = aws_lb_target_group.unity_accelerator_dashboard_target_group[0].arn
+    target_group_arn = aws_lb_target_group.unity_accelerator_dashboard_target_group.arn
     container_name   = var.container_name
     container_port   = 80
   }
 
   # Cache
   load_balancer {
-    target_group_arn = aws_lb_target_group.unity_accelerator_cache_target_group[0].arn
+    target_group_arn = aws_lb_target_group.unity_accelerator_cache_target_group.arn
     container_name   = var.container_name
     container_port   = 10080
   }
@@ -251,21 +251,11 @@ resource "aws_security_group" "unity_accelerator_service_sg" {
   tags        = local.tags
 }
 
-# Egress rule for NFS traffic from service to EFS
-resource "aws_vpc_security_group_egress_rule" "ecs_to_efs" {
-  security_group_id            = aws_security_group.unity_accelerator_service_sg.id
-  referenced_security_group_id = aws_security_group.unity_accelerator_efs_sg[0].id
-  description                  = "Allows outbound NFS traffic from Unity Accelerator service to EFS"
-  from_port                    = 2049
-  to_port                      = 2049
-  ip_protocol                  = "TCP"
-}
-
 # ECS ingress rule from ALB on port 80 (dashboard)
 resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingress_from_alb_80" {
   #checkov:skip=CKV_AWS_260:Dashboard is password-protected
 
-  count                        = var.create_external_alb ? 1 : 0
+  count                        = var.create_alb ? 1 : 0
   security_group_id            = aws_security_group.unity_accelerator_service_sg.id
   referenced_security_group_id = aws_security_group.unity_accelerator_alb_sg[0].id
   description                  = "Allows HTTP traffic on port 80 (dashboard) from the Application Load Balancer"
@@ -276,7 +266,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
 
 # ECS ingress rule on port 10080 (cache)
 resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingress_from_alb_10080" {
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description       = "Allows HTTP traffic on port 10080 (cache)"
   from_port         = 10080
@@ -287,7 +277,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
 
 # ECS ingres rules to allow health checks from NLB subnets
 resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingress_from_nlb_80" {
-  for_each          = var.create_external_nlb ? data.aws_subnet.nlb_subnets : {}
+  for_each          = var.create_nlb ? data.aws_subnet.nlb_subnets : {}
   security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description       = "Allows inbound HTTP health checks from NLB"
   from_port         = 80
@@ -298,7 +288,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_service_ingres
 
 # ECS egress Rule for all outbound traffic
 resource "aws_vpc_security_group_egress_rule" "unity_accelerator_service_egress_all" {
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description       = "Allow all outbound traffic"
   ip_protocol       = "-1"
@@ -307,7 +297,7 @@ resource "aws_vpc_security_group_egress_rule" "unity_accelerator_service_egress_
 
 # Get subnet data for each subnet ID
 data "aws_subnet" "nlb_subnets" {
-  for_each = var.create_external_nlb ? local.lb_subnet_map : {}
+  for_each = var.create_nlb ? local.lb_subnet_map : {}
   id       = each.value
 }
 
@@ -319,7 +309,7 @@ data "aws_subnet" "nlb_subnets" {
 resource "aws_security_group" "unity_accelerator_alb_sg" {
   #checkov:skip=CKV2_AWS_5:SG is attached to Unity Accelerator service ALB
 
-  count       = var.create_external_alb ? 1 : 0
+  count       = var.create_alb ? 1 : 0
   name        = "${local.name_prefix}-alb-sg"
   vpc_id      = var.vpc_id
   description = "Unity Accelerator Application Load Balancer security group"
@@ -330,7 +320,7 @@ resource "aws_security_group" "unity_accelerator_alb_sg" {
 resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_alb_ingress_http" {
   #checkov:skip=CKV_AWS_260:Dashboard is password-protected
 
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_alb_sg[0].id
   description       = "Allows HTTP traffic (dashboard) from the internet"
   from_port         = 80
@@ -341,7 +331,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_alb_ingress_ht
 
 # ALB ingress rule for https traffic (dashboard) from internet on port 443
 resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_alb_ingress_https" {
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   security_group_id = aws_security_group.unity_accelerator_alb_sg[0].id
   description       = "Allows HTTPS traffic (dashboard) from the internet"
   from_port         = 443
@@ -352,7 +342,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_alb_ingress_ht
 
 # ALB egress rule for http dashboard traffic to the Unity Accelerator service on port 80
 resource "aws_vpc_security_group_egress_rule" "unity_accelerator_alb_egress_service_80" {
-  count                        = var.create_external_alb ? 1 : 0
+  count                        = var.create_alb ? 1 : 0
   security_group_id            = aws_security_group.unity_accelerator_alb_sg[0].id
   referenced_security_group_id = aws_security_group.unity_accelerator_service_sg.id
   description                  = "Allows HTTP traffic (dashboard) to the Unity Accelerator service"
@@ -481,11 +471,11 @@ resource "aws_lb" "unity_accelerator_external_alb" {
   #checkov:skip=CKV_AWS_150:Deletion protection disabled by default
   #checkov:skip=CKV2_AWS_28: ALB access is managed with SG allow listing
 
-  count              = var.create_external_alb ? 1 : 0
+  count              = var.create_alb ? 1 : 0
   name               = "${local.name_prefix}-alb"
   security_groups    = [aws_security_group.unity_accelerator_alb_sg[0].id]
   load_balancer_type = "application"
-  internal           = false
+  internal           = var.internal_alb
   subnets            = var.lb_subnets
 
   dynamic "access_logs" {
@@ -505,7 +495,6 @@ resource "aws_lb" "unity_accelerator_external_alb" {
 resource "aws_lb_target_group" "unity_accelerator_dashboard_target_group" {
   #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
 
-  count       = var.create_external_alb ? 1 : 0
   name        = "${local.name_prefix}-dashboard-tg"
   port        = 80
   protocol    = "HTTP"
@@ -528,7 +517,7 @@ resource "aws_lb_target_group" "unity_accelerator_dashboard_target_group" {
 
 # ALB HTTPS Listener
 resource "aws_lb_listener" "unity_accelerator_https_dashboard_listener" {
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   load_balancer_arn = aws_lb.unity_accelerator_external_alb[0].arn
   port              = "443"
   protocol          = "HTTPS"
@@ -537,14 +526,14 @@ resource "aws_lb_listener" "unity_accelerator_https_dashboard_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.unity_accelerator_dashboard_target_group[0].arn
+    target_group_arn = aws_lb_target_group.unity_accelerator_dashboard_target_group.arn
   }
   tags = local.tags
 }
 
 # ALB HTTP to HTTPS redirect
 resource "aws_lb_listener" "unity_accelerator_https_dashboard_redirect" {
-  count             = var.create_external_alb ? 1 : 0
+  count             = var.create_alb ? 1 : 0
   load_balancer_arn = aws_lb.unity_accelerator_external_alb[0].arn
   port              = "80"
   protocol          = "HTTP"
@@ -568,10 +557,10 @@ resource "aws_lb" "unity_accelerator_external_nlb" {
   #checkov:skip=CKV2_AWS_28:NLB access is managed with SG allow listing
   #checkov:skip=CKV_AWS_152:Module is single-region
 
-  count              = var.create_external_nlb ? 1 : 0
+  count              = var.create_nlb ? 1 : 0
   name               = "${local.name_prefix}-nlb"
   load_balancer_type = "network"
-  internal           = false
+  internal           = var.internal_nlb
   subnets            = var.lb_subnets
 
   dynamic "access_logs" {
@@ -588,7 +577,6 @@ resource "aws_lb" "unity_accelerator_external_nlb" {
 }
 
 resource "aws_lb_target_group" "unity_accelerator_cache_target_group" {
-  count       = var.create_external_nlb ? 1 : 0
   name        = "${local.name_prefix}-cache-tg"
   port        = 10080
   protocol    = "TCP"
@@ -611,14 +599,14 @@ resource "aws_lb_target_group" "unity_accelerator_cache_target_group" {
 
 # NLB Protobuf (cache) Listener
 resource "aws_lb_listener" "unity_accelerator_cache_listener" {
-  count             = var.create_external_nlb ? 1 : 0
+  count             = var.create_nlb ? 1 : 0
   load_balancer_arn = aws_lb.unity_accelerator_external_nlb[0].arn
   port              = 10080
   protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.unity_accelerator_cache_target_group[0].arn
+    target_group_arn = aws_lb_target_group.unity_accelerator_cache_target_group.arn
   }
   tags = local.tags
 }
@@ -706,10 +694,8 @@ resource "aws_s3_bucket_policy" "lb_access_logs_bucket_policy" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
-  count = var.enable_unity_accelerator_lb_access_logs && var.unity_accelerator_lb_access_logs_bucket == null ? 1 : 0
-  depends_on = [
-    aws_s3_bucket.unity_accelerator_lb_access_logs_bucket[0]
-  ]
+  count = var.enable_unity_accelerator_lb_access_logs && var.unity_accelerator_lb_access_logs_bucket == null && length(aws_s3_bucket.unity_accelerator_lb_access_logs_bucket) > 0 ? 1 : 0
+
   bucket = aws_s3_bucket.unity_accelerator_lb_access_logs_bucket[0].id
 
   rule {
@@ -726,6 +712,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
       days_after_initiation = 7
     }
   }
+
+  depends_on = [
+    aws_s3_bucket.unity_accelerator_lb_access_logs_bucket[0]
+  ]
 }
 
 resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
@@ -785,23 +775,26 @@ resource "aws_security_group" "vpc_endpoint_sg" {
   name        = "${local.name_prefix}-vpce-sg"
   description = "Security group for VPC endpoints"
   vpc_id      = var.vpc_id
-
-  ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "TCP"
-    security_groups = [aws_security_group.unity_accelerator_service_sg.id]
-    description     = "Allows HTTPS traffic from Unity Accelerator service to VPC endpoints"
-  }
 }
 
-# Allow the ECS tasks to access the VPC endpoints
-resource "aws_vpc_security_group_egress_rule" "unity_accelerator_service_to_vpce" {
+# Allow HTTPS traffic to VPC endpoints
+resource "aws_vpc_security_group_ingress_rule" "vpc_endpoint_https" {
+  count                        = var.debug == true ? 1 : 0
+  security_group_id            = aws_security_group.vpc_endpoint_sg[0].id
+  referenced_security_group_id = aws_security_group.unity_accelerator_service_sg.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "TCP"
+  description                  = "Allows HTTPS traffic from Unity Accelerator service to VPC endpoints"
+}
+
+# Allow HTTPS traffic from VPC endpoints to Unity Accelerator service
+resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_ingress_to_vpce" {
   count                        = var.debug == true ? 1 : 0
   security_group_id            = aws_security_group.unity_accelerator_service_sg.id
   referenced_security_group_id = aws_security_group.vpc_endpoint_sg[0].id
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "TCP"
-  description                  = "Allow outbound HTTPS to VPC endpoints"
+  description                  = "Allows HTTPS traffic from VPC endpoints to Unity Accelerator service"
 }
