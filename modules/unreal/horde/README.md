@@ -65,7 +65,9 @@ No modules.
 | [aws_lb.unreal_horde_external_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb) | resource |
 | [aws_lb.unreal_horde_internal_alb](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb) | resource |
 | [aws_lb_listener.unreal_horde_external_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unreal_horde_external_alb_http_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.unreal_horde_internal_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unreal_horde_internal_alb_http_listener](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener) | resource |
 | [aws_lb_listener_rule.unreal_horde_external_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_listener_rule.unreal_horde_internal_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_target_group.unreal_horde_api_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/5.69.0/docs/resources/lb_target_group) | resource |
