@@ -31,3 +31,21 @@ If you think you’ve found a potential security issue, please do not post it in
 ## License
 
 This project is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
+
+<!-- BEGIN_TF_DOCS -->
+#### Providers
+
+No providers.
+
+#### Modules
+
+No modules.
+
+#### Resources
+
+No resources.
+
+#### Inputs
+
+No inputs.
+<!-- END_TF_DOCS -->

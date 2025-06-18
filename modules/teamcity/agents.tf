@@ -180,6 +180,8 @@ resource "aws_iam_role_policy_attachment" "teamcity_agent_task_execution_default
 }
 
 resource "aws_cloudwatch_log_group" "teamcity_agent" {
+  #checkov:skip=CKV_AWS_158: CW Log Group does not need to be encrypted
+  #checkov:skip=CKV_AWS_338: CW Log Group does not need to be retained for 1 year
   name              = "/ecs/teamcity-agent"
   retention_in_days = 7
 }
