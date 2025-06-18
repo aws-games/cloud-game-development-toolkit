@@ -65,16 +65,16 @@ No modules.
 | [aws_vpc_endpoint.ec2messages_vpce](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.ssm_vpce](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.ssmmessages_vpce](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_endpoint) | resource |
-| [aws_vpc_security_group_egress_rule.ecs_to_efs](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unity_accelerator_alb_egress_service_80](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unity_accelerator_service_egress_all](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unity_accelerator_service_to_vpce](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.service_efs](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_accelerator_alb_ingress_http](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_accelerator_alb_ingress_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_ingress_to_vpce](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_alb_10080](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_alb_80](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_nlb_80](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vpc_endpoint_https](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.unity_accelerator_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/string) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/caller_identity) | data source |
 | [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/data-sources/ecs_cluster) | data source |
@@ -97,10 +97,9 @@ No modules.
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The number of CPU units to allocate to the Unity Accelerator container. | `number` | `1024` | no |
 | <a name="input_container_memory"></a> [container\_memory](#input\_container\_memory) | The number of MB of memory to allocate to the Unity Accelerator container. | `number` | `4096` | no |
 | <a name="input_container_name"></a> [container\_name](#input\_container\_name) | The name of the Unity Accelerator container. | `string` | `"unity-accelerator"` | no |
-| <a name="input_create_external_alb"></a> [create\_external\_alb](#input\_create\_external\_alb) | Set this flag to true to create an external Application Load Balancer for the Unity Accelerator dashboard. | `bool` | `true` | no |
-| <a name="input_create_external_nlb"></a> [create\_external\_nlb](#input\_create\_external\_nlb) | Set this flag to true to create an external Network Load Balancer for the Unity Accelerator protobuf traffic. | `bool` | `true` | no |
+| <a name="input_create_alb"></a> [create\_alb](#input\_create\_alb) | Set this flag to true to create an Application Load Balancer for the Unity Accelerator dashboard. | `bool` | `true` | no |
+| <a name="input_create_nlb"></a> [create\_nlb](#input\_create\_nlb) | Set this flag to true to create an external Network Load Balancer for the Unity Accelerator protobuf traffic. | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Set this flag to enable ECS execute permissions on the Unity Accelerator container and force new service deployments on Terraform apply. | `bool` | `true` | no |
-| <a name="input_desired_container_count"></a> [desired\_container\_count](#input\_desired\_container\_count) | The desired number of containers running Unity Accelerator. | `number` | `1` | no |
 | <a name="input_efs_access_point_id"></a> [efs\_access\_point\_id](#input\_efs\_access\_point\_id) | The ID of the EFS access point to use for the Unity Accelerator data volume. | `string` | `null` | no |
 | <a name="input_efs_encryption_enabled"></a> [efs\_encryption\_enabled](#input\_efs\_encryption\_enabled) | Set this flag to true to enable EFS encryption. | `bool` | `true` | no |
 | <a name="input_efs_id"></a> [efs\_id](#input\_efs\_id) | The ID of the EFS file system to use for the Unity Accelerator service. | `string` | `null` | no |
@@ -109,6 +108,8 @@ No modules.
 | <a name="input_enable_unity_accelerator_lb_access_logs"></a> [enable\_unity\_accelerator\_lb\_access\_logs](#input\_enable\_unity\_accelerator\_lb\_access\_logs) | Enables access logging for the Application Load Balancer and Network Load Balancer used by Unity Accelerator. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_unity_accelerator_lb_deletion_protection"></a> [enable\_unity\_accelerator\_lb\_deletion\_protection](#input\_enable\_unity\_accelerator\_lb\_deletion\_protection) | Enables deletion protection for the Unity Accelerator Application Load Balancer and Network Load Balancer. Defaults to true. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
+| <a name="input_internal_alb"></a> [internal\_alb](#input\_internal\_alb) | Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false). | `bool` | `false` | no |
+| <a name="input_internal_nlb"></a> [internal\_nlb](#input\_internal\_nlb) | Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false). | `bool` | `false` | no |
 | <a name="input_lb_subnets"></a> [lb\_subnets](#input\_lb\_subnets) | The subnets in which the Application Load Balancer and Network Load Balancer will be deployed. | `list(string)` | `[]` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name applied to resources in the Unity Accelerator module. | `string` | `"unity-accelerator"` | no |
 | <a name="input_service_subnets"></a> [service\_subnets](#input\_service\_subnets) | The subnets in which the Unity Accelerator service will be deployed. | `list(string)` | n/a | yes |
@@ -127,8 +128,8 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
-| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet-facing Application Load Balancer (ALB) |
-| <a name="output_external_nlb_dns_name"></a> [external\_nlb\_dns\_name](#output\_external\_nlb\_dns\_name) | DNS endpoint of Network Load Balancer (NLB) |
-| <a name="output_external_nlb_zone_id"></a> [external\_nlb\_zone\_id](#output\_external\_nlb\_zone\_id) | Zone ID for internet-facing Network Load Balancer (NLB) |
+| <a name="output_alb_dns_name"></a> [alb\_dns\_name](#output\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | Zone ID for Application Load Balancer (ALB) |
+| <a name="output_nlb_dns_name"></a> [nlb\_dns\_name](#output\_nlb\_dns\_name) | DNS endpoint of Network Load Balancer (NLB) |
+| <a name="output_nlb_zone_id"></a> [nlb\_zone\_id](#output\_nlb\_zone\_id) | Zone ID for Network Load Balancer (NLB) |
 <!-- END_TF_DOCS -->
