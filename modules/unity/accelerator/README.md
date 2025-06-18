@@ -3,6 +3,8 @@
 
 This Unity Accelerator deployment uses an [Elastic Container Service](https://aws.amazon.com/ecs/) cluster for task deployment, with Amazon [Elastic File System](https://aws.amazon.com/efs/) providing persistent storage for configurations and cache. Access is managed through two load balancers: an [Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/application-load-balancer/) for secure, password-protected web dashboard access via HTTPS, and a [Network Load Balancer](https://aws.amazon.com/elasticloadbalancing/network-load-balancer/) for efficient cache-related protobuf traffic.
 
+A [Secrets Manager](https://aws.amazon.com/secrets-manager/) password entry, to be used as the Unity Accelerator's web dashboard password, is required beforehand. Password must be stored as a plaintext secret, not as key/value JSON secret, and the password's ARN must be provided as the value for the `unity_accelerator_dashboard_password_arn` variable.
+
 ## Deployment Architecture
 ![Unity Accelerator Module Architecture](./assets/media/diagrams/unity-accelerator-architecture.png)
 
@@ -41,10 +43,12 @@ No modules.
 | [aws_efs_file_system.unity_accelerator_efs](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/efs_file_system) | resource |
 | [aws_efs_mount_target.unity_accelerator_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/efs_mount_target) | resource |
 | [aws_iam_policy.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.secret_access_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_policy) | resource |
 | [aws_iam_role.unity_accelerator_default_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role) | resource |
 | [aws_iam_role.unity_accelerator_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.cloudwatch_logs_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.task_execution_role_secret_policy](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.unity_accelerator_default_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.unity_accelerator_task_execution_role_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_lb.unity_accelerator_external_alb](https://registry.terraform.io/providers/hashicorp/aws/5.89.0/docs/resources/lb) | resource |
@@ -115,9 +119,9 @@ No modules.
 | <a name="input_service_subnets"></a> [service\_subnets](#input\_service\_subnets) | The subnets in which the Unity Accelerator service will be deployed. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "UnityAccelerator",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_unity_accelerator_alb_access_logs_prefix"></a> [unity\_accelerator\_alb\_access\_logs\_prefix](#input\_unity\_accelerator\_alb\_access\_logs\_prefix) | Log prefix for Unity Accelerator Application Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
-| <a name="input_unity_accelerator_dashboard_password"></a> [unity\_accelerator\_dashboard\_password](#input\_unity\_accelerator\_dashboard\_password) | Password for the Unity Accelerator dashboard. | `string` | n/a | yes |
+| <a name="input_unity_accelerator_dashboard_password_arn"></a> [unity\_accelerator\_dashboard\_password\_arn](#input\_unity\_accelerator\_dashboard\_password\_arn) | ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard password. Password must be the only value and stored as text, not as key/value JSON. | `string` | n/a | yes |
 | <a name="input_unity_accelerator_dashboard_username"></a> [unity\_accelerator\_dashboard\_username](#input\_unity\_accelerator\_dashboard\_username) | Username for the Unity Accelerator dashboard. | `string` | n/a | yes |
-| <a name="input_unity_accelerator_debug_mode"></a> [unity\_accelerator\_debug\_mode](#input\_unity\_accelerator\_debug\_mode) | Enables debug output for the Unity Accelerator service. | `string` | `"true"` | no |
+| <a name="input_unity_accelerator_debug_mode"></a> [unity\_accelerator\_debug\_mode](#input\_unity\_accelerator\_debug\_mode) | Enables debug output for the Unity Accelerator service. | `string` | `"false"` | no |
 | <a name="input_unity_accelerator_docker_image"></a> [unity\_accelerator\_docker\_image](#input\_unity\_accelerator\_docker\_image) | Docker image to use for Unity Accelerator. | `string` | `"unitytechnologies/accelerator:latest"` | no |
 | <a name="input_unity_accelerator_lb_access_logs_bucket"></a> [unity\_accelerator\_lb\_access\_logs\_bucket](#input\_unity\_accelerator\_lb\_access\_logs\_bucket) | ID of the S3 bucket for Unity Accelerator Application Load Balancer and Network Load Balancer access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_unity_accelerator_log_stdout"></a> [unity\_accelerator\_log\_stdout](#input\_unity\_accelerator\_log\_stdout) | When true, outputs logs to stdout only. When false, writes logs to the persist directory. | `string` | `"true"` | no |
