@@ -1,0 +1,61 @@
+name: Auto Release
+
+# Trigger workflow twice a month
+on:
+  #  schedule:
+  #    - cron: "0 0 1,15 * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  id-token: write
+  contents: write
+  issues: write
+
+env:
+  GH_TOKEN: ${{ secrets.BOT_PAT }}
+
+jobs:
+  tag-latest-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Semantic Version
+        run: |
+          IFS='.' read -r VERSION_MAJOR VERSION_MINOR VERSION_PATCH <<< ${{ vars.SEMANTIC_VERSION }}
+          VERSION_MAJOR=${VERSION_MAJOR#v} # Remove leading 'v'
+          echo "NEW_VERSION=v$VERSION_MAJOR.$VERSION_MINOR.$(($VERSION_PATCH+1))" >> $GITHUB_ENV
+      - name: checkout-latest
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Setup Git Config
+        run: |
+          git config --global user.email "cloud-game-development-toolkit-bot@users.noreply.github.com"
+          git config --global user.name "cloud-game-development-toolkit-bot"
+      - name: tag-version
+        run: |
+          git tag $NEW_VERSION
+          git push origin ${{ env.NEW_VERSION }}
+      - name: tag-latest
+        run: |
+          git tag -f -a latest -m "Latest release"
+          git push -f origin latest
+      - name: create-release
+        uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5
+        with:
+          tag: ${{ env.NEW_VERSION }}
+          name: ${{ env.NEW_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      - name: edit-publish-release
+        run: |
+          # Edit release content
+          gh release edit ${{ env.NEW_VERSION }} \
+            --latest \
+            --draft=false
+      - name: update-repository-variable
+        run: |
+          gh variable set SEMANTIC_VERSION -b $NEW_VERSION
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
