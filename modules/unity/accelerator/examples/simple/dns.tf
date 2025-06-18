@@ -28,7 +28,7 @@ resource "aws_route53_record" "unity_accelerator_dashboard" {
   alias {
     name                   = module.unity_accelerator.alb_dns_name
     zone_id                = module.unity_accelerator.alb_zone_id
-    evaluate_target_health = false
+    evaluate_target_health = true
   }
 }
 
