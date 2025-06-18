@@ -108,6 +108,26 @@ resource "aws_lb_listener_rule" "unreal_horde_external_alb_grpc_rule" {
   }
 }
 
+# External ALB listener forwards to HTTPS listener
+resource "aws_lb_listener" "unreal_horde_external_alb_http_listener" {
+  count             = var.create_external_alb ? 1 : 0
+  load_balancer_arn = aws_lb.unreal_horde_external_alb[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      status_code = "HTTP_301"
+      protocol    = aws_lb_listener.unreal_horde_external_alb_https_listener[0].protocol
+      port        = aws_lb_listener.unreal_horde_external_alb_https_listener[0].port
+    }
+  }
+
+  tags = local.tags
+}
+
 ###########################
 # Internal Load Balancer
 ###########################
@@ -220,6 +240,26 @@ resource "aws_lb_listener_rule" "unreal_horde_internal_alb_grpc_rule" {
     target_group_arn = aws_lb_target_group.unreal_horde_grpc_target_group_internal[0].arn
     type             = "forward"
   }
+}
+
+# Internal ALB listener forwards to HTTPS listener
+resource "aws_lb_listener" "unreal_horde_internal_alb_http_listener" {
+  count             = var.create_internal_alb ? 1 : 0
+  load_balancer_arn = aws_lb.unreal_horde_internal_alb[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      status_code = "HTTP_301"
+      protocol    = aws_lb_listener.unreal_horde_internal_alb_https_listener[0].protocol
+      port        = aws_lb_listener.unreal_horde_internal_alb_https_listener[0].port
+    }
+  }
+
+  tags = local.tags
 }
 
 ###########################
