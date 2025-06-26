@@ -11,7 +11,7 @@ The [Unreal Cloud DDC Inter Cluster module](../modules/unreal/unreal-cloud-ddc-i
 ```json
 {
   "username":"GITHUB-USER-NAME-PLACEHOLDER",
-  "accessToken":"GITHUB-ACCESS-TOKEN-PLACEHOLDER"
+  "access-token":"GITHUB-ACCESS-TOKEN-PLACEHOLDER"
 }
 ```
 
