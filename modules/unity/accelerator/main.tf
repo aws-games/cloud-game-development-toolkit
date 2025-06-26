@@ -508,7 +508,7 @@ resource "aws_lb" "unity_accelerator_external_alb" {
   name               = "${local.name_prefix}-alb"
   security_groups    = [aws_security_group.unity_accelerator_alb_sg[0].id]
   load_balancer_type = "application"
-  internal           = var.internal_alb
+  internal           = var.alb_is_internal
   subnets            = var.lb_subnets
 
   dynamic "access_logs" {
@@ -593,7 +593,7 @@ resource "aws_lb" "unity_accelerator_external_nlb" {
   count              = var.create_nlb ? 1 : 0
   name               = "${local.name_prefix}-nlb"
   load_balancer_type = "network"
-  internal           = var.internal_nlb
+  internal           = var.nlb_is_internal
   subnets            = var.lb_subnets
 
   dynamic "access_logs" {

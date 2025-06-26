@@ -198,9 +198,9 @@ variable "create_alb" {
   default     = true
 }
 
-variable "internal_alb" {
+variable "alb_is_internal" {
   type        = bool
-  description = "Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false)."
+  description = "Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false). Value is ignored if no ALB is created."
   default     = false
 }
 
@@ -230,9 +230,9 @@ variable "create_nlb" {
   default     = true
 }
 
-variable "internal_nlb" {
+variable "nlb_is_internal" {
   type        = bool
-  description = "Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false)."
+  description = "Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false). Value is ignored if no NLB is created."
   default     = false
 }
 
