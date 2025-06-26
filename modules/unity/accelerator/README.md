@@ -96,6 +96,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the SSL certificate to use for the Application Load Balancer. | `string` | `null` | no |
+| <a name="input_alb_is_internal"></a> [alb\_is\_internal](#input\_alb\_is\_internal) | Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false). Value is ignored if no ALB is created. | `bool` | `false` | no |
 | <a name="input_cloudwatch_log_retention_in_days"></a> [cloudwatch\_log\_retention\_in\_days](#input\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for Unity Accelerator. | `string` | `365` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the ECS cluster to deploy Unity Accelerator to. | `string` | `null` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The number of CPU units to allocate to the Unity Accelerator container. | `number` | `1024` | no |
@@ -112,10 +113,9 @@ No modules.
 | <a name="input_enable_unity_accelerator_lb_access_logs"></a> [enable\_unity\_accelerator\_lb\_access\_logs](#input\_enable\_unity\_accelerator\_lb\_access\_logs) | Enables access logging for the Application Load Balancer and Network Load Balancer used by Unity Accelerator. Defaults to true. | `bool` | `true` | no |
 | <a name="input_enable_unity_accelerator_lb_deletion_protection"></a> [enable\_unity\_accelerator\_lb\_deletion\_protection](#input\_enable\_unity\_accelerator\_lb\_deletion\_protection) | Enables deletion protection for the Unity Accelerator Application Load Balancer and Network Load Balancer. Defaults to true. | `bool` | `true` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
-| <a name="input_internal_alb"></a> [internal\_alb](#input\_internal\_alb) | Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false). | `bool` | `false` | no |
-| <a name="input_internal_nlb"></a> [internal\_nlb](#input\_internal\_nlb) | Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false). | `bool` | `false` | no |
 | <a name="input_lb_subnets"></a> [lb\_subnets](#input\_lb\_subnets) | The subnets in which the Application Load Balancer and Network Load Balancer will be deployed. | `list(string)` | `[]` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name applied to resources in the Unity Accelerator module. | `string` | `"unity-accelerator"` | no |
+| <a name="input_nlb_is_internal"></a> [nlb\_is\_internal](#input\_nlb\_is\_internal) | Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false). Value is ignored if no NLB is created. | `bool` | `false` | no |
 | <a name="input_service_subnets"></a> [service\_subnets](#input\_service\_subnets) | The subnets in which the Unity Accelerator service will be deployed. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "UnityAccelerator",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_unity_accelerator_alb_access_logs_prefix"></a> [unity\_accelerator\_alb\_access\_logs\_prefix](#input\_unity\_accelerator\_alb\_access\_logs\_prefix) | Log prefix for Unity Accelerator Application Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
