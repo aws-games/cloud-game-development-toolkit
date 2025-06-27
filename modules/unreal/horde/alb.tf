@@ -108,6 +108,26 @@ resource "aws_lb_listener_rule" "unreal_horde_external_alb_grpc_rule" {
   }
 }
 
+# External ALB listener forwards to HTTPS listener
+resource "aws_lb_listener" "unreal_horde_external_alb_http_listener" {
+  count             = var.create_external_alb ? 1 : 0
+  load_balancer_arn = aws_lb.unreal_horde_external_alb[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      status_code = "HTTP_301"
+      protocol    = "HTTPS"
+      port        = aws_lb_listener.unreal_horde_external_alb_https_listener[0].port
+    }
+  }
+
+  tags = local.tags
+}
+
 ###########################
 # Internal Load Balancer
 ###########################
@@ -222,6 +242,26 @@ resource "aws_lb_listener_rule" "unreal_horde_internal_alb_grpc_rule" {
   }
 }
 
+# Internal ALB listener forwards to HTTPS listener
+resource "aws_lb_listener" "unreal_horde_internal_alb_http_listener" {
+  count             = var.create_internal_alb ? 1 : 0
+  load_balancer_arn = aws_lb.unreal_horde_internal_alb[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      status_code = "HTTP_301"
+      protocol    = "HTTPS"
+      port        = aws_lb_listener.unreal_horde_internal_alb_https_listener[0].port
+    }
+  }
+
+  tags = local.tags
+}
+
 ###########################
 # Access Logs
 ###########################
@@ -234,8 +274,8 @@ resource "random_string" "unreal_horde_alb_access_logs_bucket_suffix" {
 }
 
 resource "aws_s3_bucket" "unreal_horde_alb_access_logs_bucket" {
-  count  = var.enable_unreal_horde_alb_access_logs && var.unreal_horde_alb_access_logs_bucket == null ? 1 : 0
-  bucket = "${local.name_prefix}-alb-access-logs-${random_string.unreal_horde_alb_access_logs_bucket_suffix[0].result}"
+  count         = var.enable_unreal_horde_alb_access_logs && var.unreal_horde_alb_access_logs_bucket == null ? 1 : 0
+  bucket        = "${local.name_prefix}-alb-access-logs-${random_string.unreal_horde_alb_access_logs_bucket_suffix[0].result}"
   force_destroy = true
 
   #checkov:skip=CKV_AWS_21: Versioning not necessary for access logs
