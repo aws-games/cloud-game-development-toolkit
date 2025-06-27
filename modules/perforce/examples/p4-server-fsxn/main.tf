@@ -16,7 +16,7 @@ resource "aws_vpc_security_group_ingress_rule" "fsxn_inbound_p4_server" {
   ip_protocol                  = "-1"
   description                  = "Allows all inbound access from the VPC."
   security_group_id            = aws_security_group.fsx_ontap_file_system_sg.id
-  referenced_security_group_id = module.perforce.security_group_id
+  referenced_security_group_id = module.perforce.p4_server_security_group_id
   lifecycle {
     create_before_destroy = true
   }
