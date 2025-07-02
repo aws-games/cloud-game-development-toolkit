@@ -2,7 +2,7 @@
 # Perforce P4 Server Super User
 ##########################################
 resource "awscc_secretsmanager_secret" "super_user_password" {
-  count       = var.super_user_username_secret_arn == null ? 1 : 0
+  count         = var.super_user_password_secret_arn == null ? 1 : 0
   name        = "${local.name_prefix}-SuperUserPassword"
   description = "The password for the created P4 Server super user."
   generate_secret_string = {
@@ -13,7 +13,7 @@ resource "awscc_secretsmanager_secret" "super_user_password" {
 }
 
 resource "awscc_secretsmanager_secret" "super_user_username" {
-  count         = var.super_user_password_secret_arn == null ? 1 : 0
+  count       = var.super_user_username_secret_arn == null ? 1 : 0
   name          = "${local.name_prefix}-SuperUserUsername"
   description   = "The username for the created P4 Server super user."
   secret_string = "perforce"
@@ -70,8 +70,8 @@ locals {
 }
 
 locals {
-  username_secret = var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_password_secret_arn
-  password_secret = var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn
+  username_secret = var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_username_secret_arn
+  password_secret = var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_password_secret_arn
 }
 resource "aws_instance" "server_instance" {
   ami           = data.aws_ami.existing_server_ami.id
