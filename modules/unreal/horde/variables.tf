@@ -215,6 +215,7 @@ variable "create_unreal_horde_default_policy" {
 variable "github_credentials_secret_arn" {
   type        = string
   description = "A secret containing the Github username and password with permissions to the EpicGames organization."
+  default     = null
 }
 
 ######################

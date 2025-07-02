@@ -39,9 +39,9 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
     {
       name  = var.container_name
       image = var.image
-      repositoryCredentials = {
+      repositoryCredentials = var.github_credentials_secret_arn != null ? {
         "credentialsParameter" : var.github_credentials_secret_arn
-      }
+      } : null
       cpu       = var.container_cpu
       memory    = var.container_memory
       essential = true
