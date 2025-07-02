@@ -54,6 +54,12 @@ variable "vpc_id" {
 # ECS
 ########################################
 
+variable "image" {
+  type        = string
+  description = "The Horde Server image to use in the ECS service."
+  default     = "ghcr.io/epicgames/horde-server:latest-bundled"
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created."

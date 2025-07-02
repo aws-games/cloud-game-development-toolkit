@@ -161,6 +161,7 @@ No modules.
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Unreal Horde load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where your Unreal Engine Horde server will be available. This agents will use this to enroll. | `string` | n/a | yes |
 | <a name="input_github_credentials_secret_arn"></a> [github\_credentials\_secret\_arn](#input\_github\_credentials\_secret\_arn) | A secret containing the Github username and password with permissions to the EpicGames organization. | `string` | n/a | yes |
+| <a name="input_image"></a> [image](#input\_image) | The Horde Server image to use in the ECS service. | `string` | `"ghcr.io/epicgames/horde-server:latest-bundled"` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Unreal Engine Horde module resources. | `string` | `"unreal-horde"` | no |
 | <a name="input_oidc_audience"></a> [oidc\_audience](#input\_oidc\_audience) | The audience used for validating externally issued tokens. | `string` | `null` | no |
 | <a name="input_oidc_authority"></a> [oidc\_authority](#input\_oidc\_authority) | The authority for the OIDC authentication provider used. | `string` | `null` | no |

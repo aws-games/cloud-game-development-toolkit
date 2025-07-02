@@ -38,7 +38,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
   container_definitions = jsonencode([
     {
       name  = var.container_name
-      image = local.image
+      image = var.image
       repositoryCredentials = {
         "credentialsParameter" : var.github_credentials_secret_arn
       }
