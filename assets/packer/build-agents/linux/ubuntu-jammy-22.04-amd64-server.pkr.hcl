@@ -8,27 +8,27 @@ packer {
 }
 
 variable "region" {
-    type = string
-    default = null
+  type    = string
+  default = null
 }
 
 variable "vpc_id" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "subnet_id" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "associate_public_ip_address" {
-  type = bool
+  type    = bool
   default = true
 }
 
 variable "ssh_interface" {
-  type = string
+  type    = string
   default = "public_ip"
 }
 
@@ -38,7 +38,18 @@ variable "ami_prefix" {
 }
 
 variable "public_key" {
-  type = string
+  type    = string
+  default = null
+}
+
+variable "install_wine" {
+  type    = bool
+  default = false
+}
+
+variable "install_dotnet" {
+  type    = bool
+  default = false
 }
 
 locals {
@@ -56,7 +67,7 @@ source "amazon-ebs" "ubuntu" {
       virtualization-type = "hvm"
     }
     most_recent = true
-    owners      = ["amazon"]
+    owners = ["amazon"]
   }
   ssh_username = "ubuntu"
   metadata_options {
@@ -68,20 +79,20 @@ source "amazon-ebs" "ubuntu" {
   imds_support = "v2.0"
 
   # network specific details
-  vpc_id = var.vpc_id
-  subnet_id = var.subnet_id
+  vpc_id                      = var.vpc_id
+  subnet_id                   = var.subnet_id
   associate_public_ip_address = var.associate_public_ip_address
-  ssh_interface = var.ssh_interface
+  ssh_interface               = var.ssh_interface
 }
 
 build {
-  name    = "jenkins-linux-packer"
+  name = "jenkins-linux-packer"
   sources = [
     "source.amazon-ebs.ubuntu"
   ]
 
   provisioner "file" {
-    source = "install_common.ubuntu.sh"
+    source      = "install_common.ubuntu.sh"
     destination = "/tmp/install_common.ubuntu.sh"
   }
   provisioner "shell" {
@@ -96,9 +107,13 @@ build {
 
   # add the public key
   provisioner "shell" {
+    only             = var.public_key != null ? ["amazon-ebs.base"] : []
+    environment_vars = var.public_key != null ? [
+      "PUBLIC_KEY=${var.public_key}"
+    ] : []
     inline = [
       <<-EOF
-      echo "${var.public_key}" >> ~/.ssh/authorized_keys
+      echo $PUBLIC_KEY >> ~/.ssh/authorized_keys
       chmod 700 ~/.ssh
       chmod 600 ~/.ssh/authorized_keys
       EOF
@@ -106,7 +121,7 @@ build {
   }
 
   provisioner "file" {
-    source = "install_mold.sh"
+    source      = "install_mold.sh"
     destination = "/tmp/install_mold.sh"
   }
   provisioner "shell" {
@@ -119,11 +134,11 @@ build {
   }
 
   provisioner "file" {
-    source = "octobuild.conf"
+    source      = "octobuild.conf"
     destination = "/tmp/octobuild.conf"
   }
   provisioner "file" {
-    source = "install_octobuild.ubuntu.x86_64.sh"
+    source      = "install_octobuild.ubuntu.x86_64.sh"
     destination = "/tmp/install_octobuild.ubuntu.x86_64.sh"
   }
   provisioner "shell" {
@@ -137,11 +152,11 @@ build {
   }
 
   provisioner "file" {
-    source = "fsx_automounter.py"
+    source      = "fsx_automounter.py"
     destination = "/tmp/fsx_automounter.py"
   }
   provisioner "file" {
-    source = "fsx_automounter.service"
+    source      = "fsx_automounter.service"
     destination = "/tmp/fsx_automounter.service"
   }
   provisioner "shell" {
@@ -160,11 +175,11 @@ build {
 
   # set up script to automatically format and mount ephemeral storage
   provisioner "file" {
-    source = "mount_ephemeral.sh"
+    source      = "mount_ephemeral.sh"
     destination = "/tmp/mount_ephemeral.sh"
   }
   provisioner "file" {
-    source = "mount_ephemeral.service"
+    source      = "mount_ephemeral.service"
     destination = "/tmp/mount_ephemeral.service"
   }
   provisioner "shell" {
@@ -182,11 +197,11 @@ build {
   }
 
   provisioner "file" {
-    source = "create_swap.sh"
+    source      = "create_swap.sh"
     destination = "/tmp/create_swap.sh"
   }
   provisioner "file" {
-    source = "create_swap.service"
+    source      = "create_swap.service"
     destination = "/tmp/create_swap.service"
   }
   provisioner "shell" {
@@ -204,11 +219,11 @@ build {
   }
 
   provisioner "file" {
-    source = "sccache.service"
+    source      = "sccache.service"
     destination = "/tmp/sccache.service"
   }
   provisioner "file" {
-    source = "install_sccache.sh"
+    source      = "install_sccache.sh"
     destination = "/tmp/install_sccache.sh"
   }
   provisioner "shell" {
@@ -220,6 +235,31 @@ build {
       sudo cp /tmp/sccache.service /etc/systemd/system/sccache.service
       sudo chmod 755 /etc/systemd/system/sccache.service
       sudo systemctl enable sccache.service
+      EOF
+    ]
+  }
+
+  provisioner "shell" {
+    only = var.install_dotnet ? ["amazon-ebs.base"] : []
+
+    inline = [
+      "sudo apt-get install -y dotnet-runtime-6.0"
+    ]
+  }
+
+  provisioner "file" {
+    source      = "install_wine.ubuntu.x86_64.sh"
+    destination = "/tmp/install_wine.ubuntu.x86_64.sh"
+    only        = var.install_wine ? ["amazon-ebs.base"] : []
+
+  }
+
+  provisioner "shell" {
+    only = var.install_wine ? ["amazon-ebs.base"] : []
+    inline = [
+      <<-EOF
+      sudo chmod 755 /tmp/install_wine.ubuntu.x86_64.sh
+      /tmp/install_wine.ubuntu.x86_64.sh
       EOF
     ]
   }
