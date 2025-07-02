@@ -127,7 +127,7 @@ No modules.
 | <a name="input_admin_claim_type"></a> [admin\_claim\_type](#input\_admin\_claim\_type) | The claim type for administrators. | `string` | `null` | no |
 | <a name="input_admin_claim_value"></a> [admin\_claim\_value](#input\_admin\_claim\_value) | The claim value for administrators. | `string` | `null` | no |
 | <a name="input_agents"></a> [agents](#input\_agents) | Configures autoscaling groups to be used as build agents by Unreal Engine Horde. | <pre>map(object({<br/>    ami           = string<br/>    instance_type = string<br/>    block_device_mappings = list(<br/>      object({<br/>        device_name = string<br/>        ebs = object({<br/>          volume_size = number<br/>        })<br/>      })<br/>    )<br/>    min_size = optional(number, 0)<br/>    max_size = optional(number, 1)<br/>  }))</pre> | `{}` | no |
-| <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `"Anonymous"` | no |
+| <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `null` | no |
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Unreal Horde load balancer. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created. | `string` | `null` | no |
 | <a name="input_container_api_port"></a> [container\_api\_port](#input\_container\_api\_port) | The container port for the Unreal Horde web server. | `number` | `5000` | no |
