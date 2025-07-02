@@ -17,14 +17,14 @@ output "super_user_password_secret_arn" {
   value = (var.super_user_password_secret_arn == null ?
     awscc_secretsmanager_secret.super_user_password[0].secret_id :
   var.super_user_password_secret_arn)
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username."
+  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password."
 }
 
 output "super_user_username_secret_arn" {
   value = (var.super_user_username_secret_arn == null ?
     awscc_secretsmanager_secret.super_user_username[0].secret_id :
   var.super_user_username_secret_arn)
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password."
+  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username."
 }
 
 output "instance_id" {
