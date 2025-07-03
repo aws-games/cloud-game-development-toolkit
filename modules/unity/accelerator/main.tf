@@ -57,6 +57,29 @@ resource "aws_efs_access_point" "unity_accelerator_efs_data_access_point" {
 }
 
 ####################################################
+# Unity Accelerator Secrets Manager
+####################################################
+# For web dashboard username and password
+
+resource "awscc_secretsmanager_secret" "dashboard_username_arn" {
+  count         = var.unity_accelerator_dashboard_username_arn == null ? 1 : 0
+  name          = "${local.name_prefix}-dashboard-username"
+  description   = "The Unity Accelerator web dashboard's username."
+  secret_string = "uauser"
+}
+
+resource "awscc_secretsmanager_secret" "dashboard_password_arn" {
+  count       = var.unity_accelerator_dashboard_password_arn == null ? 1 : 0
+  name        = "${local.name_prefix}-dashboard-password"
+  description = "The Unity Accelerator web dashboard's password."
+  generate_secret_string = {
+    exclude_numbers     = false
+    exclude_punctuation = true
+    include_space       = false
+  }
+}
+
+####################################################
 # ECS Cluster for Unity Accelerator
 ####################################################
 
@@ -119,15 +142,19 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
 
       secrets = [
         {
+          name      = "DASHBOARD_USERNAME"
+          valueFrom = local.dashboard_username_secret
+        },
+        {
           name      = "DASHBOARD_PASSWORD"
-          valueFrom = var.unity_accelerator_dashboard_password_arn
+          valueFrom = local.dashboard_password_secret
         }
       ]
 
       command = [
         <<-EOT
         /usr/local/bin/unity-accelerator register adbv2 &&
-        /usr/local/bin/unity-accelerator dashboard password ${var.unity_accelerator_dashboard_username} --password "$DASHBOARD_PASSWORD" &&
+        /usr/local/bin/unity-accelerator dashboard password "$DASHBOARD_USERNAME" --password "$DASHBOARD_PASSWORD" &&
         /usr/local/bin/unity-accelerator dashboard list &&
         /usr/local/bin/unity-accelerator run
         EOT
@@ -448,7 +475,10 @@ resource "aws_iam_policy" "secret_access_policy" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = [var.unity_accelerator_dashboard_password_arn]
+        Resource = [
+          local.dashboard_username_secret,
+          local.dashboard_password_secret
+        ]
       }
     ]
   })

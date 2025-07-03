@@ -89,20 +89,16 @@ variable "unity_accelerator_debug_mode" {
   default     = "false"
 }
 
-variable "unity_accelerator_dashboard_username" {
-  description = "Username for the Unity Accelerator dashboard."
+variable "unity_accelerator_dashboard_username_arn" {
+  description = "ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard username. Username must be the only value and stored as text, not as key/value JSON. If not passed, one will be created and defaulted to 'uauser'."
   type        = string
+  default     = null
 }
 
 variable "unity_accelerator_dashboard_password_arn" {
-  description = "ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard password. Password must be the only value and stored as text, not as key/value JSON."
+  description = "ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard password. Password must be the only value and stored as text, not as key/value JSON. If not passed, one will be created randomly."
   type        = string
-  sensitive   = true
-
-  validation {
-    condition     = can(regex("^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:.+$", var.unity_accelerator_dashboard_password_arn))
-    error_message = "The secret ARN must be a valid AWS Secrets Manager ARN format."
-  }
+  default     = null
 }
 
 ####################################################

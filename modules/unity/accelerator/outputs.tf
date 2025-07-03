@@ -17,3 +17,13 @@ output "nlb_zone_id" {
   value       = var.create_nlb ? aws_lb.unity_accelerator_external_nlb[0].zone_id : null
   description = "Zone ID for Network Load Balancer (NLB)"
 }
+
+output "unity_accelerator_dashboard_username_arn" {
+  value       = local.dashboard_username_secret
+  description = "AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's password."
+}
+
+output "unity_accelerator_dashboard_password_arn" {
+  value       = local.dashboard_password_secret
+  description = "AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's username."
+}

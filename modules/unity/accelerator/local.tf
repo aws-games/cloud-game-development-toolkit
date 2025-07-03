@@ -16,6 +16,11 @@ locals {
   efs_file_system_arn = var.efs_id != null ? data.aws_efs_file_system.efs_file_system[0].arn : aws_efs_file_system.unity_accelerator_efs[0].arn
   efs_access_point_id = var.efs_access_point_id != null ? var.efs_access_point_id : aws_efs_access_point.unity_accelerator_efs_data_access_point[0].id
 
+  # Unity Accelerator dashboard variables
+  # Will hold the ARN of the Secrets Manager secrets containing the username and password, whether they were provided by user or created through the flow
+  dashboard_username_secret = var.unity_accelerator_dashboard_username_arn == null ? awscc_secretsmanager_secret.dashboard_username_arn[0].secret_id : var.unity_accelerator_dashboard_username_arn
+  dashboard_password_secret = var.unity_accelerator_dashboard_password_arn == null ? awscc_secretsmanager_secret.dashboard_password_arn[0].secret_id : var.unity_accelerator_dashboard_password_arn
+
   # Unity Accelerator environment variables
   base_env = [
     {
@@ -33,10 +38,6 @@ locals {
     {
       name  = "UNITY_ACCELERATOR_LOG_STDOUT"
       value = var.unity_accelerator_log_stdout
-    },
-    {
-      name  = "USER"
-      value = var.unity_accelerator_dashboard_username
     }
   ]
 }
