@@ -1,10 +1,10 @@
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: "v8.23.1"
+    rev: "v8.27.2"
     hooks:
       - id: gitleaks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-merge-conflict
       - id: detect-private-key
@@ -14,12 +14,12 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/bridgecrewio/checkov
-    rev: "3.2.201"
+    rev: "3.2.445"
     hooks:
       - id: checkov
         args: ["--config-file", ".config/.checkov.yml"]
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: "v1.89.1"
+    rev: "v1.99.4"
     hooks:
       - id: terraform_docs
         args:
