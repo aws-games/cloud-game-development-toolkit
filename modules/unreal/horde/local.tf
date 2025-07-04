@@ -8,7 +8,6 @@ resource "random_string" "unreal_horde" {
 data "aws_region" "current" {}
 
 locals {
-  image       = "ghcr.io/epicgames/horde-server:latest-bundled"
   name_prefix = "${var.project_prefix}-${var.name}"
   tags = merge(var.tags, {
     "environment" = var.environment
