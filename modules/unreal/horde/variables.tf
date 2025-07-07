@@ -356,9 +356,51 @@ variable "docdb_storage_encrypted" {
 # ELASTICACHE CONFIG
 ######################
 
-variable "redis_connection_config" {
+variable "elasticache_engine" {
+  description = "The engine to use for ElastiCache (redis or valkey)"
   type        = string
-  description = "The redis connection configuration that Horde should use."
+  default     = "redis"
+  validation {
+    condition     = contains(["redis", "valkey"], var.elasticache_engine)
+    error_message = "Invalid engine. Must be one of: redis, valkey"
+  }
+}
+
+variable "elasticache_redis_engine_version" {
+  type        = string
+  description = "The version of the Redis engine to use."
+  default     = "7.0"
+}
+variable "elasticache_valkey_engine_version" {
+  type        = string
+  description = "The version of the ElastiCache engine to use."
+  default     = "7.2"
+}
+
+variable "elasticache_redis_parameter_group_name" {
+  type        = string
+  description = "The name of the Redis parameter group to use."
+  default     = "default.redis7"
+}
+variable "elasticache_valkey_parameter_group_name" {
+  type        = string
+  description = "The name of the Valkey parameter group to use."
+  default     = "default.valkey7"
+}
+variable "elasticache_port" {
+  type        = number
+  description = "The port for the ElastiCache cluster."
+  default     = 6379
+}
+variable "elasticache_cluster_count" {
+  type        = number
+  description = "Number of cache cluster to provision in the Elasticache cluster."
+  default     = 2
+}
+
+variable "custom_cache_connection_config" {
+  type        = string
+  description = "The redis-compatible connection configuration that Horde should use."
   default     = null
 }
 
