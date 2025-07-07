@@ -127,7 +127,7 @@ No modules.
 | <a name="input_admin_claim_type"></a> [admin\_claim\_type](#input\_admin\_claim\_type) | The claim type for administrators. | `string` | `null` | no |
 | <a name="input_admin_claim_value"></a> [admin\_claim\_value](#input\_admin\_claim\_value) | The claim value for administrators. | `string` | `null` | no |
 | <a name="input_agents"></a> [agents](#input\_agents) | Configures autoscaling groups to be used as build agents by Unreal Engine Horde. | <pre>map(object({<br/>    ami           = string<br/>    instance_type = string<br/>    block_device_mappings = list(<br/>      object({<br/>        device_name = string<br/>        ebs = object({<br/>          volume_size = number<br/>        })<br/>      })<br/>    )<br/>    min_size = optional(number, 0)<br/>    max_size = optional(number, 1)<br/>  }))</pre> | `{}` | no |
-| <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `"Anonymous"` | no |
+| <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `null` | no |
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Unreal Horde load balancer. | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created. | `string` | `null` | no |
 | <a name="input_container_api_port"></a> [container\_api\_port](#input\_container\_api\_port) | The container port for the Unreal Horde web server. | `number` | `5000` | no |
@@ -160,7 +160,8 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. Development, Staging, Production, etc.). This will tag ressources and set ASPNETCORE\_ENVIRONMENT variable. | `string` | `"Development"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Unreal Horde load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where your Unreal Engine Horde server will be available. This agents will use this to enroll. | `string` | n/a | yes |
-| <a name="input_github_credentials_secret_arn"></a> [github\_credentials\_secret\_arn](#input\_github\_credentials\_secret\_arn) | A secret containing the Github username and password with permissions to the EpicGames organization. | `string` | n/a | yes |
+| <a name="input_github_credentials_secret_arn"></a> [github\_credentials\_secret\_arn](#input\_github\_credentials\_secret\_arn) | A secret containing the Github username and password with permissions to the EpicGames organization. | `string` | `null` | no |
+| <a name="input_image"></a> [image](#input\_image) | The Horde Server image to use in the ECS service. | `string` | `"ghcr.io/epicgames/horde-server:latest-bundled"` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Unreal Engine Horde module resources. | `string` | `"unreal-horde"` | no |
 | <a name="input_oidc_audience"></a> [oidc\_audience](#input\_oidc\_audience) | The audience used for validating externally issued tokens. | `string` | `null` | no |
 | <a name="input_oidc_authority"></a> [oidc\_authority](#input\_oidc\_authority) | The authority for the OIDC authentication provider used. | `string` | `null` | no |

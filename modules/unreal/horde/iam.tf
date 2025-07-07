@@ -64,6 +64,7 @@ resource "aws_iam_role" "unreal_horde_default_role" {
 }
 
 data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
+  count = var.github_credentials_secret_arn != null ? 1 : 0
   statement {
     effect = "Allow"
     actions = [
@@ -76,14 +77,17 @@ data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
 }
 
 resource "aws_iam_policy" "unreal_horde_secrets_manager_policy" {
+  count       = var.github_credentials_secret_arn != null ? 1 : 0
   name        = "${var.project_prefix}-unreal-horde-secrets-manager-policy"
   description = "Policy granting permissions for Unreal Horde task execution role to access SSM."
-  policy      = data.aws_iam_policy_document.unreal_horde_secrets_manager_policy.json
+  policy      = data.aws_iam_policy_document.unreal_horde_secrets_manager_policy[0].json
 }
 
 resource "aws_iam_role" "unreal_horde_task_execution_role" {
   name = "${var.project_prefix}-unreal_horde-task-execution-role"
 
-  assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy", aws_iam_policy.unreal_horde_secrets_manager_policy.arn]
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+  managed_policy_arns = concat([
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+  ], [for policy in aws_iam_policy.unreal_horde_secrets_manager_policy : policy.arn])
 }
