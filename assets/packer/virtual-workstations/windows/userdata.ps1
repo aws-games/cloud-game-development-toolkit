@@ -1,74 +1,108 @@
-# Core PowerShell script fed into EC2 User Data. Calls other PS Scripts
-
 <powershell>
-# Set vars for installation locations
-$driveLetter = "C:"
-$tempDir = "temp"
-$installationDir = "CGD-Workstation-Tools"
+# Create log directory first thing
+$logDir = "C:\Windows\Temp"
+$logFile = "$logDir\userdata-log.txt"
 
-# Create temp directory for script logging
-New-Item -ItemType Directory -Force -Path "$driveLetter\temp"
-
-# Define script paths
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$baseSetupScript = Join-Path $scriptDir "base_setup.ps1"
-$gitScript = Join-Path $scriptDir "install_git.ps1"
-$terraformScript = Join-Path $scriptDir "install_terraform.ps1"
-$vscodeScript = Join-Path $scriptDir "install_vscode.ps1"
-# Add more script paths as needed
-
-# Function to run external scripts
-function Invoke-ExternalScript {
+function Write-Log {
     param (
-        [string]$ScriptPath,
-        [string]$ScriptName
+        [string]$Message
     )
 
-    if (Test-Path $ScriptPath) {
-        Write-Information "Running $ScriptName script..." -InformationAction Continue
-        try {
-            # Dot-source the script to run in the current scope
-            . $ScriptPath
-            Write-Information "$ScriptName script completed successfully" -InformationAction Continue
-        }
-        catch {
-            Write-Error "Failed to run $ScriptName script. Error: $_" -ErrorAction Continue
-        }
-    }
-    else {
-        Write-Warning "Script not found: $ScriptPath" -WarningAction Continue
-    }
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] $Message"
+
+    # Write to log file
+    $logMessage | Out-File -FilePath $logFile -Append
+
+    # Write to console
+    Write-Output $logMessage
 }
 
-# Run base setup first
-Invoke-ExternalScript -ScriptPath $baseSetupScript -ScriptName "Base Setup"
+Write-Log "Starting User Data Script"
 
-# Run software installation scripts if they exist
-Invoke-ExternalScript -ScriptPath $gitScript -ScriptName "Git Installation"
-Invoke-ExternalScript -ScriptPath $terraformScript -ScriptName "Terraform Installation"
-Invoke-ExternalScript -ScriptPath $vscodeScript -ScriptName "VS Code Installation"
-# Add more script calls as needed
+Set-ExecutionPolicy Unrestricted -Scope LocalMachine -Force -ErrorAction Ignore
 
-# Create EC2Launch script for profile initialization
-Write-Information "Creating EC2Launch script for profile initialization..." -InformationAction Continue
-$ec2LaunchDir = "C:\ProgramData\Amazon\EC2-Windows\Launch\Scripts"
-if (-not (Test-Path $ec2LaunchDir)) {
-    New-Item -ItemType Directory -Path $ec2LaunchDir -Force | Out-Null
+# Don't set this before Set-ExecutionPolicy as it throws an error
+$ErrorActionPreference = "stop"
+
+# Create log file
+if (-not (Test-Path -Path $logDir)) {
+    New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    Write-Log "Created log directory: $logDir"
 }
 
-# Get the username that was created in base_setup.ps1
-$username = (Get-LocalUser | Where-Object { $_.Name -ne "Administrator" -and $_.Enabled -eq $true } | Select-Object -First 1).Name
+"User Data script started at $(Get-Date)" | Out-File -FilePath $logFile -Force
 
-$profileInitScript = @"
-# Initialize user profile for $username
-`$taskName = "InitUserProfile_$username"
-`$action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c echo Profile initialized"
-`$trigger = New-ScheduledTaskTrigger -AtLogOn -User "$username"
-`$settings = New-ScheduledTaskSettingsSet -DeleteExpiredTaskAfter "00:00:01"
-`$principal = New-ScheduledTaskPrincipal -UserId "$username" -LogonType Interactive -RunLevel Highest
-Register-ScheduledTask -TaskName `$taskName -Action `$action -Trigger `$trigger -Settings `$settings -Principal `$principal -Force
-"@
+# Remove HTTP listener
+Write-Log "Removing existing WinRM listeners"
+try {
+    Remove-Item -Path WSMan:\Localhost\listener\listener* -Recurse -ErrorAction SilentlyContinue
+    Write-Log "Existing listeners removed"
+}
+catch {
+    Write-Log "Error removing listeners: $_"
+}
 
-Set-Content -Path "$ec2LaunchDir\InitUserProfile.ps1" -Value $profileInitScript
-Write-Information "EC2Launch script created for profile initialization" -InformationAction Continue
+Write-Log "Configuring WinRM settings"
+Set-Item WSMan:\localhost\MaxTimeoutms 1800000
+Set-Item WSMan:\localhost\Service\Auth\Basic $true
+
+Write-Log "Creating self-signed certificate for WinRM"
+$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName "packer"
+Write-Log "Certificate created with thumbprint: $($Cert.Thumbprint)"
+
+Write-Log "Creating WinRM HTTPS listener"
+New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
+
+# WinRM
+Write-Log "Setting up WinRM"
+
+Write-Log "Running WinRM configuration commands"
+
+try {
+    Write-Log "Running winrm quickconfig"
+    cmd.exe /c winrm quickconfig -q
+
+    Write-Log "Setting WinRM config parameters"
+    cmd.exe /c winrm set "winrm/config" '@{MaxTimeoutms="1800000"}'
+    cmd.exe /c winrm set "winrm/config/winrs" '@{MaxMemoryPerShellMB="1024"}'
+    cmd.exe /c winrm set "winrm/config/service" '@{AllowUnencrypted="true"}'
+    cmd.exe /c winrm set "winrm/config/client" '@{AllowUnencrypted="true"}'
+    cmd.exe /c winrm set "winrm/config/service/auth" '@{Basic="true"}'
+    cmd.exe /c winrm set "winrm/config/client/auth" '@{Basic="true"}'
+    cmd.exe /c winrm set "winrm/config/service/auth" '@{CredSSP="true"}'
+
+    Write-Log "Setting up WinRM HTTPS listener"
+    cmd.exe /c winrm set "winrm/config/listener?Address=*+Transport=HTTPS" "@{Port=`"5986`";Hostname=`"packer`";CertificateThumbprint=`"$($Cert.Thumbprint)`"}"
+
+    Write-Log "Configuring Windows Firewall"
+    cmd.exe /c netsh advfirewall firewall set rule group="remote administration" new enable=yes
+    cmd.exe /c netsh advfirewall firewall add rule name="WinRM-HTTPS" dir=in localport=5986 protocol=TCP action=allow
+    cmd.exe /c netsh firewall add portopening TCP 5986 "Port 5986"
+
+    Write-Log "Restarting WinRM service"
+    cmd.exe /c net stop winrm
+    cmd.exe /c sc config winrm start= auto
+    cmd.exe /c net start winrm
+
+    Write-Log "WinRM configuration completed successfully"
+}
+catch {
+    Write-Log "Error configuring WinRM: $_"
+}
+
+# Verify WinRM is running
+try {
+    $service = Get-Service -Name winrm
+    Write-Log "WinRM service status: $($service.Status)"
+
+    # Check listeners
+    $listeners = cmd.exe /c winrm enumerate winrm/config/listener
+    Write-Log "WinRM listeners: $listeners"
+}
+catch {
+    Write-Log "Error checking WinRM status: $_"
+}
+
+Write-Log "User Data script completed at $(Get-Date)"
 </powershell>

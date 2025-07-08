@@ -8,8 +8,8 @@ packer {
 }
 
 variable "region" {
-    type = string
-    default = null
+  type = string
+  default = null
 }
 
 variable "vpc_id" {
@@ -38,22 +38,14 @@ variable "ssh_interface" {
 }
 
 variable "ami_prefix" {
-  type    = string
-  default = "windows-server-2022"
+  type = string
+  default = "windows-server-2025"
 }
 
-variable "setup_jenkins_agent" {
-  type = bool
-  default = true
-}
-
-variable "install_vs_tools" {
-  type = bool
-  default = true
-}
 
 variable "public_key" {
   type = string
+  default = ""  # Empty default, but pkrvars file should provide a real value
 }
 
 variable "root_volume_size" {
@@ -61,83 +53,84 @@ variable "root_volume_size" {
   default = 64
 }
 
+variable "admin_password" {
+  type = string
+  default = null
+  sensitive = true
+}
+
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
 
-data "amazon-ami" "windows22" {
+data "amazon-ami" "windows2025" {
   region = var.region
   filters = {
-    name = "Windows_Server-2022-English-Full-Base-*"
-    root-device-type    = "ebs"
+    name = "Windows_Server-2025-English-Full-Base-*"
+    root-device-type = "ebs"
     virtualization-type = "hvm"
   }
   most_recent = true
-  owners      = ["amazon"]
+  owners = ["amazon"]
 }
 
 source "amazon-ebs" "base" {
-  ami_name      = "${var.ami_prefix}-${local.timestamp}"
+  ami_name = "${var.ami_prefix}-${local.timestamp}"
   instance_type = var.instance_type
+  region = var.region
+  source_ami = data.amazon-ami.windows2025.id
 
-  # AMI specifications
-  region        = var.region
-  source_ami    = data.amazon-ami.windows22.id
-
-  # windows uses winRM communicator
   communicator = "winrm"
   force_deregister = true
   winrm_insecure = true
   winrm_username = "Administrator"
   winrm_use_ssl = true
-  winrm_timeout = "15m"
+  winrm_timeout = "30m"
   user_data_file = "./userdata.ps1"
 
-  # network specific details
   vpc_id = var.vpc_id
   subnet_id = var.subnet_id
   associate_public_ip_address = var.associate_public_ip_address
   ssh_interface = var.ssh_interface
 
-  # storage specifications - expand root
   launch_block_device_mappings {
     device_name = "/dev/sda1"
     volume_size = var.root_volume_size
     volume_type = "gp3"
     delete_on_termination = true
   }
+    aws_polling {
+    delay_seconds = 30
+    max_attempts = 120  # Increase this value to extend the timeout (120 * 30 seconds = 1 hour)
+  }
 }
 
 build {
-  name = "windows-builder"
-  sources = [
-    "source.amazon-ebs.base",
-  ]
+  name = "windows-server-2025-builder"
+  sources = ["source.amazon-ebs.base"]
 
-  # Execute sample script
+  # Run the base_setup_with_gpu_check script (core system setup)
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
-    script           = "./base_setup.ps1"
+    script = "./base_setup_with_gpu_check.ps1"
   }
 
-  # Execute sample script
+  # Run the dev tools installation script
   provisioner "powershell" {
-    only = var.setup_jenkins_agent ? ["amazon-ebs.base"] : []
     elevated_user = "Administrator"
     elevated_password = build.Password
-    script           = "./setup_jenkins_agent.ps1"
+    script = "./dev_tools.ps1"
   }
 
-  # Execute sample script
+  # Run the Unreal Engine development environment setup script
   provisioner "powershell" {
-    only = var.install_vs_tools ? ["amazon-ebs.base"] : []
     elevated_user = "Administrator"
     elevated_password = build.Password
-    script           = "./install_vs_tools.ps1"
+    script = "./unreal_dev.ps1"
   }
 
-  # Copy SSH public key to agent AMI
+  # Set up SSH authorized keys
   provisioner "powershell" {
     elevated_user = "Administrator"
     elevated_password = build.Password
@@ -147,4 +140,7 @@ build {
       "Get-Disk | where partitionstyle -eq \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false"
     ]
   }
+
+  # Note: Administrator password should be set after instance launch using SSM and the 'net user' command
+  # See README.md for instructions on setting the password
 }
