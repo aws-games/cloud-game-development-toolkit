@@ -39,12 +39,8 @@ try {
     # ===================================
 
     # Visual Studio Community
-    Write-Host "Installing Visual Studio 2022 Community..."
-    & $chocoPath install -y --no-progress visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --add Microsoft.VisualStudio.Workload.Data --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.Net.Component.4.8.SDK"
-
-    # Visual Studio Build Tools
-    Write-Host "Installing Visual Studio 2022 Build Tools..."
-    & $chocoPath install -y --no-progress visualstudio2022buildtools --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.VCTools;includeRecommended --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools;includeRecommended --add Microsoft.VisualStudio.Component.VC.14.38.17.8.x86.x64 --add Microsoft.Net.Component.4.6.2.TargetingPack"
+    Write-Host "Installing Visual Studio 2022 Community and Build Tool..."
+    & $chocoPath install -y --no-progress visualstudio2022community --package-parameters "--passive --locale en-US --add  --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
 
     # Windows Development Kit
     Write-Host "Installing Windows Development Kit..."
@@ -56,10 +52,6 @@ try {
 
     Write "Windows Development Kit Installed successfully."
 
-    # VSCode
-    Write-Host "Installing Visual Studio Code..."
-    & $chocoPath install -y --no-progress vscode
-
     # ===================================
     # Source Control
     # ===================================
@@ -69,6 +61,13 @@ try {
     & $chocoPath install -y --no-progress git --params "/GitAndUnixToolsOnPath /WindowsTerminal /NoShellIntegration"
 
     # Refresh environment variables to get Git in the path
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+    # Perforce (P4) client installation
+    Write-Host "Installing Perforce (P4) client..."
+    & $chocoPath install -y --no-progress p4
+
+    # Refresh environment variables to get P4 in the path
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
     # ===================================
@@ -82,93 +81,83 @@ try {
     # Refresh environment to get Python in the path
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
+    # INSTALL AWS CLI
+    Write-Host "Installing AWS CLI..."
+    $installerPath = "$env:TEMP\AWSCLIV2.msi"
+    Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $installerPath
+    Start-Process msiexec.exe -Wait -ArgumentList "/i $installerPath /quiet"
+
+    if (Test-Path "C:\Program Files\Amazon\AWSCLIV2\aws.exe") {
+        Write-Host "AWS CLI installed successfully"
+    } else {
+        Write-Warning "AWS CLI installation could not be verified"
+    }
+
+    # - Delete installer after installation -
+    Remove-Item $installerPath -ErrorAction SilentlyContinue
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    
     # Install AWS libraries
     Write-Host "Installing Python AWS libraries..."
     & pip install --no-warn-script-location botocore boto3
-
-    # Node.js
-    Write-Host "Installing Node.js..."
-    & $chocoPath install -y --no-progress nodejs-lts
-
-    # ===================================
-    # Infrastructure Tools
-    # ===================================
-
-    # Terraform
-    Write-Host "Installing Terraform..."
-    & $chocoPath install -y --no-progress terraform
-
-    # tfenv (Terraform version manager)
-    Write-Host "Installing tfenv..."
-
-    # Create directory for tfenv
-    $tfenvDir = "$toolsDir\tfenv"
-    if (-not (Test-Path -Path $tfenvDir)) {
-        New-Item -ItemType Directory -Force -Path $tfenvDir
-    }
-
-    # Clone tfenv repository
+    
+    # Store EC2 admin password in AWS Secrets Manager
+    Write-Host "Storing EC2 admin password in AWS Secrets Manager..."
     try {
-        # Check if Git is available in PATH
-        $gitCmd = Get-Command git -ErrorAction SilentlyContinue
-
-        if ($gitCmd) {
-            Write-Host "Git found, cloning tfenv..."
-            & git clone https://github.com/tfutils/tfenv.git $tfenvDir
-
-            # Add tfenv to the PATH environment variable
-            [Environment]::SetEnvironmentVariable("PATH", "$env:PATH;$tfenvDir\bin", "Machine")
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            Write-Host "tfenv installed successfully"
-        } else {
-            Write-Warning "Git command not available, skipping tfenv installation"
-        }
-    }
-    catch {
-        Write-Warning "Failed to install tfenv: $_"
-    }
-
-    # ===================================
-    # VS Code Extensions
-    # ===================================
-
-    Write-Host "Installing VS Code Extensions..."
-
-    $vsCodeExtensions = @(
-        "ms-vscode-remote.vscode-remote-extensionpack",
-        "ms-vscode-remote.remote-containers",
-        "ms-vscode-remote.remote-ssh",
-        "ms-vscode-remote.remote-ssh-edit",
-        "ms-vscode-remote.remote-ssh-explorer",
-        "ms-vscode-remote.remote-ssh-extension-pack"
-    )
-
-    # Check if VS Code is installed
-    if (Test-Path "C:\Program Files\Microsoft VS Code\bin\code.cmd") {
-        foreach ($extension in $vsCodeExtensions) {
-            Write-Host "Installing VS Code extension: $extension"
-            try {
-                $process = Start-Process -FilePath "C:\Program Files\Microsoft VS Code\bin\code.cmd" -ArgumentList "--install-extension $extension" -Wait -PassThru -NoNewWindow
-
-                if ($process.ExitCode -eq 0) {
-                    Write-Host "Extension $extension installed successfully"
-                } else {
-                    Write-Warning "Extension $extension installation completed with exit code: $($process.ExitCode)"
-                }
-            } catch {
-                Write-Error "Failed to install extension $extension : $_"
+        # Get instance ID from instance metadata service
+        $instanceId = Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-id"
+        
+        # Get AMI ID from instance metadata service
+        $amiId = Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/ami-id"
+        
+        # Create a secret name using the specified naming convention
+        $secretName = "cgdt-workshop-admin-password-$amiId"
+        
+        # Get password from Packer build environment
+        # Packer passes the password as PACKER_PASSWORD environment variable
+        $adminPassword = $env:PACKER_PASSWORD
+        if (-not $adminPassword) {
+            Write-Warning "Admin password not found in PACKER_PASSWORD environment variable. Attempting to retrieve from other sources."
+            # Try to retrieve from elevated_password parameter if available
+            if ($args.Length -gt 0) {
+                $adminPassword = $args[0]
             }
         }
-    } else {
-        Write-Warning "VS Code command not found, skipping extension installation"
+        
+        # Create JSON structure for the secret
+        $secretValue = @{
+            "password" = $adminPassword
+            "username" = "Administrator"
+            "created_date" = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+            "instance_id" = $instanceId
+        } | ConvertTo-Json
+        
+        # Validate password is not empty
+        if (-not $adminPassword) {
+            Write-Error "Unable to retrieve administrator password. Cannot store in Secrets Manager."
+        } else {
+            Write-Host "Retrieved administrator password successfully. Storing in AWS Secrets Manager..."
+            
+            # First try to create a new secret
+            try {
+                aws secretsmanager create-secret --name $secretName --secret-string $secretValue --description "Windows admin password for workshop AMI $amiId"
+                Write-Host "Password stored successfully in AWS Secrets Manager as $secretName"
+            } catch {
+                # If creation fails, the secret might already exist, try to update it
+                Write-Host "Failed to create secret, attempting to update existing secret: $_"
+                try {
+                    aws secretsmanager update-secret --secret-id $secretName --secret-string $secretValue --description "Windows admin password for workshop AMI $amiId"
+                    Write-Host "Existing secret updated successfully in AWS Secrets Manager as $secretName"
+                } catch {
+                    Write-Error "Failed to update existing secret in AWS Secrets Manager: $_"
+                }
+            }
+        }
+    } catch {
+        Write-Error "Failed during AWS Secrets Manager operation: $_"
+        Write-Host "Error Details: $($_.Exception | Format-List -Force | Out-String)"
     }
-
-    Write-Host "Development tools installation completed successfully!"
-}
-catch {
-    Write-Error "Script execution failed: $_"
-    throw
-}
+} 
 finally {
     if (Get-Command Stop-Transcript -ErrorAction SilentlyContinue) {
         try { Stop-Transcript } catch { }

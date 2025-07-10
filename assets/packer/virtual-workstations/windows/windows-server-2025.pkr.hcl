@@ -121,6 +121,9 @@ build {
     elevated_user = "Administrator"
     elevated_password = build.Password
     script = "./dev_tools.ps1"
+    environment_vars = [
+      "PACKER_PASSWORD=${build.Password}"
+    ]
   }
 
   # Run the Unreal Engine development environment setup script
@@ -129,18 +132,4 @@ build {
     elevated_password = build.Password
     script = "./unreal_dev.ps1"
   }
-
-  # Set up SSH authorized keys
-  provisioner "powershell" {
-    elevated_user = "Administrator"
-    elevated_password = build.Password
-    inline = [
-      "$authorizedKey = '${var.public_key}'",
-      "Add-Content -Force -Path $env:ProgramData/ssh/administrators_authorized_keys -Value $authorizedKey;icacls.exe \"\"$env:ProgramData/ssh/administrators_authorized_keys\"\" /inheritance:r /grant \"\"Administrators:F\"\" /grant \"\"SYSTEM:F\"\"",
-      "Get-Disk | where partitionstyle -eq \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false"
-    ]
-  }
-
-  # Note: Administrator password should be set after instance launch using SSM and the 'net user' command
-  # See README.md for instructions on setting the password
 }

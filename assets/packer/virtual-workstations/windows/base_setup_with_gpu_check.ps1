@@ -40,22 +40,6 @@ try {
     Start-Service AmazonSSMAgent
     Write-Host "SSM service configured"
 
-    # - INSTALL AWS CLI -
-    Write-Host "Installing AWS CLI..."
-    $installerPath = "$env:TEMP\AWSCLIV2.msi"
-    Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $installerPath
-    Start-Process msiexec.exe -Wait -ArgumentList "/i $installerPath /quiet"
-
-    if (Test-Path "C:\Program Files\Amazon\AWSCLIV2\aws.exe") {
-        Write-Host "AWS CLI installed successfully"
-    } else {
-        Write-Warning "AWS CLI installation could not be verified"
-    }
-
-    # - Delete installer after installation -
-    Remove-Item $installerPath -ErrorAction SilentlyContinue
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
     # - INSTALL CHOCOLATEY -
     Write-Host "Installing Chocolatey..."
     Set-ExecutionPolicy Bypass -Scope Process -Force
@@ -77,44 +61,6 @@ try {
         Write-Host "Visual C++ Redistributable installed"
     } else {
         Write-Warning "Chocolatey installation could not be verified"
-    }
-
-    # - INSTALL OPENSSH SERVER -
-    Write-Host "Installing OpenSSH Server..."
-    Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-    Set-Service -Name sshd -StartupType 'Automatic'
-    Start-Service sshd
-
-    $sshService = Get-Service -Name sshd -ErrorAction SilentlyContinue
-    if ($sshService -and $sshService.Status -eq 'Running') {
-        Write-Host "OpenSSH Server installed and running"
-    } else {
-        Write-Warning "OpenSSH Server installation could not be verified"
-    }
-
-    # - INSTALL NFS CLIENT -
-    Write-Host "Installing NFS Client feature..."
-
-    # Install NFS Client Windows feature
-    $nfsclient = Install-WindowsFeature -Name NFS-Client
-
-    if ($nfsclient.Success) {
-        Write-Host "NFS Client feature installed successfully"
-        Write-Host "Reboot required: $($nfsclient.RestartNeeded)"
-
-        # Configure NFS client settings for better performance with Unix/Linux NFS servers
-        Write-Host "Configuring NFS client settings..."
-
-        # Enable case sensitivity in NFS
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ClientForNFS\CurrentVersion\Default" -Name "CaseSensitive" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-
-        # Use NFS v3 by default (more widely compatible)
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\ClientForNFS\CurrentVersion\Default" -Name "UseReservedPorts" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-        # Restart the NFS client service to apply changes
-        Restart-Service NfsClnt -Force -ErrorAction SilentlyContinue
-    } else {
-        Write-Error "NFS Client feature installation failed"
     }
 
     # - INSTALL AMAZON DCV -
