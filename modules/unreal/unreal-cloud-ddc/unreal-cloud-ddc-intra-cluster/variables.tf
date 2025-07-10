@@ -28,9 +28,24 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "region" {
+  type    = string
+  default = "us-west-2"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Name of the EKS Cluster"
+}
+
+variable "cluster_endpoint" {
+  type        = string
+  description = "Endpoint of the EKS Cluster"
+}
+
+variable "cluster_version" {
+  type        = string
+  description = "Version of the EKS Cluster"
 }
 variable "cluster_oidc_provider_arn" {
   type        = string
