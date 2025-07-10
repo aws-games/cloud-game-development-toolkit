@@ -21,10 +21,10 @@ module "eks_blueprints_all_other_addons" {
   }
 
 
-  cluster_name      = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
-  cluster_endpoint  = data.aws_eks_cluster.unreal_cloud_ddc_cluster.endpoint
-  cluster_version   = data.aws_eks_cluster.unreal_cloud_ddc_cluster.version
-  oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
+  cluster_name      = var.cluster_name
+  cluster_endpoint  = var.cluster_endpoint
+  cluster_version   = var.cluster_version
+  oidc_provider_arn = var.cluster_oidc_provider_arn
 
   enable_aws_load_balancer_controller = true
   enable_aws_cloudwatch_metrics       = true
@@ -65,15 +65,17 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   ecr_repository_prefix = "github"
   upstream_registry_url = "ghcr.io"
   credential_arn        = var.ghcr_credentials_secret_manager_arn
+  region                = var.region
 }
 
 resource "helm_release" "unreal_cloud_ddc" {
   name         = "unreal-cloud-ddc"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
+  timeout      = 1000
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
