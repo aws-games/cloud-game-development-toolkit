@@ -122,6 +122,8 @@ module "unreal_cloud_ddc_intra_cluster" {
 
   source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
+  cluster_version                     = module.unreal_cloud_ddc_infra.cluster_version
+  cluster_endpoint                    = module.unreal_cloud_ddc_infra.cluster_endpoint
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn
 
