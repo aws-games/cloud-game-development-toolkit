@@ -121,9 +121,6 @@ build {
     elevated_user = "Administrator"
     elevated_password = build.Password
     script = "./dev_tools.ps1"
-    environment_vars = [
-      "PACKER_PASSWORD=${build.Password}"
-    ]
   }
 
   # Run the Unreal Engine development environment setup script

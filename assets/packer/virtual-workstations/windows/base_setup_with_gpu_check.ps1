@@ -24,7 +24,10 @@ try {
     }
     Write-Host "Created installation directory: $driveLetter\$installationDir"
 
-    # - GENERAL SETUP -
+    # =============
+    # GENERAL SETUP 
+    # =============
+    
     # Metadata retrieval
     Write-Host "Retrieving EC2 instance metadata..."
     $token = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{"X-aws-ec2-metadata-token-ttl-seconds"="21600"} -UseBasicParsing).Content
@@ -34,13 +37,13 @@ try {
     Write-Host "Instance ID: $instanceId"
     Write-Host "Region: $region"
 
-    # - CONFIGURE SSM FOR CONNECTIVITY -
+    # CONFIGURE SSM FOR CONNECTIVITY
     Write-Host "Configuring SSM service..."
     Set-Service AmazonSSMAgent -StartupType Automatic
     Start-Service AmazonSSMAgent
     Write-Host "SSM service configured"
 
-    # - INSTALL CHOCOLATEY -
+    # INSTALL CHOCOLATEY 
     Write-Host "Installing Chocolatey..."
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = 3072
@@ -56,14 +59,11 @@ try {
     $chocoPath = "C:\ProgramData\chocolatey\bin\choco.exe"
     if (Test-Path $chocoPath) {
         Write-Host "Chocolatey installed successfully"
-        # Install Visual C++ Redistributable
-        & $chocoPath install --no-progress -y vcredist140
-        Write-Host "Visual C++ Redistributable installed"
     } else {
         Write-Warning "Chocolatey installation could not be verified"
     }
 
-    # - INSTALL AMAZON DCV -
+    # INSTALL AMAZON DCV 
     Write-Host "Installing Amazon DCV..."
     $dcvUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
     $dcvInstaller = "$driveLetter\$installationDir\nice-dcv-installer.msi"
@@ -85,7 +85,10 @@ try {
 
     Write-Host "DCV installation and configuration completed"
 
-    # - GPU DETECTION AND DRIVER INSTALLATION -
+    # =====================================
+    # GPU DETECTION AND DRIVER INSTALLATION
+    # =====================================
+    
     # Define driver type variable
     $driverType = "NVIDIA-Tesla"
 

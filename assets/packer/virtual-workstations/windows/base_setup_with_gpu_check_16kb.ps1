@@ -11,21 +11,24 @@ try {
     # Start transcript to write script logs to a file
     Start-Transcript -Path "$driveLetter\$tempDir\cgd-workstation-config.txt" -Force
 
-    # - GENERAL SETUP -
+    # =============
+    # GENERAL SETUP 
+    # =============
+
     # Metadata retrieval
     $token = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{"X-aws-ec2-metadata-token-ttl-seconds"="21600"} -UseBasicParsing).Content
     $instanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -Headers @{"X-aws-ec2-metadata-token"=$token} -UseBasicParsing).Content
     $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token"=$token} -UseBasicParsing).Content
 
-    # - CONFIGURE SSM FOR CONNECTIVITY -
+    # CONFIGURE SSM FOR CONNECTIVITY
     Set-Service AmazonSSMAgent -StartupType Automatic
     Start-Service AmazonSSMAgent
 
-    # - INSTALL GENERAL POWERSHELL TOOLS -
+    # INSTALL GENERAL POWERSHELL TOOLS
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
-    # - INSTALL AWS POWERSHELL TOOLS -
+    # INSTALL AWS POWERSHELL TOOLS
     # Remove existing AWS modules if they exist
     Get-Module AWS.Tools.* | Remove-Module -Force -ErrorAction SilentlyContinue
     Get-Module AWS.Tools.* -ListAvailable | ForEach-Object {
@@ -40,18 +43,21 @@ try {
         Import-Module $module -RequiredVersion $latestVersion -Force
     }
 
-    # - INSTALL AWS CLI -
+    # INSTALL AWS CLI
     $installerPath = "$env:TEMP\AWSCLIV2.msi"
     Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $installerPath
     Start-Process msiexec.exe -Wait -ArgumentList "/i $installerPath /quiet"
     Remove-Item $installerPath -ErrorAction SilentlyContinue
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
-    # - WINDOWS USER CONFIGURATION -
+    # WINDOWS USER CONFIGURATION
     Initialize-AWSDefaultConfiguration
     $username = "Administrator"
 
-    # - ADDITIONAL SOFTWARE INSTALLATION -
+    # ================================
+    # ADDITIONAL SOFTWARE INSTALLATION
+    # ================================
+
     # Install Chocolatey and packages
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = 3072
@@ -60,7 +66,10 @@ try {
     choco install --no-progress -y awscli vcredist140
     [Environment]::SetEnvironmentVariable("AWS_CLI_AUTO_PROMPT", "on-partial", "Machine")
     
-    # - GPU DETECTION AND DRIVER INSTALLATION -
+    # =====================================
+    # GPU DETECTION AND DRIVER INSTALLATION
+    # =====================================
+
     $driverVersion = "573.07"
     $LocalPathDrivers = "$driveLetter\$installationDir\Drivers"
     if (-not (Test-Path "$driveLetter\$installationDir")) {
@@ -112,7 +121,7 @@ try {
         }
     }
 
-    # - INSTALL AMAZON DCV -
+    # INSTALL AMAZON DCV
     $dcvUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
     $dcvInstaller = "$driveLetter\$installationDir\nice-dcv-installer.msi"
     $listenPort = 8443
@@ -129,14 +138,13 @@ try {
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v quic-port /t REG_DWORD /d $listenPort /f
     reg.exe add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display" /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
     reg.exe add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display" /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
-
-    # - RESTART EC2 INSTANCE -
-    shutdown /r /t 10 /f
 }
+
 catch {
     Write-Error "Script execution failed: $_"
     throw
 }
+
 finally {
     if (Get-Command Stop-Transcript -ErrorAction SilentlyContinue) {
         try { Stop-Transcript } catch { }
