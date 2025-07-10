@@ -25,9 +25,9 @@ try {
     Write-Host "Created installation directory: $driveLetter\$installationDir"
 
     # =============
-    # GENERAL SETUP 
+    # GENERAL SETUP
     # =============
-    
+
     # Metadata retrieval
     Write-Host "Retrieving EC2 instance metadata..."
     $token = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{"X-aws-ec2-metadata-token-ttl-seconds"="21600"} -UseBasicParsing).Content
@@ -43,7 +43,7 @@ try {
     Start-Service AmazonSSMAgent
     Write-Host "SSM service configured"
 
-    # INSTALL CHOCOLATEY 
+    # INSTALL CHOCOLATEY
     Write-Host "Installing Chocolatey..."
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = 3072
@@ -63,7 +63,7 @@ try {
         Write-Warning "Chocolatey installation could not be verified"
     }
 
-    # INSTALL AMAZON DCV 
+    # INSTALL AMAZON DCV
     Write-Host "Installing Amazon DCV..."
     $dcvUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
     $dcvInstaller = "$driveLetter\$installationDir\nice-dcv-installer.msi"
@@ -88,7 +88,7 @@ try {
     # =====================================
     # GPU DETECTION AND DRIVER INSTALLATION
     # =====================================
-    
+
     # Define driver type variable
     $driverType = "NVIDIA-Tesla"
 

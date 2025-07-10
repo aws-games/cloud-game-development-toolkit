@@ -12,7 +12,7 @@ try {
     Start-Transcript -Path "$driveLetter\$tempDir\cgd-workstation-config.txt" -Force
 
     # =============
-    # GENERAL SETUP 
+    # GENERAL SETUP
     # =============
 
     # Metadata retrieval
@@ -65,7 +65,7 @@ try {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     choco install --no-progress -y awscli vcredist140
     [Environment]::SetEnvironmentVariable("AWS_CLI_AUTO_PROMPT", "on-partial", "Machine")
-    
+
     # =====================================
     # GPU DETECTION AND DRIVER INSTALLATION
     # =====================================
@@ -78,7 +78,7 @@ try {
     if (-not (Test-Path $LocalPathDrivers)) {
         New-Item -ItemType Directory -Path $LocalPathDrivers -Force
     }
-    
+
     # Check if GPU is present
     $gpuPresent = $false
     $videoControllers = Get-WmiObject Win32_VideoController
@@ -88,14 +88,14 @@ try {
             break
         }
     }
-    
+
     if ($gpuPresent) {
         # Install NVIDIA Tesla drivers
         $teslaUrls = @(
             "https://us.download.nvidia.com/tesla/$driverVersion/$driverVersion-data-center-tesla-desktop-winserver-2022-dch-international.exe",
             "https://us.download.nvidia.com/tesla/$driverVersion/$driverVersion-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe"
         )
-        
+
         $driverDownloaded = $false
         foreach ($url in $teslaUrls) {
             try {
@@ -110,7 +110,7 @@ try {
             }
             catch { }
         }
-        
+
         if ($driverDownloaded) {
             # Install Nvidia Desktop Manager
             try {
