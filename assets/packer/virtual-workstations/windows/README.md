@@ -35,11 +35,6 @@ instance_type = "g4dn.4xlarge"   # Instance type to use for building (use GPU-en
 root_volume_size = 512           # Size of root volume in GB
 
 ami_prefix = "windows-server-2025-workstation" # Prefix for the AMI name
-
-# Add your SSH public key here (starts with ssh-rsa)
-public_key = <<EOF
-ssh-rsa AAAAB3NzaC1yc2E... your_public_key_here
-EOF
 ```
 
 Key variables to modify:
@@ -127,12 +122,6 @@ You can customize the AMI by:
 
 ### Administrator Password
 For security reasons, the Administrator password is not set during the AMI creation. After launching an instance from the AMI, you should set a password using AWS SSM:
-
-```bash
-aws ssm send-command --document-name "AWS-RunPowerShellScript" \
-  --parameters "commands=['net user Administrator YourNewPassword']" \
-  --targets "Key=instanceids,Values=i-1234567890abcdef0"
-```
 
 ## Troubleshooting
 

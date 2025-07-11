@@ -70,9 +70,9 @@ try {
     # Refresh environment variables to get P4 in the path
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
-    # ===================================
+    # ========================
     # Languages and Frameworks
-    # ===================================
+    # ========================
 
     # Python
     Write-Host "Installing Python and AWS libraries..."

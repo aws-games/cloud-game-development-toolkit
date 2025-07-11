@@ -108,9 +108,9 @@ try {
     # Clean up the installer
     Remove-Item -Path $epicInstallerPath -ErrorAction SilentlyContinue
 
-    # ===================================
+    # ===========================================
     # Create Epic Games Launcher Desktop Shortcut
-    # ===================================
+    # ===========================================
 
     Log-Message "Creating desktop shortcut for Epic Games Launcher..." -Level "INFO"
     $WshShell = New-Object -ComObject WScript.Shell

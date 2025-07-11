@@ -99,10 +99,6 @@ source "amazon-ebs" "base" {
     volume_type = "gp3"
     delete_on_termination = true
   }
-    aws_polling {
-    delay_seconds = 30
-    max_attempts = 120  # Increase this value to extend the timeout (120 * 30 seconds = 1 hour)
-  }
 }
 
 build {
