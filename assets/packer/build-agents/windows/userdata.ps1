@@ -1,5 +1,4 @@
 <powershell>
-
 Write-Output "Running User Data Script"
 
 Set-ExecutionPolicy Unrestricted -Scope LocalMachine -Force -ErrorAction Ignore
@@ -33,5 +32,4 @@ cmd.exe /c netsh firewall add portopening TCP 5986 "Port 5986"
 cmd.exe /c net stop winrm
 cmd.exe /c sc config winrm start= auto
 cmd.exe /c net start winrm
-
 </powershell>
