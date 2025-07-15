@@ -141,6 +141,10 @@ nav:
               - Unreal Engine Cloud DDC Intra Cluster:
                   - Installation and Usage:
                     - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md
+      - Unity:
+          - Accelerator:
+              - Installation and Usage:
+                - modules/unity/accelerator/README.md
   - Samples:
       - Overview: samples/README.md
       - Simple Build Pipeline: samples/simple-build-pipeline/README.md
