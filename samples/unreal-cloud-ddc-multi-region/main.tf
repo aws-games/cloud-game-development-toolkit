@@ -3,8 +3,9 @@ resource "random_password" "unreal_ddc" {
   special = false
   numeric = true
 }
+
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region-saratoga-3"
+  name        = "unreal-cloud-ddc-bearer-token-multi-region"
   description = "The token to access unreal cloud ddc sample."
   region      = var.regions[0]
   replica {
@@ -245,12 +246,13 @@ module "unreal_cloud_ddc_infra_region_1" {
   eks_cluster_public_access               = true
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id]
 
-  primary_region       = true
-  scylla_subnets       = module.unreal_cloud_ddc_vpc_region_1.private_subnet_ids
-  scylla_ami_name      = "ScyllaDB 6.2.1"
-  scylla_architecture  = "x86_64"
-  scylla_instance_type = "i4i.xlarge"
-  existing_scylla_ips  = module.unreal_cloud_ddc_infra_region_2.scylla_ips
+  primary_region            = true
+  scylla_replication_factor = 3
+  scylla_subnets            = module.unreal_cloud_ddc_vpc_region_1.private_subnet_ids
+  scylla_ami_name           = "ScyllaDB 6.2.1"
+  scylla_architecture       = "x86_64"
+  scylla_instance_type      = "i4i.xlarge"
+  existing_scylla_ips       = module.unreal_cloud_ddc_infra_region_2.scylla_ips
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
@@ -288,27 +290,30 @@ module "unreal_cloud_ddc_intra_cluster_region_1" {
 
   source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
   region                              = var.regions[0]
+  is_multi_region_deployment          = true
   cluster_name                        = module.unreal_cloud_ddc_infra_region_1.cluster_name
   cluster_endpoint                    = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
   cluster_version                     = module.unreal_cloud_ddc_infra_region_1.cluster_version
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra_region_1.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_1
+  s3_bucket_id                        = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
 
-  s3_bucket_id = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
 
-  unreal_cloud_ddc_helm_values = [
-    templatefile("${path.module}/assets/unreal_cloud_ddc_multi_region.yaml", {
-      scylla_ips                 = join(",", local.scylla_ips)
-      bucket_name                = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
-      region                     = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
-      replication_region         = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[0]
-      aws_region                 = var.regions[0]
-      aws_replication_region     = var.regions[1]
-      ddc_replication_region_url = "http://ddc.${var.regions[1]}.${var.route53_public_hosted_zone_name}"
-      security_group_ids         = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
-      token                      = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_1.secret_string
-    })
-  ]
+  unreal_cloud_ddc_helm_base_infra_chart  = "${path.module}/assets/unreal_cloud_ddc_multi_region_base.yaml"
+  unreal_cloud_ddc_helm_replication_chart = "${path.module}/assets/unreal_cloud_ddc_multi_region.yaml"
+
+  unreal_cloud_ddc_helm_config = {
+    scylla_ips             = join(",", local.scylla_ips)
+    bucket_name            = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
+    region                 = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
+    replication_region     = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[0]
+    aws_region             = var.regions[0]
+    aws_replication_region = var.regions[1]
+    security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
+    token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_1.secret_string
+  }
+
+
   providers = {
     kubernetes = kubernetes.region-1,
     helm       = helm.region-1
@@ -331,6 +336,7 @@ module "unreal_cloud_ddc_infra_region_2" {
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id]
 
   primary_region                   = false
+  scylla_replication_factor        = 3
   existing_scylla_seed             = module.unreal_cloud_ddc_infra_region_1.scylla_seed
   create_scylla_monitoring_stack   = false
   create_application_load_balancer = false
@@ -363,27 +369,27 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_2_to_1" {
   security_group_id = module.unreal_cloud_ddc_infra_region_2.scylla_security_group
 }
 
-# Cross region load balancing
+# # Cross region load balancing
 
-# resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2" {
-#   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
-#   region            = var.regions[0]
-#   from_port         = 8080
-#   to_port           = 8080
-#   ip_protocol       = "TCP"
-#   cidr_ipv4         = "192.168.128.0/17"
-#   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
-# }
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2" {
+  description       = "Allow communication between unreal cloud ddc clusters via load balancers"
+  region            = var.regions[0]
+  from_port         = 8080
+  to_port           = 8080
+  ip_protocol       = "TCP"
+  cidr_ipv4         = "192.168.128.0/17"
+  security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
+}
 
-# resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2_http" {
-#   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
-#   region            = var.regions[0]
-#   from_port         = 80
-#   to_port           = 80
-#   ip_protocol       = "TCP"
-#   cidr_ipv4         = "192.168.128.0/17"
-#   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
-# }
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2_http" {
+  description       = "Allow communication between unreal cloud ddc clusters via load balancers"
+  region            = var.regions[0]
+  from_port         = 80
+  to_port           = 80
+  ip_protocol       = "TCP"
+  cidr_ipv4         = "192.168.128.0/17"
+  security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
+}
 
 
 resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_2_to_lb_region_1" {
@@ -416,27 +422,29 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
 
   source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
   region                              = var.regions[1]
+  is_multi_region_deployment          = true
   cluster_name                        = module.unreal_cloud_ddc_infra_region_2.cluster_name
   cluster_endpoint                    = module.unreal_cloud_ddc_infra_region_2.cluster_endpoint
   cluster_version                     = module.unreal_cloud_ddc_infra_region_2.cluster_version
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra_region_2.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_2
+  s3_bucket_id                        = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
 
-  s3_bucket_id = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
+  unreal_cloud_ddc_helm_base_infra_chart  = "${path.module}/assets/unreal_cloud_ddc_multi_region_base.yaml"
+  unreal_cloud_ddc_helm_replication_chart = "${path.module}/assets/unreal_cloud_ddc_multi_region.yaml"
 
-  unreal_cloud_ddc_helm_values = [
-    templatefile("${path.module}/assets/unreal_cloud_ddc_multi_region.yaml", {
-      scylla_ips                 = join(",", local.scylla_ips)
-      bucket_name                = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
-      region                     = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[1]
-      replication_region         = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
-      aws_region                 = var.regions[1]
-      aws_replication_region     = var.regions[0]
-      ddc_replication_region_url = "http://ddc.${var.regions[0]}.${var.route53_public_hosted_zone_name}"
-      security_group_ids         = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
-      token                      = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_2.secret_string
-    })
-  ]
+  unreal_cloud_ddc_helm_config = {
+    scylla_ips             = join(",", local.scylla_ips)
+    bucket_name            = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
+    region                 = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[1]
+    replication_region     = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
+    aws_region             = var.regions[1]
+    aws_replication_region = var.regions[0]
+    security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
+    token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_2.secret_string
+  }
+
+
   providers = {
     kubernetes = kubernetes.region-2,
     helm       = helm.region-2
