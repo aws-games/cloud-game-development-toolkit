@@ -141,6 +141,7 @@ No outputs.
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | 2.17.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.5.1 |
 
 ## Providers
@@ -186,6 +187,8 @@ No outputs.
 | [aws_vpc_security_group_egress_rule.unreal_ddc_load_balancer_egress_sg_rules_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.scylla_db_region_1_to_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.scylla_db_region_2_to_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_cluster_region_1_to_lb_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_cluster_region_1_to_lb_region_2_http](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_cluster_region_2_to_lb_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_cluster_region_2_to_lb_region_1_http](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http2_ingress_rule_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -213,8 +216,6 @@ No outputs.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_allow_my_ip"></a> [allow\_my\_ip](#input\_allow\_my\_ip) | Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers | `bool` | `true` | no |
-| <a name="input_existing_security_groups_region_1"></a> [existing\_security\_groups\_region\_1](#input\_existing\_security\_groups\_region\_1) | List of existing security groups to attach to the load balancer | `list(string)` | `[]` | no |
-| <a name="input_existing_security_groups_region_2"></a> [existing\_security\_groups\_region\_2](#input\_existing\_security\_groups\_region\_2) | List of existing security groups to attach to the load balancer | `list(string)` | `[]` | no |
 | <a name="input_github_credential_arn_region_1"></a> [github\_credential\_arn\_region\_1](#input\_github\_credential\_arn\_region\_1) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_github_credential_arn_region_2"></a> [github\_credential\_arn\_region\_2](#input\_github\_credential\_arn\_region\_2) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_regions"></a> [regions](#input\_regions) | List of regions to deploy the solution | `list(string)` | <pre>[<br/>  "us-west-2",<br/>  "us-east-2"<br/>]</pre> | no |
@@ -226,6 +227,5 @@ No outputs.
 |------|-------------|
 | <a name="output_monitoring_url_region_1"></a> [monitoring\_url\_region\_1](#output\_monitoring\_url\_region\_1) | n/a |
 | <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
-| <a name="output_unreal_ddc_url_region_1"></a> [unreal\_ddc\_url\_region\_1](#output\_unreal\_ddc\_url\_region\_1) | n/a |
-| <a name="output_unreal_ddc_url_region_2"></a> [unreal\_ddc\_url\_region\_2](#output\_unreal\_ddc\_url\_region\_2) | n/a |
+| <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
 <!-- END_TF_DOCS -->
