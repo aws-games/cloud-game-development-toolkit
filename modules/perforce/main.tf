@@ -17,7 +17,7 @@ module "p4_server" {
       (
         var.create_route53_private_hosted_zone ?
         "auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
-        module.p4_auth.alb_dns_name
+        module.p4_auth[0].alb_dns_name
       ) :
       null
     )
