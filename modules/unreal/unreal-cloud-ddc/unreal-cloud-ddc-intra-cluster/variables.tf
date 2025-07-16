@@ -28,9 +28,15 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "is_multi_region_deployment" {
+  type        = bool
+  description = "Determines whether this is a multi region Unreal DDC deployment."
+  default     = false
+}
+
 variable "region" {
-  type    = string
-  default = "us-west-2"
+  type        = string
+  description = "The region where the Unreal Cloud DDC deployment will reside"
 }
 
 variable "cluster_name" {
@@ -63,10 +69,26 @@ variable "unreal_cloud_ddc_namespace" {
   default     = "unreal-cloud-ddc"
 }
 
-variable "unreal_cloud_ddc_helm_values" {
-  type        = list(string)
-  description = "List of YAML files for Unreal Cloud DDC"
-  default     = []
+variable "unreal_cloud_ddc_helm_config" {
+  type        = map(string)
+  description = "Configuration values to pass to the Unreal Cloud DDC helm chart."
+  default     = {}
+}
+
+variable "unreal_cloud_ddc_helm_base_infra_chart" {
+  type        = string
+  description = "Path to your Unreal Cloud DDC helm chart"
+}
+
+variable "unreal_cloud_ddc_helm_replication_chart" {
+  type        = string
+  description = "Path to your Unreal Cloud DDC helm chart if replication is needed. This is used in multi-region deployments and is not required for single region deployments."
+  default     = null
+
+  validation {
+    condition     = (var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart != null) || (!var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart == null)
+    error_message = "Replication chart is required for multi-region deployments."
+  }
 }
 
 variable "ghcr_credentials_secret_manager_arn" {
@@ -96,18 +118,18 @@ variable "unreal_cloud_ddc_service_account_name" {
   default     = "unreal-cloud-ddc-sa"
 }
 
-variable "certificate_manager_hosted_zone_arn" {
-  type        = list(string)
-  description = "ARN of the Certificate Manager for Ingress."
-  default     = []
-}
+# variable "certificate_manager_hosted_zone_arn" {
+#   type        = list(string)
+#   description = "ARN of the Certificate Manager for Ingress."
+#   default     = []
+# }
 
-variable "enable_certificate_manager" {
-  type        = bool
-  description = "Enable Certificate Manager for Ingress. Required for TLS termination."
-  default     = false
-  validation {
-    condition     = var.enable_certificate_manager ? length(var.certificate_manager_hosted_zone_arn) > 0 : true
-    error_message = "Certificate Manager hosted zone ARN is required."
-  }
-}
+# variable "enable_certificate_manager" {
+#   type        = bool
+#   description = "Enable Certificate Manager for Ingress. Required for TLS termination."
+#   default     = false
+#   validation {
+#     condition     = var.enable_certificate_manager ? length(var.certificate_manager_hosted_zone_arn) > 0 : true
+#     error_message = "Certificate Manager hosted zone ARN is required."
+#   }
+# }

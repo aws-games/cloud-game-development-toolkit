@@ -66,6 +66,11 @@ variable "existing_security_groups" {
 # ScyllaDB Configuration
 ########################################
 
+variable "scylla_replication_factor" {
+  type        = number
+  description = "How many copies many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created."
+
+}
 variable "scylla_subnets" {
   type        = list(string)
   default     = []
