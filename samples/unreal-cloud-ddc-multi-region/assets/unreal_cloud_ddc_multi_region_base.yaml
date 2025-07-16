@@ -133,11 +133,7 @@ worker:
       CleanOldRefRecords: true
       CleanOldBlobs: true
       Replication:
-        Enabled: true
-        Replicators:
-          - ReplicatorName: ddc-${aws_region}-to-${aws_replication_region}-replicator
-            Namespace: ddc-${aws_region}-to-${aws_replication_region}
-            ConnectionString: "http://${ddc_replication_region_url}"
+        Enabled: false
 
     Scylla: *scylla-connection-info
     S3: *s3-connection-info

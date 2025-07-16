@@ -47,7 +47,7 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
 }
 
 resource "aws_instance" "scylla_ec2_instance_other_nodes" {
-  count  = var.primary_region ? length(var.scylla_subnets) - 1 : length(var.scylla_subnets)
+  count  = var.primary_region ? var.scylla_replication_factor - 1 : var.scylla_replication_factor
   region = var.region
 
   ami                    = data.aws_ami.scylla_ami.id

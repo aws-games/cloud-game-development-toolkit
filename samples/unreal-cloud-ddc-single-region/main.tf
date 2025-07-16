@@ -1,16 +1,25 @@
-resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
+resource "random_password" "unreal_ddc" {
+  length  = 64
+  special = false
+  numeric = true
+}
+
+resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
   name        = "unreal-cloud-ddc-bearer-token"
   description = "The token to access unreal cloud ddc sample."
-  generate_secret_string = {
-    exclude_punctuation = true
-    exclude_numbers     = false
-    include_space       = false
-    password_length     = 64
-  }
+  #checkov:skip=CKV_AWS_149: KMS encryption not yet
+  #checkov:skip=CKV2_AWS_57: Secret rotation is not required for this sample.
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
+  secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
+  secret_string = random_password.unreal_ddc.result
 }
 
 data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  secret_id = awscc_secretsmanager_secret.unreal_cloud_ddc_token.id
+  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token]
+  secret_id  = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
 }
 
 data "http" "public_ip" {
@@ -93,10 +102,12 @@ module "unreal_cloud_ddc_infra" {
   eks_cluster_public_access               = true
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group.id]
 
-  scylla_subnets       = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_ami_name      = "ScyllaDB 6.2.1"
-  scylla_architecture  = "x86_64"
-  scylla_instance_type = "i4i.xlarge"
+  primary_region            = true
+  scylla_replication_factor = 2
+  scylla_subnets            = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  scylla_ami_name           = "ScyllaDB 6.2.1"
+  scylla_architecture       = "x86_64"
+  scylla_instance_type      = "i4i.xlarge"
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
@@ -121,6 +132,7 @@ module "unreal_cloud_ddc_intra_cluster" {
   ]
 
   source                              = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
+  region                              = data.aws_region.current.name
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   cluster_version                     = module.unreal_cloud_ddc_infra.cluster_version
   cluster_endpoint                    = module.unreal_cloud_ddc_infra.cluster_endpoint
@@ -129,14 +141,14 @@ module "unreal_cloud_ddc_intra_cluster" {
 
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
-  unreal_cloud_ddc_helm_values = [
-    templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
-      scylla_ips         = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
-      bucket_name        = module.unreal_cloud_ddc_infra.s3_bucket_id
-      region             = substr(data.aws_region.current.name, length(data.aws_region.current.name) - 1, 1) == "1" ? substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2) : data.aws_region.current.name
-      aws_region         = data.aws_region.current.name
-      security_group_ids = aws_security_group.unreal_ddc_load_balancer_access_security_group.id
-      token              = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
-    })
-  ]
+  unreal_cloud_ddc_helm_base_infra_chart = "${path.module}/assets/unreal_cloud_ddc_single_region.yaml"
+
+  unreal_cloud_ddc_helm_config = {
+    scylla_ips         = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
+    bucket_name        = module.unreal_cloud_ddc_infra.s3_bucket_id
+    region             = substr(data.aws_region.current.name, length(data.aws_region.current.name) - 1, 1) == "1" ? substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2) : data.aws_region.current.name
+    aws_region         = data.aws_region.current.name
+    security_group_ids = aws_security_group.unreal_ddc_load_balancer_access_security_group.id
+    token              = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
+  }
 }

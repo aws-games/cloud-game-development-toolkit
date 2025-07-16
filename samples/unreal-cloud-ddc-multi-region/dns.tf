@@ -11,18 +11,39 @@ data "aws_route53_zone" "root" {
   private_zone = false
 }
 
-#US-WEST-2
-
 # Create a record in the Hosted Zone for the scylla_monitoring server
 resource "aws_route53_record" "unreal_cloud_ddc_region_1" {
-  depends_on = [module.unreal_cloud_ddc_infra_region_1, module.unreal_cloud_ddc_intra_cluster_region_1]
-  zone_id    = data.aws_route53_zone.root.id
-  name       = "ddc.${var.regions[0]}.${data.aws_route53_zone.root.name}"
-  type       = "A"
+  depends_on     = [module.unreal_cloud_ddc_infra_region_1, module.unreal_cloud_ddc_intra_cluster_region_1]
+  zone_id        = data.aws_route53_zone.root.id
+  name           = "ddc.${data.aws_route53_zone.root.name}"
+  type           = "A"
+  set_identifier = var.regions[0]
 
+  latency_routing_policy {
+    region = var.regions[0]
+  }
   alias {
     name                   = module.unreal_cloud_ddc_intra_cluster_region_1.unreal_cloud_ddc_load_balancer_name
     zone_id                = module.unreal_cloud_ddc_intra_cluster_region_1.unreal_cloud_ddc_load_balancer_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# Create a record in the Hosted Zone for the unreal
+resource "aws_route53_record" "unreal_cloud_ddc_region_2" {
+  depends_on     = [module.unreal_cloud_ddc_infra_region_2, module.unreal_cloud_ddc_intra_cluster_region_2]
+  zone_id        = data.aws_route53_zone.root.id
+  name           = "ddc.${data.aws_route53_zone.root.name}"
+  type           = "A"
+  set_identifier = var.regions[1]
+
+  latency_routing_policy {
+    region = var.regions[1]
+  }
+
+  alias {
+    name                   = module.unreal_cloud_ddc_intra_cluster_region_2.unreal_cloud_ddc_load_balancer_name
+    zone_id                = module.unreal_cloud_ddc_intra_cluster_region_2.unreal_cloud_ddc_load_balancer_zone_id
     evaluate_target_health = false
   }
 }
@@ -34,7 +55,7 @@ resource "aws_route53_record" "unreal_cloud_ddc_region_1" {
 # Create a record in the Hosted Zone for the scylla_monitoring server
 resource "aws_route53_record" "scylla_monitoring_region_1" {
   zone_id = data.aws_route53_zone.root.id
-  name    = "monitoring.ddc.${var.regions[0]}.${data.aws_route53_zone.root.name}"
+  name    = "monitoring.ddc.${data.aws_route53_zone.root.name}"
   type    = "A"
 
   alias {
@@ -47,7 +68,7 @@ resource "aws_route53_record" "scylla_monitoring_region_1" {
 # Create a certificate for the scylla_monitoring server
 resource "aws_acm_certificate" "scylla_monitoring_region_1" {
   region            = var.regions[0]
-  domain_name       = "monitoring.ddc.${var.regions[0]}.${data.aws_route53_zone.root.name}"
+  domain_name       = "monitoring.ddc.${data.aws_route53_zone.root.name}"
   validation_method = "DNS"
 
   tags = {
@@ -82,21 +103,4 @@ resource "aws_acm_certificate_validation" "scylla_monitoring_region_1" {
   }
   certificate_arn         = aws_acm_certificate.scylla_monitoring_region_1.arn
   validation_record_fqdns = [for record in aws_route53_record.scylla_monitoring_cert_region_1 : record.fqdn]
-}
-
-
-#US-EAST-2
-
-# Create a record in the Hosted Zone for the unreal
-resource "aws_route53_record" "unreal_cloud_ddc_region_2" {
-  depends_on = [module.unreal_cloud_ddc_infra_region_2, module.unreal_cloud_ddc_intra_cluster_region_2]
-  zone_id    = data.aws_route53_zone.root.id
-  name       = "ddc.${var.regions[1]}.${data.aws_route53_zone.root.name}"
-  type       = "A"
-
-  alias {
-    name                   = module.unreal_cloud_ddc_intra_cluster_region_2.unreal_cloud_ddc_load_balancer_name
-    zone_id                = module.unreal_cloud_ddc_intra_cluster_region_2.unreal_cloud_ddc_load_balancer_zone_id
-    evaluate_target_health = false
-  }
 }

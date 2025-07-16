@@ -142,16 +142,18 @@ No outputs.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.2.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.16.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | 2.17.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >=2.33.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | 3.0.2 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.37.1 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 
 ## Modules
 
@@ -169,35 +171,36 @@ No outputs.
 | [aws_iam_role.unreal_cloud_ddc_sa_iam_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.ebs_csi_policy_attacment](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.unreal_cloud_ddc_sa_iam_role_s3_secrets_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachment) | resource |
-| [helm_release.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [helm_release.unreal_cloud_ddc_initialization](https://registry.terraform.io/providers/hashicorp/helm/2.17.0/docs/resources/release) | resource |
+| [helm_release.unreal_cloud_ddc_with_replication](https://registry.terraform.io/providers/hashicorp/helm/2.17.0/docs/resources/release) | resource |
 | [kubernetes_namespace.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |
 | [kubernetes_service_account.unreal_cloud_ddc_service_account](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
+| [null_resource.delete_init_deployment](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/caller_identity) | data source |
-| [aws_eks_cluster.unreal_cloud_ddc_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/eks_cluster) | data source |
 | [aws_iam_openid_connect_provider.oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/iam_openid_connect_provider) | data source |
 | [aws_iam_policy_document.unreal_cloud_ddc_policy](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/iam_policy_document) | data source |
 | [aws_lb.unreal_cloud_ddc_load_balancer](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/lb) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/region) | data source |
 | [aws_s3_bucket.unreal_cloud_ddc_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/s3_bucket) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_certificate_manager_hosted_zone_arn"></a> [certificate\_manager\_hosted\_zone\_arn](#input\_certificate\_manager\_hosted\_zone\_arn) | ARN of the Certificate Manager for Ingress. | `list(string)` | `[]` | no |
 | <a name="input_cluster_endpoint"></a> [cluster\_endpoint](#input\_cluster\_endpoint) | Endpoint of the EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Name of the EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#input\_cluster\_oidc\_provider\_arn) | ARN of the OIDC Provider from EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Version of the EKS Cluster | `string` | n/a | yes |
-| <a name="input_enable_certificate_manager"></a> [enable\_certificate\_manager](#input\_enable\_certificate\_manager) | Enable Certificate Manager for Ingress. Required for TLS termination. | `bool` | `false` | no |
 | <a name="input_ghcr_credentials_secret_manager_arn"></a> [ghcr\_credentials\_secret\_manager\_arn](#input\_ghcr\_credentials\_secret\_manager\_arn) | Arn for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. | `string` | n/a | yes |
+| <a name="input_is_multi_region_deployment"></a> [is\_multi\_region\_deployment](#input\_is\_multi\_region\_deployment) | Determines whether this is a multi region Unreal DDC deployment. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_oidc_credentials_secret_manager_arn"></a> [oidc\_credentials\_secret\_manager\_arn](#input\_oidc\_credentials\_secret\_manager\_arn) | Arn for oidc credentials stored in secret manager. | `string` | `null` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-west-2"` | no |
+| <a name="input_region"></a> [region](#input\_region) | The region where the Unreal Cloud DDC deployment will reside | `string` | n/a | yes |
 | <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of the S3 Bucket for Unreal Cloud DDC to use | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
-| <a name="input_unreal_cloud_ddc_helm_values"></a> [unreal\_cloud\_ddc\_helm\_values](#input\_unreal\_cloud\_ddc\_helm\_values) | List of YAML files for Unreal Cloud DDC | `list(string)` | `[]` | no |
+| <a name="input_unreal_cloud_ddc_helm_base_infra_chart"></a> [unreal\_cloud\_ddc\_helm\_base\_infra\_chart](#input\_unreal\_cloud\_ddc\_helm\_base\_infra\_chart) | Path to your Unreal Cloud DDC helm chart | `string` | n/a | yes |
+| <a name="input_unreal_cloud_ddc_helm_config"></a> [unreal\_cloud\_ddc\_helm\_config](#input\_unreal\_cloud\_ddc\_helm\_config) | Configuration values to pass to the Unreal Cloud DDC helm chart. | `map(string)` | `{}` | no |
+| <a name="input_unreal_cloud_ddc_helm_replication_chart"></a> [unreal\_cloud\_ddc\_helm\_replication\_chart](#input\_unreal\_cloud\_ddc\_helm\_replication\_chart) | Path to your Unreal Cloud DDC helm chart if replication is needed. This is used in multi-region deployments and is not required for single region deployments. | `string` | `null` | no |
 | <a name="input_unreal_cloud_ddc_namespace"></a> [unreal\_cloud\_ddc\_namespace](#input\_unreal\_cloud\_ddc\_namespace) | Namespace for Unreal Cloud DDC | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_unreal_cloud_ddc_service_account_name"></a> [unreal\_cloud\_ddc\_service\_account\_name](#input\_unreal\_cloud\_ddc\_service\_account\_name) | Name of Unreal Cloud DDC service account. | `string` | `"unreal-cloud-ddc-sa"` | no |
 | <a name="input_unreal_cloud_ddc_version"></a> [unreal\_cloud\_ddc\_version](#input\_unreal\_cloud\_ddc\_version) | Version of the Unreal Cloud DDC Helm chart. | `string` | `"1.2.0"` | no |
