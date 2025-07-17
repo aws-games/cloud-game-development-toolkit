@@ -136,6 +136,90 @@ packer build perforce_x86.pkr.hcl
 8. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
    Code Review) and P4Auth (P4Auth).
 
+## Managing P4 Server and P4 Auth Credentials
+
+You can optionally provide your own credentials for both P4 Server and P4 Auth instead of having the module generate random credentials for you. This is useful when you want to set specific usernames and passwords or integrate with existing credential management systems.
+
+### Creating P4 Server Credentials
+
+#### Option 1: Separate Secrets (Recommended)
+
+```bash
+# Create username secret
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser-Username \
+    --description "P4 Server Super User Username" \
+    --secret-string "admin"
+
+# Create password secret
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser-Password \
+    --description "P4 Server Super User Password" \
+    --secret-string "EXAMPLE-PASSWORD"
+```
+
+#### Option 2: Combined Secret
+
+```bash
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser \
+    --description "P4 Server Super User" \
+    --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
+```
+
+### Creating P4 Auth Credentials
+
+#### Option 1: Separate Secrets (Recommended)
+
+```bash
+# Create username secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Username \
+    --description "P4Auth Admin Username" \
+    --secret-string "admin"
+
+# Create password secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Password \
+    --description "P4Auth Admin Password" \
+    --secret-string "EXAMPLE-PASSWORD"
+```
+
+#### Option 2: Combined Secret
+
+```bash
+aws secretsmanager create-secret \
+    --name P4AuthAdmin \
+    --description "P4Auth Admin" \
+    --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
+```
+
+### Using Custom Credentials in Terraform
+
+Reference your custom credentials in your Terraform configuration:
+
+```hcl
+module "perforce" {
+  source = "path/to/modules/perforce"
+  
+  # Other configuration...
+  
+  p4_server_config = {
+    # Other P4 server settings...
+    super_user_username_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4ServerSuperUser-Username-a1b2c3"
+    super_user_password_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4ServerSuperUser-Password-a1b2c3"
+  }
+  
+  p4_auth_config = {
+    # Other P4 auth settings...
+    admin_username_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4AuthAdmin-Username-a1b2c3"
+    admin_password_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4AuthAdmin-Password-a1b2c3"
+  }
+}
+```
+
+If you don't provide these ARNs, the module will automatically generate random credentials and store them in AWS Secrets Manager for you. The ARNs for these generated secrets will be available as outputs from the module.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -257,3 +341,87 @@ packer build perforce_x86.pkr.hcl
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 END_TF_DOCS
+
+## Managing P4 Server and P4 Auth Credentials
+
+You can optionally provide your own credentials for both P4 Server and P4 Auth instead of having the module generate random credentials for you. This is useful when you want to set specific usernames and passwords or integrate with existing credential management systems.
+
+### Creating P4 Server Credentials
+
+#### Option 1: Separate Secrets (Recommended)
+
+```bash
+# Create username secret
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser-Username \
+    --description "P4 Server Super User Username" \
+    --secret-string "admin"
+
+# Create password secret
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser-Password \
+    --description "P4 Server Super User Password" \
+    --secret-string "EXAMPLE-PASSWORD"
+```
+
+#### Option 2: Combined Secret
+
+```bash
+aws secretsmanager create-secret \
+    --name P4ServerSuperUser \
+    --description "P4 Server Super User" \
+    --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
+```
+
+### Creating P4 Auth Credentials
+
+#### Option 1: Separate Secrets (Recommended)
+
+```bash
+# Create username secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Username \
+    --description "P4Auth Admin Username" \
+    --secret-string "admin"
+
+# Create password secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Password \
+    --description "P4Auth Admin Password" \
+    --secret-string "EXAMPLE-PASSWORD"
+```
+
+#### Option 2: Combined Secret
+
+```bash
+aws secretsmanager create-secret \
+    --name P4AuthAdmin \
+    --description "P4Auth Admin" \
+    --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
+```
+
+### Using Custom Credentials in Terraform
+
+Reference your custom credentials in your Terraform configuration:
+
+```hcl
+module "perforce" {
+  source = "path/to/modules/perforce"
+  
+  # Other configuration...
+  
+  p4_server_config = {
+    # Other P4 server settings...
+    super_user_username_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4ServerSuperUser-Username-a1b2c3"
+    super_user_password_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4ServerSuperUser-Password-a1b2c3"
+  }
+  
+  p4_auth_config = {
+    # Other P4 auth settings...
+    admin_username_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4AuthAdmin-Username-a1b2c3"
+    admin_password_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4AuthAdmin-Password-a1b2c3"
+  }
+}
+```
+
+If you don't provide these ARNs, the module will automatically generate random credentials and store them in AWS Secrets Manager for you. The ARNs for these generated secrets will be available as outputs from the module.
