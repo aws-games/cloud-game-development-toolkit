@@ -2,7 +2,7 @@
 # Perforce P4 Server Super User
 ##########################################
 resource "awscc_secretsmanager_secret" "super_user_password" {
-  count         = var.super_user_password_secret_arn == null ? 1 : 0
+  count       = var.super_user_password_secret_arn == null ? 1 : 0
   name        = "${local.name_prefix}-SuperUserPassword"
   description = "The password for the created P4 Server super user."
   generate_secret_string = {
@@ -13,7 +13,7 @@ resource "awscc_secretsmanager_secret" "super_user_password" {
 }
 
 resource "awscc_secretsmanager_secret" "super_user_username" {
-  count       = var.super_user_username_secret_arn == null ? 1 : 0
+  count         = var.super_user_username_secret_arn == null ? 1 : 0
   name          = "${local.name_prefix}-SuperUserUsername"
   description   = "The username for the created P4 Server super user."
   secret_string = "perforce"
@@ -79,6 +79,7 @@ resource "aws_instance" "server_instance" {
 
   availability_zone = local.p4_server_az
   subnet_id         = var.instance_subnet_id
+  private_ip        = var.instance_private_ip
 
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
 
