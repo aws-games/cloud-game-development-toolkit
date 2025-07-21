@@ -25,32 +25,42 @@ function Write-Status {
 }
 
 try {
+    # Log script start with system info for debugging
+    Write-Status "Starting dev_tools.ps1 script" -Level "INFO"
+    Write-Status "Computer Name: $env:COMPUTERNAME" -Level "INFO"
+    Write-Status "Windows Version: $(Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption)" -Level "INFO"
+    Write-Status "Current User: $env:USERNAME" -Level "INFO"
+    Write-Status "PowerShell Version: $($PSVersionTable.PSVersion)" -Level "INFO"
+    
     # ===================
     # PREPARE ENVIRONMENT
     # ===================
-    
+
     # Import the Chocolatey Profile that contains the necessary code to enable tab-completions to function for `choco`.
     $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
     if (Test-Path($ChocolateyProfile)) {
+        Write-Status "Chocolatey profile found, importing..." -Level "INFO"
         Import-Module "$ChocolateyProfile"
+    } else {
+        Write-Status "Chocolatey profile not found at $ChocolateyProfile" -Level "INFO"
     }
-    
+
     # ==================================
     # INSTALL CHOCOLATEY PACKAGE MANAGER
     # ==================================
-    
+
     Write-Status "Installing Chocolatey package manager..."
-    
+
     # Set security protocol to use TLS 1.2
     [System.Net.ServicePointManager]::SecurityProtocol = 3072
-    
+
     # Install Chocolatey
     Set-ExecutionPolicy Bypass -Scope Process -Force
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    
+
     # Refresh environment path to include Chocolatey
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    
+
     Write-Status "Chocolatey installation completed" -Level "SUCCESS"
 
     # Configure Chocolatey for faster installations
@@ -60,31 +70,20 @@ try {
     # =================
     # DEV TOOLS INSTALL
     # =================
-    
+
     Write-Status "Starting sequential installations for development tools..."
-    
+
     # Visual Studio Community - Primary IDE for game development with C++/C# support
     Write-Status "Installing Visual Studio 2022 Community..."
     choco install -y --no-progress visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Status "Visual Studio 2022 Community installed successfully" -Level "SUCCESS"
     }
     else {
         Write-Status "Visual Studio 2022 Community installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
-    
-    # # Windows Development Kit - Provides tools, headers, libraries, and samples for Windows development
-    # Write-Status "Installing Windows Development Kit using Chocolatey..."
-    # choco install -y --no-progress windows-sdk-10-version-2004-all
-    
-    # if ($LASTEXITCODE -eq 0) {
-    #     Write-Status "Windows Development Kit installed successfully" -Level "SUCCESS"
-    # }
-    # else {
-    #     Write-Status "Windows Development Kit installation failed with exit code: $LASTEXITCODE" -Level "WARNING"
-    # }
-    
+
     # Install Git
     Write-Status "Installing Git..."
     choco install -y --no-progress git --params="/GitAndUnixToolsOnPath /WindowsTerminal /NoShellIntegration"
@@ -94,7 +93,7 @@ try {
     else {
         Write-Status "Git installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
-    
+
     # Install Perforce Command Line Client (p4)
     Write-Status "Installing Perforce Command Line Client (p4)..."
     choco install -y --no-progress p4
@@ -104,7 +103,7 @@ try {
     else {
         Write-Status "Perforce Command Line Client (p4) installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
-    
+
     # Install Perforce Visual Client (p4v)
     Write-Status "Installing Perforce Visual Client (p4v)..."
     choco install -y --no-progress p4v
@@ -114,7 +113,7 @@ try {
     else {
         Write-Status "Perforce Visual Client (p4v) installation failed with exit code: $LASTEXITCODE" -Level "WARNING"
     }
-    
+
     # Install Python
     Write-Status "Installing Python..."
     choco install -y --no-progress python3
@@ -124,7 +123,7 @@ try {
     else {
         Write-Status "Python installation failed" -Level "ERROR"
     }
-    
+
     # Install AWS CLI
     Write-Status "Installing AWS CLI..."
     choco install -y --no-progress awscli
@@ -134,16 +133,16 @@ try {
     else {
         Write-Status "AWS CLI installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
-    
+
     Write-Status "Installing Python packages..."
-    
+
     # Refresh environment variables
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    
+
     # Install AWS Python libraries
     Write-Status "Installing AWS Python libraries..."
     python -m pip install --no-warn-script-location botocore boto3
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Status "AWS Python libraries installed successfully" -Level "SUCCESS"
     }

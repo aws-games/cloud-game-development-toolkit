@@ -76,9 +76,9 @@ This script handles the core system setup, including:
 Installs development tools necessary for game development:
 - Chocolatey package manager
 - Visual Studio 2022 Community with C++ workload
-- Windows Development Kit
+- AWS CLI
 - Git for source control
-- Perforce client
+- Perforce client and CLI
 - Python with AWS SDKs
 
 ### unreal_dev.ps1

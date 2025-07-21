@@ -69,3 +69,6 @@ id_ed25519.pub
 # drawio temp and backup files
 *.drawio.bkp
 *.drawio.dtmp
+
+# Kiro context files
+.kiro
