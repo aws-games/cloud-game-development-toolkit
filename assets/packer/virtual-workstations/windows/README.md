@@ -2,11 +2,22 @@
 
 This directory contains Packer configuration files and scripts for building Windows Server 2025 AMIs optimized for game development workstations with GPU support, particularly for Unreal Engine development.
 
-## What is Packer?
+## What's Included
 
-[Packer](https://www.packer.io/) is an open-source tool for creating identical machine images for multiple platforms from a single source configuration. It's designed to be lightweight, running on every major operating system, and performs builds in parallel for multiple platforms.
+This project provides a complete solution for creating Windows-based virtual workstations in AWS with:
 
-Packer helps you create standardized machine images that can be used repeatedly to provision virtual machines, ensuring consistency across your infrastructure.
+- **GPU Support**: Automatic detection and configuration of NVIDIA GPUs
+- **Remote Access**: Amazon DCV for high-performance remote desktop access
+- **Development Tools**: Visual Studio, Git, Python, and other essential tools
+- **Unreal Engine Support**: Epic Games Launcher pre-installed
+
+## File Structure
+
+- `windows-server-2025.pkr.hcl` - Main Packer template for Windows Server 2025
+- `userdata.ps1` - Initial Windows setup script for WinRM configuration
+- `base_setup_with_gpu_check.ps1` - Core system setup with GPU detection and DCV installation
+- `dev_tools.ps1` - Development tools installation script
+- `unreal_dev.ps1` - Unreal Engine development environment setup
 
 ## Prerequisites
 
@@ -22,34 +33,23 @@ Before using this Packer configuration, ensure you have:
 
 ### Step 1: Configure Variables
 
-Edit the `variables.pkrvars.hcl` file to specify your AWS environment settings:
+You can pass variables directly to the Packer command:
 
-```hcl
-region = "us-east-1"             # AWS region to build in
-vpc_id = "vpc-xxxxxxxxxxxx"      # Your VPC ID
-subnet_id = "subnet-xxxxxxxxxxxx" # Your subnet ID
-associate_public_ip_address = true
-ssh_interface = "public_ip"
-
-instance_type = "g4dn.4xlarge"   # Instance type to use for building (use GPU-enabled instance)
-root_volume_size = 512           # Size of root volume in GB
-
-ami_prefix = "windows-server-2025-workstation" # Prefix for the AMI name
+```bash
+packer build \
+  -var="region=us-east-1" \
+  -var="vpc_id=vpc-0123456789abcdef0" \
+  -var="subnet_id=subnet-0123456789abcdef0" \
+  -var="instance_type=g4dn.2xlarge" \
+  windows-server-2025.pkr.hcl
 ```
-
-Key variables to modify:
-- `vpc_id` - Your VPC ID
-- `subnet_id` - Your subnet ID
-- `instance_type` - Choose a GPU-enabled instance for best results
-- `root_volume_size` - Adjust based on your storage needs
-- `public_key` - Your SSH public key for authentication
 
 ### Step 2: Run Packer Build
 
 From this directory, run the following command:
 
 ```bash
-packer build -var-file="variables.pkrvars.hcl" windows-server-2025.pkr.hcl
+packer build windows-server-2025.pkr.hcl
 ```
 
 This will start the build process, which includes:
@@ -58,79 +58,66 @@ This will start the build process, which includes:
 3. Running provisioning scripts
 4. Creating and registering the final AMI
 
-The build process may take 30-60 minutes depending on your instance type and network speed.
+The build process may take 30-45 minutes depending on your instance type and network speed.
 
-## Script Breakdown
+## Script Details
 
 ### base_setup_with_gpu_check.ps1
+
 This script handles the core system setup, including:
 - System configuration and logging
-- AWS tools installation (CLI, SSM)
-- Chocolatey package manager installation
+- Amazon DCV installation with virtual display driver for non-GPU instances
+- AWS S3 tools for driver install
 - NVIDIA GPU detection and driver installation
-- OpenSSH Server setup
-- NFS Client setup for file sharing
-- Amazon DCV installation for remote desktop access
-
-### base_setup_with_gpu_check_16kb.ps1
-A version of the base setup script optimized for use as user data when manually creating instances. This script:
-- Installs AWS tools and PowerShell modules
-- Sets up GPU drivers if a compatible GPU is detected
-- Configures Amazon DCV
-- Restarts the instance to apply changes
+- Sysprep configuration for GRID drivers compatibility
 
 ### dev_tools.ps1
+
 Installs development tools necessary for game development:
-- Visual Studio 2022 Community and Build Tools
+- Chocolatey package manager
+- Visual Studio 2022 Community with C++ workload
 - Windows Development Kit
-- Visual Studio Code with extensions
 - Git for source control
-- Python and Node.js
-- Terraform and tfenv for infrastructure management
+- Perforce client
+- Python with AWS SDKs
 
 ### unreal_dev.ps1
+
 Sets up the Unreal Engine development environment:
-- Creates directory structure for Unreal Engine
 - Installs the Epic Games Launcher
 - Creates desktop shortcuts for easy access
 
 ### userdata.ps1
+
 Configures Windows for Packer connectivity via WinRM:
 - Creates self-signed certificates
 - Sets up WinRM listeners
 - Configures Windows Firewall to allow WinRM traffic
 
-### windows-server-2025.pkr.hcl
-The main Packer configuration file that:
-- Defines the Amazon EBS builder
-- Sets up communication with the Windows instance
-- Specifies provisioning steps using PowerShell scripts
-- Configures SSH key deployment
-
 ## Customization Options
 
 ### Instance Types
+
 Choose an appropriate instance type based on your development needs:
 - For GPU workloads: g4dn.xlarge, g4dn.2xlarge, g4dn.4xlarge
 - For CPU-focused workloads: m5.xlarge, c5.2xlarge
 
 ### AMI Customization
-You can customize the AMI by:
-1. Modifying the existing scripts to add/remove software
-2. Adding new provisioning scripts to the Packer configuration
-3. Adjusting system configurations in the PowerShell scripts
 
-### Administrator Password
-For security reasons, the Administrator password is not set during the AMI creation. After launching an instance from the AMI, you should set a password using AWS SSM:
+The build process can be customized by:
+- Modifying the PowerShell scripts to install additional software
+- Adjusting the root volume size for more storage
+- Changing the region and VPC settings to match your infrastructure
 
 ## Troubleshooting
 
-If the Packer build fails:
-1. Check the Packer logs for error messages
-2. Verify your VPC and subnet have internet connectivity
-3. Ensure your AWS credentials have sufficient permissions
-4. Check that the instance type is available in your selected region
-5. Validate the syntax of your variables.pkrvars.hcl file
+# If the Packer build fails:
+    1. Run packer build with the `-debug` flag for detailed output
+    2. Check the Packer logs for error messages
+    3. Verify your VPC and subnet have internet connectivity
+    4. Ensure your AWS credentials have sufficient permissions
+    5. Check that the instance type is available in your selected region
+    6. Check that all required variables are provided in your command line
 
 ## License
 

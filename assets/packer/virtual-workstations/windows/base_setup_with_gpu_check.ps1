@@ -1,175 +1,186 @@
-# This script handles core system setup, AWS tools, and GPU driver installation
+# ====================================
+# Base Setup Script with GPU Detection
+# ====================================
 
-# Set vars for installation locations
-$driveLetter = "C:"
-$tempDir = "temp"
-$installationDir = "CGD-Workstation-Tools"
+# Simple console logging function
+function Write-Status {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
 
-# Create temp directory for script logging
-New-Item -ItemType Directory -Force -Path "$driveLetter\temp"
+        [Parameter(Mandatory = $false)]
+        [string]$Level = "INFO"
+    )
 
-# Start transcript to write script logs to a file
-Start-Transcript -Path "$driveLetter\$tempDir\cgd-workstation-config.txt" -Force -Verbose
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] [$Level] $Message"
+
+    # Write to console with color based on level for immediate feedback
+    switch ($Level) {
+        "ERROR" { Write-Host $logMessage -ForegroundColor Red }
+        "WARNING" { Write-Host $logMessage -ForegroundColor Yellow }
+        "SUCCESS" { Write-Host $logMessage -ForegroundColor Green }
+        "DEBUG" { Write-Host $logMessage -ForegroundColor Cyan }
+        default { Write-Host $logMessage }
+    }
+}
 
 try {
-    # System information
-    Write-Host "Starting Windows Workstation Setup"
-    Write-Host "Computer Name: $env:COMPUTERNAME"
-    Write-Host "Windows Version: $(Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption)"
-    Write-Host "Current User: $env:USERNAME"
-
-    # Create installation directory
-    if (-not (Test-Path "$driveLetter\$installationDir")) {
-        New-Item -ItemType Directory -Path "$driveLetter\$installationDir" -Force
-    }
-    Write-Host "Created installation directory: $driveLetter\$installationDir"
-
     # =============
-    # GENERAL SETUP
+    # GPU DETECTION
     # =============
 
-    # Metadata retrieval
-    Write-Host "Retrieving EC2 instance metadata..."
-    $token = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{"X-aws-ec2-metadata-token-ttl-seconds"="21600"} -UseBasicParsing).Content
-    $instanceId = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" -Headers @{"X-aws-ec2-metadata-token"=$token} -UseBasicParsing).Content
-    $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{"X-aws-ec2-metadata-token"=$token} -UseBasicParsing).Content
-
-    Write-Host "Instance ID: $instanceId"
-    Write-Host "Region: $region"
-
-    # CONFIGURE SSM FOR CONNECTIVITY
-    Write-Host "Configuring SSM service..."
-    Set-Service AmazonSSMAgent -StartupType Automatic
-    Start-Service AmazonSSMAgent
-    Write-Host "SSM service configured"
-
-    # INSTALL CHOCOLATEY
-    Write-Host "Installing Chocolatey..."
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    choco install --no-progress -y vcredist140
-    [Environment]::SetEnvironmentVariable("AWS_CLI_AUTO_PROMPT", "on-partial", "Machine")
-
-    # Wait for Chocolatey to finish installing
-    Start-Sleep -Seconds 10
-
-    # Use full path to choco
-    $chocoPath = "C:\ProgramData\chocolatey\bin\choco.exe"
-    if (Test-Path $chocoPath) {
-        Write-Host "Chocolatey installed successfully"
+    # Check if GPU is present using PCI devices
+    Write-Status "Checking for GPU hardware..."
+    $gpuPresent = $false
+    $devices = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -like "*VEN_10DE*" }
+    
+    if ($devices) {
+        $gpuPresent = $true
+        Write-Status "Found NVIDIA GPU" -Level "SUCCESS"
     } else {
-        Write-Warning "Chocolatey installation could not be verified"
+        Write-Status "No NVIDIA GPU found. Virtual display driver for DCV will be installed." -Level "WARNING"
     }
-
+    
+    # ==================
     # INSTALL AMAZON DCV
-    Write-Host "Installing Amazon DCV..."
+    # ==================
+    
+    Write-Status "Installing Amazon DCV..."
     $dcvUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
-    $dcvInstaller = "$driveLetter\$installationDir\nice-dcv-installer.msi"
+    $dcvInstaller = "$env:TEMP\nice-dcv-installer.msi"
     $listenPort = 8443
 
+    # Download and install DCV server
     Invoke-WebRequest -Uri $dcvUrl -OutFile $dcvInstaller -UseBasicParsing
     Start-Process "msiexec.exe" -ArgumentList "/i `"$dcvInstaller`" ADDLOCAL=ALL /quiet /norestart" -Wait
+    Write-Status "DCV server installed" -Level "SUCCESS"
 
+    # Install virtual display driver if no GPU is present
+    if (-not $gpuPresent) {
+        Write-Status "No GPU detected. Installing DCV virtual display driver..."
+        $virtualDisplayUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi"
+        $virtualDisplayInstaller = "$env:TEMP\nice-dcv-virtual-display-x64-Release.msi"
+        
+        Invoke-WebRequest -Uri $virtualDisplayUrl -OutFile $virtualDisplayInstaller -UseBasicParsing
+        Start-Process "msiexec.exe" -ArgumentList "/i `"$virtualDisplayInstaller`" ADDLOCAL=ALL /quiet /norestart" -Wait
+        Write-Status "Virtual display driver installed" -Level "SUCCESS"
+        
+        # Clean up installer file
+        Remove-Item -Path $virtualDisplayInstaller -Force -ErrorAction SilentlyContinue
+    }
+    
     # Configure DCV registry settings
-    Write-Host "Configuring DCV registry settings..."
+    Write-Status "Configuring DCV registry settings for Administrator user..."
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management" /v create-session /t REG_DWORD /d 1 /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v owner /t REG_SZ /d "administrator" /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v storage-root /t REG_SZ /d "C:/Users/Administrator/" /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v owner /t REG_SZ /d "Administrator" /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v storage-root /t REG_SZ /d "%home%" /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v enable-quic-frontend /t REG_DWORD /d 1 /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v web-port /t REG_DWORD /d $listenPort /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v quic-port /t REG_DWORD /d $listenPort /f
-    reg.exe add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display" /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
-    reg.exe add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display" /v console-session-default-layout /t REG_SZ /d "[{'w':1920, 'h':1080, 'x':0, 'y':0}]" /f
 
-    Write-Host "DCV installation and configuration completed"
-
-    # =====================================
-    # GPU DETECTION AND DRIVER INSTALLATION
-    # =====================================
-
-    # Define driver type variable
-    $driverType = "NVIDIA-Tesla"
-
-    # Check if GPU is present using Win32_VideoController
-    Write-Host "Checking for GPU hardware..."
-    $gpuPresent = $false
-    if (-not $gpuPresent) {
-        Write-Host "checking PCI devices for Nvidia devices..."
-        $devices = Get-WmiObject Win32_PnPEntity
-        foreach ($device in $devices) {
-            # NVIDIA GPUs have a specific vendor ID: VEN_10DE
-            if ($device.DeviceID -like "*VEN_10DE*") {
-                $gpuPresent = $true
-                Write-Host "Found NVIDIA GPU via DeviceID: $($device.Name) [$($device.DeviceID)]" -ForegroundColor Green
-                break
-            }
-        }
+    # Restart DCV service to apply changes
+    Write-Status "Restarting DCV service to apply configuration changes..."
+    Restart-Service -Name dcvserver -Force
+    
+    # Clean up installer file
+    if (Test-Path $dcvInstaller) {
+        Remove-Item -Path $dcvInstaller -Force
     }
 
-    # Create directory structure if it doesn't exist
-    $LocalPathDrivers = "$driveLetter\$installationDir\Drivers"
-    if (-not (Test-Path $LocalPathDrivers)) {
-        New-Item -ItemType Directory -Path $LocalPathDrivers -Force
-    }
+    Write-Status "DCV installation and configuration completed" -Level "SUCCESS"
 
+    # ===========================
+    # INSTALL NVIDIA GRID DRIVERS
+    # ===========================
+    
     # Only attempt to install drivers if GPU is present
     if ($gpuPresent) {
-        Write-Host "This AMI will be optimized for GPU instances"
-
-        # Install drivers based on type
-        switch ($driverType) {
-            "NVIDIA-Tesla" {
-                Write-Host "Installing NVIDIA Tesla drivers..."
-
-                # Define URLs for Tesla driver versions
-                $teslaUrls = @(
-                    "https://us.download.nvidia.com/tesla/573.39/573.39-data-center-tesla-desktop-winserver-2022-2025-dch-international.exe"
-                )
-
-                $driverDownloaded = $false
-                foreach ($url in $teslaUrls) {
-                    try {
-                        $response = Invoke-WebRequest -Uri $url -Method Head -UseBasicParsing -ErrorAction SilentlyContinue
-                        if ($response.StatusCode -eq 200) {
-                            $teslaDriverInstaller = "$LocalPathDrivers\nvidia-tesla-driver.exe"
-                            Invoke-WebRequest -Uri $url -OutFile $teslaDriverInstaller
-                            Start-Process $teslaDriverInstaller -ArgumentList "/s" -Wait
-                            $driverDownloaded = $true
-                            break
-                        }
-                    }
-                    catch { }
-                }
-
-                if (-not $driverDownloaded) {
-                    Write-Warning "Failed to download any Tesla driver version"
-                }
-
-                # Create completion marker
-                "NVIDIA driver installation completed at $(Get-Date)" | Out-File -FilePath "$LocalPathDrivers\nvidia-install-complete.txt"
-
-                # Install Nvidia Desktop Manager if applicable
-                try {
-                    Get-AppxPackage -AllUsers | Where-Object {$_.Name -like "*NVIDIAControlPanel*"} | Remove-AppxPackage -AllUsers
-                    Add-AppxPackage -Register "C:\Program Files\WindowsApps\NVIDIACorp.NVIDIAControlPanel_*\AppxManifest.xml" -DisableDevelopmentMode -ErrorAction SilentlyContinue
-                }
-                catch { }
+        Write-Status "Installing NVIDIA GRID drivers for GPU instance..."
+        
+        # Install AWS.Tools.S3 module directly
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+        Install-Module -Name AWS.Tools.S3 -Force -Scope CurrentUser -AllowClobber
+        Import-Module AWS.Tools.S3
+        
+        # Download and install the drivers
+        $Bucket = "ec2-windows-nvidia-drivers"
+        $KeyPrefix = "latest"
+        $LocalPath = "C:\temp\drivers"
+        
+        $Objects = Get-S3Object -BucketName $Bucket -KeyPrefix $KeyPrefix -Region us-east-1
+        
+        foreach ($Object in $Objects) {
+            if ($Object.Key -ne '' -and $Object.Size -ne 0) {
+                $LocalFilePath = Join-Path $LocalPath $Object.Key
+                Copy-S3Object -BucketName $Bucket -Key $Object.Key -LocalFile $LocalFilePath -Region us-east-1
             }
         }
-    } else {
-        Write-Warning "No NVIDIA GPU detected. Skipping driver installation."
+        
+        # Find and install the driver
+        $gridDriverPath = Get-ChildItem -Path $LocalPath -Filter "*.exe" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+        if ($gridDriverPath) {
+            Start-Process -FilePath $gridDriverPath -ArgumentList "/s" -Wait -PassThru -NoNewWindow
+            Write-Status "NVIDIA GRID driver installation completed" -Level "SUCCESS"
+            
+            # Configure GRID licensing for workstation features
+            reg add "HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v FeatureType /t REG_DWORD /d 1 /f
+            reg add "HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v IgnoreSP /t REG_DWORD /d 1 /f
+        }
+    }
+    else {
+        Write-Status "No NVIDIA GPU detected. Skipping driver installation." -Level "INFO"
     }
 
-    Write-Host "Setup completed successfully at $(Get-Date)"
+    # ======================================
+    # SYSPREP CONFIGURATION FOR GRID DRIVERS
+    # ======================================
+    
+    Write-Status "Configuring Sysprep for driver persistence..."
+    
+    # Create EC2Launch config directory
+    $ec2LaunchV2Dir = "C:\ProgramData\Amazon\EC2Launch\config"
+    New-Item -Path $ec2LaunchV2Dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    
+    # Create agent-config.yml with driver persistence enabled
+    $agentYml = @"
+# EC2Launch v2 agent configuration
+version: 1.0
+config:
+  name: WindowsServerAMI
+  initializeSystem: true
+  setComputerName: false
+  setWallpaper: true
+  addDnsSuffixList: true
+  extendBootVolumeSize: true
+  handleUserData: true
+  adminPasswordType: Random
+  configSsmAgent: true
+  persistDrivers: true
+"@
+    Set-Content -Path "$ec2LaunchV2Dir\agent-config.yml" -Value $agentYml
+    
+    # Create sysprep directory and Unattend.xml
+    New-Item -Path "$ec2LaunchV2Dir\sysprep" -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    
+    $unattendXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <settings pass="generalize">
+        <component name="Microsoft-Windows-PnpSysprep" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+            <PersistAllDeviceInstalls>true</PersistAllDeviceInstalls>
+            <DoNotCleanUpNonPresentDevices>true</DoNotCleanUpNonPresentDevices>
+        </component>
+    </settings>
+</unattend>
+"@
+    Set-Content -Path "$ec2LaunchV2Dir\sysprep\Unattend.xml" -Value $unattendXml
+    
+    Write-Status "Sysprep configuration completed" -Level "SUCCESS"
+
+    Write-Status "Setup completed successfully" -Level "SUCCESS"
 }
 catch {
-    Write-Error "Script execution failed: $_"
+    Write-Status "Script execution failed: $_" -Level "ERROR"
     throw
-}
-finally {
-    if (Get-Command Stop-Transcript -ErrorAction SilentlyContinue) {
-        try { Stop-Transcript } catch { }
-    }
 }
