@@ -53,6 +53,9 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
+          allowForks: true
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          context: ${{ github.workflow }}
 
       # Comment on PR that the workflow is in progress
       - name: Comment on PR that the workflow is in progress
@@ -72,11 +75,12 @@ jobs:
             })
 
       # Checkout the PR branch
-      - name: Checkout PR branch ${{ steps.comment-branch.outputs.head_ref }}
+      # Note: In GitHub's API, PRs are a type of issue, so github.event.issue.number is the PR number
+      # refs/pull/NUMBER/head is a special reference that works for both internal PRs and forks
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
-          repository: ${{ steps.comment-branch.outputs.head_repo }}
+          ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 0
 
       # Use GitHub Action secret to assume existing AWS IAM Role using OIDC connection
@@ -136,3 +140,6 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
+          allowForks: true
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          context: ${{ github.workflow }}
