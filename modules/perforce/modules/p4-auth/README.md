@@ -14,9 +14,27 @@ This module creates the following resources:
 
 ## Prerequisites
 
-P4Admin can be configured at deployment time or through the web UI following deployment. If you opt to configure P4Admin through the web-based UI you will need to create an administrative user for initial login. You can either create and upload these credentials to AWS Secrets Manager yourself, or you opt to have the module create these credentials for you. The parent module does this by default.
+P4Auth can be configured at deployment time or through the web UI following deployment. If you opt to configure P4Auth through the web-based UI you will need to create an administrative user for initial login. You can either create and upload these credentials to AWS Secrets Manager yourself, or you opt to have the module create these credentials for you. The parent module does this by default.
 
-Should you choose to create this administrative user yourself you will need to specify the ARN for the username and password as module variables. You can create the secret using the AWS CLI:
+Should you choose to create this administrative user yourself, you have two options:
+
+### Option 1: Separate Secrets (Recommended)
+
+```bash
+# Create username secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Username \
+    --description "P4Auth Admin Username" \
+    --secret-string "admin"
+
+# Create password secret
+aws secretsmanager create-secret \
+    --name P4AuthAdmin-Password \
+    --description "P4Auth Admin Password" \
+    --secret-string "EXAMPLE-PASSWORD"
+```
+
+### Option 2: Combined Secret
 
 ```bash
 aws secretsmanager create-secret \
@@ -25,7 +43,22 @@ aws secretsmanager create-secret \
     --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
 ```
 
-And then provide the relevant ARNs as variables when you define the Helix Authentication module in your Terraform configurations:
+> **Important:** When using a combined secret, the task execution role needs additional IAM permissions. You must add the following policy to your task execution role:
+>
+> ```json
+> {
+>   "Version": "2012-10-17",
+>   "Statement": [
+>     {
+>       "Effect": "Allow",
+>       "Action": "secretsmanager:GetSecretValue",
+>       "Resource": "arn:aws:secretsmanager:region:account:secret:P4AuthAdmin*"
+>     }
+>   ]
+> }
+> ```
+
+You can then provide the relevant ARN as variables when you define the Helix Authentication module in your Terraform configurations:
 
 ```hcl
 module "p4_auth" {
@@ -70,7 +103,7 @@ curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
 ## Requirements
 
 | Name | Version |
-|------|---------|
+|------|---------| 
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.97.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.34.0 |
@@ -79,7 +112,7 @@ curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
 ## Providers
 
 | Name | Version |
-|------|---------|
+|------|---------| 
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
 | <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.34.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
