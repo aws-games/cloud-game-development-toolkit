@@ -70,7 +70,7 @@ This script handles the core system setup, including:
     - Optional virtual display driver for [Non-GPU instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html)
 - **AWS S3 tools for driver install** [S3 Powershell tools](https://docs.aws.amazon.com/powershell/v5/userguide/pstools-s3.html)
 - **NVIDIA GPU detection and driver installation** [GRID Drivers](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver)
-- **Sysprep configuration for GRID drivers compatibility** For Windows instances, if you launch your instance from a custom Windows AMI, the AMI must be a standardized image created with Windows Sysprep to ensure that the GRID driver works. For more information, see [https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html)
+- **Sysprep configuration for GRID drivers compatibility** For Windows instances, if you launch your instance from a custom Windows AMI, the AMI must be a standardized image created with Windows Sysprep to ensure that the GRID driver works. For more information, see [Create an Amazon EC2 AMI using Windows Sysprep](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html)
 
 ### dev_tools.ps1
 
