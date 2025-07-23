@@ -31,19 +31,6 @@ try {
     Write-Status "Windows Version: $(Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption)" -Level "INFO"
     Write-Status "Current User: $env:USERNAME" -Level "INFO"
     Write-Status "PowerShell Version: $($PSVersionTable.PSVersion)" -Level "INFO"
-    
-    # ===================
-    # PREPARE ENVIRONMENT
-    # ===================
-
-    # Import the Chocolatey Profile that contains the necessary code to enable tab-completions to function for `choco`.
-    $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-    if (Test-Path($ChocolateyProfile)) {
-        Write-Status "Chocolatey profile found, importing..." -Level "INFO"
-        Import-Module "$ChocolateyProfile"
-    } else {
-        Write-Status "Chocolatey profile not found at $ChocolateyProfile" -Level "INFO"
-    }
 
     # ==================================
     # INSTALL CHOCOLATEY PACKAGE MANAGER
@@ -73,8 +60,10 @@ try {
 
     Write-Status "Starting sequential installations for development tools..."
 
-    # Visual Studio Community - Primary IDE for game development with C++/C# support
-    Write-Status "Installing Visual Studio 2022 Community..."
+    # Visual Studio Community - Primary IDE for game development with required workloads and compontents for building on Unreal Engine
+    # Workloads - Managed Desktop (.NET), Native Desktop (C++), .NET Cross-Platform Development
+    # Components - Visual C++ Diagnostic Tools, Address Sanitizer, Windows 10 SDK (10.0.18362.0), Unreal Engine Component
+    Write-Status "Installing Visual Studio 2022 Community and tools for building on Unreal Engine..."
     choco install -y --no-progress visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
 
     if ($LASTEXITCODE -eq 0) {
@@ -92,6 +81,16 @@ try {
     }
     else {
         Write-Status "Git installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
+    }
+
+    # Install Windows Subsystem for Linux (WSL)
+    Write-Status "Installing Windows Subsystem for Linux (WSL)..."
+    choco install -y --no-progress wsl2
+    if ($LASTEXITCODE -eq 0) {
+        Write-Status "WSL installed successfully" -Level "SUCCESS"
+    }
+    else {
+        Write-Status "WSL installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
 
     # Install Perforce Command Line Client (p4)

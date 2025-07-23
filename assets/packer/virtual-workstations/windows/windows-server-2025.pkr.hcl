@@ -24,7 +24,7 @@ variable "subnet_id" {
 
 variable "instance_type" {
   type = string
-  default = "g4dn.4xlarge"
+  default = "g4dn.2xlarge"
 }
 
 variable "associate_public_ip_address" {
@@ -39,7 +39,7 @@ variable "ami_prefix" {
 
 variable "root_volume_size" {
   type = number
-  default = 100
+  default = 128
 }
 
 locals {
@@ -90,6 +90,7 @@ source "amazon-ebs" "base" {
   subnet_id = var.subnet_id
   associate_public_ip_address = var.associate_public_ip_address
 
+  # Boosting EBS peformance to speed up the AMI creation
   launch_block_device_mappings {
     device_name = "/dev/sda1"
     volume_size = var.root_volume_size

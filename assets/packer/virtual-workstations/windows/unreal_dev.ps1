@@ -54,7 +54,7 @@ try {
                 TimeoutSec = 300  # 5 minute timeout
             }
             Invoke-WebRequest @downloadParams
-            
+
             if (Test-Path $epicInstallerPath) {
                 $fileSize = (Get-Item $epicInstallerPath).Length
                 if ($fileSize -gt 1MB) {
