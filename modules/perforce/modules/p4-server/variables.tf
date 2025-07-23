@@ -215,6 +215,12 @@ variable "instance_subnet_id" {
   description = "The subnet where the P4 Server instance will be deployed."
 }
 
+variable "instance_private_ip" {
+  type        = string
+  description = "The private IP address to assign to the P4 Server."
+  default     = null
+}
+
 variable "create_default_sg" {
   type        = bool
   description = "Whether to create a default security group for the P4 Server instance."
