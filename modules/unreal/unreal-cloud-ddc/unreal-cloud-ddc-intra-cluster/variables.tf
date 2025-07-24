@@ -118,18 +118,18 @@ variable "unreal_cloud_ddc_service_account_name" {
   default     = "unreal-cloud-ddc-sa"
 }
 
-# variable "certificate_manager_hosted_zone_arn" {
-#   type        = list(string)
-#   description = "ARN of the Certificate Manager for Ingress."
-#   default     = []
-# }
+variable "certificate_manager_hosted_zone_arn" {
+  type        = list(string)
+  description = "ARN of the Certificate Manager for Ingress."
+  default     = []
+}
 
-# variable "enable_certificate_manager" {
-#   type        = bool
-#   description = "Enable Certificate Manager for Ingress. Required for TLS termination."
-#   default     = false
-#   validation {
-#     condition     = var.enable_certificate_manager ? length(var.certificate_manager_hosted_zone_arn) > 0 : true
-#     error_message = "Certificate Manager hosted zone ARN is required."
-#   }
-# }
+variable "enable_certificate_manager" {
+  type        = bool
+  description = "Enable Certificate Manager for Ingress. Required for TLS termination."
+  default     = false
+  validation {
+    condition     = var.enable_certificate_manager ? length(var.certificate_manager_hosted_zone_arn) > 0 : true
+    error_message = "Certificate Manager hosted zone ARN is required."
+  }
+}

@@ -226,6 +226,7 @@ No outputs.
 | Name | Description |
 |------|-------------|
 | <a name="output_monitoring_url_region_1"></a> [monitoring\_url\_region\_1](#output\_monitoring\_url\_region\_1) | n/a |
+| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | n/a |
 | <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
 | <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
 <!-- END_TF_DOCS -->

@@ -3,10 +3,10 @@
 # }
 data "aws_caller_identity" "current" {}
 
-# data "aws_eks_cluster" "unreal_cloud_ddc_cluster" {
-#   region = var.region
-#   name   = var.cluster_name
-# }
+data "aws_eks_cluster" "unreal_cloud_ddc_cluster" {
+  region = var.region
+  name   = var.cluster_name
+}
 
 data "aws_s3_bucket" "unreal_cloud_ddc_bucket" {
   region = var.region

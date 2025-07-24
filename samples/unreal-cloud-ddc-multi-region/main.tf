@@ -5,7 +5,7 @@ resource "random_password" "unreal_ddc" {
 }
 
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region"
+  name        = "unreal-cloud-ddc-bearer-token-multi-region-test-3"
   description = "The token to access unreal cloud ddc sample."
   region      = var.regions[0]
   replica {
@@ -16,15 +16,15 @@ resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
   tags = local.tags
 }
 
-data "aws_secretsmanager_secret" "unreal_ddc_region_2" {
-  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token]
-  region     = var.regions[1]
-  name       = aws_secretsmanager_secret.unreal_cloud_ddc_token.name
-}
-
 resource "aws_secretsmanager_secret_version" "unreal_ddc" {
   secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
   secret_string = random_password.unreal_ddc.result
+}
+
+data "aws_secretsmanager_secret" "unreal_ddc_region_2" {
+  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token, aws_secretsmanager_secret_version.unreal_ddc]
+  region     = var.regions[1]
+  name       = aws_secretsmanager_secret.unreal_cloud_ddc_token.name
 }
 
 data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token_region_1" {
@@ -199,6 +199,7 @@ resource "aws_vpc_peering_connection_accepter" "region_2" {
 }
 
 resource "aws_vpc_peering_connection_options" "requester" {
+  depends_on                = [aws_vpc_peering_connection_accepter.region_2]
   region                    = var.regions[0]
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
   requester {
@@ -207,6 +208,7 @@ resource "aws_vpc_peering_connection_options" "requester" {
 }
 
 resource "aws_vpc_peering_connection_options" "accepter" {
+  depends_on                = [aws_vpc_peering_connection_accepter.region_2]
   region                    = var.regions[1]
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
   accepter {
