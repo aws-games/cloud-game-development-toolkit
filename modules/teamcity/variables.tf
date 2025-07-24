@@ -225,3 +225,22 @@ variable "aurora_instance_count" {
   description = "Number of instances to provision for the Aurora cluster"
   default     = 2
 }
+
+##########################################
+### Build Farm Configuration Variables ###
+##########################################
+
+variable "build_farm_config" {
+  type = map(object({
+    image         = string
+    desired_count = number
+    cpu           = number
+    memory        = number
+  }))
+  default = {}
+}
+
+variable "agent_log_group_retention_in_days" {
+  type    = number
+  default = 7
+}
