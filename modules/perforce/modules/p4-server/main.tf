@@ -24,8 +24,10 @@ resource "awscc_secretsmanager_secret" "super_user_username" {
 # Perforce P4 Server Instance
 ##########################################
 locals {
-  is_fsxn  = var.storage_type == "FSxN"
   is_iscsi = var.protocol == "ISCSI"
+  is_fsxn  = var.storage_type == "FSxN"
+  is_ebs   = var.storage_type == "EBS"
+
   iscsi_depot_volume = (local.is_iscsi ?
     "/dev/mapper/${aws_fsx_ontap_volume.depot[0].name}" :
     null
@@ -34,7 +36,12 @@ locals {
     "${var.amazon_fsxn_svm_id}.${var.amazon_fsxn_filesystem_id}.fsx.${var.fsxn_region}.amazonaws.com:${aws_fsx_ontap_volume.depot[0].junction_path}"
     : null
   )
-  ebs_depot_volume = var.storage_type == "EBS" ? "/dev/sdf" : null
+  ebs_depot_volume = local.is_ebs ? "/dev/sdf" : null
+  depot_volume_name = (local.is_fsxn ?
+    (local.is_iscsi ? local.iscsi_depot_volume : local.nfs_depot_volume) :
+    local.ebs_depot_volume
+  )
+
   iscsi_metadata_volume = (local.is_fsxn && local.is_iscsi ?
     "/dev/mapper/${aws_fsx_ontap_volume.metadata[0].name}" :
     null
@@ -44,7 +51,12 @@ locals {
     :
     null
   )
-  ebs_metadata_volume = var.storage_type == "EBS" ? "/dev/sdg" : null
+  ebs_metadata_volume = local.is_ebs ? "/dev/sdg" : null
+  metadata_volume_name = (local.is_fsxn ?
+    (local.is_iscsi ? local.iscsi_metadata_volume : local.nfs_metadata_volume) :
+    local.ebs_metadata_volume
+  )
+
   iscsi_logs_volume = (local.is_iscsi ?
     "/dev/mapper/${aws_fsx_ontap_volume.logs[0].name}" :
     null
@@ -54,15 +66,7 @@ locals {
     :
     null
   )
-  ebs_logs_volume = var.storage_type == "EBS" ? "/dev/sdh" : null
-  depot_volume_name = (local.is_fsxn ?
-    (local.is_iscsi ? local.iscsi_depot_volume : local.nfs_depot_volume) :
-    local.ebs_depot_volume
-  )
-  metadata_volume_name = (local.is_fsxn ?
-    (local.is_iscsi ? local.iscsi_metadata_volume : local.nfs_metadata_volume) :
-    local.ebs_metadata_volume
-  )
+  ebs_logs_volume = local.is_ebs ? "/dev/sdh" : null
   logs_volume_name = (local.is_fsxn ?
     (local.is_iscsi ? local.iscsi_logs_volume : local.nfs_logs_volume) :
     local.ebs_logs_volume
@@ -157,7 +161,7 @@ resource "aws_ebs_volume" "depot" {
 }
 resource "aws_volume_attachment" "depot_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
-  device_name = "/dev/sdh"
+  device_name = local.ebs_depot_volume
   volume_id   = aws_ebs_volume.depot[count.index].id
   instance_id = aws_instance.server_instance.id
 }
@@ -176,7 +180,7 @@ resource "aws_ebs_volume" "metadata" {
 
 resource "aws_volume_attachment" "metadata_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
-  device_name = "/dev/sdg"
+  device_name = local.ebs_metadata_volume
   volume_id   = aws_ebs_volume.metadata[count.index].id
   instance_id = aws_instance.server_instance.id
 }
@@ -194,7 +198,7 @@ resource "aws_ebs_volume" "logs" {
 }
 resource "aws_volume_attachment" "logs_attachment" {
   count       = var.storage_type == "EBS" ? 1 : 0
-  device_name = "/dev/sdf"
+  device_name = local.ebs_logs_volume
   volume_id   = aws_ebs_volume.logs[count.index].id
   instance_id = aws_instance.server_instance.id
 }
