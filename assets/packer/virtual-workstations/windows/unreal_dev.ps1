@@ -25,12 +25,6 @@ function Write-Status {
 }
 
 try {
-    # Log system information
-    Write-Status "Starting Unreal Development Environment Setup"
-    Write-Status "Computer Name: $env:COMPUTERNAME"
-    Write-Status "Windows Version: $(Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption)"
-    Write-Status "Current User: $env:USERNAME"
-
     # ================================
     # Epic Games Launcher Installation
     # ================================

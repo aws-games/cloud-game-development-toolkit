@@ -25,13 +25,6 @@ function Write-Status {
 }
 
 try {
-    # Log script start with system info for debugging
-    Write-Status "Starting dev_tools.ps1 script" -Level "INFO"
-    Write-Status "Computer Name: $env:COMPUTERNAME" -Level "INFO"
-    Write-Status "Windows Version: $(Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption)" -Level "INFO"
-    Write-Status "Current User: $env:USERNAME" -Level "INFO"
-    Write-Status "PowerShell Version: $($PSVersionTable.PSVersion)" -Level "INFO"
-
     # ==================================
     # INSTALL CHOCOLATEY PACKAGE MANAGER
     # ==================================
