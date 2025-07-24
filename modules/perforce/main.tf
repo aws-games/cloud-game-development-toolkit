@@ -59,7 +59,6 @@ module "p4_server" {
   super_user_username_secret_arn = var.p4_server_config.super_user_username_secret_arn
   create_default_role            = var.p4_server_config.create_default_role
   custom_role                    = var.p4_server_config.custom_role
-  depends_on                     = [module.p4_auth]
 }
 
 
