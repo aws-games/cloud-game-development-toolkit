@@ -10,12 +10,23 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
   count = var.cluster_name != null ? 0 : 1
   name  = "${local.name_prefix}-cluster"
 
+  service_connect_defaults {
+    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  }
+
   setting {
     name  = "containerInsights"
     value = "enabled"
   }
 
   tags = local.tags
+}
+
+resource "aws_service_discovery_http_namespace" "teamcity" {
+  count       = var.cluster_name != null ? 0 : 1
+  name        = "${local.name_prefix}-namespace"
+  description = "Service Connect namespace for TeamCity services"
+  tags        = local.tags
 }
 
 # TeamCity Task Definition
@@ -36,6 +47,7 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
 
       portMappings = [
         {
+          name          = "teamcity-server"
           containerPort = var.container_port
           hostPort      = var.container_port
         }
@@ -90,13 +102,23 @@ resource "aws_ecs_task_definition" "teamcity_task_definition" {
 
 # ECS Service
 resource "aws_ecs_service" "teamcity" {
-  name                   = local.name_prefix
-  cluster                = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].arn : aws_ecs_cluster.teamcity_cluster[0].arn
+  name = local.name_prefix
+  cluster = (var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].arn :
+  aws_ecs_cluster.teamcity_cluster[0].arn)
   task_definition        = aws_ecs_task_definition.teamcity_task_definition.arn
   launch_type            = "FARGATE"
   desired_count          = var.desired_container_count
   force_new_deployment   = var.debug
   enable_execute_command = var.debug
+
+  //The databases were breaking because the tasks would cycle out,
+  // meaning that when one was terminating, another one would be booting up.
+  // At this time, the Teamcity server thinks that the database is assigned to
+  // 2 different servers and you'd be forced to do a completely new deployment because
+  // the server won't work. This temp solution works because it makes sure the task
+  // is completely off before another one is booted up, and I don't know an alternative yet
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
 
   wait_for_steady_state = false #TODO: make this configurable
 
@@ -111,6 +133,29 @@ resource "aws_ecs_service" "teamcity" {
       container_name   = var.container_name
       container_port   = var.container_port
 
+    }
+  }
+
+  # to let the agent talk to the service w/o hitting ALB
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+
+    service {
+      port_name      = "teamcity-server"
+      discovery_name = "teamcity-server"
+      client_alias {
+        port = var.container_port
+      }
+    }
+
+    log_configuration {
+      log_driver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.teamcity_log_group.name
+        awslogs-region        = data.aws_region.current.name
+        awslogs-stream-prefix = "[CONNECT]"
+      }
     }
   }
 
@@ -230,6 +275,9 @@ data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
 }
 
 data "aws_iam_policy_document" "teamcity_default_policy" {
+  #checkov:skip=CKV_AWS_111: resources need IAM write permissions
+  #checkov:skip=CKV_AWS_356: resources need IAM write permissions
+
   # ECS
   statement {
     sid    = "ECSExec"
@@ -258,6 +306,20 @@ data "aws_iam_policy_document" "teamcity_default_policy" {
       local.efs_file_system_arn
     ]
   }
+
+  statement {
+    sid       = "ServiceDiscovery"
+    effect    = "Allow"
+    actions   = ["servicediscovery:DiscoverInstances"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "logs"
+    effect    = "Allow"
+    actions   = ["logs:CreateLogGroup"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "teamcity_default_policy" {
@@ -270,41 +332,51 @@ resource "aws_iam_role" "teamcity_default_role" {
   name               = "teamcity-default-role"
   description        = "Default role for TeamCity ECS task."
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = [
-    aws_iam_policy.teamcity_default_policy.arn
-  ]
 
   tags = local.tags
 }
-resource "aws_iam_role" "teamcity_task_execution_role" {
-  name = "teamcity-task-execution-role"
 
-  assume_role_policy  = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+resource "aws_iam_role_policy_attachment" "teamcity_default_role" {
+  role       = aws_iam_role.teamcity_default_role.name
+  policy_arn = aws_iam_policy.teamcity_default_policy.arn
+}
 
-  dynamic "inline_policy" {
-    for_each = var.database_connection_string == null ? [1] : []
-    content {
-      name = "teamcity-secrets-access"
-      policy = jsonencode({
-        Version = "2012-10-17"
-        Statement = [
-          {
-            Sid    = "SecretsManager"
-            Effect = "Allow"
-            Action = [
-              "secretsmanager:GetSecretValue"
-            ]
-            Resource = [
-              aws_rds_cluster.teamcity_db_cluster[0].master_user_secret[0].secret_arn
-            ]
-          }
-        ]
-      })
-    }
+data "aws_iam_policy_document" "teamcity_execution_database_policy" {
+  count = var.database_connection_string == null ? 1 : 0
+  statement {
+    sid     = "SecretsManager"
+    effect  = "Allow"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_rds_cluster.teamcity_db_cluster[0].master_user_secret[0].secret_arn
+    ]
   }
+}
+
+resource "aws_iam_policy" "teamcity_execution_database_policy" {
+  count       = var.database_connection_string == null ? 1 : 0
+  name        = "teamcity-execution-policy"
+  description = "Policy granting permissions for TeamCity to access the database."
+  policy      = data.aws_iam_policy_document.teamcity_execution_database_policy[0].json
 
 }
+
+resource "aws_iam_role" "teamcity_task_execution_role" {
+  name               = "teamcity-task-execution-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+}
+
+resource "aws_iam_role_policy_attachment" "teamcity_task_execution_database_policy" {
+  count      = var.database_connection_string == null ? 1 : 0
+  role       = aws_iam_role.teamcity_task_execution_role.name
+  policy_arn = aws_iam_policy.teamcity_execution_database_policy[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "teamcity_task_execution_default_policy" {
+  role       = aws_iam_role.teamcity_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
 
 # CloudWatch Logs
 resource "aws_cloudwatch_log_group" "teamcity_log_group" {
@@ -328,8 +400,10 @@ resource "aws_lb" "teamcity_external_lb" {
     for_each = var.enable_teamcity_alb_access_logs ? [1] : []
     content {
       enabled = var.enable_teamcity_alb_access_logs
-      bucket  = var.teamcity_alb_access_logs_bucket != null ? var.teamcity_alb_access_logs_bucket : aws_s3_bucket.teamcity_alb_access_logs_bucket[0].id
-      prefix  = var.teamcity_alb_access_logs_prefix != null ? var.teamcity_alb_access_logs_prefix : "${local.name_prefix}-alb"
+      bucket = (var.teamcity_alb_access_logs_bucket != null ? var.teamcity_alb_access_logs_bucket :
+      aws_s3_bucket.teamcity_alb_access_logs_bucket[0].id)
+      prefix = (var.teamcity_alb_access_logs_prefix != null ? var.teamcity_alb_access_logs_prefix :
+      "${local.name_prefix}-alb")
     }
   }
   #checkov:skip=CKV_AWS_150:Deletion protection disabled by default
@@ -521,14 +595,16 @@ data "aws_iam_policy_document" "access_logs_bucket_alb_write" {
       type        = "AWS"
       identifiers = [data.aws_elb_service_account.main.arn]
     }
-    resources = ["${var.teamcity_alb_access_logs_bucket != null ? var.teamcity_alb_access_logs_bucket : aws_s3_bucket.teamcity_alb_access_logs_bucket[0].arn}/${var.teamcity_alb_access_logs_prefix != null ? var.teamcity_alb_access_logs_prefix : "${local.name_prefix}-alb"}/*"
+    resources = [
+      "${var.teamcity_alb_access_logs_bucket != null ? var.teamcity_alb_access_logs_bucket : aws_s3_bucket.teamcity_alb_access_logs_bucket[0].arn}/${var.teamcity_alb_access_logs_prefix != null ? var.teamcity_alb_access_logs_prefix : "${local.name_prefix}-alb"}/*"
     ]
   }
 }
 
 resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {
-  count  = var.enable_teamcity_alb_access_logs && var.teamcity_alb_access_logs_bucket == null ? 1 : 0
-  bucket = var.teamcity_alb_access_logs_bucket == null ? aws_s3_bucket.teamcity_alb_access_logs_bucket[0].id : var.teamcity_alb_access_logs_bucket
+  count = var.enable_teamcity_alb_access_logs && var.teamcity_alb_access_logs_bucket == null ? 1 : 0
+  bucket = (var.teamcity_alb_access_logs_bucket == null ? aws_s3_bucket.teamcity_alb_access_logs_bucket[0].id :
+  var.teamcity_alb_access_logs_bucket)
   policy = data.aws_iam_policy_document.access_logs_bucket_alb_write[0].json
 }
 

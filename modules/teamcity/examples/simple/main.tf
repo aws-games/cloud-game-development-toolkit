@@ -4,4 +4,13 @@ module "teamcity" {
   service_subnets     = aws_subnet.private_subnets[*].id
   alb_subnets         = aws_subnet.public_subnets[*].id
   alb_certificate_arn = aws_acm_certificate.teamcity.arn
+
+  build_farm_config = {
+    "teamcity-simple" = {
+      image         = "jetbrains/teamcity-agent"
+      cpu           = 256
+      memory        = 256
+      desired_count = 3
+    }
+  }
 }
