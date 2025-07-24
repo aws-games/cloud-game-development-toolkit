@@ -360,6 +360,11 @@ variable "p4_auth_config" {
     custom_role               = optional(string, null)
     admin_username_secret_arn = optional(string, null)
     admin_password_secret_arn = optional(string, null)
+
+    # SCIM
+    p4d_super_user_arn          = optional(string, null)
+    p4d_super_user_password_arn = optional(string, null)
+    scim_bearer_token_arn       = optional(string, null)
   })
 
   default = null
@@ -410,6 +415,13 @@ variable "p4_auth_config" {
 
     admin_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4Auth Administrator password."
 
+
+    # - SCIM -
+    p4d_super_user_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user username for p4d."
+
+    p4d_super_user_password_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user password for p4d."
+
+    scim_bearer_token_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token."
 
 
   EOT
