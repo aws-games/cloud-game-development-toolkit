@@ -21,13 +21,16 @@ module "eks_blueprints_all_other_addons" {
   }
 
 
-  cluster_name      = var.cluster_name
-  cluster_endpoint  = var.cluster_endpoint
-  cluster_version   = var.cluster_version
-  oidc_provider_arn = var.cluster_oidc_provider_arn
+  cluster_name      = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
+  cluster_endpoint  = data.aws_eks_cluster.unreal_cloud_ddc_cluster.endpoint
+  cluster_version   = data.aws_eks_cluster.unreal_cloud_ddc_cluster.version
+  oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
 
   enable_aws_load_balancer_controller = true
   enable_aws_cloudwatch_metrics       = true
+  enable_cert_manager                 = var.enable_certificate_manager
+
+  cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
 
 
   tags = {
@@ -62,9 +65,7 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   ecr_repository_prefix = "github"
   upstream_registry_url = "ghcr.io"
   credential_arn        = var.ghcr_credentials_secret_manager_arn
-  region                = var.region
 }
-
 locals {
   unreal_cloud_ddc_base_values                          = [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, var.unreal_cloud_ddc_helm_config)]
   unreal_cloud_ddc_multi_region_with_replication_values = [templatefile(var.unreal_cloud_ddc_helm_replication_chart, merge(var.unreal_cloud_ddc_helm_config, { "ddc_replication_region_url" : data.aws_lb.unreal_cloud_ddc_load_balancer.dns_name }))]
@@ -105,6 +106,7 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
   depends_on = [
+    helm_release.unreal_cloud_ddc_initialization,
     null_resource.delete_init_deployment,
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
