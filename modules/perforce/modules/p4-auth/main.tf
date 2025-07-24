@@ -82,13 +82,19 @@ resource "aws_ecs_task_definition" "task_definition" {
         var.enable_web_based_administration ? [
           {
             name  = "ADMIN_PASSWD_FILE",
-            value = "/var/has/password.txt"
+            value = "${local.data_path}/password.txt"
           }
         ] : [],
         var.p4d_port != null ? [
           {
             name  = "P4PORT"
             value = var.p4d_port
+          }
+        ] : [],
+        var.scim_bearer_token_arn != null ? [
+          {
+            name  = "BEARER_TOKEN_FILE"
+            value = "${local.data_path}/bearer_token.txt"
           }
         ] : [],
       )
@@ -103,12 +109,6 @@ resource "aws_ecs_task_definition" "task_definition" {
           {
             name      = "P4USER"
             valueFrom = var.p4d_super_user_arn
-          }
-        ] : [],
-        var.scim_bearer_token_arn != null ? [
-          {
-            name      = "BEARER_TOKEN"
-            valueFrom = var.scim_bearer_token_arn
           }
         ] : [],
       )
@@ -142,18 +142,26 @@ resource "aws_ecs_task_definition" "task_definition" {
       name                     = "${var.container_name}-config"
       image                    = "bash"
       essential                = false
-      command                  = ["sh", "-c", "echo $ADMIN_PASSWD | tee /var/has/password.txt"]
+      command                  = ["sh", "-c", "echo $ADMIN_PASSWD | tee ${local.data_path}/password.txt && echo -n $BEARER_TOKEN | base64 | tee ${local.data_path}/bearer_token.txt"]
       readonly_root_filesystem = false
-      secrets = var.enable_web_based_administration ? [
-        {
-          name      = "ADMIN_USERNAME"
-          valueFrom = var.admin_username_secret_arn != null ? var.admin_username_secret_arn : awscc_secretsmanager_secret.admin_username[0].secret_id
-        },
-        {
-          name      = "ADMIN_PASSWD"
-          valueFrom = var.admin_password_secret_arn != null ? var.admin_password_secret_arn : awscc_secretsmanager_secret.admin_password[0].secret_id
-        },
-      ] : [],
+      secrets = concat([],
+        var.enable_web_based_administration ? [
+          {
+            name      = "ADMIN_USERNAME"
+            valueFrom = var.admin_username_secret_arn != null ? var.admin_username_secret_arn : awscc_secretsmanager_secret.admin_username[0].secret_id
+          },
+          {
+            name      = "ADMIN_PASSWD"
+            valueFrom = var.admin_password_secret_arn != null ? var.admin_password_secret_arn : awscc_secretsmanager_secret.admin_password[0].secret_id
+          },
+        ] : [],
+        var.scim_bearer_token_arn != null ? [
+          {
+            name      = "BEARER_TOKEN"
+            valueFrom = var.scim_bearer_token_arn
+          }
+        ] : [],
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {
