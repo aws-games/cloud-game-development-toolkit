@@ -77,7 +77,7 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
-  timeout      = 2700
+  # timeout      = 2700
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
