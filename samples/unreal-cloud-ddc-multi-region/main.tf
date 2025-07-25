@@ -5,7 +5,7 @@ resource "random_password" "unreal_ddc" {
 }
 
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region-test-3"
+  name        = "unreal-cloud-ddc-bearer-token-multi-region-test-7"
   description = "The token to access unreal cloud ddc sample."
   region      = var.regions[0]
   replica {
@@ -311,6 +311,7 @@ module "unreal_cloud_ddc_intra_cluster_region_1" {
     replication_region     = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[0]
     aws_region             = var.regions[0]
     aws_replication_region = var.regions[1]
+    ddc_region             = replace(var.regions[0], "-", "_")
     security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
     token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_1.secret_string
   }
@@ -442,6 +443,7 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
     replication_region     = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
     aws_region             = var.regions[1]
     aws_replication_region = var.regions[0]
+    ddc_region             = replace(var.regions[1], "-", "_")
     security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
     token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_2.secret_string
   }
