@@ -186,10 +186,12 @@ No outputs.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_certificate_manager_hosted_zone_arn"></a> [certificate\_manager\_hosted\_zone\_arn](#input\_certificate\_manager\_hosted\_zone\_arn) | ARN of the Certificate Manager for Ingress. | `list(string)` | `[]` | no |
 | <a name="input_cluster_endpoint"></a> [cluster\_endpoint](#input\_cluster\_endpoint) | Endpoint of the EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | Name of the EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#input\_cluster\_oidc\_provider\_arn) | ARN of the OIDC Provider from EKS Cluster | `string` | n/a | yes |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Version of the EKS Cluster | `string` | n/a | yes |
+| <a name="input_enable_certificate_manager"></a> [enable\_certificate\_manager](#input\_enable\_certificate\_manager) | Enable Certificate Manager for Ingress. Required for TLS termination. | `bool` | `false` | no |
 | <a name="input_ghcr_credentials_secret_manager_arn"></a> [ghcr\_credentials\_secret\_manager\_arn](#input\_ghcr\_credentials\_secret\_manager\_arn) | Arn for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. | `string` | n/a | yes |
 | <a name="input_is_multi_region_deployment"></a> [is\_multi\_region\_deployment](#input\_is\_multi\_region\_deployment) | Determines whether this is a multi region Unreal DDC deployment. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |

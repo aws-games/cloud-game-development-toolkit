@@ -28,7 +28,9 @@ module "eks_blueprints_all_other_addons" {
 
   enable_aws_load_balancer_controller = true
   enable_aws_cloudwatch_metrics       = true
+  enable_cert_manager                 = var.enable_certificate_manager
 
+  cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
 
   tags = {
     Environment = var.cluster_name
@@ -105,6 +107,7 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
   depends_on = [
+    helm_release.unreal_cloud_ddc_initialization,
     null_resource.delete_init_deployment,
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,

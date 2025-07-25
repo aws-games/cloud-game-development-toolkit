@@ -199,6 +199,7 @@ resource "aws_vpc_peering_connection_accepter" "region_2" {
 }
 
 resource "aws_vpc_peering_connection_options" "requester" {
+  depends_on                = [aws_vpc_peering_connection_accepter.region_2]
   region                    = var.regions[0]
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
   requester {
@@ -207,6 +208,7 @@ resource "aws_vpc_peering_connection_options" "requester" {
 }
 
 resource "aws_vpc_peering_connection_options" "accepter" {
+  depends_on                = [aws_vpc_peering_connection_accepter.region_2]
   region                    = var.regions[1]
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
   accepter {
