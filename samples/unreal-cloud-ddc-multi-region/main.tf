@@ -1,43 +1,30 @@
-resource "random_password" "unreal_ddc" {
-  length  = 64
-  special = false
-  numeric = true
-}
-
-resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region-test-7"
+resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
+  name        = "unreal-cloud-ddc-bearer-token-multi-region"
   description = "The token to access unreal cloud ddc sample."
-  region      = var.regions[0]
-  replica {
-    region = var.regions[1]
+  generate_secret_string = {
+    exclude_punctuation = true
+    exclude_numbers     = false
+    include_space       = false
+    password_length     = 64
   }
-  #checkov:skip=CKV_AWS_149: KMS encryption not yet
-  #checkov:skip=CKV2_AWS_57: Secret rotation is not required for this sample.
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "unreal_ddc" {
-  secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
-  secret_string = random_password.unreal_ddc.result
-}
-
-data "aws_secretsmanager_secret" "unreal_ddc_region_2" {
-  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token, aws_secretsmanager_secret_version.unreal_ddc]
-  region     = var.regions[1]
-  name       = aws_secretsmanager_secret.unreal_cloud_ddc_token.name
+  replica_regions = [{
+    region = var.regions[1]
+  }]
+  provider = awscc.region-1
 }
 
 data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token_region_1" {
-  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token]
+  depends_on = [awscc_secretsmanager_secret.unreal_cloud_ddc_token]
   region     = var.regions[0]
-  secret_id  = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
+  secret_id  = awscc_secretsmanager_secret.unreal_cloud_ddc_token.id
 }
 
 data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token_region_2" {
-  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token]
+  depends_on = [awscc_secretsmanager_secret.unreal_cloud_ddc_token]
   region     = var.regions[1]
-  secret_id  = data.aws_secretsmanager_secret.unreal_ddc_region_2.id
+  secret_id  = awscc_secretsmanager_secret.unreal_cloud_ddc_token.name
 }
+
 
 data "http" "public_ip" {
   url = "https://checkip.amazonaws.com/"

@@ -33,6 +33,16 @@ terraform {
   required_version = ">= 1.10.3"
 }
 
+provider "awscc" {
+  alias  = "region-1"
+  region = "us-west-2"
+}
+
+provider "awscc" {
+  alias  = "region-2"
+  region = "us-east-2"
+}
+
 provider "aws" {
   alias  = "region-1"
   region = "us-west-2"

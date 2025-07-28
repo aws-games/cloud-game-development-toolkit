@@ -82,6 +82,9 @@ Just a note here, you will have to specify the namespace to be DDC as the token 
 
 This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the `"monitoring_url"` provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
 
+## Deletion
+In order to delete this sample, you will need to
+
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
@@ -149,8 +152,8 @@ No outputs.
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_awscc.region-1"></a> [awscc.region-1](#provider\_awscc.region-1) | 1.49.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
 
 ## Modules
 
@@ -175,8 +178,6 @@ No outputs.
 | [aws_route53_record.scylla_monitoring_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.unreal_cloud_ddc_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.unreal_cloud_ddc_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
-| [aws_secretsmanager_secret.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/secretsmanager_secret) | resource |
-| [aws_secretsmanager_secret_version.unreal_ddc](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
 | [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
 | [aws_vpc_peering_connection.vpc_connection_region_1_to_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_peering_connection) | resource |
@@ -197,7 +198,7 @@ No outputs.
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http_ingress_rule_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_https_ingress_rule_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_https_ingress_rule_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_password.unreal_ddc](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/password) | resource |
+| [awscc_secretsmanager_secret.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_availability_zones.available_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/availability_zones) | data source |
 | [aws_availability_zones.available_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/caller_identity) | data source |
@@ -206,7 +207,6 @@ No outputs.
 | [aws_region.region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/region) | data source |
 | [aws_region.region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/region) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/route53_zone) | data source |
-| [aws_secretsmanager_secret.unreal_ddc_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/secretsmanager_secret) | data source |
 | [aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_1](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/secretsmanager_secret_version) | data source |
 | [aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_2](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/secretsmanager_secret_version) | data source |
 | [http_http.public_ip](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) | data source |

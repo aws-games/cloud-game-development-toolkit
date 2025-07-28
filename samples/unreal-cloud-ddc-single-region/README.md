@@ -149,8 +149,8 @@ No outputs.
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.49.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
 
 ## Modules
 
@@ -169,14 +169,12 @@ No outputs.
 | [aws_route53_record.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.scylla_monitoring_cert](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/route53_record) | resource |
-| [aws_secretsmanager_secret.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/secretsmanager_secret) | resource |
-| [aws_secretsmanager_secret_version.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_security_group.unreal_ddc_load_balancer_access_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_ddc_load_balancer_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http2_ingress_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http_ingress_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_https_ingress_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_password.unreal_ddc](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/password) | resource |
+| [awscc_secretsmanager_secret.unreal_cloud_ddc_token](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/caller_identity) | data source |
 | [aws_ecr_authorization_token.token](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/ecr_authorization_token) | data source |

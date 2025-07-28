@@ -1,25 +1,16 @@
-resource "random_password" "unreal_ddc" {
-  length  = 64
-  special = false
-  numeric = true
-}
-
-resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token"
+resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
+  name        = "unreal-cloud-ddc-bearer-token-2"
   description = "The token to access unreal cloud ddc sample."
-  #checkov:skip=CKV_AWS_149: KMS encryption not yet
-  #checkov:skip=CKV2_AWS_57: Secret rotation is not required for this sample.
-  tags = local.tags
-}
-
-resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
-  secret_string = random_password.unreal_ddc.result
+  generate_secret_string = {
+    exclude_punctuation = true
+    exclude_numbers     = false
+    include_space       = false
+    password_length     = 64
+  }
 }
 
 data "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  depends_on = [aws_secretsmanager_secret.unreal_cloud_ddc_token]
-  secret_id  = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
+  secret_id = awscc_secretsmanager_secret.unreal_cloud_ddc_token.id
 }
 
 data "http" "public_ip" {

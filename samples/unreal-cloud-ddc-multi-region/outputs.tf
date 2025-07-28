@@ -7,7 +7,7 @@ output "monitoring_url_region_1" {
 }
 
 output "unreal_cloud_ddc_bearer_token_arn" {
-  value = aws_secretsmanager_secret.unreal_cloud_ddc_token.id
+  value = awscc_secretsmanager_secret.unreal_cloud_ddc_token.id
 }
 
 output "scylla_ips" {
