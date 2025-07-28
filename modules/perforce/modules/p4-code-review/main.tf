@@ -117,6 +117,10 @@ resource "aws_ecs_task_definition" "task_definition" {
           {
             name  = "SWARM_REDIS_PORT" # cannot update naming until the Perforce container image is updated
             value = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.cluster[0].cache_nodes[0].port)
+          },
+          {
+            name  = "SWARM_FORCE_EXT"
+            value = "y"
           }
         ],
         readonlyRootFilesystem = false
