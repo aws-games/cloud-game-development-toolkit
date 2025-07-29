@@ -91,7 +91,7 @@ resource "null_resource" "delete_init_deployment" {
   count = var.is_multi_region_deployment ? 1 : 0
 
   provisioner "local-exec" {
-    command = "kubectl delete deployment -l app.kubernetes.io/instance=unreal-cloud-ddc-initialize -n ${var.unreal_cloud_ddc_namespace} || true"
+    command = "aws eks update-kubeconfig --region ${var.region} --name ${data.aws_eks_cluster.unreal_cloud_ddc_cluster.name} && kubectl delete deployment -l app.kubernetes.io/instance=unreal-cloud-ddc-initialize -n ${var.unreal_cloud_ddc_namespace} || true"
   }
 
   depends_on = [helm_release.unreal_cloud_ddc_initialization]
