@@ -14,7 +14,7 @@ data "http" "my_ip" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_https" {
   security_group_id = aws_security_group.allow_my_ip.id
-  description       = "Allow HTTPS traffic from Kevon."
+  description       = "Allow HTTPS traffic from my public IP."
   from_port         = 443
   to_port           = 443
   ip_protocol       = "tcp"
@@ -22,7 +22,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_https" {
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_http" {
   security_group_id = aws_security_group.allow_my_ip.id
-  description       = "Allow HTTP traffic from Kevon."
+  description       = "Allow HTTP traffic from my public IP."
   from_port         = 80
   to_port           = 80
   ip_protocol       = "tcp"
@@ -31,7 +31,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_http" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_icmp" {
   security_group_id = aws_security_group.allow_my_ip.id
-  description       = "Allow ICMP traffic from Kevon."
+  description       = "Allow ICMP traffic from my public IP."
   from_port         = -1
   to_port           = -1
   ip_protocol       = "icmp"
@@ -39,7 +39,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_icmp" {
 }
 resource "aws_vpc_security_group_ingress_rule" "allow_perforce" {
   security_group_id = aws_security_group.allow_my_ip.id
-  description       = "Allow Perforce traffic from Kevon."
+  description       = "Allow Perforce traffic from my public IP."
   from_port         = 1666
   to_port           = 1666
   ip_protocol       = "tcp"

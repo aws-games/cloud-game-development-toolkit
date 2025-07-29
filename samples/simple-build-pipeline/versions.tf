@@ -4,11 +4,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.97.0"
+      version = "6.5.0"
     }
     netapp-ontap = {
       source  = "NetApp/netapp-ontap"
-      version = "2.1.0"
+      version = "2.3.0"
     }
     http = {
       source  = "hashicorp/http"
