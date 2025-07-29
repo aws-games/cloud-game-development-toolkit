@@ -1,5 +1,5 @@
 resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region-test-10"
+  name        = "unreal-cloud-ddc-bearer-token-multi-region"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
     exclude_punctuation = true

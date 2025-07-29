@@ -190,7 +190,7 @@ No modules.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.2.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.5.1 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.6 |
 
@@ -210,70 +210,70 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_log_group.unreal_cluster_cloudwatch](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_eks_cluster.unreal_cloud_ddc_eks_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/eks_cluster) | resource |
-| [aws_eks_node_group.nvme_node_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.system_node_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.worker_node_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/eks_node_group) | resource |
-| [aws_iam_instance_profile.scylla_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_instance_profile.scylla_monitoring_profile](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_openid_connect_provider) | resource |
-| [aws_iam_role.eks_cluster_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.nvme_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_monitoring_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.system_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.worker_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.scylla_monitoring_policy](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy) | resource |
-| [aws_iam_role_policy_attachments_exclusive.eks_cluster_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.nvme_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.scylla_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.system_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.worker_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_instance.scylla_ec2_instance_other_nodes](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/instance) | resource |
-| [aws_instance.scylla_ec2_instance_seed](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/instance) | resource |
-| [aws_instance.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/instance) | resource |
-| [aws_launch_template.nvme_launch_template](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/launch_template) | resource |
-| [aws_launch_template.system_launch_template](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/launch_template) | resource |
-| [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/launch_template) | resource |
-| [aws_lb.scylla_monitoring_alb](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/lb) | resource |
-| [aws_lb_listener.scylla_monitoring_listener](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.scylla_monitoring_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group_attachment.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/lb_target_group_attachment) | resource |
-| [aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_security_group.cluster_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.nvme_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_lb_sg](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_sg](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.system_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_security_group.worker_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.cluster_egress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.nvme_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_lb_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.self_scylla_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.ssm_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.system_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.worker_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.cluster_lb_ingress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_node_exporter](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_prometheus](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_lb_monitoring](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_cloudwatch_log_group.unreal_cluster_cloudwatch](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_eks_cluster.unreal_cloud_ddc_eks_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster) | resource |
+| [aws_eks_node_group.nvme_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
+| [aws_eks_node_group.system_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
+| [aws_eks_node_group.worker_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
+| [aws_iam_instance_profile.scylla_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_instance_profile.scylla_monitoring_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider) | resource |
+| [aws_iam_role.eks_cluster_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.nvme_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.scylla_monitoring_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.scylla_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.system_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.worker_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.scylla_monitoring_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachments_exclusive.eks_cluster_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
+| [aws_iam_role_policy_attachments_exclusive.nvme_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
+| [aws_iam_role_policy_attachments_exclusive.scylla_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
+| [aws_iam_role_policy_attachments_exclusive.system_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
+| [aws_iam_role_policy_attachments_exclusive.worker_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
+| [aws_instance.scylla_ec2_instance_other_nodes](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
+| [aws_instance.scylla_ec2_instance_seed](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
+| [aws_instance.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
+| [aws_launch_template.nvme_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
+| [aws_launch_template.system_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
+| [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
+| [aws_lb.scylla_monitoring_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
+| [aws_lb_listener.scylla_monitoring_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_target_group.scylla_monitoring_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group_attachment.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment) | resource |
+| [aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_security_group.cluster_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.nvme_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.scylla_monitoring_lb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.scylla_monitoring_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.scylla_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.system_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.worker_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.cluster_egress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.nvme_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.scylla_monitoring_lb_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.scylla_monitoring_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.self_scylla_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.ssm_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.system_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.worker_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.cluster_lb_ingress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_node_exporter](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_prometheus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.scylla_monitoring_lb_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/string) | resource |
-| [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/ami) | data source |
-| [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/ami) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_assume_role](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/6.2.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.scylla_monitoring_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.scylla_monitoring_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [tls_certificate.eks_tls_certificate](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate) | data source |
 
 ## Inputs
