@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.97.0"
+      version = "6.5.0"
     }
     awscc = {
       source  = "hashicorp/awscc"
@@ -12,7 +12,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.7.1"
+      version = "3.7.2"
     }
     netapp-ontap = {
       source  = "NetApp/netapp-ontap"
@@ -24,7 +24,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "2.5.2"
+      version = "2.5.3"
     }
   }
 }

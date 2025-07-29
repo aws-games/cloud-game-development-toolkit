@@ -209,6 +209,7 @@ variable "p4_server_config" {
 
     # Networking & Security
     instance_subnet_id       = optional(string, null)
+    instance_private_ip      = optional(string, null)
     create_default_sg        = optional(bool, true)
     existing_security_groups = optional(list(string), [])
     internal                 = optional(bool, false)
@@ -276,6 +277,8 @@ variable "p4_server_config" {
 
     # - Networking & Security -
     instance_subnet_id: "The subnet where the P4 Server instance will be deployed."
+
+    instance_private_ip: "The private IP address to assign to the P4 Server."
 
     create_default_sg : "Whether to create a default security group for the P4 Server instance."
 

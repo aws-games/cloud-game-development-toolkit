@@ -579,9 +579,19 @@ SDP_Offline_Recreate=/p4/sdp/Server/Unix/p4/common/bin/recreate_offline_db.sh
 SDP_Client_Binary=/hxdepots/sdp/helix_binaries/p4
 SDP=/hxdepots/sdp
 TOKEN=$(curl --request PUT "http://169.254.169.254/latest/api/token" --header "X-aws-ec2-metadata-token-ttl-seconds: 3600") # This is only for the metadata V2 need to check go and try the V1 with no token and see which one works.
-EC2_DNS_PRIVATE=$(curl -s http://169.254.169.254/latest/meta-data/hostname --header "X-aws-ec2-metadata-token: $TOKEN") # same need to check for V2 vs V1
 SDP_Setup_Script_Config=/hxdepots/sdp/Server/Unix/setup/mkdirs.cfg # Config to the new script needed for mkdirs.sh
 AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region --header "X-aws-ec2-metadata-token: $TOKEN") # Get AWS region for SiteTags
+
+if [ -z "${FQDN}" ]; then
+    FQDN=$(curl -s http://169.254.169.254/latest/meta-data/hostname --header "X-aws-ec2-metadata-token: $TOKEN") # same need to check for V2 vs V1
+
+    # Check if FQDN was successfully retrieved
+    if [ -z "${FQDN}" ]; then
+        log_message "Failed to retrieve EC2 instance DNS name."
+        exit 1
+    fi
+    log_message "--fqdn not provided, using EC2 private DNS name $FQDN"
+fi
 
 cd /hxdepots/sdp/Server/Unix/setup # need to cd other
 
@@ -607,9 +617,9 @@ log_message "Updated ADMINUSER in $SDP_Setup_Script_Config."
 # Check if p4d_master server and update sitetags
 
 # Update P4MASTERHOST value in the configuration file
-sed -i "s/^P4MASTERHOST=.*/P4MASTERHOST=$EC2_DNS_PRIVATE/" "$SDP_Setup_Script_Config"
+sed -i "s/^P4MASTERHOST=.*/P4MASTERHOST=$FQDN/" "$SDP_Setup_Script_Config"
 
-log_message "Updated P4MASTERHOST to $EC2_DNS_PRIVATE in $SDP_Setup_Script_Config."
+log_message "Updated P4MASTERHOST to $FQDN in $SDP_Setup_Script_Config."
 
 # Update Perforce case_sensitivity in configuration
 sed -i "s/^CASE_SENSITIVE=.*/CASE_SENSITIVE=$CASE_SENSITIVE/" "$SDP_Setup_Script_Config"
@@ -642,16 +652,8 @@ if [ "${PLAINTEXT,,}" = "false" ]; then
   # update cert config with ec2 DNS name
   FILE_PATH="/p4/ssl/config.txt"
 
-  # Check if EC2_DNS_PRIVATE was successfully retrieved
-
-
-  if [ -z "${EC2_DNS_PRIVATE}" ]; then
-    log_message "Failed to retrieve EC2 instance DNS name."
-    exit 1
-  fi
-
   # Replace REPL_DNSNAME with the EC2 instance DNS name for ssl certificate generation
-  sed -i "s/REPL_DNSNAME/$EC2_DNS_PRIVATE/" "$FILE_PATH"
+  sed -i "s/REPL_DNSNAME/$FQDN/" "$FILE_PATH"
 
   echo "File updated successfully."
 
