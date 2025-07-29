@@ -4,6 +4,7 @@ This Terraform module creates a Virtual Desktop Infrastructure (VDI) setup on AW
 
 ## Features
 
+- **VPC Management**: Create a new VPC with public and private subnets or use an existing VPC
 - **EC2 Instance**: Configurable instance type with GPU support (default: g4dn.2xlarge)
 - **EBS Storage**: 512GB encrypted root volume with configurable type and performance, plus an additional volume for file storage
 - **Security**: Security group with configurable access rules for RDP and NICE DCV
@@ -16,7 +17,10 @@ This Terraform module creates a Virtual Desktop Infrastructure (VDI) setup on AW
 ## Architecture
 
 The module creates:
-- An EC2 instance in a specified VPC subnet
+- A VPC with public and private subnets (optional - can use an existing VPC instead)
+- Internet Gateway for public subnet connectivity (if creating a new VPC)
+- NAT Gateway for private subnet outbound internet access (if creating a new VPC)
+- An EC2 instance in a specified VPC subnet (usually a private subnet for security)
 - A security group with ingress rules for RDP and NICE DCV remote access
 - An IAM role and instance profile for AWS service integration
 - A launch template for instance configuration
@@ -28,7 +32,8 @@ The module creates:
 This is example for how to use the Terraform file. Uncomment specific configuration lines in your actual Terraform code (not in this README) when you want to use those options:
 
 ```hcl
-module "vdi" {
+# Option 1: Create a new VPC with public and private subnets
+module "vdi_with_new_vpc" {
   source = "./modules/vdi"
 
   # General Configuration
@@ -36,32 +41,25 @@ module "vdi" {
   project_prefix = "cgd"
   environment    = "dev"
 
-  # Networking
-  vpc_id    = "vpc-12345678"  # Replace with actual VPC ID
-  subnet_id = "subnet-12345678"
+  # VPC Configuration - Create a new VPC
+  create_vpc = true
+  vpc_cidr   = "10.0.0.0/16"
+  public_subnet_cidrs  = ["10.0.101.0/24", "10.0.102.0/24"]
+  private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+  enable_nat_gateway = true
+  single_nat_gateway = true
   
   # Instance Configuration
   instance_type = "g4dn.2xlarge"
   
   # Key Pair and Password Management
-  # Option 1: Generate a key pair and password (default behavior)
   create_key_pair = true
   store_passwords_in_secrets_manager = true
   
-  # Option 2: Use existing key pair (uncomment this line and replace with your key pair name)
-  # key_pair_name = "my-key-pair"
-  
-  # Option 3: Provide a custom admin password (uncomment this line and replace with your password)
-  # admin_password = "YourSecurePassword123!"
-  
-  # AMI Selection Options
-  # Option 1: Auto-discover AMI from Packer template (default)
+  # AMI Selection - Auto-discover AMI from Packer template
   ami_prefix = "windows-server-2025"
   
-  # Option 2: Specify a custom AMI ID
-  # ami_id = "ami-0123456789abcdef0"
-  
-  # Storage Configuration (root volume is 512GB by default)
+  # Storage Configuration
   root_volume_type = "gp3"
   root_volume_iops = 4000
   
@@ -81,6 +79,23 @@ module "vdi" {
     Environment = "dev"
     Project     = "VDI"
   }
+}
+
+# Option 2: Use an existing VPC and subnet
+module "vdi_with_existing_vpc" {
+  source = "./modules/vdi"
+
+  # General Configuration
+  name           = "dev-vdi"
+  project_prefix = "cgd"
+  environment    = "dev"
+
+  # Use existing VPC
+  create_vpc = false
+  vpc_id     = "vpc-12345678"  # Replace with actual VPC ID
+  subnet_id  = "subnet-12345678"  # Replace with actual subnet ID
+  
+  # Other configuration options...
 }
 ```
 
@@ -105,9 +120,15 @@ module "vdi" {
 | project_prefix | The project prefix for this workload | `string` | `"cgd"` | no |
 | environment | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | tags | Tags to apply to resources | `map(any)` | See variables.tf | no |
-| vpc_id | The ID of the existing VPC to deploy the VDI instance into | `string` | `"vpc-placeholder-replace-with-actual-vpc-id"` | no |
-| subnet_id | The subnet ID to deploy the VDI instance into | `string` | n/a | yes |
-| associate_public_ip_address | Whether to associate a public IP address with the VDI instance | `bool` | `false` | no |
+| create_vpc | Whether to create a new VPC for the VDI instance | `bool` | `false` | no |
+| vpc_id | The ID of the existing VPC to deploy the VDI instance into (required if create_vpc is false) | `string` | `null` | no |
+| vpc_cidr | The CIDR block for the VPC (only used if create_vpc is true) | `string` | `"10.0.0.0/16"` | no |
+| public_subnet_cidrs | List of CIDR blocks for public subnets (only used if create_vpc is true) | `list(string)` | `["10.0.101.0/24", "10.0.102.0/24"]` | no |
+| private_subnet_cidrs | List of CIDR blocks for private subnets (only used if create_vpc is true) | `list(string)` | `["10.0.1.0/24", "10.0.2.0/24"]` | no |
+| availability_zones | List of availability zones to use for the subnets (only used if create_vpc is true) | `list(string)` | `[]` | no |
+| subnet_id | The subnet ID to deploy the VDI instance into (required if create_vpc is false) | `string` | `null` | no |
+| enable_nat_gateway | Whether to enable NAT Gateway for the private subnets | `bool` | `true` | no |
+| single_nat_gateway | Whether to use a single NAT Gateway for all private subnets | `bool` | `true` | no |
 | allowed_cidr_blocks | List of CIDR blocks allowed to access the VDI instance | `list(string)` | `["10.0.0.0/8"]` | no |
 | key_pair_name | The name of an existing AWS key pair to use | `string` | `null` | no |
 | create_key_pair | Whether to create a new key pair if key_pair_name is not provided | `bool` | `true` | no |
@@ -130,6 +151,11 @@ module "vdi" {
 
 | Name | Description |
 |------|-------------|
+| vpc_id | The ID of the VPC (created or provided) |
+| public_subnet_ids | List of public subnet IDs (only when create_vpc = true) |
+| private_subnet_ids | List of private subnet IDs (only when create_vpc = true) |
+| internet_gateway_id | ID of the Internet Gateway (only when create_vpc = true) |
+| nat_gateway_ids | List of NAT Gateway IDs (only when create_vpc = true and enable_nat_gateway = true) |
 | vdi_instance_id | The ID of the VDI EC2 instance |
 | vdi_instance_private_ip | The private IP address of the VDI instance |
 | vdi_instance_public_ip | The public IP address of the VDI instance (if assigned) |
@@ -152,7 +178,9 @@ module "vdi" {
 
 1. **Packer AMI**: The module expects an AMI created by the `windows-server-2025` Packer template to be available in your AWS account.
 
-2. **VPC and Subnets**: An existing VPC with appropriate subnets must be available. Update the `vpc_id` variable with the actual VPC ID.
+2. **VPC and Subnets**: Either:
+   - **Option A**: Set `create_vpc = true` to have the module create a new VPC with public and private subnets
+   - **Option B**: Set `create_vpc = false` and provide an existing VPC ID and subnet ID
 
 3. **Key Pair and Password**:
    - The module can automatically generate a key pair if `create_key_pair` is set to true
@@ -262,7 +290,7 @@ Replace `<secret-id>` with the value of the `secrets_manager_secret_id` output.
 
 ## TODO
 
-- [ ] Replace VPC placeholder with actual VPC reference when VPC module is identified
+- [x] Add support for creating VPC with public and private subnets
 - [ ] Add support for Auto Scaling Groups for multiple VDI instances
 - [ ] Add CloudWatch monitoring and alerting?
 - [ ] Add backup and snapshot policies?

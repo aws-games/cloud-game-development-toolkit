@@ -1,3 +1,139 @@
+# VPC Creation
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+locals {
+  # Determine availability zones to use
+  availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, length(var.private_subnet_cidrs))
+  
+  # Determine VPC and subnet IDs based on create_vpc variable
+  vpc_id               = var.create_vpc ? aws_vpc.vdi_vpc[0].id : var.vpc_id
+  subnet_id            = var.create_vpc ? aws_subnet.vdi_private_subnet[0].id : var.subnet_id
+  public_subnet_count  = var.create_vpc ? length(var.public_subnet_cidrs) : 0
+  private_subnet_count = var.create_vpc ? length(var.private_subnet_cidrs) : 0
+}
+
+# Create VPC if specified
+resource "aws_vpc" "vdi_vpc" {
+  count      = var.create_vpc ? 1 : 0
+  cidr_block = var.vpc_cidr
+  
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-vpc"
+  })
+}
+
+# Internet Gateway for public subnets
+resource "aws_internet_gateway" "vdi_igw" {
+  count  = var.create_vpc ? 1 : 0
+  vpc_id = aws_vpc.vdi_vpc[0].id
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-igw"
+  })
+}
+
+# Public subnets
+resource "aws_subnet" "vdi_public_subnet" {
+  count             = var.create_vpc ? local.public_subnet_count : 0
+  vpc_id            = aws_vpc.vdi_vpc[0].id
+  cidr_block        = var.public_subnet_cidrs[count.index]
+  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
+  
+  map_public_ip_on_launch = true
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-public-subnet-${count.index + 1}"
+  })
+}
+
+# Private subnets
+resource "aws_subnet" "vdi_private_subnet" {
+  count             = var.create_vpc ? local.private_subnet_count : 0
+  vpc_id            = aws_vpc.vdi_vpc[0].id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-private-subnet-${count.index + 1}"
+  })
+}
+
+# Route table for public subnets
+resource "aws_route_table" "vdi_public_rt" {
+  count  = var.create_vpc ? 1 : 0
+  vpc_id = aws_vpc.vdi_vpc[0].id
+  
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.vdi_igw[0].id
+  }
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-public-rt"
+  })
+}
+
+# Associate public subnets with public route table
+resource "aws_route_table_association" "vdi_public_rta" {
+  count          = var.create_vpc ? local.public_subnet_count : 0
+  subnet_id      = aws_subnet.vdi_public_subnet[count.index].id
+  route_table_id = aws_route_table.vdi_public_rt[0].id
+}
+
+# NAT Gateway for private subnets (if enabled)
+resource "aws_eip" "vdi_nat_eip" {
+  count      = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.vdi_igw[0]]
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-nat-eip-${count.index + 1}"
+  })
+}
+
+resource "aws_nat_gateway" "vdi_nat_gateway" {
+  count         = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
+  allocation_id = aws_eip.vdi_nat_eip[count.index].id
+  subnet_id     = aws_subnet.vdi_public_subnet[count.index].id
+  depends_on    = [aws_internet_gateway.vdi_igw[0]]
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-nat-gateway-${count.index + 1}"
+  })
+}
+
+# Route table for private subnets
+resource "aws_route_table" "vdi_private_rt" {
+  count  = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.private_subnet_count) : (var.create_vpc ? 1 : 0)
+  vpc_id = aws_vpc.vdi_vpc[0].id
+  
+  dynamic "route" {
+    for_each = var.create_vpc && var.enable_nat_gateway ? [1] : []
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = var.single_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[0].id : aws_nat_gateway.vdi_nat_gateway[count.index].id
+    }
+  }
+  
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-${var.name}-private-rt${var.single_nat_gateway ? "" : "-${count.index + 1}"}"
+  })
+}
+
+# Associate private subnets with private route table
+resource "aws_route_table_association" "vdi_private_rta" {
+  count          = var.create_vpc ? local.private_subnet_count : 0
+  subnet_id      = aws_subnet.vdi_private_subnet[count.index].id
+  route_table_id = var.enable_nat_gateway ? (
+    var.single_nat_gateway ? aws_route_table.vdi_private_rt[0].id : aws_route_table.vdi_private_rt[count.index].id
+  ) : aws_route_table.vdi_private_rt[0].id
+}
+
 # Generate a key pair if one is not provided
 resource "tls_private_key" "vdi_key" {
   count     = var.key_pair_name == null && var.create_key_pair ? 1 : 0
@@ -79,7 +215,7 @@ locals {
 # Security group for the VDI instance
 resource "aws_security_group" "vdi_sg" {
   name_prefix = "${var.project_prefix}-${var.name}-vdi-"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.vpc_id
   description = "Security group for VDI instances"
 
   # RDP access
@@ -256,7 +392,7 @@ resource "aws_instance" "vdi_instance" {
     version = "$Latest"
   }
 
-  subnet_id                   = var.subnet_id
+  subnet_id                   = local.subnet_id
   associate_public_ip_address = var.associate_public_ip_address
 
   tags = merge(var.tags, {

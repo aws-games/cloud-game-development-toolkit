@@ -1,16 +1,26 @@
-# Example usage of the VDI module
+# Example: Creating a new VPC with public and private subnets
 module "vdi" {
   source = "../../"
 
   # General Configuration
-  name           = "example-vdi"
+  name           = "new-vpc-vdi"
   project_prefix = "cgd"
   environment    = "dev"
 
-  # Networking Configuration
-  # TODO: Replace with actual VPC ID and subnet ID
-  vpc_id    = "vpc-12345678"
-  subnet_id = "subnet-12345678"
+  # Create a new VPC with public and private subnets
+  create_vpc = true
+  vpc_cidr   = "10.0.0.0/16"
+  
+  # Public and private subnets
+  public_subnet_cidrs  = ["10.0.101.0/24", "10.0.102.0/24"]
+  private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+  
+  # Availability zones (if left empty, will use the first n available AZs in the region)
+  # availability_zones = ["us-west-2a", "us-west-2b"]  # Uncomment and set specific AZs if needed
+  
+  # NAT Gateway configuration
+  enable_nat_gateway = true
+  single_nat_gateway = true
   
   # Set to true if you want a public IP (not recommended for production)
   associate_public_ip_address = false
@@ -19,23 +29,15 @@ module "vdi" {
   instance_type = "g4dn.2xlarge"
   
   # Key Pair and Password Options
-  # Option 1: Auto-generate key pair and password (default) (comment this line if you want to use your own password and key pair)
-  create_key_pair                 = true  # This is the default behavior
-  store_passwords_in_secrets_manager = true  # Store in Secrets Manager
-  
-  # Option 2: Use existing key pair (uncomment this line and replace with your key pair name)
-  # key_pair_name = "my-existing-key-pair"
-  
-  # Option 3: Provide a custom admin password (uncomment this line and replace with your password)
-  # admin_password = "YourSecurePassword123!"  # Best set through variables or environment variables
+  create_key_pair                 = true
+  store_passwords_in_secrets_manager = true
   
   # Storage Configuration
-  # Note: Default root volume is now 512GB
   root_volume_iops       = 4000
   root_volume_throughput = 250
   
   # Security Configuration - Restrict access to your network
-  allowed_cidr_blocks = ["10.0.0.0/8"]  # Applies to RDP and NICE DCV ports
+  allowed_cidr_blocks = ["10.0.0.0/8"]
   
   # Additional EBS volume for file storage
   additional_ebs_volumes = [
@@ -49,13 +51,8 @@ module "vdi" {
     }
   ]
 
-  # AMI Selection - Choose one of these options:
-  
-  # Option 1: Auto-discovery (default) - finds AMI created by the packer template
+  # AMI Selection - finds AMI created by the packer template
   ami_prefix = "windows-server-2025"
-  
-  # Option 2: Use a specific AMI (uncomment this line and replace with your AMI ID)
-  # ami_id = "ami-0123456789abcdef0"  # Replace with your custom AMI ID
 
   # Custom tags
   tags = {
@@ -67,8 +64,33 @@ module "vdi" {
 }
 
 # Output important information
+output "vpc_id" {
+  description = "The ID of the created VPC"
+  value       = module.vdi.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs in the created VPC"
+  value       = module.vdi.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "List of private subnet IDs in the created VPC"
+  value       = module.vdi.private_subnet_ids
+}
+
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway"
+  value       = module.vdi.internet_gateway_id
+}
+
+output "nat_gateway_ids" {
+  description = "List of NAT Gateway IDs"
+  value       = module.vdi.nat_gateway_ids
+}
+
 output "vdi_instance_id" {
-  description = "The ID of the created VDI instance"
+  description = "The ID of the VDI instance"
   value       = module.vdi.vdi_instance_id
 }
 
@@ -97,13 +119,8 @@ output "security_group_id" {
   value       = module.vdi.vdi_security_group_id
 }
 
-output "key_pair_name" {
-  description = "The name of the key pair used for the VDI instance"
-  value       = module.vdi.key_pair_name
-}
-
 output "credentials_secret_id" {
-  description = "The ID of the AWS Secrets Manager secret containing credentials (if enabled)"
+  description = "The ID of the AWS Secrets Manager secret for the VDI"
   value       = module.vdi.secrets_manager_secret_id
 }
 
