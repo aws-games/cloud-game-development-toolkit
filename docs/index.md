@@ -40,7 +40,7 @@ Below are key tenets driving project's focus:
 
 ## Getting Started
 
-[Getting Started](https://aws-games.github.io/cloud-game-development-toolkit/latest/getting-started.html){ .md-button  }
+[Getting Started](../docs/getting-started.md){ .md-button  }
 
 ## License
 
