@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material:9.6.15
+FROM squidfunk/mkdocs-material:9.6.16
 COPY requirements.txt ./
 ARG VERSION ALIAS
 ENV VERSION=$VERSION ALIAS=$ALIAS
