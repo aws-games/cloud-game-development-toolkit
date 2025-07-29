@@ -1,3 +1,30 @@
+# VPC Outputs
+output "vpc_id" {
+  description = "The ID of the VPC (created or provided)"
+  value       = local.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs (only when create_vpc = true)"
+  value       = var.create_vpc ? aws_subnet.vdi_public_subnet[*].id : []
+}
+
+output "private_subnet_ids" {
+  description = "List of private subnet IDs (only when create_vpc = true)"
+  value       = var.create_vpc ? aws_subnet.vdi_private_subnet[*].id : []
+}
+
+output "internet_gateway_id" {
+  description = "ID of the Internet Gateway (only when create_vpc = true)"
+  value       = var.create_vpc ? aws_internet_gateway.vdi_igw[0].id : null
+}
+
+output "nat_gateway_ids" {
+  description = "List of NAT Gateway IDs (only when create_vpc = true and enable_nat_gateway = true)"
+  value       = var.create_vpc && var.enable_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[*].id : []
+}
+
+# Instance Outputs
 output "vdi_instance_id" {
   description = "The ID of the VDI EC2 instance"
   value       = var.create_instance ? aws_instance.vdi_instance[0].id : null
