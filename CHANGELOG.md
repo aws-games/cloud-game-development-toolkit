@@ -3,10 +3,50 @@
 
 
 <a name="latest"></a>
-## [latest] - 2025-06-09
+## [latest] - 2025-07-29
+
+<a name="v1.1.5"></a>
+## [v1.1.5] - 2025-07-29
+### Bug Fixes
+- fixes button/link to getting started page in homepage
+- update perforce tf test to support branches on forks as well as source repo
+- Minor Perforce module copy/paste naming resolution ([#645](https://github.com/aws-games/cloud-game-development-toolkit/issues/645))
+- Fixes typo in code block in samples DDC readme
+- hardcode protocol to appease checkov
+- Update SG reference in P4 FSxN Example ([#640](https://github.com/aws-games/cloud-game-development-toolkit/issues/640))
+- **p4:** Fix typo'ed output.shared_application_load_balancer_arn
+
+### Chore
+- remove kevon from description :( ([#672](https://github.com/aws-games/cloud-game-development-toolkit/issues/672))
+- update dependabot configuration
+- **deps:** bump the random-provider group across 9 directories with 1 update ([#653](https://github.com/aws-games/cloud-game-development-toolkit/issues/653))
+- **deps:** bump NetApp/netapp-ontap
+- **deps:** bump NetApp/netapp-ontap in /samples/simple-build-pipeline
+- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump the aws-provider group across 8 directories with 1 update
+- **deps:** bump the aws-provider group across 8 directories with 1 update ([#662](https://github.com/aws-games/cloud-game-development-toolkit/issues/662))
+- **deps:** bump hashicorp/local in /modules/perforce/modules/p4-server
+- **deps:** bump hashicorp/local in /modules/perforce
+- **deps:** bump the awscc-provider group across 3 directories with 1 update
+- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump ossf/scorecard-action from 2.4.1 to 2.4.2
+- **deps:** bump aquasecurity/trivy-action from 0.30.0 to 0.31.0
+
+### Docs
+- fixed broken links in getting started guide
+- **horde:** add alb http listeners to README.md
+
+### Features
+- Packer template for Cloud Game Development virtual workstation AMI ([#651](https://github.com/aws-games/cloud-game-development-toolkit/issues/651))
+- Unity Accelerator asset caching proxy
+- **horde:** allow users to bring their own horde-server images ([#643](https://github.com/aws-games/cloud-game-development-toolkit/issues/643))
+- **horde:** add HTTP redirect listeners to ALBs
+- **p4:** allow users to specify a private ip ([#665](https://github.com/aws-games/cloud-game-development-toolkit/issues/665))
+- **p4:** p4_configure.sh attempts to use --fqdn if passed ([#666](https://github.com/aws-games/cloud-game-development-toolkit/issues/666))
+
 
 <a name="v1.1.4"></a>
-## [v1.1.4] - 2025-04-28
+## [v1.1.4] - 2025-06-09
 ### Bug Fixes
 - Remove commented out NetApp volume resources and cleanup IAM managed policies
 - Resolved EC2 DNS self-signed certificate bug in P4 Server packer template
@@ -18,12 +58,13 @@
 - regenerate CHANGELOG.md for 2025-03-19
 - Minor maintenance to Helix Core module
 - Minor Helix Authentication fixes
+- regenerate CHANGELOG.md for 2025-06-09
 - Addressed IAM policy warnings for Helix Swarm
-- **deps:** bump xt0rted/pull-request-comment-branch from 1 to 3
-- **deps:** bump mkdocs-material from 9.6.11 to 9.6.12 in /docs
-- **deps:** bump mkdocs-material from 9.6.12 to 9.6.14 in /docs
 - **deps:** bump actions/github-script from 6 to 7
+- **deps:** bump mkdocs-material from 9.6.11 to 9.6.12 in /docs
+- **deps:** bump xt0rted/pull-request-comment-branch from 1 to 3
 - **deps:** bump actions/checkout from 3 to 4
+- **deps:** bump squidfunk/mkdocs-material in /docs
 - **deps:** bump mkdocs-material from 9.6.9 to 9.6.11 in /docs
 - **deps:** bump squidfunk/mkdocs-material in /docs
 - **deps:** bump aquasecurity/trivy-action from 0.29.0 to 0.30.0
@@ -31,7 +72,7 @@
 - **deps:** bump squidfunk/mkdocs-material from 9.6.8 to 9.6.9 in /docs
 - **deps:** bump actions/upload-artifact from 4.6.1 to 4.6.2
 - **deps:** bump the awscc-provider group across 2 directories with 1 update
-- **deps:** bump squidfunk/mkdocs-material in /docs
+- **deps:** bump mkdocs-material from 9.6.12 to 9.6.14 in /docs
 
 ### Code Refactoring
 - Update Simple Build Pipeline sample to use new Perforce parent module ([#608](https://github.com/aws-games/cloud-game-development-toolkit/issues/608))
@@ -342,7 +383,8 @@
 
 
 [Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...HEAD
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...latest
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...latest
+[v1.1.5]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...v1.1.4
 [v1.1.3-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...v1.1.3-alpha
 [v1.1.2-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha
