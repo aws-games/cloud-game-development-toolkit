@@ -88,7 +88,7 @@ module "p4_auth" {
   container_port   = var.p4_auth_config.container_port
   container_cpu    = var.p4_auth_config.container_cpu
   container_memory = var.p4_auth_config.container_memory
-  p4d_port         = var.p4_auth_config.p4d_port
+  p4d_port         = var.p4_auth_config.p4d_port != null ? var.p4_auth_config.p4d_port : local.p4_port
 
   # Storage & Logging
   enable_alb_access_logs           = false
@@ -128,15 +128,11 @@ module "p4_code_review" {
     var.existing_ecs_cluster_name :
     aws_ecs_cluster.perforce_web_services_cluster[0].name
   )
-  container_name   = var.p4_code_review_config.container_name
-  container_port   = var.p4_code_review_config.container_port
-  container_cpu    = var.p4_code_review_config.container_cpu
-  container_memory = var.p4_code_review_config.container_memory
-  p4d_port = (
-    var.p4_code_review_config.p4d_port != null ?
-    var.p4_code_review_config.p4d_port :
-    "ssl:${var.create_route53_private_hosted_zone ? aws_route53_zone.perforce_private_hosted_zone[0].name : module.p4_server.private_ip}:1666"
-  )
+  container_name            = var.p4_code_review_config.container_name
+  container_port            = var.p4_code_review_config.container_port
+  container_cpu             = var.p4_code_review_config.container_cpu
+  container_memory          = var.p4_code_review_config.container_memory
+  p4d_port                  = var.p4_code_review_config.p4d_port != null ? var.p4_code_review_config.p4d_port : local.p4_port
   existing_redis_connection = var.p4_code_review_config.existing_redis_connection
 
   # Storage & Logging
