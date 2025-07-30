@@ -88,6 +88,7 @@ module "p4_auth" {
   container_port   = var.p4_auth_config.container_port
   container_cpu    = var.p4_auth_config.container_cpu
   container_memory = var.p4_auth_config.container_memory
+  p4d_port         = var.p4_auth_config.p4d_port
 
   # Storage & Logging
   enable_alb_access_logs           = false
