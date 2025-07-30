@@ -319,6 +319,11 @@ variable "p4_server_config" {
     error_message = "Not a valid storage type. Valid values are either 'EBS' or 'FSxN'."
   }
 
+  validation {
+    condition     = !var.create_route53_private_hosted_zone || var.route53_private_hosted_zone_name == var.p4_server_config.fully_qualified_domain_name
+    error_message = "Route53 zone name and Perforce Server FQDN must match."
+  }
+
 }
 
 ########################################
