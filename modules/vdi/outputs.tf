@@ -86,8 +86,9 @@ output "secrets_manager_secret_id" {
 }
 
 output "admin_password_set" {
-  description = "Indicates if an administrator password was set (either provided or generated)"
-  value       = local.admin_password != null
+  description = "Indicates if an administrator password was set"
+  value       = var.admin_password != null
+  sensitive   = true
 }
 
 output "ami_id" {

@@ -123,7 +123,7 @@ variable "create_key_pair" {
 
 variable "admin_password" {
   type        = string
-  description = "The administrator password for the Windows instance. If not provided, a random password will be generated."
+  description = "The administrator password for the Windows instance. This is required to set the Windows administrator password."
   default     = null
   sensitive   = true
 }

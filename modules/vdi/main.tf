@@ -149,28 +149,12 @@ resource "aws_key_pair" "vdi_key_pair" {
   tags = var.tags
 }
 
-# Generate a random password if one is not provided
-resource "random_password" "admin_password" {
-  count   = var.admin_password == null ? 1 : 0
-  length  = 16
-  special = true
-  # AWS Windows passwords must not contain / or @
-  override_special = "!#$%^&*()_+[]{}|;:,.<>?"
-}
-
 locals {
-  # Use the provided password or the generated one
-  admin_password = var.admin_password != null ? var.admin_password : (length(random_password.admin_password) > 0 ? random_password.admin_password[0].result : null)
-  # Generate user data for password setting if a password is available
-  user_data_script = local.admin_password != null ? <<-EOT
-    <powershell>
-    $admin = [adsi]("WinNT://./administrator, user")
-    $admin.psbase.invoke("SetPassword", "${local.admin_password}")
-    </powershell>
-  EOT
-  : null
+  # Simple PowerShell script to set admin password if provided
+  user_data_script = var.admin_password != null ? "write-host 'Setting admin password'; $admin = [adsi]('WinNT://./administrator, user'); $admin.psbase.invoke('SetPassword', '${var.admin_password}')" : null
   
-  encoded_user_data = local.user_data_script != null ? base64encode(local.user_data_script) : var.user_data_base64
+  # Encode the script for user_data if it exists
+  encoded_user_data = local.user_data_script != null ? base64encode("<powershell>${local.user_data_script}</powershell>") : var.user_data_base64
 }
 
 # Store secrets in AWS Secrets Manager if enabled
@@ -186,7 +170,7 @@ resource "aws_secretsmanager_secret_version" "vdi_secrets" {
   
   secret_string = jsonencode({
     private_key    = var.key_pair_name == null && var.create_key_pair ? tls_private_key.vdi_key[0].private_key_pem : null
-    admin_password = local.admin_password
+    admin_password = var.admin_password
   })
 }
 
