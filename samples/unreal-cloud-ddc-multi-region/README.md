@@ -85,7 +85,7 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 ## Deletion
 For the cleanest deletion, it is best to first do a targeted destroy for the `module.unreal_cloud_ddc_intra_cluster_region_1` and `module.unreal_cloud_ddc_intra_cluster_region_2`.
 ```bash
-terraform destroy -target module.unreal_cloud_ddc_intra_cluster_region_1 module.unreal_cloud_ddc_intra_cluster_region_2
+terraform destroy -target module.unreal_cloud_ddc_intra_cluster_region_1 -target module.unreal_cloud_ddc_intra_cluster_region_2
 ```
 Once the resources are successfully destroyed, you can do a full destroy.
 ```bash
