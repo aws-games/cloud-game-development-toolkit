@@ -1,0 +1,8 @@
+# Example Terraform variables file
+# Copy this file to "terraform.tfvars" and update the values
+
+# Required - Windows administrator password
+admin_password = "YourSecurePassword123!"
+
+# Your public IP address in CIDR notation for direct access to the VDI instance
+allowed_ip_address = "203.0.113.1/32"  # Replace with your public IP address

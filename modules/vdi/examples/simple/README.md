@@ -1,6 +1,13 @@
-# VDI Example with VPC Creation
+# # VDI Example with VPC Creation
 
 This example demonstrates how to use the VDI module to create a Virtual Desktop Infrastructure instance on AWS with a new VPC containing public and private subnets.
+
+## Updated Variables Configuration
+
+This example now uses variables for sensitive configuration:
+
+- `admin_password`: Windows administrator password (required)
+- `allowed_ip_address`: Your public IP address in CIDR notation for access (optional)
 
 ## What This Example Creates
 

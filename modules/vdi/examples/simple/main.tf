@@ -23,7 +23,7 @@ module "vdi" {
   single_nat_gateway = true
   
   # Set to true if you want a public IP (not recommended for production)
-  associate_public_ip_address = false
+  associate_public_ip_address = true # Set to true for testing to allow direct access
 
   # Instance Configuration
   instance_type = "g4dn.2xlarge"
@@ -31,13 +31,14 @@ module "vdi" {
   # Key Pair and Password Options
   create_key_pair                 = true
   store_passwords_in_secrets_manager = true
+  admin_password                  = var.admin_password # Required password for Windows admin
   
   # Storage Configuration
   root_volume_iops       = 4000
   root_volume_throughput = 250
   
   # Security Configuration - Restrict access to your network
-  allowed_cidr_blocks = ["10.0.0.0/8"]
+  allowed_cidr_blocks = ["10.0.0.0/8", var.allowed_ip_address] # Add your public IP for access
   
   # Additional EBS volume for file storage
   additional_ebs_volumes = [

@@ -12,7 +12,7 @@ This Terraform module creates a Virtual Desktop Infrastructure (VDI) setup on AW
 - **Launch Template**: Reusable launch template for consistent deployments
 - **AMI Options**: Use auto-discovery or provide a custom AMI ID
 - **Key Pair Management**: Automatically generates a key pair or uses an existing one
-- **Password Management**: Sets a custom or auto-generated password for the administrator account
+- **Password Management**: Sets a custom administrator password for Windows instances
 
 ## Architecture
 
@@ -25,7 +25,7 @@ The module creates:
 - An IAM role and instance profile for AWS service integration
 - A launch template for instance configuration
 - 512GB EBS root volume plus an additional volume for file storage, both with encryption support
-- Auto-generated key pair and administrator password (optional)
+- Auto-generated key pair (optional) and required administrator password
 
 ## Usage
 
@@ -184,7 +184,7 @@ module "vdi_with_existing_vpc" {
 
 3. **Key Pair and Password**:
    - The module can automatically generate a key pair if `create_key_pair` is set to true
-   - The module can set a custom admin password or auto-generate one
+   - The module requires a custom admin password to be specified via the `admin_password` parameter
    - If `store_passwords_in_secrets_manager` is true, credentials are securely stored in AWS Secrets Manager
 
 ## Security Considerations
@@ -273,8 +273,7 @@ When `key_pair_name` is specified (by uncommenting and setting the value in your
 - Uses an existing AWS key pair with the specified name
 
 ### Administrator Password
-- Auto-generates a secure password when `admin_password = null` (default)
-- Uses a custom password when `admin_password` is specified (by uncommenting and setting the value in your configuration)
+- Requires a password to be specified via the `admin_password` parameter
 - Sets the password via user data script during instance boot
 - Stores the password securely in AWS Secrets Manager (if enabled)
 
