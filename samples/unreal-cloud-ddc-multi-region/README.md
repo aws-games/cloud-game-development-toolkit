@@ -87,6 +87,8 @@ For the cleanest deletion, it is best to first do a targeted destroy for the `mo
 ```bash
 terraform destroy -target module.unreal_cloud_ddc_intra_cluster_region_1 -target module.unreal_cloud_ddc_intra_cluster_region_2
 ```
+Note: If the previous command fails the first time with an error for context deadline exceeded, run the command again.
+
 Once the resources are successfully destroyed, you can do a full destroy.
 ```bash
 terraform destroy
