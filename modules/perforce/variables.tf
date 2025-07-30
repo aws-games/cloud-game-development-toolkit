@@ -240,7 +240,7 @@ variable "p4_server_config" {
 
     auth_service_url: "The URL for the P4Auth Service."
 
-    fully_qualified_domain_name = "The FQDN for the P4Auth Service. This is used for the P4 Server's Perforce configuration."
+    fully_qualified_domain_name = "The FQDN for the P4 Server. This is used for the P4 Server's Perforce configuration."
 
 
     # - Compute -
@@ -339,6 +339,7 @@ variable "p4_auth_config" {
     container_port   = optional(number, 3000)
     container_cpu    = optional(number, 1024)
     container_memory = optional(number, 4096)
+    p4d_port         = optional(string, null)
 
     # - Storage & Logging -
     cloudwatch_log_retention_in_days = optional(number, 365)
@@ -383,6 +384,8 @@ variable "p4_auth_config" {
     container_cpu : "The number of CPU units to reserve for the P4Auth service container. Default is '1024'."
 
     container_memory : "The number of CPU units to reserve for the P4Auth service container. Default is '4096'."
+
+    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
 
 
     # Storage & Logging
