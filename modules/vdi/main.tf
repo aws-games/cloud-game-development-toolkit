@@ -312,8 +312,7 @@ resource "aws_launch_template" "vdi_launch_template" {
   instance_type = var.instance_type
   key_name      = var.key_pair_name != null ? var.key_pair_name : (var.create_key_pair ? aws_key_pair.vdi_key_pair[0].key_name : null)
 
-  vpc_security_group_ids = [aws_security_group.vdi_sg.id]
-
+  # Security groups are specified only in network_interfaces, not at the top level
   network_interfaces {
     subnet_id                   = local.subnet_id
     associate_public_ip_address = var.associate_public_ip_address
