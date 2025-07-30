@@ -314,6 +314,12 @@ resource "aws_launch_template" "vdi_launch_template" {
 
   vpc_security_group_ids = [aws_security_group.vdi_sg.id]
 
+  network_interfaces {
+    subnet_id                   = local.subnet_id
+    associate_public_ip_address = var.associate_public_ip_address
+    security_groups             = [aws_security_group.vdi_sg.id]
+  }
+
   iam_instance_profile {
     name = aws_iam_instance_profile.vdi_instance_profile.name
   }
@@ -375,9 +381,6 @@ resource "aws_instance" "vdi_instance" {
     id      = aws_launch_template.vdi_launch_template.id
     version = "$Latest"
   }
-
-  subnet_id                   = local.subnet_id
-  associate_public_ip_address = var.associate_public_ip_address
 
   tags = merge(var.tags, {
     Name = "${var.project_prefix}-${var.name}-vdi"
