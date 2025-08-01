@@ -53,10 +53,10 @@ If you do not provide these the module will create a random Super User and creat
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.34.0 |
-| <a name="provider_netapp-ontap"></a> [netapp-ontap](#provider\_netapp-ontap) | 2.1.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.50.0 |
+| <a name="provider_netapp-ontap"></a> [netapp-ontap](#provider\_netapp-ontap) | 2.3.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 
 ## Modules
 
