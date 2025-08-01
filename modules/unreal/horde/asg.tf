@@ -133,7 +133,7 @@ resource "aws_s3_bucket" "ansible_playbooks" {
 
   tags                = local.tags
   object_lock_enabled = true
-  force_destroy = true
+  force_destroy       = true
 
 }
 

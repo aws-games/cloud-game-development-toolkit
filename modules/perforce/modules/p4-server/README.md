@@ -42,12 +42,12 @@ If you do not provide these the module will create a random Super User and creat
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 5.97.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.34.0 |
-| <a name="requirement_local"></a> [local](#requirement\_local) | 2.5.2 |
-| <a name="requirement_netapp-ontap"></a> [netapp-ontap](#requirement\_netapp-ontap) | 2.1.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.6.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.50.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | 2.5.3 |
+| <a name="requirement_netapp-ontap"></a> [netapp-ontap](#requirement\_netapp-ontap) | 2.3.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | 3.2.4 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.1 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
 
 ## Providers
 
@@ -66,46 +66,46 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/ebs_volume) | resource |
-| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/ebs_volume) | resource |
-| [aws_eip.server_eip](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/eip) | resource |
-| [aws_fsx_ontap_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/fsx_ontap_volume) | resource |
-| [aws_fsx_ontap_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/fsx_ontap_volume) | resource |
-| [aws_fsx_ontap_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/fsx_ontap_volume) | resource |
-| [aws_iam_instance_profile.instance_profile](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.default_role](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.lambda_role](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.default_role_default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.default_role_ssm_managed_instance_core](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.lambda_service_basic_execution_role](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.lambda_service_role](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.lambda_vpc_access_role](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_instance.server_instance](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/instance) | resource |
-| [aws_lambda_function.lambda_function](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/lambda_function) | resource |
-| [aws_security_group.default_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/security_group) | resource |
-| [aws_security_group.fsxn_lambda_link_security_group](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/security_group) | resource |
-| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/volume_attachment) | resource |
-| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/volume_attachment) | resource |
-| [aws_vpc_security_group_egress_rule.link_outbound_fsxn](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.server_internet](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.fsxn_inbound_link](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [awscc_secretsmanager_secret.super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.34.0/docs/resources/secretsmanager_secret) | resource |
-| [awscc_secretsmanager_secret.super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.34.0/docs/resources/secretsmanager_secret) | resource |
-| [netapp-ontap_lun.depots_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/lun) | resource |
-| [netapp-ontap_lun.logs_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/lun) | resource |
-| [netapp-ontap_lun.metadata_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/lun) | resource |
-| [netapp-ontap_san_igroup.perforce_igroup](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/san_igroup) | resource |
-| [netapp-ontap_san_lun-map.depots_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/san_lun-map) | resource |
-| [netapp-ontap_san_lun-map.logs_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/san_lun-map) | resource |
-| [netapp-ontap_san_lun-map.metadata_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.1.0/docs/resources/san_lun-map) | resource |
-| [random_string.p4_server](https://registry.terraform.io/providers/hashicorp/random/3.7.1/docs/resources/string) | resource |
-| [aws_ami.existing_server_ami](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/data-sources/ami) | data source |
-| [aws_iam_policy_document.default_policy](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/5.97.0/docs/data-sources/subnet) | data source |
+| [aws_ebs_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ebs_volume) | resource |
+| [aws_ebs_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ebs_volume) | resource |
+| [aws_eip.server_eip](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/eip) | resource |
+| [aws_fsx_ontap_volume.depot](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/fsx_ontap_volume) | resource |
+| [aws_fsx_ontap_volume.logs](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/fsx_ontap_volume) | resource |
+| [aws_fsx_ontap_volume.metadata](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/fsx_ontap_volume) | resource |
+| [aws_iam_instance_profile.instance_profile](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_policy.default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_policy) | resource |
+| [aws_iam_role.default_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role) | resource |
+| [aws_iam_role.lambda_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.default_role_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.default_role_ssm_managed_instance_core](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_service_basic_execution_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_service_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.lambda_vpc_access_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_instance.server_instance](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/instance) | resource |
+| [aws_lambda_function.lambda_function](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lambda_function) | resource |
+| [aws_security_group.default_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
+| [aws_security_group.fsxn_lambda_link_security_group](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
+| [aws_volume_attachment.depot_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.logs_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/volume_attachment) | resource |
+| [aws_volume_attachment.metadata_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/volume_attachment) | resource |
+| [aws_vpc_security_group_egress_rule.link_outbound_fsxn](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.server_internet](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.fsxn_inbound_link](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [awscc_secretsmanager_secret.super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
+| [netapp-ontap_lun.depots_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/lun) | resource |
+| [netapp-ontap_lun.logs_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/lun) | resource |
+| [netapp-ontap_lun.metadata_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/lun) | resource |
+| [netapp-ontap_san_igroup.perforce_igroup](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_igroup) | resource |
+| [netapp-ontap_san_lun-map.depots_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_lun-map) | resource |
+| [netapp-ontap_san_lun-map.logs_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_lun-map) | resource |
+| [netapp-ontap_san_lun-map.metadata_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_lun-map) | resource |
+| [random_string.p4_server](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_ami.existing_server_ami](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ami) | data source |
+| [aws_iam_policy_document.default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/subnet) | data source |
 
 ## Inputs
 

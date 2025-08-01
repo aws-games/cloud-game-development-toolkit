@@ -25,15 +25,10 @@
         line: "/hxdepots/p4/1/checkpoints *(ro,no_all_squash)"
         state: present
         create: yes
-    
+
     - name: Restart and enable NFS server
       become: yes
       ansible.builtin.systemd:
         name: nfs-server
         state: restarted
         enabled: yes
-
-
-
-        
-        

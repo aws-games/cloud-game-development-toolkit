@@ -82,12 +82,12 @@ pipeline {
                         SRCDIR=$MOUNTDIR
 
                         cd $SRCDIR
-                        
+
                         # Build UE5
                         time ./Setup.sh
                         time ./GenerateProjectFiles.sh
                         time make
-                        '''        
+                        '''
                     } finally {
                         sh '''
                         sudo umount /tmp/overlay_mount
