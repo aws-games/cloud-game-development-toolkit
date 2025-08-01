@@ -190,7 +190,7 @@ No modules.
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=5.89.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.5.1 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.6 |
 
@@ -198,7 +198,7 @@ No modules.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
 
@@ -293,6 +293,8 @@ No modules.
 | <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
+| <a name="input_existing_scylla_ips"></a> [existing\_scylla\_ips](#input\_existing\_scylla\_ips) | List of existing ScyllaDB IPs to be used for the ScyllaDB instance | `list(string)` | `[]` | no |
+| <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | The IP address of the seed instance of the ScyllaDB cluster | `string` | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
 | <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
@@ -303,6 +305,7 @@ No modules.
 | <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
 | <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
+| <a name="input_primary_region"></a> [primary\_region](#input\_primary\_region) | The AWS region that will be the primary region for your Unreal DDC deployment | `bool` | `true` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_region"></a> [region](#input\_region) | The AWS region to deploy to | `string` | `"us-west-2"` | no |
 | <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
@@ -314,6 +317,7 @@ No modules.
 | <a name="input_scylla_monitoring_instance_type"></a> [scylla\_monitoring\_instance\_type](#input\_scylla\_monitoring\_instance\_type) | The type and size of the Scylla monitoring instance. | `string` | `"t3.xlarge"` | no |
 | <a name="input_scylla_monitoring_lb_access_logs_bucket"></a> [scylla\_monitoring\_lb\_access\_logs\_bucket](#input\_scylla\_monitoring\_lb\_access\_logs\_bucket) | Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
 | <a name="input_scylla_monitoring_lb_access_logs_prefix"></a> [scylla\_monitoring\_lb\_access\_logs\_prefix](#input\_scylla\_monitoring\_lb\_access\_logs\_prefix) | Prefix to use for the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
+| <a name="input_scylla_replication_factor"></a> [scylla\_replication\_factor](#input\_scylla\_replication\_factor) | How many copies many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created. | `number` | n/a | yes |
 | <a name="input_scylla_subnets"></a> [scylla\_subnets](#input\_scylla\_subnets) | A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
 | <a name="input_system_managed_node_desired_size"></a> [system\_managed\_node\_desired\_size](#input\_system\_managed\_node\_desired\_size) | Desired number of system managed node group instances. | `number` | `1` | no |
 | <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
@@ -336,6 +340,7 @@ No modules.
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
+| <a name="output_cluster_version"></a> [cluster\_version](#output\_cluster\_version) | EKS Cluster Version |
 | <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
 | <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
 | <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
@@ -343,6 +348,8 @@ No modules.
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
 | <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
+| <a name="output_scylla_security_group"></a> [scylla\_security\_group](#output\_scylla\_security\_group) | ScyllaDB security group id |
+| <a name="output_scylla_seed"></a> [scylla\_seed](#output\_scylla\_seed) | IP of the Scylla Seed |
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
