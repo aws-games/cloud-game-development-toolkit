@@ -239,4 +239,9 @@ variable "scim_bearer_token_arn" {
   type        = string
   description = "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token."
   default     = null
+
+  validation {
+    condition     = var.scim_bearer_token_arn == null || (var.p4d_super_user_arn != null && var.p4d_super_user_password_arn != null)
+    error_message = "scim_bearer_token_arn is only useful if p4d_super_user_arn and p4d_super_user_password_arn are also set, did you mean to set all three?"
+  }
 }
