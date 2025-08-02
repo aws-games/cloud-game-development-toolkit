@@ -90,7 +90,7 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.89.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.26.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0, < 3.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |

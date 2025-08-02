@@ -84,7 +84,7 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=5.73.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.16.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.16.0, <3.0.0 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >=2.33.0 |
 
 ## Providers
@@ -92,7 +92,7 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.7.0 |
-| <a name="provider_helm"></a> [helm](#provider\_helm) | 3.0.2 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.38.0 |
 
 ## Modules
