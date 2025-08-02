@@ -434,6 +434,7 @@ variable "p4_code_review_config" {
     container_cpu    = optional(number, 1024)
     container_memory = optional(number, 4096)
     p4d_port         = optional(string, null)
+    p4charset        = optional(string, null)
     existing_redis_connection = optional(object({
       host = string
       port = number
@@ -487,6 +488,8 @@ variable "p4_code_review_config" {
     container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."
 
     pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
+
+    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."
 
     existing_redis_connection : "The existing Redis connection for the P4 Code Review service."
 

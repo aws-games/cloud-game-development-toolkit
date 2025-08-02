@@ -128,11 +128,16 @@ module "p4_code_review" {
     var.existing_ecs_cluster_name :
     aws_ecs_cluster.perforce_web_services_cluster[0].name
   )
-  container_name            = var.p4_code_review_config.container_name
-  container_port            = var.p4_code_review_config.container_port
-  container_cpu             = var.p4_code_review_config.container_cpu
-  container_memory          = var.p4_code_review_config.container_memory
-  p4d_port                  = var.p4_code_review_config.p4d_port != null ? var.p4_code_review_config.p4d_port : local.p4_port
+  container_name   = var.p4_code_review_config.container_name
+  container_port   = var.p4_code_review_config.container_port
+  container_cpu    = var.p4_code_review_config.container_cpu
+  container_memory = var.p4_code_review_config.container_memory
+  p4d_port         = var.p4_code_review_config.p4d_port != null ? var.p4_code_review_config.p4d_port : local.p4_port
+  p4charset = var.p4_code_review_config.p4charset != null ? var.p4_code_review_config.p4charset : (
+    var.p4_server_config != null ? (
+      var.p4_server_config.unicode ? "auto" : "none"
+    ) : "none"
+  )
   existing_redis_connection = var.p4_code_review_config.existing_redis_connection
 
   # Storage & Logging
