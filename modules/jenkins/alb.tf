@@ -35,7 +35,7 @@ resource "random_string" "jenkins_alb_access_logs_bucket_suffix" {
 }
 
 resource "aws_s3_bucket" "jenkins_alb_access_logs_bucket" {
-  count  = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
+  count         = var.create_application_load_balancer && var.enable_jenkins_alb_access_logs && var.jenkins_alb_access_logs_bucket == null ? 1 : 0
   bucket        = "${local.name_prefix}-alb-access-logs-${random_string.jenkins_alb_access_logs_bucket_suffix[0].result}"
   force_destroy = var.debug
 

@@ -8,18 +8,7 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "terraform"
-    directories:
-      - "/modules/jenkins"
-      - "/modules/perforce"
-      - "/modules/perforce/modules/p4-auth"
-      - "/modules/perforce/modules/p4-server"
-      - "/modules/perforce/modules/p4-code-review"
-      - "/modules/teamcity"
-      - "/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster"
-      - "/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra"
-      - "/modules/unreal/horde"
-      - "/samples/simple-build-pipeline"
-      - "/samples/unreal-cloud-ddc-single-region"
+    directory: "/"
     commit-message:
       prefix: "chore"
       include: "scope"

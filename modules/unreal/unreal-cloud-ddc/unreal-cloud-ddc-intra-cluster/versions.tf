@@ -6,8 +6,10 @@ terraform {
       version = ">=2.33.0"
     }
     helm = {
-      source  = "hashicorp/helm"
-      version = ">=2.16.0"
+      source = "hashicorp/helm"
+      # Upgrading to helm 3.0.0 will require some changes
+      # https://registry.terraform.io/providers/hashicorp/helm/latest/docs/guides/v3-upgrade-guide
+      version = ">=2.16.0, <3.0.0"
     }
     aws = {
       source  = "hashicorp/aws"

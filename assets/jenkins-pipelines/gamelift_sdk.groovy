@@ -41,7 +41,7 @@ pipeline {
                     return env.source_path == ''
                 }
             }
-            agent { 
+            agent {
                 label 'linux && ubuntu-jammy-22.04'
             }
             steps {
