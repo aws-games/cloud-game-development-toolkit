@@ -1,0 +1,28 @@
+name: pre-commit
+on:
+  - push
+permissions: read-all
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - uses: hashicorp/setup-terraform@v3
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: terraform-docs alias
+        # This is necessary because terraform docs doesn't install super duper easily
+        run: |
+          mkdir -p $RUNNER_TEMP/docker-aliases
+          echo "$RUNNER_TEMP/docker-aliases" >> $GITHUB_PATH
+
+          {
+            echo "#!/usr/bin/bash"
+            echo "docker run --rm quay.io/terraform-docs/terraform-docs:0.20.0 \"\$@\""
+          } >> $RUNNER_TEMP/docker-aliases/terraform-docs
+          chmod +x $RUNNER_TEMP/docker-aliases/terraform-docs
+
+      - uses: pre-commit/action@v3.0.1
