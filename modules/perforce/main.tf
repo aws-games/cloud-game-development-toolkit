@@ -106,6 +106,11 @@ module "p4_auth" {
   admin_username_secret_arn = var.p4_auth_config.admin_username_secret_arn
   admin_password_secret_arn = var.p4_auth_config.admin_password_secret_arn
 
+  # SCIM
+  p4d_super_user_arn          = var.p4_auth_config.p4d_super_user_arn
+  p4d_super_user_password_arn = var.p4_auth_config.p4d_super_user_password_arn
+  scim_bearer_token_arn       = var.p4_auth_config.scim_bearer_token_arn
+
   depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
 }
 
