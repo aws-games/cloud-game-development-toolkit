@@ -65,5 +65,5 @@ def mount_fsx_volumes(client):
                 print(e)
         else:
             print("Currently not supported: volumeType %s" % volumeInfo['VolumeType'])
-       
+
 mount_fsx_volumes(client)

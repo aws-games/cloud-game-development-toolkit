@@ -27,7 +27,7 @@ pipeline {
                         # Delete the snapshot, if found
                         if [ "$SNAPSHOTID" != "null" ]; then
                             aws fsx delete-snapshot --snapshot-id $SNAPSHOTID
-                        
+
                             # Wait until the snapshot is deleted
                             i=0
                             while [ $i -ne 20 ]; do

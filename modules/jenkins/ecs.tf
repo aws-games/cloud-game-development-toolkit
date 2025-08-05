@@ -121,4 +121,3 @@ resource "aws_ecs_service" "jenkins_service" {
 
   tags = local.tags
 }
-
