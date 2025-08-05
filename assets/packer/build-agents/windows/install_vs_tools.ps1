@@ -26,7 +26,7 @@ finally {
 try {
     Write "Installing Visual Studio 2022 Build Tools"
     choco install -y --no-progress visualstudio2022buildtools --package-parameters " --passive --locale en-US --add Microsoft.VisualStudio.Workload.VCTools;includeRecommended --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools;includeRecommended --add Microsoft.VisualStudio.Component.VC.14.38.17.8.x86.x64 --add Microsoft.Net.Component.4.6.2.TargetingPack"
-    
+
 }
 catch {
     Write "Failed to install Visual Studio 2022 Build Tools"
