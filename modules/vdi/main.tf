@@ -1,137 +1,7 @@
-# VPC Creation
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
+# Module setup
 locals {
-  # Determine availability zones to use
-  availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, length(var.private_subnet_cidrs))
-  
-  # Determine VPC and subnet IDs based on create_vpc variable
-  vpc_id               = var.create_vpc ? aws_vpc.vdi_vpc[0].id : var.vpc_id
-  subnet_id            = var.create_vpc ? aws_subnet.vdi_private_subnet[0].id : var.subnet_id
-  public_subnet_count  = var.create_vpc ? length(var.public_subnet_cidrs) : 0
-  private_subnet_count = var.create_vpc ? length(var.private_subnet_cidrs) : 0
-}
-
-# Create VPC if specified
-resource "aws_vpc" "vdi_vpc" {
-  count      = var.create_vpc ? 1 : 0
-  cidr_block = var.vpc_cidr
-  
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-vpc"
-  })
-}
-
-# Internet Gateway for public subnets
-resource "aws_internet_gateway" "vdi_igw" {
-  count  = var.create_vpc ? 1 : 0
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-igw"
-  })
-}
-
-# Public subnets
-resource "aws_subnet" "vdi_public_subnet" {
-  count             = var.create_vpc ? local.public_subnet_count : 0
-  vpc_id            = aws_vpc.vdi_vpc[0].id
-  cidr_block        = var.public_subnet_cidrs[count.index]
-  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
-  
-  map_public_ip_on_launch = true
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-public-subnet-${count.index + 1}"
-  })
-}
-
-# Private subnets
-resource "aws_subnet" "vdi_private_subnet" {
-  count             = var.create_vpc ? local.private_subnet_count : 0
-  vpc_id            = aws_vpc.vdi_vpc[0].id
-  cidr_block        = var.private_subnet_cidrs[count.index]
-  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-private-subnet-${count.index + 1}"
-  })
-}
-
-# Route table for public subnets
-resource "aws_route_table" "vdi_public_rt" {
-  count  = var.create_vpc ? 1 : 0
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.vdi_igw[0].id
-  }
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-public-rt"
-  })
-}
-
-# Associate public subnets with public route table
-resource "aws_route_table_association" "vdi_public_rta" {
-  count          = var.create_vpc ? local.public_subnet_count : 0
-  subnet_id      = aws_subnet.vdi_public_subnet[count.index].id
-  route_table_id = aws_route_table.vdi_public_rt[0].id
-}
-
-# NAT Gateway for private subnets (if enabled)
-resource "aws_eip" "vdi_nat_eip" {
-  count      = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
-  domain     = "vpc"
-  depends_on = [aws_internet_gateway.vdi_igw[0]]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-nat-eip-${count.index + 1}"
-  })
-}
-
-resource "aws_nat_gateway" "vdi_nat_gateway" {
-  count         = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
-  allocation_id = aws_eip.vdi_nat_eip[count.index].id
-  subnet_id     = aws_subnet.vdi_public_subnet[count.index].id
-  depends_on    = [aws_internet_gateway.vdi_igw[0]]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-nat-gateway-${count.index + 1}"
-  })
-}
-
-# Route table for private subnets
-resource "aws_route_table" "vdi_private_rt" {
-  count  = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.private_subnet_count) : (var.create_vpc ? 1 : 0)
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  dynamic "route" {
-    for_each = var.create_vpc && var.enable_nat_gateway ? [1] : []
-    content {
-      cidr_block     = "0.0.0.0/0"
-      nat_gateway_id = var.single_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[0].id : aws_nat_gateway.vdi_nat_gateway[count.index].id
-    }
-  }
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-private-rt${var.single_nat_gateway ? "" : "-${count.index + 1}"}"
-  })
-}
-
-# Associate private subnets with private route table
-resource "aws_route_table_association" "vdi_private_rta" {
-  count          = var.create_vpc ? local.private_subnet_count : 0
-  subnet_id      = aws_subnet.vdi_private_subnet[count.index].id
-  route_table_id = var.enable_nat_gateway ? (
-    var.single_nat_gateway ? aws_route_table.vdi_private_rt[0].id : aws_route_table.vdi_private_rt[count.index].id
-  ) : aws_route_table.vdi_private_rt[0].id
+  vpc_id     = var.vpc_id
+  subnet_id  = var.subnet_id
 }
 
 # Generate a key pair if one is not provided
@@ -149,35 +19,28 @@ resource "aws_key_pair" "vdi_key_pair" {
   tags = var.tags
 }
 
-# Generate a random password if one is not provided
-resource "random_password" "admin_password" {
-  count   = var.admin_password == null ? 1 : 0
-  length  = 16
-  special = true
-  # AWS Windows passwords must not contain / or @
-  override_special = "!#$%^&*()_+[]{}|;:,.<>?"
+locals {
+  # We're removing the password setting from user_data and using SSM instead
+  encoded_user_data = var.user_data_base64
 }
 
-locals {
-  # Use the provided password or the generated one
-  admin_password = var.admin_password != null ? var.admin_password : (length(random_password.admin_password) > 0 ? random_password.admin_password[0].result : null)
-  # Generate user data for password setting if a password is available
-  user_data_script = local.admin_password != null ? <<-EOT
-    <powershell>
-    $admin = [adsi]("WinNT://./administrator, user")
-    $admin.psbase.invoke("SetPassword", "${local.admin_password}")
-    </powershell>
-  EOT
-  : null
-  
-  encoded_user_data = local.user_data_script != null ? base64encode(local.user_data_script) : var.user_data_base64
+# Generate a random string to make the secret name unique
+resource "random_string" "secret_suffix" {
+  count   = var.store_passwords_in_secrets_manager ? 1 : 0
+  length  = 8
+  special = false
+  upper   = false
 }
 
 # Store secrets in AWS Secrets Manager if enabled
 resource "aws_secretsmanager_secret" "vdi_secrets" {
   count = var.store_passwords_in_secrets_manager ? 1 : 0
-  name  = "${var.project_prefix}-${var.name}-secrets"
-  tags  = var.tags
+  name  = "${var.project_prefix}-${var.name}-secrets-${random_string.secret_suffix[0].result}"
+  
+  # Use a customer-managed KMS key if provided, otherwise AWS will use the default AWS managed key
+  kms_key_id = var.secrets_kms_key_id
+  
+  tags = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "vdi_secrets" {
@@ -186,9 +49,45 @@ resource "aws_secretsmanager_secret_version" "vdi_secrets" {
   
   secret_string = jsonencode({
     private_key    = var.key_pair_name == null && var.create_key_pair ? tls_private_key.vdi_key[0].private_key_pem : null
-    admin_password = local.admin_password
+    admin_password = var.admin_password
   })
 }
+
+# Secret rotation configuration
+resource "aws_secretsmanager_secret_rotation" "vdi_secrets_rotation" {
+  count               = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
+  secret_id           = aws_secretsmanager_secret.vdi_secrets[0].id
+  rotation_lambda_arn = aws_serverlessapplicationrepository_cloudformation_stack.rotation_lambda[0].outputs["RotationLambdaARN"]
+  
+  rotation_rules {
+    automatically_after_days = var.secrets_rotation_days
+  }
+}
+
+# Use AWS Serverless Application Repository for the rotation lambda
+resource "aws_serverlessapplicationrepository_cloudformation_stack" "rotation_lambda" {
+  count           = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
+  name            = "${var.project_prefix}-${var.name}-rotation-lambda"
+  application_id  = "arn:aws:serverlessrepo:us-east-1:297356227824:applications/SecretsManagerRotationTemplate"
+  semantic_version = "1.1.3"
+  capabilities    = ["CAPABILITY_IAM"]
+  
+  parameters = {
+    endpoint       = "https://secretsmanager.${data.aws_region.current.name}.amazonaws.com"
+    functionName   = "${var.project_prefix}-${var.name}-rotation-lambda"
+    excludeCharacters = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+    vpcSubnetIds   = ""
+    vpcSecurityGroupIds = ""
+  }
+  
+  tags = var.tags
+}
+
+# These IAM resources are no longer needed since we're using the AWS Serverless Application Repository
+# which creates the necessary IAM roles and permissions automatically
+
+# Get current region for the Lambda environment variables
+data "aws_region" "current" {}
 
 # Data source to find the AMI created by the packer template
 data "aws_ami" "windows_server_2025_vdi" {
@@ -287,6 +186,12 @@ resource "aws_iam_instance_profile" "vdi_instance_profile" {
   tags = var.tags
 }
 
+# Attach the AWS managed policy for SSM to ensure complete SSM functionality
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
+  role       = aws_iam_role.vdi_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM policy for VDI instance
 resource "aws_iam_role_policy" "vdi_instance_policy" {
   name = "${var.project_prefix}-${var.name}-vdi-instance-policy"
@@ -304,6 +209,13 @@ resource "aws_iam_role_policy" "vdi_instance_policy" {
           "ssm:ListCommandInvocations",
           "ssm:DescribeInstanceInformation",
           "ssm:GetCommandInvocation",
+          "ssm:GetDocument",
+          "ssm:DescribeDocument",
+          "ssm:GetParameters",
+          "ssm:ListAssociations",
+          "ssm:UpdateAssociationStatus",
+          "ssm:CreateAssociation",
+          "ssm:UpdateAssociation",
           "ssmmessages:CreateControlChannel",
           "ssmmessages:CreateDataChannel",
           "ssmmessages:OpenControlChannel",
@@ -316,6 +228,15 @@ resource "aws_iam_role_policy" "vdi_instance_policy" {
           "ec2messages:SendReply"
         ]
         Resource = "*"
+      },
+      {
+        # Allow access to Secrets Manager for secure password retrieval
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.store_passwords_in_secrets_manager ? [aws_secretsmanager_secret.vdi_secrets[0].arn] : []
       }
     ]
   })
@@ -327,8 +248,27 @@ resource "aws_launch_template" "vdi_launch_template" {
   image_id      = local.ami_id
   instance_type = var.instance_type
   key_name      = var.key_pair_name != null ? var.key_pair_name : (var.create_key_pair ? aws_key_pair.vdi_key_pair[0].key_name : null)
+  ebs_optimized = var.ebs_optimized  # Use the configurable variable for EBS optimization
+  
+  # Enable detailed monitoring (1-minute metrics) if specified
+  monitoring {
+    enabled = var.enable_detailed_monitoring
+  }
+  
+  # Configure Instance Metadata Service - enforce IMDSv2
+  metadata_options {
+    http_endpoint               = var.metadata_options.http_endpoint
+    http_tokens                 = var.metadata_options.http_tokens  # "required" enforces IMDSv2
+    http_put_response_hop_limit = var.metadata_options.http_put_response_hop_limit
+    instance_metadata_tags      = var.metadata_options.instance_metadata_tags
+  }
 
-  vpc_security_group_ids = [aws_security_group.vdi_sg.id]
+  # Security groups are specified only in network_interfaces, not at the top level
+  network_interfaces {
+    subnet_id                   = local.subnet_id
+    associate_public_ip_address = var.associate_public_ip_address
+    security_groups             = [aws_security_group.vdi_sg.id]
+  }
 
   iam_instance_profile {
     name = aws_iam_instance_profile.vdi_instance_profile.name
@@ -392,9 +332,6 @@ resource "aws_instance" "vdi_instance" {
     version = "$Latest"
   }
 
-  subnet_id                   = local.subnet_id
-  associate_public_ip_address = var.associate_public_ip_address
-
   tags = merge(var.tags, {
     Name = "${var.project_prefix}-${var.name}-vdi"
   })
@@ -402,4 +339,82 @@ resource "aws_instance" "vdi_instance" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# SSM document for setting the Administrator password
+resource "aws_ssm_document" "set_admin_password" {
+  count           = var.create_instance && var.admin_password != null ? 1 : 0
+  name            = "${var.project_prefix}-${var.name}-set-password"
+  document_type   = "Command"
+  document_format = "YAML"
+  
+  content = <<DOC
+schemaVersion: '2.2'
+description: 'Set Windows Administrator password and configure NICE DCV'
+parameters:
+  Password:
+    type: SecureString
+    description: 'Administrator password'
+    # No default value provided - will be passed at runtime
+mainSteps:
+  - action: aws:runPowerShellScript
+    name: setPassword
+    inputs:
+      runCommand:
+        - |
+          # Set the Administrator password using multiple methods for reliability
+          try {
+            $password = '{{Password}}'
+            
+            # Method 1: Using ADSI
+            $admin = [adsi]('WinNT://./Administrator, user')
+            $admin.psbase.invoke('SetPassword', $password)
+            Write-Host "Password set using ADSI method"
+          } catch {
+            Write-Host "ADSI method failed: $_"
+          }
+          
+          # Method 2: Using Net User command (more reliable on Windows Server)
+          try {
+            net user Administrator $password /active:yes
+            Write-Host "Password set using net user command"
+          } catch {
+            Write-Host "Net user command failed: $_"
+          }
+          
+          # Method 3: Enable NICE DCV Console Session Authentication
+          try {
+            Set-ItemProperty -Path "HKLM:\\SOFTWARE\\GSettings\\com\\nicesoftware\\dcv\\security" -Name "auth-console-session" -Value "true" -Type String -ErrorAction SilentlyContinue
+            Write-Host "Enabled NICE DCV console session authentication"
+          } catch {
+            Write-Host "DCV configuration failed: $_"
+          }
+          
+          # Restart NICE DCV service to apply changes
+          try {
+            Restart-Service -Name dcvserver -Force -ErrorAction SilentlyContinue
+            Write-Host "Restarted NICE DCV service"
+          } catch {
+            Write-Host "DCV service restart failed: $_"
+          }
+DOC
+
+  tags = var.tags
+}
+
+# SSM command to execute the document on the instance
+resource "aws_ssm_association" "run_password_command" {
+  count       = var.create_instance && var.admin_password != null && var.store_passwords_in_secrets_manager ? 1 : 0
+  name        = aws_ssm_document.set_admin_password[0].name
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.vdi_instance[0].id]
+  }
+  
+  # Use AWS Secrets Manager as parameter source for secure password handling
+  parameters = {
+    "Password" = "{{ssm-secure:${aws_secretsmanager_secret.vdi_secrets[0].name}:admin_password}}"
+  }
+  
+  depends_on = [aws_instance.vdi_instance, aws_secretsmanager_secret_version.vdi_secrets]
 }
