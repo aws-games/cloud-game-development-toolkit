@@ -36,7 +36,11 @@ resource "random_string" "secret_suffix" {
 resource "aws_secretsmanager_secret" "vdi_secrets" {
   count = var.store_passwords_in_secrets_manager ? 1 : 0
   name  = "${var.project_prefix}-${var.name}-secrets-${random_string.secret_suffix[0].result}"
-  tags  = var.tags
+  
+  # Use a customer-managed KMS key if provided, otherwise AWS will use the default AWS managed key
+  kms_key_id = var.secrets_kms_key_id
+  
+  tags = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "vdi_secrets" {
@@ -48,6 +52,42 @@ resource "aws_secretsmanager_secret_version" "vdi_secrets" {
     admin_password = var.admin_password
   })
 }
+
+# Secret rotation configuration
+resource "aws_secretsmanager_secret_rotation" "vdi_secrets_rotation" {
+  count               = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
+  secret_id           = aws_secretsmanager_secret.vdi_secrets[0].id
+  rotation_lambda_arn = aws_serverlessapplicationrepository_cloudformation_stack.rotation_lambda[0].outputs["RotationLambdaARN"]
+  
+  rotation_rules {
+    automatically_after_days = var.secrets_rotation_days
+  }
+}
+
+# Use AWS Serverless Application Repository for the rotation lambda
+resource "aws_serverlessapplicationrepository_cloudformation_stack" "rotation_lambda" {
+  count           = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
+  name            = "${var.project_prefix}-${var.name}-rotation-lambda"
+  application_id  = "arn:aws:serverlessrepo:us-east-1:297356227824:applications/SecretsManagerRotationTemplate"
+  semantic_version = "1.1.3"
+  capabilities    = ["CAPABILITY_IAM"]
+  
+  parameters = {
+    endpoint       = "https://secretsmanager.${data.aws_region.current.name}.amazonaws.com"
+    functionName   = "${var.project_prefix}-${var.name}-rotation-lambda"
+    excludeCharacters = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+    vpcSubnetIds   = ""
+    vpcSecurityGroupIds = ""
+  }
+  
+  tags = var.tags
+}
+
+# These IAM resources are no longer needed since we're using the AWS Serverless Application Repository
+# which creates the necessary IAM roles and permissions automatically
+
+# Get current region for the Lambda environment variables
+data "aws_region" "current" {}
 
 # Data source to find the AMI created by the packer template
 data "aws_ami" "windows_server_2025_vdi" {
@@ -146,6 +186,12 @@ resource "aws_iam_instance_profile" "vdi_instance_profile" {
   tags = var.tags
 }
 
+# Attach the AWS managed policy for SSM to ensure complete SSM functionality
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
+  role       = aws_iam_role.vdi_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # IAM policy for VDI instance
 resource "aws_iam_role_policy" "vdi_instance_policy" {
   name = "${var.project_prefix}-${var.name}-vdi-instance-policy"
@@ -163,6 +209,13 @@ resource "aws_iam_role_policy" "vdi_instance_policy" {
           "ssm:ListCommandInvocations",
           "ssm:DescribeInstanceInformation",
           "ssm:GetCommandInvocation",
+          "ssm:GetDocument",
+          "ssm:DescribeDocument",
+          "ssm:GetParameters",
+          "ssm:ListAssociations",
+          "ssm:UpdateAssociationStatus",
+          "ssm:CreateAssociation",
+          "ssm:UpdateAssociation",
           "ssmmessages:CreateControlChannel",
           "ssmmessages:CreateDataChannel",
           "ssmmessages:OpenControlChannel",
@@ -175,6 +228,15 @@ resource "aws_iam_role_policy" "vdi_instance_policy" {
           "ec2messages:SendReply"
         ]
         Resource = "*"
+      },
+      {
+        # Allow access to Secrets Manager for secure password retrieval
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = var.store_passwords_in_secrets_manager ? [aws_secretsmanager_secret.vdi_secrets[0].arn] : []
       }
     ]
   })
@@ -186,6 +248,7 @@ resource "aws_launch_template" "vdi_launch_template" {
   image_id      = local.ami_id
   instance_type = var.instance_type
   key_name      = var.key_pair_name != null ? var.key_pair_name : (var.create_key_pair ? aws_key_pair.vdi_key_pair[0].key_name : null)
+  ebs_optimized = var.ebs_optimized  # Use the configurable variable for EBS optimization
 
   # Security groups are specified only in network_interfaces, not at the top level
   network_interfaces {
@@ -277,9 +340,9 @@ schemaVersion: '2.2'
 description: 'Set Windows Administrator password and configure NICE DCV'
 parameters:
   Password:
-    type: String
+    type: SecureString
     description: 'Administrator password'
-    default: '${var.admin_password}'
+    # No default value provided - will be passed at runtime
 mainSteps:
   - action: aws:runPowerShellScript
     name: setPassword
@@ -328,11 +391,17 @@ DOC
 
 # SSM command to execute the document on the instance
 resource "aws_ssm_association" "run_password_command" {
-  count       = var.create_instance && var.admin_password != null ? 1 : 0
+  count       = var.create_instance && var.admin_password != null && var.store_passwords_in_secrets_manager ? 1 : 0
   name        = aws_ssm_document.set_admin_password[0].name
   targets {
     key    = "InstanceIds"
     values = [aws_instance.vdi_instance[0].id]
   }
-  depends_on = [aws_instance.vdi_instance]
+  
+  # Use AWS Secrets Manager as parameter source for secure password handling
+  parameters = {
+    "Password" = "{{ssm-secure:${aws_secretsmanager_secret.vdi_secrets[0].name}:admin_password}}"
+  }
+  
+  depends_on = [aws_instance.vdi_instance, aws_secretsmanager_secret_version.vdi_secrets]
 }

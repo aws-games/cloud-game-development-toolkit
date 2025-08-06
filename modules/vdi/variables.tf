@@ -90,6 +90,24 @@ variable "store_passwords_in_secrets_manager" {
   default     = true
 }
 
+variable "secrets_kms_key_id" {
+  type        = string
+  description = "The KMS key ID to use for encrypting secrets in AWS Secrets Manager. If not specified, the default AWS managed key is used."
+  default     = null
+}
+
+variable "enable_secrets_rotation" {
+  type        = bool
+  description = "Whether to enable automatic rotation for secrets in AWS Secrets Manager."
+  default     = true
+}
+
+variable "secrets_rotation_days" {
+  type        = number
+  description = "Number of days between automatic rotations of the secret."
+  default     = 30
+}
+
 ########################################
 # INSTANCE CONFIGURATION
 ########################################
@@ -122,6 +140,12 @@ variable "user_data_base64" {
   type        = string
   description = "Base64 encoded user data script to run on instance launch."
   default     = null
+}
+
+variable "ebs_optimized" {
+  type        = bool
+  description = "Whether to enable EBS optimization for the instance for improved EBS I/O performance."
+  default     = true
 }
 
 ########################################

@@ -6,6 +6,7 @@ This Terraform module creates a Virtual Desktop Infrastructure (VDI) setup on AW
 
 - **EC2 Instance**: Configurable instance type with GPU support (default: g4dn.2xlarge)
 - **EBS Storage**: 512GB encrypted root volume with configurable type, plus additional volumes if needed
+- **EBS Optimization**: Enhanced storage performance with EBS-optimized instances (enabled by default)
 - **Security**: Security group with configurable access rules for RDP and NICE DCV
 - **IAM Integration**: IAM role and instance profile with SSM permissions for management
 - **Key Pair Management**: Auto-generates a key pair or uses an existing one
@@ -87,17 +88,39 @@ This module supports two main remote access options:
 This module uses AWS Systems Manager (SSM) Run Command to set the Administrator password instead of user data scripts. This approach is more reliable and resolves issues where user data scripts might fail to set the password correctly.
 
 How it works:
-1. The module creates an SSM document with the password setting commands
-2. After instance creation, an SSM association executes the document
-3. The document uses multiple methods to set the password and configure NICE DCV
-4. The NICE DCV service is restarted to apply authentication changes
+1. The administrator password is securely stored in AWS Secrets Manager
+2. The module creates an SSM document with the password setting commands
+3. After instance creation, an SSM association references the password from Secrets Manager
+4. The password is securely passed to the instance using SSM SecureString parameters
+5. Multiple password setting methods are attempted for maximum reliability
+6. NICE DCV is configured for proper authentication
 
-This method avoids the timing issues that can occur with user data scripts and ensures the password is set consistently.
+This method avoids the timing issues that can occur with user data scripts and ensures the password is set consistently without exposing sensitive information.
 
 ## Security Considerations
 
-- EBS encryption is enabled by default
-- Instance is configured with minimal IAM permissions
-- Consider deploying in a private subnet with a bastion host or VPN for access
-- Credentials are stored securely in AWS Secrets Manager
-- Password setting occurs via secure SSM communications
+- **Password Protection**:
+  - Passwords are never hardcoded or exposed in clear text
+  - Password is stored in AWS Secrets Manager and securely referenced
+  - SSM uses SecureString parameters to protect sensitive data
+  - IAM permissions restrict access to only the specific required secrets
+
+- **Encryption**:
+  - Secrets Manager secrets are encrypted using KMS (can use customer-managed CMK)
+  - EBS volumes are encrypted by default
+  - All sensitive data transmissions use secure channels
+
+- **Secret Rotation**:
+  - Automatic rotation of secrets is available and enabled by default
+  - Configurable rotation period (default: 30 days)
+  - Uses AWS Serverless Application Repository for reliable rotation
+
+- **Network Security**:
+  - Instance can be deployed in private or public subnet based on requirements
+  - Customizable security groups limit access to specific CIDR blocks
+  - Consider deploying in a private subnet with a bastion host or VPN for production
+  
+- **Access Control**:
+  - Instance is configured with least-privilege IAM permissions
+  - Separation of duties between EC2 instance and secrets management
+  - Fine-grained control over who can access the VDI instance
