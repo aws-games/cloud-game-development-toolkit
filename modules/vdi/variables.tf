@@ -148,6 +148,28 @@ variable "ebs_optimized" {
   default     = true
 }
 
+variable "enable_detailed_monitoring" {
+  type        = bool
+  description = "Whether to enable detailed monitoring for the EC2 instance (1-minute metrics instead of 5-minute)."
+  default     = true
+}
+
+variable "metadata_options" {
+  type = object({
+    http_endpoint               = string
+    http_tokens                 = string
+    http_put_response_hop_limit = number
+    instance_metadata_tags      = string
+  })
+  description = "Customize the Instance Metadata Service (IMDS) configuration"
+  default = {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # IMDSv2 required
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+}
+
 ########################################
 # STORAGE CONFIGURATION
 ########################################

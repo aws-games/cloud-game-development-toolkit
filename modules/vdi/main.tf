@@ -249,6 +249,19 @@ resource "aws_launch_template" "vdi_launch_template" {
   instance_type = var.instance_type
   key_name      = var.key_pair_name != null ? var.key_pair_name : (var.create_key_pair ? aws_key_pair.vdi_key_pair[0].key_name : null)
   ebs_optimized = var.ebs_optimized  # Use the configurable variable for EBS optimization
+  
+  # Enable detailed monitoring (1-minute metrics) if specified
+  monitoring {
+    enabled = var.enable_detailed_monitoring
+  }
+  
+  # Configure Instance Metadata Service - enforce IMDSv2
+  metadata_options {
+    http_endpoint               = var.metadata_options.http_endpoint
+    http_tokens                 = var.metadata_options.http_tokens  # "required" enforces IMDSv2
+    http_put_response_hop_limit = var.metadata_options.http_put_response_hop_limit
+    instance_metadata_tags      = var.metadata_options.instance_metadata_tags
+  }
 
   # Security groups are specified only in network_interfaces, not at the top level
   network_interfaces {

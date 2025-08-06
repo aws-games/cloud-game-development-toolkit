@@ -5,6 +5,7 @@ This Terraform module creates a Virtual Desktop Infrastructure (VDI) setup on AW
 ## Features
 
 - **EC2 Instance**: Configurable instance type with GPU support (default: g4dn.2xlarge)
+- **Detailed Monitoring**: Enhanced CloudWatch metrics with 1-minute interval (enabled by default)
 - **EBS Storage**: 512GB encrypted root volume with configurable type, plus additional volumes if needed
 - **EBS Optimization**: Enhanced storage performance with EBS-optimized instances (enabled by default)
 - **Security**: Security group with configurable access rules for RDP and NICE DCV
@@ -119,7 +120,18 @@ This method avoids the timing issues that can occur with user data scripts and e
   - Instance can be deployed in private or public subnet based on requirements
   - Customizable security groups limit access to specific CIDR blocks
   - Consider deploying in a private subnet with a bastion host or VPN for production
+
+- **Instance Metadata Security**:
+  - IMDSv2 is enforced by default (session token-based requests required)
+  - Protects against SSRF vulnerabilities
+  - Configurable hop limit prevents metadata service access from containers
+  - IMDSv1 (less secure) is disabled
   
+- **Monitoring and Observability**:
+  - Detailed monitoring enabled by default (1-minute CloudWatch metrics)
+  - Enhanced visibility into resource utilization and performance
+  - Better alerting capabilities through more frequent metrics
+
 - **Access Control**:
   - Instance is configured with least-privilege IAM permissions
   - Separation of duties between EC2 instance and secrets management
