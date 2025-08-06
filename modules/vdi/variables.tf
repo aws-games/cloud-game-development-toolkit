@@ -39,64 +39,20 @@ variable "tags" {
 # NETWORKING CONFIGURATION
 ########################################
 
-variable "create_vpc" {
-  type        = bool
-  description = "Whether to create a new VPC for the VDI instance."
-  default     = false
-}
-
 variable "vpc_id" {
   type        = string
-  description = "The ID of the existing VPC to deploy the VDI instance into. Required if create_vpc is false."
-  default     = null
-}
-
-variable "vpc_cidr" {
-  type        = string
-  description = "The CIDR block for the VPC. Only used if create_vpc is true."
-  default     = "10.0.0.0/16"
-}
-
-variable "public_subnet_cidrs" {
-  type        = list(string)
-  description = "List of CIDR blocks for public subnets. Only used if create_vpc is true."
-  default     = ["10.0.101.0/24", "10.0.102.0/24"]
-}
-
-variable "private_subnet_cidrs" {
-  type        = list(string)
-  description = "List of CIDR blocks for private subnets. Only used if create_vpc is true."
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
-}
-
-variable "availability_zones" {
-  type        = list(string)
-  description = "List of availability zones to use for the subnets. Only used if create_vpc is true."
-  default     = []
+  description = "The ID of the VPC to deploy the VDI instance into."
 }
 
 variable "subnet_id" {
   type        = string
-  description = "The subnet ID to deploy the VDI instance into. Private subnet is recommended for security. Required if create_vpc is false."
-  default     = null
+  description = "The subnet ID to deploy the VDI instance into. Private subnet is recommended for security."
 }
 
 variable "associate_public_ip_address" {
   type        = bool
   description = "Whether to associate a public IP address with the VDI instance."
   default     = false
-}
-
-variable "enable_nat_gateway" {
-  type        = bool
-  description = "Whether to enable NAT Gateway for the private subnets. Only used if create_vpc is true."
-  default     = true
-}
-
-variable "single_nat_gateway" {
-  type        = bool
-  description = "Whether to use a single NAT Gateway for all private subnets. Only used if create_vpc is true and enable_nat_gateway is true."
-  default     = true
 }
 
 ########################################

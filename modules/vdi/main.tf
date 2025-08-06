@@ -1,137 +1,7 @@
-# VPC Creation
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
+# Module setup
 locals {
-  # Determine availability zones to use
-  availability_zones = length(var.availability_zones) > 0 ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, length(var.private_subnet_cidrs))
-  
-  # Determine VPC and subnet IDs based on create_vpc variable
-  vpc_id               = var.create_vpc ? aws_vpc.vdi_vpc[0].id : var.vpc_id
-  subnet_id            = var.create_vpc ? aws_subnet.vdi_private_subnet[0].id : var.subnet_id
-  public_subnet_count  = var.create_vpc ? length(var.public_subnet_cidrs) : 0
-  private_subnet_count = var.create_vpc ? length(var.private_subnet_cidrs) : 0
-}
-
-# Create VPC if specified
-resource "aws_vpc" "vdi_vpc" {
-  count      = var.create_vpc ? 1 : 0
-  cidr_block = var.vpc_cidr
-  
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-vpc"
-  })
-}
-
-# Internet Gateway for public subnets
-resource "aws_internet_gateway" "vdi_igw" {
-  count  = var.create_vpc ? 1 : 0
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-igw"
-  })
-}
-
-# Public subnets
-resource "aws_subnet" "vdi_public_subnet" {
-  count             = var.create_vpc ? local.public_subnet_count : 0
-  vpc_id            = aws_vpc.vdi_vpc[0].id
-  cidr_block        = var.public_subnet_cidrs[count.index]
-  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
-  
-  map_public_ip_on_launch = true
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-public-subnet-${count.index + 1}"
-  })
-}
-
-# Private subnets
-resource "aws_subnet" "vdi_private_subnet" {
-  count             = var.create_vpc ? local.private_subnet_count : 0
-  vpc_id            = aws_vpc.vdi_vpc[0].id
-  cidr_block        = var.private_subnet_cidrs[count.index]
-  availability_zone = local.availability_zones[count.index % length(local.availability_zones)]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-private-subnet-${count.index + 1}"
-  })
-}
-
-# Route table for public subnets
-resource "aws_route_table" "vdi_public_rt" {
-  count  = var.create_vpc ? 1 : 0
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.vdi_igw[0].id
-  }
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-public-rt"
-  })
-}
-
-# Associate public subnets with public route table
-resource "aws_route_table_association" "vdi_public_rta" {
-  count          = var.create_vpc ? local.public_subnet_count : 0
-  subnet_id      = aws_subnet.vdi_public_subnet[count.index].id
-  route_table_id = aws_route_table.vdi_public_rt[0].id
-}
-
-# NAT Gateway for private subnets (if enabled)
-resource "aws_eip" "vdi_nat_eip" {
-  count      = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
-  domain     = "vpc"
-  depends_on = [aws_internet_gateway.vdi_igw[0]]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-nat-eip-${count.index + 1}"
-  })
-}
-
-resource "aws_nat_gateway" "vdi_nat_gateway" {
-  count         = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.public_subnet_count) : 0
-  allocation_id = aws_eip.vdi_nat_eip[count.index].id
-  subnet_id     = aws_subnet.vdi_public_subnet[count.index].id
-  depends_on    = [aws_internet_gateway.vdi_igw[0]]
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-nat-gateway-${count.index + 1}"
-  })
-}
-
-# Route table for private subnets
-resource "aws_route_table" "vdi_private_rt" {
-  count  = var.create_vpc && var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : local.private_subnet_count) : (var.create_vpc ? 1 : 0)
-  vpc_id = aws_vpc.vdi_vpc[0].id
-  
-  dynamic "route" {
-    for_each = var.create_vpc && var.enable_nat_gateway ? [1] : []
-    content {
-      cidr_block     = "0.0.0.0/0"
-      nat_gateway_id = var.single_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[0].id : aws_nat_gateway.vdi_nat_gateway[count.index].id
-    }
-  }
-  
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-private-rt${var.single_nat_gateway ? "" : "-${count.index + 1}"}"
-  })
-}
-
-# Associate private subnets with private route table
-resource "aws_route_table_association" "vdi_private_rta" {
-  count          = var.create_vpc ? local.private_subnet_count : 0
-  subnet_id      = aws_subnet.vdi_private_subnet[count.index].id
-  route_table_id = var.enable_nat_gateway ? (
-    var.single_nat_gateway ? aws_route_table.vdi_private_rt[0].id : aws_route_table.vdi_private_rt[count.index].id
-  ) : aws_route_table.vdi_private_rt[0].id
+  vpc_id     = var.vpc_id
+  subnet_id  = var.subnet_id
 }
 
 # Generate a key pair if one is not provided
@@ -150,17 +20,22 @@ resource "aws_key_pair" "vdi_key_pair" {
 }
 
 locals {
-  # Simple PowerShell script to set admin password if provided
-  user_data_script = var.admin_password != null ? "write-host 'Setting admin password'; $admin = [adsi]('WinNT://./administrator, user'); $admin.psbase.invoke('SetPassword', '${var.admin_password}')" : null
-  
-  # Encode the script for user_data if it exists
-  encoded_user_data = local.user_data_script != null ? base64encode("<powershell>${local.user_data_script}</powershell>") : var.user_data_base64
+  # We're removing the password setting from user_data and using SSM instead
+  encoded_user_data = var.user_data_base64
+}
+
+# Generate a random string to make the secret name unique
+resource "random_string" "secret_suffix" {
+  count   = var.store_passwords_in_secrets_manager ? 1 : 0
+  length  = 8
+  special = false
+  upper   = false
 }
 
 # Store secrets in AWS Secrets Manager if enabled
 resource "aws_secretsmanager_secret" "vdi_secrets" {
   count = var.store_passwords_in_secrets_manager ? 1 : 0
-  name  = "${var.project_prefix}-${var.name}-secrets"
+  name  = "${var.project_prefix}-${var.name}-secrets-${random_string.secret_suffix[0].result}"
   tags  = var.tags
 }
 
@@ -388,4 +263,76 @@ resource "aws_instance" "vdi_instance" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# SSM document for setting the Administrator password
+resource "aws_ssm_document" "set_admin_password" {
+  count           = var.create_instance && var.admin_password != null ? 1 : 0
+  name            = "${var.project_prefix}-${var.name}-set-password"
+  document_type   = "Command"
+  document_format = "YAML"
+  
+  content = <<DOC
+schemaVersion: '2.2'
+description: 'Set Windows Administrator password and configure NICE DCV'
+parameters:
+  Password:
+    type: String
+    description: 'Administrator password'
+    default: '${var.admin_password}'
+mainSteps:
+  - action: aws:runPowerShellScript
+    name: setPassword
+    inputs:
+      runCommand:
+        - |
+          # Set the Administrator password using multiple methods for reliability
+          try {
+            $password = '{{Password}}'
+            
+            # Method 1: Using ADSI
+            $admin = [adsi]('WinNT://./Administrator, user')
+            $admin.psbase.invoke('SetPassword', $password)
+            Write-Host "Password set using ADSI method"
+          } catch {
+            Write-Host "ADSI method failed: $_"
+          }
+          
+          # Method 2: Using Net User command (more reliable on Windows Server)
+          try {
+            net user Administrator $password /active:yes
+            Write-Host "Password set using net user command"
+          } catch {
+            Write-Host "Net user command failed: $_"
+          }
+          
+          # Method 3: Enable NICE DCV Console Session Authentication
+          try {
+            Set-ItemProperty -Path "HKLM:\\SOFTWARE\\GSettings\\com\\nicesoftware\\dcv\\security" -Name "auth-console-session" -Value "true" -Type String -ErrorAction SilentlyContinue
+            Write-Host "Enabled NICE DCV console session authentication"
+          } catch {
+            Write-Host "DCV configuration failed: $_"
+          }
+          
+          # Restart NICE DCV service to apply changes
+          try {
+            Restart-Service -Name dcvserver -Force -ErrorAction SilentlyContinue
+            Write-Host "Restarted NICE DCV service"
+          } catch {
+            Write-Host "DCV service restart failed: $_"
+          }
+DOC
+
+  tags = var.tags
+}
+
+# SSM command to execute the document on the instance
+resource "aws_ssm_association" "run_password_command" {
+  count       = var.create_instance && var.admin_password != null ? 1 : 0
+  name        = aws_ssm_document.set_admin_password[0].name
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.vdi_instance[0].id]
+  }
+  depends_on = [aws_instance.vdi_instance]
 }

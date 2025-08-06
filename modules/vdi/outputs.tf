@@ -1,27 +1,12 @@
-# VPC Outputs
+# VPC Information
 output "vpc_id" {
-  description = "The ID of the VPC (created or provided)"
-  value       = local.vpc_id
+  description = "The ID of the VPC used for the VDI instance"
+  value       = var.vpc_id
 }
 
-output "public_subnet_ids" {
-  description = "List of public subnet IDs (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_subnet.vdi_public_subnet[*].id : []
-}
-
-output "private_subnet_ids" {
-  description = "List of private subnet IDs (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_subnet.vdi_private_subnet[*].id : []
-}
-
-output "internet_gateway_id" {
-  description = "ID of the Internet Gateway (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_internet_gateway.vdi_igw[0].id : null
-}
-
-output "nat_gateway_ids" {
-  description = "List of NAT Gateway IDs (only when create_vpc = true and enable_nat_gateway = true)"
-  value       = var.create_vpc && var.enable_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[*].id : []
+output "subnet_id" {
+  description = "The ID of the subnet used for the VDI instance"
+  value       = var.subnet_id
 }
 
 # Instance Outputs
@@ -85,6 +70,11 @@ output "secrets_manager_secret_id" {
   value       = var.store_passwords_in_secrets_manager ? aws_secretsmanager_secret.vdi_secrets[0].id : null
 }
 
+output "secrets_manager_secret_name" {
+  description = "The name of the AWS Secrets Manager secret containing credentials (if enabled)"
+  value       = var.store_passwords_in_secrets_manager ? aws_secretsmanager_secret.vdi_secrets[0].name : null
+}
+
 output "admin_password_set" {
   description = "Indicates if an administrator password was set"
   value       = var.admin_password != null
@@ -109,4 +99,20 @@ output "ami_creation_date" {
 output "ami_source" {
   description = "The source of the AMI (custom or auto-discovered)"
   value       = var.ami_id != null ? "custom" : "auto-discovered"
+}
+
+# SSM password setting information
+output "password_ssm_document_name" {
+  description = "The name of the SSM document that sets the Administrator password"
+  value       = var.create_instance && var.admin_password != null ? aws_ssm_document.set_admin_password[0].name : null
+}
+
+output "password_ssm_association_id" {
+  description = "The ID of the SSM association that executes the password setting document"
+  value       = var.create_instance && var.admin_password != null ? aws_ssm_association.run_password_command[0].association_id : null
+}
+
+output "password_setting_method" {
+  description = "The method used to set the Administrator password"
+  value       = var.admin_password != null ? "SSM Run Command" : "None"
 }
