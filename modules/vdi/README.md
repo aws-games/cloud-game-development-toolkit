@@ -111,10 +111,10 @@ This method avoids the timing issues that can occur with user data scripts and e
   - EBS volumes are encrypted by default
   - All sensitive data transmissions use secure channels
 
-- **Secret Rotation**:
-  - Automatic rotation of secrets is available and enabled by default
-  - Configurable rotation period (default: 30 days)
-  - Uses AWS Serverless Application Repository for reliable rotation
+- **Secret Management**:
+  - Passwords are stored securely in AWS Secrets Manager
+  - KMS encryption available for enhanced security
+  - Secret rotation will be implemented in a future update
 
 - **Network Security**:
   - Instance can be deployed in private or public subnet based on requirements

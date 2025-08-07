@@ -36,8 +36,10 @@ module "vdi" {
   # AWS Secrets Manager configuration
   store_passwords_in_secrets_manager = true
   # secrets_kms_key_id = null # Set this to your KMS key ARN if you want to use a customer-managed key
-  enable_secrets_rotation   = true
-  secrets_rotation_days     = 30
+  
+  # Secret rotation is disabled for now - will be implemented in a future update
+  enable_secrets_rotation   = false
+  # secrets_rotation_days   = 30
   
   # Instance Metadata Service (IMDS) configuration - enforce IMDSv2
   metadata_options = {

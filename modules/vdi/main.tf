@@ -53,35 +53,8 @@ resource "aws_secretsmanager_secret_version" "vdi_secrets" {
   })
 }
 
-# Secret rotation configuration
-resource "aws_secretsmanager_secret_rotation" "vdi_secrets_rotation" {
-  count               = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
-  secret_id           = aws_secretsmanager_secret.vdi_secrets[0].id
-  rotation_lambda_arn = aws_serverlessapplicationrepository_cloudformation_stack.rotation_lambda[0].outputs["RotationLambdaARN"]
-  
-  rotation_rules {
-    automatically_after_days = var.secrets_rotation_days
-  }
-}
-
-# Use AWS Serverless Application Repository for the rotation lambda
-resource "aws_serverlessapplicationrepository_cloudformation_stack" "rotation_lambda" {
-  count           = var.store_passwords_in_secrets_manager && var.enable_secrets_rotation ? 1 : 0
-  name            = "${var.project_prefix}-${var.name}-rotation-lambda"
-  application_id  = "arn:aws:serverlessrepo:us-east-1:297356227824:applications/SecretsManagerRotationTemplate"
-  semantic_version = "1.1.3"
-  capabilities    = ["CAPABILITY_IAM"]
-  
-  parameters = {
-    endpoint       = "https://secretsmanager.${data.aws_region.current.name}.amazonaws.com"
-    functionName   = "${var.project_prefix}-${var.name}-rotation-lambda"
-    excludeCharacters = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
-    vpcSubnetIds   = ""
-    vpcSecurityGroupIds = ""
-  }
-  
-  tags = var.tags
-}
+# Secret rotation functionality removed for now
+# Will be implemented in a future update
 
 # These IAM resources are no longer needed since we're using the AWS Serverless Application Repository
 # which creates the necessary IAM roles and permissions automatically
@@ -309,14 +282,14 @@ resource "aws_launch_template" "vdi_launch_template" {
   tag_specifications {
     resource_type = "instance"
     tags = merge(var.tags, {
-      Name = "${var.project_prefix}-${var.name}-vdi"
+      Name = "cgd-vdi"
     })
   }
 
   tag_specifications {
     resource_type = "volume"
     tags = merge(var.tags, {
-      Name = "${var.project_prefix}-${var.name}-vdi-volume"
+      Name = "cgd-vdi-volume"
     })
   }
 
@@ -333,7 +306,7 @@ resource "aws_instance" "vdi_instance" {
   }
 
   tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-vdi"
+    Name = "cgd-vdi"
   })
 
   lifecycle {
@@ -353,9 +326,9 @@ schemaVersion: '2.2'
 description: 'Set Windows Administrator password and configure NICE DCV'
 parameters:
   Password:
-    type: SecureString
+    type: String
     description: 'Administrator password'
-    # No default value provided - will be passed at runtime
+    default: ''
 mainSteps:
   - action: aws:runPowerShellScript
     name: setPassword
@@ -404,17 +377,17 @@ DOC
 
 # SSM command to execute the document on the instance
 resource "aws_ssm_association" "run_password_command" {
-  count       = var.create_instance && var.admin_password != null && var.store_passwords_in_secrets_manager ? 1 : 0
+  count       = var.create_instance && var.admin_password != null ? 1 : 0
   name        = aws_ssm_document.set_admin_password[0].name
   targets {
     key    = "InstanceIds"
     values = [aws_instance.vdi_instance[0].id]
   }
   
-  # Use AWS Secrets Manager as parameter source for secure password handling
+  # Pass the password directly - it's used in a secure context
   parameters = {
-    "Password" = "{{ssm-secure:${aws_secretsmanager_secret.vdi_secrets[0].name}:admin_password}}"
+    "Password" = var.admin_password
   }
   
-  depends_on = [aws_instance.vdi_instance, aws_secretsmanager_secret_version.vdi_secrets]
+  depends_on = [aws_instance.vdi_instance]
 }

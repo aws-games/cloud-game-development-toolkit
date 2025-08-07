@@ -98,8 +98,8 @@ variable "secrets_kms_key_id" {
 
 variable "enable_secrets_rotation" {
   type        = bool
-  description = "Whether to enable automatic rotation for secrets in AWS Secrets Manager."
-  default     = true
+  description = "Whether to enable automatic rotation for secrets in AWS Secrets Manager. Note: Rotation functionality is currently disabled and will be implemented in a future update."
+  default     = false
 }
 
 variable "secrets_rotation_days" {
