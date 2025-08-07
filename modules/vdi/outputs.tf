@@ -1,27 +1,12 @@
 # VPC Outputs
 output "vpc_id" {
-  description = "The ID of the VPC (created or provided)"
-  value       = local.vpc_id
+  description = "The ID of the VPC being used"
+  value       = var.vpc_id
 }
 
-output "public_subnet_ids" {
-  description = "List of public subnet IDs (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_subnet.vdi_public_subnet[*].id : []
-}
-
-output "private_subnet_ids" {
-  description = "List of private subnet IDs (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_subnet.vdi_private_subnet[*].id : []
-}
-
-output "internet_gateway_id" {
-  description = "ID of the Internet Gateway (only when create_vpc = true)"
-  value       = var.create_vpc ? aws_internet_gateway.vdi_igw[0].id : null
-}
-
-output "nat_gateway_ids" {
-  description = "List of NAT Gateway IDs (only when create_vpc = true and enable_nat_gateway = true)"
-  value       = var.create_vpc && var.enable_nat_gateway ? aws_nat_gateway.vdi_nat_gateway[*].id : []
+output "subnet_id" {
+  description = "The subnet ID being used"
+  value       = var.subnet_id
 }
 
 # Instance Outputs
@@ -70,6 +55,11 @@ output "vdi_iam_role_arn" {
   value       = aws_iam_role.vdi_instance_role.arn
 }
 
+output "vdi_iam_role_name" {
+  description = "The name of the IAM role associated with the VDI instance"
+  value       = aws_iam_role.vdi_instance_role.name
+}
+
 output "vdi_iam_instance_profile_name" {
   description = "The name of the IAM instance profile associated with the VDI instance"
   value       = aws_iam_instance_profile.vdi_instance_profile.name
@@ -109,4 +99,41 @@ output "ami_creation_date" {
 output "ami_source" {
   description = "The source of the AMI (custom or auto-discovered)"
   value       = var.ami_id != null ? "custom" : "auto-discovered"
+}
+
+# AD Domain Join Outputs
+output "domain_join_enabled" {
+  description = "Whether AD domain joining is enabled"
+  value       = local.enable_domain_join
+}
+
+output "ssm_document_name" {
+  description = "Name of the SSM document for domain joining (if enabled)"
+  value       = local.enable_domain_join ? aws_ssm_document.ssm_document_my_ad[0].name : null
+}
+
+output "ssm_association_id" {
+  description = "ID of the SSM association for domain joining (if enabled and instance created)"
+  value       = local.enable_domain_join && var.create_instance ? aws_ssm_association.domain_join[0].association_id : null
+}
+
+output "directory_id" {
+  description = "Directory ID used for domain joining (if provided)"
+  value       = var.directory_id
+}
+
+output "password_type_used" {
+  description = "Indicates which password type is being used"
+  value       = local.enable_domain_join ? "AD admin password" : "Local admin password"
+}
+
+output "effective_password_set" {
+  description = "Indicates if an effective password was set"
+  value       = local.effective_password != null
+  sensitive   = true
+}
+
+output "user_public_ip" {
+  description = "The detected public IP address of the user"
+  value       = chomp(data.http.user_public_ip.response_body)
 }

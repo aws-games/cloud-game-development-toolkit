@@ -1,23 +1,41 @@
-# # VDI Example with VPC Creation
+# VDI Simple Example (Independent Operation)
 
-This example demonstrates how to use the VDI module to create a Virtual Desktop Infrastructure instance on AWS with a new VPC containing public and private subnets.
+This example creates a complete VDI environment that operates **independently** from the main VDI module's domain joining features.
 
-## Updated Variables Configuration
+## Architecture
 
-This example now uses variables for sensitive configuration:
-
-- `admin_password`: Windows administrator password (required)
-- `allowed_ip_address`: Your public IP address in CIDR notation for access (optional)
+This example demonstrates:
+- **Independent VDI Module Usage** - Uses the VDI module purely for instance creation
+- **Separate Simple AD Integration** - Handles Simple AD creation and domain joining independently
+- **Complete Infrastructure** - Creates VPC, networking, and all supporting resources
 
 ## What This Example Creates
 
-- A complete VPC infrastructure:
-  - Public and private subnets across multiple availability zones
-  - Internet Gateway for public subnet connectivity
-  - NAT Gateway for private subnet outbound access
-  - Appropriate route tables for network traffic
-- A Windows Server 2025-based VDI instance in a private subnet
-- Security group with RDP and NICE DCV access
+### Infrastructure (Independent)
+- **VPC** with public and private subnets
+- **Simple AD** (AWS Directory Service)
+- **NAT Gateway** and **Internet Gateway**
+- **Route tables** and **DHCP options**
+
+### VDI Instance (Via Module)
+- **Windows Server 2025** VDI instance (using VDI module)
+- **Security groups** and **IAM roles**
+- **EBS volumes** and **key pairs**
+
+### Domain Joining (Independent)
+- **SSM Document** for Simple AD domain joining
+- **SSM Association** to execute domain join
+- **Additional IAM permissions** for Directory Service
+
+## Key Independence Features
+
+| Component | Implementation | Independence |
+|-----------|----------------|--------------|
+| **VDI Instance** | Uses `modules/vdi/` | ✅ Pure module usage |
+| **Simple AD** | Created in example | ✅ Example-specific |
+| **Domain Joining** | Example's `adjoin.tf` | ✅ Independent logic |
+| **IAM Permissions** | Example's `iam.tf` | ✅ Additional policies |
+| **Networking** | Example's `vpc.tf` | ✅ Complete infrastructure |
 - IAM role and instance profile for AWS Systems Manager integration
 - EBS volumes with encryption enabled
 - Launch template for consistent deployments
@@ -34,12 +52,39 @@ This example now uses variables for sensitive configuration:
 
 ## Usage
 
+**Note:** This example creates Simple AD by default and automatically joins the VDI workstation to the domain.
+
 1. Clone this repository and navigate to this example directory:
    ```bash
    cd modules/vdi/examples/simple
    ```
 
-2. Review and update the configuration in `main.tf` as needed:
+2. Copy and configure the variables file:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+   
+   Edit `terraform.tfvars` with required values:
+   ```hcl
+   # Required passwords
+   admin_password = "YourWindowsPassword123!"
+   directory_admin_password = "YourSimpleADPassword123!"
+   
+   # Required domain name for DNS records
+   domain_name = "example.com"
+   
+   # Simple AD domain name (defaults to corp.example.com)
+   directory_name = "corp.example.com"
+   
+   # DNS Configuration
+   create_hosted_zone = false      # Set to true if you need a new hosted zone
+   create_ssl_certificate = false # Set to true for SSL certificate
+   
+   # Simple AD is created by default
+   # To disable: enable_simple_ad = false
+   ```
+
+3. Review and update the configuration in `main.tf` as needed:
    - Adjust VPC CIDR block (`vpc_cidr`) if needed
    - Modify public and private subnet CIDR blocks (`public_subnet_cidrs` and `private_subnet_cidrs`)
    - Uncomment and set specific availability zones if required (`availability_zones`)
