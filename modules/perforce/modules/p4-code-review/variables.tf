@@ -74,6 +74,12 @@ variable "p4d_port" {
   default     = "ssl:perforce:1666"
 }
 
+variable "p4charset" {
+  type        = string
+  description = "The P4CHARSET environment variable to set in the P4 Code Review container."
+  default     = "none"
+}
+
 variable "existing_redis_connection" {
   type = object({
     host = string
