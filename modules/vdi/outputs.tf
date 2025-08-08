@@ -1,3 +1,15 @@
+# VPC Outputs
+output "vpc_id" {
+  description = "The ID of the VPC being used"
+  value       = var.vpc_id
+}
+
+output "subnet_id" {
+  description = "The subnet ID being used"
+  value       = var.subnet_id
+}
+
+# Instance Outputs
 output "vdi_instance_id" {
   description = "The ID of the VDI EC2 instance"
   value       = var.create_instance ? aws_instance.vdi_instance[0].id : null
@@ -43,6 +55,11 @@ output "vdi_iam_role_arn" {
   value       = aws_iam_role.vdi_instance_role.arn
 }
 
+output "vdi_iam_role_name" {
+  description = "The name of the IAM role associated with the VDI instance"
+  value       = aws_iam_role.vdi_instance_role.name
+}
+
 output "vdi_iam_instance_profile_name" {
   description = "The name of the IAM instance profile associated with the VDI instance"
   value       = aws_iam_instance_profile.vdi_instance_profile.name
@@ -59,8 +76,9 @@ output "secrets_manager_secret_id" {
 }
 
 output "admin_password_set" {
-  description = "Indicates if an administrator password was set (either provided or generated)"
-  value       = local.admin_password != null
+  description = "Indicates if an administrator password was set"
+  value       = var.admin_password != null
+  sensitive   = true
 }
 
 output "ami_id" {
@@ -81,4 +99,41 @@ output "ami_creation_date" {
 output "ami_source" {
   description = "The source of the AMI (custom or auto-discovered)"
   value       = var.ami_id != null ? "custom" : "auto-discovered"
+}
+
+# AD Domain Join Outputs
+output "domain_join_enabled" {
+  description = "Whether AD domain joining is enabled"
+  value       = local.enable_domain_join
+}
+
+output "ssm_document_name" {
+  description = "Name of the SSM document for domain joining (if enabled)"
+  value       = local.enable_domain_join ? aws_ssm_document.ssm_document_my_ad[0].name : null
+}
+
+output "ssm_association_id" {
+  description = "ID of the SSM association for domain joining (if enabled and instance created)"
+  value       = local.enable_domain_join && var.create_instance ? aws_ssm_association.domain_join[0].association_id : null
+}
+
+output "directory_id" {
+  description = "Directory ID used for domain joining (if provided)"
+  value       = var.directory_id
+}
+
+output "password_type_used" {
+  description = "Indicates which password type is being used"
+  value       = local.enable_domain_join ? "AD admin password" : "Local admin password"
+}
+
+output "effective_password_set" {
+  description = "Indicates if an effective password was set"
+  value       = local.effective_password != null
+  sensitive   = true
+}
+
+output "user_public_ip" {
+  description = "The detected public IP address of the user"
+  value       = chomp(data.http.user_public_ip.response_body)
 }

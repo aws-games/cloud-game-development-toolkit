@@ -42,8 +42,6 @@ variable "tags" {
 variable "vpc_id" {
   type        = string
   description = "The ID of the existing VPC to deploy the VDI instance into."
-  # TODO: Replace with actual VPC ID reference when VPC module is identified
-  default = "vpc-placeholder-replace-with-actual-vpc-id"
 }
 
 variable "subnet_id" {
@@ -81,14 +79,21 @@ variable "create_key_pair" {
 
 variable "admin_password" {
   type        = string
-  description = "The administrator password for the Windows instance. If not provided, a random password will be generated."
-  default     = null
+  description = "The local administrator password for the Windows instance. Used when not joining AD domain."
+  sensitive   = true
+  # No default - will be prompted
+}
+
+variable "ad_admin_password" {
+  type        = string
+  description = "The AD domain administrator password. Used when joining AD domain. If not provided, will use admin_password."
+  default     = ""
   sensitive   = true
 }
 
 variable "store_passwords_in_secrets_manager" {
   type        = bool
-  description = "Whether to store generated passwords in AWS Secrets Manager."
+  description = "Whether to store passwords in AWS Secrets Manager. Always stores Windows admin password regardless of AD configuration."
   default     = true
 }
 
@@ -190,3 +195,45 @@ variable "additional_ebs_volumes" {
     error_message = "All volume types must be one of: gp2, gp3, io1, io2."
   }
 }
+
+########################################
+# SSM CONFIGURATION for AD Join
+########################################
+
+variable "ssm_document_name" {
+  type        = string
+  description = "Name of SSM document to join domain. Only used if directory_id is provided."
+  default     = null
+}
+
+variable "directory_id" {
+  type        = string
+  description = "ID of AWS Directory Service AD domain. If provided, instance will join the domain."
+  default     = null
+}
+
+variable "directory_name" {
+  type        = string
+  description = "Name of AWS Directory Service AD domain. Required if directory_id is provided."
+  default     = null
+}
+
+variable "directory_ou" {
+  type        = string
+  description = "Organizational unit of AWS Directory Service AD domain (e.g., DC=corp,DC=example,DC=com). If not provided, will use the domain root."
+  default     = null
+}
+
+variable "dns_ip_addresses" {
+  type        = list(string)
+  description = "List of DNS IP addresses for the AD domain. Required if directory_id is provided."
+  default     = []
+}
+
+variable "domain_join_timeout" {
+  type        = number
+  description = "Timeout in seconds for domain join operation."
+  default     = 300
+}
+
+# Note: Validation logic and locals are defined in locals.tf and main.tf
