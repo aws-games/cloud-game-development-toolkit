@@ -155,14 +155,14 @@ No outputs.
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.5.1 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >=3.5.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
-| <a name="provider_awscc.region-1"></a> [awscc.region-1](#provider\_awscc.region-1) | 1.50.0 |
+| <a name="provider_awscc.region-1"></a> [awscc.region-1](#provider\_awscc.region-1) | 1.51.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules

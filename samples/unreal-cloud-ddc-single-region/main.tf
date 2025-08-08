@@ -23,9 +23,9 @@ data "http" "public_ip" {
 
 module "unreal_cloud_ddc_vpc" {
   source                = "./vpc"
-  vpc_cidr              = "192.168.0.0/16"
-  private_subnets_cidrs = ["192.168.0.0/24", "192.168.1.0/24"]
-  public_subnets_cidrs  = ["192.168.2.0/24", "192.168.3.0/24"]
+  vpc_cidr              = local.vpc_cidr
+  private_subnets_cidrs = local.private_subnets_cidrs
+  public_subnets_cidrs  = local.public_subnets_cidrs
   availability_zones    = local.azs
   additional_tags       = local.tags
 }
@@ -96,9 +96,9 @@ module "unreal_cloud_ddc_infra" {
   primary_region            = true
   scylla_replication_factor = 2
   scylla_subnets            = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_ami_name           = "ScyllaDB 6.2.1"
-  scylla_architecture       = "x86_64"
-  scylla_instance_type      = "i4i.xlarge"
+  scylla_ami_name           = local.scylla_ami_name
+  scylla_architecture       = local.scylla_architecture
+  scylla_instance_type      = local.scylla_instance_type
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
@@ -106,13 +106,13 @@ module "unreal_cloud_ddc_infra" {
   monitoring_application_load_balancer_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
   alb_certificate_arn                          = aws_acm_certificate.scylla_monitoring.arn
 
-  nvme_managed_node_instance_type = "i3en.xlarge"
+  nvme_managed_node_instance_type = local.nvme_managed_node_instance_type
   nvme_managed_node_desired_size  = 2
 
-  worker_managed_node_instance_type = "c6i.large"
+  worker_managed_node_instance_type = local.worker_managed_node_instance_type
   worker_managed_node_desired_size  = 1
 
-  system_managed_node_instance_type = "m7i.large"
+  system_managed_node_instance_type = local.system_managed_node_instance_type
   system_managed_node_desired_size  = 1
 }
 

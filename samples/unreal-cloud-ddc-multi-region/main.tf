@@ -1,5 +1,5 @@
 resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  name        = "unreal-cloud-ddc-bearer-token-multi-region"
+  name        = "unreal-cloud-ddc-bearer-token-multi-region-10"
   description = "The token to access unreal cloud ddc sample."
   generate_secret_string = {
     exclude_punctuation = true
@@ -38,9 +38,9 @@ data "http" "public_ip" {
 
 module "unreal_cloud_ddc_vpc_region_1" {
   source                = "./vpc"
-  vpc_cidr              = "192.168.0.0/17"
-  private_subnets_cidrs = ["192.168.0.0/24", "192.168.1.0/24"]
-  public_subnets_cidrs  = ["192.168.2.0/24", "192.168.3.0/24"]
+  vpc_cidr              = local.vpc_cidr_block_region_1
+  private_subnets_cidrs = local.private_subnets_cidrs_region_1
+  public_subnets_cidrs  = local.public_subnets_cidrs_region_1
   region                = var.regions[0]
   availability_zones    = local.azs_region_1
   additional_tags       = local.tags
@@ -103,9 +103,9 @@ resource "aws_vpc_security_group_egress_rule" "unreal_ddc_load_balancer_egress_s
 
 module "unreal_cloud_ddc_vpc_region_2" {
   source                = "./vpc"
-  vpc_cidr              = "192.168.128.0/17"
-  private_subnets_cidrs = ["192.168.128.0/24", "192.168.129.0/24"]
-  public_subnets_cidrs  = ["192.168.130.0/24", "192.168.131.0/24"]
+  vpc_cidr              = local.vpc_cidr_block_region_2
+  private_subnets_cidrs = local.private_subnets_cidrs_region_2
+  public_subnets_cidrs  = local.public_subnets_cidrs_region_2
   region                = var.regions[1]
   availability_zones    = local.azs_region_2
   additional_tags       = local.tags
@@ -206,14 +206,14 @@ resource "aws_vpc_peering_connection_options" "accepter" {
 resource "aws_route" "vpc_region_1_to_region_2" {
   region                    = var.regions[0]
   route_table_id            = module.unreal_cloud_ddc_vpc_region_1.vpc_private_route_table_id
-  destination_cidr_block    = "192.168.128.0/17"
+  destination_cidr_block    = local.vpc_cidr_block_region_2
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
 }
 
 resource "aws_route" "vpc_region_2_to_region_1" {
   region                    = var.regions[1]
   route_table_id            = module.unreal_cloud_ddc_vpc_region_2.vpc_private_route_table_id
-  destination_cidr_block    = "192.168.0.0/17"
+  destination_cidr_block    = local.vpc_cidr_block_region_1
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_connection_region_1_to_region_2.id
 }
 
@@ -238,9 +238,9 @@ module "unreal_cloud_ddc_infra_region_1" {
   primary_region            = true
   scylla_replication_factor = 3
   scylla_subnets            = module.unreal_cloud_ddc_vpc_region_1.private_subnet_ids
-  scylla_ami_name           = "ScyllaDB 6.2.1"
-  scylla_architecture       = "x86_64"
-  scylla_instance_type      = "i4i.xlarge"
+  scylla_ami_name           = local.scylla_ami_name
+  scylla_architecture       = local.scylla_architecture
+  scylla_instance_type      = local.scylla_instance_type
   existing_scylla_ips       = module.unreal_cloud_ddc_infra_region_2.scylla_ips
 
   scylla_db_throughput = 200
@@ -249,13 +249,13 @@ module "unreal_cloud_ddc_infra_region_1" {
   monitoring_application_load_balancer_subnets = module.unreal_cloud_ddc_vpc_region_1.public_subnet_ids
   alb_certificate_arn                          = aws_acm_certificate.scylla_monitoring_region_1.arn
 
-  nvme_managed_node_instance_type = "i3en.xlarge"
+  nvme_managed_node_instance_type = local.nvme_managed_node_instance_type
   nvme_managed_node_desired_size  = 2
 
-  worker_managed_node_instance_type = "c6i.large"
+  worker_managed_node_instance_type = local.worker_managed_node_instance_type
   worker_managed_node_desired_size  = 1
 
-  system_managed_node_instance_type = "m7i.large"
+  system_managed_node_instance_type = local.system_managed_node_instance_type
   system_managed_node_desired_size  = 1
 }
 
@@ -267,7 +267,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_1_to_2" {
   from_port         = 0
   to_port           = 65535
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.128.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = module.unreal_cloud_ddc_infra_region_1.scylla_security_group
 }
 
@@ -331,20 +331,20 @@ module "unreal_cloud_ddc_infra_region_2" {
   create_scylla_monitoring_stack   = false
   create_application_load_balancer = false
   scylla_subnets                   = module.unreal_cloud_ddc_vpc_region_2.private_subnet_ids
-  scylla_ami_name                  = "ScyllaDB 6.2.1"
-  scylla_architecture              = "x86_64"
-  scylla_instance_type             = "i4i.xlarge"
+  scylla_ami_name                  = local.scylla_ami_name
+  scylla_architecture              = local.scylla_architecture
+  scylla_instance_type             = local.scylla_instance_type
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
 
-  nvme_managed_node_instance_type = "i3en.xlarge"
+  nvme_managed_node_instance_type = local.nvme_managed_node_instance_type
   nvme_managed_node_desired_size  = 2
 
-  worker_managed_node_instance_type = "c6i.large"
+  worker_managed_node_instance_type = local.worker_managed_node_instance_type
   worker_managed_node_desired_size  = 1
 
-  system_managed_node_instance_type = "m7i.large"
+  system_managed_node_instance_type = local.system_managed_node_instance_type
   system_managed_node_desired_size  = 1
 }
 
@@ -355,7 +355,7 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_2_to_1" {
   from_port         = 0
   to_port           = 65535
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.0.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = module.unreal_cloud_ddc_infra_region_2.scylla_security_group
 }
 
@@ -367,7 +367,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
   from_port         = 8080
   to_port           = 8080
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.128.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
 }
 
@@ -377,7 +377,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
   from_port         = 80
   to_port           = 80
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.128.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
 }
 
@@ -388,7 +388,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
   from_port         = 8080
   to_port           = 8080
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.0.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
 }
 
@@ -398,7 +398,7 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
   from_port         = 80
   to_port           = 80
   ip_protocol       = "TCP"
-  cidr_ipv4         = "192.168.0.0/17"
+  cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
 }
 

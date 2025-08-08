@@ -11,7 +11,7 @@ data "aws_route53_zone" "root" {
   private_zone = false
 }
 
-# Create a record in the Hosted Zone for the scylla_monitoring server
+# Create a record in the Hosted Zone for the unreal cloud ddc in region 1
 resource "aws_route53_record" "unreal_cloud_ddc_region_1" {
   depends_on     = [module.unreal_cloud_ddc_infra_region_1, module.unreal_cloud_ddc_intra_cluster_region_1]
   zone_id        = data.aws_route53_zone.root.id
@@ -29,7 +29,7 @@ resource "aws_route53_record" "unreal_cloud_ddc_region_1" {
   }
 }
 
-# Create a record in the Hosted Zone for the unreal
+# Create a record in the Hosted Zone for the unreal cloud ddc in region 2
 resource "aws_route53_record" "unreal_cloud_ddc_region_2" {
   depends_on     = [module.unreal_cloud_ddc_infra_region_2, module.unreal_cloud_ddc_intra_cluster_region_2]
   zone_id        = data.aws_route53_zone.root.id
