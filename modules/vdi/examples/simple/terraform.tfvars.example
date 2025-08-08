@@ -1,8 +1,31 @@
-# Example Terraform variables file
-# Copy this file to "terraform.tfvars" and update the values
+# Example Terraform variables file for VDI deployment
+# Copy this file to terraform.tfvars and update with your actual values
 
-# Required - Windows administrator password
-admin_password = "YourSecurePassword123!"
+########################################
+# REQUIRED VARIABLES
+########################################
 
-# Your public IP address in CIDR notation for direct access to the VDI instance
-allowed_ip_address = "203.0.113.1/32"  # Replace with your public IP address
+# Windows administrator password (always stored in Secrets Manager)
+admin_password = "YourSuperSecretPassword123"
+
+# Optional: Domain name for DNS record (creates vdi.example.com)
+# domain_name = "example.com"
+
+##############################################
+# SIMPLE AD CONFIGURATION (ENABLED BY DEFAULT)
+##############################################
+
+# Simple AD domain name 
+directory_name = "example.people.aws.dev"
+
+# Password for the Simple AD administrator account (REQUIRED)
+directory_admin_password = "YourSuperSecretPassword123"
+
+# Directory size (Small or Large)
+  directory_size = "Small"
+
+# Optional: Organizational Unit (if not provided, uses default Computers container)
+# directory_ou = "DC=corp,DC=example,DC=com"
+
+# Optional: Disable Simple AD creation (uncomment to disable)
+# enable_simple_ad = false

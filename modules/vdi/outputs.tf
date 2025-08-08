@@ -1,11 +1,11 @@
-# VPC Information
+# VPC Outputs
 output "vpc_id" {
-  description = "The ID of the VPC used for the VDI instance"
+  description = "The ID of the VPC being used"
   value       = var.vpc_id
 }
 
 output "subnet_id" {
-  description = "The ID of the subnet used for the VDI instance"
+  description = "The subnet ID being used"
   value       = var.subnet_id
 }
 
@@ -55,6 +55,11 @@ output "vdi_iam_role_arn" {
   value       = aws_iam_role.vdi_instance_role.arn
 }
 
+output "vdi_iam_role_name" {
+  description = "The name of the IAM role associated with the VDI instance"
+  value       = aws_iam_role.vdi_instance_role.name
+}
+
 output "vdi_iam_instance_profile_name" {
   description = "The name of the IAM instance profile associated with the VDI instance"
   value       = aws_iam_instance_profile.vdi_instance_profile.name
@@ -68,11 +73,6 @@ output "key_pair_name" {
 output "secrets_manager_secret_id" {
   description = "The ID of the AWS Secrets Manager secret containing credentials (if enabled)"
   value       = var.store_passwords_in_secrets_manager ? aws_secretsmanager_secret.vdi_secrets[0].id : null
-}
-
-output "secrets_manager_secret_name" {
-  description = "The name of the AWS Secrets Manager secret containing credentials (if enabled)"
-  value       = var.store_passwords_in_secrets_manager ? aws_secretsmanager_secret.vdi_secrets[0].name : null
 }
 
 output "admin_password_set" {
@@ -101,18 +101,39 @@ output "ami_source" {
   value       = var.ami_id != null ? "custom" : "auto-discovered"
 }
 
-# SSM password setting information
-output "password_ssm_document_name" {
-  description = "The name of the SSM document that sets the Administrator password"
-  value       = var.create_instance && var.admin_password != null ? aws_ssm_document.set_admin_password[0].name : null
+# AD Domain Join Outputs
+output "domain_join_enabled" {
+  description = "Whether AD domain joining is enabled"
+  value       = local.enable_domain_join
 }
 
-output "password_ssm_association_id" {
-  description = "The ID of the SSM association that executes the password setting document"
-  value       = var.create_instance && var.admin_password != null ? aws_ssm_association.run_password_command[0].association_id : null
+output "ssm_document_name" {
+  description = "Name of the SSM document for domain joining (if enabled)"
+  value       = local.enable_domain_join ? aws_ssm_document.ssm_document_my_ad[0].name : null
 }
 
-output "password_setting_method" {
-  description = "The method used to set the Administrator password"
-  value       = var.admin_password != null ? "SSM Run Command" : "None"
+output "ssm_association_id" {
+  description = "ID of the SSM association for domain joining (if enabled and instance created)"
+  value       = local.enable_domain_join && var.create_instance ? aws_ssm_association.domain_join[0].association_id : null
+}
+
+output "directory_id" {
+  description = "Directory ID used for domain joining (if provided)"
+  value       = var.directory_id
+}
+
+output "password_type_used" {
+  description = "Indicates which password type is being used"
+  value       = local.enable_domain_join ? "AD admin password" : "Local admin password"
+}
+
+output "effective_password_set" {
+  description = "Indicates if an effective password was set"
+  value       = local.effective_password != null
+  sensitive   = true
+}
+
+output "user_public_ip" {
+  description = "The detected public IP address of the user"
+  value       = chomp(data.http.user_public_ip.response_body)
 }
