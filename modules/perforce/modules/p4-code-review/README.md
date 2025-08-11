@@ -137,6 +137,7 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | The name attached to P4 Code Review module resources. | `string` | `"p4-code-review"` | no |
 | <a name="input_p4_code_review_user_password_secret_arn"></a> [p4\_code\_review\_user\_password\_secret\_arn](#input\_p4\_code\_review\_user\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password. | `string` | n/a | yes |
 | <a name="input_p4_code_review_user_username_secret_arn"></a> [p4\_code\_review\_user\_username\_secret\_arn](#input\_p4\_code\_review\_user\_username\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username. | `string` | n/a | yes |
+| <a name="input_p4charset"></a> [p4charset](#input\_p4charset) | The P4CHARSET environment variable to set in the P4 Code Review container. | `string` | `"none"` | no |
 | <a name="input_p4d_port"></a> [p4d\_port](#input\_p4d\_port) | The P4D\_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666' | `string` | `"ssl:perforce:1666"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_s3_enable_force_destroy"></a> [s3\_enable\_force\_destroy](#input\_s3\_enable\_force\_destroy) | Enables force destroy for the S3 bucket for P4 Code Review access log storage. Defaults to true. | `bool` | `true` | no |
