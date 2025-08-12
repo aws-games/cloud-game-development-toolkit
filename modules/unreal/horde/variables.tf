@@ -47,6 +47,12 @@ variable "config_path" {
   default     = null
 }
 
+variable "extra_server_config" {
+  type        = map(any)
+  description = "Extra json to include in the server.json config file"
+  default     = {}
+}
+
 ########################################
 # NETWORKING
 ########################################

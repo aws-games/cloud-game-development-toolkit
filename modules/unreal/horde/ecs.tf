@@ -64,29 +64,20 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         startPeriod = 10
         timeout     = 5
       }
-      environment = concat([
-        {
-          name  = "Horde__databaseConnectionString"
-          value = local.database_connection_string
-        },
-        {
-          name  = "Horde__redisConnectionConfig"
-          value = local.redis_connection_config
-        },
-        {
-          name  = "Horde__databasePublicCert",
-          value = "/app/config/global-bundle.pem"
-        },
-        {
-          name  = "Horde__jwtIssuer",
-          value = "https://${var.fully_qualified_domain_name}"
-        },
+      environment = [
         {
           name  = "P4TRUST"
           value = "/app/config/.p4trust"
         },
-      ], local.horde_service_env)
-      secrets = local.horde_service_secrets
+        {
+          name  = "Horde__DataDir"
+          value = "/app/config"
+        },
+        {
+          name  = "ASPNETCORE_ENVIRONMENT"
+          value = var.environment
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -94,16 +85,16 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           awslogs-region        = data.aws_region.current.id
           awslogs-stream-prefix = "[APP]"
         }
-      },
+      }
       mountPoints = [
         {
           sourceVolume  = "unreal-horde-config",
           containerPath = "/app/config"
         }
-      ],
+      ]
       dependsOn = concat(
         [{
-          containerName = "unreal-horde-docdb-cert",
+          containerName = "unreal-horde-config"
           condition     = "SUCCESS"
         }],
         local.need_p4_trust ? [{
@@ -127,39 +118,32 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         jq -n '{
           Version: 2,
 
+          Macros: [
+            ${join(", ", [for macro in [
+        {
+          Condition = var.p4_port != null
+          Name      = "P4PORT"
+          Value     = "\"${var.p4_port}\""
+        },
+        {
+          Condition = var.p4_super_user_username_secret_arn != null
+          Name      = "P4USER"
+          Value     = "env.P4_SUPER_USERNAME"
+        },
+        {
+          Condition = var.p4_super_user_password_secret_arn != null
+          Name      = "P4PASSWD",
+          Value     = "env.P4_SUPER_PASSWORD",
+        },
+    ] : "{ Name: \"${macro.Name}\", Value: ${macro.Value} }" if macro.Condition])}
+          ],
+
           %{if var.config_path != null}
           Include: [
             { Path: "${var.config_path}" }
           ],
           %{endif}
-
-          Plugins: {
-            Build: {
-              %{if var.p4_port != null && var.p4_super_user_username_secret_arn != null && var.p4_super_user_password_secret_arn != null}
-              PerforceClusters: [{
-                Name: "Default",
-                CanImpersonate: true,
-                SupportsPartitionedWorkspaces: true,
-                Servers: [{
-                  ServerAndPort: "${var.p4_port}",
-                }],
-                Credentials: [{
-                  UserName: env.P4_SUPER_USERNAME,
-                  Password: env.P4_SUPER_PASSWORD,
-                }],
-              }],
-              %{endif}
-            },
-          },
-
-          Parameters: {
-            ugs: {
-              %{if var.p4_port != null}
-              defaultPerforceServer: "${var.p4_port}",
-              %{endif}
-            },
-          },
-        } * ${jsonencode(var.extra_global_config)}' > /app/config/globals.json
+        }' > /app/config/globals.json
 
         # Create the server config
         jq -n '{
@@ -174,12 +158,6 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
 
             EnableDebugEndpoints: ${var.debug},
             ForceConfigUpdateOnStartup: true,
-
-            %{for key, value in local.server_config}
-            %{if value != null}
-            ${key}: "${value}",
-            %{endif}
-            %{endfor}
 
             Plugins: {
               Build: {
@@ -199,6 +177,12 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
                 AutoEnrollAgents: ${var.enable_new_agents_by_default},
               }
             },
+
+            %{for key, value in local.server_config~}
+            %{if value != null~}
+            ${key}: "${value}",
+            %{endif~}
+            %{endfor~}
           },
 
           AWS: {
@@ -229,7 +213,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         options = {
           awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
           awslogs-region        = data.aws_region.current.id
-          awslogs-stream-prefix = "[DOCDB CERT]"
+          awslogs-stream-prefix = "[P4CONFIG]"
         }
       },
     }],
