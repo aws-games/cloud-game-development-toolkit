@@ -61,6 +61,10 @@ locals {
       value = tostring(var.enable_new_agents_by_default)
     },
     {
+      name  = "Horde__configPath",
+      value = var.config_path
+    },
+    {
       name  = "Horde__Perforce__0__ServerAndPort"
       value = var.p4_port
     },

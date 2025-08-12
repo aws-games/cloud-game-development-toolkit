@@ -41,6 +41,12 @@ variable "debug" {
   default     = false
 }
 
+variable "config_path" {
+  type        = string
+  description = "The path to your config file in Perforce"
+  default     = null
+}
+
 ########################################
 # NETWORKING
 ########################################
