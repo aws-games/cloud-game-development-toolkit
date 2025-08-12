@@ -192,7 +192,7 @@ resource "aws_ssm_association" "configure_unreal_horde_agent" {
   parameters = {
     SourceInfo     = "{\"path\":\"https://${aws_s3_bucket.ansible_playbooks[0].bucket_domain_name}/agent/\"}"
     PlaybookFile   = "horde-agent.ansible.yml"
-    ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name}"
+    ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name} dotnet_runtime_version=${var.agent_dotnet_runtime_version}"
   }
 
   output_location {
