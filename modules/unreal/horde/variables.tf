@@ -481,6 +481,12 @@ variable "agents" {
   default     = {}
 }
 
+variable "agent_dotnet_runtime_version" {
+  type        = string
+  description = "The dotnet-runtime-{} package to install (see your engine version's release notes for supported version)"
+  default     = "6.0"
+}
+
 variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name where your Unreal Engine Horde server will be available. This agents will use this to enroll."
