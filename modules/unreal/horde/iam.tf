@@ -39,10 +39,9 @@ data "aws_iam_policy_document" "unreal_horde_elasticache_policy" {
     actions = [
       "elasticache:Connect"
     ]
-    resources = (var.elasticache_engine == "redis" ?
-      [aws_elasticache_cluster.horde[0].arn] :
-    [aws_elasticache_replication_group.horde[0].arn])
-
+    resources = (var.elasticache_serverless ? [aws_elasticache_serverless_cache.horde[0].arn] :
+      var.elasticache_engine == "redis" ? [aws_elasticache_cluster.horde[0].arn] : [aws_elasticache_replication_group.horde[0].arn]
+    )
   }
 }
 data "aws_iam_policy_document" "unreal_horde_recycle_policy" {
