@@ -366,15 +366,56 @@ variable "elasticache_engine" {
   }
 }
 
+variable "elasticache_serverless" {
+  description = "Whether to use an elasticache serverless deployment"
+  type        = bool
+  default     = false
+
+  validation {
+    condition     = var.elasticache_serverless == false || var.custom_cache_connection_config == null
+    error_message = "elasticache_serverless cannot be set if an external cache connection is configured."
+  }
+}
+
+variable "elasticache_serverless_usesage_limits" {
+  description = "Whether to use an elasticache serverless deployment"
+  type = object({
+    data_storage = object({
+      minimum = number
+      maximum = number
+    })
+    ecpu_per_second = object({
+      minimum = number
+      maximum = number
+    })
+  })
+  default = null
+
+  validation {
+    condition     = var.elasticache_serverless == false || var.elasticache_serverless_usesage_limits != null
+    error_message = "elasticache_serverless_usesage_limits must be set if elasticache_serverless is enabled."
+  }
+}
+
 variable "elasticache_redis_engine_version" {
   type        = string
   description = "The version of the Redis engine to use."
   default     = "7.0"
+
+  validation {
+    condition     = !(var.elasticache_serverless && var.elasticache_engine == "redis" && strcontains(var.elasticache_redis_engine_version, "."))
+    error_message = "When using elasticache_serverless, var.elasticache_redis_engine_version must be a MAJOR version only."
+  }
 }
 variable "elasticache_valkey_engine_version" {
   type        = string
   description = "The version of the ElastiCache engine to use."
   default     = "7.2"
+
+  validation {
+    condition     = !(var.elasticache_serverless && var.elasticache_engine == "valkey" && strcontains(var.elasticache_valkey_engine_version, "."))
+    error_message = "When using elasticache_serverless, var.elasticache_valkey_engine_version must be a MAJOR version only."
+  }
 }
 
 variable "elasticache_redis_parameter_group_name" {

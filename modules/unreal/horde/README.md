@@ -54,6 +54,7 @@ No modules.
 | [aws_ecs_task_definition.unreal_horde_task_definition](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_task_definition) | resource |
 | [aws_elasticache_cluster.horde](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/elasticache_cluster) | resource |
 | [aws_elasticache_replication_group.horde](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/elasticache_replication_group) | resource |
+| [aws_elasticache_serverless_cache.horde](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/elasticache_serverless_cache) | resource |
 | [aws_elasticache_subnet_group.horde](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/elasticache_subnet_group) | resource |
 | [aws_iam_instance_profile.unreal_horde_agent_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_policy.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_policy) | resource |
@@ -163,6 +164,8 @@ No modules.
 | <a name="input_elasticache_port"></a> [elasticache\_port](#input\_elasticache\_port) | The port for the ElastiCache cluster. | `number` | `6379` | no |
 | <a name="input_elasticache_redis_engine_version"></a> [elasticache\_redis\_engine\_version](#input\_elasticache\_redis\_engine\_version) | The version of the Redis engine to use. | `string` | `"7.0"` | no |
 | <a name="input_elasticache_redis_parameter_group_name"></a> [elasticache\_redis\_parameter\_group\_name](#input\_elasticache\_redis\_parameter\_group\_name) | The name of the Redis parameter group to use. | `string` | `"default.redis7"` | no |
+| <a name="input_elasticache_serverless"></a> [elasticache\_serverless](#input\_elasticache\_serverless) | Whether to use an elasticache serverless deployment | `bool` | `false` | no |
+| <a name="input_elasticache_serverless_usesage_limits"></a> [elasticache\_serverless\_usesage\_limits](#input\_elasticache\_serverless\_usesage\_limits) | Whether to use an elasticache serverless deployment | <pre>object({<br/>    data_storage = object({<br/>      minimum = number<br/>      maximum = number<br/>    })<br/>    ecpu_per_second = object({<br/>      minimum = number<br/>      maximum = number<br/>    })<br/>  })</pre> | `null` | no |
 | <a name="input_elasticache_snapshot_retention_limit"></a> [elasticache\_snapshot\_retention\_limit](#input\_elasticache\_snapshot\_retention\_limit) | The number of Elasticache snapshots to retain. | `number` | `5` | no |
 | <a name="input_elasticache_valkey_engine_version"></a> [elasticache\_valkey\_engine\_version](#input\_elasticache\_valkey\_engine\_version) | The version of the ElastiCache engine to use. | `string` | `"7.2"` | no |
 | <a name="input_elasticache_valkey_parameter_group_name"></a> [elasticache\_valkey\_parameter\_group\_name](#input\_elasticache\_valkey\_parameter\_group\_name) | The name of the Valkey parameter group to use. | `string` | `"default.valkey7"` | no |
