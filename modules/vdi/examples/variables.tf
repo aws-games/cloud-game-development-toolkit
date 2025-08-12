@@ -54,7 +54,7 @@ variable "public_subnet_cidrs" {
 
 variable "private_subnet_cidrs" {
   type        = list(string)
-  description = "List of CIDR blocks for private subnets (used for Simple AD)"
+  description = "List of CIDR blocks for private subnets (used for Managed AD)"
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
@@ -148,51 +148,41 @@ variable "allowed_cidr_blocks" {
 
 variable "admin_password" {
   type        = string
-  description = "The local administrator password for the Windows instance"
+  description = "Shared temporary password for all VDI users. AD users will be forced to change this on first login."
   sensitive   = true
 }
 
-variable "ad_admin_password" {
-  type        = string
-  description = "The AD domain administrator password (optional - will use admin_password if not provided)"
-  sensitive   = true
-  default     = ""
-}
-
-# Note: Standard AD Domain Join variables not needed - Simple AD configuration handles domain joining
-
 ########################################
-# SIMPLE AD CONFIGURATION
+# MANAGED MICROSOFT AD CONFIGURATION
 ########################################
-
-variable "enable_simple_ad" {
-  type        = bool
-  description = "Whether to create a Simple AD and join the VDI workstation to it"
-  default     = true
-}
 
 variable "directory_admin_password" {
   type        = string
-  description = "The password for the Simple AD administrator account"
+  description = "The password for the Managed Microsoft AD administrator account"
   sensitive   = true
 }
 
 variable "directory_name" {
   type        = string
-  description = "Name of AWS Directory Service AD domain. Required if directory_id is provided."
-  default     = null
-}
-
-variable "directory_size" {
-  type        = string
-  description = "The size of the Simple AD directory (Small or Large)"
-  default     = "Small"
+  description = "Name of AWS Directory Service AD domain. Used as the domain name for Managed Microsoft AD."
 
   validation {
-    condition     = contains(["Small", "Large"], var.directory_size)
-    error_message = "Directory size must be either 'Small' or 'Large'."
+    condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$", var.directory_name))
+    error_message = "Directory name must be a valid domain name (e.g., corp.example.com)."
   }
 }
+
+variable "directory_edition" {
+  type        = string
+  description = "The edition of the Managed Microsoft AD directory (Standard or Enterprise)"
+  default     = "Standard"
+
+  validation {
+    condition     = contains(["Standard", "Enterprise"], var.directory_edition)
+    error_message = "Directory edition must be either 'Standard' or 'Enterprise'."
+  }
+}
+
 ########################################
 # OPTIONAL DNS CONFIGURATION
 ########################################

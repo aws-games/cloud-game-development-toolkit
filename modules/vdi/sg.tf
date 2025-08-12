@@ -1,39 +1,53 @@
-# Security group for the VDI instance
-resource "aws_security_group" "vdi_sg" {
-  name_prefix = "${var.project_prefix}-${var.name}-vdi-"
+# Default security groups for VDI instances (created when create_default_security_groups = true)
+resource "aws_security_group" "vdi_default_sg" {
+  for_each = {
+    for user, config in local.processed_vdi_config : user => config
+    if config.create_default_security_groups
+  }
+  
+  name_prefix = "${var.project_prefix}-${each.key}-vdi-"
   vpc_id      = var.vpc_id
-  description = "Security group for VDI instances"
+  description = "Default security group for VDI instance ${each.key}"
 
-  # RDP access from user public IP
+  # RDP access from user's public IP (if detected) and allowed CIDR blocks
   ingress {
-    from_port   = 3389
-    to_port     = 3389
-    protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.user_public_ip.response_body)}/32"]
-    description = "RDP access from user public IP"
+    from_port = 3389
+    to_port   = 3389
+    protocol  = "tcp"
+    cidr_blocks = local.user_public_ip_cidr != null ? concat([local.user_public_ip_cidr], each.value.allowed_cidr_blocks) : each.value.allowed_cidr_blocks
+    description = local.user_public_ip_cidr != null ? "RDP access from user public IP ${local.user_public_ip_cidr} and allowed networks" : "RDP access from allowed networks"
   }
 
-  # NICE DCV access (HTTPS) from user public IP
+  # NICE DCV access (HTTPS) from user's public IP (if detected) and allowed CIDR blocks
   ingress {
-    from_port   = 8443
-    to_port     = 8443
-    protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.user_public_ip.response_body)}/32"]
-    description = "NICE DCV HTTPS access from user public IP"
+    from_port = 8443
+    to_port   = 8443
+    protocol  = "tcp"
+    cidr_blocks = local.user_public_ip_cidr != null ? concat([local.user_public_ip_cidr], each.value.allowed_cidr_blocks) : each.value.allowed_cidr_blocks
+    description = local.user_public_ip_cidr != null ? "NICE DCV HTTPS access from user public IP ${local.user_public_ip_cidr} and allowed networks" : "NICE DCV HTTPS access from allowed networks"
   }
 
-  # NICE DCV access (UDP for QUIC protocol) from user public IP
+  # NICE DCV access (UDP for QUIC protocol) from user's public IP (if detected) and allowed CIDR blocks
   ingress {
-    from_port   = 8443
-    to_port     = 8443
-    protocol    = "udp"
-    cidr_blocks = ["${chomp(data.http.user_public_ip.response_body)}/32"]
-    description = "NICE DCV QUIC access from user public IP"
+    from_port = 8443
+    to_port   = 8443
+    protocol  = "udp"
+    cidr_blocks = local.user_public_ip_cidr != null ? concat([local.user_public_ip_cidr], each.value.allowed_cidr_blocks) : each.value.allowed_cidr_blocks
+    description = local.user_public_ip_cidr != null ? "NICE DCV QUIC access from user public IP ${local.user_public_ip_cidr} and allowed networks" : "NICE DCV QUIC access from allowed networks"
   }
 
-  # Domain joining traffic (only added if directory_id is provided)
+  # HTTPS access (port 443) from user's public IP (if detected) and allowed CIDR blocks
+  ingress {
+    from_port = 443
+    to_port   = 443
+    protocol  = "tcp"
+    cidr_blocks = local.user_public_ip_cidr != null ? concat([local.user_public_ip_cidr], each.value.allowed_cidr_blocks) : each.value.allowed_cidr_blocks
+    description = local.user_public_ip_cidr != null ? "HTTPS access from user public IP ${local.user_public_ip_cidr} and allowed networks" : "HTTPS access from allowed networks"
+  }
+
+  # Domain joining traffic (only added if this user joins AD)
   dynamic "ingress" {
-    for_each = local.enable_domain_join ? [
+    for_each = each.value.join_ad ? [
       { port = 53, protocol = "tcp", description = "DNS TCP" },
       { port = 53, protocol = "udp", description = "DNS UDP" },
       { port = 88, protocol = "tcp", description = "Kerberos TCP" },
@@ -56,9 +70,9 @@ resource "aws_security_group" "vdi_sg" {
     }
   }
 
-  # Dynamic RPC ports for AD (only if domain joining is enabled)
+  # Dynamic RPC ports for AD (only if this user joins AD)
   dynamic "ingress" {
-    for_each = local.enable_domain_join ? [1] : []
+    for_each = each.value.join_ad ? [1] : []
 
     content {
       from_port   = 1024
@@ -78,7 +92,7 @@ resource "aws_security_group" "vdi_sg" {
     description = "All outbound traffic"
   }
 
-  tags = merge(var.tags, {
-    Name = "${var.project_prefix}-${var.name}-vdi-sg"
+  tags = merge(each.value.tags, {
+    Name = "${var.project_prefix}-${each.key}-vdi-sg"
   })
 }

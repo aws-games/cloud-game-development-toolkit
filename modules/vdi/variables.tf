@@ -2,17 +2,6 @@
 # GENERAL CONFIGURATION
 ########################################
 
-variable "name" {
-  type        = string
-  description = "The name attached to VDI module resources."
-  default     = "vdi"
-
-  validation {
-    condition     = length(var.name) > 1 && length(var.name) <= 50
-    error_message = "The defined 'name' has too many characters (${length(var.name)}). This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
-  }
-}
-
 variable "project_prefix" {
   type        = string
   description = "The project prefix for this workload. This is appended to the beginning of most resource names."
@@ -35,139 +24,105 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "auto_detect_public_ip" {
+  type        = bool
+  description = "Whether to automatically detect and allow the user's public IP for DCV, RDP, and HTTPS access"
+  default     = true
+}
+
 ########################################
 # NETWORKING CONFIGURATION
 ########################################
 
 variable "vpc_id" {
   type        = string
-  description = "The ID of the existing VPC to deploy the VDI instance into."
+  description = "The ID of the existing VPC to deploy the VDI instances into."
 }
 
-variable "subnet_id" {
-  type        = string
-  description = "The subnet ID to deploy the VDI instance into. Private subnet is recommended for security."
-}
-
-variable "associate_public_ip_address" {
-  type        = bool
-  description = "Whether to associate a public IP address with the VDI instance."
-  default     = false
-}
-
-########################################
-# SECURITY CONFIGURATION
-########################################
-
-variable "allowed_cidr_blocks" {
+variable "subnets" {
   type        = list(string)
-  description = "List of CIDR blocks allowed to access the VDI instance (RDP and NICE DCV ports)."
-  default     = ["10.0.0.0/8"]
-}
-
-variable "key_pair_name" {
-  type        = string
-  description = "The name of an existing AWS key pair to use for the VDI instance. If not provided, a new key pair will be generated."
-  default     = null
-}
-
-variable "create_key_pair" {
-  type        = bool
-  description = "Whether to create a new key pair if key_pair_name is not provided."
-  default     = true
-}
-
-variable "admin_password" {
-  type        = string
-  description = "The local administrator password for the Windows instance. Used when not joining AD domain."
-  sensitive   = true
-  # No default - will be prompted
-}
-
-variable "ad_admin_password" {
-  type        = string
-  description = "The AD domain administrator password. Used when joining AD domain. If not provided, will use admin_password."
-  default     = ""
-  sensitive   = true
-}
-
-variable "store_passwords_in_secrets_manager" {
-  type        = bool
-  description = "Whether to store passwords in AWS Secrets Manager. Always stores Windows admin password regardless of AD configuration."
-  default     = true
+  description = "List of subnet IDs available for VDI instances."
 }
 
 ########################################
-# INSTANCE CONFIGURATION
+# VDI CONFIGURATION
 ########################################
 
-variable "create_instance" {
-  type        = bool
-  description = "Whether to create the VDI instance. Set to false to only create the launch template."
-  default     = true
+variable "vdi_config" {
+  type = map(object({
+    # Compute
+    ami           = optional(string)
+    instance_type = string
+    
+    # Networking
+    availability_zone               = string
+    subnet_id                      = string
+    associate_public_ip_address    = optional(bool, false)
+    
+    # Security
+    iam_instance_profile           = optional(string)
+    create_default_security_groups = optional(bool, true)
+    existing_security_groups       = optional(list(string), [])
+    allowed_cidr_blocks           = optional(list(string), ["10.0.0.0/8"])
+    
+    # Key Pair Management
+    key_pair_name   = optional(string)
+    create_key_pair = optional(bool, true)
+    
+    # Password Management
+    admin_password                     = optional(string)
+    store_passwords_in_secrets_manager = optional(bool, true)
+    
+    # Storage
+    volumes = map(object({
+      capacity   = number
+      type       = string
+      iops       = optional(number, 3000)
+      throughput = optional(number, 125)
+    }))
+    
+    # Active Directory
+    join_ad = optional(bool, false)
+    
+    # Tags for user identification
+    tags = map(string)
+  }))
+  
+  description = "Configuration for each VDI user workstation"
+  
+  validation {
+    condition = alltrue([
+      for user, config in var.vdi_config : contains(["gp2", "gp3", "io1", "io2"], config.volumes.Root.type)
+    ])
+    error_message = "Root volume type must be one of: gp2, gp3, io1, io2."
+  }
+  
+  validation {
+    condition = alltrue([
+      for user, config in var.vdi_config : config.volumes.Root.capacity >= 30 && config.volumes.Root.capacity <= 16384
+    ])
+    error_message = "Root volume capacity must be between 30 and 16384 GiB."
+  }
 }
 
-variable "instance_type" {
-  type        = string
-  description = "The EC2 instance type for the VDI instance."
-  default     = "g4dn.2xlarge"
-}
-
-variable "ami_id" {
-  type        = string
-  description = "The ID of a specific AMI to use for the VDI instance. If provided, this takes precedence over ami_prefix."
-  default     = null
-}
+########################################
+# SHARED CONFIGURATION
+########################################
 
 variable "ami_prefix" {
   type        = string
-  description = "The prefix of the AMI name created by the packer template. Only used if ami_id is not provided."
+  description = "The prefix of the AMI name created by the packer template. Used when ami is not specified in vdi_config."
   default     = "windows-server-2025"
-}
-
-variable "user_data_base64" {
-  type        = string
-  description = "Base64 encoded user data script to run on instance launch."
-  default     = null
 }
 
 ########################################
 # STORAGE CONFIGURATION
 ########################################
 
-variable "root_volume_size" {
-  type        = number
-  description = "The size of the root EBS volume in GB."
-  default     = 512
-}
-
-variable "root_volume_type" {
-  type        = string
-  description = "The type of the root EBS volume."
-  default     = "gp3"
-
-  validation {
-    condition     = contains(["gp2", "gp3", "io1", "io2"], var.root_volume_type)
-    error_message = "Root volume type must be one of: gp2, gp3, io1, io2."
-  }
-}
-
-variable "root_volume_iops" {
-  type        = number
-  description = "The IOPS for the root EBS volume (only applicable for gp3, io1, io2)."
-  default     = 3000
-}
-
-variable "root_volume_throughput" {
-  type        = number
-  description = "The throughput for the root EBS volume in MB/s (only applicable for gp3)."
-  default     = 125
-}
-
 variable "ebs_encryption_enabled" {
   type        = bool
   description = "Whether to enable EBS encryption for all volumes."
-  default     = true
+  default     = false
 }
 
 variable "ebs_kms_key_id" {
@@ -176,45 +131,25 @@ variable "ebs_kms_key_id" {
   default     = null
 }
 
-variable "additional_ebs_volumes" {
-  type = list(object({
-    device_name           = string
-    volume_size           = number
-    volume_type           = string
-    iops                  = optional(number, 3000)
-    throughput            = optional(number, 125)
-    delete_on_termination = optional(bool, true)
-  }))
-  description = "List of additional EBS volumes to attach to the VDI instance."
-  default     = []
-
-  validation {
-    condition = alltrue([
-      for volume in var.additional_ebs_volumes : contains(["gp2", "gp3", "io1", "io2"], volume.volume_type)
-    ])
-    error_message = "All volume types must be one of: gp2, gp3, io1, io2."
-  }
-}
-
 ########################################
-# SSM CONFIGURATION for AD Join
+# ACTIVE DIRECTORY CONFIGURATION
 ########################################
 
-variable "ssm_document_name" {
-  type        = string
-  description = "Name of SSM document to join domain. Only used if directory_id is provided."
-  default     = null
+variable "enable_ad_integration" {
+  type        = bool
+  description = "Whether to enable Active Directory integration. When false, all AD-related resources are skipped."
+  default     = true
 }
 
 variable "directory_id" {
   type        = string
-  description = "ID of AWS Directory Service AD domain. If provided, instance will join the domain."
+  description = "ID of AWS Directory Service AD domain. Required when enable_ad_integration is true and join_ad is true for any user."
   default     = null
 }
 
 variable "directory_name" {
   type        = string
-  description = "Name of AWS Directory Service AD domain. Required if directory_id is provided."
+  description = "Name of AWS Directory Service AD domain. Required when join_ad is true for any user."
   default     = null
 }
 
@@ -230,10 +165,22 @@ variable "dns_ip_addresses" {
   default     = []
 }
 
+variable "ad_admin_password" {
+  type        = string
+  description = "The AD domain administrator password. Used for domain joining operations."
+  default     = ""
+  sensitive   = true
+}
+
+variable "shared_temp_password" {
+  type        = string
+  description = "Shared temporary password for initial user login. Users will be forced to change this on first AD login. Required when join_ad is true for any user."
+  default     = null
+  sensitive   = true
+}
+
 variable "domain_join_timeout" {
   type        = number
   description = "Timeout in seconds for domain join operation."
   default     = 300
 }
-
-# Note: Validation logic and locals are defined in locals.tf and main.tf

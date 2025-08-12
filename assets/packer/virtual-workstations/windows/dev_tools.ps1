@@ -43,6 +43,10 @@ try {
 
     Write-Status "Chocolatey installation completed" -Level "SUCCESS"
 
+    # Refresh Chocolatey metadata
+    Write-Status "Refreshing Chocolatey metadata..."
+    choco upgrade chocolatey -y --no-progress
+
     # Configure Chocolatey for faster installations
     choco feature enable -n allowGlobalConfirmation
     choco feature disable -n showDownloadProgress
@@ -88,7 +92,7 @@ try {
 
     # Install Perforce Command Line Client (p4)
     Write-Status "Installing Perforce Command Line Client (p4)..."
-    choco install -y --no-progress p4
+    choco install -y --no-progress --ignore-checksums p4
     if ($LASTEXITCODE -eq 0) {
         Write-Status "Perforce Command Line Client (p4) installed successfully" -Level "SUCCESS"
     }
@@ -98,7 +102,7 @@ try {
 
     # Install Perforce Visual Client (p4v)
     Write-Status "Installing Perforce Visual Client (p4v)..."
-    choco install -y --no-progress p4v
+    choco install -y --no-progress --ignore-checksums p4v
     if ($LASTEXITCODE -eq 0) {
         Write-Status "Perforce Visual Client (p4v) installed successfully" -Level "SUCCESS"
     }

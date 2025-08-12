@@ -1,6 +1,6 @@
-# IAM role for the VDI instance
+# IAM role for VDI instances (shared across all users)
 resource "aws_iam_role" "vdi_instance_role" {
-  name = "${var.project_prefix}-${var.name}-vdi-instance-role"
+  name = "${var.project_prefix}-vdi-instance-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -18,9 +18,9 @@ resource "aws_iam_role" "vdi_instance_role" {
   tags = var.tags
 }
 
-# IAM instance profile
+# IAM instance profile (shared across all users)
 resource "aws_iam_instance_profile" "vdi_instance_profile" {
-  name = "${var.project_prefix}-${var.name}-vdi-instance-profile"
+  name = "${var.project_prefix}-vdi-instance-profile"
   role = aws_iam_role.vdi_instance_role.name
 
   tags = var.tags
@@ -32,18 +32,18 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# AWS Managed Policy: Directory Service access (only when domain joining)
+# AWS Managed Policy: Directory Service access (only when any user joins domain)
 resource "aws_iam_role_policy_attachment" "ssm_directory_service_access" {
-  count      = local.enable_domain_join ? 1 : 0
+  count      = local.any_ad_join_required ? 1 : 0
   role       = aws_iam_role.vdi_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMDirectoryServiceAccess"
 }
 
-# Additional custom policy for Secrets Manager access (if needed)
+# Additional custom policy for Secrets Manager access (if any user stores passwords)
 resource "aws_iam_role_policy" "vdi_secrets_access" {
-  count = var.store_passwords_in_secrets_manager ? 1 : 0
-  name  = "${var.project_prefix}-${var.name}-secrets-access"
-  role  = aws_iam_role.vdi_instance_role.id
+  count       = length(aws_secretsmanager_secret.vdi_secrets) > 0 ? 1 : 0
+  name_prefix = "${var.project_prefix}-vdi-secrets-access-"
+  role        = aws_iam_role.vdi_instance_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -54,7 +54,7 @@ resource "aws_iam_role_policy" "vdi_secrets_access" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = aws_secretsmanager_secret.vdi_secrets[0].arn
+        Resource = values(aws_secretsmanager_secret.vdi_secrets)[*].arn
       }
     ]
   })
@@ -62,8 +62,8 @@ resource "aws_iam_role_policy" "vdi_secrets_access" {
 
 # Custom policy for NICE DCV license access
 resource "aws_iam_role_policy" "vdi_dcv_license_access" {
-  name = "${var.project_prefix}-${var.name}-dcv-license-access"
-  role = aws_iam_role.vdi_instance_role.id
+  name_prefix = "${var.project_prefix}-vdi-dcv-license-access-"
+  role        = aws_iam_role.vdi_instance_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -71,7 +71,7 @@ resource "aws_iam_role_policy" "vdi_dcv_license_access" {
       {
         Effect   = "Allow"
         Action   = "s3:GetObject"
-        Resource = "arn:aws:s3:::dcv-license.${data.aws_region.current.name}/*"
+        Resource = "arn:aws:s3:::dcv-license.${data.aws_region.current.id}/*"
       }
     ]
   })

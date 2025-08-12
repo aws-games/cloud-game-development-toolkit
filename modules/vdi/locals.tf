@@ -1,46 +1,67 @@
 # Local variables for the VDI module
 locals {
-  # Use either the provided AMI ID or the discovered AMI ID
-  ami_id = var.ami_id != null ? var.ami_id : (length(data.aws_ami.windows_server_2025_vdi) > 0 ? data.aws_ami.windows_server_2025_vdi[0].id : null)
-
-  # Determine which password to use based on AD configuration
-  effective_password = local.enable_domain_join ? (
-    var.ad_admin_password != "" ? var.ad_admin_password : var.admin_password
-  ) : var.admin_password
-
-  # PowerShell script to set administrator password
-  user_data_script = local.effective_password != null ? "write-host 'Setting admin password'; $admin = [adsi]('WinNT://./administrator, user'); $admin.psbase.invoke('SetPassword', '${local.effective_password}')" : null
-
-  # Base64 encode the PowerShell script for EC2 user data
-  encoded_user_data = local.user_data_script != null ? base64encode("<powershell>${local.user_data_script}</powershell>") : var.user_data_base64
-
-  # AD domain joining configuration
-  enable_domain_join = var.directory_id != null
-  ssm_document_name  = local.enable_domain_join ? coalesce(var.ssm_document_name, "${var.project_prefix}-${var.name}-domain-join") : null
-
-  # Validation locals
-  validate_ad_config = var.directory_id != null ? (
-    var.directory_name != null &&
-    length(var.dns_ip_addresses) >= 1
-  ) : true
-
-  # Validate that at least one password is provided
-  validate_password = var.admin_password != "" || var.ad_admin_password != ""
-}
-
-# Validation resources
-resource "null_resource" "validate_ad_config" {
-  count = local.validate_ad_config ? 0 : 1
-
-  provisioner "local-exec" {
-    command = "echo 'ERROR: When directory_id is provided, directory_name and dns_ip_addresses must also be provided' && exit 1"
-  }
-}
-
-resource "null_resource" "validate_password" {
-  count = local.validate_password ? 0 : 1
-
-  provisioner "local-exec" {
-    command = "echo 'ERROR: Either admin_password or ad_admin_password must be provided' && exit 1"
+  # Default AMI ID from data source
+  default_ami_id = length(data.aws_ami.windows_server_2025_vdi) > 0 ? data.aws_ami.windows_server_2025_vdi[0].id : null
+  
+  # User's public IP for security group access (if auto-detection is enabled)
+  user_public_ip_cidr = var.auto_detect_public_ip ? "${chomp(data.http.user_public_ip[0].response_body)}/32" : null
+  
+  # Check if any user requires AD joining AND AD integration is enabled
+  any_ad_join_required = var.enable_ad_integration && anytrue([for user, config in var.vdi_config : config.join_ad])
+  
+  # All users who join AD will get the shared temporary password (only if AD integration is enabled)
+  users_joining_ad = var.enable_ad_integration ? {
+    for user, config in var.vdi_config : user => config
+    if config.join_ad
+  } : {}
+  
+  # Validation: Check if AD configuration is complete when needed
+  users_wanting_ad = [for user, config in var.vdi_config : user if config.join_ad]
+  ad_config_incomplete = length(local.users_wanting_ad) > 0 && (
+    var.directory_id == null || 
+    var.directory_name == null || 
+    var.shared_temp_password == null
+  )
+  
+  # Process each user's configuration with defaults
+  processed_vdi_config = {
+    for user, config in var.vdi_config : user => {
+      # Compute
+      ami           = config.ami != null ? config.ami : local.default_ami_id
+      instance_type = config.instance_type
+      
+      # Networking
+      availability_zone               = config.availability_zone
+      subnet_id                      = config.subnet_id
+      associate_public_ip_address    = config.associate_public_ip_address
+      
+      # Security
+      iam_instance_profile           = config.iam_instance_profile
+      create_default_security_groups = config.create_default_security_groups
+      existing_security_groups       = config.existing_security_groups
+      allowed_cidr_blocks           = config.allowed_cidr_blocks
+      
+      # Key Pair
+      key_pair_name   = config.key_pair_name
+      create_key_pair = config.create_key_pair
+      
+      # Password - use provided, shared temp password for AD users (only if directory provided), or null for standalone
+      admin_password = config.admin_password != null ? config.admin_password : (
+        config.join_ad && var.directory_id != null ? var.shared_temp_password : null
+      )
+      store_passwords_in_secrets_manager = config.store_passwords_in_secrets_manager
+      
+      # Storage
+      volumes = config.volumes
+      
+      # Active Directory - only if AD integration is enabled
+      join_ad = config.join_ad && var.enable_ad_integration
+      
+      # Tags
+      tags = merge(var.tags, config.tags, {
+        User = user
+        Name = "${var.project_prefix}-${user}-vdi"
+      })
+    }
   }
 }

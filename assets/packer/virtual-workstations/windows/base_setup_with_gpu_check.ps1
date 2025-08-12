@@ -70,14 +70,29 @@ try {
         Remove-Item -Path $virtualDisplayInstaller -Force -ErrorAction SilentlyContinue
     }
 
-    # Configure DCV registry settings
-    Write-Status "Configuring DCV registry settings for Administrator user..."
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management" /v create-session /t REG_DWORD /d 1 /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v owner /t REG_SZ /d "Administrator" /f
+    # Configure comprehensive DCV registry settings for both local and AD authentication
+    Write-Status "Configuring DCV registry settings for flexible authentication..."
+    
+    # Session management
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management" /v create-session /t REG_SZ /d "any-authenticated" /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v owner /t REG_SZ /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v storage-root /t REG_SZ /d "%home%" /f
+    
+    # Connectivity
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v enable-quic-frontend /t REG_DWORD /d 1 /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v web-port /t REG_DWORD /d $listenPort /f
     reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v quic-port /t REG_DWORD /d $listenPort /f
+    
+    # Authentication (works for both local and AD)
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\authentication" /v authentication-method /t REG_SZ /d "system" /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\authentication" /v enable-auth /t REG_DWORD /d 1 /f
+    
+    # Security
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\security" /v authentication-threshold /t REG_DWORD /d 3 /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\security" /v idle-timeout /t REG_DWORD /d 60 /f
+    
+    # Permissions (empty = use Windows default permissions, works for AD and local)
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\permissions" /v file /t REG_SZ /d "" /f
 
     # Restart DCV service to apply changes
     Write-Status "Restarting DCV service to apply configuration changes..."
