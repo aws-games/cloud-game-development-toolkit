@@ -24,7 +24,7 @@ variable "subnet_id" {
 
 variable "instance_type" {
   type = string
-  default = "g4dn.2xlarge"
+  default = "g4dn.8xlarge"
 }
 
 variable "associate_public_ip_address" {
@@ -110,6 +110,13 @@ build {
     elevated_user = "Administrator"
     elevated_password = build.Password
     script = "./base_setup_with_gpu_check.ps1"
+  }
+
+    # Configure Active Directory authentication
+  provisioner "powershell" {
+    elevated_user = "Administrator"
+    elevated_password = build.Password
+    script = "./ad_preperation.ps1"
   }
 
   # Run the dev tools installation script
