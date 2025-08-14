@@ -17,7 +17,7 @@
       when: ansible_distribution == "Ubuntu"
     - name: Install DotNet
       ansible.builtin.package:
-        name: dotnet-runtime-6.0
+        name: dotnet-runtime-8.0 # Unreal Engine 5.6 needs DotNet runtime version 8; previous versions require version 6 instead
         state: present
     - name: Check if i386 enabled
       ansible.builtin.shell:
