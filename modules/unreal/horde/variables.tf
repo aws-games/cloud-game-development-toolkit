@@ -222,6 +222,43 @@ variable "github_credentials_secret_arn" {
 # OIDC CONFIG
 ######################
 
+variable "p4_port" {
+  type        = string
+  description = "The Perforce server to connect to."
+  default     = null
+}
+
+variable "p4_super_user_username_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
+  default     = null
+
+  validation {
+    condition     = var.p4_super_user_username_secret_arn == null || var.p4_port != null
+    error_message = "p4_super_user_username_secret_arn cannot be passed unless p4_port is also passed."
+  }
+}
+
+variable "p4_super_user_password_secret_arn" {
+  type        = string
+  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
+  default     = null
+
+  validation {
+    condition     = var.p4_super_user_password_secret_arn == null || var.p4_port != null
+    error_message = "p4_super_user_password_secret_arn cannot be passed unless p4_port is also passed."
+  }
+
+  validation {
+    condition     = (var.p4_super_user_username_secret_arn == null) == (var.p4_super_user_password_secret_arn == null)
+    error_message = "p4_super_user_username_secret_arn and p4_super_user_password_secret_arn must be provided together."
+  }
+}
+
+######################
+# OIDC CONFIG
+######################
+
 variable "auth_method" {
   type        = string
   description = "The authentication method for the Horde server."
