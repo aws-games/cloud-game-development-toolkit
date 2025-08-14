@@ -88,19 +88,20 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.89.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.26.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0, < 3.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.7.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.51.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.49.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
@@ -150,26 +151,33 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
 | <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
 <!-- END_TF_DOCS -->
+| Name | Description |
+|------|-------------|
+| <a name="output_monitoring_url"></a> [monitoring\_url](#output\_monitoring\_url) | n/a |
+| <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
+| <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
+<!-- END_TF_DOCS -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.89.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.26.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0, < 3.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.89.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.26.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.49.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
 

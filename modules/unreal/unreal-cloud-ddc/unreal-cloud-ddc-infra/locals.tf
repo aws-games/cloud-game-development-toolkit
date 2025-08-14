@@ -36,13 +36,14 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name,
         "seed_provider" : [{
-        "parameters" : [{ "seeds" : aws_instance.scylla_ec2_instance_seed[0].private_ip }] }]
+        "parameters" : [{ "seeds" : var.primary_region ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
       }
       #required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       #if scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring.
       "start_scylla_on_first_boot" : true
     }
   )
+
   nvme-pre-bootstrap-userdata = <<EOF
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="//"
@@ -59,7 +60,8 @@ EOF
 
   scylla_node_ips = concat(
     [for instance in aws_instance.scylla_ec2_instance_seed : instance.private_ip],
-    [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip]
+    [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip],
+    var.existing_scylla_ips
   )
 
   scylla_monitoring_user_data = <<MONITORING_EOF
@@ -130,4 +132,5 @@ sudo ./start-all.sh -l -d /home/ec2-user/prometheus/data -a /home/ec2-user/prome
 
 --//--\
 MONITORING_EOF
+
 }
