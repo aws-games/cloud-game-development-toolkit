@@ -78,6 +78,12 @@
         mode: "0644"
       become: true
       become_user: "{{ horde_user_name }}"
+    - name: Try to copy the p4trust file
+      ansible.builtin.copy:
+        src: .p4trust
+        dest: "{{ horde_agent_dir }}/.p4trust"
+        mode: "0644"
+      failed_when: false
     - name: Configure the Horde Agent
       ansible.builtin.shell:
         chdir: $HORDE_AGENT_DIR

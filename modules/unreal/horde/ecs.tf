@@ -113,10 +113,110 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
       )
     },
     {
-      name                     = "unreal-horde-docdb-cert",
-      image                    = "public.ecr.aws/docker/library/bash:5.3",
-      essential                = false
-      command                  = ["wget", "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem", "-P", "/app/config/"]
+      name      = "unreal-horde-config",
+      image     = "registry.gitlab.com/gitlab-ci-utils/curl-jq:latest"
+      essential = false
+      command = ["/bin/bash", "-exc",
+        <<-EOF
+        mkdir -p /app/config/
+
+        # Pull the PEM bundle required to connect to DocDB
+        wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -P /app/config/
+
+        # Create the global config
+        jq -n '{
+          Version: 2,
+
+          %{if var.config_path != null}
+          Include: [
+            { Path: "${var.config_path}" }
+          ],
+          %{endif}
+
+          Plugins: {
+            Build: {
+              %{if var.p4_port != null && var.p4_super_user_username_secret_arn != null && var.p4_super_user_password_secret_arn != null}
+              PerforceClusters: [{
+                Name: "Default",
+                CanImpersonate: true,
+                SupportsPartitionedWorkspaces: true,
+                Servers: [{
+                  ServerAndPort: "${var.p4_port}",
+                }],
+                Credentials: [{
+                  UserName: env.P4_SUPER_USERNAME,
+                  Password: env.P4_SUPER_PASSWORD,
+                }],
+              }],
+              %{endif}
+            },
+          },
+
+          Parameters: {
+            ugs: {
+              %{if var.p4_port != null}
+              defaultPerforceServer: "${var.p4_port}",
+              %{endif}
+            },
+          },
+        } * ${jsonencode(var.extra_global_config)}' > /app/config/globals.json
+
+        # Create the server config
+        jq -n '{
+          Horde: {
+            ConfigPath: "/app/config/globals.json",
+            ServerUrl: "https://${var.fully_qualified_domain_name}",
+            DashboardUrl: "https://${var.fully_qualified_domain_name}",
+
+            MongoPublicCertificate: "/app/config/global-bundle.pem",
+            MongoConnectionString: "${local.database_connection_string}",
+            RedisConnectionString: "${local.redis_connection_config}",
+
+            EnableDebugEndpoints: ${var.debug},
+            ForceConfigUpdateOnStartup: true,
+
+            %{for key, value in local.server_config}
+            %{if value != null}
+            ${key}: "${value}",
+            %{endif}
+            %{endfor}
+
+            Plugins: {
+              Build: {
+                UseLocalPerforceEnv: false,
+                Perforce: [{
+                  %{if var.p4_port != null && var.p4_super_user_username_secret_arn != null && var.p4_super_user_password_secret_arn != null}
+                  ServerAndPort: "${var.p4_port}",
+                  Credentials: {
+                    UserName: env.P4_SUPER_USERNAME,
+                    Password: env.P4_SUPER_PASSWORD,
+                  },
+                  %{endif}
+                }],
+              },
+              Compute: {
+                WithAws: true,
+                AutoEnrollAgents: ${var.enable_new_agents_by_default},
+              }
+            },
+          },
+
+          AWS: {
+            Region: "${data.aws_region.current.region}",
+          },
+        } * ${jsonencode(var.extra_server_config)}' > /app/config/server.json
+        EOF
+      ]
+      secrets = [for config in [
+        {
+          name      = "P4_SUPER_USERNAME"
+          valueFrom = var.p4_super_user_username_secret_arn
+        },
+        {
+          name      = "P4_SUPER_PASSWORD"
+          valueFrom = var.p4_super_user_password_secret_arn
+        },
+      ] : config.valueFrom != null ? config : null]
       readonly_root_filesystem = false
       mountPoints = [
         {
@@ -135,16 +235,26 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
     }],
     local.need_p4_trust ? [{
       name      = "unreal-horde-p4-trust",
-      image     = "ubuntu:noble"
+      image     = "public.ecr.aws/ubuntu/ubuntu:noble"
       essential = false
       command = ["bash", "-exc", <<-EOF
         apt-get update
-        apt-get install -y curl gnupg
+        apt-get install -y curl gnupg unzip
         curl -fs https://package.perforce.com/perforce.pubkey | gpg --dearmor -o /usr/share/keyrings/perforce.gpg
         echo "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu noble release" > /etc/apt/sources.list.d/perforce.list
         apt-get update
         apt-get install -y p4-cli
         p4 -p ${var.p4_port} trust -y
+
+        # Upload the p4trust file for agents to pull
+        %{if length(var.agents) > 0}
+        curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+        unzip awscliv2.zip
+        ./aws/install
+        rm -rf awscliv2.zip aws
+
+        aws s3 cp $P4TRUST s3://${aws_s3_bucket.ansible_playbooks[0].id}/agent/.p4trust
+        %{endif}
       EOF
       ]
       readonly_root_filesystem = false
