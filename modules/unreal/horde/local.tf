@@ -21,6 +21,8 @@ locals {
 
   database_connection_string = var.database_connection_string != null ? var.database_connection_string : "mongodb://${var.docdb_master_username}:${var.docdb_master_password}@${aws_docdb_cluster.horde[0].endpoint}:27017/?tls=true&tlsCAFile=/app/config/global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
 
+  need_p4_trust = var.p4_port != null && startswith(var.p4_port, "ssl:")
+
   horde_service_env = [for config in [
     {
       name  = "Horde__authMethod"
@@ -59,8 +61,23 @@ locals {
       value = tostring(var.enable_new_agents_by_default)
     },
     {
+      name  = "Horde__Perforce__0__ServerAndPort"
+      value = var.p4_port
+    },
+    {
       name  = "ASPNETCORE_ENVIRONMENT"
       value = var.environment
     }
   ] : config.value != null ? config : null]
+
+  horde_service_secrets = [for config in [
+    {
+      name      = "Horde__Perforce__0__credentials__username"
+      valueFrom = var.p4_super_user_username_secret_arn
+    },
+    {
+      name      = "Horde__Perforce__0__credentials__password"
+      valueFrom = var.p4_super_user_password_secret_arn
+    },
+  ] : config.valueFrom != null ? config : null]
 }
