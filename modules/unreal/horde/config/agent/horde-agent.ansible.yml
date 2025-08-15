@@ -17,7 +17,7 @@
       when: ansible_distribution == "Ubuntu"
     - name: Install DotNet
       ansible.builtin.package:
-        name: dotnet-runtime-6.0
+        name: dotnet-runtime-{{ dotnet_runtime_version }}
         state: present
     - name: Check if i386 enabled
       ansible.builtin.shell:
