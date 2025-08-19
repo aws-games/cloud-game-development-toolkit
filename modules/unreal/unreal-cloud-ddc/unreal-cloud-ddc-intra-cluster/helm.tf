@@ -66,18 +66,48 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   upstream_registry_url = "ghcr.io"
   credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
-
-resource "helm_release" "unreal_cloud_ddc" {
-  name         = "unreal-cloud-ddc"
+locals {
+  unreal_cloud_ddc_base_values                          = [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, var.unreal_cloud_ddc_helm_config)]
+  unreal_cloud_ddc_multi_region_with_replication_values = var.is_multi_region_deployment ? [templatefile(var.unreal_cloud_ddc_helm_replication_chart, merge(var.unreal_cloud_ddc_helm_config, { "ddc_replication_region_url" : data.aws_lb.unreal_cloud_ddc_load_balancer.dns_name }))] : null
+}
+resource "helm_release" "unreal_cloud_ddc_initialization" {
+  name         = "unreal-cloud-ddc-initialize"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
+  timeout      = 2700
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
     aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
   ]
-  values = var.unreal_cloud_ddc_helm_values
+  values = local.unreal_cloud_ddc_base_values
+
+}
+
+resource "null_resource" "delete_init_deployment" {
+  count = var.is_multi_region_deployment ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "aws eks update-kubeconfig --region ${var.region} --name ${data.aws_eks_cluster.unreal_cloud_ddc_cluster.name} && kubectl delete deployment -l app.kubernetes.io/instance=unreal-cloud-ddc-initialize -n ${var.unreal_cloud_ddc_namespace} || true"
+  }
+
+  depends_on = [helm_release.unreal_cloud_ddc_initialization]
+}
+
+resource "helm_release" "unreal_cloud_ddc_with_replication" {
+  count        = var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart != null ? 1 : 0
+  name         = "unreal-cloud-ddc-replicate"
+  chart        = "unreal-cloud-ddc"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
+  namespace    = var.unreal_cloud_ddc_namespace
+  version      = "${var.unreal_cloud_ddc_version}+helm"
+  reset_values = true
+  timeout      = 600
+  depends_on = [
+    null_resource.delete_init_deployment
+  ]
+  values = local.unreal_cloud_ddc_multi_region_with_replication_values
 }
