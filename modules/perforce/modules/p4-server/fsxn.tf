@@ -243,3 +243,21 @@ resource "netapp-ontap_san_lun-map" "depots_lun_map" {
     aws_vpc_security_group_ingress_rule.fsxn_inbound_link
   ]
 }
+
+locals {
+  lambda_payload = {
+    ResourceProperties = {
+      Source = "AWS_Gaming_Toolkit"
+      Region = var.fsxn_region
+    }
+    RequestType = "Terraform"
+  }
+}
+
+resource "null_resource" "invoke_usage_lambda" {
+  provisioner "local-exec" {
+    command = "aws lambda invoke --function-name arn:aws:lambda:${data.aws_region.current.id}:052582346341:function:reporting-monitoring-dashboard-usage --payload '${jsonencode(local.lambda_payload)}' --cli-binary-format raw-in-base64-out null"
+    on_failure = continue
+  }
+ count = var.fsxn_report_usage && var.storage_type == "FSxN" ? 1 : 0
+}

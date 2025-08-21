@@ -229,6 +229,7 @@ variable "p4_server_config" {
     fsxn_svm_name                     = optional(string, null)
     amazon_fsxn_svm_id                = optional(string, null)
     fsxn_aws_profile                  = optional(string, null)
+    fsxn_report_usage                 = optional(bool, true)
   })
   description = <<EOT
     # - General -

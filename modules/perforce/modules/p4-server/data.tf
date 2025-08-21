@@ -28,3 +28,5 @@ data "aws_ami" "existing_server_ami" {
     values = [var.instance_architecture]
   }
 }
+
+data "aws_region" "current" {}
