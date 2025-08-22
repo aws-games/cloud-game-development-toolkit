@@ -2,10 +2,6 @@
 
 [Unreal Engine Horde](https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde) is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the [image available from the Epic Games Github organization.](https://github.com/orgs/EpicGames/packages/container/package/horde-server). Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an [Amazon Elasticache with Redis OSS Compatibility](https://aws.amazon.com/elasticache/redis/) cluster and an [Amazon DocumentDB](https://aws.amazon.com/documentdb/) cluster.
 
-Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde module:
-
-[![Watch the video](https://img.youtube.com/vi/kIP4wsVprYY/0.jpg)](https://www.youtube.com/watch?v=kIP4wsVprYY)
-
 ## Deployment Architecture
 ![Unreal Engine Horde Module Architecture](./assets/media/diagrams/unreal-engine-horde-architecture.png)
 
@@ -18,6 +14,16 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
+
+## Additional Resources
+
+Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde module:
+
+[![Watch the video](https://img.youtube.com/vi/kIP4wsVprYY/0.jpg)](https://www.youtube.com/watch?v=kIP4wsVprYY)
+
+### **💡 Looking for a fully managed solution?**
+
+If you'd prefer a fully managed installation of Horde instead of managing this yourself, then check out [**Universal Foundry**](https://www.universalfoundry.io/). They offer a production-ready turnkey Unreal Horde installation, hosted on AWS and fully managed by experts with deep Unreal Engine experience. [**🚀 Request a Demo**](https://www.universalfoundry.io/request-demo).
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
