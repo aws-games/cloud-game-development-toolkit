@@ -9,6 +9,7 @@ This directory contains Packer configuration files and scripts for building Wind
 - `base_setup_with_gpu_check.ps1` - Core system setup with GPU detection and DCV installation
 - `dev_tools.ps1` - Development tools installation script
 - `unreal_dev.ps1` - Unreal Engine development environment setup
+- `sysprep_preparation.ps1` - Complete sysprep preparation including password generation system and answer file creation
 
 ## Prerequisites
 
@@ -49,10 +50,11 @@ packer build windows-server-2025.pkr.hcl
 This will start the build process, which includes:
 1. Launching a Windows Server 2025 instance
 2. Configuring WinRM for Packer connectivity
-3. Running provisioning scripts
-4. Creating and registering the final AMI
+3. Running provisioning scripts (base setup, dev tools, Unreal Engine setup)
+4. Running sysprep preparation and generalization (sets up password generation system, creates answer file, and runs sysprep)
+5. Creating and registering the final AMI
 
-The build process may take 30-45 minutes depending on your instance type and network speed.
+The build process may take 35-50 minutes depending on your instance type and network speed.
 
 ## Script Details
 
@@ -70,7 +72,6 @@ This script handles the core system setup, including:
     - Optional virtual display driver for [Non-GPU instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html)
 - **AWS S3 tools for driver install** [S3 Powershell tools](https://docs.aws.amazon.com/powershell/v5/userguide/pstools-s3.html)
 - **NVIDIA GPU detection and driver installation** [GRID Drivers](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver)
-- **Sysprep configuration for GRID drivers compatibility** For Windows instances, if you launch your instance from a custom Windows AMI, the AMI must be a standardized image created with Windows Sysprep to ensure that the GRID driver works. For more information, see [Create an Amazon EC2 AMI using Windows Sysprep](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html)
 
 ### dev_tools.ps1
 
@@ -99,7 +100,6 @@ Installs development tools necessary for game development:
 
 #### Cloud and Scripting
 - **AWS CLI** [Command-line interface for AWS](https://docs.aws.amazon.com/streams/latest/dev/setup-awscli.html)
-- **Windows Subsystem for Linux** [WSL](https://learn.microsoft.com/en-us/windows/wsl/setup/environment)
 - **Python v3.14** [General-purpose programming language](https://www.python.org/)
 - **Boto3** [AWS SDK for Python](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
 
@@ -109,13 +109,27 @@ Sets up the Unreal Engine development environment:
 - **Installs the Epic Games Launcher** [Epic Games Launcher](https://store.epicgames.com/en-US/download)
 - **Creates desktop shortcuts for easy access**
 
+### sysprep_preparation.ps1
+
+Complete sysprep preparation and execution script that handles all AMI generalization:
+[Createing a AMI with sysprep](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html)
+- **Creates the password generation script** (`VDI-PasswordGen.ps1`) that runs on first boot
+- **Configures GRID driver persistence** through EC2Launch v2 agent configuration
+- **Creates sysprep answer file** (`unattend.xml`) with proper OOBE configuration
+- **Sets unique hostname generation** - each instance gets a unique computer name on first boot
+- **Executes sysprep** to generalize the AMI and shut down the instance
+
+### Password Retrieval
+
+1. Ensure you are launching the instance with a keypair and that you have access to the private key
+2. Go to the Connect Tab in the AWS Console within the EC2 instance
+3. Move to RDP Client tab
+4. Click "Get password"
+5. Upload or paste the private key including the opening and closing dashes
+6. Click "Decrypt password"
+7. Password should now be available to be copied
+
 ## Customization Options
-
-### Instance Types
-
-Choose an appropriate instance type based on your development needs:
-- For GPU workloads: g4dn.xlarge, g4dn.2xlarge, g4dn.4xlarge
-- For CPU-focused workloads: m5.xlarge, c5.2xlarge
 
 ### AMI Customization
 
@@ -132,6 +146,7 @@ The build process can be customized by:
     3. Verify your VPC and subnet have internet connectivity
     4. Ensure your AWS credentials have sufficient permissions
     5. Check that the instance type is available in your selected region
+    6. If SSM is not connecting, ensure that your Security Group allows outbound traffic on port 443
 
 ## License
 
