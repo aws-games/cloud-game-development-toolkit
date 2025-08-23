@@ -114,7 +114,6 @@ Sets up the Unreal Engine development environment:
 Complete sysprep preparation and execution script that handles all AMI generalization:
 [Createing a AMI with sysprep](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-create-win-sysprep.html)
 - **Creates the password generation script** (`VDI-PasswordGen.ps1`) that runs on first boot
-- **Configures the password generation system** to integrate with AWS Secrets Manager
 - **Configures GRID driver persistence** through EC2Launch v2 agent configuration
 - **Creates sysprep answer file** (`unattend.xml`) with proper OOBE configuration
 - **Sets unique hostname generation** - each instance gets a unique computer name on first boot
@@ -122,36 +121,13 @@ Complete sysprep preparation and execution script that handles all AMI generaliz
 
 ### Password Retrieval
 
-#### Via AWS CLI
-```bash
-# Get the secret name for a specific instance
-SECRET_NAME=$(aws secretsmanager list-secrets \
-  --query "SecretList[?Tags[?Key=='InstanceId' && Value=='i-1234567890abcdef0']].Name" \
-  --output text)
-
-# Retrieve the password
-aws secretsmanager get-secret-value \
-  --secret-id "$SECRET_NAME" \
-  --query SecretString \
-  --output text | jq -r '.windows_admin_password'
-```
-
-#### Via AWS Console
-1. Go to AWS Secrets Manager
-2. Find the secret named `{project_prefix}-{username}-vdi-secrets-{suffix}`
-3. Click "Retrieve secret value"
-4. Look for the `windows_admin_password` field
-
-#### Programmatically (PowerShell)
-```powershell
-# From within the instance or with appropriate AWS credentials
-$instanceId = "i-1234567890abcdef0"
-$region = "us-east-1"
-
-$secretName = (aws secretsmanager list-secrets --region $region --query "SecretList[?Tags[?Key=='InstanceId' && Value=='$instanceId']].Name" --output text)
-$secret = aws secretsmanager get-secret-value --region $region --secret-id $secretName --query SecretString --output text | ConvertFrom-Json
-$password = $secret.windows_admin_password
-```
+1. Ensure you are launching the instance with a keypair and that you have access to the private key
+2. Go to the Connect Tab in the AWS Console within the EC2 instance
+3. Move to RDP Client tab
+4. Click "Get password"
+5. Upload or paste the private key including the opening and closing dashes
+6. Click "Decrypt password"
+7. Password should now be available to be copied
 
 ## Customization Options
 
@@ -170,6 +146,7 @@ The build process can be customized by:
     3. Verify your VPC and subnet have internet connectivity
     4. Ensure your AWS credentials have sufficient permissions
     5. Check that the instance type is available in your selected region
+    6. If SSM is not connecting, ensure that your Security Group allows outbound traffic on port 443
 
 ## License
 

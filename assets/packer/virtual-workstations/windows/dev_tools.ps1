@@ -62,7 +62,7 @@ try {
     # Components - Visual C++ Diagnostic Tools, Address Sanitizer, Windows 10 SDK (10.0.18362.0), Unreal Engine Component
     Write-Status "Installing Visual Studio 2022 Community and tools for building on Unreal Engine..."
     Write-Status "This installation may take 15-30 minutes. Please be patient..." -Level "WARNING"
-
+    
     # Set longer timeout for Visual Studio installation (45 minutes)
     $vsInstallResult = choco install -y visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
 
@@ -92,46 +92,6 @@ try {
     else {
         Write-Status "Python 3, AWS CLI, Perforce Server (P4) and Perforce Command Line Client (P4V) installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
     }
-
-    # # Install Perforce Command Line Client (p4)
-    # Write-Status "Installing Perforce Command Line Client (p4)..."
-    # choco install -y --no-progress --ignore-checksums p4
-    # if ($LASTEXITCODE -eq 0) {
-    #     Write-Status "Perforce Command Line Client (p4) installed successfully" -Level "SUCCESS"
-    # }
-    # else {
-    #     Write-Status "Perforce Command Line Client (p4) installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
-    # }
-
-    # # Install Perforce Visual Client (p4v)
-    # Write-Status "Installing Perforce Visual Client (p4v)..."
-    # choco install -y --no-progress --ignore-checksums p4v
-    # if ($LASTEXITCODE -eq 0) {
-    #     Write-Status "Perforce Visual Client (p4v) installed successfully" -Level "SUCCESS"
-    # }
-    # else {
-    #     Write-Status "Perforce Visual Client (p4v) installation failed with exit code: $LASTEXITCODE" -Level "WARNING"
-    # }
-
-    # # Install Python
-    # Write-Status "Installing Python..."
-    # choco install -y --no-progress python3
-    # if ($LASTEXITCODE -eq 0) {
-    #     Write-Status "Python3 installed successfully" -Level "SUCCESS"
-    # }
-    # else {
-    #     Write-Status "Python installation failed" -Level "ERROR"
-    # }
-
-    # # Install AWS CLI
-    # Write-Status "Installing AWS CLI..."
-    # choco install -y --no-progress awscli
-    # if ($LASTEXITCODE -eq 0) {
-    #     Write-Status "AWS CLI installed successfully" -Level "SUCCESS"
-    # }
-    # else {
-    #     Write-Status "AWS CLI installation failed with exit code: $LASTEXITCODE" -Level "ERROR"
-    # }
 
     Write-Status "Installing Python packages..."
 
