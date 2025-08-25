@@ -161,6 +161,14 @@ variable "fsxn_region" {
   }
 }
 
+
+variable "fsxn_report_usage" {
+  description = "Flag to determine if the usage reporting Lambda function should be invoked."
+  type        = bool
+  default     = true
+}
+
+
 variable "protocol" {
   description = "Specify the protocol (NFS or ISCSI)"
   type        = string

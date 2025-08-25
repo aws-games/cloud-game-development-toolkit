@@ -47,6 +47,8 @@ module "p4_server" {
   fsxn_password                     = var.p4_server_config.fsxn_password
   fsxn_region                       = var.p4_server_config.fsxn_region
   fsxn_management_ip                = var.p4_server_config.fsxn_management_ip
+  fsxn_report_usage                 = var.p4_server_config.fsxn_report_usage
+
 
   # Networking & Security
   vpc_id                         = var.vpc_id
