@@ -38,7 +38,8 @@ try {
     if ($devices) {
         $gpuPresent = $true
         Write-Status "Found NVIDIA GPU" -Level "SUCCESS"
-    } else {
+    }
+    else {
         Write-Status "No NVIDIA GPU found. Virtual display driver for DCV will be installed." -Level "WARNING"
     }
 
@@ -49,7 +50,6 @@ try {
     Write-Status "Installing Amazon DCV..."
     $dcvUrl = "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
     $dcvInstaller = "$env:TEMP\nice-dcv-installer.msi"
-    $listenPort = 8443
 
     # Download and install DCV server
     Invoke-WebRequest -Uri $dcvUrl -OutFile $dcvInstaller -UseBasicParsing
@@ -70,18 +70,38 @@ try {
         Remove-Item -Path $virtualDisplayInstaller -Force -ErrorAction SilentlyContinue
     }
 
-    # Configure DCV registry settings
-    Write-Status "Configuring DCV registry settings for Administrator user..."
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management" /v create-session /t REG_DWORD /d 1 /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v owner /t REG_SZ /d "Administrator" /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session" /v storage-root /t REG_SZ /d "%home%" /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v enable-quic-frontend /t REG_DWORD /d 1 /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v web-port /t REG_DWORD /d $listenPort /f
-    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v quic-port /t REG_DWORD /d $listenPort /f
+    # Configure DCV via Windows Registry
+    Write-Status "Configuring DCV via Windows Registry..."
 
-    # Restart DCV service to apply changes
-    Write-Status "Restarting DCV service to apply configuration changes..."
+    # Set DCV authentication to system
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\security" /v authentication /t REG_SZ /d system /f
+
+    # Configure session management
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management" /v create-session /t REG_DWORD /d 1 /f
+
+    # Configure connectivity
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v web-port /t REG_DWORD /d 8443 /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v quic-port /t REG_DWORD /d 8443 /f
+    reg add "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" /v enable-quic-frontend /t REG_SZ /d true /f
+
+    # Enable Windows Credentials Provider
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{8A2C93D0-D55F-4045-99D7-B27F5E263407}" /v Disabled /t REG_DWORD /d 0 /f
+
+    Write-Status "DCV registry configuration completed" -Level "SUCCESS"
+
+    # Restart DCV service to apply registry changes
+    Write-Status "Restarting DCV service..."
     Restart-Service -Name dcvserver -Force
+    Start-Sleep -Seconds 5
+
+    # Delete any existing sessions
+    & 'C:\Program Files\NICE\DCV\Server\bin\dcv.exe' close-session console 2>$null
+    Start-Sleep -Seconds 2
+
+    # Create admin console session (owned by Administrator)
+    & 'C:\Program Files\NICE\DCV\Server\bin\dcv.exe' create-session --owner=Administrator admin-console 2>&1
+
+    Write-Status "DCV session configuration completed" -Level "SUCCESS"
 
     # Clean up installer file
     if (Test-Path $dcvInstaller) {
@@ -98,10 +118,11 @@ try {
     if ($gpuPresent) {
         Write-Status "Installing NVIDIA GRID drivers for GPU instance..."
 
-        # Install AWS.Tools.S3 module directly
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-        Install-Module -Name AWS.Tools.S3 -Force -Scope CurrentUser -AllowClobber
-        Import-Module AWS.Tools.S3
+        # Install AWS.Tools.S3 module directly (suppress verbose output)
+        Write-Status "Installing AWS PowerShell S3 tools for NVIDIA driver download..."
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Verbose:$false | Out-Null
+        Install-Module -Name AWS.Tools.S3 -Force -Scope CurrentUser -AllowClobber -Verbose:$false | Out-Null
+        Import-Module AWS.Tools.S3 -Verbose:$false
 
         # Download and install the drivers
         $Bucket = "ec2-windows-nvidia-drivers"
@@ -124,59 +145,26 @@ try {
             Write-Status "NVIDIA GRID driver installation completed" -Level "SUCCESS"
 
             # Configure GRID licensing for workstation features
-            reg add "HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v FeatureType /t REG_DWORD /d 1 /f
-            reg add "HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v IgnoreSP /t REG_DWORD /d 1 /f
+            Write-Status "Configuring NVIDIA GRID licensing..."
+            $gridLicensingConfig = @"
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\NVIDIA Corporation\Global\GridLicensing]
+"FeatureType"=dword:00000001
+"IgnoreSP"=dword:00000001
+"@
+
+            $gridRegFile = "$env:TEMP\nvidia-grid-config.reg"
+            $gridLicensingConfig | Out-File -FilePath $gridRegFile -Encoding ASCII -Force
+            Start-Process -FilePath "reg.exe" -ArgumentList "import", "`"$gridRegFile`"" -Wait -NoNewWindow
+            Remove-Item -Path $gridRegFile -Force -ErrorAction SilentlyContinue
+
+            Write-Status "NVIDIA GRID licensing configured" -Level "SUCCESS"
         }
     }
     else {
         Write-Status "No NVIDIA GPU detected. Skipping driver installation." -Level "INFO"
     }
-
-    # ======================================
-    # SYSPREP CONFIGURATION FOR GRID DRIVERS
-    # ======================================
-
-    Write-Status "Configuring Sysprep for driver persistence..."
-
-    # Create EC2Launch config directory
-    $ec2LaunchV2Dir = "C:\ProgramData\Amazon\EC2Launch\config"
-    New-Item -Path $ec2LaunchV2Dir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
-
-    # Create agent-config.yml with driver persistence enabled
-    $agentYml = @"
-# EC2Launch v2 agent configuration
-version: 1.0
-config:
-  name: WindowsServerAMI
-  initializeSystem: true
-  setComputerName: false
-  setWallpaper: true
-  addDnsSuffixList: true
-  extendBootVolumeSize: true
-  handleUserData: true
-  adminPasswordType: Random
-  configSsmAgent: true
-  persistDrivers: true
-"@
-    Set-Content -Path "$ec2LaunchV2Dir\agent-config.yml" -Value $agentYml
-
-    # Create sysprep directory and Unattend.xml
-    New-Item -Path "$ec2LaunchV2Dir\sysprep" -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
-
-    $unattendXml = @"
-<?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
-    <settings pass="generalize">
-        <component name="Microsoft-Windows-PnpSysprep" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-            <PersistAllDeviceInstalls>true</PersistAllDeviceInstalls>
-            <DoNotCleanUpNonPresentDevices>true</DoNotCleanUpNonPresentDevices>
-        </component>
-    </settings>
-</unattend>
-"@
-    Set-Content -Path "$ec2LaunchV2Dir\sysprep\Unattend.xml" -Value $unattendXml
-
-    Write-Status "Sysprep configuration completed" -Level "SUCCESS"
 
     Write-Status "Setup completed successfully" -Level "SUCCESS"
 }
