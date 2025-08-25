@@ -62,7 +62,7 @@ try {
     # Components - Visual C++ Diagnostic Tools, Address Sanitizer, Windows 10 SDK (10.0.18362.0), Unreal Engine Component
     Write-Status "Installing Visual Studio 2022 Community and tools for building on Unreal Engine..."
     Write-Status "This installation may take 15-30 minutes. Please be patient..." -Level "WARNING"
-    
+
     # Set longer timeout for Visual Studio installation (45 minutes)
     $vsInstallResult = choco install -y visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
 
