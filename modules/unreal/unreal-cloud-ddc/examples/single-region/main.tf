@@ -4,9 +4,18 @@ module "unreal_cloud_ddc" {
   
   providers = {
     aws.primary        = aws
+    aws.secondary      = aws.secondary
     awscc.primary      = awscc
+    awscc.secondary    = awscc.secondary
     kubernetes.primary = kubernetes
+    kubernetes.secondary = kubernetes.secondary
     helm.primary       = helm
+    helm.secondary     = helm.secondary
+  }
+  
+  # Single region configuration (no secondary)
+  regions = {
+    primary = { region = data.aws_region.current.name }
   }
   
   # VPC Configuration

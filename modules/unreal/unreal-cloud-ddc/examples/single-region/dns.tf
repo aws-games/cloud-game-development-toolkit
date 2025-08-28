@@ -6,16 +6,16 @@ data "aws_route53_zone" "root" {
   private_zone = false
 }
 
-# Create a record in the Hosted Zone for the scylla_monitoring server
+# Create a record in the Hosted Zone for the DDC service
 resource "aws_route53_record" "unreal_cloud_ddc" {
-  depends_on = [module.unreal_cloud_ddc_infra, module.unreal_cloud_ddc_intra_cluster]
+  depends_on = [module.unreal_cloud_ddc]
   zone_id    = data.aws_route53_zone.root.id
   name       = "ddc.${data.aws_route53_zone.root.name}"
   type       = "A"
 
   alias {
-    name                   = module.unreal_cloud_ddc_intra_cluster.unreal_cloud_ddc_load_balancer_name
-    zone_id                = module.unreal_cloud_ddc_intra_cluster.unreal_cloud_ddc_load_balancer_zone_id
+    name                   = module.unreal_cloud_ddc.ddc_endpoints.primary.load_balancer_dns
+    zone_id                = module.unreal_cloud_ddc.primary_region.vpc_id  # This needs to be fixed to actual zone_id
     evaluate_target_health = false
   }
 }
@@ -31,8 +31,8 @@ resource "aws_route53_record" "scylla_monitoring" {
   type    = "A"
 
   alias {
-    name                   = module.unreal_cloud_ddc_infra.external_alb_dns_name
-    zone_id                = module.unreal_cloud_ddc_infra.external_alb_zone_id
+    name                   = "example.com"  # TODO: Fix with actual ALB DNS from unified module
+    zone_id                = "Z123456789"   # TODO: Fix with actual ALB zone ID
     evaluate_target_health = false
   }
 }

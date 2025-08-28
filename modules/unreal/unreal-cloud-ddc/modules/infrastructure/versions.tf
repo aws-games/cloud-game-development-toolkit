@@ -14,5 +14,9 @@ terraform {
       source  = "hashicorp/random"
       version = "3.7.2"
     }
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = ">= 1.26.0"
+    }
   }
 }

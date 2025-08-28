@@ -28,8 +28,27 @@ terraform {
   required_version = ">= 1.10.3"
 }
 
-# Basic providers - kubernetes and helm will be configured by the module
+# Basic providers
 provider "aws" {}
 provider "awscc" {}
 provider "kubernetes" {}
 provider "helm" {}
+
+# Dummy secondary providers for single-region (required by module but not used)
+# These inherit the same credentials as the primary providers
+provider "aws" {
+  alias  = "secondary"
+  region = "us-west-2"  # Dummy region
+}
+provider "awscc" {
+  alias  = "secondary"
+  region = "us-west-2"  # Dummy region
+}
+provider "kubernetes" {
+  alias = "secondary"
+  # Empty config - won't be used in single-region
+}
+provider "helm" {
+  alias = "secondary"
+  # Empty config - won't be used in single-region
+}
