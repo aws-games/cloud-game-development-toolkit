@@ -2,7 +2,7 @@ variable "github_credential_arn" {
   type        = string
   sensitive   = true
   description = "Github Credential ARN"
-  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/-XBalRp"
+  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/-XBalRp" # TODO - Remove
 }
 
 variable "allow_my_ip" {
