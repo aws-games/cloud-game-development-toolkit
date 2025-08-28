@@ -28,10 +28,22 @@ variable "tags" {
   description = "Tags to apply to resources."
 }
 
+variable "is_multi_region_deployment" {
+  type        = bool
+  description = "Determines whether this is a multi region Unreal DDC deployment."
+  default     = false
+}
+
+variable "region" {
+  type        = string
+  description = "The region where the Unreal Cloud DDC deployment will reside"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Name of the EKS Cluster"
 }
+
 variable "cluster_oidc_provider_arn" {
   type        = string
   description = "ARN of the OIDC Provider from EKS Cluster"
@@ -48,10 +60,26 @@ variable "unreal_cloud_ddc_namespace" {
   default     = "unreal-cloud-ddc"
 }
 
-variable "unreal_cloud_ddc_helm_values" {
-  type        = list(string)
-  description = "List of YAML files for Unreal Cloud DDC"
-  default     = []
+variable "unreal_cloud_ddc_helm_config" {
+  type        = map(string)
+  description = "Configuration values to pass to the Unreal Cloud DDC helm chart."
+  default     = {}
+}
+
+variable "unreal_cloud_ddc_helm_base_infra_chart" {
+  type        = string
+  description = "Path to your Unreal Cloud DDC helm chart"
+}
+
+variable "unreal_cloud_ddc_helm_replication_chart" {
+  type        = string
+  description = "Path to your Unreal Cloud DDC helm chart if replication is needed. This is used in multi-region deployments and is not required for single region deployments."
+  default     = null
+
+  validation {
+    condition     = (var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart != null) || (!var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart == null)
+    error_message = "Replication chart is required for multi-region deployments."
+  }
 }
 
 variable "ghcr_credentials_secret_manager_arn" {
