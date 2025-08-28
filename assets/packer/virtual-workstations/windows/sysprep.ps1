@@ -17,11 +17,7 @@ config:
       - task: setDnsSuffix
         inputs:
           suffixes:
-            - corp.joshral.people.aws.dev
-            - joshral.people.aws.dev
-            - people.aws.dev
-            - aws.dev
-            - $REGION.ec2-utilities.amazonaws.com
+            # Add your domain suffixes here (e.g. - "example.com")
       - task: setAdminAccount
         inputs:
           password:
