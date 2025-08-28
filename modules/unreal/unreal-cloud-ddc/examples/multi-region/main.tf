@@ -21,8 +21,8 @@ module "unreal_cloud_ddc" {
   
   # VPC Configuration
   vpc_ids = {
-    primary   = module.vpc_primary.vpc_id
-    secondary = module.vpc_secondary.vpc_id
+    primary   = aws_vpc.primary.id
+    secondary = aws_vpc.secondary.id
   }
   
   # Infrastructure Configuration
@@ -33,14 +33,14 @@ module "unreal_cloud_ddc" {
     
     # EKS Configuration
     kubernetes_version      = var.eks_cluster_version
-    eks_node_group_subnets = module.vpc_primary.private_subnet_ids
+    eks_node_group_subnets = aws_subnet.primary_private[*].id
     
     # ScyllaDB Configuration
-    scylla_subnets       = module.vpc_primary.private_subnet_ids
+    scylla_subnets       = aws_subnet.primary_private[*].id
     scylla_instance_type = var.scylla_instance_type
     
     # Load Balancer Configuration
-    monitoring_application_load_balancer_subnets = module.vpc_primary.public_subnet_ids
+    monitoring_application_load_balancer_subnets = aws_subnet.primary_public[*].id
   }
   
   # Application Configuration
@@ -58,32 +58,84 @@ module "unreal_cloud_ddc" {
   tags = var.additional_tags
 }
 
-# VPC for primary region
-module "vpc_primary" {
-  source = "../single-region/vpc"
+# Primary region VPC
+resource "aws_vpc" "primary" {
+  provider = aws.primary
   
-  providers = {
-    aws = aws.primary
-  }
-  
-  vpc_cidr               = var.vpc_cidr_region_1
-  availability_zones     = local.azs_region_1
-  public_subnets_cidrs   = [cidrsubnet(var.vpc_cidr_region_1, 8, 1), cidrsubnet(var.vpc_cidr_region_1, 8, 2)]
-  private_subnets_cidrs  = [cidrsubnet(var.vpc_cidr_region_1, 8, 3), cidrsubnet(var.vpc_cidr_region_1, 8, 4)]
-  additional_tags        = var.additional_tags
+  cidr_block           = var.vpc_cidr_region_1
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-primary-vpc"
+  })
 }
 
-# VPC for secondary region
-module "vpc_secondary" {
-  source = "../single-region/vpc"
+# Secondary region VPC
+resource "aws_vpc" "secondary" {
+  provider = aws.secondary
   
-  providers = {
-    aws = aws.secondary
-  }
-  
-  vpc_cidr               = var.vpc_cidr_region_2
-  availability_zones     = local.azs_region_2
-  public_subnets_cidrs   = [cidrsubnet(var.vpc_cidr_region_2, 8, 1), cidrsubnet(var.vpc_cidr_region_2, 8, 2)]
-  private_subnets_cidrs  = [cidrsubnet(var.vpc_cidr_region_2, 8, 3), cidrsubnet(var.vpc_cidr_region_2, 8, 4)]
-  additional_tags        = var.additional_tags
+  cidr_block           = var.vpc_cidr_region_2
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-secondary-vpc"
+  })
+}
+
+# Primary region subnets
+resource "aws_subnet" "primary_public" {
+  provider = aws.primary
+  count    = 2
+
+  vpc_id                  = aws_vpc.primary.id
+  cidr_block              = cidrsubnet(var.vpc_cidr_region_1, 8, count.index + 1)
+  availability_zone       = local.azs_region_1[count.index]
+  map_public_ip_on_launch = true
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-primary-public-${count.index + 1}"
+  })
+}
+
+resource "aws_subnet" "primary_private" {
+  provider = aws.primary
+  count    = 2
+
+  vpc_id            = aws_vpc.primary.id
+  cidr_block        = cidrsubnet(var.vpc_cidr_region_1, 8, count.index + 3)
+  availability_zone = local.azs_region_1[count.index]
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-primary-private-${count.index + 1}"
+  })
+}
+
+# Secondary region subnets
+resource "aws_subnet" "secondary_public" {
+  provider = aws.secondary
+  count    = 2
+
+  vpc_id                  = aws_vpc.secondary.id
+  cidr_block              = cidrsubnet(var.vpc_cidr_region_2, 8, count.index + 1)
+  availability_zone       = local.azs_region_2[count.index]
+  map_public_ip_on_launch = true
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-secondary-public-${count.index + 1}"
+  })
+}
+
+resource "aws_subnet" "secondary_private" {
+  provider = aws.secondary
+  count    = 2
+
+  vpc_id            = aws_vpc.secondary.id
+  cidr_block        = cidrsubnet(var.vpc_cidr_region_2, 8, count.index + 3)
+  availability_zone = local.azs_region_2[count.index]
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_prefix}-secondary-private-${count.index + 1}"
+  })
 }
