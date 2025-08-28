@@ -7,4 +7,13 @@ locals {
   p4_port = var.p4_server_config != null ? (
     "%{if !var.p4_server_config.plaintext}ssl:%{endif}${var.p4_server_config.fully_qualified_domain_name}:1666"
   ) : null
+  
+  # Replica domain mapping
+  replica_domains = {
+    for name, config in var.p4_server_replicas_config : name => (
+      config.subdomain != null ?
+      "${config.subdomain}.${var.p4_server_config.fully_qualified_domain_name}" :
+      "${name}.${var.p4_server_config.fully_qualified_domain_name}"
+    )
+  }
 }

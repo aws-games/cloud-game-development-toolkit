@@ -262,6 +262,12 @@ variable "custom_role" {
   default     = null
 }
 
+variable "replica_scripts_bucket_arn" {
+  type        = string
+  description = "ARN of the S3 bucket containing replica configuration scripts"
+  default     = null
+}
+
 variable "tags" {
   type        = map(any)
   description = "Tags to apply to resources."

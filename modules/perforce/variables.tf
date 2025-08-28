@@ -429,6 +429,113 @@ variable "p4_auth_config" {
 }
 
 ########################################
+# P4 Server Replicas
+########################################
+variable "p4_server_replicas_config" {
+  description = "Map of P4 server replica configurations"
+  type = map(object({
+    # Replica-specific fields
+    replica_type = optional(string, "readonly")
+    subdomain    = optional(string, null)
+    
+    # General (inherits from primary if not specified)
+    name                        = optional(string, null)
+    project_prefix              = optional(string, null)
+    environment                 = optional(string, null)
+    fully_qualified_domain_name = optional(string, null) # Auto-generated if not provided
+
+    # Compute (inherits from primary if not specified)
+    lookup_existing_ami   = optional(bool, null)
+    ami_prefix           = optional(string, null)
+    instance_type        = optional(string, null)
+    instance_architecture = optional(string, null)
+    unicode              = optional(bool, null)
+    selinux              = optional(bool, null)
+    case_sensitive       = optional(bool, null)
+    plaintext            = optional(bool, null)
+
+    # Storage (inherits from primary if not specified)
+    storage_type         = optional(string, null)
+    depot_volume_size    = optional(number, null)
+    metadata_volume_size = optional(number, null)
+    logs_volume_size     = optional(number, null)
+
+    # Networking & Security (replica-specific)
+    vpc_id                       = string
+    instance_subnet_id           = string
+    instance_private_ip          = optional(string, null)
+    create_default_sg            = optional(bool, null)
+    existing_security_groups     = optional(list(string), null)
+    internal                     = optional(bool, null)
+    
+    # Credentials (inherits from primary if not specified)
+    super_user_password_secret_arn = optional(string, null)
+    super_user_username_secret_arn = optional(string, null)
+    create_default_role            = optional(bool, null)
+    custom_role                    = optional(string, null)
+
+    # FSxN (inherits from primary if not specified)
+    fsxn_password                     = optional(string, null)
+    fsxn_filesystem_security_group_id = optional(string, null)
+    protocol                          = optional(string, null)
+    fsxn_region                       = optional(string, null)
+    fsxn_management_ip                = optional(string, null)
+    fsxn_svm_name                     = optional(string, null)
+    amazon_fsxn_svm_id                = optional(string, null)
+    fsxn_aws_profile                  = optional(string, null)
+  }))
+  default = {}
+  
+  validation {
+    condition = alltrue([
+      for k, v in var.p4_server_replicas_config :
+      contains(["standby", "forwarding", "readonly", "edge"], v.replica_type)
+    ])
+    error_message = "Replica type must be one of: standby, forwarding, readonly, edge"
+  }
+
+  validation {
+    condition = var.p4_server_config == null ? true : alltrue([
+      for k, v in var.p4_server_replicas_config :
+      v.storage_type == null || v.storage_type == var.p4_server_config.storage_type
+    ])
+    error_message = "Replica storage_type must match primary server storage_type for replication compatibility"
+  }
+
+  validation {
+    condition = var.p4_server_config == null ? true : alltrue([
+      for k, v in var.p4_server_replicas_config :
+      v.depot_volume_size == null || v.depot_volume_size >= var.p4_server_config.depot_volume_size
+    ])
+    error_message = "Replica depot_volume_size must be >= primary server depot_volume_size for replication"
+  }
+
+  validation {
+    condition = var.p4_server_config == null ? true : alltrue([
+      for k, v in var.p4_server_replicas_config :
+      v.metadata_volume_size == null || v.metadata_volume_size >= var.p4_server_config.metadata_volume_size
+    ])
+    error_message = "Replica metadata_volume_size must be >= primary server metadata_volume_size for replication"
+  }
+
+  validation {
+    condition = var.p4_server_config == null ? true : alltrue([
+      for k, v in var.p4_server_replicas_config :
+      v.unicode == null || v.unicode == var.p4_server_config.unicode
+    ])
+    error_message = "Replica unicode setting must match primary server for P4 compatibility"
+  }
+
+  validation {
+    condition = var.p4_server_config == null ? true : alltrue([
+      for k, v in var.p4_server_replicas_config :
+      v.case_sensitive == null || v.case_sensitive == var.p4_server_config.case_sensitive
+    ])
+    error_message = "Replica case_sensitive setting must match primary server for P4 compatibility"
+  }
+}
+
+########################################
 # P4 Code Review
 ########################################
 variable "p4_code_review_config" {

@@ -7,10 +7,59 @@ For a video walkthrough demonstrating how to use this module, see this YouTube V
 ## Features
 
 - Dynamic creation and configuration of [P4 Server (formerly Helix Core)](https://www.perforce.com/products/helix-core)
+- **P4 Server Replica Support** - Deploy multiple P4 server replicas for high availability, load distribution, and geographic distribution
 - Dynamic creation and configuration
   of [P4 Code Review (formerly Helix Swarm)](https://www.perforce.com/products/helix-swarm)
 - Dynamic creation and configuration
   of [P4Auth (formerly Helix Authentication Service)](https://help.perforce.com/helix-core/integrations-plugins/helix-auth-svc/current/Content/HAS/overview-of-has.html)
+
+## P4 Server Replica Support
+
+This module supports deploying P4 server replicas for:
+
+- **High Availability**: Multi-AZ deployment with standby replicas
+- **Load Distribution**: Read-only replicas for CI/CD systems and build agents
+- **Geographic Distribution**: Edge replicas for global development teams
+- **Disaster Recovery**: Cross-region standby replicas
+
+### Replica Types
+
+- **Standby**: Full replica that can be promoted to primary during failover
+- **Read-only**: Optimized for read operations, perfect for CI/CD systems
+- **Forwarding**: Local commits forwarded to primary, ideal for small remote teams
+- **Edge**: Full P4 server for major regional offices
+
+### Example Configuration
+
+```hcl
+module "perforce" {
+  source = "./modules/perforce"
+  
+  p4_server_config = {
+    fully_qualified_domain_name = "perforce.yourdomain.com"
+    instance_subnet_id = aws_subnet.primary.id
+  }
+  
+  p4_server_replicas_config = {
+    "standby-replica" = {
+      replica_type       = "standby"
+      subdomain          = "standby"
+      vpc_id             = aws_vpc.main.id
+      instance_subnet_id = aws_subnet.standby.id
+    }
+    "ci-replica" = {
+      replica_type       = "readonly"
+      subdomain          = "ci"
+      vpc_id             = aws_vpc.main.id
+      instance_subnet_id = aws_subnet.ci.id
+    }
+  }
+}
+```
+
+For complete examples, see:
+- [Single-Region Replicas](./examples/replica-single-region/) - Multi-AZ high availability
+- [Cross-Region Replicas](./examples/replica-cross-region/) - Geographic distribution
 
 ## Architecture
 
