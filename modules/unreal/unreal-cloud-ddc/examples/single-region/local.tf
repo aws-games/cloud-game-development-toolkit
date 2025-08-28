@@ -4,15 +4,16 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
-data "aws_ecr_authorization_token" "token" {}
-
-data "aws_caller_identity" "current" {}
-
 locals {
+  project_prefix = "cgd"
   azs = slice(data.aws_availability_zones.available.names, 0, 2)
+  
+  # Networking
+  public_subnet_cidrs  = ["192.168.2.0/24", "192.168.3.0/24"]
+  private_subnet_cidrs = ["192.168.0.0/24", "192.168.1.0/24"]
 
   tags = {
-    Environment = "cgd"
+    Environment = "dev"
     Application = "unreal-cloud-ddc"
   }
 }

@@ -17,7 +17,7 @@ This module currently utilizes the [Terraform EKS Blueprints Addons](https://git
 
 ## Prerequisites
 !!!note
-    This module is designed to be used in conjunction with the [Unreal Cloud DDC Infra Module](../unreal-cloud-ddc-infra/README.md) which deploys the required infrastructure to host the Cloud DDC service.
+    This module is designed to be used in conjunction with the infrastructure module which deploys the required infrastructure to host the Cloud DDC service.
 
 ### GitHub Secret
 Next, for the module to be able to access the Unreal Cloud DDC container image, there are 2 things you must do. First, if you have not done so, you must [connect your GitHub account to your Epic account](https://www.unrealengine.com/en-US/ue-on-github), thereby granting you access to the container images in the Unreal Engine repository. Next, you will need to create a `github_credentials` secret which includes a `username` and `access-token` field.

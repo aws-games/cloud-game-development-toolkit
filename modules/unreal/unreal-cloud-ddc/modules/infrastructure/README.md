@@ -52,7 +52,7 @@ This architecture ensures high availability and secure communication patterns fo
 
 <!-- ## Examples
 
-For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/examples). -->
+For example configurations, please see the [examples](../../examples/). -->
 
 <!-- TODO -->
 <!-- ## Deployment Instructions -->

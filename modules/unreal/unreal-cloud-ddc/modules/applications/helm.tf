@@ -67,6 +67,30 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
 
+# Cleanup resource for proper Kubernetes resource management
+resource "null_resource" "cleanup_on_destroy" {
+  triggers = {
+    cluster_name = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
+    region      = data.aws_region.current.name
+    namespace   = var.unreal_cloud_ddc_namespace
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      # Only run cleanup if we can connect to the cluster
+      if aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
+        echo "Cleaning up Kubernetes resources in namespace ${self.triggers.namespace}"
+        kubectl delete all --all -n ${self.triggers.namespace} --timeout=60s --ignore-not-found=true || true
+        kubectl delete pvc --all -n ${self.triggers.namespace} --timeout=30s --ignore-not-found=true || true
+        kubectl delete namespace ${self.triggers.namespace} --timeout=60s --ignore-not-found=true || true
+      else
+        echo "Cluster not accessible, skipping Kubernetes cleanup"
+      fi
+    EOT
+  }
+}
+
 resource "helm_release" "unreal_cloud_ddc" {
   name         = "unreal-cloud-ddc"
   chart        = "unreal-cloud-ddc"
@@ -74,10 +98,16 @@ resource "helm_release" "unreal_cloud_ddc" {
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
+  
+  # Improve deployment reliability
+  disable_webhooks = true
+  cleanup_on_fail  = true
+  
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
-    aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
+    aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule,
+    null_resource.cleanup_on_destroy
   ]
   values = var.unreal_cloud_ddc_helm_values
 }

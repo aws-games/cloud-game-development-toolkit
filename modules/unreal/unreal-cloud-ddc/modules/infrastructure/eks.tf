@@ -12,6 +12,13 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   version                   = var.kubernetes_version
   enabled_cluster_log_types = var.eks_cluster_logging_types
 
+  # Timeout configuration for reliability
+  timeouts {
+    create = "30m"
+    update = "60m"
+    delete = "30m"
+  }
+
 
 
   access_config {
