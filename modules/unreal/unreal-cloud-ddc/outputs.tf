@@ -26,7 +26,7 @@ output "secondary_region" {
     eks_endpoint     = module.infrastructure_secondary[0].cluster_endpoint
     scylla_ips       = module.infrastructure_secondary[0].scylla_ips
     s3_bucket_id     = module.infrastructure_secondary[0].s3_bucket_id
-    vpc_id           = var.vpc_ids.secondary
+    vpc_id           = try(var.vpc_ids.secondary, null)
   } : null
 }
 
