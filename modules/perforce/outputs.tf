@@ -112,3 +112,40 @@ output "p4_server_lambda_link_name" {
   module.p4_server[0].lambda_link_name : null)
   description = "The name of the Lambda link for the P4 Server instance to use with FSxN."
 }
+
+# P4 Server Replicas
+output "p4_server_replicas" {
+  value = {
+    for name, replica in module.p4_server_replicas : name => {
+      instance_id                    = replica.instance_id
+      private_ip                     = replica.private_ip
+      public_ip                      = replica.eip_public_ip
+      fqdn                          = local.replica_domains[name]
+      security_group_id             = replica.security_group_id
+      super_user_password_secret_arn = replica.super_user_password_secret_arn
+      super_user_username_secret_arn = replica.super_user_username_secret_arn
+    }
+  }
+  description = "Map of P4 server replica information including instance IDs, IPs, FQDNs, and credentials."
+}
+
+output "p4_server_replicas_instance_ids" {
+  value = {
+    for name, replica in module.p4_server_replicas : name => replica.instance_id
+  }
+  description = "Map of replica names to instance IDs for easy reference."
+}
+
+output "p4_server_replicas_fqdns" {
+  value = {
+    for name, config in var.p4_server_replicas_config : name => local.replica_domains[name]
+  }
+  description = "Map of replica names to their fully qualified domain names."
+}
+
+output "p4_server_replicas_connection_strings" {
+  value = {
+    for name, replica in module.p4_server_replicas : name => "ssl:${local.replica_domains[name]}:1666"
+  }
+  description = "Map of replica names to their P4 connection strings."
+}
