@@ -74,6 +74,7 @@ locals {
       tags = merge(var.tags, config.tags != null ? config.tags : {}, {
         User = user
         Name = "${var.project_prefix}-${user}-vdi"
+        Environment = var.environment
       })
     }
   }
