@@ -218,6 +218,17 @@ variable "github_credentials_secret_arn" {
   default     = null
 }
 
+variable "create_unreal_horde_recycle_policy" {
+  type        = bool
+  description = "Optional creation of Unreal Horde IAM Policy allowing usage of the AwsReuse/AwsRecycle fleet manager."
+  default     = false
+
+  validation {
+    condition     = var.create_unreal_horde_recycle_policy == false || var.create_unreal_horde_default_role == true
+    error_message = "Cannot create recycle policy if not creating default role."
+  }
+}
+
 ######################
 # OIDC CONFIG
 ######################
@@ -464,8 +475,9 @@ variable "elasticache_snapshot_retention_limit" {
 ######################
 variable "agents" {
   type = map(object({
-    ami           = string
-    instance_type = string
+    ami             = string
+    instance_type   = string
+    horde_pool_name = optional(string)
     block_device_mappings = list(
       object({
         device_name = string
