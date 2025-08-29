@@ -55,7 +55,14 @@ locals {
   scylla_ami_name      = "ScyllaDB 6.2.1"
   scylla_architecture  = "x86_64"
   scylla_instance_type = "i4i.xlarge"
+  # Backward compatible flat list
   scylla_ips           = concat(module.unreal_cloud_ddc_infra_region_1.scylla_ips, module.unreal_cloud_ddc_infra_region_2.scylla_ips)
+  
+  # New map structure for monitoring
+  scylla_ips_by_region = {
+    (var.regions[0]) = module.unreal_cloud_ddc_infra_region_1.scylla_ips
+    (var.regions[1]) = module.unreal_cloud_ddc_infra_region_2.scylla_ips
+  }
 
   tags = {
     Environment = "cgd"

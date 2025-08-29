@@ -90,6 +90,12 @@ variable "existing_scylla_ips" {
   description = "List of existing ScyllaDB IPs to be used for the ScyllaDB instance"
 }
 
+variable "scylla_ips_by_region" {
+  type        = map(list(string))
+  default     = {}
+  description = "Map of ScyllaDB IPs organized by region for monitoring dashboard separation"
+}
+
 variable "scylla_instance_type" {
   type        = string
   default     = "i4i.2xlarge"
@@ -286,11 +292,11 @@ variable "system_managed_node_min_size" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.31"
+  default     = "1.33"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
   validation {
-    condition     = contains(["1.24", "1.25", "1.26", "1.27", "1.28", "1.29", "1.30", "1.31"], var.kubernetes_version)
+    condition     = contains(["1.31", "1.32", "1.33"], var.kubernetes_version)
     error_message = "Version number must be supported version in AWS Kubernetes"
   }
 }

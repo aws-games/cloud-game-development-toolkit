@@ -242,6 +242,7 @@ module "unreal_cloud_ddc_infra_region_1" {
   scylla_architecture       = local.scylla_architecture
   scylla_instance_type      = local.scylla_instance_type
   existing_scylla_ips       = module.unreal_cloud_ddc_infra_region_2.scylla_ips
+  scylla_ips_by_region      = local.scylla_ips_by_region
 
   scylla_db_throughput = 200
   scylla_db_storage    = 100
@@ -292,8 +293,8 @@ module "unreal_cloud_ddc_intra_cluster_region_1" {
   unreal_cloud_ddc_helm_config = {
     scylla_ips             = join(",", local.scylla_ips)
     bucket_name            = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
-    region                 = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
-    replication_region     = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[0]
+    region                 = replace(var.regions[0], "-1", "")
+    replication_region     = replace(var.regions[1], "-1", "")
     aws_region             = var.regions[0]
     aws_replication_region = var.regions[1]
     ddc_region             = replace(var.regions[0], "-", "_")
@@ -421,8 +422,8 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
   unreal_cloud_ddc_helm_config = {
     scylla_ips             = join(",", local.scylla_ips)
     bucket_name            = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
-    region                 = substr(var.regions[1], length(var.regions[1]) - 1, 1) == "1" ? substr(var.regions[1], 0, length(var.regions[1]) - 2) : var.regions[1]
-    replication_region     = substr(var.regions[0], length(var.regions[0]) - 1, 1) == "1" ? substr(var.regions[0], 0, length(var.regions[0]) - 2) : var.regions[0]
+    region                 = replace(var.regions[1], "-1", "")
+    replication_region     = replace(var.regions[0], "-1", "")
     aws_region             = var.regions[1]
     aws_replication_region = var.regions[0]
     ddc_region             = replace(var.regions[1], "-", "_")
@@ -464,18 +465,20 @@ runtimeConfig:
       - id: 0.aws:runShellScript
         runCommand:
           - |
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[0]}': 0, '${var.regions[1]}': 0};" && \
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[0]}': 1, '${var.regions[1]}': 0};" && \
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[0]}': 2, '${var.regions[1]}': 0};" && \
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[1]}': 0, '${var.regions[0]}': 0};" && \
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[1]}': 1, '${var.regions[0]}': 0};" && \
-            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${var.regions[1]}': 2, '${var.regions[0]}': 0};"
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[0], "-1", "")}': 0, '${replace(var.regions[1], "-1", "")}': 0};" && \
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[0], "-1", "")}': 1, '${replace(var.regions[1], "-1", "")}': 0};" && \
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[0], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[0], "-1", "")}': 2, '${replace(var.regions[1], "-1", "")}': 0};" && \
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[1], "-1", "")}': 0, '${replace(var.regions[0], "-1", "")}': 0};" && \
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[1], "-1", "")}': 1, '${replace(var.regions[0], "-1", "")}': 0};" && \
+            cqlsh --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.regions[1], "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.regions[1], "-1", "")}': 2, '${replace(var.regions[0], "-1", "")}': 0};"
 DOC
 }
 
 resource "aws_ssm_association" "unreal_cloud_ddc_scylla_db_association" {
   depends_on = [
-    aws_ssm_document.unreal_cloud_ddc_scylla_update_document
+    aws_ssm_document.unreal_cloud_ddc_scylla_update_document,
+    module.unreal_cloud_ddc_intra_cluster_region_1,
+    module.unreal_cloud_ddc_intra_cluster_region_2
   ]
   name = aws_ssm_document.unreal_cloud_ddc_scylla_update_document.name
   targets {
@@ -483,3 +486,5 @@ resource "aws_ssm_association" "unreal_cloud_ddc_scylla_db_association" {
     values = [module.unreal_cloud_ddc_infra_region_1.scylla_seed_instance_id]
   }
 }
+
+

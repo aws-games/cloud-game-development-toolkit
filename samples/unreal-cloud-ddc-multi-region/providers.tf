@@ -43,16 +43,6 @@ provider "awscc" {
   region = var.regions[1]
 }
 
-provider "aws" {
-  alias  = "region-1"
-  region = var.regions[0]
-}
-
-provider "aws" {
-  alias  = "region-2"
-  region = var.regions[1]
-}
-
 provider "kubernetes" {
   alias                  = "region-1"
   host                   = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
@@ -109,4 +99,14 @@ provider "helm" {
     username = data.aws_ecr_authorization_token.token_region_2.user_name
     password = data.aws_ecr_authorization_token.token_region_2.password
   }
+}
+
+provider "aws" {
+  alias  = "region-1"
+  region = var.regions[0]
+}
+
+provider "aws" {
+  alias  = "region-2"
+  region = var.regions[1]
 }

@@ -84,7 +84,6 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
     aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
   ]
   values = local.unreal_cloud_ddc_base_values
-
 }
 
 resource "null_resource" "delete_init_deployment" {
@@ -111,3 +110,7 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   ]
   values = local.unreal_cloud_ddc_multi_region_with_replication_values
 }
+
+
+
+
