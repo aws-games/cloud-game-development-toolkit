@@ -4,13 +4,16 @@
 output "primary_region" {
   description = "Primary region information"
   value = {
-    region           = local.primary_region
-    eks_cluster_name = module.infrastructure_primary.cluster_name
-    eks_cluster_arn  = module.infrastructure_primary.cluster_arn
-    eks_endpoint     = module.infrastructure_primary.cluster_endpoint
-    scylla_ips       = module.infrastructure_primary.scylla_ips
-    s3_bucket_id     = module.infrastructure_primary.s3_bucket_id
-    vpc_id           = var.vpc_ids.primary
+    region                            = local.primary_region
+    eks_cluster_name                  = module.infrastructure_primary.cluster_name
+    eks_cluster_arn                   = module.infrastructure_primary.cluster_arn
+    eks_endpoint                      = module.infrastructure_primary.cluster_endpoint
+    scylla_ips                        = module.infrastructure_primary.scylla_ips
+    s3_bucket_id                      = module.infrastructure_primary.s3_bucket_id
+    vpc_id                            = var.vpc_ids.primary
+    scylla_monitoring_alb_dns_name    = module.infrastructure_primary.scylla_monitoring_alb_dns_name
+    scylla_monitoring_alb_zone_id     = module.infrastructure_primary.scylla_monitoring_alb_zone_id
+    scylla_monitoring_alb_arn         = module.infrastructure_primary.scylla_monitoring_alb_arn
   }
 }
 
@@ -20,13 +23,28 @@ output "primary_region" {
 output "secondary_region" {
   description = "Secondary region information (if multi-region)"
   value = local.is_multi_region ? {
-    region           = local.secondary_region
-    eks_cluster_name = module.infrastructure_secondary[0].cluster_name
-    eks_cluster_arn  = module.infrastructure_secondary[0].cluster_arn
-    eks_endpoint     = module.infrastructure_secondary[0].cluster_endpoint
-    scylla_ips       = module.infrastructure_secondary[0].scylla_ips
-    s3_bucket_id     = module.infrastructure_secondary[0].s3_bucket_id
-    vpc_id           = try(var.vpc_ids.secondary, null)
+    region                            = local.secondary_region
+    eks_cluster_name                  = module.infrastructure_secondary[0].cluster_name
+    eks_cluster_arn                   = module.infrastructure_secondary[0].cluster_arn
+    eks_endpoint                      = module.infrastructure_secondary[0].cluster_endpoint
+    scylla_ips                        = module.infrastructure_secondary[0].scylla_ips
+    s3_bucket_id                      = module.infrastructure_secondary[0].s3_bucket_id
+    vpc_id                            = try(var.vpc_ids.secondary, null)
+    scylla_monitoring_alb_dns_name    = module.infrastructure_secondary[0].scylla_monitoring_alb_dns_name
+    scylla_monitoring_alb_zone_id     = module.infrastructure_secondary[0].scylla_monitoring_alb_zone_id
+    scylla_monitoring_alb_arn         = module.infrastructure_secondary[0].scylla_monitoring_alb_arn
+  } : null
+}
+
+########################################
+# DNS Outputs
+########################################
+output "private_hosted_zone" {
+  description = "Private Route53 hosted zone information for DDC"
+  value = var.create_route53_private_hosted_zone && local.create_dns_resources ? {
+    zone_id = aws_route53_zone.ddc_private_hosted_zone[0].zone_id
+    name    = aws_route53_zone.ddc_private_hosted_zone[0].name
+    fqdn    = local.private_hosted_zone_name
   } : null
 }
 
@@ -39,10 +57,18 @@ output "ddc_endpoints" {
     primary = {
       namespace         = var.application_config.unreal_cloud_ddc_namespace
       load_balancer_dns = module.applications_primary.unreal_cloud_ddc_load_balancer_name
+      private_fqdn      = local.create_dns_resources ? local.private_hosted_zone_name : null
+      public_fqdn       = var.route53_public_hosted_zone_name != null ? "${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
+      monitoring_fqdn   = var.route53_public_hosted_zone_name != null ? "monitoring.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
+      cache_fqdn        = var.route53_public_hosted_zone_name != null ? "cache.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
     }
     secondary = local.is_multi_region ? {
       namespace         = var.application_config.unreal_cloud_ddc_namespace
       load_balancer_dns = module.applications_secondary[0].unreal_cloud_ddc_load_balancer_name
+      private_fqdn      = local.create_dns_resources ? local.private_hosted_zone_name : null
+      public_fqdn       = var.route53_public_hosted_zone_name != null ? "${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
+      monitoring_fqdn   = var.route53_public_hosted_zone_name != null ? "monitoring.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
+      cache_fqdn        = var.route53_public_hosted_zone_name != null ? "cache.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
     } : null
   }
 }

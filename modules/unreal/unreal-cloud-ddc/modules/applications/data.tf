@@ -1,5 +1,7 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_region" "current" {}
+
 data "aws_eks_cluster" "unreal_cloud_ddc_cluster" {
   region = var.region
   name   = var.cluster_name

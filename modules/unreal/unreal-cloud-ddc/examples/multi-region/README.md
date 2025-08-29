@@ -1,167 +1,117 @@
-# Unreal Cloud DDC - Multi-Region Example
+# Unreal Cloud DDC Multi-Region
 
-This example demonstrates deploying Unreal Cloud DDC across two AWS regions with cross-region replication and VPC peering.
+This example deploys **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)** across two AWS regions with cross-region replication. The deployment is a comprehensive solution that leverages several AWS services to create a robust and efficient data caching system with high availability and low-latency access for global development teams.
 
 ## Architecture
 
 - **Primary Region**: Complete DDC infrastructure with EKS, ScyllaDB, and S3
-- **Secondary Region**: Replicated infrastructure for high availability and performance
-- **VPC Peering**: Secure connectivity between regions
-- **DNS**: Region-specific endpoints for load balancing
+- **Secondary Region**: Replicated DDC infrastructure for high availability and performance  
+- **VPC Peering**: Secure cross-region connectivity between VPCs
+- **Cross-Region Replication**: Automatic ScyllaDB data synchronization between regions
+- **DNS**: Region-specific DDC endpoints plus centralized monitoring
+- **Monitoring**: Single monitoring stack in primary region (monitors both regions)
 
-## Prerequisites
+## DNS Endpoints
 
-1. **AWS CLI configured** with appropriate permissions
-2. **Terraform >= 1.10.3** installed
-3. **kubectl** installed for cluster management
-4. **Route53 hosted zone** for DNS records
-5. **GitHub credentials** stored in AWS Secrets Manager (both regions)
+After deployment, you'll have access to these endpoints:
+- `ddc-primary.<your-domain>` - Primary region DDC service
+- `ddc-secondary.<your-domain>` - Secondary region DDC service
+- `monitoring.ddc.<your-domain>` - Monitoring dashboard (primary region only)
 
-## Quick Start
+Where `<your-domain>` is the value you provided for `route53_public_hosted_zone_name`.
 
-1. **Configure variables**:
-```bash
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-```
+**DNS Record Locations:**
+- **Public Records**: All user-facing DNS records are created in your existing **public hosted zone**
+- **Private Zone**: The module creates a private hosted zone for internal cross-region service discovery
 
-2. **Deploy infrastructure**:
-```bash
-terraform init
-terraform plan
-terraform apply
-```
+## Important
 
-3. **Configure kubectl**:
-```bash
-# Primary region
-aws eks update-kubeconfig --region us-east-1 --name <primary-cluster-name>
+### Provider Configuration
 
-# Secondary region  
-aws eks update-kubeconfig --region us-east-2 --name <secondary-cluster-name>
-```
-
-## Configuration
-
-### Required Variables
+This example requires separate provider configurations for each region:
 
 ```hcl
-# terraform.tfvars
-project_prefix = "my-game"
-environment    = "prod"
-regions        = ["us-east-1", "us-east-2"]
-
-# DNS Configuration
-route53_public_hosted_zone_name = "yourdomain.com"
-
-# GitHub Credentials (must be prefixed with 'ecr-pullthroughcache/')
-github_credential_arn_region_1 = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/github-token"
-github_credential_arn_region_2 = "arn:aws:secretsmanager:us-east-2:123456789012:secret:ecr-pullthroughcache/github-token"
-
-# Networking
-vpc_cidr_region_1 = "10.0.0.0/16"
-vpc_cidr_region_2 = "10.1.0.0/16"
-```
-
-### Optional Variables
-
-```hcl
-# Infrastructure sizing
-eks_cluster_version  = "1.31"
-scylla_instance_type = "i4i.xlarge"
-scylla_node_count    = 3
-
-# Tags
-additional_tags = {
-  Project   = "my-game"
-  Team      = "platform"
-  ManagedBy = "terraform"
+providers = {
+  aws.primary        = aws.primary
+  aws.secondary      = aws.secondary
+  awscc.primary      = awscc.primary
+  awscc.secondary    = awscc.secondary
+  kubernetes.primary = kubernetes.primary
+  kubernetes.secondary = kubernetes.secondary
+  helm.primary       = helm.primary
+  helm.secondary     = helm.secondary
 }
 ```
 
-## Endpoints
+### Region Configuration
 
-After deployment, you'll have:
+**Critical**: The deployment will create resources in the **exact regions specified** in locals.tf:
 
-- **Primary DDC**: `https://ddc-primary.yourdomain.com`
-- **Secondary DDC**: `https://ddc-secondary.yourdomain.com`
-- **Primary Monitoring**: `https://monitoring-primary.ddc.yourdomain.com`
-- **Secondary Monitoring**: `https://monitoring-secondary.ddc.yourdomain.com`
-
-## Unreal Engine Configuration
-
-Configure your Unreal Engine project to use the nearest DDC endpoint:
-
-```ini
-# DefaultEngine.ini
-[DDC]
-DefaultBackend=S3
-S3Region=us-east-1
-S3Bucket=<primary-s3-bucket>
-S3Endpoint=https://ddc-primary.yourdomain.com
-
-# For EU/Asia teams, use secondary region
-S3Region=us-east-2
-S3Endpoint=https://ddc-secondary.yourdomain.com
+```hcl
+regions = {
+  primary = {
+    name  = "us-east-1"
+    alias = "primary"
+  }
+  secondary = {
+    name  = "us-east-2"
+    alias = "secondary"
+  }
+}
 ```
 
-## Monitoring
+### Network Architecture
 
-Access ScyllaDB monitoring dashboards:
-- Primary: `https://monitoring-primary.ddc.yourdomain.com`
-- Secondary: `https://monitoring-secondary.ddc.yourdomain.com`
+- **Primary VPC**: `10.0.0.0/16` with public/private subnets
+- **Secondary VPC**: `10.1.0.0/16` with public/private subnets
+- **VPC Peering**: Enables cross-region ScyllaDB communication
+- **Security Groups**: Allow ScyllaDB ports (7000, 7001, 9042) between regions
 
-## Troubleshooting
+### GitHub Credentials Setup
 
-### Common Issues
+Before deployment, create GitHub credentials in AWS Secrets Manager in **both regions**:
 
-1. **VPC Peering not working**:
-   - Check security groups allow cross-region traffic
-   - Verify route table entries
-   - Ensure CIDR blocks don't overlap
+Example secret names:
+- Primary: `ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials`
+- Secondary: `ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials`
 
-2. **DNS resolution fails**:
-   - Verify Route53 hosted zone exists
-   - Check ACM certificate validation
-   - Confirm load balancer is healthy
-
-3. **ScyllaDB replication issues**:
-   - Check cross-region connectivity
-   - Verify ScyllaDB cluster status
-   - Review CloudWatch logs
-
-### Useful Commands
-
-```bash
-# Check EKS cluster status
-kubectl get nodes
-kubectl get pods -n unreal-cloud-ddc
-
-# Test cross-region connectivity
-kubectl exec -it <pod-name> -- ping <secondary-region-ip>
-
-# View ScyllaDB status
-kubectl exec -it <scylla-pod> -- nodetool status
+Secret format:
+```json
+{
+  "username": "GITHUB-USER-NAME",
+  "accessToken": "GITHUB-ACCESS-TOKEN"
+}
 ```
 
-## Cleanup
+### Deployment Timeline
 
-```bash
-terraform destroy
-```
+- **Infrastructure (EKS, VPC, ScyllaDB)**: ~20-25 minutes
+- **Helm Charts and Application Deployment**: ~5-10 minutes
+- **Total**: ~30 minutes
 
-**Note**: Ensure all S3 buckets are empty before destroying, as Terraform cannot delete non-empty buckets.
+### Post-Deployment
 
-## Cost Optimization
+The example deploys Route53 DNS records for accessing your Unreal DDC services:
+- **Primary DDC**: `ddc-primary.<your-domain>` - Primary region DDC API endpoint
+- **Secondary DDC**: `ddc-secondary.<your-domain>` - Secondary region DDC API endpoint  
+- **Monitoring**: `monitoring.ddc.<your-domain>` - ScyllaDB monitoring dashboard (primary region only)
 
-- Use smaller instance types for development environments
-- Consider single-region deployment if global distribution isn't needed
-- Monitor CloudWatch costs and adjust retention periods
-- Use Spot instances for non-production workloads (configure in infrastructure_config)
+Where `<your-domain>` is your `route53_public_hosted_zone_name` value.
 
-## Security Considerations
+These records point to load balancers which may take additional time to become fully available after deployment completes. The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing, stored in AWS Secrets Manager.
 
-- VPC peering provides secure cross-region connectivity
-- All traffic between regions stays within AWS backbone
-- ScyllaDB uses TLS encryption for inter-node communication
-- Load balancers use ACM certificates for HTTPS termination
+### Monitoring
+
+The deployment includes a ScyllaDB monitoring stack with Prometheus, Alertmanager, and Grafana deployed in the **primary region only**. This single monitoring instance provides real-time insights into database performance across both regions through cross-region connectivity. Access the Grafana dashboard using the `monitoring_url` provided in the Terraform outputs. For more information, see the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
+
+### Production Recommendations
+
+**It is recommended that for production use you change the authentication mode from Service Account to Bearer and use an IDP for authentication with TLS termination.**
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `primary_ddc_url` | Primary region DDC service endpoint |
+| `secondary_ddc_url` | Secondary region DDC service endpoint |
+| `monitoring_url` | ScyllaDB monitoring dashboard (primary region) |

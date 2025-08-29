@@ -44,61 +44,23 @@ provider "awscc" {
 }
 
 provider "kubernetes" {
-  alias                  = "region-1"
-  host                   = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_1.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
-  }
+  alias = "region-1"
+  # Use empty config - will be configured by modules when needed
 }
 
 provider "helm" {
   alias = "region-1"
-  kubernetes {
-    host                   = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_1.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
-    }
-  }
-  registry {
-    url      = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.region_1.region}.amazonaws.com"
-    username = data.aws_ecr_authorization_token.token_region_1.user_name
-    password = data.aws_ecr_authorization_token.token_region_1.password
-  }
+  # Use empty config - will be configured by modules when needed
 }
 
 provider "kubernetes" {
-  alias                  = "region-2"
-  host                   = module.unreal_cloud_ddc_infra_region_2.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_2.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
-  }
+  alias = "region-2"
+  # Use empty config - will be configured by modules when needed
 }
 
 provider "helm" {
   alias = "region-2"
-  kubernetes {
-    host                   = module.unreal_cloud_ddc_infra_region_2.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_2.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
-    }
-  }
-  registry {
-    url      = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.region_2.region}.amazonaws.com"
-    username = data.aws_ecr_authorization_token.token_region_2.user_name
-    password = data.aws_ecr_authorization_token.token_region_2.password
-  }
+  # Use empty config - will be configured by modules when needed
 }
 
 provider "aws" {

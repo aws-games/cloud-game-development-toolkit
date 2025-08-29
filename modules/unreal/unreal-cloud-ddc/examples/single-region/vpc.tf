@@ -2,7 +2,7 @@
 # VPC
 ##########################################
 resource "aws_vpc" "unreal_cloud_ddc_vpc" {
-  cidr_block           = "192.168.0.0/16"
+  cidr_block           = local.vpc_cidr
   enable_dns_hostnames = true
   #checkov:skip=CKV2_AWS_11: VPC flow logging disabled by design
 
@@ -29,8 +29,8 @@ resource "aws_default_security_group" "default" {
 resource "aws_subnet" "public_subnets" {
   count             = length(local.public_subnet_cidrs)
   vpc_id            = aws_vpc.unreal_cloud_ddc_vpc.id
-  cidr_block        = element(local.public_subnet_cidrs, count.index)
-  availability_zone = element(local.azs, count.index)
+  cidr_block        = local.public_subnet_cidrs[count.index]
+  availability_zone = local.azs[count.index]
 
   tags = merge(local.tags,
     {
@@ -42,8 +42,8 @@ resource "aws_subnet" "public_subnets" {
 resource "aws_subnet" "private_subnets" {
   count             = length(local.private_subnet_cidrs)
   vpc_id            = aws_vpc.unreal_cloud_ddc_vpc.id
-  cidr_block        = element(local.private_subnet_cidrs, count.index)
-  availability_zone = element(local.azs, count.index)
+  cidr_block        = local.private_subnet_cidrs[count.index]
+  availability_zone = local.azs[count.index]
 
   tags = merge(local.tags,
     {

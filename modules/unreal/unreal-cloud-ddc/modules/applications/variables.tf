@@ -19,13 +19,15 @@ variable "project_prefix" {
 }
 
 variable "tags" {
-  type = map(any)
-  default = {
-    "ModuleBy"   = "CGD-Toolkit"
-    "ModuleName" = "Unreal DDC"
-    "IaC"        = "Terraform"
-  }
+  type        = map(any)
   description = "Tags to apply to resources."
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "terraform-aws-unreal-cloud-ddc"
+    "ModuleName"     = "applications"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc"
+  }
 }
 
 variable "is_multi_region_deployment" {

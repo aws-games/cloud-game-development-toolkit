@@ -41,7 +41,7 @@ resource "aws_instance" "scylla_monitoring" {
 resource "aws_lb" "scylla_monitoring_alb" {
   count                            = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   region                           = var.region
-  name                             = "${var.project_prefix}-monitoring-alb"
+  name_prefix                      = "${var.project_prefix}"
   load_balancer_type               = "application"
   subnets                          = var.monitoring_application_load_balancer_subnets
   security_groups                  = concat([aws_security_group.scylla_monitoring_lb_sg[count.index].id], var.existing_security_groups)
@@ -62,7 +62,9 @@ resource "aws_lb" "scylla_monitoring_alb" {
   enable_deletion_protection = var.enable_scylla_monitoring_lb_deletion_protection
   tags = merge(var.tags,
     {
-      Name = "${local.name_prefix}-scylla-monitoring-alb"
+      Name = "${local.name_prefix}-shared-alb"
+      Type = "Application Load Balancer"
+      Routability = var.internal_facing_application_load_balancer ? "PRIVATE" : "PUBLIC"
     }
   )
 }
@@ -71,7 +73,7 @@ resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
   #checkov:skip=CKV_AWS_378: TLS termination at ALB
   count       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   region      = var.region
-  name        = "${var.project_prefix}-scylla-monitoring-tg"
+  name_prefix = "${var.project_prefix}"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -90,7 +92,8 @@ resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
   }
   tags = merge(var.tags,
     {
-      Name = "${local.name_prefix}-scylla-monitoring-tg"
+      Name = "${local.name_prefix}-monitoring-tg"
+      TrafficDestination = "${local.name_prefix}-monitoring-service"
     }
   )
 }
@@ -112,7 +115,9 @@ resource "aws_lb_listener" "scylla_monitoring_listener" {
   }
   tags = merge(var.tags,
     {
-      Name = "${local.name_prefix}-scylla-monitoring-alb-listener"
+      Name = "${local.name_prefix}-alb-listener"
+      TrafficSource = "${local.name_prefix}-shared-alb"
+      TrafficDestination = "${local.name_prefix}-monitoring-tg"
     }
   )
 }

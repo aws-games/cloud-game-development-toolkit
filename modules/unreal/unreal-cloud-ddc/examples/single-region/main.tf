@@ -4,18 +4,18 @@ module "unreal_cloud_ddc" {
   
   providers = {
     aws.primary        = aws
-    aws.secondary      = aws.secondary
+    aws.secondary      = aws
     awscc.primary      = awscc
-    awscc.secondary    = awscc.secondary
+    awscc.secondary    = awscc
     kubernetes.primary = kubernetes
-    kubernetes.secondary = kubernetes.secondary
+    kubernetes.secondary = kubernetes
     helm.primary       = helm
-    helm.secondary     = helm.secondary
+    helm.secondary     = helm
   }
   
-  # Single region configuration (no secondary)
+  # Single region configuration - Deploy DDC infrastructure to one region only
   regions = {
-    primary = { region = data.aws_region.current.name }
+    primary = { region = local.region.name }  # Primary region for DDC cluster (no secondary region)
   }
   
   # VPC Configuration
@@ -23,15 +23,20 @@ module "unreal_cloud_ddc" {
     primary = aws_vpc.unreal_cloud_ddc_vpc.id
   }
   
+  # Security Groups
+  existing_security_groups = [aws_security_group.allow_my_ip.id]
+  
+  # Module-level configuration (following Perforce pattern)
+  project_prefix = local.project_prefix
+  
   # Infrastructure Configuration
   infrastructure_config = {
-    name           = "unreal-cloud-ddc"
-    project_prefix = local.project_prefix
-    environment    = "dev"
-    region         = data.aws_region.current.name
+    name        = "unreal-cloud-ddc"  # Hardcoded like Perforce
+    environment = local.environment
+    region      = local.region.name  # Matches regions.primary
     
     # EKS Configuration
-    kubernetes_version      = "1.31"
+    kubernetes_version      = "1.33"
     eks_node_group_subnets = aws_subnet.private_subnets[*].id
     
     # ScyllaDB Configuration
@@ -40,19 +45,24 @@ module "unreal_cloud_ddc" {
     
     # Load Balancer Configuration
     monitoring_application_load_balancer_subnets = aws_subnet.public_subnets[*].id
+    alb_certificate_arn = aws_acm_certificate_validation.scylla_monitoring.certificate_arn
   }
   
   # Application Configuration
   application_config = {
-    name           = "unreal-cloud-ddc"
-    project_prefix = "cgd"
+    name = "unreal-cloud-ddc"  # Hardcoded like Perforce
     
     # Credentials
     ghcr_credentials_secret_manager_arn = var.github_credential_arn
     
     # Application Settings
-    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
+    unreal_cloud_ddc_namespace = local.ddc_namespace
   }
+  
+  # DNS Configuration (optional)
+  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  create_route53_private_hosted_zone = true
+  ddc_subdomain = local.ddc_subdomain
   
   tags = local.tags
 }

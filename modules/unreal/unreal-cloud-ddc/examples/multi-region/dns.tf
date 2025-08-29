@@ -1,108 +1,82 @@
-# Route53 Hosted Zone
+##########################################
+# Fetch Monitoring ALB Details (Primary Region Only)
+##########################################
+data "aws_lb" "monitoring_alb_primary" {
+  provider   = aws.primary
+  arn        = module.unreal_cloud_ddc.primary_region.scylla_monitoring_alb_arn
+  depends_on = [module.unreal_cloud_ddc]
+}
+
+##########################################
+# Route53 Hosted Zone for Root
+##########################################
 data "aws_route53_zone" "root" {
-  provider     = aws.primary
   name         = var.route53_public_hosted_zone_name
   private_zone = false
 }
 
-# Primary region DDC record
-resource "aws_route53_record" "unreal_cloud_ddc_primary" {
-  provider = aws.primary
-  
-  zone_id = data.aws_route53_zone.root.id
-  name    = "ddc-primary.${data.aws_route53_zone.root.name}"
-  type    = "A"
+##########################################
+# DDC Service DNS Records (Region-Specific)
+##########################################
+# Primary DDC service
+resource "aws_route53_record" "ddc_primary" {
+  depends_on = [module.unreal_cloud_ddc]
+  zone_id    = data.aws_route53_zone.root.id
+  name       = "ddc-primary.${var.route53_public_hosted_zone_name}"
+  type       = "CNAME"
+  ttl        = 300
+  records    = [module.unreal_cloud_ddc.ddc_endpoints.primary.load_balancer_dns]
+}
+
+# Secondary DDC service
+resource "aws_route53_record" "ddc_secondary" {
+  depends_on = [module.unreal_cloud_ddc]
+  zone_id    = data.aws_route53_zone.root.id
+  name       = "ddc-secondary.${var.route53_public_hosted_zone_name}"
+  type       = "CNAME"
+  ttl        = 300
+  records    = [module.unreal_cloud_ddc.ddc_endpoints.secondary.load_balancer_dns]
+}
+
+##########################################
+# Monitoring Service DNS Record (Primary Region Only)
+##########################################
+# Monitoring service (only in primary region)
+resource "aws_route53_record" "monitoring" {
+  depends_on = [module.unreal_cloud_ddc]
+  zone_id    = data.aws_route53_zone.root.id
+  name       = "${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  type       = "A"
 
   alias {
-    name                   = module.unreal_cloud_ddc.primary_region.ddc_endpoints.load_balancer_dns
-    zone_id                = module.unreal_cloud_ddc.primary_region.ddc_endpoints.load_balancer_zone_id
+    name                   = data.aws_lb.monitoring_alb_primary.dns_name
+    zone_id                = data.aws_lb.monitoring_alb_primary.zone_id
     evaluate_target_health = false
   }
 }
 
-# Secondary region DDC record
-resource "aws_route53_record" "unreal_cloud_ddc_secondary" {
-  provider = aws.primary
-  
-  zone_id = data.aws_route53_zone.root.id
-  name    = "ddc-secondary.${data.aws_route53_zone.root.name}"
-  type    = "A"
-
-  alias {
-    name                   = module.unreal_cloud_ddc.secondary_region.ddc_endpoints.load_balancer_dns
-    zone_id                = module.unreal_cloud_ddc.secondary_region.ddc_endpoints.load_balancer_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# Primary region monitoring record
-resource "aws_route53_record" "scylla_monitoring_primary" {
-  provider = aws.primary
-  
-  zone_id = data.aws_route53_zone.root.id
-  name    = "monitoring-primary.ddc.${data.aws_route53_zone.root.name}"
-  type    = "A"
-
-  alias {
-    name                   = module.unreal_cloud_ddc.primary_region.monitoring_load_balancer_dns
-    zone_id                = module.unreal_cloud_ddc.primary_region.monitoring_load_balancer_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# Secondary region monitoring record
-resource "aws_route53_record" "scylla_monitoring_secondary" {
-  provider = aws.primary
-  
-  zone_id = data.aws_route53_zone.root.id
-  name    = "monitoring-secondary.ddc.${data.aws_route53_zone.root.name}"
-  type    = "A"
-
-  alias {
-    name                   = module.unreal_cloud_ddc.secondary_region.monitoring_load_balancer_dns
-    zone_id                = module.unreal_cloud_ddc.secondary_region.monitoring_load_balancer_zone_id
-    evaluate_target_health = false
-  }
-}
-
-# ACM Certificate for primary region monitoring
-resource "aws_acm_certificate" "scylla_monitoring_primary" {
-  provider = aws.primary
-  
-  domain_name       = "monitoring-primary.ddc.${data.aws_route53_zone.root.name}"
+##########################################
+# SSL Certificate (Primary Region Only)
+##########################################
+# Monitoring certificate (only in primary region)
+resource "aws_acm_certificate" "monitoring" {
+  provider      = aws.primary
+  domain_name   = "${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   validation_method = "DNS"
 
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-monitoring-primary-cert"
-  })
-  
+  tags = local.tags
   lifecycle {
     create_before_destroy = true
   }
 }
 
-# ACM Certificate for secondary region monitoring
-resource "aws_acm_certificate" "scylla_monitoring_secondary" {
-  provider = aws.secondary
-  
-  domain_name       = "monitoring-secondary.ddc.${data.aws_route53_zone.root.name}"
-  validation_method = "DNS"
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-monitoring-secondary-cert"
-  })
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Certificate validation records
-resource "aws_route53_record" "scylla_monitoring_cert_primary" {
-  provider = aws.primary
-  
+##########################################
+# Certificate Validation Records
+##########################################
+# Monitoring certificate validation
+resource "aws_route53_record" "monitoring_cert" {
   for_each = {
-    for dvo in aws_acm_certificate.scylla_monitoring_primary.domain_validation_options : dvo.domain_name => {
+    for dvo in aws_acm_certificate.monitoring.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -117,42 +91,15 @@ resource "aws_route53_record" "scylla_monitoring_cert_primary" {
   zone_id         = data.aws_route53_zone.root.id
 }
 
-resource "aws_route53_record" "scylla_monitoring_cert_secondary" {
-  provider = aws.primary
-  
-  for_each = {
-    for dvo in aws_acm_certificate.scylla_monitoring_secondary.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+##########################################
+# Certificate Validation
+##########################################
+resource "aws_acm_certificate_validation" "monitoring" {
+  provider        = aws.primary
+  certificate_arn = aws_acm_certificate.monitoring.arn
+  validation_record_fqdns = [for record in aws_route53_record.monitoring_cert : record.fqdn]
 
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.root.id
-}
-
-# Certificate validation
-resource "aws_acm_certificate_validation" "scylla_monitoring_primary" {
-  provider = aws.primary
-  
   timeouts {
     create = "15m"
   }
-  certificate_arn         = aws_acm_certificate.scylla_monitoring_primary.arn
-  validation_record_fqdns = [for record in aws_route53_record.scylla_monitoring_cert_primary : record.fqdn]
-}
-
-resource "aws_acm_certificate_validation" "scylla_monitoring_secondary" {
-  provider = aws.secondary
-  
-  timeouts {
-    create = "15m"
-  }
-  certificate_arn         = aws_acm_certificate.scylla_monitoring_secondary.arn
-  validation_record_fqdns = [for record in aws_route53_record.scylla_monitoring_cert_secondary : record.fqdn]
 }

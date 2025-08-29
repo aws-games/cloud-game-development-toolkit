@@ -34,7 +34,7 @@ variable "existing_security_groups" {
 }
 
 ########################################
-# Infrastructure Configuration
+# Infrastructure Submodule Configuration
 ########################################
 variable "infrastructure_config" {
   type = object({
@@ -46,7 +46,7 @@ variable "infrastructure_config" {
     debug          = optional(bool, false)
 
     # EKS Configuration
-    kubernetes_version      = optional(string, "1.31")
+    kubernetes_version      = optional(string, "1.33")
     eks_node_group_subnets = optional(list(string), [])
     
     # Node Groups
@@ -129,7 +129,25 @@ variable "infrastructure_config" {
 }
 
 ########################################
-# Application Configuration
+# Authentication Configuration
+########################################
+variable "ddc_bearer_token_secret_arn" {
+  type        = string
+  description = "ARN of existing DDC bearer token secret. If not provided, a new secret will be created."
+  default     = null
+}
+
+########################################
+# ECR Configuration
+########################################
+variable "ecr_secret_suffix" {
+  type        = string
+  description = "Suffix for ECR pull-through cache secret name (after 'ecr-pullthroughcache/'). Defaults to project_prefix-name pattern."
+  default     = null
+}
+
+########################################
+# Application Submodule Configuration
 ########################################
 variable "application_config" {
   type = object({
@@ -182,12 +200,49 @@ variable "application_config" {
 
   validation {
     condition     = length(regexall("ecr-pullthroughcache/", var.application_config.ghcr_credentials_secret_manager_arn)) > 0
-    error_message = "ghcr_credentials_secret_manager_arn needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache."
+    error_message = "ghcr_credentials_secret_manager_arn needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. Expected pattern: 'ecr-pullthroughcache/${var.project_prefix}-${var.infrastructure_config.name}-github-credentials' or use ecr_secret_suffix variable to customize."
+  }
+  
+  validation {
+    condition     = can(regex("ecr-pullthroughcache/[a-zA-Z0-9-_]+", var.application_config.ghcr_credentials_secret_manager_arn))
+    error_message = "ECR pull-through cache secret name must follow pattern 'ecr-pullthroughcache/[name]' where [name] contains only alphanumeric characters, hyphens, and underscores."
   }
 
   validation {
     condition     = var.application_config.enable_certificate_manager ? length(var.application_config.certificate_manager_hosted_zone_arn) > 0 : true
     error_message = "Certificate Manager hosted zone ARN is required when enable_certificate_manager is true."
+  }
+}
+
+########################################
+# DNS Configuration
+########################################
+variable "route53_public_hosted_zone_name" {
+  type        = string
+  description = "The name of the public Route53 Hosted Zone (e.g., 'example.com'). Used as the parent domain for DDC subdomains."
+  default     = null
+}
+
+variable "create_route53_private_hosted_zone" {
+  type        = bool
+  description = "Whether to create a private Route53 Hosted Zone for internal DDC communication. This private hosted zone is used for internal communication between DDC services."
+  default     = true
+}
+
+variable "route53_private_hosted_zone_name" {
+  type        = string
+  description = "The name of the private Route53 Hosted Zone for DDC resources. If not provided, defaults to 'ddc.<public_zone_name>'."
+  default     = null
+}
+
+variable "ddc_subdomain" {
+  type        = string
+  description = "The subdomain to use for DDC services (e.g., 'ddc' creates 'ddc.example.com')."
+  default     = "ddc"
+  
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.ddc_subdomain))
+    error_message = "DDC subdomain must contain only lowercase letters, numbers, and hyphens."
   }
 }
 

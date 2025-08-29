@@ -75,12 +75,29 @@ output "system_node_group_label" {
   description = "Label for the System node group"
 }
 
+# Load Balancer Outputs (following Perforce naming pattern)
+output "scylla_monitoring_alb_dns_name" {
+  value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].dns_name : null
+  description = "DNS endpoint of ScyllaDB Monitoring Application Load Balancer"
+}
+
+output "scylla_monitoring_alb_zone_id" {
+  value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].zone_id : null
+  description = "Zone ID of ScyllaDB Monitoring Application Load Balancer"
+}
+
+output "scylla_monitoring_alb_arn" {
+  value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].arn : null
+  description = "ARN of ScyllaDB Monitoring Application Load Balancer"
+}
+
+# Legacy outputs for backward compatibility
 output "external_alb_dns_name" {
   value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].dns_name : null
-  description = "DNS endpoint of Application Load Balancer (ALB)"
+  description = "DNS endpoint of Application Load Balancer (ALB) - DEPRECATED: use scylla_monitoring_alb_dns_name"
 }
 
 output "external_alb_zone_id" {
   value       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? aws_lb.scylla_monitoring_alb[0].zone_id : null
-  description = "Zone ID for internet facing load balancer"
+  description = "Zone ID for internet facing load balancer - DEPRECATED: use scylla_monitoring_alb_zone_id"
 }

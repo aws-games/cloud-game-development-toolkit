@@ -13,10 +13,10 @@ module "unreal_cloud_ddc" {
     helm.secondary     = helm.secondary
   }
   
-  # Multi-region Configuration
+  # Multi-region Configuration - Deploy DDC infrastructure to both regions with cross-region replication
   regions = {
-    primary   = { region = var.regions[0] }
-    secondary = { region = var.regions[1] }
+    primary   = { region = local.regions.primary.name }   # Primary region for main DDC cluster
+    secondary = { region = local.regions.secondary.name } # Secondary region for replicated DDC cluster
   }
   
   # VPC Configuration
@@ -25,19 +25,30 @@ module "unreal_cloud_ddc" {
     secondary = aws_vpc.secondary.id
   }
   
+  # Security Groups
+  existing_security_groups = [
+    aws_security_group.allow_my_ip_primary.id,
+    aws_security_group.allow_my_ip_secondary.id,
+    aws_security_group.scylla_cross_region_primary.id,
+    aws_security_group.scylla_cross_region_secondary.id
+  ]
+  
+  # Module-level configuration (following Perforce pattern)
+  project_prefix = local.project_prefix
+  
   # Infrastructure Configuration
   infrastructure_config = {
-    name           = var.project_prefix
-    project_prefix = var.project_prefix
-    environment    = var.environment
+    name        = "unreal-cloud-ddc"  # Hardcoded like Perforce
+    environment = local.environment
+    region      = local.regions.primary.name  # Matches regions.primary
     
     # EKS Configuration
-    kubernetes_version      = var.eks_cluster_version
+    kubernetes_version      = "1.31"
     eks_node_group_subnets = aws_subnet.primary_private[*].id
     
     # ScyllaDB Configuration
     scylla_subnets       = aws_subnet.primary_private[*].id
-    scylla_instance_type = var.scylla_instance_type
+    scylla_instance_type = "i4i.xlarge"
     
     # Load Balancer Configuration
     monitoring_application_load_balancer_subnets = aws_subnet.primary_public[*].id
@@ -45,97 +56,20 @@ module "unreal_cloud_ddc" {
   
   # Application Configuration
   application_config = {
-    name           = var.project_prefix
-    project_prefix = var.project_prefix
+    name = "unreal-cloud-ddc"  # Hardcoded like Perforce
     
     # Credentials
     ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_1
     
     # Application Settings
-    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
+    unreal_cloud_ddc_namespace = local.ddc_namespace
   }
   
-  tags = var.additional_tags
-}
-
-# Primary region VPC
-resource "aws_vpc" "primary" {
-  provider = aws.primary
+  # DNS Configuration (optional)
+  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  create_route53_private_hosted_zone = true
+  ddc_subdomain = local.ddc_subdomain
   
-  cidr_block           = var.vpc_cidr_region_1
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-primary-vpc"
-  })
+  tags = local.tags
 }
 
-# Secondary region VPC
-resource "aws_vpc" "secondary" {
-  provider = aws.secondary
-  
-  cidr_block           = var.vpc_cidr_region_2
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-secondary-vpc"
-  })
-}
-
-# Primary region subnets
-resource "aws_subnet" "primary_public" {
-  provider = aws.primary
-  count    = 2
-
-  vpc_id                  = aws_vpc.primary.id
-  cidr_block              = cidrsubnet(var.vpc_cidr_region_1, 8, count.index + 1)
-  availability_zone       = local.azs_region_1[count.index]
-  map_public_ip_on_launch = true
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-primary-public-${count.index + 1}"
-  })
-}
-
-resource "aws_subnet" "primary_private" {
-  provider = aws.primary
-  count    = 2
-
-  vpc_id            = aws_vpc.primary.id
-  cidr_block        = cidrsubnet(var.vpc_cidr_region_1, 8, count.index + 3)
-  availability_zone = local.azs_region_1[count.index]
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-primary-private-${count.index + 1}"
-  })
-}
-
-# Secondary region subnets
-resource "aws_subnet" "secondary_public" {
-  provider = aws.secondary
-  count    = 2
-
-  vpc_id                  = aws_vpc.secondary.id
-  cidr_block              = cidrsubnet(var.vpc_cidr_region_2, 8, count.index + 1)
-  availability_zone       = local.azs_region_2[count.index]
-  map_public_ip_on_launch = true
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-secondary-public-${count.index + 1}"
-  })
-}
-
-resource "aws_subnet" "secondary_private" {
-  provider = aws.secondary
-  count    = 2
-
-  vpc_id            = aws_vpc.secondary.id
-  cidr_block        = cidrsubnet(var.vpc_cidr_region_2, 8, count.index + 3)
-  availability_zone = local.azs_region_2[count.index]
-
-  tags = merge(local.common_tags, {
-    Name = "${var.project_prefix}-secondary-private-${count.index + 1}"
-  })
-}

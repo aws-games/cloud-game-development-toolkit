@@ -67,29 +67,31 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
 
-# Cleanup resource for proper Kubernetes resource management
-resource "null_resource" "cleanup_on_destroy" {
+# Cleanup Helm releases before EKS cluster destruction
+resource "null_resource" "helm_cleanup" {
   triggers = {
-    cluster_name = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
-    region      = data.aws_region.current.name
-    namespace   = var.unreal_cloud_ddc_namespace
+    cluster_name = var.cluster_name
+    namespace    = var.unreal_cloud_ddc_namespace
+    region       = var.region
   }
 
   provisioner "local-exec" {
-    when    = destroy
+    when = destroy
     command = <<-EOT
-      # Only run cleanup if we can connect to the cluster
+      # Update kubeconfig and cleanup Helm releases
       if aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
-        echo "Cleaning up Kubernetes resources in namespace ${self.triggers.namespace}"
-        kubectl delete all --all -n ${self.triggers.namespace} --timeout=60s --ignore-not-found=true || true
-        kubectl delete pvc --all -n ${self.triggers.namespace} --timeout=30s --ignore-not-found=true || true
-        kubectl delete namespace ${self.triggers.namespace} --timeout=60s --ignore-not-found=true || true
+        echo "Cleaning up Helm releases in namespace ${self.triggers.namespace}"
+        helm uninstall unreal-cloud-ddc-initialize -n ${self.triggers.namespace} --timeout=60s || true
+        helm uninstall unreal-cloud-ddc-replicate -n ${self.triggers.namespace} --timeout=60s || true
+        kubectl delete namespace ${self.triggers.namespace} --timeout=60s || true
       else
-        echo "Cluster not accessible, skipping Kubernetes cleanup"
+        echo "Cluster not accessible, skipping Helm cleanup"
       fi
     EOT
   }
 }
+
+
 
 locals {
   unreal_cloud_ddc_base_values                          = [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, var.unreal_cloud_ddc_helm_config)]
@@ -112,19 +114,15 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
     aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule,
-    null_resource.cleanup_on_destroy
+    null_resource.helm_cleanup
   ]
   values = local.unreal_cloud_ddc_base_values
 }
 
-resource "null_resource" "delete_init_deployment" {
-  count = var.is_multi_region_deployment ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --region ${var.region} --name ${data.aws_eks_cluster.unreal_cloud_ddc_cluster.name} && kubectl delete deployment -l app.kubernetes.io/instance=unreal-cloud-ddc-initialize -n ${var.unreal_cloud_ddc_namespace} || true"
-  }
-
-  depends_on = [helm_release.unreal_cloud_ddc_initialization]
+resource "time_sleep" "wait_for_init" {
+  count           = var.is_multi_region_deployment ? 1 : 0
+  create_duration = "30s"
+  depends_on      = [helm_release.unreal_cloud_ddc_initialization]
 }
 
 resource "helm_release" "unreal_cloud_ddc_with_replication" {
@@ -137,7 +135,8 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   reset_values = true
   timeout      = 600
   depends_on = [
-    null_resource.delete_init_deployment
+    time_sleep.wait_for_init,
+    null_resource.helm_cleanup
   ]
   values = local.unreal_cloud_ddc_multi_region_with_replication_values
 }

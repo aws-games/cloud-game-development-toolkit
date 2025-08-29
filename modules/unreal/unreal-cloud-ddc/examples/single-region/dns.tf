@@ -1,4 +1,12 @@
 ##########################################
+# Fetch Monitoring ALB Details
+##########################################
+data "aws_lb" "monitoring_alb" {
+  arn = module.unreal_cloud_ddc.primary_region.scylla_monitoring_alb_arn
+  depends_on = [module.unreal_cloud_ddc]
+}
+
+##########################################
 # Route53 Hosted Zone for Root
 ##########################################
 data "aws_route53_zone" "root" {
@@ -10,14 +18,10 @@ data "aws_route53_zone" "root" {
 resource "aws_route53_record" "unreal_cloud_ddc" {
   depends_on = [module.unreal_cloud_ddc]
   zone_id    = data.aws_route53_zone.root.id
-  name       = "ddc.${data.aws_route53_zone.root.name}"
-  type       = "A"
-
-  alias {
-    name                   = module.unreal_cloud_ddc.ddc_endpoints.primary.load_balancer_dns
-    zone_id                = module.unreal_cloud_ddc.primary_region.vpc_id  # This needs to be fixed to actual zone_id
-    evaluate_target_health = false
-  }
+  name       = local.ddc_fully_qualified_domain_name
+  type       = "CNAME"
+  ttl        = 300
+  records    = [module.unreal_cloud_ddc.ddc_endpoints.primary.load_balancer_dns]
 }
 
 ##########################################
@@ -26,25 +30,24 @@ resource "aws_route53_record" "unreal_cloud_ddc" {
 
 # Create a record in the Hosted Zone for the scylla_monitoring server
 resource "aws_route53_record" "scylla_monitoring" {
-  zone_id = data.aws_route53_zone.root.id
-  name    = "monitoring.ddc.${data.aws_route53_zone.root.name}"
-  type    = "A"
+  depends_on = [module.unreal_cloud_ddc]
+  zone_id    = data.aws_route53_zone.root.id
+  name       = local.monitoring_fully_qualified_domain_name
+  type       = "A"
 
   alias {
-    name                   = "example.com"  # TODO: Fix with actual ALB DNS from unified module
-    zone_id                = "Z123456789"   # TODO: Fix with actual ALB zone ID
+    name                   = data.aws_lb.monitoring_alb.dns_name
+    zone_id                = data.aws_lb.monitoring_alb.zone_id
     evaluate_target_health = false
   }
 }
 
 # Create a certificate for the scylla_monitoring server
 resource "aws_acm_certificate" "scylla_monitoring" {
-  domain_name       = "monitoring.ddc.${data.aws_route53_zone.root.name}"
+  domain_name       = local.monitoring_fully_qualified_domain_name
   validation_method = "DNS"
 
-  tags = {
-    Environment = "test"
-  }
+  tags = local.tags
   lifecycle {
     create_before_destroy = true
   }

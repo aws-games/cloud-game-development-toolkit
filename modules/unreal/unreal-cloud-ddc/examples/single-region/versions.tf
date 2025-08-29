@@ -5,34 +5,22 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "6.6.0"
-      configuration_aliases = [
-        aws.primary,
-        aws.secondary
-      ]
     }
     awscc = {
       source  = "hashicorp/awscc"
       version = "1.50.0"
-      configuration_aliases = [
-        awscc.primary,
-        awscc.secondary
-      ]
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">=2.33.0"
-      configuration_aliases = [
-        kubernetes.primary,
-        kubernetes.secondary
-      ]
     }
     helm = {
       source  = "hashicorp/helm"
       version = ">=2.16.0, <3.0.0"
-      configuration_aliases = [
-        helm.primary,
-        helm.secondary
-      ]
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = ">= 3.4.5"
     }
     random = {
       source  = "hashicorp/random"

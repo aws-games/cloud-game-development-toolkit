@@ -1,86 +1,134 @@
 # Unreal Cloud DDC Single Region
 
-The Unreal Cloud DDC Single Region is a comprehensive solution that leverages several AWS services to create a robust and efficient data caching system. It uses a well-designed Virtual Private Cloud (VPC) to ensure network isolation and security. The solution employs an Amazon Elastic Kubernetes Service (EKS) Cluster with Node Groups to manage and orchestrate containerized applications.
+This example deploys **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)** in a single AWS region. The deployment is a comprehensive solution that leverages several AWS services to create a robust and efficient data caching system. It uses a well-designed Virtual Private Cloud (VPC) to ensure network isolation and security, employs an Amazon Elastic Kubernetes Service (EKS) Cluster with Node Groups to manage and orchestrate containerized applications, and includes an instance of ScyllaDB, a high-performance NoSQL database, running on specially optimized Amazon EC2 instances. The Unreal Cloud Derived Data Cache Container is managed by Helm and uses Amazon S3 for durable storage.
 
-At the heart of the system is an instance of ScyllaDB, a high-performance NoSQL database, running on specially optimized Amazon EC2 instances. The Unreal Cloud Derived Data Cache Container is managed by Helm, a package manager for Kubernetes, and uses Amazon S3 for durable storage.
+## Architecture
 
+![unreal-cloud-ddc-single-region](../../modules/applications/assets/media/diagrams/unreal-cloud-ddc-single-region.png)
 
-### Predeployment - Set Up Github Content Repository Credentials
+## Important
 
-The [Unreal Cloud DDC Inter Cluster module](../modules/unreal/unreal-cloud-ddc-intra-cluster) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
-```json
-{
-  "username":"GITHUB-USER-NAME-PLACEHOLDER",
-  "accessToken":"GITHUB-ACCESS-TOKEN-PLACEHOLDER"
+### Provider Configuration
+
+This example uses a unified module that supports both single and multi-region deployments. **All provider aliases must be defined even for single-region deployments** due to the module's design. For single-region, point the secondary providers to the same configurations as primary:
+
+```hcl
+providers = {
+  aws.primary        = aws          # Creates AWS resources (EKS, EC2, S3)
+  aws.secondary      = aws          # Required but unused for single-region
+  awscc.primary      = awscc        # Creates AWS Cloud Control resources
+  awscc.secondary    = awscc        # Required but unused for single-region
+  kubernetes.primary = kubernetes   # Deploys to EKS cluster
+  kubernetes.secondary = kubernetes # Required but unused for single-region
+  helm.primary       = helm         # Installs Helm charts
+  helm.secondary     = helm         # Required but unused for single-region
 }
 ```
 
-## Deployment
+### Region Configuration
 
-Once you've completed the prerequisites and set your variables, you can deploy the solution by running:
+**Important**: The deployment will create resources in the **exact region specified** in the `regions` variable, regardless of your AWS CLI/session default region.
 
-``` bash
-terraform apply
+```hcl
+regions = {
+  primary = { region = "us-east-1" }  # Resources deployed HERE, not your session region
+}
 ```
 
-The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.
-## Postdeployment
-The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.
+**Key constraints:**
+- Keys must be exactly `"primary"` (cannot use `"main"`, `"east"`, etc.)
+- Region string must be explicit (not `data.aws_region.current.name`)
+- Your AWS session region does **not** affect where resources are deployed
 
-The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager. The ARN of this secret is provided as a Terraform output (`"unreal_cloud_ddc_bearer_token_arn"`) on the console following deployment. To fetch the bearer token you can use the aws CLI:
+**⚠️ Avoid using data sources for regions:**
+```hcl
+# DON'T DO THIS - risky and unpredictable
+regions = {
+  primary = { region = data.aws_region.current.name }
+}
+
+# DO THIS - explicit and safe
+regions = {
+  primary = { region = "us-east-1" }
+}
+```
+
+**Why explicit regions are safer:**
+- **Predictable**: Always deploys to the same region
+- **Team-safe**: Works regardless of individual AWS profile configurations
+- **CI/CD-safe**: No dependency on runtime environment
+- **Change-safe**: Won't propose region changes when team members have different default regions
+
+### GitHub Credentials Setup
+
+Before deployment, you must create GitHub credentials in AWS Secrets Manager **in the same region** as your deployment (matching your `regions.primary.region` value) to access the Unreal Cloud DDC container image. The secret must be prefixed with `ecr-pullthroughcache/` and follow the naming pattern `ecr-pullthroughcache/{project_prefix}-{name}-github-credentials`.
+
+Example secret name: `ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials`
+
+Secret format:
+```json
+{
+  "username": "GITHUB-USER-NAME",
+  "accessToken": "GITHUB-ACCESS-TOKEN"
+}
+```
+
+### Deployment Time
+
+The deployment takes approximately 30 minutes, with EKS cluster and node group creation requiring around 20 minutes.
+
+### Post-Deployment
+
+The example deploys Route53 DNS records for accessing your Unreal DDC services:
+- **DDC Service**: `ddc.<your-domain>` - Main DDC API endpoint
+- **Monitoring**: `monitoring.ddc.<your-domain>` - ScyllaDB monitoring dashboard
+
+Where `<your-domain>` is the value you provided for `route53_public_hosted_zone_name`.
+
+**DNS Record Locations:**
+- **Public Records**: All DNS records are created in your existing **public hosted zone**
+- **Private Zone**: The module also creates a private hosted zone for internal service discovery
+
+These records point to load balancers which may take additional time to become fully available after deployment completes. You can view the provisioning status in the EC2 Load Balancing console.
+
+The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager.
+
+### Post-Deployment Testing
+
+#### Quick Sanity Check
+After deployment, test your setup using the provided sanity check script:
+
 ```bash
-aws secretsmanager get-secret-value --secret-id <"unreal_cloud_ddc_bearer_token_arn">
+cd assets
+./sanity_check.sh
 ```
 
-To validate you can put an object you can run:
+This script automatically tests the DDC API by putting and getting test data.
+
+#### Manual Testing
+To manually validate you can put an object:
+
 ```bash
 curl http://<unreal_ddc_url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H 'Authorization: ServiceAccount <secret-manager-token>'
 ```
-After running this you should get a response that looks as the following:
-```
-HTTP/1.1 200 OK
-Server: nginx
-Date: Wed, 29 Jan 2025 19:15:05 GMT
-Content-Type: application/json; charset=utf-8
-Transfer-Encoding: chunked
-Connection: keep-alive
-Server-Timing: blob.put.FileSystemStore;dur=0.1451;desc="PUT to store: 'FileSystemStore'",blob.put.AmazonS3Store;dur=267.0449;desc="PUT to store: 'AmazonS3Store'",blob.get-metadata.FileSystemStore;dur=0.0406;desc="Blob GET Metadata from: 'FileSystemStore'",ref.finalize;dur=7.1407;desc="Finalizing the ref",ref.put;dur=25.2064;desc="Inserting ref"
 
-{"needs":[]}%
-```
+#### Comprehensive Testing
+For comprehensive testing, use the [benchmarking tools](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks) with an x2idn.32xlarge instance:
 
-You can then access the same chunk with the following command:
-```bash
-curl http://<unreal_ddc_url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json -i -H 'Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token>'
-```
-
-The response should look like the following:
-```
-HTTP/1.1 200 OK
-Server: nginx
-Date: Wed, 29 Jan 2025 19:16:46 GMT
-Content-Type: application/json
-Content-Length: 66
-Connection: keep-alive
-X-Jupiter-IoHash: 7D873DCC262F62FBAA871FE61B2B52D715A1171E
-X-Jupiter-LastAccess: 01/29/2025 19:16:46
-Server-Timing: ref.get;dur=0.0299;desc="Fetching Ref from DB"
-
-{"RawHash":"4878ca0425c739fa427f7eda20fe845f6b2e46ba","RawSize":4}%
-```
-For a more comprehensive test of your deployment, we recommend using the [bench marking tools](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks). To do so we used a x2idn.32xlarge as it matched Epic's benchmarking instance to test their configuration.
-
-With the benchmarking tools we ran the following command after compiling the docker image:
 ```bash
 docker run --network host jupiter_benchmark --seed --seed-remote --host http://<unreal_ddc_url> --namespace ddc \
 --header="Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token>" all
 ```
-Just a note here, you will have to specify the namespace to be DDC as the token only has access to that namespace.
 
-**It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.**
+**Note**: Specify the namespace as `ddc` since the token only has access to that namespace.
 
+### Monitoring
 
-This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the `"monitoring_url"` provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
+The deployment includes a ScyllaDB monitoring stack with Prometheus, Alertmanager, and Grafana for real-time insights into database performance. Access the Grafana dashboard using the `monitoring_url` provided in the Terraform outputs. For more information, see the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
+
+### Production Recommendations
+
+**It is recommended that for production use you change the authentication mode from Service Account to Bearer and use an IDP for authentication with TLS termination.**
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
