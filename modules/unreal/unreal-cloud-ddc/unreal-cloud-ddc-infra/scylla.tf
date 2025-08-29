@@ -3,14 +3,15 @@
 ################################################################################
 
 resource "aws_iam_instance_profile" "scylla_instance_profile" {
-  name = "${local.name_prefix}-scylladb-instance-profile"
+  name = "${local.name_prefix}-scylladb-instance-profile-${var.region}"
   role = aws_iam_role.scylla_role.name
 }
 ################################################################################
 # Scylla Instances
 ################################################################################
 resource "aws_instance" "scylla_ec2_instance_seed" {
-  count = length([var.scylla_subnets[0]])
+  count  = var.is_primary_region ? length([var.scylla_subnets[0]]) : 0
+  region = var.region
 
   ami                    = data.aws_ami.scylla_ami.id
   instance_type          = var.scylla_instance_type
@@ -46,7 +47,8 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
 }
 
 resource "aws_instance" "scylla_ec2_instance_other_nodes" {
-  count = length(var.scylla_subnets) - 1
+  count  = var.is_primary_region ? var.scylla_replication_factor - 1 : var.scylla_replication_factor
+  region = var.region
 
   ami                    = data.aws_ami.scylla_ami.id
   instance_type          = var.scylla_instance_type

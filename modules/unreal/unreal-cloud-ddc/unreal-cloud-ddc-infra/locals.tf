@@ -36,13 +36,14 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name,
         "seed_provider" : [{
-        "parameters" : [{ "seeds" : aws_instance.scylla_ec2_instance_seed[0].private_ip }] }]
+        "parameters" : [{ "seeds" : var.is_primary_region ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
       }
       #required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       #if scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring.
       "start_scylla_on_first_boot" : true
     }
   )
+
   nvme-pre-bootstrap-userdata = <<EOF
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="//"
@@ -59,7 +60,8 @@ EOF
 
   scylla_node_ips = concat(
     [for instance in aws_instance.scylla_ec2_instance_seed : instance.private_ip],
-    [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip]
+    [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip],
+    var.existing_scylla_ips
   )
 
   scylla_monitoring_user_data = <<MONITORING_EOF
@@ -113,6 +115,19 @@ sudo systemctl restart docker
 # Create the scylla_servers.yml file with server information
 cat << EOF | sudo tee prometheus/scylla_servers.yml
 # List of Scylla nodes to monitor
+%{if length(var.scylla_ips_by_region) > 0~}
+%{for region, ips in var.scylla_ips_by_region~}
+- targets:
+%{for ip in ips~}
+    - ${ip}
+%{endfor~}
+  labels:
+    cluster: "unreal-cloud-ddc"
+    dc: ${region}
+    region: ${region}
+%{endfor~}
+%{else~}
+# Fallback for single region or legacy configuration
 - targets:
 %{for ip in local.scylla_node_ips~}
     - ${ip}
@@ -120,6 +135,8 @@ cat << EOF | sudo tee prometheus/scylla_servers.yml
   labels:
     cluster: "unreal-cloud-ddc"
     dc: ${var.region}
+    region: ${var.region}
+%{endif~}
 EOF
 
 # Set proper permissions
@@ -130,4 +147,5 @@ sudo ./start-all.sh -l -d /home/ec2-user/prometheus/data -a /home/ec2-user/prome
 
 --//--\
 MONITORING_EOF
+
 }
