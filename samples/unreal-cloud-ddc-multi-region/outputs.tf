@@ -13,3 +13,7 @@ output "unreal_cloud_ddc_bearer_token_arn" {
 output "scylla_ips" {
   value = local.scylla_ips
 }
+
+output "scylla_ips_by_region" {
+  value = local.scylla_ips_by_region
+}

@@ -37,16 +37,53 @@ The Unreal Cloud Derived Data Cache (DDC) infrastructure module implements Epic'
 
 ## Prerequisites
 
-#### Network Infrastructure Requirements
+### Network Infrastructure Requirements
 
-At a minimum, the Cloud DDC Module requires a Virtual Private Cloud (VPC) with a specific subnet configuration. The suggested configuration includes:
+The Cloud DDC Module requires a properly configured Virtual Private Cloud (VPC) with specific networking components:
 
-- 2 public subnets
-- 2 private subnets
-- Coverage across 2 Availability Zones
-- An S3 interface endpoint
+**Required VPC Configuration:**
+- **2 public subnets** - For load balancers and NAT gateways
+- **2 private subnets** - For EKS nodes and ScyllaDB instances
+- **Coverage across 2 Availability Zones** - For high availability
+- **S3 VPC endpoint** - For efficient S3 access without internet routing
+- **Internet Gateway** - For outbound internet access
+- **NAT Gateways** - For private subnet internet access
 
-This architecture ensures high availability and secure communication patterns for your DDC infrastructure.
+**Security Considerations:**
+- Private subnets are **strongly recommended** for all compute resources
+- Public subnets should only contain load balancers and NAT gateways
+- VPC endpoints reduce data transfer costs and improve security
+
+**Single vs Multi-Region Networking:**
+- **Single Region**: Standard VPC with local subnets
+- **Multi-Region**: Requires inter-region connectivity for ScyllaDB cluster communication
+  - **Options**: VPC Peering, Transit Gateway, AWS Direct Connect, or Site-to-Site VPN
+  - **Considerations**: Latency, bandwidth, and cost vary by connectivity method
+
+### Authentication & Security
+
+**Bearer Token Authentication:**
+The module automatically generates a secure bearer token stored in AWS Secrets Manager. This token:
+- Authenticates all API requests to the DDC service
+- Prevents unauthorized access to cached game assets
+- Is replicated across regions in multi-region deployments
+- Should be rotated regularly in production environments
+
+**GitHub Container Registry Access:**
+Access to Epic's Unreal Cloud DDC container images requires:
+1. **GitHub account linked to Epic account** - [Instructions here](https://www.unrealengine.com/en-US/ue-on-github)
+2. **GitHub Personal Access Token** with specific permissions:
+   - `read:packages` - Required to pull container images from GitHub Container Registry
+   - `repo` - Required to access the private Unreal Engine repository
+3. **Manual secret creation** - Required due to ECR pull-through cache naming requirements
+
+⚠️ **Permission Requirements**: Both `read:packages` and `repo` permissions are mandatory for accessing Unreal Engine container images.
+
+**Security Best Practices:**
+- Use OIDC authentication instead of bearer tokens in production
+- Enable VPC Flow Logs for network monitoring
+- Implement least-privilege IAM policies
+- Enable CloudTrail for API auditing
 
 <br/>
 
@@ -75,6 +112,59 @@ ScyllaDB Instance Distribution: `scylla_subnets`
 
 The `scylla_subnets` variable determines the deployment topology of your ScyllaDB instances. Each specified subnet receives a dedicated ScyllaDB instance, with multiple subnet configurations automatically establishing a distributed cluster architecture. Configurations of two or more subnets enable high availability and data resilience through native ScyllaDB clustering at the cost of increased infrastructure complexity and proportionally higher operational expenses.
 
+## Troubleshooting
+
+### Common Issues
+
+**ScyllaDB Cluster Formation Issues:**
+- **Symptom**: Nodes not joining cluster
+- **Cause**: Security group rules blocking cluster communication
+- **Solution**: Verify ports 7000, 7001, 9042 are open between ScyllaDB security groups
+
+**EKS Node Group Launch Failures:**
+- **Symptom**: Node groups stuck in CREATE_FAILED state
+- **Cause**: Insufficient subnet capacity or incorrect instance types
+- **Solution**: Check subnet available IPs and verify instance type availability in AZ
+
+**Monitoring Stack Access Issues:**
+- **Symptom**: Cannot access Grafana dashboard
+- **Cause**: Security group or certificate configuration
+- **Solution**: Verify ALB security group allows inbound HTTPS and certificate is valid
+
+### Validation Commands
+
+**Check ScyllaDB Cluster Status:**
+```bash
+# SSH to ScyllaDB instance via Session Manager
+aws ssm start-session --target i-1234567890abcdef0
+
+# Check cluster status
+nodetool status
+
+# Verify datacenter configuration
+cqlsh -e "SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"
+```
+
+**Verify EKS Cluster Health:**
+```bash
+# Update kubeconfig
+aws eks update-kubeconfig --region us-east-1 --name unreal-cloud-ddc-cluster
+
+# Check node status
+kubectl get nodes
+
+# Verify system pods
+kubectl get pods -n kube-system
+```
+
+**Monitor Resource Usage:**
+```bash
+# Check EKS cluster logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/eks/unreal-cloud-ddc"
+
+# Monitor ScyllaDB metrics
+curl http://scylla-ip:9180/metrics
+```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

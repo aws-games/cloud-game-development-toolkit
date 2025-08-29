@@ -24,6 +24,22 @@ terraform apply
 ```
 
 The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.
+
+### Expected Deployment Timeline
+- **Infrastructure (EKS, VPC, ScyllaDB)**: ~20-25 minutes
+- **Helm Charts and Application Deployment**: ~5-10 minutes
+- **Total**: ~30 minutes
+
+### ScyllaDB Datacenter Naming Important Note
+⚠️ **Critical**: Due to a ScyllaDB parsing issue with strings containing `-1`, this sample removes the `-1` suffix from datacenter names to prevent configuration errors. Other suffixes remain unchanged. **Examples:**
+- `us-east-1` → `us-east` (datacenter name)
+- `us-east-2` → `us-east-2` (datacenter name)
+- `us-west-1` → `us-west` (datacenter name)
+- `us-west-2` → `us-west-2` (datacenter name)
+- `eu-west-1` → `eu-west` (datacenter name)
+- `ap-southeast-1` → `ap-southeast` (datacenter name)
+
+**You can use any AWS regions** - this sample automatically handles the conversion in the Helm configuration and SSM documents. When you see datacenter names like `us-east`, this represents the `us-east-1` region.
 ## Postdeployment
 The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.
 
@@ -81,6 +97,180 @@ Just a note here, you will have to specify the namespace to be DDC as the token 
 
 
 This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the `"monitoring_url"` provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
+
+## Troubleshooting
+
+### Quick Health Checks
+
+**Execute these commands from your local machine** with AWS CLI and kubectl configured.
+
+#### 0. Configure kubectl for EKS (Required First)
+```bash
+# Run on your local machine with AWS CLI access
+# Update kubeconfig to connect to your EKS cluster
+aws eks update-kubeconfig --region <your-region> --name <cluster-name>
+
+# Example for us-east-1:
+# aws eks update-kubeconfig --region us-east-1 --name unreal-cloud-ddc-cluster
+```
+
+#### 1. Check Pod Status
+```bash
+# Run on your local machine
+# View all pods in the unreal-cloud-ddc namespace
+kubectl get pods -n unreal-cloud-ddc
+
+# Expected: All pods should be in "Running" status
+# If pods are in CrashLoopBackOff or Error state, proceed to log analysis
+```
+
+#### 2. Check Pod Logs
+```bash
+# Run on your local machine
+# Check logs for application pods
+kubectl logs -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc --tail=50
+
+# Check logs for worker pods
+kubectl logs -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc-worker --tail=50
+```
+
+#### 3. Verify ScyllaDB Datacenter Configuration
+```bash
+# Run on your local machine
+# Get a pod name
+POD_NAME=$(kubectl get pods -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc -o jsonpath='{.items[0].metadata.name}')
+
+# Check ScyllaDB datacenters from within the application pod
+kubectl exec -n unreal-cloud-ddc $POD_NAME -- cqlsh -e "SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"
+
+# Expected output should show converted datacenter names (e.g., 'us-east' instead of 'us-east-1')
+```
+
+#### 4. Check Application Configuration
+```bash
+# Run on your local machine
+# View the ConfigMap to verify datacenter names in application config
+kubectl get configmap -n unreal-cloud-ddc -o yaml | grep -A 10 -B 5 "KeyspaceReplicationStrategy"
+
+# Verify the datacenter names match what ScyllaDB reports
+```
+
+#### 5. Direct ScyllaDB Access (Alternative Method)
+```bash
+# Run on one of the ScyllaDB EC2 instances (if needed for deeper troubleshooting)
+# SSH to ScyllaDB instance first, then:
+cqlsh -e "SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"
+cqlsh -e "DESCRIBE KEYSPACE jupiter;"
+```
+
+### Common Issues and Solutions
+
+#### Issue: Pods in CrashLoopBackOff with ScyllaDB Connection Errors
+**Symptoms:**
+- Pods show CrashLoopBackOff status
+- Logs contain "Unrecognized strategy option {us-east-1}" or similar datacenter name errors
+- HTTP 502 errors on health checks
+
+**Root Cause:** Datacenter name mismatch between application configuration and actual ScyllaDB datacenters
+
+**Solution:**
+1. Verify ScyllaDB datacenter names using the commands above
+2. Check if region conversion logic is working correctly in `main.tf`
+3. Ensure Helm configuration uses `replace(var.regions[X], "-1", "")` for datacenter names
+
+#### Issue: Terraform Apply Timeout (45+ minutes)
+**Symptoms:**
+- Terraform apply hangs on Helm release deployment
+- Timeout errors after extended periods
+
+**Root Cause:** Usually indicates application-level issues preventing successful startup
+
+**Solution:**
+1. Check pod status and logs using commands above
+2. Verify ScyllaDB connectivity and datacenter configuration
+3. If needed, run `terraform destroy -target helm_release.unreal_cloud_ddc_initialization` and reapply
+
+#### Issue: SSM Document Execution Failures
+**Symptoms:**
+- SSM association shows failed status
+- ScyllaDB keyspace replication not configured correctly
+
+**Root Cause:** SSM document using incorrect datacenter names in CQL commands
+
+**Solution:**
+1. Check SSM document content for correct datacenter names
+2. Verify SSM association targets the correct ScyllaDB instance
+3. Manually run CQL commands to verify datacenter names
+
+### Monitoring During Deployment
+
+#### Watch Pod Deployment Progress
+```bash
+# Run on your local machine during terraform apply
+# Monitor pods in real-time
+watch kubectl get pods -n unreal-cloud-ddc
+```
+
+#### Check Helm Release Status
+```bash
+# Run on your local machine with Helm installed
+# List Helm releases
+helm list -n unreal-cloud-ddc
+
+# Get detailed status of a specific release
+helm status unreal-cloud-ddc-initialize -n unreal-cloud-ddc
+```
+
+#### Monitor Load Balancer Provisioning
+```bash
+# Run on your local machine
+# Check service status
+kubectl get svc -n unreal-cloud-ddc
+
+# Get load balancer details
+kubectl describe svc -n unreal-cloud-ddc
+```
+
+### Performance Validation
+
+After successful deployment, validate performance using the [benchmarking tools](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks):
+
+```bash
+# Run comprehensive benchmark
+docker run --network host jupiter_benchmark --seed --seed-remote --host http://<unreal_ddc_url> --namespace ddc \
+--header="Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token-multi-region>" all
+```
+
+### API Testing
+
+#### Get Bearer Token
+```bash
+# Get the bearer token from Secrets Manager
+TOKEN=$(aws secretsmanager get-secret-value --secret-id unreal-cloud-ddc-bearer-token-multi-region --query SecretString --output text)
+echo $TOKEN
+```
+
+#### Test API Endpoints
+```bash
+# Test PUT operation (upload data)
+curl http://<load-balancer-url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa \
+  -X PUT --data 'test' \
+  -H 'content-type: application/octet-stream' \
+  -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' \
+  -H "Authorization: ServiceAccount $TOKEN" \
+  -i
+
+# Expected response: HTTP/1.1 200 OK with {"needs":[]}
+
+# Test GET operation (retrieve data)
+curl http://<load-balancer-url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json \
+  -H "Authorization: ServiceAccount $TOKEN" \
+  -i
+
+# Expected response: HTTP/1.1 200 OK with JSON containing RawHash and RawSize
+```
+
+**Note**: Replace `<load-balancer-url>` with your actual load balancer URL from terraform outputs. For single-region deployments, use secret name `unreal-cloud-ddc-bearer-token` instead.
 
 ## Deletion
 For the cleanest deletion, it is best to first do a targeted destroy for the `module.unreal_cloud_ddc_intra_cluster_region_1` and `module.unreal_cloud_ddc_intra_cluster_region_2`.

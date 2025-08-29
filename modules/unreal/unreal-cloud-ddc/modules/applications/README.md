@@ -19,62 +19,219 @@ This module currently utilizes the [Terraform EKS Blueprints Addons](https://git
 !!!note
     This module is designed to be used in conjunction with the infrastructure module which deploys the required infrastructure to host the Cloud DDC service.
 
-### GitHub Secret
-Next, for the module to be able to access the Unreal Cloud DDC container image, there are 2 things you must do. First, if you have not done so, you must [connect your GitHub account to your Epic account](https://www.unrealengine.com/en-US/ue-on-github), thereby granting you access to the container images in the Unreal Engine repository. Next, you will need to create a `github_credentials` secret which includes a `username` and `access-token` field.
+## Authentication & Security
 
-!!!note
-    Instructions on creating a new access token can be found [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). You will need to provide the `read:package` and `repo` permissions to the access token you create.
+### Bearer Token Authentication
 
-You can then upload the secret to AWS Secret Manager using the following [AWS CLI](https://aws.amazon.com/cli/) command:
+The Unreal Cloud DDC uses bearer tokens to authenticate API requests and prevent unauthorized access to cached game assets.
 
-```commandline
-aws secretsmanager create-secret --name "ecr-pullthroughcache/github-credentials" --secret-string '{"username":"USERNAME-PLACEHOLDER","access-token":"ACCESS-TOKEN-PLACEHOLDER"}'
+**How Bearer Tokens Work:**
+- Auto-generated 64-character secure token stored in AWS Secrets Manager
+- Required in the `Authorization: ServiceAccount <token>` header for all API calls
+- Validates client access to read/write cached data
+- Replicated across regions in multi-region deployments
+
+**Token Usage Example:**
+```bash
+# Get token from Secrets Manager
+TOKEN=$(aws secretsmanager get-secret-value --secret-id unreal-cloud-ddc-bearer-token --query SecretString --output text)
+
+# Use in API calls
+curl -H "Authorization: ServiceAccount $TOKEN" http://ddc-url/api/v1/refs/ddc/default/...
 ```
 
-!!!note
-    Make sure to replace the `GITHUB-USERNAME-PLACEHOLDER` and `GITHUB-ACCESS-TOKEN-PLACEHOLDER` with the appropriate values from your GitHub account prior to running the command.
+**Production Recommendations:**
+- Use OIDC authentication instead of bearer tokens for enhanced security
+- Rotate tokens regularly
+- Store tokens securely and never commit to version control
 
-!!!warning
-    Note that the name of the secret must be prefixed with `ecr-pullthroughcache/` and the fields must be called `username` and `access-token` for ECR to properly detect the secrets. If making changes to the above command, you must adhere to these rules.
+### GitHub Container Registry Access
 
-Once the secret is created, pass the newly uploaded secret's ARN into the `ghcr_credentials_secret_manager_arn` variable.
+**Why Manual Setup is Required:**
+Access to Epic's Unreal Cloud DDC container images requires specific ECR pull-through cache configuration that cannot be automated due to AWS naming requirements.
+
+**Setup Steps:**
+
+1. **Link GitHub to Epic Account**
+   - Visit [Unreal Engine on GitHub](https://www.unrealengine.com/en-US/ue-on-github)
+   - Connect your existing GitHub account to your Epic account
+   - This grants access to the Unreal Engine repository and container images
+
+2. **Create GitHub Personal Access Token**
+   - Go to GitHub Settings → Developer settings → Personal access tokens
+   - **Required Permissions:**
+     - `read:packages` - Access to GitHub Container Registry packages
+     - `repo` - Access to private repositories (required for Unreal Engine repo)
+   - [Detailed instructions](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
+   
+   ⚠️ **Critical**: Both permissions are mandatory. Missing either will cause container pull failures.
+
+3. **Create AWS Secret (Required Format)**
+   ```bash
+   aws secretsmanager create-secret \
+     --name "ecr-pullthroughcache/github-credentials" \
+     --secret-string '{"username":"YOUR-GITHUB-USERNAME","access-token":"YOUR-GITHUB-TOKEN"}'
+   ```
+
+**Critical Requirements:**
+- Secret name **must** be prefixed with `ecr-pullthroughcache/`
+- JSON fields **must** be named `username` and `access-token`
+- These naming requirements are enforced by AWS ECR pull-through cache
+
+4. **Pass Secret ARN to Module**
+   ```hcl
+   ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:region:account:secret:ecr-pullthroughcache/github-credentials-XXXXXX"
+   ```
+
+## Networking Architecture
+
+### Single Region Deployment
+- **EKS Cluster**: Deployed in private subnets across multiple AZs
+- **Load Balancer**: Network Load Balancer in public subnets
+- **ScyllaDB**: Private instances with internal communication
+- **S3 Access**: Via VPC endpoint for optimal performance
+
+### Multi-Region Deployment
+- **Inter-Region Connectivity**: Required between regions for ScyllaDB cluster communication
+  - **Options**: VPC Peering, Transit Gateway, or Direct Connect
+  - **Requirements**: Private network connectivity with appropriate routing
+- **Cross-Region Replication**: Automatic data synchronization between regions
+- **Load Balancing**: Route53 latency-based routing between regional endpoints
+- **Security Groups**: Cross-region rules for ScyllaDB cluster ports (7000, 9042, etc.)
+
+### Security Group Configuration
+**EKS Cluster Security Groups:**
+- Inbound: HTTPS (443) from load balancer
+- Outbound: All traffic for container registry and S3 access
+
+**ScyllaDB Security Groups:**
+- Inbound: Cluster communication ports (7000, 7001, 9042, 9100, 9142, 9160, 9180, 10000)
+- Cross-region: Same ports from peer VPC CIDR blocks
+
+**Load Balancer Security Groups:**
+- Inbound: HTTP (80), HTTPS (443) from allowed CIDR blocks
+- Outbound: To EKS cluster on application ports
 
 ## Customizing Your Deployment
 
-### OIDC Secret
-To use client secrets for OIDC authentication, a new secret must be uploaded to AWS Secrets Manager. You can upload the new secret to AWS Secret Manager using the following [AWS CLI](https://aws.amazon.com/cli/) command:
+### OIDC Authentication (Production Recommended)
+**OIDC vs Bearer Token Comparison:**
 
-!!!note
-    Make sure to replace the `CLIENT-SECRET-PLACEHOLDER` and `CLIENT-ID-PLACEHOLDER` with the appropriate values from your IDP prior to running the command.
+| Feature | Bearer Token | OIDC Authentication |
+|---------|--------------|--------------------|
+| **Security** | Static token | Dynamic, time-limited tokens |
+| **Setup Complexity** | Simple | Requires IDP integration |
+| **Production Ready** | Development only | ✅ Recommended |
+| **Token Rotation** | Manual | Automatic |
+| **Audit Trail** | Limited | Full user attribution |
 
-```commandline
-aws secretsmanager create-secret --name "external-idp-oidc-credentials" --secret-string '{"client_secret":"CLIENT-SECRET-PLACEHOLDER","client_id":"CLIENT-ID-PLACEHOLDER"}'
+**OIDC Setup Steps:**
+
+1. **Configure Your Identity Provider**
+   - Set up OIDC application in your IDP (Azure AD, Okta, etc.)
+   - Configure redirect URIs and scopes
+   - Note the client ID and client secret
+
+2. **Create AWS Secret**
+   ```bash
+   aws secretsmanager create-secret \
+     --name "external-idp-oidc-credentials" \
+     --secret-string '{"client_secret":"YOUR-CLIENT-SECRET","client_id":"YOUR-CLIENT-ID"}'
+   ```
+
+3. **Configure Module Variable**
+   ```hcl
+   oidc_credentials_secret_manager_arn = "aws!arn:aws:secretsmanager:region:account:secret:external-idp-oidc-credentials-XXXXXX|client_secret"
+   ```
+   
+   **Format Requirements:**
+   - Prefix: `aws!`
+   - Suffix: `|<json-field>` (e.g., `|client_secret`)
+
+**Bearer Token Alternative (Development Only):**
+For development environments, you can use the auto-generated bearer token:
+```hcl
+unreal_cloud_ddc_helm_config = {
+  token = data.aws_secretsmanager_secret_version.ddc_token.secret_string
+  # Other configuration...
+}
 ```
 
-The ARN for the newly created secret must then be passed to the `oidc_credentials_secret_manager_arn` variable. The secret is referenced using the following format and should be passed into the variable using the same format:
-
-```
-aws!arn:aws:secretsmanager:<region>:<aws-account-number>:secret:<secret-name>|<json-field>
-```
-
-!!!note
-    Note the prefix `aws!` and the postfix `|<json-field>` are added to the ARN of the newly created secret.
-
-!!!note
-    While we highly encourage the use of OIDC tokens for production environments, users can use a bearer token in its place by providing the token to the `unreal_cloud_ddc_helm_values` variable. See DDC sample for an example implementation.
-
-    ```
-        unreal_cloud_ddc_helm_values = [
-            templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
-                token = <bearer-token>
-                # Other templatefile parameters...
-            })
-        ]
-    ```
+⚠️ **Security Warning**: Bearer tokens should never be used in production environments due to their static nature and security limitations.
 
 ### Chart Values (Helm Configurations)
 
 The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to configure the Unreal Cloud DDC deployment through the use of YAML files. We generally recommend you to use a template file. An example of a template file configuration can be found in the `unreal-cloud-ddc-single-region` sample located [here](/samples/unreal-cloud-ddc-single-region/assets/unreal_cloud_ddc_single_region.yaml). You can also find additional example templates provided by Epic [here](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Helm/UnrealCloudDDC).
+
+## Troubleshooting
+
+### Common Deployment Issues
+
+**Helm Chart Deployment Failures:**
+- **Symptom**: Helm release stuck in pending or failed state
+- **Cause**: Missing GitHub credentials or incorrect secret format
+- **Solution**: Verify ECR pull-through cache secret exists and has correct format
+
+**Pod CrashLoopBackOff:**
+- **Symptom**: DDC pods continuously restarting
+- **Cause**: ScyllaDB connection issues or authentication failures
+- **Solution**: Check ScyllaDB connectivity and bearer token configuration
+
+**Authentication Errors:**
+- **Symptom**: HTTP 401 responses from DDC API
+- **Cause**: Invalid or missing bearer token
+- **Solution**: Verify token in Secrets Manager and Helm configuration
+
+### Validation Commands
+
+**Check Pod Status:**
+```bash
+# Configure kubectl
+aws eks update-kubeconfig --region <region> --name <cluster-name>
+
+# Check DDC pods
+kubectl get pods -n unreal-cloud-ddc
+
+# View pod logs
+kubectl logs -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc --tail=50
+```
+
+**Test API Connectivity:**
+```bash
+# Get bearer token
+TOKEN=$(aws secretsmanager get-secret-value --secret-id unreal-cloud-ddc-bearer-token --query SecretString --output text)
+
+# Test API endpoint
+curl -H "Authorization: ServiceAccount $TOKEN" http://<load-balancer-url>/api/v1/refs/ddc/default/test
+```
+
+**Verify ScyllaDB Configuration:**
+```bash
+# Check from within DDC pod
+POD_NAME=$(kubectl get pods -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n unreal-cloud-ddc $POD_NAME -- cqlsh -e "SELECT data_center FROM system.local;"
+```
+
+**Monitor Helm Releases:**
+```bash
+# List releases
+helm list -n unreal-cloud-ddc
+
+# Check release status
+helm status unreal-cloud-ddc-initialize -n unreal-cloud-ddc
+```
+
+### Performance Optimization
+
+**Load Balancer Configuration:**
+- Use Network Load Balancer for better performance
+- Enable cross-zone load balancing
+- Configure appropriate health check settings
+
+**Resource Allocation:**
+- NVME nodes: Use for high-performance caching
+- Worker nodes: Scale based on replication workload
+- System nodes: Ensure adequate resources for Kubernetes system components
 
 
 <!-- BEGIN_TF_DOCS -->
