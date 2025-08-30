@@ -1,0 +1,28 @@
+################################################################################
+# DDC Services Module Outputs
+################################################################################
+
+output "helm_release_name" {
+  description = "Name of the primary Helm release"
+  value       = helm_release.unreal_cloud_ddc_initialization.name
+}
+
+output "helm_release_namespace" {
+  description = "Namespace of the Helm release"
+  value       = helm_release.unreal_cloud_ddc_initialization.namespace
+}
+
+output "helm_release_version" {
+  description = "Version of the Helm release"
+  value       = helm_release.unreal_cloud_ddc_initialization.version
+}
+
+output "replication_helm_release_name" {
+  description = "Name of the replication Helm release"
+  value       = var.ddc_replication_region_url != null && var.unreal_cloud_ddc_helm_replication_chart != null ? helm_release.unreal_cloud_ddc_with_replication[0].name : null
+}
+
+output "ecr_repository_url" {
+  description = "ECR repository URL for DDC images"
+  value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
+}
