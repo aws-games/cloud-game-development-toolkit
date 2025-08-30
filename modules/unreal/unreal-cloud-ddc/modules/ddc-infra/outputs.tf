@@ -39,18 +39,18 @@ output "peer_security_group_id" {
 }
 
 output "scylla_seed_instance_id" {
-  value       = var.is_primary_region ? aws_instance.scylla_ec2_instance_seed[0].id : null
+  value       = var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].id : null
   description = "Instance ID of scylla seed node"
 
 }
 
 output "scylla_seed" {
-  value       = var.is_primary_region ? aws_instance.scylla_ec2_instance_seed[0].private_ip : null
+  value       = var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : null
   description = "IP of the Scylla Seed"
 }
 
 output "scylla_ips" {
-  value       = var.is_primary_region ? (concat([aws_instance.scylla_ec2_instance_seed[0].private_ip], flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip))) : flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)
+  value       = var.create_seed_node ? (concat([aws_instance.scylla_ec2_instance_seed[0].private_ip], flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip))) : flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)
   description = "IPs of the Scylla EC2 instances"
 }
 
@@ -113,30 +113,27 @@ output "nlb_security_group_id" {
   description = "ID of the DDC NLB security group"
 }
 
-################################################################################
-# Kubernetes Resources Outputs
-################################################################################
 
-output "namespace" {
-  value       = kubernetes_namespace.unreal_cloud_ddc.metadata[0].name
-  description = "Name of the Kubernetes namespace"
-}
-
-output "service_account" {
-  value       = kubernetes_service_account.unreal_cloud_ddc_service_account.metadata[0].name
-  description = "Name of the Kubernetes service account"
-}
-
-output "service_account_arn" {
-  value       = aws_iam_role.unreal_cloud_ddc_sa_iam_role.arn
-  description = "ARN of the service account IAM role"
-}
 
 ################################################################################
 # SSM Document Outputs
 ################################################################################
 
 output "ssm_document_name" {
-  value       = !var.is_primary_region && var.existing_scylla_seed != null ? aws_ssm_document.scylla_keyspace_update[0].name : null
+  value       = !var.create_seed_node ? aws_ssm_document.scylla_keyspace_update[0].name : null
   description = "Name of the SSM document for keyspace configuration"
+}
+
+################################################################################
+# Service Account IAM Role Output
+################################################################################
+
+output "service_account_arn" {
+  value       = aws_iam_role.unreal_cloud_ddc_sa_iam_role.arn
+  description = "ARN of the service account IAM role"
+}
+
+output "ebs_csi_role_arn" {
+  value       = aws_iam_role.ebs_csi_iam_role.arn
+  description = "ARN of the EBS CSI driver IAM role"
 }

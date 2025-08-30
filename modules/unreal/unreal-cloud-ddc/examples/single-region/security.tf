@@ -12,13 +12,6 @@ resource "aws_security_group" "allow_my_ip" {
 }
 
 ##########################################
-# Get My Public IP
-##########################################
-data "http" "my_ip" {
-  url = "https://checkip.amazonaws.com/"
-}
-
-##########################################
 # Security Group Rules for My IP
 ##########################################
 # Allow HTTPS access to monitoring dashboard

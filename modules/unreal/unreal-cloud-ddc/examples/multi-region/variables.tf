@@ -1,7 +1,13 @@
-variable "primary_scylla_seed_ip" {
-  description = "IP address of the primary region's ScyllaDB seed node"
+variable "route53_public_hosted_zone_name" {
+  description = "The name of your existing Route53 Public Hosted Zone. This is required to create the ACM certificate and Route53 records."
   type        = string
-  default     = null
+  default     = "novekm.people.aws.dev"
+}
+
+variable "ghcr_credentials_secret_manager_arn" {
+  description = "ARN of the GitHub Container Registry credentials secret in AWS Secrets Manager"
+  type        = string
+  default     = "arn:aws:secretsmanager:us-east-2:644937705968:secret:ecr-pullthroughcache/-7mP9Ak" # TODO - remove
 }
 
 variable "primary_ddc_url" {
@@ -10,25 +16,13 @@ variable "primary_ddc_url" {
   default     = null
 }
 
-variable "route53_public_hosted_zone_name" {
-  description = "The name of your existing Route53 Public Hosted Zone. This is required to create the ACM certificate and Route53 records."
-  type        = string
-}
-
-variable "ghcr_credentials_secret_manager_arn" {
-  description = "ARN of the GitHub Container Registry credentials secret in AWS Secrets Manager"
-  type        = string
-}
-
 variable "primary_scylla_seed_ip" {
-  description = "IP address of the primary region ScyllaDB seed node (for secondary regions)"
+  description = "IP address of the primary region's ScyllaDB seed node"
   type        = string
   default     = null
 }
 
-variable "primary_ddc_url" {
-  description = "URL of the primary region DDC service (for secondary regions)"
-  type        = string
-  default     = null
-}
+
+
+
 

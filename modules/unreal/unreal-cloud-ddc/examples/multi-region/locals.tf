@@ -4,7 +4,7 @@ locals {
   
   # Regions
   primary_region = "us-east-1"
-  secondary_region = "us-west-2"
+  secondary_region = "us-east-2"
   
   # Kubernetes version - ensure consistency across regions
   kubernetes_version = "1.33"
@@ -20,7 +20,7 @@ locals {
   # VPC Configuration
   vpc_cidr = "10.0.0.0/16"
   azs_primary = ["us-east-1a", "us-east-1b", "us-east-1c"]
-  azs_secondary = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  azs_secondary = ["us-east-2a", "us-east-2b", "us-east-2c"]
   
   # Primary region subnets
   public_subnet_cidrs_primary = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
@@ -35,8 +35,18 @@ locals {
   monitoring_subdomain = "monitoring"
   
   # DDC Domain
-  ddc_fully_qualified_domain_name = "${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  ddc_fully_qualified_domain_name = "${local.primary_region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   
   # Monitoring Domain
-  monitoring_fully_qualified_domain_name = "${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  monitoring_fully_qualified_domain_name = "${local.primary_region}.${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  
+  # Create monitoring DNS only if ALB is created (matches main.tf monitoring config)
+  create_monitoring_dns = true  # Primary region has create_application_load_balancer = true
+  
+  # Common tags
+  tags = {
+    Environment = local.environment
+    Project     = local.project_prefix
+    ManagedBy   = "Terraform"
+  }
 }

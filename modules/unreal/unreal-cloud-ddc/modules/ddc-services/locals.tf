@@ -7,13 +7,15 @@ locals {
   name_prefix = "${var.project_prefix}-${var.name}"
 
   helm_config = {
-    bucket_name      = var.s3_bucket_id
-    scylla_ips       = join(",", var.scylla_ips)
-    region           = var.region
-    aws_region       = var.region
-    token            = var.ddc_bearer_token
-    nlb_arn          = var.nlb_arn
-    target_group_arn = var.nlb_target_group_arn
+    bucket_name        = var.s3_bucket_id
+    scylla_ips         = join(",", var.scylla_ips)
+    region             = var.region
+    aws_region         = var.region
+    token              = var.ddc_bearer_token
+    nlb_arn            = var.nlb_arn
+    target_group_arn   = var.nlb_target_group_arn
+    replication_factor = var.replication_factor
+    replication_enabled = var.ddc_replication_region_url != null
   }
 
   base_values = var.unreal_cloud_ddc_helm_base_infra_chart != null ? [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, local.helm_config)] : []

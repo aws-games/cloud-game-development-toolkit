@@ -53,8 +53,8 @@ variable "region" {
   default     = "us-west-2"
 }
 
-variable "is_primary_region" {
-  description = "The AWS region that will be the primary region for your Unreal DDC deployment"
+variable "create_seed_node" {
+  description = "Whether this region creates the ScyllaDB seed node (bootstrap node for cluster formation)"
   type        = bool
   default     = true
 }

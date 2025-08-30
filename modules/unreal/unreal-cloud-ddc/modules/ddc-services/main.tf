@@ -1,6 +1,86 @@
 ################################################################################
-# DDC Services Module - Helm Charts Only (No AWS Infrastructure)
+# DDC Services Module - Kubernetes Resources and Helm Charts
 ################################################################################
+
+################################################################################
+# Kubernetes Resources
+################################################################################
+
+resource "kubernetes_namespace" "unreal_cloud_ddc" {
+  metadata {
+    name = var.namespace
+  }
+}
+
+resource "kubernetes_service_account" "unreal_cloud_ddc_service_account" {
+  depends_on = [kubernetes_namespace.unreal_cloud_ddc]
+  
+  metadata {
+    name        = var.service_account
+    namespace   = var.namespace
+    labels      = { aws-usage : "application" }
+    annotations = { "eks.amazonaws.com/role-arn" : var.service_account_arn }
+  }
+  
+  automount_service_account_token = true
+}
+
+################################################################################
+# EKS Addons (Moved from ddc-infra to avoid circular dependency)
+################################################################################
+
+module "eks_blueprints_addons" {
+  #checkov:skip=CKV_TF_1:Using forked version with AWS Provider v6 region parameter support
+  source = "git::https://github.com/novekm/terraform-aws-eks-blueprints-addons.git?ref=main"
+
+  # EKS Addons configuration
+  eks_addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = var.ebs_csi_role_arn
+    }
+  }
+
+  # Cluster configuration (from ddc-infra outputs)
+  cluster_name      = var.cluster_name
+  cluster_endpoint  = var.cluster_endpoint
+  cluster_version   = data.aws_eks_cluster.cluster.version
+  oidc_provider_arn = var.oidc_provider_arn
+  
+  # AWS Provider v6 region parameter support
+  region = var.region
+
+  # Disable load balancer controller (we create NLB directly in ddc-infra)
+  enable_aws_load_balancer_controller = false
+  
+  # Keep existing addons
+  enable_aws_cloudwatch_metrics = true
+  enable_cert_manager           = var.enable_certificate_manager
+  cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
+
+  tags = {
+    Environment = var.cluster_name
+  }
+
+  depends_on = [
+    kubernetes_namespace.unreal_cloud_ddc,
+    kubernetes_service_account.unreal_cloud_ddc_service_account
+  ]
+}
+
+# Data source to get cluster info
+data "aws_eks_cluster" "cluster" {
+  name = var.cluster_name
+}
 
 ################################################################################
 # ECR Pull-Through Cache
@@ -25,6 +105,7 @@ resource "null_resource" "helm_cleanup" {
     namespace    = var.namespace
     region       = var.region
     timeout      = var.helm_cleanup_timeout
+    name_prefix  = "${var.project_prefix}-${var.name}"
   }
 
   provisioner "local-exec" {
@@ -67,29 +148,29 @@ resource "null_resource" "helm_cleanup" {
       echo "🗑️  Uninstalling Helm releases (timeout: ${self.triggers.timeout}s)..."
 
       # Primary release
-      if helm list -n ${self.triggers.namespace} | grep -q "${local.name_prefix}-initialize"; then
-        echo "📦 Removing ${local.name_prefix}-initialize..."
-        if ! helm uninstall ${local.name_prefix}-initialize -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
-          echo "❌ Failed to uninstall ${local.name_prefix}-initialize"
+      if helm list -n ${self.triggers.namespace} | grep -q "${self.triggers.name_prefix}-initialize"; then
+        echo "📦 Removing ${self.triggers.name_prefix}-initialize..."
+        if ! helm uninstall ${self.triggers.name_prefix}-initialize -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
+          echo "❌ Failed to uninstall ${self.triggers.name_prefix}-initialize"
           echo "📚 Troubleshooting: https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc#helm-cleanup-failures"
           exit 1
         fi
-        echo "✅ ${local.name_prefix}-initialize removed"
+        echo "✅ ${self.triggers.name_prefix}-initialize removed"
       else
-        echo "ℹ️  ${local.name_prefix}-initialize not found (already removed)"
+        echo "ℹ️  ${self.triggers.name_prefix}-initialize not found (already removed)"
       fi
 
       # Replication release (if exists)
-      if helm list -n ${self.triggers.namespace} | grep -q "${local.name_prefix}-replicate"; then
-        echo "📦 Removing ${local.name_prefix}-replicate..."
-        if ! helm uninstall ${local.name_prefix}-replicate -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
-          echo "❌ Failed to uninstall ${local.name_prefix}-replicate"
+      if helm list -n ${self.triggers.namespace} | grep -q "${self.triggers.name_prefix}-replicate"; then
+        echo "📦 Removing ${self.triggers.name_prefix}-replicate..."
+        if ! helm uninstall ${self.triggers.name_prefix}-replicate -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
+          echo "❌ Failed to uninstall ${self.triggers.name_prefix}-replicate"
           echo "📚 Troubleshooting: https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc#helm-cleanup-failures"
           exit 1
         fi
-        echo "✅ ${local.name_prefix}-replicate removed"
+        echo "✅ ${self.triggers.name_prefix}-replicate removed"
       else
-        echo "ℹ️  ${local.name_prefix}-replicate not found (already removed)"
+        echo "ℹ️  ${self.triggers.name_prefix}-replicate not found (already removed)"
       fi
 
       echo ""
@@ -100,36 +181,8 @@ resource "null_resource" "helm_cleanup" {
 
   # Only run when Helm releases are actually being destroyed
   depends_on = [
-    helm_release.unreal_cloud_ddc_initialization,
-    helm_release.unreal_cloud_ddc_with_replication
+    helm_release.unreal_cloud_ddc_initialization
   ]
-}
-
-################################################################################
-# Local Variables
-################################################################################
-
-locals {
-  # Naming consistency with other modules
-  name_prefix = "${var.project_prefix}-${var.name}"
-
-  helm_config = {
-    bucket_name      = var.s3_bucket_id
-    scylla_ips       = join(",", var.scylla_ips)
-    region           = var.region
-    aws_region       = var.region
-    token            = var.ddc_bearer_token
-    nlb_arn          = var.nlb_arn
-    target_group_arn = var.nlb_target_group_arn
-  }
-
-  base_values = var.unreal_cloud_ddc_helm_base_infra_chart != null ? [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, local.helm_config)] : []
-
-  replication_values = var.unreal_cloud_ddc_helm_replication_chart != null ? [
-    templatefile(var.unreal_cloud_ddc_helm_replication_chart, merge(local.helm_config, {
-      ddc_replication_region_url = var.ddc_replication_region_url
-    }))
-  ] : null
 }
 
 ################################################################################
@@ -174,8 +227,7 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   values = local.replication_values
 
   depends_on = [
-    time_sleep.wait_for_init,
-    null_resource.helm_cleanup
+    time_sleep.wait_for_init
   ]
 }
 

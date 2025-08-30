@@ -348,7 +348,7 @@ resource "awscc_secretsmanager_secret" "unreal_cloud_ddc_token" {
 
 # NEW: AWS provider with explicit region-based replication
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.is_primary_region ? 1 : 0
+  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.create_seed_node ? 1 : 0
   name = "${local.name_prefix}-bearer-token"
   description = "The bearer token to access Unreal Cloud DDC service."
   
@@ -356,14 +356,14 @@ resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
 }
 
 resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.is_primary_region ? 1 : 0
+  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.create_seed_node ? 1 : 0
   secret_id = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
   secret_string = random_password.ddc_token[0].result
 }
 
 # Replicate to secondary region using AWS Provider v6
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token_replica" {
-  count = var.ddc_bearer_token_secret_arn == null && !var.ddc_core_config.is_primary_region && var.ddc_core_config.existing_scylla_seed != null ? 1 : 0
+  count = var.ddc_bearer_token_secret_arn == null && !var.ddc_core_config.create_seed_node && var.ddc_core_config.existing_scylla_seed != null ? 1 : 0
   region = var.ddc_core_config.region  # AWS Provider v6 region parameter
   name = "${local.name_prefix}-bearer-token"
   description = "The bearer token to access Unreal Cloud DDC service (replica)."
@@ -374,7 +374,7 @@ resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token_replica" {
 }
 
 resource "random_password" "ddc_token" {
-  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.is_primary_region ? 1 : 0
+  count = var.ddc_bearer_token_secret_arn == null && var.ddc_core_config.create_seed_node ? 1 : 0
   length = 64
   special = false
 }
@@ -388,7 +388,7 @@ resource "random_password" "ddc_token" {
 # Primary region creates token
 module "ddc_primary" {
   ddc_core_config = {
-    is_primary_region = true
+    create_seed_node = true
     # Token will be created here
   }
 }
@@ -396,7 +396,7 @@ module "ddc_primary" {
 # Secondary region uses existing token (no creation)
 module "ddc_secondary" {
   ddc_core_config = {
-    is_primary_region = false
+    create_seed_node = false
     existing_scylla_seed = module.ddc_primary.scylla_seed_ip
     # Token already exists from primary, will be replicated
   }
@@ -434,7 +434,7 @@ module "ddc_primary" {
   
   ddc_core_config = {
     region = "us-east-1"
-    is_primary_region = true
+    create_seed_node = true
     # ... config
   }
 }
@@ -453,7 +453,7 @@ module "ddc_secondary" {
   
   ddc_core_config = {
     region = "us-west-2"
-    is_primary_region = false
+    create_seed_node = false
     existing_scylla_seed = module.ddc_primary.scylla_seed_ip  # Cross-region coordination
     # ... config
   }
@@ -493,7 +493,7 @@ module "ddc_secondary" {
 **Benefits**: Easy DR testing, cost control, gradual rollout
 
 ### ScyllaDB Cross-Region Replication
-1. **Primary Region**: Creates seed node with `is_primary_region = true`
+1. **Primary Region**: Creates seed node with `create_seed_node = true`
 2. **Secondary Region**: Joins cluster with `existing_scylla_seed = module.ddc_primary.scylla_seed_ip`
 3. **Cross-Region Security Groups**: Use CIDR-based rules (security group IDs don't work cross-region)
 4. **Monitoring Integration**: Primary region monitors all regions
@@ -520,7 +520,7 @@ module "unreal_cloud_ddc" {
     environment = "dev"
     kubernetes_version = "1.31"
     scylla_instance_type = "i4i.xlarge"
-    is_primary_region = true
+    create_seed_node = true
     scylla_replication_factor = 3
     eks_node_group_subnets = var.eks_node_group_subnets
     scylla_subnets = var.scylla_subnets
@@ -562,7 +562,7 @@ module "ddc_primary" {
     environment = "prod"
     kubernetes_version = "1.31"
     scylla_instance_type = "i4i.xlarge"
-    is_primary_region = true
+    create_seed_node = true
     scylla_replication_factor = 3
     eks_node_group_subnets = var.eks_node_group_subnets.primary
     scylla_subnets = var.scylla_subnets.primary
@@ -600,7 +600,7 @@ module "ddc_secondary" {
     environment = "prod"
     kubernetes_version = "1.31"
     scylla_instance_type = "i4i.large"  # Smaller for DR
-    is_primary_region = false
+    create_seed_node = false
     existing_scylla_seed = module.ddc_primary.scylla_seed_ip  # Cross-region coordination
     scylla_replication_factor = 2
     eks_node_group_subnets = var.eks_node_group_subnets.secondary
@@ -636,7 +636,7 @@ module "unreal_cloud_ddc_infra_only" {
     environment = "dev"
     kubernetes_version = "1.31"
     scylla_instance_type = "i4i.xlarge"
-    is_primary_region = true
+    create_seed_node = true
     eks_node_group_subnets = var.eks_node_group_subnets
     scylla_subnets = var.scylla_subnets
   }

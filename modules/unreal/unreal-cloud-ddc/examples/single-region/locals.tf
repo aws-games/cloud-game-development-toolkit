@@ -25,11 +25,19 @@ locals {
   monitoring_subdomain = "monitoring"
   
   # DDC Domain
-  ddc_fully_qualified_domain_name = "${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  ddc_fully_qualified_domain_name = "${local.region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   
   # Monitoring Domain
-  monitoring_fully_qualified_domain_name = "${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  monitoring_fully_qualified_domain_name = "${local.region}.${local.monitoring_subdomain}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   
   # Amazon Certificate Manager (ACM)
   certificate_arn = aws_acm_certificate.ddc.arn
+  
+  # Common tags
+  tags = {
+    ProjectPrefix = local.project_prefix
+    Environment   = local.environment
+    IaC          = "Terraform"
+    ModuleBy     = "CGD-Toolkit"
+  }
 }

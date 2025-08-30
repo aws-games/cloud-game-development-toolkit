@@ -77,6 +77,36 @@ variable "service_account" {
   default     = null
 }
 
+variable "service_account_arn" {
+  description = "ARN of the service account IAM role"
+  type        = string
+  default     = null
+}
+
+variable "oidc_provider_arn" {
+  description = "OIDC provider ARN for EKS cluster"
+  type        = string
+  default     = null
+}
+
+variable "ebs_csi_role_arn" {
+  description = "EBS CSI driver IAM role ARN"
+  type        = string
+  default     = null
+}
+
+variable "enable_certificate_manager" {
+  description = "Enable Certificate Manager for Ingress"
+  type        = bool
+  default     = false
+}
+
+variable "certificate_manager_hosted_zone_arn" {
+  description = "ARN of the Certificate Manager hosted zone"
+  type        = list(string)
+  default     = []
+}
+
 variable "s3_bucket_id" {
   description = "S3 bucket ID"
   type        = string
@@ -87,6 +117,12 @@ variable "scylla_ips" {
   description = "ScyllaDB node IPs"
   type        = list(string)
   default     = []
+}
+
+variable "replication_factor" {
+  description = "ScyllaDB replication factor"
+  type        = number
+  default     = 3
 }
 
 ########################################

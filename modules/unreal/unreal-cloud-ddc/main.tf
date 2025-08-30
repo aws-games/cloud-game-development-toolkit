@@ -63,7 +63,7 @@ module "ddc_infra" {
   debug                    = var.ddc_infra_config.debug
   vpc_id                   = var.vpc_id
   existing_security_groups = var.existing_security_groups
-  is_primary_region        = var.ddc_infra_config.is_primary_region
+  create_seed_node         = var.ddc_infra_config.create_seed_node
   existing_scylla_seed     = var.ddc_infra_config.existing_scylla_seed
   scylla_source_region     = var.ddc_infra_config.scylla_source_region
   
@@ -176,10 +176,17 @@ module "ddc_services" {
   nlb_arn              = var.ddc_infra_config != null ? module.ddc_infra[0].nlb_arn : null
   nlb_target_group_arn = var.ddc_infra_config != null ? module.ddc_infra[0].nlb_target_group_arn : null
   nlb_dns_name         = var.ddc_infra_config != null ? module.ddc_infra[0].nlb_dns_name : null
-  namespace            = var.ddc_infra_config != null ? module.ddc_infra[0].namespace : null
-  service_account      = var.ddc_infra_config != null ? module.ddc_infra[0].service_account : null
+  namespace            = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_namespace : null
+  service_account      = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_service_account_name : null
+  service_account_arn  = var.ddc_infra_config != null ? module.ddc_infra[0].service_account_arn : null
   s3_bucket_id         = var.ddc_infra_config != null ? module.ddc_infra[0].s3_bucket_id : null
   scylla_ips           = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips : []
+  
+  # EKS Addons Configuration (from ddc-infra)
+  oidc_provider_arn                   = var.ddc_infra_config != null ? module.ddc_infra[0].oidc_provider_arn : null
+  ebs_csi_role_arn                    = var.ddc_infra_config != null ? module.ddc_infra[0].ebs_csi_role_arn : null
+  enable_certificate_manager          = var.ddc_infra_config != null ? var.ddc_infra_config.enable_certificate_manager : false
+  certificate_manager_hosted_zone_arn = var.ddc_infra_config != null ? var.ddc_infra_config.certificate_manager_hosted_zone_arn : []
   
   # Service Configuration
   unreal_cloud_ddc_version                = var.ddc_services_config.unreal_cloud_ddc_version
@@ -193,6 +200,9 @@ module "ddc_services" {
   # Credentials
   ghcr_credentials_secret_manager_arn = var.ddc_services_config.ghcr_credentials_secret_manager_arn
   oidc_credentials_secret_manager_arn = var.ddc_services_config.oidc_credentials_secret_manager_arn
+  
+  # ScyllaDB Configuration
+  replication_factor = var.ddc_infra_config.scylla_replication_factor
   
   # Multi-region SSM coordination
   ssm_document_name       = var.ddc_infra_config != null ? module.ddc_infra[0].ssm_document_name : null

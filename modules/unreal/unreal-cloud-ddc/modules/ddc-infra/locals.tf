@@ -36,7 +36,7 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name,
         "seed_provider" : [{
-        "parameters" : [{ "seeds" : var.is_primary_region ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
+        "parameters" : [{ "seeds" : var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
       }
       #required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       #if scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring.

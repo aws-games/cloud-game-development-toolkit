@@ -279,7 +279,7 @@ No modules.
 | <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | The IP address of the seed instance of the ScyllaDB cluster | `string` | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
 | <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
-| <a name="input_is_primary_region"></a> [is\_primary\_region](#input\_is\_primary\_region) | The AWS region that will be the primary region for your Unreal DDC deployment | `bool` | `true` | no |
+| <a name="input_create_seed_node"></a> [create\_seed\_node](#input\_create\_seed\_node) | Whether this region creates the ScyllaDB seed node (bootstrap node for cluster formation) | `bool` | `true` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
 | <a name="input_monitoring_application_load_balancer_subnets"></a> [monitoring\_application\_load\_balancer\_subnets](#input\_monitoring\_application\_load\_balancer\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |

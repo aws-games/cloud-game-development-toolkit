@@ -20,7 +20,8 @@ ephemeral "random_password" "ddc_token" {
 }
 
 resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  count         = var.ddc_bearer_token_secret_arn == null && var.ddc_infra_config != null ? 1 : 0
-  secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
-  secret_string = ephemeral.random_password.ddc_token[0].result
+  count                    = var.ddc_bearer_token_secret_arn == null && var.ddc_infra_config != null ? 1 : 0
+  secret_id                = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
+  secret_string_wo         = ephemeral.random_password.ddc_token[0].result
+  secret_string_wo_version = 1
 }

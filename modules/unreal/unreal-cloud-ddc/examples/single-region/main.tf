@@ -8,7 +8,6 @@ module "unreal_cloud_ddc" {
   # General/shared configuration
   vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
   existing_security_groups = [aws_security_group.allow_my_ip.id]  # Global access to all components
-  ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
   
   # Infrastructure Configuration
   ddc_infra_config = {
@@ -42,6 +41,7 @@ module "unreal_cloud_ddc" {
     
     create_application_load_balancer = true
     monitoring_application_load_balancer_subnets = aws_subnet.public_subnets[*].id
+    alb_certificate_arn = local.certificate_arn
   }
   
   # Services Configuration

@@ -41,7 +41,18 @@ variable "ddc_bearer_token_secret_arn" {
 
 variable "existing_security_groups" {
   type        = list(string)
-  description = "A list of existing security group IDs to attach to the Unreal Cloud DDC load balancers."
+  description = <<EOT
+    GLOBAL ACCESS: Security group IDs that provide access to ALL DDC load balancers (NLB + ALB).
+    
+    Use this for:
+    - General user access (your IP, office network)
+    - Shared access across all DDC services
+    
+    Security Flow:
+    User → existing_security_groups → All Load Balancers → DDC Services
+    
+    Example: [aws_security_group.allow_my_ip.id]
+  EOT
   default     = []
 }
 
@@ -56,7 +67,7 @@ variable "ddc_infra_config" {
     environment    = optional(string, "dev")
     region         = optional(string, null)
     debug          = optional(bool, false)
-    is_primary_region = optional(bool, true)
+    create_seed_node = optional(bool, true)
     existing_scylla_seed = optional(string, null)
     scylla_source_region = optional(string, null)
 
@@ -102,10 +113,26 @@ variable "ddc_infra_config" {
     certificate_manager_hosted_zone_arn = optional(list(string), [])
     enable_certificate_manager          = optional(bool, false)
     
-    # Additional Security Groups
+    # Additional Security Groups (Targeted Access)
     additional_nlb_security_groups = optional(list(string), [])
     additional_eks_security_groups = optional(list(string), [])
   })
+
+  # Security Group Access Patterns:
+  # 
+  # GLOBAL ACCESS (existing_security_groups):
+  #   User → Global SG → ALL Load Balancers → All Services
+  #   Use for: General access, your IP, office network
+  # 
+  # TARGETED ACCESS (additional_*_security_groups):
+  #   additional_nlb_security_groups: DDC NLB only (game clients, build systems)
+  #   additional_eks_security_groups: EKS cluster only (kubectl, CI/CD, direct service access)
+  #   additional_alb_security_groups: Monitoring ALB only (ops team, monitoring tools)
+  # 
+  # Example Usage:
+  #   existing_security_groups = [aws_security_group.allow_my_ip.id]  # Everyone gets basic access
+  #   additional_nlb_security_groups = [aws_security_group.game_clients.id]  # Game clients get DDC access
+  #   additional_eks_security_groups = [aws_security_group.devops_team.id]   # DevOps gets kubectl access
 
   description = <<EOT
     Configuration object for DDC infrastructure (EKS, ScyllaDB, NLB, Kubernetes resources).
@@ -117,7 +144,7 @@ variable "ddc_infra_config" {
     environment: "The current environment (e.g. dev, prod, etc.)"
     region: "The AWS region to deploy to"
     debug: "Enable debug mode"
-    is_primary_region: "Whether this is the primary region (creates bearer token)"
+    create_seed_node: "Whether this region creates the ScyllaDB seed node (bootstrap node for cluster formation)"
     existing_scylla_seed: "IP of existing ScyllaDB seed node (for secondary regions)"
 
     # EKS Configuration
@@ -175,9 +202,16 @@ variable "ddc_monitoring_config" {
     scylla_monitoring_lb_access_logs_bucket         = optional(string, null)
     scylla_monitoring_lb_access_logs_prefix         = optional(string, null)
     
-    # Additional Security Groups
+    # Additional Security Groups (Targeted Access)
     additional_alb_security_groups = optional(list(string), [])
   })
+
+  # MONITORING ALB ACCESS:
+  #   additional_alb_security_groups: Monitoring ALB only (ops team, monitoring tools)
+  #   Use for: Grafana dashboard access, monitoring team, alerting systems
+  # 
+  # Security Flow:
+  #   Monitoring User → additional_alb_security_groups → Monitoring ALB → Grafana Dashboard
 
   description = <<EOT
     Configuration object for DDC monitoring stack (ScyllaDB monitoring, ALB).
@@ -196,14 +230,7 @@ variable "ddc_monitoring_config" {
   default = null
 }
 
-########################################
-# Authentication Configuration
-########################################
-variable "ddc_bearer_token_secret_arn" {
-  type        = string
-  description = "ARN of existing DDC bearer token secret. If not provided, a new secret will be created."
-  default     = null
-}
+
 
 ########################################
 # ECR Configuration
@@ -287,6 +314,12 @@ variable "create_route53_private_hosted_zone" {
 variable "route53_private_hosted_zone_name" {
   type        = string
   description = "The name of the private Route53 Hosted Zone for DDC resources. If not provided, defaults to 'ddc.internal'."
+  default     = null
+}
+
+variable "shared_private_zone_id" {
+  type        = string
+  description = "Zone ID of existing private hosted zone to associate with (for secondary regions). If provided, this VPC will be associated with the existing zone instead of creating a new one."
   default     = null
 }
 

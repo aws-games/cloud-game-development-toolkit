@@ -14,9 +14,10 @@ output "ddc_infra" {
     scylla_seed          = module.ddc_infra[0].scylla_seed
     nlb_arn              = module.ddc_infra[0].nlb_arn
     nlb_dns_name         = module.ddc_infra[0].nlb_dns_name
+    nlb_zone_id          = module.ddc_infra[0].nlb_zone_id
     nlb_target_group_arn = module.ddc_infra[0].nlb_target_group_arn
-    namespace            = module.ddc_infra[0].namespace
-    service_account      = module.ddc_infra[0].service_account
+    namespace            = var.ddc_services_config != null ? module.ddc_services[0].namespace : null
+    service_account      = var.ddc_services_config != null ? module.ddc_services[0].service_account : null
   } : null
 }
 
@@ -30,6 +31,7 @@ output "ddc_monitoring" {
     monitoring_instance_id       = module.ddc_monitoring[0].scylla_monitoring_instance_id
     monitoring_alb_dns_name     = module.ddc_monitoring[0].scylla_monitoring_alb_dns_name
     monitoring_alb_arn          = module.ddc_monitoring[0].scylla_monitoring_alb_arn
+    monitoring_alb_zone_id      = module.ddc_monitoring[0].scylla_monitoring_alb_zone_id
     monitoring_security_group_id = module.ddc_monitoring[0].scylla_monitoring_security_group_id
   } : null
 }
@@ -54,7 +56,7 @@ output "ddc_services" {
 
 output "private_hosted_zone" {
   description = "Private Route53 hosted zone information for DDC"
-  value = var.create_route53_private_hosted_zone ? {
+  value = var.create_route53_private_hosted_zone && var.shared_private_zone_id == null ? {
     zone_id = aws_route53_zone.ddc_private_hosted_zone[0].zone_id
     name    = aws_route53_zone.ddc_private_hosted_zone[0].name
     fqdn    = local.private_hosted_zone_name
@@ -92,15 +94,28 @@ output "bearer_token_secret_arn" {
 # DDC Connection Information
 ################################################################################
 
+################################################################################
+# DDC Connection Information
+################################################################################
+
 output "ddc_connection" {
   description = "DDC connection information for this region"
   value = var.ddc_infra_config != null ? {
     region = module.ddc_infra[0].region
     bucket = module.ddc_infra[0].s3_bucket_id
-    endpoint_elb = "http://${module.ddc_infra[0].nlb_dns_name}"
-    bearer_token_secret = var.ddc_bearer_token_secret_arn != null ? var.ddc_bearer_token_secret_arn : aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn
+    endpoint = var.create_route53_private_hosted_zone ? "http://${local.private_hosted_zone_name}" : null
+    endpoint_nlb = "http://${module.ddc_infra[0].nlb_dns_name}"
+    bearer_token_secret_arn = var.ddc_bearer_token_secret_arn != null ? var.ddc_bearer_token_secret_arn : aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn
+    kubectl_command = "aws eks update-kubeconfig --region ${module.ddc_infra[0].region} --name ${module.ddc_infra[0].cluster_name}"
+    cluster_name = module.ddc_infra[0].cluster_name
+    namespace = var.ddc_services_config != null ? module.ddc_services[0].namespace : null
+    scylla_ips = module.ddc_infra[0].scylla_ips
+    scylla_seed = module.ddc_infra[0].scylla_seed
+    monitoring_endpoint = var.ddc_monitoring_config != null ? module.ddc_monitoring[0].scylla_monitoring_alb_dns_name : null
   } : null
 }
+
+
 
 ################################################################################
 # Version Information for Multi-Region Consistency

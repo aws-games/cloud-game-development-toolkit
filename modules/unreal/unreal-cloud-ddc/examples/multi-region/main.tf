@@ -5,7 +5,7 @@ module "unreal_cloud_ddc_primary" {
   source = "../../"
   
   project_prefix = local.project_prefix
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc_primary.id
+  vpc_id = aws_vpc.primary.id
   existing_security_groups = [aws_security_group.allow_my_ip_primary.id]
   
   # Infrastructure Configuration
@@ -15,14 +15,17 @@ module "unreal_cloud_ddc_primary" {
     environment       = local.environment
     region            = local.primary_region
     
+    # Multi-region coordination
+    create_seed_node = true
+    
     # EKS Configuration
     kubernetes_version     = local.kubernetes_version
-    eks_node_group_subnets = aws_subnet.private_subnets_primary[*].id
+    eks_node_group_subnets = aws_subnet.primary_private[*].id
     eks_api_access_cidrs   = [local.my_ip_cidr]
     
     # ScyllaDB Configuration
     scylla_replication_factor = 3
-    scylla_subnets           = aws_subnet.private_subnets_primary[*].id
+    scylla_subnets           = aws_subnet.primary_private[*].id
     scylla_instance_type     = local.scylla_instance_type
     
     # Kubernetes Configuration
@@ -39,7 +42,8 @@ module "unreal_cloud_ddc_primary" {
     scylla_monitoring_instance_type = local.scylla_monitoring_instance_type
     
     create_application_load_balancer = true
-    monitoring_application_load_balancer_subnets = aws_subnet.public_subnets_primary[*].id
+    alb_certificate_arn = aws_acm_certificate_validation.ddc.certificate_arn
+    monitoring_application_load_balancer_subnets = aws_subnet.primary_public[*].id
   }
   
   # Services Configuration
@@ -52,13 +56,13 @@ module "unreal_cloud_ddc_primary" {
   }
 }
 
-# Secondary Region (us-west-2)
+# Secondary Region (us-east-2)
 module "unreal_cloud_ddc_secondary" {
   source = "../../"
   
   region = local.secondary_region  # REQUIRED: Must be different from primary region to avoid conflicts
   project_prefix = local.project_prefix
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc_secondary.id
+  vpc_id = aws_vpc.secondary.id
   existing_security_groups = [aws_security_group.allow_my_ip_secondary.id]
   
   # Infrastructure Configuration
@@ -69,21 +73,22 @@ module "unreal_cloud_ddc_secondary" {
     region            = local.secondary_region
     
     # Multi-region coordination
+    create_seed_node     = false
     existing_scylla_seed = module.unreal_cloud_ddc_primary.ddc_infra.scylla_seed
     scylla_source_region = local.primary_region
     
     # EKS Configuration - MUST match primary region
     kubernetes_version     = module.unreal_cloud_ddc_primary.version_info.kubernetes_version
-    eks_node_group_subnets = aws_subnet.private_subnets_secondary[*].id
+    eks_node_group_subnets = aws_subnet.secondary_private[*].id
     eks_api_access_cidrs   = [local.my_ip_cidr]
     
     # ScyllaDB Configuration
     scylla_replication_factor = 2
-    scylla_subnets           = aws_subnet.private_subnets_secondary[*].id
+    scylla_subnets           = aws_subnet.secondary_private[*].id
     scylla_instance_type     = local.scylla_instance_type
     
-    # Kubernetes Configuration
-    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
+    # Kubernetes Configuration - MUST match primary region
+    unreal_cloud_ddc_namespace = module.unreal_cloud_ddc_primary.ddc_connection.namespace
   }
   
   # No monitoring in secondary region
@@ -98,7 +103,7 @@ module "unreal_cloud_ddc_secondary" {
     ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
     
     # Replication URL
-    ddc_replication_region_url = module.unreal_cloud_ddc_primary.ddc_connection.endpoint_route53
+    ddc_replication_region_url = module.unreal_cloud_ddc_primary.ddc_connection.endpoint_nlb
   }
   
   depends_on = [module.unreal_cloud_ddc_primary]

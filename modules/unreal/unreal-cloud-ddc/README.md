@@ -4,6 +4,15 @@ This module deploys **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngi
 
 > **⚠️ Can't access the Unreal Cloud DDC link?** You need Epic Games GitHub organization access. Follow the [Epic Games Container Images Quick Start](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine) to join the organization and get access to DDC resources. **Note: This is critical to use DDC. You must do this or the deployment will not work.**
 
+## 🔧 Version Requirements
+
+**⚠️ Important Version Dependencies:**
+
+- **Terraform 1.11+** - Required for ephemeral values and write-only attributes used in secure secret management
+- **AWS Provider 6.0+** - Required for the `region` parameter on resources, enabling simplified multi-region deployments without provider aliases
+
+These versions enable enhanced security (ephemeral secrets) and simplified multi-region configuration patterns used throughout this module.
+
 ## ✨ Features
 
 - **Single module call** deploys complete DDC infrastructure (EKS, ScyllaDB, S3, Load Balancers)
@@ -867,30 +876,75 @@ This module manages both **infrastructure** (AWS resources) and **applications**
 - **Configuration:** Security groups (`existing_security_groups`, `additional_*_security_groups`)
 - **Security impact:** Limited to DDC operations
 
-### Security Group Patterns
+### Security Group Architecture
 
-**Global Access (Simple):**
+The module provides **4 levels of security group access control**:
 
+#### Global Access (Simple)
 ```hcl
-existing_security_groups = [aws_security_group.everyone.id]  # Applied to all load balancers
+existing_security_groups = [aws_security_group.allow_my_ip.id]
 ```
+**Flow:** `User → Global SG → ALL Load Balancers → All Services`
 
-**Role-Based Access (Granular):**
+**Use for:** General access, your IP, office network
 
+#### Targeted Access (Granular)
 ```hcl
-existing_security_groups = []  # No global access
 ddc_infra_config = {
-  additional_nlb_security_groups = [aws_security_group.game_devs.id]  # DDC access only
+  additional_nlb_security_groups = [aws_security_group.game_clients.id]  # DDC NLB only
+  additional_eks_security_groups = [aws_security_group.devops_team.id]   # EKS cluster only
 }
 ddc_monitoring_config = {
-  additional_alb_security_groups = [aws_security_group.devops.id]     # Monitoring access only
+  additional_alb_security_groups = [aws_security_group.monitoring_team.id] # Monitoring ALB only
 }
 ```
 
-**⚠️ Security Best Practice:**
+**Security Flows:**
+
+1. **DDC NLB Access:** `Game Clients → additional_nlb_security_groups → DDC NLB → DDC Service`
+2. **EKS Cluster Access:** `DevOps Team → additional_eks_security_groups → EKS Cluster → kubectl/services`
+3. **Monitoring ALB Access:** `Ops Team → additional_alb_security_groups → Monitoring ALB → Grafana Dashboard`
+
+#### What Each Security Group Controls
+
+| Security Group | Controls Access To | Use Cases |
+|---|---|---|
+| `existing_security_groups` | **All load balancers** (NLB + ALB) | General access, your IP, office network |
+| `additional_nlb_security_groups` | **DDC NLB only** | Game clients, build systems, Unreal Engine |
+| `additional_eks_security_groups` | **EKS cluster only** | kubectl users, CI/CD, direct service access |
+| `additional_alb_security_groups` | **Monitoring ALB only** | Ops team, monitoring tools, Grafana users |
+
+#### Role-Based Access Example
+
+```hcl
+# Global access for everyone
+existing_security_groups = [aws_security_group.allow_my_ip.id]
+
+# Targeted access by role
+ddc_infra_config = {
+  additional_nlb_security_groups = [
+    aws_security_group.game_developers.id,
+    aws_security_group.build_machines.id
+  ]
+  additional_eks_security_groups = [
+    aws_security_group.devops_team.id,
+    aws_security_group.ci_cd_systems.id
+  ]
+}
+
+ddc_monitoring_config = {
+  additional_alb_security_groups = [
+    aws_security_group.monitoring_team.id,
+    aws_security_group.alerting_systems.id
+  ]
+}
+```
+
+**⚠️ Security Best Practices:**
 
 - **Minimize EKS API access:** Only give to users who need cluster management
 - **Separate access types:** Game developers need DDC access, not kubectl access
-- **Use consistent IP sources:** Same data source for security groups and EKS API access
+- **Use role-based security groups:** Different teams get different access levels
+- **Combine global + targeted:** Use `existing_security_groups` for basic access, `additional_*` for specific roles
 
 <!-- BEGIN_TF_DOCS -->

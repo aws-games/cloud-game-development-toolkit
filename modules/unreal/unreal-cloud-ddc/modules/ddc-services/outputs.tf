@@ -26,3 +26,17 @@ output "ecr_repository_url" {
   description = "ECR repository URL for DDC images"
   value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
 }
+
+################################################################################
+# Kubernetes Resources Outputs
+################################################################################
+
+output "namespace" {
+  value       = kubernetes_namespace.unreal_cloud_ddc.metadata[0].name
+  description = "Name of the Kubernetes namespace"
+}
+
+output "service_account" {
+  value       = kubernetes_service_account.unreal_cloud_ddc_service_account.metadata[0].name
+  description = "Name of the Kubernetes service account"
+}

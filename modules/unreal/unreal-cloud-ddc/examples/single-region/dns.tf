@@ -10,26 +10,25 @@ data "aws_route53_zone" "root" {
 # DDC External (Public) DNS
 ##########################################
 # Route DDC service traffic to the DDC NLB
-resource "aws_route53_record" "external_ddc_service" {
+resource "aws_route53_record" "ddc_service" {
   zone_id = data.aws_route53_zone.root.id
   name    = local.ddc_fully_qualified_domain_name
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc.nlb_dns_name
-    zone_id                = module.unreal_cloud_ddc.nlb_zone_id
+    name                   = module.unreal_cloud_ddc.ddc_infra.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc.ddc_infra.nlb_zone_id
     evaluate_target_health = true
   }
 }
 
 # Route monitoring traffic to the monitoring ALB
-resource "aws_route53_record" "external_ddc_monitoring" {
-  count   = try(module.unreal_cloud_ddc.monitoring_alb_dns_name, null) != null ? 1 : 0
+resource "aws_route53_record" "ddc_monitoring" {
   zone_id = data.aws_route53_zone.root.id
   name    = local.monitoring_fully_qualified_domain_name
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc.monitoring_alb_dns_name
-    zone_id                = module.unreal_cloud_ddc.monitoring_alb_zone_id
+    name                   = module.unreal_cloud_ddc.ddc_monitoring.monitoring_alb_dns_name
+    zone_id                = module.unreal_cloud_ddc.ddc_monitoring.monitoring_alb_zone_id
     evaluate_target_health = true
   }
 }
@@ -38,6 +37,7 @@ resource "aws_route53_record" "external_ddc_monitoring" {
 # DDC Certificate Management
 ##########################################
 resource "aws_acm_certificate" "ddc" {
+  region      = local.region
   domain_name = "*.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
 
   validation_method = "DNS"
@@ -71,6 +71,7 @@ resource "aws_route53_record" "ddc_cert" {
 }
 
 resource "aws_acm_certificate_validation" "ddc" {
+  region                  = local.region
   certificate_arn         = aws_acm_certificate.ddc.arn
   validation_record_fqdns = [for record in aws_route53_record.ddc_cert : record.fqdn]
 

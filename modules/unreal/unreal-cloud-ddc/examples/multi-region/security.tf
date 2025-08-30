@@ -24,13 +24,6 @@ resource "aws_security_group" "allow_my_ip_secondary" {
 }
 
 ##########################################
-# Get My Public IP
-##########################################
-data "http" "my_ip" {
-  url = "https://checkip.amazonaws.com/"
-}
-
-##########################################
 # Primary Region Security Group Rules
 ##########################################
 # Allow HTTPS access to primary monitoring dashboard

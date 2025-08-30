@@ -114,7 +114,7 @@ module "ddc_primary" {
   source = "../../"
   ddc_infra_config = {
     region = "us-east-1"
-    is_primary_region = true
+    create_seed_node = true
   }
 }
 
@@ -123,7 +123,7 @@ module "ddc_secondary" {
   source = "../../"
   ddc_infra_config = {
     region = "us-west-2"
-    is_primary_region = false
+    create_seed_node = false
     existing_scylla_seed = module.ddc_primary.scylla_seed_ip
   }
 }
@@ -223,7 +223,7 @@ module "ddc" {
 # Primary region
 module "ddc_primary" {
   source = "path/to/module"
-  ddc_infra_config = { is_primary_region = true }
+  ddc_infra_config = { create_seed_node = true }
   ddc_monitoring_config = { /* ... */ }
   ddc_services_config = { /* ... */ }
 }
@@ -232,7 +232,7 @@ module "ddc_primary" {
 module "ddc_secondary" {
   source = "path/to/module"
   ddc_infra_config = { 
-    is_primary_region = false
+    create_seed_node = false
     existing_scylla_seed = module.ddc_primary.scylla_seed_ip
   }
   ddc_services_config = {

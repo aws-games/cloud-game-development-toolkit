@@ -9,27 +9,39 @@ data "aws_route53_zone" "root" {
 ##########################################
 # DDC External (Public) DNS
 ##########################################
-# Route DDC service traffic to the DDC NLB
-resource "aws_route53_record" "external_ddc_service" {
+# Route primary region DDC service traffic to the DDC NLB
+resource "aws_route53_record" "primary_ddc_service" {
   zone_id = data.aws_route53_zone.root.id
-  name    = local.ddc_fully_qualified_domain_name
+  name    = "${local.primary_region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc.nlb_dns_name
-    zone_id                = module.unreal_cloud_ddc.nlb_zone_id
+    name                   = module.unreal_cloud_ddc_primary.ddc_infra.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc_primary.ddc_infra.nlb_zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Route secondary region DDC service traffic to the DDC NLB
+resource "aws_route53_record" "secondary_ddc_service" {
+  zone_id = data.aws_route53_zone.root.id
+  name    = "${local.secondary_region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  type    = "A"
+  alias {
+    name                   = module.unreal_cloud_ddc_secondary.ddc_infra.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc_secondary.ddc_infra.nlb_zone_id
     evaluate_target_health = true
   }
 }
 
 # Route monitoring traffic to the monitoring ALB (primary region only)
-resource "aws_route53_record" "external_ddc_monitoring" {
-  count   = local.region == "us-east-1" && try(module.unreal_cloud_ddc.monitoring_alb_dns_name, null) != null ? 1 : 0
+resource "aws_route53_record" "primary_ddc_monitoring" {
+  count   = local.create_monitoring_dns ? 1 : 0
   zone_id = data.aws_route53_zone.root.id
-  name    = local.monitoring_fully_qualified_domain_name
+  name    = "${local.primary_region}.monitoring.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc.monitoring_alb_dns_name
-    zone_id                = module.unreal_cloud_ddc.monitoring_alb_zone_id
+    name                   = module.unreal_cloud_ddc_primary.ddc_monitoring.monitoring_alb_dns_name
+    zone_id                = module.unreal_cloud_ddc_primary.ddc_monitoring.monitoring_alb_zone_id
     evaluate_target_health = true
   }
 }
