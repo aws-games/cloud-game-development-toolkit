@@ -27,7 +27,7 @@ resource "aws_security_group" "allow_my_ip_secondary" {
 # Get My Public IP
 ##########################################
 data "http" "my_ip" {
-  url = "https://api.ipify.org"
+  url = "https://checkip.amazonaws.com/"
 }
 
 ##########################################

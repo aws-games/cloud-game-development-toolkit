@@ -2,7 +2,9 @@
 
 This module deploys **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)** infrastructure on AWS, providing a complete derived data cache solution for Unreal Engine projects.
 
-## Features
+> **⚠️ Can't access the Unreal Cloud DDC link?** You need Epic Games GitHub organization access. Follow the [Epic Games Container Images Quick Start](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine) to join the organization and get access to DDC resources. **Note: This is critical to use DDC. You must do this or the deployment will not work.**
+
+## ✨ Features
 
 - **Single module call** deploys complete DDC infrastructure (EKS, ScyllaDB, S3, Load Balancers)
 - **Multi-region support** with cross-region replication (maximum 2 regions)
@@ -11,399 +13,884 @@ This module deploys **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngi
 - **Built-in monitoring** with ScyllaDB monitoring stack (Prometheus, Grafana, Alertmanager)
 - **Security by default** with VPC isolation, IAM roles, and encrypted storage
 
-## Architecture
+## 🏢 Architecture
 
 ### Single Region
-![unreal-cloud-ddc-single-region](./modules/applications/assets/media/diagrams/unreal-cloud-ddc-single-region.png)
+
+![unreal-cloud-ddc-single-region](./assets/media/diagrams/unreal-cloud-ddc-single-region.png)
+
+- **EKS Cluster**: Kubernetes cluster with specialized node groups (system, worker, NVME)
+- **ScyllaDB**: High-performance database cluster for DDC metadata
+- **S3 Bucket**: Object storage for cached game assets
+- **Load Balancers**: Network Load Balancer for DDC API, Application Load Balancer for monitoring
+- **Monitoring Stack**: Prometheus, Grafana, and Alertmanager for observability
 
 ### Multi-Region
+
+<!-- TODO: ADD MULTI-REGION ARCH DIAGRAM -->
+
 - **Primary Region**: Complete DDC infrastructure with EKS, ScyllaDB, and S3
 - **Secondary Region**: Replicated infrastructure for high availability
 - **VPC Peering**: Secure cross-region connectivity
 - **Cross-Region Replication**: Automatic data synchronization
 - **DNS**: Region-specific endpoints for optimal routing
 
-## Prerequisites
+## 🧩 Submodules
 
-- **GitHub Credentials**: Access token stored in AWS Secrets Manager (prefixed with `ecr-pullthroughcache/`) to pull Unreal Cloud DDC container images
+### DDC Infrastructure
+
+**DDC Infrastructure** creates the core AWS resources: EKS cluster with specialized node groups, ScyllaDB database cluster on dedicated EC2 instances, S3 storage buckets, and load balancers for external access.
+
+📚 For more info, see the [DDC Infrastructure module docs](./modules/ddc-infra/README.md)
+
+### DDC Services
+
+**DDC Services** deploys the Unreal Cloud DDC applications to the EKS cluster using Helm charts, manages container orchestration, and configures service networking.
+
+📚 For more info, see the [DDC Services module docs](./modules/ddc-services/README.md)
+
+### DDC Monitoring
+
+**DDC Monitoring** provides observability with Prometheus metrics collection, Grafana dashboards for visualization, and Alertmanager for handling alerts across the DDC infrastructure.
+
+📚 For more info, see the [DDC Monitoring module docs](./modules/ddc-monitoring/README.md)
+
+## 🎒 Prerequisites
+
+### Required Tools & Access
+
+- **Epic Games Organization Access**: Must be member of Epic Games GitHub organization to access DDC container images
+- **GitHub Personal Access Token**: Stored in AWS Secrets Manager (prefixed with `ecr-pullthroughcache/`) with structure `{"username":"<your-github-username>","accessToken":"<your-pat>"}` and `packages:read` permission. See [AWS ECR pull-through cache documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-secret.html) for details.
+- **AWS CLI**: Configured with appropriate permissions for deployment and testing
+- **kubectl**: For EKS cluster access and post-deployment verification
+- **Helm**: For application deployment and cleanup operations
 - **Route53 Hosted Zone**: For DNS records and SSL certificate validation (recommended)
 - **VPC Infrastructure**: Existing VPC with public and private subnets
-- **AWS CLI**: Configured with appropriate permissions for deployment and testing
-- **kubectl**: For post-deployment verification and troubleshooting
+
+📚 **For answers to common questions and detailed explanations**, see the [FAQ section](#frequently-asked-questions-faq).
 
 **Important**: The module currently supports a maximum of 2 regions (primary and secondary).
 
-### Region Configuration
+## 📚 Examples
 
-**Critical**: Resources are deployed to the **exact regions specified** in the `regions` variable, not your AWS CLI default region.
+For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/examples){:target="\_blank"}.
 
-```terraform
-# Single-region
-regions = {
-  primary = { region = "us-east-1" }  # Deploys to us-east-1
+## 🚀 Deployment Instructions
+
+Make sure you've completed the [Prerequisites](#prerequisites) section first, then follow these steps to deploy DDC infrastructure.
+
+⚠️ **CRITICAL**: Your IP address must be consistently allowed in `eks_api_access_cidrs` for both deployment and destruction. This module uses Helm to deploy applications, requiring EKS API access during `terraform destroy` to prevent orphaned AWS resources. See [Troubleshooting](#destroy-troubleshooting) if destroy operations fail.
+
+### Step 1: Configure GitHub Credentials
+
+Create GitHub Personal Access Token with Epic Games organization access and store in AWS Secrets Manager:
+
+```bash
+# Store GitHub credentials as JSON (required format for ECR pull-through cache)
+aws secretsmanager create-secret \
+  --name "ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials" \
+  --description "GitHub PAT for DDC container images" \
+  --secret-string '{"username":"your-github-username","accessToken":"your-personal-access-token"}'
+```
+
+See [AWS ECR pull-through cache documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-secret.html) for more details on secret structure.
+
+### Step 2: Configure Terraform
+
+Set up your Terraform configuration with the required providers and module call. See the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/examples) for complete working configurations including provider setup, VPC configuration, and all required variables.
+
+### Step 3: Deploy Infrastructure
+
+Ensure AWS credentials are configured and verify access:
+
+**Verify AWS credentials:**
+
+```bash
+# Check that AWS credentials are configured and valid
+aws sts get-caller-identity
+```
+
+**Initialize Terraform:**
+
+```bash
+terraform init
+```
+
+**Plan deployment:**
+
+```bash
+terraform plan
+```
+
+**Deploy infrastructure:**
+
+```bash
+terraform apply
+```
+
+## ✅ Verifying and Testing DDC Deployment
+
+Run these tests to ensure DDC is working before configuring Unreal Engine projects.
+
+After deploying DDC infrastructure, verify the deployment is working correctly before developers configure Unreal Engine.
+
+### Connection Information
+
+**After deployment completes, terraform displays key connection values:**
+
+```bash
+# These outputs are automatically shown after 'terraform apply'
+# You can also view them anytime with:
+terraform output
+```
+
+**Key outputs for Unreal Engine configuration:**
+
+- **`s3_bucket_name`** - S3 bucket for cached assets
+- **`region`** - AWS region where DDC is deployed
+- **`ddc_endpoint_url`** - Main DDC API endpoint (Route53 DNS)
+- **`nlb_dns_name`** - Backup endpoint (direct load balancer)
+
+**Additional outputs (for testing/troubleshooting):**
+
+- **`eks_cluster_name`** - For kubectl access
+- **`monitoring_url`** - Grafana dashboard access
+- **`bearer_token_secret_arn`** - DDC authentication token location
+
+**⚠️ IMPORTANT - Multi-Region:** For multi-region deployments, each region produces its own set of outputs with region-specific URLs (e.g., `us-east-1.ddc.yourdomain.com`, `us-west-2.ddc.yourdomain.com`). Users should connect to their geographically closest region for optimal performance.
+
+### Basic Verification
+
+Verifies that Kubernetes pods are deployed and running correctly:
+
+**Configure kubectl access:**
+
+```bash
+# Terraform outputs provide these values if following examples
+aws eks update-kubeconfig --region <region> --name <cluster-name>
+```
+
+**Check DDC pods are running:**
+
+```bash
+# Use terraform output for actual namespace
+kubectl get pods -n $(terraform output -raw namespace)
+```
+
+**Verify all pods are in Running state:**
+
+```bash
+kubectl get pods -n $(terraform output -raw namespace) --field-selector=status.phase=Running
+```
+
+### Automated Testing Scripts
+
+Runs comprehensive functional tests to verify DDC API connectivity and version compatibility. These scripts are located in the `assets/scripts/` directory of the DDC module:
+
+**Test DDC functionality:**
+
+```bash
+# Requires authentication - tests end-to-end DDC operations
+./assets/scripts/ddc_functional_test.sh
+```
+
+**Check deployed versions:**
+
+```bash
+# Verifies DDC and Kubernetes component versions
+./assets/scripts/ddc_version_check.sh
+```
+
+### Manual Connectivity Test
+
+For quick verification without running scripts:
+
+**Simple connectivity test (recommended first):**
+
+```bash
+# Tests basic authentication and endpoint availability
+curl http://ddc.yourdomain.com/api/v1/health -H 'Authorization: ServiceAccount your-bearer-token-from-aws-secrets-manager'
+```
+
+**If Route53 DNS fails, try direct ELB endpoint:**
+
+```bash
+curl http://cgd-unreal-cloud-ddc-123456789.elb.us-east-1.amazonaws.com/api/v1/health -H 'Authorization: ServiceAccount your-bearer-token-from-aws-secrets-manager'
+```
+
+**Full functionality test:**
+
+```bash
+# Tests write capability and writes small dummy data to cache
+curl http://ddc.yourdomain.com/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H 'Authorization: ServiceAccount your-bearer-token-from-aws-secrets-manager'
+```
+
+**Replace with your values:**
+
+- `ddc.yourdomain.com` → Your actual DDC endpoint URL
+- `your-bearer-token-from-aws-secrets-manager` → Token from AWS Secrets Manager
+
+### What to Expect
+
+**Successful Response:**
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+...
+```
+
+**Common Issues:**
+
+- **Connection timeout**: Check security groups allow your IP
+- **401 Unauthorized**: Verify bearer token is correct
+- **DNS resolution failed**: Check Route53 records
+
+## 🔌 Connecting Unreal Engine to DDC
+
+### Overview
+
+Unlike version control systems (Perforce, Git) that have GUI clients, **DDC works transparently in the background**. There's no "DDC client" to install - Unreal Engine connects directly to your deployed DDC service to cache derived data (compiled shaders, textures, etc.).
+
+### Prerequisites for Connection
+
+#### 1. Unreal Engine Installation
+
+- **Epic Games Launcher**: Download from [Epic Games](https://www.epicgames.com/store/download)
+- **Unreal Engine**: Install version compatible with your DDC version (see [Version Compatibility](#version-compatibility))
+- **Project Setup**: Have an existing Unreal Engine project or create a new one
+
+#### 2. Network Access
+
+- **Your IP must be allowed** in the security groups configured during DDC deployment
+- **Corporate networks**: May need firewall rules for DDC endpoints
+- **VPN access**: If DDC is deployed in private subnets
+
+### Configuration Steps
+
+#### Step 1: Get DDC Connection Information
+
+Your DevOps team deployed the DDC infrastructure and has the connection details you need. Ask them for the following information:
+
+**Required information from DevOps:**
+
+- **S3 Bucket Name** - Where cached assets are stored (e.g., `cgd-unreal-cloud-ddc-bucket-abc123`)
+- **AWS Region** - Where DDC is deployed (e.g., `us-east-1`)
+- **DDC Endpoint URL** - Main DDC API endpoint (e.g., `http://ddc.yourdomain.com`)
+- **Backup Endpoint** - Direct load balancer DNS (fallback if Route53 fails)
+
+**For DevOps:** These values are available via `terraform output` command.
+
+#### Step 2: Configure Unreal Engine Project
+
+**Option A: Project-Specific Configuration (Recommended)**
+
+Edit your project's `Config/DefaultEngine.ini` file:
+
+```bash
+# Get connection information from terraform
+terraform output ddc_connection
+```
+
+```ini
+[DDC]
+; Use your deployed DDC service
+DefaultBackend=Shared
+
+; Configure the shared DDC backend
+Shared=(Type=S3, Remote=true, Bucket=your-s3-bucket-name, Region=your-aws-region, BaseUrl=http://your-ddc-dns-name)
+
+; Example with actual values:
+; Shared=(Type=S3, Remote=true, Bucket=cgd-unreal-cloud-ddc-bucket-abc123, Region=us-east-1, BaseUrl=http://ddc.yourdomain.com)
+
+; Optional: Configure local cache as fallback
+Local=(Type=FileSystem, Path=%GAMEDIR%DerivedDataCache, MaxFileAge=60)
+```
+
+**Option B: Engine-Wide Configuration**
+
+Edit the engine's `Engine/Config/BaseEngine.ini` (affects all projects):
+
+```ini
+[DDC]
+DefaultBackend=Hierarchical
+
+; Hierarchical setup: try shared first, then local
+Hierarchical=(Type=Hierarchical, Inner=Shared, Inner=Local)
+Shared=(Type=S3, Remote=true, Bucket=your-s3-bucket-name, Region=your-aws-region, BaseUrl=http://ddc.yourdomain.com)
+Local=(Type=FileSystem, Path=%GAMEDIR%DerivedDataCache)
+```
+
+#### Step 3: Test DDC Connection
+
+1. **Open Unreal Engine** with your configured project
+2. **Open Output Log**: Window → Developer Tools → Output Log
+3. **Filter for DDC**: In the log filter, type "DDC" to see DDC-related messages
+4. **Compile a shader or asset**: Make a change that triggers asset compilation
+5. **Check for DDC activity**: Look for messages like:
+   ```
+   LogDerivedDataCache: Shared DDC: Put succeeded for key...
+   LogDerivedDataCache: Shared DDC: Get succeeded for key...
+   ```
+
+### Verification Steps
+
+#### 1. Check DDC Status in Editor
+
+- **Editor Preferences** → **General** → **Loading & Saving** → **Derived Data Cache**
+- Verify your shared DDC backend is listed and active
+
+#### 2. Monitor DDC Usage
+
+```bash
+# Check S3 bucket for cached objects
+aws s3 ls s3://your-ddc-bucket-name --recursive
+
+# Run functional test to verify API connectivity
+./assets/scripts/ddc_functional_test.sh
+```
+
+#### 3. Performance Validation
+
+- **First build**: Will be slower as DDC populates
+- **Subsequent builds**: Should be significantly faster
+- **Team sharing**: Other developers should see faster builds when using same assets
+
+### Troubleshooting Connection Issues
+
+#### "DDC Backend Not Available"
+
+**Symptoms**: Unreal Engine logs show DDC connection failures
+
+**Solutions**:
+
+1. **Test connectivity with different endpoints**:
+
+   ```bash
+   # Test Route53 DNS name first (simple health check)
+   curl http://ddc.yourdomain.com/api/v1/health -H "Authorization: ServiceAccount your-bearer-token"
+
+   # If health check works, test full functionality
+   curl http://ddc.yourdomain.com/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H "Authorization: ServiceAccount your-bearer-token"
+
+   # If Route53 fails, try direct NLB connection
+   terraform output nlb_dns_name  # Get NLB DNS name
+   curl http://cgd-unreal-cloud-ddc-123456789.elb.us-east-1.amazonaws.com/api/v1/health -H "Authorization: ServiceAccount your-bearer-token"
+   curl http://cgd-unreal-cloud-ddc-123456789.elb.us-east-1.amazonaws.com/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H "Authorization: ServiceAccount your-bearer-token"
+
+   # For multi-region, test specific region
+   curl http://us-east-1.ddc.yourdomain.com/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H "Authorization: ServiceAccount your-bearer-token"
+   ```
+
+2. **Check network access**: Verify your IP is in DDC security groups
+3. **Verify DNS resolution**:
+   ```bash
+   nslookup ddc.yourdomain.com
+   # Should resolve to NLB IP addresses
+   ```
+4. **Verify AWS credentials**: Run `aws sts get-caller-identity`
+5. **Check configuration**: Ensure BaseUrl, Bucket, and Region are correct
+
+**Connection Troubleshooting Flow**:
+
+1. **Route53 DNS fails** → Check DNS records and Route53 configuration
+2. **Direct NLB works** → DNS issue, fix Route53 records
+3. **Both fail** → Network/security group issue
+4. **401 errors** → Authentication issue (bearer token or AWS credentials)
+
+#### "Access Denied" Errors
+
+**Symptoms**: AWS authentication failures in UE logs
+
+**Solutions**:
+
+1. **Check IAM permissions**: Ensure AWS credentials have S3 and DDC access
+2. **Verify bearer token**: Check AWS Secrets Manager for valid token
+3. **Test AWS CLI**: Run `aws s3 ls s3://your-ddc-bucket`
+
+#### "Slow Build Performance"
+
+**Symptoms**: Builds not faster despite DDC configuration
+
+**Solutions**:
+
+1. **Check DDC hit rate**: Monitor Grafana dashboard (if enabled)
+2. **Verify cache population**: Check S3 bucket for cached objects
+3. **Network latency**: Consider regional deployment closer to developers
+
+### Team Deployment Best Practices
+
+#### 1. Shared Configuration
+
+- **Version control DDC config**: Include `DefaultEngine.ini` changes in your project repository
+- **Document setup**: Create team wiki with connection instructions
+- **Standardize credentials**: Use shared AWS account or IAM roles
+
+#### 2. Gradual Rollout
+
+- **Start with build machines**: Configure CI/CD systems first
+- **Pilot group**: Test with small group of developers
+- **Full team**: Roll out after validation
+
+#### 3. Monitoring & Maintenance
+
+- **Monitor usage**: Use Grafana dashboard to track DDC performance
+- **Cache cleanup**: Implement S3 lifecycle policies for old cache data
+- **Version updates**: Follow [DDC Version Management](#ddc-version-management--updates) process
+
+## 🔧 Troubleshooting
+
+Common problems and solutions for deployment issues and connection issues.
+
+### Creation Issues
+
+#### EKS Cluster Creation Fails
+
+**Symptoms**: `Error creating EKS Cluster` or timeout during cluster creation
+
+**Common Causes & Solutions:**
+
+- **Insufficient IAM permissions**: Ensure your AWS credentials have EKS cluster creation permissions
+- **VPC/Subnet issues**: Verify subnets exist and have proper tags for EKS
+- **IP range conflicts**: Check `eks_api_access_cidrs` doesn't conflict with VPC CIDR
+- **Resource limits**: Check AWS service quotas for EKS clusters in your region
+
+```bash
+# Verify EKS permissions
+aws iam simulate-principal-policy --policy-source-arn $(aws sts get-caller-identity --query Arn --output text) --action-names eks:CreateCluster
+
+# Check VPC subnets
+aws ec2 describe-subnets --subnet-ids subnet-xxx --query 'Subnets[*].{SubnetId:SubnetId,VpcId:VpcId,AvailabilityZone:AvailabilityZone}'
+```
+
+#### ScyllaDB Instance Launch Fails
+
+**Symptoms**: `Error launching EC2 instance` for ScyllaDB nodes
+
+**Common Causes & Solutions:**
+
+- **Instance type unavailable**: Try different instance type or availability zone
+- **AMI not found**: Verify ScyllaDB AMI exists in your region
+- **Security group issues**: Check VPC security group rules
+- **Subnet capacity**: Ensure private subnets have available IP addresses
+
+```bash
+# Check instance type availability
+aws ec2 describe-instance-type-offerings --location-type availability-zone --filters Name=instance-type,Values=i4i.xlarge
+
+# Verify subnet capacity
+aws ec2 describe-subnets --subnet-ids subnet-xxx --query 'Subnets[*].{SubnetId:SubnetId,AvailableIpAddressCount:AvailableIpAddressCount}'
+```
+
+### Deletion Issues {#destroy-troubleshooting}
+
+#### Understanding IP Access Requirements
+
+**Why This Matters**: Unlike typical Terraform modules that only manage AWS resources, this module also deploys Kubernetes applications via Helm. During `terraform destroy`, Helm must clean up applications before EKS infrastructure is deleted to prevent orphaned AWS resources.
+
+**Common Failure Scenario:**
+
+```bash
+# Deploy from office
+terraform apply  # IP: 203.0.113.5 (allowed in eks_api_access_cidrs)
+
+# Destroy from home
+terraform destroy  # IP: 198.51.100.10 (NOT in allowlist)
+# Result: Helm cleanup fails → EKS destroyed → Orphaned AWS resources
+```
+
+#### Automatic vs Manual Cleanup
+
+The module provides automatic Helm cleanup during destroy operations:
+
+```hcl
+# Default: Automatic cleanup enabled
+ddc_services_config = {
+  auto_cleanup = true   # Recommended for most users
 }
 
-# Multi-region  
-regions = {
-  primary   = { region = "us-east-1" }  # Primary cluster in us-east-1
-  secondary = { region = "us-east-2" }  # Secondary cluster in us-east-2
+# Advanced: Manual cleanup (experts only)
+ddc_services_config = {
+  auto_cleanup = false  # You handle cleanup manually
 }
 ```
 
-**Requirements:**
-- Keys must be exactly `"primary"` and `"secondary"` (fixed by module)
-- Region values must be explicit strings (no data sources)
-- Your AWS session/profile region does not affect deployment location
+**When `auto_cleanup = true` (Default):**
 
-**⚠️ Why we recommend explicit regions over data sources:**
+- ✅ Prevents orphaned ENIs and Load Balancers
+- ⚠️ Requires your IP in `eks_api_access_cidrs` during destroy
+- ⚠️ Needs `helm` and `kubectl` installed locally
 
-While you *could* use `data.aws_region.current.name`, this creates risks:
+**When `auto_cleanup = false`:**
 
-```terraform
-# Risky - depends on runtime environment
-regions = {
-  primary = { region = data.aws_region.current.name }
-}
+- ✅ No IP dependency during destroy
+- 🚨 Manual cleanup mandatory before destroying EKS cluster
 
-# Safe - explicit and predictable
-regions = {
-  primary = { region = "us-east-1" }
+#### Destroy Fails with "EKS API Access Denied"
+
+**Symptoms**: `terraform destroy` fails during Helm cleanup phase
+
+**Root Cause**: Your IP address changed since deployment and is no longer in `eks_api_access_cidrs`
+
+**Solutions:**
+
+1. **Update IP and re-apply**:
+
+   ```bash
+   # Check current IP
+   curl https://checkip.amazonaws.com/
+
+   # Update eks_api_access_cidrs in your terraform.tfvars
+   # Then apply changes
+   terraform apply
+
+   # Now destroy will work
+   terraform destroy
+   ```
+
+2. **Manual cleanup** (if above fails):
+
+   ```bash
+   # From a machine with EKS access
+   aws eks update-kubeconfig --region <region> --name <cluster-name>
+   helm list -A
+   helm uninstall <release-name> -n <namespace> --wait
+
+   # Then retry destroy
+   terraform destroy
+   ```
+
+**Prevention Strategies:**
+
+1. **Static IP**: Always deploy/destroy from same location
+2. **Broader CIDR**: Use wider IP ranges (e.g., office + VPN ranges)
+3. **Manual cleanup**: Set `auto_cleanup = false` and handle cleanup manually
+
+#### Helm Cleanup Timeout {#helm-cleanup-failures}
+
+**Symptoms**: Helm uninstall hangs or times out during destroy
+
+**Common Causes & Solutions:**
+
+- **Stuck finalizers**: Kubernetes resources with finalizers preventing deletion
+- **Network issues**: Pods can't communicate with Kubernetes API
+- **Resource dependencies**: External resources preventing pod termination
+
+```bash
+# Check for stuck resources
+kubectl get all -n unreal-cloud-ddc
+kubectl get pvc -n unreal-cloud-ddc
+
+# Force delete stuck pods
+kubectl delete pod <pod-name> -n unreal-cloud-ddc --force --grace-period=0
+
+# Remove finalizers from stuck resources
+kubectl patch <resource-type> <resource-name> -n unreal-cloud-ddc -p '{"metadata":{"finalizers":[]}}' --type=merge
+```
+
+### Connection Issues
+
+#### Cannot Access DDC API
+
+**Symptoms**: `Connection timeout` or `Connection refused` when accessing DDC URL
+
+**Common Causes & Solutions:**
+
+- **Security group restrictions**: Your IP not in security group allowlist
+- **Load balancer not ready**: NLB still provisioning or unhealthy targets
+- **DNS resolution issues**: Route53 records not propagated
+
+```bash
+# Check your current IP
+curl https://checkip.amazonaws.com/
+
+# Test DNS resolution
+nslookup ddc.yourdomain.com
+
+# Check load balancer health
+aws elbv2 describe-target-health --target-group-arn <target-group-arn>
+```
+
+#### EKS API Access Denied
+
+**Symptoms**: `kubectl` commands fail with `Unauthorized` or `Forbidden`
+
+**Common Causes & Solutions:**
+
+- **IP not in allowlist**: Current IP not in `eks_api_access_cidrs`
+- **AWS credentials**: Invalid or expired AWS credentials
+- **Kubeconfig outdated**: Need to refresh EKS kubeconfig
+
+```bash
+# Update kubeconfig
+aws eks update-kubeconfig --region <region> --name <cluster-name>
+
+# Test AWS credentials
+aws sts get-caller-identity
+
+# Check current IP vs allowlist
+echo "Current IP: $(curl -s https://checkip.amazonaws.com/)"
+echo "Check if this IP is in your eks_api_access_cidrs variable"
+```
+
+<!-- BEGIN_TF_DOCS -->
+<!-- This section will be auto-generated by terraform-docs -->
+<!-- END_TF_DOCS -->
+
+## ❓ Frequently Asked Questions (FAQ)
+
+### Prerequisites & Setup
+
+#### Q: Why do I need Epic Games organization access?
+
+**A:** Epic Games hosts DDC container images on GitHub Container Registry with controlled access. You must be a member of the Epic Games GitHub organization to access these private container images. See the [Prerequisites section](#prerequisites) for setup requirements.
+
+📚 **Setup Guide**: [Epic Games Container Images Quick Start](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine)
+
+#### Q: How should game studios manage GitHub access?
+
+**A:** Use a dedicated service account instead of individual developer accounts:
+
+1. **Create Service Account**: New GitHub user with company email
+2. **Join Epic Games Org**: Follow Epic's setup guide
+3. **Generate Single PAT**: Create token with `packages:read` permission
+4. **Store in Secrets Manager**: DevOps team manages centrally
+
+**Benefits**: No individual dependencies, centralized control, reduced security risk.
+
+#### Q: What's the correct secret format for GitHub credentials?
+
+**A:** The secret must be JSON format as shown in [Deployment Instructions](#deployment-instructions):
+
+```json
+{
+  "username": "your-github-username",
+  "accessToken": "your-personal-access-token"
 }
 ```
 
-**Problems with data sources:**
-- **Team inconsistency**: Different developers' AWS profiles may have different default regions
-- **Terraform plan changes**: `terraform plan` may show region changes when run by different team members
-- **CI/CD unpredictability**: Pipeline environment may have different default region than development
-- **Accidental deployments**: Easy to accidentally deploy to wrong region if AWS profile changes
+See [AWS ECR pull-through cache documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-secret.html) for details.
 
-**Benefits of explicit regions:**
-- **Predictable**: Always deploys to the same location
-- **Team-safe**: Works consistently across all team members
-- **CI/CD-reliable**: No dependency on runtime AWS configuration
-- **Change-safe**: No unexpected region changes in Terraform plans
+### Architecture & Components
 
-## Examples
+#### Q: What are the main components of this module?
 
-For example configurations, please see the [examples](./examples/).
+**A:** The module consists of three submodules as described in the [Submodules section](#submodules):
 
-## Usage
+- **DDC Infrastructure**: EKS, ScyllaDB, S3, Load Balancers
+- **DDC Services**: Helm charts and Kubernetes applications
+- **DDC Monitoring**: Prometheus, Grafana, Alertmanager
 
-### Single Region Deployment
+#### Q: What is ScyllaDB and why not Amazon Keyspaces?
 
-```terraform
-module "unreal_cloud_ddc" {
-  source = "../../modules/unreal/unreal-cloud-ddc"
-  
-  providers = {
-    aws.primary        = aws
-    awscc.primary      = awscc
-    kubernetes.primary = kubernetes
-    helm.primary       = helm
-  }
-  
-  # VPC Configuration
-  vpc_ids = {
-    primary = aws_vpc.main.id
-  }
-  
-  # Infrastructure Configuration
-  infrastructure_config = {
-    name           = "my-game-ddc"
-    project_prefix = "cgd"
-    environment    = "dev"
-    
-    # EKS Configuration
-    kubernetes_version     = "1.33"
-    eks_node_group_subnets = aws_subnet.private[*].id
-    
-    # ScyllaDB Configuration
-    scylla_subnets       = aws_subnet.private[*].id
-    scylla_instance_type = "i4i.2xlarge"
-    
-    # Load Balancer Configuration
-    monitoring_application_load_balancer_subnets = aws_subnet.public[*].id
-  }
-  
-  # Application Configuration
-  application_config = {
-    name           = "my-game-ddc"
-    project_prefix = "cgd"
-    
-    # Credentials (must be prefixed with ecr-pullthroughcache/)
-    ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/cgd-my-game-ddc-github-credentials"
-    
-    # Application Settings
-    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
-    unreal_cloud_ddc_version   = "1.2.0"
-  }
+**A:** ScyllaDB provides ultra-high performance (sub-millisecond latency) for DDC metadata storage, while Amazon Keyspaces offers single-digit millisecond latency. DDC requires extremely low latency for optimal game asset caching performance.
+
+#### Q: How does ECR pull-through cache work?
+
+**A:** The module automatically caches Epic Games' container images in your AWS account:
+
+1. First pull downloads from GitHub Container Registry
+2. ECR caches the image locally
+3. Future pulls use the local cache (faster, more reliable)
+
+See [Deployment Instructions](#deployment-instructions) for GitHub credentials setup.
+
+### Configuration & Deployment
+
+#### Q: Can I customize the Helm chart configuration?
+
+**A:** Yes, several ways:
+
+1. **Built-in variables**: Use module variables like `replication_factor`
+2. **Custom values**: Use `unreal_cloud_ddc_helm_values` for additional YAML files
+3. **Template modification**: Copy and modify YAML files in `assets/submodules/ddc-services/`
+
+#### Q: What is the DDC bearer token?
+
+**A:** A regional service credential automatically created during deployment:
+
+- **Shared by all users**: Unreal Engine clients, build systems, CI/CD
+- **Per-region**: Each region has its own independent token
+- **Stored in Secrets Manager**: Named `${project_prefix}-${name}-bearer-token`
+- **Team-wide access**: Represents DDC service access for the entire studio
+
+#### Q: How do I update DDC versions?
+
+**A:** DDC versions are explicitly pinned and never auto-update:
+
+1. Change `unreal_cloud_ddc_version` in your configuration
+2. Run `terraform apply`
+3. Verify update with testing scripts
+
+See [DDC Version Management](#ddc-version-management--updates) for detailed process.
+
+### Multi-Region & Networking
+
+#### Q: How does multi-region replication work?
+
+**A:** Each region deploys DDC independently with ScyllaDB cross-region replication:
+
+- **Regional independence**: Users connect to their regional endpoint
+- **Internal replication**: Only DDC services communicate across regions
+- **Version consistency**: Secondary regions inherit versions from primary
+
+See [Architecture section](#architecture) for deployment patterns.
+
+#### Q: How do I set up multi-region GitHub credentials?
+
+**A:** Each region requires its own GitHub credentials secret:
+
+```hcl
+# Primary region
+ddc_services_config = {
+  ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-east-1:123:secret:ecr-pullthroughcache/github-creds"
+}
+
+# Secondary region
+ddc_services_config = {
+  ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-west-2:123:secret:ecr-pullthroughcache/github-creds"
 }
 ```
 
-### Multi-Region Deployment
+### Troubleshooting
 
-```terraform
-module "unreal_cloud_ddc" {
-  source = "../../modules/unreal/unreal-cloud-ddc"
-  
-  providers = {
-    aws.primary          = aws
-    aws.secondary        = aws.us_west_2
-    awscc.primary        = awscc
-    awscc.secondary      = awscc.us_west_2
-    kubernetes.primary   = kubernetes
-    kubernetes.secondary = kubernetes.us_west_2
-    helm.primary         = helm
-    helm.secondary       = helm.us_west_2
-  }
-  
-  # Multi-region Configuration
-  regions = {
-    primary   = { region = "us-east-1" }
-    secondary = { region = "us-west-2" }
-  }
-  
-  # VPC Configuration
-  vpc_ids = {
-    primary   = aws_vpc.us_east_1.id
-    secondary = aws_vpc.us_west_2.id
-  }
-  
-  # Infrastructure Configuration (shared across regions)
-  infrastructure_config = {
-    name           = "global-game-ddc"
-    project_prefix = "cgd"
-    environment    = "prod"
-    
-    # EKS Configuration
-    kubernetes_version     = "1.33"
-    eks_node_group_subnets = aws_subnet.us_east_1_private[*].id  # Primary region subnets
-    
-    # ScyllaDB Configuration
-    scylla_subnets       = aws_subnet.us_east_1_private[*].id
-    scylla_instance_type = "i4i.4xlarge"  # Larger for production
-    
-    # Load Balancer Configuration
-    monitoring_application_load_balancer_subnets = aws_subnet.us_east_1_public[*].id
-  }
-  
-  # Application Configuration (shared across regions)
-  application_config = {
-    name           = "global-game-ddc"
-    project_prefix = "cgd"
-    
-    # Credentials (must be prefixed with ecr-pullthroughcache/)
-    ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/cgd-global-game-ddc-github-credentials"
-    
-    # Application Settings
-    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
-    unreal_cloud_ddc_version   = "1.2.0"
-  }
+#### Q: Why does terraform destroy fail with "EKS API Access Denied"?
+
+**A:** Your IP address changed since deployment and is no longer in `eks_api_access_cidrs`. See [Troubleshooting section](#destroy-troubleshooting) for solutions:
+
+1. Update IP and re-apply
+2. Use manual cleanup if needed
+3. Consider broader CIDR ranges
+
+#### Q: How do I avoid IP restrictions during destroy?
+
+**A:** Set `auto_cleanup = false` and manually clean up Helm releases before destroying infrastructure. See [Troubleshooting section](#destroy-troubleshooting) for manual cleanup process.
+
+#### Q: Can I use this with existing EKS clusters?
+
+**A:** Not currently - the module creates its own EKS cluster. This may be supported in future versions.
+
+### Getting Help
+
+#### Q: Where can I get additional support?
+
+**A:**
+
+1. **Troubleshooting**: See [Troubleshooting section](#troubleshooting) for common issues
+2. **AWS Service Health**: [AWS Status Page](https://status.aws.amazon.com/)
+3. **Service Limits**: [AWS Service Quotas Console](https://console.aws.amazon.com/servicequotas/)
+4. **Community Support**: [GitHub Discussions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)
+5. **Debug Logging**: Set `TF_LOG=DEBUG` for detailed Terraform logs
+
+## 🔄 Migration Guide
+
+Safe migration strategies and module version update procedures.
+
+### From Existing Infrastructure
+
+If you already have DDC infrastructure deployed, you can gradually migrate to this module:
+
+1. **Deploy new infrastructure** alongside existing (different names/regions)
+2. **Test thoroughly** with new infrastructure
+3. **Migrate data/traffic** gradually using DDC replication features
+4. **Decommission old infrastructure** once migration is complete
+
+### Module Version Updates
+
+For general guidance on toolkit versioning (commit hash vs release tags), see the [Module Version Management](../../docs/modules/index.md#module-version-management) documentation.
+
+**Version Update Process:**
+
+1. **Test new version** in development environment
+2. **Review CHANGELOG.md** for breaking changes
+3. **Update commit hash/tag** in configuration
+4. **Run terraform plan** to review changes
+5. **Apply in staging** before production
+6. **Monitor deployment** for issues
+
+**Breaking Changes:**
+
+- Always review module documentation before updating
+- Test in non-production environment first
+- Plan for potential resource recreation
+- Keep backups of critical data (S3, ScyllaDB)
+
+## ⚙️ Advanced Configuration
+
+Multi-region configurations and build farm optimizations for your Unreal Engine projects.
+
+### Multi-Region Unreal Engine Setup
+
+For teams distributed across regions, configure Unreal Engine to use multiple DDC endpoints:
+
+```ini
+[DDC]
+; Primary region DDC
+Primary=(Type=S3, Remote=true, Bucket=primary-bucket, Region=us-east-1, BaseUrl=http://ddc-primary.yourdomain.com)
+
+; Secondary region DDC (fallback)
+Secondary=(Type=S3, Remote=true, Bucket=secondary-bucket, Region=us-west-2, BaseUrl=http://ddc-secondary.yourdomain.com)
+
+; Try primary first, then secondary, then local
+Hierarchical=(Type=Hierarchical, Inner=Primary, Inner=Secondary, Inner=Local)
+```
+
+### Build Farm Integration
+
+Optimized configuration for build machines:
+
+```ini
+[DDC]
+DefaultBackend=SharedOnly
+SharedOnly=(Type=S3, Remote=true, Bucket=your-bucket, Region=your-region, BaseUrl=http://your-ddc-endpoint, MaxCacheSize=50GB)
+```
+
+## 🛡️ Access Control & Security
+
+Understand the difference between infrastructure access and application access.
+
+### Critical Understanding: Two Types of Access
+
+This module manages both **infrastructure** (AWS resources) and **applications** (Kubernetes), creating two distinct access requirements:
+
+#### 1. Infrastructure Access (DevOps/CI)
+
+- **Who needs this:** DevOps teams, CI/CD systems
+- **What it controls:** `kubectl`, `terraform apply`, cluster management
+- **Configuration:** `eks_api_access_cidrs` in `ddc_infra_config`
+- **Security impact:** Full cluster control
+
+#### 2. Application Access (End Users)
+
+- **Who needs this:** Game developers, Unreal Engine clients, build systems
+- **What it controls:** DDC API for asset caching
+- **Configuration:** Security groups (`existing_security_groups`, `additional_*_security_groups`)
+- **Security impact:** Limited to DDC operations
+
+### Security Group Patterns
+
+**Global Access (Simple):**
+
+```hcl
+existing_security_groups = [aws_security_group.everyone.id]  # Applied to all load balancers
+```
+
+**Role-Based Access (Granular):**
+
+```hcl
+existing_security_groups = []  # No global access
+ddc_infra_config = {
+  additional_nlb_security_groups = [aws_security_group.game_devs.id]  # DDC access only
+}
+ddc_monitoring_config = {
+  additional_alb_security_groups = [aws_security_group.devops.id]     # Monitoring access only
 }
 ```
 
-### Provider Configuration
+**⚠️ Security Best Practice:**
 
-**Important**: All provider aliases must be defined even for single-region deployments due to the unified module design.
+- **Minimize EKS API access:** Only give to users who need cluster management
+- **Separate access types:** Game developers need DDC access, not kubectl access
+- **Use consistent IP sources:** Same data source for security groups and EKS API access
 
-#### Single Region
-For single-region, point secondary providers to the same configurations as primary:
-
-```terraform
-providers = {
-  aws.primary        = aws          # Creates AWS resources
-  aws.secondary      = aws          # Required but unused
-  awscc.primary      = awscc        # Creates Cloud Control resources
-  awscc.secondary    = awscc        # Required but unused
-  kubernetes.primary = kubernetes   # Deploys to EKS cluster
-  kubernetes.secondary = kubernetes # Required but unused
-  helm.primary       = helm         # Installs Helm charts
-  helm.secondary     = helm         # Required but unused
-}
-```
-
-#### Multi-Region
-For multi-region, provide separate provider configurations:
-
-```terraform
-# Provider mapping: module_alias = your_provider_alias
-providers = {
-  aws.primary        = aws.primary        # Module expects "aws.primary" -> your "aws.primary" provider
-  aws.secondary      = aws.secondary      # Module expects "aws.secondary" -> your "aws.secondary" provider
-  awscc.primary      = awscc.primary      # Module expects "awscc.primary" -> your "awscc.primary" provider
-  awscc.secondary    = awscc.secondary    # Module expects "awscc.secondary" -> your "awscc.secondary" provider
-  kubernetes.primary = kubernetes.primary # Module expects "kubernetes.primary" -> your "kubernetes.primary" provider
-  kubernetes.secondary = kubernetes.secondary # Module expects "kubernetes.secondary" -> your "kubernetes.secondary" provider
-  helm.primary       = helm.primary       # Module expects "helm.primary" -> your "helm.primary" provider
-  helm.secondary     = helm.secondary     # Module expects "helm.secondary" -> your "helm.secondary" provider
-}
-
-# Define your providers (aliases can be renamed, but must match the mapping above):
-provider "aws" {
-  alias  = "primary"                    # This alias name can be changed (e.g., "east")
-  region = var.regions.primary.region   # Uses regions variable - references module input
-}
-
-provider "aws" {
-  alias  = "secondary"                  # This alias name can be changed (e.g., "west")
-  region = var.regions.secondary.region # Uses regions variable - references module input
-}
-
-# Configure regions in terraform.tfvars (these keys are fixed by the module):
-regions = {
-  primary   = { region = "us-east-1" }   # Key "primary" is required by module
-  secondary = { region = "us-east-2" }   # Key "secondary" is required by module
-}
-
-# Resources will be deployed to us-east-1 and us-east-2, regardless of your AWS session region
-```
-
-**Naming Constraints:**
-- **Left side of providers block**: Fixed by module (cannot change `aws.primary`, `aws.secondary`, etc.)
-- **Right side of providers block**: Your choice (can rename `aws.primary` to `aws.east`, etc.)
-- **Provider alias names**: Your choice (can be anything, just must match the right side)
-- **regions map keys**: Fixed by module (must be `primary` and `secondary`)
-- **Region values**: Your choice (any valid AWS regions)
-
-## Configuration Reference
-
-### Infrastructure Config Object
-
-The `infrastructure_config` object configures EKS clusters, ScyllaDB, and load balancers:
-
-```terraform
-infrastructure_config = {
-  # General
-  name           = "unreal-cloud-ddc"  # Resource naming
-  project_prefix = "cgd"               # Prefix for all resources
-  environment    = "dev"               # Environment tag
-  
-  # EKS Configuration
-  kubernetes_version     = "1.33"                    # Latest supported version
-  eks_node_group_subnets = ["subnet-123", "subnet-456"]  # Private subnets recommended
-  
-  # Node Groups (optional, defaults provided)
-  nvme_managed_node_instance_type   = "i3en.large"   # High-performance storage nodes
-  worker_managed_node_instance_type = "c5.large"     # DDC worker nodes
-  system_managed_node_instance_type = "m5.large"     # System components
-  
-  # ScyllaDB Configuration
-  scylla_subnets       = ["subnet-789", "subnet-012"]  # Private subnets
-  scylla_instance_type = "i4i.2xlarge"                 # NVME instance required
-  scylla_architecture  = "x86_64"                      # or "arm64"
-  
-  # Load Balancer (optional)
-  create_application_load_balancer             = true
-  monitoring_application_load_balancer_subnets = ["subnet-pub1", "subnet-pub2"]
-  alb_certificate_arn                          = "arn:aws:acm:..."
-}
-```
-
-### Application Config Object
-
-The `application_config` object configures Kubernetes applications and Helm charts:
-
-```terraform
-application_config = {
-  # General
-  name           = "unreal-cloud-ddc"
-  project_prefix = "cgd"
-  
-  # Credentials (REQUIRED - follows name_prefix pattern)
-  ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:region:account:secret:ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials"
-  
-  # Application Settings (optional, defaults provided)
-  unreal_cloud_ddc_namespace           = "unreal-cloud-ddc"
-  unreal_cloud_ddc_version             = "1.2.0"
-  unreal_cloud_ddc_service_account_name = "unreal-cloud-ddc-sa"
-  
-  # Certificate Management (optional)
-  enable_certificate_manager          = false
-  certificate_manager_hosted_zone_arn = ["arn:aws:route53:..."]
-}
-```
-
-### Multi-Region Configuration
-
-For multi-region deployments, specify both primary and secondary regions:
-
-```terraform
-regions = {
-  primary   = { region = "us-east-1" }
-  secondary = { region = "us-west-2" }
-}
-
-vpc_ids = {
-  primary   = aws_vpc.primary.id
-  secondary = aws_vpc.secondary.id
-}
-```
-
-## Migration from Separate Modules
-
-### Before (Separate Modules)
-```terraform
-# Old approach - multiple module calls
-module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
-  # ... VPC configuration
-}
-
-module "unreal_cloud_ddc_infra" {
-  source = "./unreal-cloud-ddc-infra"
-  # ... 50+ variables
-}
-
-module "unreal_cloud_ddc_intra_cluster" {
-  source = "./unreal-cloud-ddc-intra-cluster"
-  # ... 30+ variables
-  depends_on = [module.unreal_cloud_ddc_infra]
-}
-```
-
-### After (Unified Module)
-```terraform
-# New approach - single module call
-module "unreal_cloud_ddc" {
-  source = "../../modules/unreal/unreal-cloud-ddc"
-  
-  vpc_ids               = { primary = aws_vpc.main.id }
-  infrastructure_config = { /* simplified config */ }
-  application_config    = { /* simplified config */ }
-}
-```
-
-### Migration Steps
-1. **Backup existing state**: `terraform state pull > backup.tfstate`
-2. **Update configuration** to use unified module structure
-3. **Import existing resources** or deploy fresh (recommended)
-4. **Test thoroughly** before production migration
-
-## Architecture
-
-This module internally uses:
-- `./modules/infrastructure/` - EKS clusters, ScyllaDB, networking (formerly `unreal-cloud-ddc-infra`)
-- `./modules/applications/` - Kubernetes applications and Helm charts (formerly `unreal-cloud-ddc-intra-cluster`)
-
-### Key Improvements
-- **Automatic dependency management** - Applications wait for infrastructure
-- **Provider consolidation** - Only AWS providers needed from user
-- **Graceful cleanup** - Proper destroy order prevents hanging resources
-- **Multi-region orchestration** - Conditional deployment based on regions map
-
-## Requirements
-
-### Prerequisites
-- AWS CLI configured with appropriate permissions
-- Terraform >= 1.0
-- kubectl (for post-deployment verification)
-
-### AWS Permissions
-The module requires permissions for:
-- EKS (clusters, node groups, addons)
-- EC2 (instances, security groups, networking)
-- IAM (roles, policies, OIDC providers)
-- S3 (buckets for DDC storage)
-- Secrets Manager (GitHub credentials)
-- Route53 (optional, for DNS)
-- ACM (optional, for TLS certificates)
+<!-- BEGIN_TF_DOCS -->

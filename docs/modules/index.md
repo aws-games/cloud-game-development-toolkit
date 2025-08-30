@@ -18,7 +18,7 @@ A module is an automated deployment of a game development workload (i.e. Jenkins
 | :--------------------------------------------------------------- | :- |
 | [:simple-perforce: __Perforce__](../../modules/perforce/README.md)              | This module allows for deployment of Perforce resources on AWS. These are currently P4 Server (formerly Helix Core), P4Auth (formerly Helix Authentication Service), and P4 Code Review (formerly Helix Swarm). |
 | [:simple-unrealengine: __Unreal Horde__](../../modules/unreal/horde/README.md)         | This module allows for deployment of Unreal Horde on AWS. |
-| [:simple-unrealengine: __Unreal Cloud DDC__](../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md)              | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS. |
+| [:simple-unrealengine: __Unreal Cloud DDC__](../../modules/unreal/unreal-cloud-ddc/README.md) | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS. |
 | [:simple-teamcity: __TeamCity__](../../modules/teamcity/README.md) | This module allows for deployment of TeamCity resources on AWS. |
 [:simple-jenkins: __Jenkins__](../../modules/jenkins/README.md)              | This module allows for deployment of Jenkins on AWS.
 
@@ -26,6 +26,64 @@ A module is an automated deployment of a game development workload (i.e. Jenkins
 ## How to include these modules
 
 We've found that including the **CGD Toolkit** repository as a git submodule in your own infrastructure repository is a good way of depending on the modules within an (existing) Terraform root module. Forking the **CGD Toolkit** and submoduling your fork may be a good approach if you intend to make changes to any modules. We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed. Note how you can use the [module source argument](https://developer.hashicorp.com/terraform/language/modules/sources) to declare modules that use the **CGD Toolkit**'s module source code.
+
+## Module Version Management
+
+### Understanding Toolkit Releases
+The Cloud Game Development Toolkit currently has a **gap between code updates and releases**:
+
+- **Merge to main** → New commit available immediately
+- **Release process** → Manual, infrequent releases with comprehensive changelogs
+
+This creates two versioning strategies for referencing modules:
+
+### Option 1: Git Commit Hash (Latest & Greatest)
+**Use when**: You want the latest features and fixes immediately
+
+```hcl
+module "example_module" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=a1b2c3d4e5f6789012345678901234567890abcd"
+  # ... configuration
+}
+```
+
+**Benefits**:
+- ✅ Access to latest features immediately
+- ✅ Get bug fixes as soon as they're merged
+- ✅ Same stability as release tags (points to exact code)
+
+**Trade-offs**:
+- ⚠️ Less predictable (no formal changelog)
+- ⚠️ Requires monitoring commit messages for changes
+
+**How to get commit hash**:
+- **GitHub Web**: Go to [toolkit repo](https://github.com/aws-games/cloud-game-development-toolkit) → click latest commit → copy hash
+- **GitHub API**: `curl -s https://api.github.com/repos/aws-games/cloud-game-development-toolkit/commits/main | jq -r '.sha'`
+- **Local clone**: `git rev-parse HEAD`
+
+### Option 2: Git Release Tag (Stable & Documented)
+**Use when**: You want predictable releases with clear impact documentation
+
+```hcl
+module "example_module" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=v2025.03.15"
+  # ... configuration
+}
+```
+
+**Benefits**:
+- ✅ Comprehensive changelog with full impact analysis
+- ✅ Tested and validated release
+- ✅ Predictable update schedule
+
+**Trade-offs**:
+- ⚠️ Delayed access to latest features
+- ⚠️ May miss important bug fixes between releases
+
+### Recommendation
+- **Development/Testing**: Use commit hash for latest features
+- **Production**: Use release tag for stability and clear change documentation
+- **Hybrid**: Start with commit hash, pin to release tag when available
 
 ## Contribution
 

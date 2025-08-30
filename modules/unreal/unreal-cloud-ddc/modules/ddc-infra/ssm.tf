@@ -1,0 +1,33 @@
+################################################################################
+# SSM Document for Multi-Region ScyllaDB Keyspace Configuration
+################################################################################
+
+# SSM Document for Multi-Region Keyspace Configuration
+# Created by SECONDARY region when connecting to existing primary
+resource "aws_ssm_document" "scylla_keyspace_update" {
+  count           = !var.is_primary_region && var.existing_scylla_seed != null ? 1 : 0
+  name            = "${local.name_prefix}-scylla-keyspace-update"
+  document_format = "YAML"
+  document_type   = "Command"
+  
+  content = <<DOC
+schemaVersion: '1.2'
+description: Alter the keyspaces for multi-region ScyllaDB replication.
+runtimeConfig:
+  aws:runShellScript:
+    properties:
+      - id: 0.aws:runShellScript
+        runCommand:
+          - |
+            # Wait for both regions' keyspaces to exist
+            sleep 30
+            # Configure primary region keyspace
+            cqlsh ${var.existing_scylla_seed} --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.scylla_source_region, "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.scylla_source_region, "-1", "")}': 2, '${replace(var.region, "-1", "")}': 0};" || true
+            # Configure secondary region keyspace  
+            cqlsh ${var.existing_scylla_seed} --request-timeout=120 -e "ALTER KEYSPACE jupiter_local_ddc_${replace(var.region, "-", "_")} WITH replication = {'class': 'NetworkTopologyStrategy', '${replace(var.region, "-1", "")}': 2, '${replace(var.scylla_source_region, "-1", "")}': 0};" || true
+DOC
+  
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-scylla-keyspace-update"
+  })
+}

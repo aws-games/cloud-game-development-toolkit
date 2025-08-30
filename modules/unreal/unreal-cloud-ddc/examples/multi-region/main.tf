@@ -1,75 +1,105 @@
-# Multi-region example using unified module with config objects
-module "unreal_cloud_ddc" {
+# Multi-region DDC deployment with both regions in single terraform apply
+
+# Primary Region (us-east-1)
+module "unreal_cloud_ddc_primary" {
   source = "../../"
   
-  providers = {
-    aws.primary        = aws.primary
-    aws.secondary      = aws.secondary
-    awscc.primary      = awscc.primary
-    awscc.secondary    = awscc.secondary
-    kubernetes.primary = kubernetes.primary
-    kubernetes.secondary = kubernetes.secondary
-    helm.primary       = helm.primary
-    helm.secondary     = helm.secondary
-  }
-  
-  # Multi-region Configuration - Deploy DDC infrastructure to both regions with cross-region replication
-  regions = {
-    primary   = { region = local.regions.primary.name }   # Primary region for main DDC cluster
-    secondary = { region = local.regions.secondary.name } # Secondary region for replicated DDC cluster
-  }
-  
-  # VPC Configuration
-  vpc_ids = {
-    primary   = aws_vpc.primary.id
-    secondary = aws_vpc.secondary.id
-  }
-  
-  # Security Groups
-  existing_security_groups = [
-    aws_security_group.allow_my_ip_primary.id,
-    aws_security_group.allow_my_ip_secondary.id,
-    aws_security_group.scylla_cross_region_primary.id,
-    aws_security_group.scylla_cross_region_secondary.id
-  ]
-  
-  # Module-level configuration (following Perforce pattern)
   project_prefix = local.project_prefix
+  vpc_id = aws_vpc.unreal_cloud_ddc_vpc_primary.id
+  existing_security_groups = [aws_security_group.allow_my_ip_primary.id]
   
   # Infrastructure Configuration
-  infrastructure_config = {
-    name        = "unreal-cloud-ddc"  # Hardcoded like Perforce
-    environment = local.environment
-    region      = local.regions.primary.name  # Matches regions.primary
+  ddc_infra_config = {
+    name              = "unreal-cloud-ddc"
+    project_prefix    = local.project_prefix
+    environment       = local.environment
+    region            = local.primary_region
     
     # EKS Configuration
-    kubernetes_version      = "1.31"
-    eks_node_group_subnets = aws_subnet.primary_private[*].id
+    kubernetes_version     = local.kubernetes_version
+    eks_node_group_subnets = aws_subnet.private_subnets_primary[*].id
+    eks_api_access_cidrs   = [local.my_ip_cidr]
     
     # ScyllaDB Configuration
-    scylla_subnets       = aws_subnet.primary_private[*].id
-    scylla_instance_type = "i4i.xlarge"
+    scylla_replication_factor = 3
+    scylla_subnets           = aws_subnet.private_subnets_primary[*].id
+    scylla_instance_type     = local.scylla_instance_type
     
-    # Load Balancer Configuration
-    monitoring_application_load_balancer_subnets = aws_subnet.primary_public[*].id
+    # Kubernetes Configuration
+    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
   }
   
-  # Application Configuration
-  application_config = {
-    name = "unreal-cloud-ddc"  # Hardcoded like Perforce
+  # Monitoring Configuration (primary region only)
+  ddc_monitoring_config = {
+    name           = "unreal-cloud-ddc"
+    project_prefix = local.project_prefix
+    environment    = local.environment
     
-    # Credentials
-    ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_1
+    create_scylla_monitoring_stack = true
+    scylla_monitoring_instance_type = local.scylla_monitoring_instance_type
     
-    # Application Settings
-    unreal_cloud_ddc_namespace = local.ddc_namespace
+    create_application_load_balancer = true
+    monitoring_application_load_balancer_subnets = aws_subnet.public_subnets_primary[*].id
   }
   
-  # DNS Configuration (optional)
-  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
-  create_route53_private_hosted_zone = true
-  ddc_subdomain = local.ddc_subdomain
-  
-  tags = local.tags
+  # Services Configuration
+  ddc_services_config = {
+    name           = "unreal-cloud-ddc"
+    project_prefix = local.project_prefix
+    
+    unreal_cloud_ddc_version = local.unreal_cloud_ddc_version
+    ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
+  }
 }
 
+# Secondary Region (us-west-2)
+module "unreal_cloud_ddc_secondary" {
+  source = "../../"
+  
+  region = local.secondary_region  # REQUIRED: Must be different from primary region to avoid conflicts
+  project_prefix = local.project_prefix
+  vpc_id = aws_vpc.unreal_cloud_ddc_vpc_secondary.id
+  existing_security_groups = [aws_security_group.allow_my_ip_secondary.id]
+  
+  # Infrastructure Configuration
+  ddc_infra_config = {
+    name              = "unreal-cloud-ddc"
+    project_prefix    = local.project_prefix
+    environment       = local.environment
+    region            = local.secondary_region
+    
+    # Multi-region coordination
+    existing_scylla_seed = module.unreal_cloud_ddc_primary.ddc_infra.scylla_seed
+    scylla_source_region = local.primary_region
+    
+    # EKS Configuration - MUST match primary region
+    kubernetes_version     = module.unreal_cloud_ddc_primary.version_info.kubernetes_version
+    eks_node_group_subnets = aws_subnet.private_subnets_secondary[*].id
+    eks_api_access_cidrs   = [local.my_ip_cidr]
+    
+    # ScyllaDB Configuration
+    scylla_replication_factor = 2
+    scylla_subnets           = aws_subnet.private_subnets_secondary[*].id
+    scylla_instance_type     = local.scylla_instance_type
+    
+    # Kubernetes Configuration
+    unreal_cloud_ddc_namespace = "unreal-cloud-ddc"
+  }
+  
+  # No monitoring in secondary region
+  ddc_monitoring_config = null
+  
+  # Services Configuration
+  ddc_services_config = {
+    name           = "unreal-cloud-ddc"
+    project_prefix = local.project_prefix
+    
+    unreal_cloud_ddc_version = module.unreal_cloud_ddc_primary.version_info.ddc_version  # MUST match primary region
+    ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
+    
+    # Replication URL
+    ddc_replication_region_url = module.unreal_cloud_ddc_primary.ddc_connection.endpoint_route53
+  }
+  
+  depends_on = [module.unreal_cloud_ddc_primary]
+}

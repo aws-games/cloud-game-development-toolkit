@@ -1,115 +1,115 @@
-########################################
-# Primary Region Outputs
-########################################
-output "primary_region" {
-  description = "Primary region information"
-  value = {
-    region                            = local.primary_region
-    eks_cluster_name                  = module.infrastructure_primary.cluster_name
-    eks_cluster_arn                   = module.infrastructure_primary.cluster_arn
-    eks_endpoint                      = module.infrastructure_primary.cluster_endpoint
-    scylla_ips                        = module.infrastructure_primary.scylla_ips
-    s3_bucket_id                      = module.infrastructure_primary.s3_bucket_id
-    vpc_id                            = var.vpc_ids.primary
-    scylla_monitoring_alb_dns_name    = module.infrastructure_primary.scylla_monitoring_alb_dns_name
-    scylla_monitoring_alb_zone_id     = module.infrastructure_primary.scylla_monitoring_alb_zone_id
-    scylla_monitoring_alb_arn         = module.infrastructure_primary.scylla_monitoring_alb_arn
-  }
-}
+################################################################################
+# DDC Infrastructure Outputs
+################################################################################
 
-########################################
-# Secondary Region Outputs (Conditional)
-########################################
-output "secondary_region" {
-  description = "Secondary region information (if multi-region)"
-  value = local.is_multi_region ? {
-    region                            = local.secondary_region
-    eks_cluster_name                  = module.infrastructure_secondary[0].cluster_name
-    eks_cluster_arn                   = module.infrastructure_secondary[0].cluster_arn
-    eks_endpoint                      = module.infrastructure_secondary[0].cluster_endpoint
-    scylla_ips                        = module.infrastructure_secondary[0].scylla_ips
-    s3_bucket_id                      = module.infrastructure_secondary[0].s3_bucket_id
-    vpc_id                            = try(var.vpc_ids.secondary, null)
-    scylla_monitoring_alb_dns_name    = module.infrastructure_secondary[0].scylla_monitoring_alb_dns_name
-    scylla_monitoring_alb_zone_id     = module.infrastructure_secondary[0].scylla_monitoring_alb_zone_id
-    scylla_monitoring_alb_arn         = module.infrastructure_secondary[0].scylla_monitoring_alb_arn
+output "ddc_infra" {
+  description = "DDC infrastructure outputs"
+  value = var.ddc_infra_config != null ? {
+    region                = module.ddc_infra[0].region
+    cluster_name          = module.ddc_infra[0].cluster_name
+    cluster_endpoint      = module.ddc_infra[0].cluster_endpoint
+    cluster_arn           = module.ddc_infra[0].cluster_arn
+    s3_bucket_id          = module.ddc_infra[0].s3_bucket_id
+    scylla_ips           = module.ddc_infra[0].scylla_ips
+    scylla_seed          = module.ddc_infra[0].scylla_seed
+    nlb_arn              = module.ddc_infra[0].nlb_arn
+    nlb_dns_name         = module.ddc_infra[0].nlb_dns_name
+    nlb_target_group_arn = module.ddc_infra[0].nlb_target_group_arn
+    namespace            = module.ddc_infra[0].namespace
+    service_account      = module.ddc_infra[0].service_account
   } : null
 }
 
-########################################
+################################################################################
+# DDC Monitoring Outputs
+################################################################################
+
+output "ddc_monitoring" {
+  description = "DDC monitoring outputs"
+  value = var.ddc_monitoring_config != null ? {
+    monitoring_instance_id       = module.ddc_monitoring[0].scylla_monitoring_instance_id
+    monitoring_alb_dns_name     = module.ddc_monitoring[0].scylla_monitoring_alb_dns_name
+    monitoring_alb_arn          = module.ddc_monitoring[0].scylla_monitoring_alb_arn
+    monitoring_security_group_id = module.ddc_monitoring[0].scylla_monitoring_security_group_id
+  } : null
+}
+
+################################################################################
+# DDC Services Outputs
+################################################################################
+
+output "ddc_services" {
+  description = "DDC services outputs"
+  value = var.ddc_services_config != null ? {
+    helm_release_name      = module.ddc_services[0].helm_release_name
+    helm_release_namespace = module.ddc_services[0].helm_release_namespace
+    helm_release_version   = module.ddc_services[0].helm_release_version
+    ecr_repository_url     = module.ddc_services[0].ecr_repository_url
+  } : null
+}
+
+################################################################################
 # DNS Outputs
-########################################
+################################################################################
+
 output "private_hosted_zone" {
   description = "Private Route53 hosted zone information for DDC"
-  value = var.create_route53_private_hosted_zone && local.create_dns_resources ? {
+  value = var.create_route53_private_hosted_zone ? {
     zone_id = aws_route53_zone.ddc_private_hosted_zone[0].zone_id
     name    = aws_route53_zone.ddc_private_hosted_zone[0].name
     fqdn    = local.private_hosted_zone_name
   } : null
 }
 
-########################################
-# Application Outputs
-########################################
-output "ddc_endpoints" {
-  description = "DDC service endpoints for each region"
-  value = {
-    primary = {
-      namespace         = var.application_config.unreal_cloud_ddc_namespace
-      load_balancer_dns = module.applications_primary.unreal_cloud_ddc_load_balancer_name
-      private_fqdn      = local.create_dns_resources ? local.private_hosted_zone_name : null
-      public_fqdn       = var.route53_public_hosted_zone_name != null ? "${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-      monitoring_fqdn   = var.route53_public_hosted_zone_name != null ? "monitoring.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-      cache_fqdn        = var.route53_public_hosted_zone_name != null ? "cache.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-    }
-    secondary = local.is_multi_region ? {
-      namespace         = var.application_config.unreal_cloud_ddc_namespace
-      load_balancer_dns = module.applications_secondary[0].unreal_cloud_ddc_load_balancer_name
-      private_fqdn      = local.create_dns_resources ? local.private_hosted_zone_name : null
-      public_fqdn       = var.route53_public_hosted_zone_name != null ? "${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-      monitoring_fqdn   = var.route53_public_hosted_zone_name != null ? "monitoring.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-      cache_fqdn        = var.route53_public_hosted_zone_name != null ? "cache.${var.ddc_subdomain}.${var.route53_public_hosted_zone_name}" : null
-    } : null
-  }
-}
-
-########################################
+################################################################################
 # Connection Information
-########################################
-output "kubectl_commands" {
-  description = "kubectl commands to connect to EKS clusters"
-  value = {
-    primary = "aws eks update-kubeconfig --region ${local.primary_region} --name ${module.infrastructure_primary.cluster_name}"
-    secondary = local.is_multi_region ? "aws eks update-kubeconfig --region ${local.secondary_region} --name ${module.infrastructure_secondary[0].cluster_name}" : null
-  }
+################################################################################
+
+output "kubectl_command" {
+  description = "kubectl command to connect to EKS cluster"
+  value = var.ddc_infra_config != null ? "aws eks update-kubeconfig --region ${module.ddc_infra[0].region} --name ${module.ddc_infra[0].cluster_name}" : null
 }
 
 output "scylla_connection_info" {
   description = "ScyllaDB connection information"
-  value = {
-    primary = {
-      region = local.primary_region
-      ips    = module.infrastructure_primary.scylla_ips
-    }
-    secondary = local.is_multi_region ? {
-      region = local.secondary_region
-      ips    = module.infrastructure_secondary[0].scylla_ips
-    } : null
-  }
+  value = var.ddc_infra_config != null ? {
+    region = module.ddc_infra[0].region
+    ips    = module.ddc_infra[0].scylla_ips
+    seed   = module.ddc_infra[0].scylla_seed
+  } : null
 }
 
-########################################
-# Multi-Region Status
-########################################
-output "deployment_info" {
-  description = "Deployment configuration summary"
+################################################################################
+# Bearer Token Secret ARN
+################################################################################
+
+output "bearer_token_secret_arn" {
+  description = "ARN of the DDC bearer token secret"
+  value = var.ddc_bearer_token_secret_arn != null ? var.ddc_bearer_token_secret_arn : (var.ddc_infra_config != null ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : null)
+}
+
+################################################################################
+# DDC Connection Information
+################################################################################
+
+output "ddc_connection" {
+  description = "DDC connection information for this region"
+  value = var.ddc_infra_config != null ? {
+    region = module.ddc_infra[0].region
+    bucket = module.ddc_infra[0].s3_bucket_id
+    endpoint_elb = "http://${module.ddc_infra[0].nlb_dns_name}"
+    bearer_token_secret = var.ddc_bearer_token_secret_arn != null ? var.ddc_bearer_token_secret_arn : aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn
+  } : null
+}
+
+################################################################################
+# Version Information for Multi-Region Consistency
+################################################################################
+
+output "version_info" {
+  description = "Version information for multi-region consistency checks"
   value = {
-    is_multi_region = local.is_multi_region
-    regions = local.is_multi_region ? [
-      local.primary_region,
-      local.secondary_region
-    ] : [local.primary_region]
-    project_prefix = var.infrastructure_config.project_prefix
-    environment    = var.infrastructure_config.environment
+    kubernetes_version = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_version : null
+    ddc_version = var.ddc_services_config != null ? var.ddc_services_config.unreal_cloud_ddc_version : null
   }
 }

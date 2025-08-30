@@ -1,12 +1,9 @@
-variable "github_credential_arn" {
+variable "route53_public_hosted_zone_name" {
+  description = "The name of your existing Route53 Public Hosted Zone. This is required to create the ACM certificate and Route53 records."
   type        = string
-  sensitive   = true
-  description = "Github Credential ARN"
-  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/-XBalRp"
 }
 
-variable "route53_public_hosted_zone_name" {
+variable "ghcr_credentials_secret_manager_arn" {
+  description = "ARN of the GitHub Container Registry credentials secret in AWS Secrets Manager"
   type        = string
-  description = "The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created."
-  default     = "novekm.people.aws.dev"
 }

@@ -1,61 +1,61 @@
 ##########################################
-# Fetch Monitoring ALB Details
-##########################################
-data "aws_lb" "monitoring_alb" {
-  arn = module.unreal_cloud_ddc.primary_region.scylla_monitoring_alb_arn
-  depends_on = [module.unreal_cloud_ddc]
-}
-
-##########################################
-# Route53 Hosted Zone for Root
+# Fetch Route53 Public Hosted Zone for FQDN
 ##########################################
 data "aws_route53_zone" "root" {
   name         = var.route53_public_hosted_zone_name
   private_zone = false
 }
 
-# Create a record in the Hosted Zone for the DDC service
-resource "aws_route53_record" "unreal_cloud_ddc" {
-  depends_on = [module.unreal_cloud_ddc]
-  zone_id    = data.aws_route53_zone.root.id
-  name       = local.ddc_fully_qualified_domain_name
-  type       = "CNAME"
-  ttl        = 300
-  records    = [module.unreal_cloud_ddc.ddc_endpoints.primary.load_balancer_dns]
-}
-
 ##########################################
-# Route53 Hosted Zone for Monitoring
+# DDC External (Public) DNS
 ##########################################
-
-# Create a record in the Hosted Zone for the scylla_monitoring server
-resource "aws_route53_record" "scylla_monitoring" {
-  depends_on = [module.unreal_cloud_ddc]
-  zone_id    = data.aws_route53_zone.root.id
-  name       = local.monitoring_fully_qualified_domain_name
-  type       = "A"
-
+# Route DDC service traffic to the DDC NLB
+resource "aws_route53_record" "external_ddc_service" {
+  zone_id = data.aws_route53_zone.root.id
+  name    = local.ddc_fully_qualified_domain_name
+  type    = "A"
   alias {
-    name                   = data.aws_lb.monitoring_alb.dns_name
-    zone_id                = data.aws_lb.monitoring_alb.zone_id
-    evaluate_target_health = false
+    name                   = module.unreal_cloud_ddc.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc.nlb_zone_id
+    evaluate_target_health = true
   }
 }
 
-# Create a certificate for the scylla_monitoring server
-resource "aws_acm_certificate" "scylla_monitoring" {
-  domain_name       = local.monitoring_fully_qualified_domain_name
+# Route monitoring traffic to the monitoring ALB
+resource "aws_route53_record" "external_ddc_monitoring" {
+  count   = try(module.unreal_cloud_ddc.monitoring_alb_dns_name, null) != null ? 1 : 0
+  zone_id = data.aws_route53_zone.root.id
+  name    = local.monitoring_fully_qualified_domain_name
+  type    = "A"
+  alias {
+    name                   = module.unreal_cloud_ddc.monitoring_alb_dns_name
+    zone_id                = module.unreal_cloud_ddc.monitoring_alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
+##########################################
+# DDC Certificate Management
+##########################################
+resource "aws_acm_certificate" "ddc" {
+  domain_name = "*.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+
   validation_method = "DNS"
 
-  tags = local.tags
+  #checkov:skip=CKV2_AWS_71: Wildcard is necessary for this domain
+
+  tags = {
+    environment = local.environment
+  }
+
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_route53_record" "scylla_monitoring_cert" {
+resource "aws_route53_record" "ddc_cert" {
   for_each = {
-    for dvo in aws_acm_certificate.scylla_monitoring.domain_validation_options : dvo.domain_name => {
+    for dvo in aws_acm_certificate.ddc.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -70,10 +70,14 @@ resource "aws_route53_record" "scylla_monitoring_cert" {
   zone_id         = data.aws_route53_zone.root.id
 }
 
-resource "aws_acm_certificate_validation" "scylla_monitoring" {
+resource "aws_acm_certificate_validation" "ddc" {
+  certificate_arn         = aws_acm_certificate.ddc.arn
+  validation_record_fqdns = [for record in aws_route53_record.ddc_cert : record.fqdn]
+
+  lifecycle {
+    create_before_destroy = true
+  }
   timeouts {
     create = "15m"
   }
-  certificate_arn         = aws_acm_certificate.scylla_monitoring.arn
-  validation_record_fqdns = [for record in aws_route53_record.scylla_monitoring_cert : record.fqdn]
 }

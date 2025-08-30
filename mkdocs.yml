@@ -135,12 +135,15 @@ nav:
               - Installation and Usage:
                 - modules/unreal/horde/README.md
           - Unreal Cloud DDC:
-              - Unreal Engine Cloud DDC Infra:
-                  - Installation and Usage:
-                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md
-              - Unreal Engine Cloud DDC Intra Cluster:
-                  - Installation and Usage:
-                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md
+              - Installation & Usage:
+                - modules/unreal/unreal-cloud-ddc/README.md
+              - Submodules:
+                  - DDC Infra:
+                    - modules/unreal/unreal-cloud-ddc/modules/ddc-infra/README.md
+                  - DDC Services:
+                    - modules/unreal/unreal-cloud-ddc/modules/ddc-services/README.md
+                  - DDC Monitoring:
+                    - modules/unreal/unreal-cloud-ddc/modules/ddc-monitoring/README.md
       - Unity:
           - Accelerator:
               - Installation and Usage:
