@@ -50,7 +50,7 @@ resource "aws_route53_record" "unreal_cloud_ddc_region_2" {
 # Create a record in the Hosted Zone for the scylla_monitoring server
 resource "aws_route53_record" "scylla_monitoring_region_1" {
   zone_id = data.aws_route53_zone.root.id
-  name    = "monitoring.ddc.${data.aws_route53_zone.root.name}"
+  name    = "${var.regions[0]}.monitoring.ddc.${data.aws_route53_zone.root.name}"
   type    = "A"
 
   alias {
@@ -63,12 +63,13 @@ resource "aws_route53_record" "scylla_monitoring_region_1" {
 # Create a certificate for the scylla_monitoring server
 resource "aws_acm_certificate" "scylla_monitoring_region_1" {
   region            = var.regions[0]
-  domain_name       = "monitoring.ddc.${data.aws_route53_zone.root.name}"
+  domain_name       = "*.ddc.${data.aws_route53_zone.root.name}"
+  subject_alternative_names = [
+    "*.monitoring.ddc.${data.aws_route53_zone.root.name}"
+  ]
   validation_method = "DNS"
 
-  tags = {
-    Environment = "test"
-  }
+  tags = local.tags
   lifecycle {
     create_before_destroy = true
   }

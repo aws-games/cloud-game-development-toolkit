@@ -4,6 +4,13 @@
 module "unreal_cloud_ddc_primary" {
   source = "../../"
   
+  # CRITICAL: Pass region-specific providers (AWS auto-inherited)
+  providers = {
+    kubernetes = kubernetes.primary
+    helm       = helm.primary
+    # AWS provider auto-inherited - no need to pass!
+  }
+  
   project_prefix = local.project_prefix
   vpc_id = aws_vpc.primary.id
   existing_security_groups = [aws_security_group.allow_my_ip_primary.id]
@@ -59,6 +66,13 @@ module "unreal_cloud_ddc_primary" {
 # Secondary Region (us-east-2)
 module "unreal_cloud_ddc_secondary" {
   source = "../../"
+  
+  # CRITICAL: Pass region-specific providers (AWS auto-inherited)
+  providers = {
+    kubernetes = kubernetes.secondary
+    helm       = helm.secondary
+    # AWS provider auto-inherited - no need to pass!
+  }
   
   region = local.secondary_region  # REQUIRED: Must be different from primary region to avoid conflicts
   project_prefix = local.project_prefix

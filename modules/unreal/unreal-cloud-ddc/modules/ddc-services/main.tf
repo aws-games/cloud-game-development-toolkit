@@ -92,6 +92,34 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
 
+# Clean up ECR repositories created by pull-through cache
+# Evidence: cwwalb deployments left orphaned ECR repos that persist after destroy
+resource "null_resource" "ecr_cleanup" {
+  triggers = {
+    repository_name = "github/epicgames/unreal-cloud-ddc"
+    region         = var.region
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      echo "🧹 Cleaning up ECR repositories created by pull-through cache..."
+      
+      # Delete the auto-created repository (ignore errors if it doesn't exist)
+      aws ecr delete-repository \
+        --repository-name ${self.triggers.repository_name} \
+        --region ${self.triggers.region} \
+        --force 2>/dev/null || echo "ℹ️  Repository ${self.triggers.repository_name} not found or already deleted"
+      
+      echo "✅ ECR cleanup completed"
+    EOT
+  }
+
+  depends_on = [aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule]
+}
+
+
+
 ################################################################################
 # Helm Cleanup
 ################################################################################

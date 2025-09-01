@@ -2,6 +2,11 @@
 module "unreal_cloud_ddc" {
   source = "../../"
   
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+  
   # Region configuration (optional - uses provider default if not specified)
   region = local.region
   

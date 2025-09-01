@@ -165,6 +165,11 @@ module "ddc_services" {
   source = "./modules/ddc-services"
   count  = var.ddc_services_config != null ? 1 : 0
   
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+  
   # Pass through services config
   name           = var.ddc_services_config.name
   project_prefix = var.ddc_services_config.project_prefix
@@ -195,7 +200,7 @@ module "ddc_services" {
   ddc_replication_region_url              = var.ddc_services_config.ddc_replication_region_url
   
   # Bearer token
-  ddc_bearer_token = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
+  ddc_bearer_token = aws_secretsmanager_secret_version.unreal_cloud_ddc_token[0].secret_string_wo
   
   # Credentials
   ghcr_credentials_secret_manager_arn = var.ddc_services_config.ghcr_credentials_secret_manager_arn

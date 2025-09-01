@@ -5,6 +5,8 @@ locals {
   # Naming
   name_prefix = var.ddc_infra_config != null ? "${var.project_prefix}-${var.ddc_infra_config.name}" : "${var.project_prefix}-unreal-cloud-ddc"
   
+
+  
   # Private hosted zone name
   private_hosted_zone_name = var.route53_private_hosted_zone_name != null ? var.route53_private_hosted_zone_name : "ddc.internal"
   

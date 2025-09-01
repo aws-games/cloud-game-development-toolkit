@@ -21,8 +21,12 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
   subnet_id = element(var.scylla_subnets, count.index)
 
   user_data                   = local.scylla_user_data_primary_node
-  user_data_replace_on_change = true
+  user_data_replace_on_change = false
   ebs_optimized               = true
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 
   iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
 
@@ -58,8 +62,12 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
   subnet_id = element(var.scylla_subnets, count.index + 1)
 
   user_data                   = local.scylla_user_data_other_nodes
-  user_data_replace_on_change = true
+  user_data_replace_on_change = false
   ebs_optimized               = true
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 
   iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
 

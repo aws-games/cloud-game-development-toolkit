@@ -25,3 +25,9 @@ resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
   secret_string_wo         = ephemeral.random_password.ddc_token[0].result
   secret_string_wo_version = 1
 }
+
+# Ephemeral resource for reading created secrets (maximum security)
+ephemeral "aws_secretsmanager_secret_version" "ddc_token" {
+  count     = var.ddc_infra_config != null ? 1 : 0
+  secret_id = aws_secretsmanager_secret_version.unreal_cloud_ddc_token[0].secret_id
+}

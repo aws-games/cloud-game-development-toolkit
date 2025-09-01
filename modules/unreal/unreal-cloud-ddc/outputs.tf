@@ -9,6 +9,7 @@ output "ddc_infra" {
     cluster_name          = module.ddc_infra[0].cluster_name
     cluster_endpoint      = module.ddc_infra[0].cluster_endpoint
     cluster_arn           = module.ddc_infra[0].cluster_arn
+    cluster_certificate_authority_data = module.ddc_infra[0].cluster_certificate_authority_data
     s3_bucket_id          = module.ddc_infra[0].s3_bucket_id
     scylla_ips           = module.ddc_infra[0].scylla_ips
     scylla_seed          = module.ddc_infra[0].scylla_seed
@@ -16,8 +17,6 @@ output "ddc_infra" {
     nlb_dns_name         = module.ddc_infra[0].nlb_dns_name
     nlb_zone_id          = module.ddc_infra[0].nlb_zone_id
     nlb_target_group_arn = module.ddc_infra[0].nlb_target_group_arn
-    namespace            = var.ddc_services_config != null ? module.ddc_services[0].namespace : null
-    service_account      = var.ddc_services_config != null ? module.ddc_services[0].service_account : null
   } : null
 }
 

@@ -80,6 +80,26 @@ These versions enable enhanced security (ephemeral secrets) and simplified multi
 
 **Important**: The module currently supports a maximum of 2 regions (primary and secondary).
 
+### Multi-Region Requirements
+
+**⚠️ Critical: Region Family Restrictions**
+
+For multi-region deployments, you **must use different region families** to avoid ScyllaDB datacenter name collisions:
+
+✅ **Supported combinations:**
+- `us-east-1` + `us-west-2` (East Coast + West Coast)
+- `us-east-1` + `eu-west-1` (US + Europe) 
+- `us-west-2` + `ap-southeast-1` (US + Asia)
+
+❌ **Blocked combinations:**
+- `us-east-1` + `us-east-2` (same region family)
+- `us-west-1` + `us-west-2` (same region family)
+- `eu-west-1` + `eu-west-2` (same region family)
+
+**Why this restriction exists:** ScyllaDB's EC2Snitch automatically converts region names (`us-east-1` → `us-east`, `us-east-2` → `us-east`), causing datacenter name collisions that break multi-region clusters.
+
+**For detailed multi-region setup and examples, see the [Multi-Region Example](./examples/multi-region/README.md).**
+
 ## 📚 Examples
 
 For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/examples){:target="\_blank"}.
@@ -790,6 +810,529 @@ ddc_services_config = {
 3. **Service Limits**: [AWS Service Quotas Console](https://console.aws.amazon.com/servicequotas/)
 4. **Community Support**: [GitHub Discussions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)
 5. **Debug Logging**: Set `TF_LOG=DEBUG` for detailed Terraform logs
+
+## 🔧 Implementation Details
+
+Important technical considerations for module architecture and security patterns.
+
+### Provider Configuration Requirements
+
+**Understanding the Module Architecture:**
+
+This module uses a **parent-child module structure** where the main DDC module orchestrates three submodules:
+- `ddc-infra` - Creates EKS cluster and AWS infrastructure
+- `ddc-services` - Deploys Kubernetes applications via Helm
+- `ddc-monitoring` - Sets up monitoring stack
+
+**Module Hierarchy Diagram:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Root Level (Your Project)                   │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   AWS Provider  │  │ Kubernetes      │  │  Helm Provider  │ │
+│  │   (automatic)   │  │   Provider      │  │  (must pass)    │ │
+│  │                 │  │  (must pass)    │  │                 │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                │                │               │
+│                                ▼                ▼               │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │              Main DDC Module                                │ │
+│  │                                                             │ │
+│  │  • NLB (DDC API)           • ALB (Monitoring)              │ │
+│  │  • Route53 DNS             • Security Groups               │ │
+│  │  • DDC Bearer Token        • Load Balancer Config          │ │
+│  │                                                             │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │ │
+│  │  │ ddc-infra   │  │ddc-services │  │   ddc-monitoring    │  │ │
+│  │  │             │  │             │  │                     │  │ │
+│  │  │ • EKS       │  │ • Helm      │  │ • Prometheus        │  │ │
+│  │  │ • ScyllaDB  │  │ • K8s Apps  │  │ • Grafana           │  │ │
+│  │  │ • S3        │  │             │  │                     │  │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────────────┘  │ │
+│  │                         ▲                                   │ │
+│  │                         │                                   │ │
+│  │                  Needs K8s + Helm                          │ │
+│  │                    Providers                                │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why Only Kubernetes and Helm Providers Need Passing:**
+
+| Provider | Auto-Inherited? | Why? |
+|----------|----------------|------|
+| **AWS** | ✅ Yes | Uses region/credentials from environment automatically |
+| **Kubernetes** | ❌ No | Needs EKS cluster connection details (host, auth, certs) |
+| **Helm** | ❌ No | Needs Kubernetes connection to deploy charts |
+
+**The Core Problem:**
+
+Unlike simple modules that only use AWS resources, this module requires **Kubernetes and Helm providers** to deploy applications to the EKS cluster. These providers must be configured at the **root level** (your example/project) and explicitly passed down through the module hierarchy.
+
+**Provider Flow Diagram:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Root Level                              │
+│                                                                 │
+│  1. Configure Providers                                         │
+│     provider "kubernetes" {                                     │
+│       host = module.ddc.ddc_infra.cluster_endpoint             │
+│       # ... EKS connection details                              │
+│     }                                                           │
+│                                                                 │
+│  2. Pass to Main Module                                         │
+│     module "unreal_cloud_ddc" {                                 │
+│       providers = {                                             │
+│         kubernetes = kubernetes  ←───────────────────────────────────┐│
+│         helm       = helm        ←───────────────────────────────────┐││
+│       }                                                        │││
+│     }                                                          │││
+└─────────────────────────────────────────────────────────────────┘││
+                                                                 │││
+┌─────────────────────────────────────────────────────────────────┘││
+│                     Main DDC Module                             ││
+│                                                                 ││
+│  3. Receive and Pass to Submodule                              ││
+│     module "ddc_services" {                                     ││
+│       providers = {                                             ││
+│         kubernetes = kubernetes  ←──────────────────────────────────────┘│
+│         helm       = helm        ←───────────────────────────────────────┘
+│       }                                                          
+│     }                                                            
+└─────────────────────────────────────────────────────────────────┘
+                                                                   
+┌─────────────────────────────────────────────────────────────────┐
+│                    ddc-services Submodule                      │
+│                                                                 │
+│  4. Use Configured Providers                                    │
+│     resource "kubernetes_namespace" "ddc" { ... }               │
+│     resource "helm_release" "ddc_app" { ... }                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Step-by-Step Implementation:**
+
+**Step 1: Root Level Provider Configuration**
+
+```hcl
+# examples/single-region/providers.tf
+
+# AWS Provider - inherited automatically, no passing needed
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Kubernetes Provider - MUST be configured and passed
+provider "kubernetes" {
+  host                   = module.unreal_cloud_ddc.ddc_infra.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc.ddc_infra.cluster_certificate_authority_data)
+  
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc.ddc_infra.cluster_name]
+  }
+}
+
+# Helm Provider - MUST be configured and passed
+provider "helm" {
+  kubernetes {
+    host                   = module.unreal_cloud_ddc.ddc_infra.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc.ddc_infra.cluster_certificate_authority_data)
+    
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc.ddc_infra.cluster_name]
+    }
+  }
+}
+```
+
+**Step 2: Root Level Module Call (Pass Providers Down)**
+
+```hcl
+# examples/single-region/main.tf
+module "unreal_cloud_ddc" {
+  source = "../../"
+  
+  # CRITICAL: Must pass providers explicitly
+  providers = {
+    kubernetes = kubernetes  # Pass configured K8s provider
+    helm       = helm        # Pass configured Helm provider
+    # AWS provider inherited automatically - no need to pass
+  }
+  
+  # ... rest of your DDC configuration
+  ddc_infra_config = { ... }
+  ddc_services_config = { ... }
+}
+```
+
+**Step 3: Main Module Receives and Passes to Submodules**
+
+```hcl
+# modules/unreal/unreal-cloud-ddc/main.tf (already implemented)
+module "ddc_services" {
+  source = "./modules/ddc-services"
+  count  = var.ddc_services_config != null ? 1 : 0
+  
+  # Pass received providers to submodule
+  providers = {
+    kubernetes = kubernetes  # Forward from root level
+    helm       = helm        # Forward from root level
+  }
+  
+  # ... service configuration
+}
+```
+
+**Step 4: Submodule Declares Provider Requirements**
+
+```hcl
+# modules/unreal/unreal-cloud-ddc/modules/ddc-services/versions.tf
+terraform {
+  required_providers {
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">=2.33.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.16.0"
+    }
+  }
+}
+```
+
+**Complete Provider Passing Map:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WHERE TO CONFIGURE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  📁 examples/single-region/                                     │
+│  ├── 📄 providers.tf ← CONFIGURE kubernetes & helm here        │
+│  └── 📄 main.tf      ← PASS providers to main module here      │
+│                                                                 │
+│  📁 modules/unreal/unreal-cloud-ddc/                            │
+│  └── 📄 main.tf      ← PASS providers to ddc-services here     │
+│                                                                 │
+│  📁 modules/unreal/unreal-cloud-ddc/modules/ddc-services/       │
+│  └── 📄 versions.tf  ← DECLARE provider requirements here      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**What Happens Without Explicit Provider Passing:**
+
+| Problem | Symptom | Root Cause |
+|---------|---------|------------|
+| **Circular Dependency** | `Error: Cycle: provider → module → provider` | Provider config uses module outputs, but module needs provider first |
+| **Localhost Connection** | `dial tcp 127.0.0.1:80: connection refused` | Kubernetes provider defaults to local cluster instead of EKS |
+| **Missing Provider** | `Warning: Missing required provider configuration` | Submodules can't find configured providers |
+
+**Why This Architecture Works:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DEPENDENCY FLOW                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. ddc-infra creates EKS cluster                              │
+│     ├── cluster_endpoint                                        │
+│     ├── cluster_name                                            │
+│     └── cluster_certificate_authority_data                     │
+│                                                                 │
+│  2. Root level configures providers using ↑ outputs           │
+│     ├── provider "kubernetes" { host = cluster_endpoint }       │
+│     └── provider "helm" { kubernetes { host = ... } }           │
+│                                                                 │
+│  3. Providers passed explicitly to ddc-services               │
+│     └── No circular dependency because providers are           │
+│         configured AFTER infrastructure exists                 │
+│                                                                 │
+│  4. ddc-services uses configured providers                     │
+│     ├── kubernetes_namespace                                    │
+│     └── helm_release                                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Insight:** The explicit provider passing **breaks the circular dependency** by separating provider configuration (root level) from provider usage (submodules).
+
+**Quick Reference - Single Region:**
+
+1. **Configure providers** in `examples/single-region/providers.tf`
+2. **Pass providers** in `examples/single-region/main.tf` module call
+3. **That's it!** - The main module handles the rest
+
+### Multi-Region Provider Configuration
+
+**Multi-region deployments require provider aliases** to distinguish between regions. Each region needs its own set of Kubernetes and Helm providers.
+
+**Multi-Region Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Root Level (Multi-Region)                   │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   AWS Primary   │  │ Kubernetes      │  │  Helm Primary   │ │
+│  │   (alias)       │  │ Primary (alias) │  │  (alias)        │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  AWS Secondary  │  │ Kubernetes      │  │ Helm Secondary  │ │
+│  │   (alias)       │  │Secondary (alias)│  │  (alias)        │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                │                │               │
+│                                ▼                ▼               │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │              Primary DDC Module                             │ │
+│  │  providers = {                                              │ │
+│  │    aws        = aws.primary                                 │ │
+│  │    kubernetes = kubernetes.primary                          │ │
+│  │    helm       = helm.primary                                │ │
+│  │  }                                                          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │             Secondary DDC Module                            │ │
+│  │  providers = {                                              │ │
+│  │    aws        = aws.secondary                               │ │
+│  │    kubernetes = kubernetes.secondary                        │ │
+│  │    helm       = helm.secondary                              │ │
+│  │  }                                                          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Multi-Region Provider Flow:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Multi-Region Flow                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. Configure Aliased Providers                                 │
+│     provider "aws" { alias = "primary", region = "us-east-1" }   │
+│     provider "aws" { alias = "secondary", region = "us-west-2" } │
+│     provider "kubernetes" { alias = "primary", ... }             │
+│     provider "kubernetes" { alias = "secondary", ... }           │
+│                                                                 │
+│  2. Pass Aliased Providers to Each Module                      │
+│     module "ddc_primary" {                                      │
+│       providers = {                                             │
+│         aws        = aws.primary        ←─────────────────────┐ │
+│         kubernetes = kubernetes.primary ←─────────────────────┐ │
+│         helm       = helm.primary       ←─────────────────────┐ │
+│       }                                                      │ │
+│     }                                                        │ │
+│                                                              │ │
+│     module "ddc_secondary" {                                 │ │
+│       providers = {                                          │ │
+│         aws        = aws.secondary      ←─────────────────────┘ │
+│         kubernetes = kubernetes.secondary ←───────────────────┘ │
+│         helm       = helm.secondary     ←─────────────────────┘ │
+│       }                                                        │
+│     }                                                          │
+│                                                                │
+│  3. Each Module Uses Its Region-Specific Providers            │
+│     Primary → us-east-1 EKS cluster                           │
+│     Secondary → us-west-2 EKS cluster                         │
+│                                                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Multi-Region Implementation Steps:**
+
+**Step 1: Configure Aliased Providers**
+
+```hcl
+# examples/multi-region/providers.tf
+
+# AWS Providers with aliases
+provider "aws" {
+  alias  = "primary"
+  region = local.primary_region
+}
+
+provider "aws" {
+  alias  = "secondary"
+  region = local.secondary_region
+}
+
+# Kubernetes Providers with aliases
+provider "kubernetes" {
+  alias                  = "primary"
+  host                   = module.unreal_cloud_ddc_primary.ddc_infra.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_primary.ddc_infra.cluster_certificate_authority_data)
+  
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_primary.ddc_infra.cluster_name, "--region", local.primary_region]
+  }
+}
+
+provider "kubernetes" {
+  alias                  = "secondary"
+  host                   = module.unreal_cloud_ddc_secondary.ddc_infra.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_secondary.ddc_infra.cluster_certificate_authority_data)
+  
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_secondary.ddc_infra.cluster_name, "--region", local.secondary_region]
+  }
+}
+
+# Helm Providers with aliases
+provider "helm" {
+  alias = "primary"
+  kubernetes {
+    host                   = module.unreal_cloud_ddc_primary.ddc_infra.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_primary.ddc_infra.cluster_certificate_authority_data)
+    
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_primary.ddc_infra.cluster_name, "--region", local.primary_region]
+    }
+  }
+}
+
+provider "helm" {
+  alias = "secondary"
+  kubernetes {
+    host                   = module.unreal_cloud_ddc_secondary.ddc_infra.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_secondary.ddc_infra.cluster_certificate_authority_data)
+    
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_secondary.ddc_infra.cluster_name, "--region", local.secondary_region]
+    }
+  }
+}
+```
+
+**Step 2: Pass Aliased Providers to Modules**
+
+```hcl
+# examples/multi-region/main.tf
+
+# Primary Region Module
+module "unreal_cloud_ddc_primary" {
+  source = "../../"
+  
+  # CRITICAL: Pass region-specific providers
+  providers = {
+    aws        = aws.primary
+    kubernetes = kubernetes.primary
+    helm       = helm.primary
+  }
+  
+  # ... rest of primary region configuration
+}
+
+# Secondary Region Module
+module "unreal_cloud_ddc_secondary" {
+  source = "../../"
+  
+  # CRITICAL: Pass region-specific providers
+  providers = {
+    aws        = aws.secondary
+    kubernetes = kubernetes.secondary
+    helm       = helm.secondary
+  }
+  
+  # ... rest of secondary region configuration
+  depends_on = [module.unreal_cloud_ddc_primary]
+}
+```
+
+**Key Multi-Region Differences:**
+
+| Aspect | Single Region | Multi-Region |
+|--------|---------------|---------------|
+| **Provider Aliases** | Not needed | Required for each region |
+| **AWS Provider** | Auto-inherited | Must pass with alias |
+| **Module Calls** | One module | Multiple modules with different providers |
+| **Dependencies** | None | Secondary depends on primary |
+
+### Ephemeral Secrets Implementation
+
+**Security Challenge:**
+
+Traditional Terraform stores all values in state files, including sensitive data like passwords and tokens. This creates security risks when state files are shared or stored in version control.
+
+**Ephemeral Values Solution:**
+
+Terraform 1.11+ introduces **ephemeral values** and **write-only attributes** that never get stored in state files, providing enhanced security for sensitive data.
+
+**Implementation Pattern:**
+
+```hcl
+# 1. Generate password ephemerally (not stored in state)
+ephemeral "random_password" "ddc_token" {
+  length  = 64
+  special = false
+}
+
+# 2. Store in AWS Secrets Manager with write-only (not stored in state)
+resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
+  secret_id                = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
+  secret_string_wo         = ephemeral.random_password.ddc_token[0].result  # Write-only
+  secret_string_wo_version = 1
+}
+
+# 3. Use direct resource reference (not ephemeral read due to Helm limitations)
+ddc_bearer_token = aws_secretsmanager_secret_version.unreal_cloud_ddc_token[0].secret_string_wo
+```
+
+**Security Benefits:**
+
+- ✅ **Password generation** - Never stored in Terraform state
+- ✅ **Secret storage** - Never stored in Terraform state  
+- ⚠️ **Helm usage** - Stored in state (unavoidable with current Helm provider)
+
+**Why Not Full Ephemeral Chain:**
+
+The **Helm provider limitation** prevents complete ephemeral implementation:
+
+- **Helm `values` must be in state** - Terraform needs to track configuration changes
+- **No `values_wo` support** - Helm provider doesn't support write-only values
+- **No ephemeral support** - Helm can't accept ephemeral values
+
+**Security Comparison:**
+
+| Approach | Password in State | Secret Storage in State | Helm Usage in State |
+|----------|-------------------|-------------------------|---------------------|
+| **Traditional** | ❌ Yes | ❌ Yes | ❌ Yes |
+| **Ephemeral (This Module)** | ✅ No | ✅ No | ❌ Yes |
+| **Theoretical Full Ephemeral** | ✅ No | ✅ No | ✅ No |
+
+**Practical Impact:**
+
+While not perfect, this implementation provides **significant security improvement**:
+- **Reduced attack surface** - Secret appears in fewer places in state
+- **Better audit trail** - Clear separation of secure vs. non-secure components
+- **Future-ready** - Prepared for when Helm provider adds write-only support
+
+**Alternative Approaches:**
+
+If complete state isolation is required:
+1. **External Secrets Operator** - Inject secrets at pod runtime from AWS Secrets Manager
+2. **Kubernetes Manifests** - Use `kubernetes_manifest` instead of Helm (still stores config)
+3. **Init Containers** - Fetch secrets during container startup
+
+These alternatives add complexity but provide complete state isolation if required by security policies.
 
 ## 🔄 Migration Guide
 

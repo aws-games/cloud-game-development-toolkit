@@ -4,22 +4,24 @@
 ################################################################################
 
 resource "aws_iam_instance_profile" "scylla_monitoring_profile" {
-  count = var.create_scylla_monitoring_stack ? 1 : 0
-  name  = "${local.name_prefix}-scylla-monitoring-profile-${var.region}"
-  role  = aws_iam_role.scylla_monitoring_role[count.index].name
+  name = "${local.name_prefix}-scylla-monitoring-profile-${var.region}"
+  role = aws_iam_role.scylla_monitoring_role.name
 }
 
 # Scylla monitoring instance
 resource "aws_instance" "scylla_monitoring" {
-  count                       = var.create_scylla_monitoring_stack ? 1 : 0
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = var.scylla_monitoring_instance_type
   subnet_id                   = element(var.scylla_subnets, count.index + 1)
-  vpc_security_group_ids      = concat([aws_security_group.scylla_monitoring_sg[count.index].id], var.existing_security_groups)
+  vpc_security_group_ids      = concat([aws_security_group.scylla_monitoring_sg.id], var.existing_security_groups)
   user_data                   = local.scylla_monitoring_user_data
-  user_data_replace_on_change = true
+  user_data_replace_on_change = false
   ebs_optimized               = true
-  iam_instance_profile        = aws_iam_instance_profile.scylla_monitoring_profile[count.index].name
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
+  iam_instance_profile        = aws_iam_instance_profile.scylla_monitoring_profile.name
   monitoring                  = true
   
   root_block_device {

@@ -164,6 +164,8 @@ variable "scylla_source_region" {
   default     = null
 }
 
+
+
 ########################################
 # EKS Configurations
 ########################################

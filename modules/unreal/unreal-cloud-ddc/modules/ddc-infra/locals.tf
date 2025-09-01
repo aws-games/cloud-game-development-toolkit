@@ -36,7 +36,9 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name,
         "seed_provider" : [{
-        "parameters" : [{ "seeds" : var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
+          "class_name" : "org.apache.cassandra.locator.SimpleSeedProvider",
+          "parameters" : [{ "seeds" : var.create_seed_node ? "${aws_instance.scylla_ec2_instance_seed[0].private_ip}" : var.existing_scylla_seed }]
+        }]
       }
       #required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       #if scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring.
@@ -58,94 +60,96 @@ sudo mount /dev/nvme1n1 /data
 --//--\
 EOF
 
-  scylla_node_ips = concat(
-    [for instance in aws_instance.scylla_ec2_instance_seed : instance.private_ip],
-    [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip],
-    var.existing_scylla_ips
-  )
+
 
   scylla_monitoring_user_data = <<MONITORING_EOF
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="//"
-
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-
-#!/usr/bin/env bash
-# This script downloads the dependencies and then installs the scylla monitoring stack
-
-# Update system and install dependencies
+#!/bin/bash
+# Install monitoring stack with runtime ScyllaDB discovery
 sudo yum update -y
-sudo yum install -y docker
+sudo yum install -y docker awscli
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker ec2-user
 
+# Create directories
 sudo mkdir -p /home/ec2-user/prometheus/data
 sudo mkdir -p /home/ec2-user/prometheus/alertmanager
 sudo chown -R ec2-user:ec2-user /home/ec2-user/prometheus
 
+# Create alertmanager config
 cat << 'EOF' > /home/ec2-user/prometheus/alertmanager/alertmanager.yml
 global:
   resolve_timeout: 5m
-
 route:
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
   receiver: 'default'
-
 receivers:
 - name: 'default'
 EOF
 
+# Download and setup monitoring
 cd /home/ec2-user
-
-# Install and start Docker
-sudo systemctl start docker
-sudo groupadd docker
-sudo usermod -aG docker $USER
-sudo systemctl enable docker
-
-# Install the Scylla Monitoring stack
 wget https://github.com/scylladb/scylla-monitoring/archive/4.9.4.tar.gz
 tar -xvf 4.9.4.tar.gz
-cd scylla-monitoring-4.9.4
+chown -R ec2-user:ec2-user scylla-monitoring-4.9.4
 
-sudo systemctl restart docker
+# Create runtime discovery script
+cat << 'DISCOVERY_EOF' > /home/ec2-user/configure-scylla-monitoring.sh
+#!/bin/bash
+echo "Discovering ScyllaDB nodes..."
 
-# Create the scylla_servers.yml file with server information
-cat << EOF | sudo tee prometheus/scylla_servers.yml
-# List of Scylla nodes to monitor
-%{if length(var.scylla_ips_by_region) > 0~}
-%{for region, ips in var.scylla_ips_by_region~}
+# Wait for ScyllaDB instances to be ready
+for i in {1..30}; do
+  SCYLLA_IPS=$(aws ec2 describe-instances \
+    --region ${var.region} \
+    --filters "Name=tag:Name,Values=*scylla*" "Name=instance-state-name,Values=running" \
+    --query 'Reservations[].Instances[].PrivateIpAddress' \
+    --output text)
+  
+  if [ ! -z "$SCYLLA_IPS" ]; then
+    echo "Found ScyllaDB nodes: $SCYLLA_IPS"
+    break
+  fi
+  echo "Waiting for ScyllaDB nodes... (attempt $i/30)"
+  sleep 10
+done
+
+if [ -z "$SCYLLA_IPS" ]; then
+  echo "ERROR: No ScyllaDB nodes found after 5 minutes"
+  exit 1
+fi
+
+# Generate scylla_servers.yml
+cat << EOF > /home/ec2-user/scylla-monitoring-4.9.4/prometheus/scylla_servers.yml
 - targets:
-%{for ip in ips~}
-    - ${ip}
-%{endfor~}
-  labels:
-    cluster: "unreal-cloud-ddc"
-    dc: ${region}
-    region: ${region}
-%{endfor~}
-%{else~}
-# Fallback for single region or legacy configuration
-- targets:
-%{for ip in local.scylla_node_ips~}
-    - ${ip}
-%{endfor~}
-  labels:
-    cluster: "unreal-cloud-ddc"
-    dc: ${var.region}
-    region: ${var.region}
-%{endif~}
 EOF
 
-# Set proper permissions
-sudo chmod 644 prometheus/scylla_servers.yml
+for ip in $SCYLLA_IPS; do
+  echo "    - $ip" >> /home/ec2-user/scylla-monitoring-4.9.4/prometheus/scylla_servers.yml
+done
 
+cat << EOF >> /home/ec2-user/scylla-monitoring-4.9.4/prometheus/scylla_servers.yml
+  labels:
+    cluster: "unreal-cloud-ddc"
+    dc: "${var.region}"
+    region: "${var.region}"
+EOF
+
+echo "ScyllaDB monitoring configuration complete"
+
+# Start monitoring stack
 cd /home/ec2-user/scylla-monitoring-4.9.4
 sudo ./start-all.sh -l -d /home/ec2-user/prometheus/data -a /home/ec2-user/prometheus/alertmanager
+DISCOVERY_EOF
 
---//--\
+chmod +x /home/ec2-user/configure-scylla-monitoring.sh
+
+# Run discovery script in background
+nohup /home/ec2-user/configure-scylla-monitoring.sh > /var/log/scylla-monitoring-setup.log 2>&1 &
+
 MONITORING_EOF
 
 }

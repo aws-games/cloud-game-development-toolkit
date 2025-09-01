@@ -124,6 +124,11 @@ output "ssm_document_name" {
   description = "Name of the SSM document for keyspace configuration"
 }
 
+output "ssm_keyspace_replication_fix_name" {
+  value       = var.is_multi_region ? aws_ssm_document.scylla_keyspace_replication_fix[0].name : null
+  description = "Name of the SSM document for multi-region keyspace replication fix"
+}
+
 ################################################################################
 # Service Account IAM Role Output
 ################################################################################

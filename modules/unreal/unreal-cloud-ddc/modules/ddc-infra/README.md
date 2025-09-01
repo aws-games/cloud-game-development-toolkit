@@ -506,3 +506,243 @@ No modules.
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
+
+---
+
+# ScyllaDB in Unreal Cloud DDC
+
+This document explains how ScyllaDB works within the Unreal Cloud DDC module, including keyspace management, multi-region replication, and operational procedures.
+
+## Overview
+
+ScyllaDB serves as the metadata database for Unreal Cloud DDC, storing information about cached objects while the actual data resides in S3. The DDC application automatically creates and manages keyspaces, while our Terraform module provides the infrastructure and tools for multi-region configuration.
+
+## Keyspace Architecture
+
+### Automatic Keyspace Creation
+
+The DDC application creates keyspaces automatically when it starts:
+
+- **`jupiter`**: Main/shared keyspace for global metadata
+- **`jupiter_local_ddc_<region>`**: Region-specific keyspace for local caching
+
+### Naming Conventions
+
+Region names are transformed for ScyllaDB compatibility:
+- AWS Region: `us-east-1` → Keyspace: `jupiter_local_ddc_us_east_1` (hyphens become underscores)
+- AWS Region: `us-west-2` → Keyspace: `jupiter_local_ddc_us_west_2`
+
+### Datacenter Names
+
+ScyllaDB datacenter names are derived from AWS regions:
+- `us-east-1` → `us_east` (remove numeric suffix)
+- `us-west-2` → `us_west`
+- `eu-central-1` → `eu_central`
+
+## Replication Strategies
+
+### Single Region Deployment
+
+```sql
+jupiter_local_ddc_us_west_2: {
+  'class': 'NetworkTopologyStrategy', 
+  'us_west': 2
+}
+```
+
+- **Replication Factor**: 2 copies within the single datacenter
+- **Automatic**: Created by DDC application on startup
+
+### Multi-Region Deployment
+
+#### Initial State (after both regions deploy)
+```sql
+-- Primary region keyspace
+jupiter_local_ddc_us_west_2: {
+  'class': 'NetworkTopologyStrategy', 
+  'us_west': 2
+}
+
+-- Secondary region keyspace  
+jupiter_local_ddc_us_east_1: {
+  'class': 'NetworkTopologyStrategy', 
+  'us_east': 2
+}
+```
+
+#### After SSM Configuration
+```sql
+-- Primary region keyspace (configured for cross-region)
+jupiter_local_ddc_us_west_2: {
+  'class': 'NetworkTopologyStrategy', 
+  'us_west': 2, 
+  'us_east': 0
+}
+
+-- Secondary region keyspace (configured for cross-region)
+jupiter_local_ddc_us_east_1: {
+  'class': 'NetworkTopologyStrategy', 
+  'us_east': 2, 
+  'us_west': 0
+}
+```
+
+## Connection Architecture
+
+### ScyllaDB IP Distribution
+
+All DDC instances connect to **ALL** ScyllaDB nodes across **ALL** regions:
+
+```yaml
+ConnectionString: Contact Points=10.0.1.100,10.0.1.101,10.0.2.100,10.0.2.101;
+```
+
+**Example Multi-Region Setup:**
+- Region 1 ScyllaDB IPs: `10.0.1.100, 10.0.1.101`
+- Region 2 ScyllaDB IPs: `10.0.2.100, 10.0.2.101`
+- Both DDC deployments connect to all 4 IPs
+
+### Network Requirements
+
+- **VPC Peering**: Required between regions for ScyllaDB communication
+- **Security Groups**: Must allow cross-region traffic on ScyllaDB ports
+- **DNS Resolution**: Cross-region DNS resolution enabled via VPC peering
+
+## Operational Procedures
+
+### Single → Multi-Region Migration
+
+1. **Deploy Secondary Region**
+   ```bash
+   terraform apply  # Deploys infrastructure + DDC services
+   ```
+
+2. **Execute Keyspace Configuration**
+   ```bash
+   # SSM document automatically created by module
+   aws ssm send-command \
+     --document-name "update_keyspaces_document" \
+     --instance-ids "i-1234567890abcdef0"
+   ```
+
+3. **Verify Replication**
+   ```bash
+   cqlsh -e "DESCRIBE KEYSPACES;"
+   cqlsh -e "SELECT * FROM system.peers;"
+   ```
+
+### Multi-Region → Single Region Migration
+
+1. **Create Downgrade SSM Document** (manual process)
+   ```sql
+   ALTER KEYSPACE jupiter_local_ddc_us_west_2 WITH replication = {
+     'class': 'NetworkTopologyStrategy', 
+     'us_west': 2
+   };
+   -- Remove us_east datacenter entirely
+   ```
+
+2. **Execute Downgrade**
+   ```bash
+   aws ssm send-command --document-name "downgrade_keyspaces_document"
+   ```
+
+3. **Destroy Secondary Region**
+   ```bash
+   terraform destroy  # In secondary region
+   ```
+
+### Immediate Multi-Region Deployment
+
+When starting with multi-region from the beginning:
+
+1. **Deploy Both Regions Simultaneously**
+2. **Execute SSM Configuration** (same as migration process)
+3. **No additional steps required**
+
+## Replication Factor Guidelines
+
+### Recommended Settings
+
+- **Single Region**: RF=2 (minimum for fault tolerance)
+- **Multi-Region Primary**: RF=2 per datacenter
+- **Multi-Region Secondary**: RF=2 per datacenter
+
+### ScyllaDB Limitations
+
+- **Incremental Changes**: Can only change RF by 1 at a time
+- **Datacenter Limitation**: Only one datacenter's RF can be changed per operation
+- **Step-by-Step Process**: 0→1→2 progression required
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Keyspace Not Found**
+   - DDC application hasn't started yet
+   - Check DDC pod logs for startup errors
+
+2. **Cross-Region Connectivity**
+   - Verify VPC peering connection
+   - Check security group rules
+   - Test network connectivity between regions
+
+3. **Replication Lag**
+   - Monitor ScyllaDB metrics
+   - Check network latency between regions
+   - Verify ScyllaDB cluster health
+
+### Monitoring Commands
+
+```bash
+# Check keyspace replication
+cqlsh -e "SELECT keyspace_name, replication FROM system_schema.keyspaces;"
+
+# View cluster topology
+cqlsh -e "SELECT * FROM system.peers;"
+
+# Check node status
+nodetool status
+
+# Monitor replication lag
+nodetool netstats
+```
+
+## Data Lifecycle
+
+### What Happens to Data
+
+- **DDC Shutdown**: Keyspaces and data remain in ScyllaDB
+- **Region Removal**: Data persists until manually deleted
+- **Keyspace Deletion**: Must be done manually if desired
+
+### Data Cleanup
+
+```sql
+-- Manual keyspace deletion (if needed)
+DROP KEYSPACE jupiter_local_ddc_us_east_1;
+```
+
+## Module Responsibilities
+
+### What Our Terraform Module Does
+
+✅ **Provides ScyllaDB infrastructure** (EC2 instances, security groups, networking)  
+✅ **Creates SSM documents** for keyspace configuration  
+✅ **Manages EKS cluster** for DDC application  
+✅ **Configures networking** (VPC peering, security groups)  
+
+### What Our Module Does NOT Do
+
+❌ **Create keyspaces** (DDC application handles this)  
+❌ **Automatically execute SSM documents** (manual trigger required)  
+❌ **Delete keyspaces** (manual cleanup if desired)  
+❌ **Manage ScyllaDB schema** beyond replication configuration  
+
+## Further Reading
+
+- [ScyllaDB Documentation](https://docs.scylladb.com/)
+- [ScyllaDB Replication Strategies](https://docs.scylladb.com/stable/architecture/ringarchitecture/replication-strategy.html)
+- [ScyllaDB Multi-Datacenter](https://docs.scylladb.com/stable/operating-scylla/procedures/cluster-management/create-cluster-multidc.html)
+- [ScyllaDB CQL Reference](https://docs.scylladb.com/stable/cql/)
+- [Unreal Cloud DDC Documentation](https://github.com/EpicGames/UnrealCloudDDC)

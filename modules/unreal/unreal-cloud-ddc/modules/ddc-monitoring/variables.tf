@@ -75,12 +75,7 @@ variable "scylla_subnets" {
   description = "A list of subnet IDs where monitoring will be deployed. Private subnets are strongly recommended."
 }
 
-variable "create_scylla_monitoring_stack" {
-  type        = bool
-  default     = true
-  description = "Whether to create the Scylla monitoring stack"
-  nullable    = false
-}
+
 
 variable "scylla_monitoring_instance_type" {
   type        = string
