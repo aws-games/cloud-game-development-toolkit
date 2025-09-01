@@ -11,30 +11,27 @@ echo "================================="
 # Get DDC endpoint and bearer token directly from Terraform outputs
 echo "📋 Getting configuration from Terraform outputs..."
 
-# Get all available endpoints from Terraform outputs
-ENDPOINTS_JSON=$(terraform output -json endpoints 2>/dev/null)
-if [ -z "$ENDPOINTS_JSON" ] || [ "$ENDPOINTS_JSON" = "null" ]; then
-    echo "❌ Could not get endpoints from terraform outputs"
+# Get DDC connection info from Terraform outputs
+DDC_CONNECTION=$(terraform output -json ddc_connection 2>/dev/null)
+if [ -z "$DDC_CONNECTION" ] || [ "$DDC_CONNECTION" = "null" ]; then
+    echo "❌ Could not get ddc_connection from terraform outputs"
     echo "💡 Make sure you're running this from your terraform directory"
     echo "💡 And that 'terraform apply' completed successfully"
     exit 1
 fi
 
 # Extract available endpoints
-DDC_DNS_ENDPOINT=$(echo "$ENDPOINTS_JSON" | jq -r '.ddc // empty')
-DDC_DIRECT_ENDPOINT=$(echo "$ENDPOINTS_JSON" | jq -r '.ddc_direct // empty')
+DDC_DNS_ENDPOINT=$(echo "$DDC_CONNECTION" | jq -r '.endpoint_private_dns // empty')
+DDC_DIRECT_ENDPOINT=$(echo "$DDC_CONNECTION" | jq -r '.endpoint_nlb // empty')
+ACCESS_METHOD=$(echo "$DDC_CONNECTION" | jq -r '.access_method // "external"')
 
-# Determine access method and primary endpoint
-if [ -n "$DDC_DNS_ENDPOINT" ]; then
+# Determine primary endpoint based on access method
+if [ "$ACCESS_METHOD" = "internal" ] && [ -n "$DDC_DNS_ENDPOINT" ]; then
     PRIMARY_ENDPOINT="$DDC_DNS_ENDPOINT"
-    if echo "$DDC_DNS_ENDPOINT" | grep -q "\.internal"; then
-        ACCESS_METHOD="internal"
-    else
-        ACCESS_METHOD="external"
-    fi
+elif [ "$ACCESS_METHOD" = "external" ] && [ -n "$DDC_DNS_ENDPOINT" ]; then
+    PRIMARY_ENDPOINT="$DDC_DNS_ENDPOINT"
 else
     PRIMARY_ENDPOINT="$DDC_DIRECT_ENDPOINT"
-    ACCESS_METHOD="direct-nlb"
 fi
 
 if [ -z "$PRIMARY_ENDPOINT" ]; then
@@ -43,10 +40,17 @@ if [ -z "$PRIMARY_ENDPOINT" ]; then
 fi
 
 # Get bearer token from Terraform outputs
-BEARER_TOKEN=$(terraform output -raw bearer_token 2>/dev/null)
+BEARER_TOKEN_ARN=$(echo "$DDC_CONNECTION" | jq -r '.bearer_token_secret_arn // empty')
+if [ -n "$BEARER_TOKEN_ARN" ]; then
+    BEARER_TOKEN=$(aws secretsmanager get-secret-value --secret-id "$BEARER_TOKEN_ARN" --query SecretString --output text 2>/dev/null)
+else
+    # Fallback to direct terraform output
+    BEARER_TOKEN=$(terraform output -raw bearer_token 2>/dev/null)
+fi
+
 if [ -z "$BEARER_TOKEN" ]; then
-    echo "❌ Could not get bearer token from terraform outputs"
-    echo "💡 Make sure the bearer token output exists in your terraform configuration"
+    echo "❌ Could not get bearer token"
+    echo "💡 Check bearer_token_secret_arn in terraform outputs or bearer_token output"
     exit 1
 fi
 
@@ -149,15 +153,16 @@ echo ""
 echo "🧪 Functional Cache Tests"
 echo "========================="
 
-# Test data
+# Test data - use first namespace from configuration
+FIRST_NAMESPACE=$(echo "$DDC_CONNECTION" | jq -r 'if .namespaces then (.namespaces | keys[0]) else "ddc" end')
 TEST_HASH="00000000000000000000000000000000000000aa"
-TEST_DATA="test"
+TEST_DATA="test-$(date +%s)"
 TEST_IOHASH="4878CA0425C739FA427F7EDA20FE845F6B2E46BA"
 
 echo "📤 Testing PUT operation..."
 echo "=========================="
 PUT_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-    "$PRIMARY_ENDPOINT/api/v1/refs/ddc/default/$TEST_HASH" \
+    "$PRIMARY_ENDPOINT/api/v1/refs/$FIRST_NAMESPACE/default/$TEST_HASH" \
     -X PUT \
     --data "$TEST_DATA" \
     -H 'content-type: application/octet-stream' \
@@ -179,7 +184,7 @@ echo ""
 echo "📥 Testing GET operation..."
 echo "=========================="
 GET_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-    "$PRIMARY_ENDPOINT/api/v1/refs/ddc/default/$TEST_HASH.raw" \
+    "$PRIMARY_ENDPOINT/api/v1/refs/$FIRST_NAMESPACE/default/$TEST_HASH.raw" \
     -H "Authorization: Bearer $BEARER_TOKEN")
 
 GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)

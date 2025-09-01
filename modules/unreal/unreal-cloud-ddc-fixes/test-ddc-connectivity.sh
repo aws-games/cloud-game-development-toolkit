@@ -17,7 +17,12 @@ BEARER_TOKEN="${2:-}"
 
 if [ -z "$DDC_ENDPOINT" ] || [ -z "$BEARER_TOKEN" ]; then
     echo -e "${RED}Usage: $0 <ddc-endpoint> <bearer-token>${NC}"
-    echo "Example: $0 http://us-east-1.ddc.example.com n9JTfDyaK2XD0uV6QXjfUZXdv2k5fZDepRgNvB610QRi5405WESQ2BTaks48Hx0z"
+    echo "Example: $0 http://us-east-1.ddc.example.com your-bearer-token"
+    echo ""
+    echo "To get values from Terraform:"
+    echo "  DDC_ENDPOINT=\$(terraform output -raw ddc_connection | jq -r '.endpoint_nlb')"
+    echo "  BEARER_TOKEN=\$(aws secretsmanager get-secret-value --secret-id \$(terraform output -raw ddc_connection | jq -r '.bearer_token_secret_arn') --query SecretString --output text)"
+    echo "  $0 \$DDC_ENDPOINT \$BEARER_TOKEN"
     exit 1
 fi
 
@@ -54,10 +59,10 @@ fi
 
 # Test 4: Write Test Object
 echo -e "\n${YELLOW}Test 4: Write Test Object${NC}"
-TEST_NAMESPACE="test-namespace"
+TEST_NAMESPACE="ddc"  # Use standard DDC namespace
 TEST_BUCKET="default"
 TEST_HASH="00000000000000000000000000000000000000aa"
-TEST_DATA="Hello DDC Test $(date)"
+TEST_DATA="Hello DDC Test $(date +%s)"
 TEST_CONTENT_HASH="4878CA0425C739FA427F7EDA20FE845F6B2E46BA"
 
 WRITE_RESPONSE=$(curl -s --max-time 30 -w "%{http_code}" -o /dev/null \
@@ -88,14 +93,14 @@ else
     echo -e "${RED}❌ Write test failed (HTTP $WRITE_RESPONSE)${NC}"
 fi
 
-# Test 6: List Namespaces (Optional)
-echo -e "\n${YELLOW}Test 6: List Namespaces${NC}"
-NAMESPACES_RESPONSE=$(curl -s --max-time 10 -H "Authorization: Bearer $BEARER_TOKEN" "$DDC_ENDPOINT/api/v1/namespaces" || echo "FAILED")
-if [ "$NAMESPACES_RESPONSE" != "FAILED" ] && [ -n "$NAMESPACES_RESPONSE" ]; then
-    echo -e "${GREEN}✅ Namespaces list accessible${NC}"
-    echo "Response: $NAMESPACES_RESPONSE"
+# Test 6: Namespace Info (Optional)
+echo -e "\n${YELLOW}Test 6: Namespace Info${NC}"
+NAMESPACE_INFO=$(curl -s --max-time 10 -H "Authorization: Bearer $BEARER_TOKEN" "$DDC_ENDPOINT/api/v1/refs/$TEST_NAMESPACE" || echo "FAILED")
+if [ "$NAMESPACE_INFO" != "FAILED" ] && [ -n "$NAMESPACE_INFO" ]; then
+    echo -e "${GREEN}✅ Namespace info accessible${NC}"
+    echo "Response: $NAMESPACE_INFO"
 else
-    echo -e "${YELLOW}⚠️ Namespaces list failed (may not be implemented)${NC}"
+    echo -e "${YELLOW}⚠️ Namespace info failed (may not be implemented)${NC}"
 fi
 
 echo -e "\n${GREEN}=========================================="
