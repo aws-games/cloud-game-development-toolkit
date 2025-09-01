@@ -20,11 +20,11 @@ resource "aws_lb" "shared_nlb" {
   enable_deletion_protection = false
   
   dynamic "access_logs" {
-    for_each = var.enable_centralized_logging || var.enable_nlb_access_logs ? [1] : []
+    for_each = var.enable_centralized_logging && local.logs_bucket_id != null ? [1] : []
     content {
-      enabled = var.enable_centralized_logging || var.enable_nlb_access_logs
+      enabled = true
       bucket  = local.logs_bucket_id
-      prefix  = "infrastructure/nlb/"  # Organized prefix: infrastructure/, application/, service/
+      prefix  = "infrastructure/nlb"
     }
   }
 
@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "shared_nlb_tg" {
     healthy_threshold   = 2
     interval            = 30
     matcher             = "200"
-    path                = "/health"
+    path                = "/health/live"  # DDC health endpoint for bring-your-own NLB
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 5
@@ -62,8 +62,10 @@ resource "aws_lb_target_group" "shared_nlb_tg" {
   })
 }
 
-# Shared NLB HTTP Listener
+# Shared NLB HTTP Listener (Debug Mode Only)
 resource "aws_lb_listener" "shared_nlb_http_listener" {
+  count = var.debug_mode == "enabled" ? 1 : 0
+  
   load_balancer_arn = aws_lb.shared_nlb.arn
   port              = "80"
   protocol          = "TCP"
@@ -76,6 +78,7 @@ resource "aws_lb_listener" "shared_nlb_http_listener" {
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-shared-nlb-http-listener"
     Region = var.region
+    DebugMode = "true"
   })
 }
 
@@ -98,6 +101,35 @@ resource "aws_lb_listener" "shared_nlb_https_listener" {
   })
 }
 
+################################################################################
+# NLB Target Group Attachments - Connect to EKS Worker Nodes
+################################################################################
+
+# Simple approach: Register all EKS worker nodes as targets
+# DDC service will only respond on nodes where pods are scheduled
+data "aws_instances" "eks_worker_nodes" {
+  filter {
+    name   = "tag:kubernetes.io/cluster/${module.ddc_infra[0].cluster_name}"
+    values = ["owned"]
+  }
+  
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
+  }
+  
+  depends_on = [module.ddc_infra]
+}
+
+# Register all EKS worker nodes as NLB targets
+# Health checks will mark unhealthy nodes as unhealthy
+resource "aws_lb_target_group_attachment" "eks_worker_nodes" {
+  count            = length(data.aws_instances.eks_worker_nodes.private_ips)
+  target_group_arn = aws_lb_target_group.shared_nlb_tg.arn
+  target_id        = data.aws_instances.eks_worker_nodes.private_ips[count.index]
+  port             = 30080  # NodePort
+}
+
 
 
 ################################################################################
@@ -110,7 +142,7 @@ resource "aws_lb_listener" "shared_nlb_https_listener" {
 
 # Single logging bucket for entire DDC module
 resource "aws_s3_bucket" "ddc_logs" {
-  count         = var.enable_centralized_logging && var.centralized_logs_bucket == null ? 1 : 0
+  count         = var.enable_centralized_logging ? 1 : 0
   bucket        = "${local.name_prefix}-logs-${random_string.logs_suffix[0].result}"
   force_destroy = true
 
@@ -123,13 +155,13 @@ resource "aws_s3_bucket" "ddc_logs" {
 
 # S3 bucket policy for load balancer access logs
 resource "aws_s3_bucket_policy" "ddc_logs_policy" {
-  count  = var.enable_centralized_logging && var.centralized_logs_bucket == null ? 1 : 0
+  count  = var.enable_centralized_logging ? 1 : 0
   bucket = aws_s3_bucket.ddc_logs[0].id
   policy = data.aws_iam_policy_document.ddc_logs_policy[0].json
 }
 
 data "aws_iam_policy_document" "ddc_logs_policy" {
-  count = var.enable_centralized_logging && var.centralized_logs_bucket == null ? 1 : 0
+  count = var.enable_centralized_logging ? 1 : 0
   
   # Allow ELB service account to write access logs
   statement {
@@ -172,90 +204,72 @@ data "aws_elb_service_account" "main" {}
 # DDC Application Logs
 resource "aws_cloudwatch_log_group" "ddc_application" {
   count             = var.enable_centralized_logging ? 1 : 0
-  name              = "${local.name_prefix}/application/ddc"
+  name              = "${local.name_prefix}-${var.region}/application/ddc"
   retention_in_days = var.log_retention_by_category.application
   
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-ddc-application-logs"
     LogType = "Application"
-    Description = "DDC service application logs - API requests, cache operations, errors"
+    Description = "DDC service application logs"
   })
 }
 
 # EKS Control Plane Logs
 resource "aws_cloudwatch_log_group" "eks_control_plane" {
   count             = var.enable_centralized_logging ? 1 : 0
-  name              = "${local.name_prefix}/infrastructure/eks"
+  name              = "${local.name_prefix}-${var.region}/infrastructure/eks"
   retention_in_days = var.log_retention_by_category.infrastructure
   
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-eks-control-plane-logs"
     LogType = "Infrastructure"
-    Description = "EKS control plane logs - API server, scheduler, controller manager"
+    Description = "EKS control plane logs"
   })
 }
 
 # ScyllaDB Service Logs
 resource "aws_cloudwatch_log_group" "scylla_service" {
   count             = var.enable_centralized_logging ? 1 : 0
-  name              = "${local.name_prefix}/service/scylla"
+  name              = "${local.name_prefix}-${var.region}/service/scylla"
   retention_in_days = var.log_retention_by_category.service
   
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-scylla-service-logs"
     LogType = "Service"
-    Description = "ScyllaDB database logs - queries, performance, cluster events"
+    Description = "ScyllaDB database logs"
   })
 }
 
 # NLB Access Logs (CloudWatch - for real-time monitoring)
 resource "aws_cloudwatch_log_group" "nlb_access" {
   count             = var.enable_centralized_logging ? 1 : 0
-  name              = "${local.name_prefix}/infrastructure/nlb"
+  name              = "${local.name_prefix}-${var.region}/infrastructure/nlb"
   retention_in_days = var.log_retention_by_category.infrastructure
   
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-nlb-access-logs"
     LogType = "Infrastructure"
-    Description = "Network Load Balancer access logs - connections, traffic patterns, health checks"
+    Description = "Network Load Balancer access logs"
   })
 }
 
 # ALB Access Logs (future-ready - no cost when empty)
 resource "aws_cloudwatch_log_group" "alb_access" {
   count             = var.enable_centralized_logging ? 1 : 0
-  name              = "${local.name_prefix}/infrastructure/alb"
+  name              = "${local.name_prefix}-${var.region}/infrastructure/alb"
   retention_in_days = var.log_retention_by_category.infrastructure
   
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-alb-access-logs"
     LogType = "Infrastructure"
-    Description = "Application Load Balancer access logs - HTTP requests, response codes, latency"
+    Description = "Application Load Balancer access logs"
   })
 }
 
 resource "random_string" "logs_suffix" {
-  count   = var.enable_centralized_logging && var.centralized_logs_bucket == null ? 1 : 0
+  count   = var.enable_centralized_logging ? 1 : 0
   length  = 8
   special = false
   upper   = false
 }
 
-# Legacy NLB-specific bucket (deprecated - use centralized bucket)
-resource "aws_s3_bucket" "nlb_access_logs_bucket" {
-  count         = !var.enable_centralized_logging && var.enable_nlb_access_logs && var.nlb_access_logs_bucket == null ? 1 : 0
-  bucket        = "${local.name_prefix}-shared-nlb-logs-${random_string.nlb_logs_suffix[0].result}"
-  force_destroy = true
-
-  tags = merge(var.tags, {
-    Name = "${local.name_prefix}-shared-nlb-logs"
-    Region = var.region
-  })
-}
-
-resource "random_string" "nlb_logs_suffix" {
-  count   = !var.enable_centralized_logging && var.enable_nlb_access_logs && var.nlb_access_logs_bucket == null ? 1 : 0
-  length  = 8
-  special = false
-  upper   = false
-}

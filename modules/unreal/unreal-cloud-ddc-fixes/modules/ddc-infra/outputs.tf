@@ -118,3 +118,17 @@ output "ebs_csi_role_arn" {
   value       = aws_iam_role.ebs_csi_iam_role.arn
   description = "ARN of the EBS CSI driver IAM role"
 }
+
+################################################################################
+# ScyllaDB Datacenter Naming Outputs
+################################################################################
+
+output "scylla_datacenter_name" {
+  value       = local.scylla_datacenter_name
+  description = "ScyllaDB datacenter name (region with -1 suffix removed)"
+}
+
+output "scylla_keyspace_suffix" {
+  value       = local.scylla_keyspace_suffix
+  description = "ScyllaDB keyspace suffix (region with dashes replaced by underscores)"
+}

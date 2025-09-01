@@ -13,7 +13,14 @@ module "unreal_cloud_ddc_primary" {
   
   project_prefix = local.project_prefix
   vpc_id = aws_vpc.primary.id
+  public_subnets = aws_subnet.primary_public[*].id
+  private_subnets = aws_subnet.primary_private[*].id
   existing_security_groups = [aws_security_group.allow_my_ip_primary.id]
+  
+  # DNS Configuration
+  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  certificate_arn = aws_acm_certificate_validation.ddc.certificate_arn
+  create_private_dns_records = true  # Primary region creates private zone
   
   # Centralized Logging Configuration (customizable)
   enable_centralized_logging = true
@@ -71,7 +78,21 @@ module "unreal_cloud_ddc_secondary" {
   region = local.secondary_region  # REQUIRED: Must be different from primary region to avoid conflicts
   project_prefix = local.project_prefix
   vpc_id = aws_vpc.secondary.id
+  public_subnets = aws_subnet.secondary_public[*].id
+  private_subnets = aws_subnet.secondary_private[*].id
   existing_security_groups = [aws_security_group.allow_my_ip_secondary.id]
+  
+  # DNS Configuration - CRITICAL: Prevent conflicts
+  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  certificate_arn = aws_acm_certificate_validation.ddc.certificate_arn
+  create_private_dns_records = false  # Prevent duplicate private zone creation
+  
+  # Cross-region VPC associations
+  additional_vpc_associations = {
+    primary_vpc = {
+      vpc_id = aws_vpc.primary.id
+    }
+  }
   
   # Centralized Logging Configuration (customizable)
   enable_centralized_logging = true

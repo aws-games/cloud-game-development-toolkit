@@ -64,7 +64,6 @@ module "unreal_cloud_ddc" {
     name           = "unreal-cloud-ddc"
     project_prefix = local.project_prefix
     
-    unreal_cloud_ddc_version = "1.2.0"
     ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
   }
 }

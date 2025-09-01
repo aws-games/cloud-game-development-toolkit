@@ -20,14 +20,8 @@ locals {
   nlb_zone_id = aws_lb.shared_nlb.zone_id
   target_group_arn = aws_lb_target_group.shared_nlb_tg.arn
   
-  # Centralized logging bucket selection
-  logs_bucket_id = (
-    var.enable_centralized_logging ? (
-      var.centralized_logs_bucket != null ? var.centralized_logs_bucket : aws_s3_bucket.ddc_logs[0].id
-    ) : (
-      var.nlb_access_logs_bucket != null ? var.nlb_access_logs_bucket : aws_s3_bucket.nlb_access_logs_bucket[0].id
-    )
-  )
+  # Centralized logging bucket (always create our own)
+  logs_bucket_id = var.enable_centralized_logging ? aws_s3_bucket.ddc_logs[0].id : null
   
   # Default helm chart paths
   default_consolidated_chart = "${path.module}/assets/submodules/ddc-services/unreal_cloud_ddc_consolidated.yaml"

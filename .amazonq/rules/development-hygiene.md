@@ -256,6 +256,25 @@ terraform validate
 - Include standard logging variables (enable_centralized_logging, log_retention_days)
 - Ensure future-ready structure with empty log groups for planned services
 
+### Critical Gap: Log Shipping Configuration
+**IMPORTANT**: Creating CloudWatch log groups ≠ logs actually being sent. Most modules only create log destinations but don't configure log sources:
+
+**✅ Usually Configured:**
+- NLB/ALB access logs → S3 (automatic via load balancer configuration)
+- EKS pod metrics → CloudWatch (via Container Insights)
+
+**❌ Usually Missing:**
+- **Application logs** → CloudWatch (requires container logging configuration)
+- **Database logs** (ScyllaDB, RDS) → CloudWatch (requires log shipping setup)
+- **EKS control plane logs** → CloudWatch (requires EKS cluster logging enablement)
+- **Custom service logs** → CloudWatch (requires log agent/shipping configuration)
+
+**When implementing logging, ensure both:**
+1. **Log destinations** (CloudWatch log groups, S3 buckets)
+2. **Log sources** (actual configuration to ship logs to destinations)
+
+- **Note**: DDC application metrics (cache hit rates, response times) require application-level configuration and are not currently implemented in CGD Toolkit modules
+
 ## Parent Module README Standards
 
 ### Essential Sections (Must Have)

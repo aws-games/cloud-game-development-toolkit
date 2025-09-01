@@ -16,6 +16,111 @@ Deploy Unreal Engine's Cloud DDC infrastructure on AWS for distributed game deve
 
 These versions enable enhanced security and simplified multi-region configuration patterns used throughout this module.
 
+## ⚠️ Critical: DDC Version Compatibility
+
+**IMPORTANT: Use DDC version 1.2.0 - DO NOT use 1.3.0**
+
+### DDC 1.3.0 Known Issues
+
+**Configuration Parsing Bug:**
+- DDC 1.3.0 has stricter configuration validation that fails to read ScyllaDB settings
+- Error: `'LocalDatacenterName' field is required` and `'LocalKeyspaceSuffix' field is required`
+- **Impact**: DDC pods crash in `CrashLoopBackOff` state
+- **Status**: Configuration is present and correct, but DDC 1.3.0 cannot parse it
+
+### Recommended Configuration
+
+```hcl
+ddc_services_config = {
+  unreal_cloud_ddc_version = "1.2.0"  # ✅ RECOMMENDED - Stable and tested
+  # unreal_cloud_ddc_version = "1.3.0"  # ❌ AVOID - Has configuration parsing bugs
+}
+```
+
+### Bring-Your-Own Load Balancer Support
+
+**⚠️ CRITICAL**: This module supports bring-your-own NLB integration via `nlb_target_group_arn` parameter, which requires specific Unix socket configuration overrides.
+
+#### Default Pattern: Auto NLB Creation
+```yaml
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+```
+- **NGINX**: Enabled (`nginx.enabled=true`, `nginx.useDomainSockets=true`)
+- **Communication**: NLB → NGINX Proxy → Unix Socket → DDC Application
+- **Health Check**: `/health` (NGINX translates to DDC's `/health/live`)
+- **Containers**: 2 per pod (DDC + NGINX sidecar)
+
+#### Bring-Your-Own NLB Pattern
+```yaml
+service:
+  type: ClusterIP
+```
+- **NGINX**: Disabled (`nginx.enabled=false`)
+- **Communication**: NLB → TargetGroupBinding → DDC Application (port 80)
+- **Health Check**: `/health/live` (direct to DDC application)
+- **Containers**: 1 per pod (DDC only)
+
+#### Critical Configuration Override
+
+When using bring-your-own NLB, this module automatically applies **4 required configuration overrides** to disable Unix sockets:
+
+```hcl
+# Automatically configured when nlb_target_group_arn is provided
+nginx.enabled = false
+nginx.useDomainSockets = false
+ASPNETCORE_URLS = "http://0.0.0.0:80"
+Kestrel__Endpoints__Http__Url = "http://0.0.0.0:80"  # Critical override
+```
+
+**Why all 4 are required**: DDC has multiple configuration layers, and only `Kestrel__Endpoints__Http__Url` has sufficient precedence to override persistent file-based Unix socket configuration.
+
+**Without this fix**: Pod crashes with `Invalid url: 'unix:///nginx/jupiter-http.sock'`
+
+### HTTP vs HTTPS Security
+
+**⚠️ SECURITY**: This module implements **HTTPS-first security** with optional HTTP for development.
+
+#### Production Security (Default)
+```hcl
+debug_mode = "disabled"  # Default - HTTPS only
+```
+- ✅ **HTTPS only** (port 443) - Encrypted traffic
+- ✅ **Bearer tokens protected** - Authentication encrypted
+- ✅ **Game assets encrypted** - Cache data protected in transit
+- ❌ **No HTTP listener** - Port 80 blocked
+
+#### Development Mode (Optional)
+```hcl
+debug_mode = "enabled"  # Enable debug features including HTTP
+```
+- ✅ **HTTPS available** (port 443) - Production-ready
+- ⚠️ **HTTP available** (port 80) - **UNENCRYPTED**
+- ⚠️ **Bearer tokens visible** - Network sniffing possible
+- ⚠️ **Cache data unencrypted** - Man-in-the-middle attacks possible
+
+#### Recommended Usage
+```hcl
+# Production
+debug_mode = "disabled"
+
+# Development/Testing
+debug_mode = "enabled"
+```
+
+**Unreal Engine Configuration:**
+```ini
+; Production (HTTPS only)
+[DDC]
+Cloud=(Type=HTTPDerivedDataBackend, Host="https://us-east-1.ddc.example.com")
+
+; Development (HTTP available)
+[DDC] 
+Cloud=(Type=HTTPDerivedDataBackend, Host="http://us-east-1.ddc.example.com")  # Only for internal networks
+```
+
 ## ✨ Features
 
 - **Single module call** deploys complete DDC infrastructure (EKS, ScyllaDB, S3, Load Balancers)
@@ -216,14 +321,21 @@ terraform apply
 
 ### Basic Verification
 
-**Configure kubectl access:**
+**⚠️ CRITICAL FIRST STEP: Configure kubectl access:**
 ```bash
+# REQUIRED: Must run this before any kubectl commands
 aws eks update-kubeconfig --region <region> --name <cluster-name>
+
+# Verify kubectl access works
+kubectl get nodes
 ```
 
 **Check DDC pods are running:**
 ```bash
 kubectl get pods -n unreal-cloud-ddc
+
+# Expected for bring-your-own NLB: 1/1 Running (single container)
+# Expected for auto NLB: 2/2 Running (DDC + NGINX containers)
 ```
 
 ### Manual Connectivity Test
@@ -425,7 +537,200 @@ variable "allowed_external_cidrs" {
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### ⚠️ CRITICAL: kubectl Setup Required
+
+**Before running ANY kubectl commands**, you must configure kubectl access to the EKS cluster:
+
+```bash
+# REQUIRED: Configure kubectl access to EKS cluster
+aws eks update-kubeconfig --region <region> --name <cluster-name>
+
+# Verify access works
+kubectl get nodes
+```
+
+**Without this step, all kubectl commands will fail with "connection refused" or "server not found" errors.**
+
+### Systematic Troubleshooting Guide
+
+Follow this **step-by-step approach** from smallest to largest scope:
+
+#### Level 1: Pod-Level Checks (Start Here)
+
+**1.1 Verify Pod Health**
+```bash
+# Check pod status - should be 1/1 Running for bring-your-own NLB
+kubectl get pods -n unreal-cloud-ddc
+
+# Expected: Single container pods in Running state
+# ✅ cgd-unreal-cloud-ddc-initialize-xxxxx  1/1  Running
+# ❌ cgd-unreal-cloud-ddc-initialize-xxxxx  0/1  CrashLoopBackOff
+# ❌ cgd-unreal-cloud-ddc-initialize-xxxxx  2/2  Running  (NGINX still enabled)
+```
+
+**If CrashLoopBackOff**: Check logs for Unix socket errors
+```bash
+kubectl logs <pod-name> -n unreal-cloud-ddc
+# Look for: "Invalid url: 'unix:///nginx/jupiter-http.sock'"
+```
+
+**1.2 Test DDC Health Endpoints Directly**
+```bash
+# Test health endpoints inside pod
+kubectl exec <pod-name> -n unreal-cloud-ddc -- curl -s http://localhost:80/health/live
+kubectl exec <pod-name> -n unreal-cloud-ddc -- curl -s http://localhost:80/health/ready
+
+# Expected: "Healthy" response
+# ✅ Healthy%
+# ❌ Connection refused / timeout
+```
+
+#### Level 2: Service-Level Checks
+
+**2.1 Verify Service Configuration**
+```bash
+# Check service exists and is ClusterIP type
+kubectl get svc -n unreal-cloud-ddc
+
+# Expected:
+# ✅ cgd-unreal-cloud-ddc-initialize  ClusterIP  172.20.x.x  <none>  80/TCP,8080/TCP
+# ❌ cgd-unreal-cloud-ddc-initialize  LoadBalancer  (wrong type)
+```
+
+**2.2 Test Service Connectivity**
+```bash
+# Port-forward to test service routing
+kubectl port-forward svc/cgd-unreal-cloud-ddc-initialize 8080:80 -n unreal-cloud-ddc
+
+# In another terminal:
+curl http://localhost:8080/health/live
+
+# Expected: Instant connection and "Healthy" response
+# ❌ If port-forward hangs: Service targetPort misconfigured
+# ❌ If curl fails: Service not routing to healthy pods
+```
+
+#### Level 3: TargetGroupBinding Checks (Bring-Your-Own NLB Only)
+
+**3.1 Verify TargetGroupBinding Exists**
+```bash
+# Check TargetGroupBinding was created
+kubectl get targetgroupbinding -n unreal-cloud-ddc
+
+# Expected:
+# ✅ cgd-unreal-cloud-ddc-tgb
+# ❌ No resources found (not created by Terraform)
+```
+
+**3.2 Check TargetGroupBinding Status**
+```bash
+kubectl describe targetgroupbinding cgd-unreal-cloud-ddc-tgb -n unreal-cloud-ddc
+
+# Look for:
+# ✅ Status: Successfully reconciled (recent timestamp)
+# ❌ Warning: BackendNotFound (service name mismatch)
+# ❌ Warning: TargetGroupNotFound (invalid target group ARN)
+```
+
+#### Level 4: AWS Target Group Checks
+
+**4.1 Check Target Registration**
+```bash
+# Check target group health
+aws elbv2 describe-target-health --target-group-arn <target-group-arn>
+
+# Expected target states:
+# ✅ Health status: healthy (IP addresses on port 80)
+# ❌ Health status: unhealthy (health check failing)
+# ❌ Health status: draining (old targets being removed)
+# ❌ No targets registered (TargetGroupBinding not working)
+```
+
+**4.2 Verify Health Check Configuration**
+```bash
+# Check target group health check settings
+aws elbv2 describe-target-groups --target-group-arns <target-group-arn>
+
+# Critical settings:
+# ✅ HealthCheckPath: "/health/live" (not "/health")
+# ✅ HealthCheckProtocol: "HTTP"
+# ✅ HealthCheckPort: "traffic-port"
+# ✅ Matcher: HttpCode "200"
+```
+
+**If health checks fail**:
+```bash
+# Update health check path
+aws elbv2 modify-target-group \
+  --target-group-arn <target-group-arn> \
+  --health-check-path "/health/live"
+```
+
+#### Level 5: Load Balancer Checks
+
+**5.1 Test NLB Direct Access**
+```bash
+# Get NLB DNS name
+aws elbv2 describe-load-balancers --load-balancer-arns <nlb-arn>
+
+# Test direct NLB endpoint
+curl http://<nlb-dns-name>/health/live
+
+# Expected: "Healthy" response
+# ❌ Connection timeout: No healthy targets
+# ❌ 503 Service Unavailable: All targets unhealthy
+```
+
+#### Level 6: DNS and External Access
+
+**6.1 Test DNS Resolution**
+```bash
+# Test DNS endpoint (if configured)
+nslookup us-east-1.ddc.yourcompany.com
+
+# Expected: Resolves to NLB IP addresses
+# ❌ NXDOMAIN: DNS record not configured
+# ❌ Wrong IP: DNS pointing to wrong resource
+```
+
+### Common Failure Scenarios
+
+#### Scenario 1: Pod Crashes with Unix Socket Error
+**Symptoms**: `CrashLoopBackOff`, logs show `Invalid url: 'unix:///nginx/jupiter-http.sock'`
+
+**Root Cause**: Incomplete Unix socket configuration override for bring-your-own NLB
+
+**Solution**: Verify all 4 configuration overrides are applied:
+```bash
+# Check Helm values
+helm get values cgd-unreal-cloud-ddc-initialize -n unreal-cloud-ddc
+
+# Should show:
+# nginx:
+#   enabled: false
+#   useDomainSockets: false
+# env:
+# - name: ASPNETCORE_URLS
+#   value: http://0.0.0.0:80
+# - name: Kestrel__Endpoints__Http__Url
+#   value: http://0.0.0.0:80
+```
+
+#### Scenario 2: Targets Unhealthy in Target Group
+**Symptoms**: NLB returns 503, target group shows "unhealthy" targets
+
+**Root Cause**: Health check path mismatch (`/health` vs `/health/live`)
+
+**Solution**: Update target group health check path to `/health/live`
+
+#### Scenario 3: TargetGroupBinding "BackendNotFound"
+**Symptoms**: TargetGroupBinding events show service not found
+
+**Root Cause**: Service name mismatch in TargetGroupBinding configuration
+
+**Solution**: Verify actual service name matches TargetGroupBinding spec
+
+### Legacy Troubleshooting
 
 **EKS Cluster Creation Fails:**
 - **Cause**: Insufficient IAM permissions or VPC/subnet issues
@@ -439,7 +744,7 @@ variable "allowed_external_cidrs" {
 - **Cause**: Missing Epic Games organization access or invalid PAT
 - **Solution**: Verify Epic Games membership and PAT permissions
 
-### Debugging Commands
+### Quick Debugging Commands
 
 ```bash
 # Check current IP
@@ -451,7 +756,8 @@ nslookup us-east-1.ddc.yourcompany.com
 # Check EKS cluster status
 aws eks describe-cluster --name <cluster-name>
 
-# Verify kubectl access
+# REMEMBER: Configure kubectl first!
+aws eks update-kubeconfig --region <region> --name <cluster-name>
 kubectl get nodes
 ```
 

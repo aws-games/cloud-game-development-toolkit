@@ -1,0 +1,15 @@
+{{ $fullname := include "common.names.fullname" . }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $fullname }}
+  annotations:
+    "helm.sh/hook": test-success
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:  ['{{ $fullname }}:{{ .Values.service.port }}']
+  restartPolicy: Never

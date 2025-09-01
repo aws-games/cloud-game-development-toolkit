@@ -88,11 +88,18 @@ variable "enable_centralized_logging" {
   default = true
 }
 
-variable "centralized_logs_bucket" {
-  type = string
-  description = "Existing S3 bucket for centralized logs (if null, creates new bucket)"
-  default = null
+variable "debug_mode" {
+  type        = string
+  description = "Debug mode for development and troubleshooting. 'enabled' allows additional debug features including HTTP access. 'disabled' enforces production security settings."
+  default     = "disabled"
+  
+  validation {
+    condition     = contains(["enabled", "disabled"], var.debug_mode)
+    error_message = "debug_mode must be either 'enabled' or 'disabled'."
+  }
 }
+
+# Removed centralized_logs_bucket variable - always create our own bucket with proper permissions
 
 variable "log_retention_by_category" {
   type = object({
@@ -119,24 +126,7 @@ variable "log_group_prefix" {
   default = "/cgd/ddc"
 }
 
-# Legacy NLB-specific logging (deprecated)
-variable "enable_nlb_access_logs" {
-  type = bool
-  description = "[DEPRECATED] Use enable_centralized_logging instead"
-  default = false
-}
 
-variable "nlb_access_logs_bucket" {
-  type = string
-  description = "[DEPRECATED] Use centralized_logs_bucket instead"
-  default = null
-}
-
-variable "nlb_access_logs_prefix" {
-  type = string
-  description = "[DEPRECATED] Centralized logging uses organized prefixes"
-  default = null
-}
 
 
 
@@ -226,6 +216,9 @@ variable "ddc_infra_config" {
     # Additional Security Groups (Targeted Access)
     additional_nlb_security_groups = optional(list(string), [])
     additional_eks_security_groups = optional(list(string), [])
+    
+    # Multi-region monitoring (from cwwalb branch)
+    scylla_ips_by_region = optional(map(list(string)), {})
   })
 
   # Security Group Access Patterns:
@@ -310,7 +303,7 @@ variable "ddc_services_config" {
     region         = optional(string, "us-west-2")
 
     # Application Settings
-    unreal_cloud_ddc_version             = optional(string, "1.2.0")
+    unreal_cloud_ddc_version             = optional(string, "1.2.0")  # HIGHLY RECOMMENDED: Do not change unless testing fixes
     unreal_cloud_ddc_helm_values         = optional(list(string), [])
     
     # Multi-region replication
@@ -333,7 +326,7 @@ variable "ddc_services_config" {
     project_prefix: "The project prefix for this workload."
 
     # Application Settings
-    unreal_cloud_ddc_version: "Version of the Unreal Cloud DDC Helm chart."
+    unreal_cloud_ddc_version: "Version of the Unreal Cloud DDC Helm chart. DEFAULT: 1.2.0 (HIGHLY RECOMMENDED). DDC 1.3.0 has known configuration parsing bugs that cause crashes. Only change if testing fixes or newer versions."
     unreal_cloud_ddc_helm_values: "List of YAML files for Unreal Cloud DDC"
     ddc_replication_region_url: "URL of primary region DDC for replication (secondary regions only)"
     
@@ -341,7 +334,7 @@ variable "ddc_services_config" {
     auto_cleanup: "Automatically clean up Helm releases during destroy to prevent orphaned AWS resources (ENIs, Load Balancers). If false, manual cleanup required before destroying EKS cluster. Default: true (recommended)."
 
     # Credentials
-    ghcr_credentials_secret_manager_arn: "ARN for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache."
+    ghcr_credentials_secret_manager_arn: "ARN for credentials stored in secret manager. CRITICAL: Secret name MUST be prefixed with EXACTLY 'ecr-pullthroughcache/' AND have something after the slash (e.g., 'ecr-pullthroughcache/UnrealCloudDDC'). AWS will reject secrets named just 'ecr-pullthroughcache/' or with different prefixes."
     oidc_credentials_secret_manager_arn: "ARN for oidc credentials stored in secret manager."
   EOT
 
@@ -349,12 +342,12 @@ variable "ddc_services_config" {
 
   validation {
     condition     = var.ddc_services_config == null || length(regexall("ecr-pullthroughcache/", var.ddc_services_config.ghcr_credentials_secret_manager_arn)) > 0
-    error_message = "ghcr_credentials_secret_manager_arn needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. Expected pattern: 'ecr-pullthroughcache/${var.project_prefix}-${var.ddc_infra_config.name}-github-credentials' or use ecr_secret_suffix variable to customize."
+    error_message = "CRITICAL: ghcr_credentials_secret_manager_arn MUST be prefixed with EXACTLY 'ecr-pullthroughcache/' AND have something after the slash. AWS requires this exact format. Example: 'ecr-pullthroughcache/UnrealCloudDDC' or 'ecr-pullthroughcache/github-credentials'. Secrets named just 'ecr-pullthroughcache/' or 'pullthroughcache/something' will be REJECTED by AWS."
   }
   
   validation {
-    condition     = var.ddc_services_config == null || can(regex("ecr-pullthroughcache/[a-zA-Z0-9-_]+", var.ddc_services_config.ghcr_credentials_secret_manager_arn))
-    error_message = "ECR pull-through cache secret name must follow pattern 'ecr-pullthroughcache/[name]' where [name] contains only alphanumeric characters, hyphens, and underscores."
+    condition     = var.ddc_services_config == null || can(regex("ecr-pullthroughcache/[a-zA-Z0-9-_]*", var.ddc_services_config.ghcr_credentials_secret_manager_arn))
+    error_message = "ECR pull-through cache secret name must follow pattern 'ecr-pullthroughcache/[name]' where [name] contains only alphanumeric characters, hyphens, and underscores (or can be empty)."
   }
 }
 

@@ -285,16 +285,72 @@ echo "Cloud=(Type=HTTPDerivedDataBackend, Host=\"$DDC_ENDPOINT\")" >> Config/Def
 
 ### Step 5: Verify Deployment
 
+#### Option A: Automated Test Script (macOS/Linux)
+
 ```bash
-# Test DDC connectivity
-curl -I https://ddc.yourcompany.com/health
+# Run the comprehensive DDC functional test
+../../assets/scripts/ddc_functional_test.sh
 
-# Check monitoring dashboard
-open https://monitoring.ddc.yourcompany.com
+# This script will:
+# ✅ Auto-detect your NLB and bearer token
+# ✅ Test PUT/GET operations (actual cache functionality)
+# ✅ Verify authentication and end-to-end workflow
+```
 
-# Verify EKS cluster (DevOps only)
+#### Option B: Manual Testing (Windows/All Platforms)
+
+**Get connection details:**
+```bash
+# Get your DDC endpoint and bearer token
+terraform output endpoints
+terraform output bearer_token
+```
+
+**Test health endpoints:**
+```bash
+# Test basic connectivity (no auth required)
+curl https://ddc.yourcompany.com/health/live
+curl https://ddc.yourcompany.com/health/ready
+
+# Expected response: "Healthy"
+```
+
+**Test DDC functionality:**
+```bash
+# Set your values (replace with actual values from terraform output)
+set DDC_ENDPOINT=https://ddc.yourcompany.com
+set BEARER_TOKEN=your-bearer-token-here
+
+# Test PUT operation (write to cache)
+curl -X PUT "%DDC_ENDPOINT%/api/v1/refs/test-namespace/default/00000000000000000000000000000000000000aa" ^
+  --data "test" ^
+  -H "content-type: application/octet-stream" ^
+  -H "X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA" ^
+  -H "Authorization: Bearer %BEARER_TOKEN%"
+
+# Test GET operation (read from cache)
+curl "%DDC_ENDPOINT%/api/v1/refs/test-namespace/default/00000000000000000000000000000000000000aa.raw" ^
+  -H "Authorization: Bearer %BEARER_TOKEN%"
+
+# Expected: Returns "test" data you just wrote
+```
+
+**Verify EKS cluster (DevOps only):**
+```bash
+# Configure kubectl access
 aws eks update-kubeconfig --region us-east-1 --name <cluster-name>
+
+# Check pod status
 kubectl get pods -n unreal-cloud-ddc
+
+# Expected: All pods should be "Running"
+```
+
+**Check monitoring dashboard:**
+```bash
+# Open monitoring dashboard
+open https://monitoring.ddc.yourcompany.com
+# Or visit the URL in your browser
 ```
 
 ## Monitoring and Operations

@@ -26,6 +26,8 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name
       }
+      # Required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
+      # If scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring
       "start_scylla_on_first_boot" : true
     }
   )
@@ -36,6 +38,8 @@ locals {
         "seed_provider" : [{
         "parameters" : [{ "seeds" : var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
       }
+      # Required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
+      # If scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring
       "start_scylla_on_first_boot" : true
     }
   )
@@ -59,6 +63,10 @@ EOF
     [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip],
     var.existing_scylla_ips
   )
+
+  # ScyllaDB datacenter naming - use replace() for proper region naming
+  scylla_datacenter_name = replace(var.region, "-1", "")
+  scylla_keyspace_suffix = replace(var.region, "-", "_")
 
   scylla_monitoring_user_data = <<MONITORING_EOF
 MIME-Version: 1.0
@@ -119,7 +127,7 @@ cat << EOF | sudo tee prometheus/scylla_servers.yml
 %{endfor~}
   labels:
     cluster: "unreal-cloud-ddc"
-    dc: ${region}
+    dc: ${replace(region, "-1", "")}
     region: ${region}
 %{endfor~}
 %{else~}
@@ -130,7 +138,7 @@ cat << EOF | sudo tee prometheus/scylla_servers.yml
 %{endfor~}
   labels:
     cluster: "unreal-cloud-ddc"
-    dc: ${var.region}
+    dc: ${local.scylla_datacenter_name}
     region: ${var.region}
 %{endif~}
 EOF

@@ -36,7 +36,7 @@ resource "null_resource" "deployment_success" {
   provisioner "local-exec" {
     command = <<-EOT
       echo "✅ DEPLOYMENT COMPLETE!"
-      echo "🌐 DDC URL: ${var.ddc_infra_config != null ? aws_lb.shared_nlb[0].dns_name : "N/A"}"
+      echo "🌐 DDC URL: ${var.ddc_infra_config != null ? aws_lb.shared_nlb.dns_name : "N/A"}"
 
       echo "🔑 Bearer Token: Check AWS Secrets Manager"
       echo ""
@@ -111,6 +111,9 @@ module "ddc_infra" {
   additional_nlb_security_groups = var.ddc_infra_config.additional_nlb_security_groups
   additional_eks_security_groups = var.ddc_infra_config.additional_eks_security_groups
   
+  # Multi-region monitoring (from cwwalb branch)
+  scylla_ips_by_region = var.ddc_infra_config.scylla_ips_by_region
+  
   # OIDC Credentials (from services config)
   oidc_credentials_secret_manager_arn = var.ddc_services_config != null ? var.ddc_services_config.oidc_credentials_secret_manager_arn : null
   
@@ -139,14 +142,16 @@ module "ddc_services" {
   # Use outputs from ddc_infra and parent module NLB
   cluster_endpoint     = var.ddc_infra_config != null ? module.ddc_infra[0].cluster_endpoint : null
   cluster_name         = var.ddc_infra_config != null ? module.ddc_infra[0].cluster_name : null
-  nlb_arn              = var.ddc_infra_config != null ? aws_lb.shared_nlb[0].arn : null
-  nlb_target_group_arn = var.ddc_infra_config != null ? aws_lb_target_group.shared_nlb_tg[0].arn : null
-  nlb_dns_name         = var.ddc_infra_config != null ? aws_lb.shared_nlb[0].dns_name : null
+  nlb_arn              = var.ddc_infra_config != null ? aws_lb.shared_nlb.arn : null
+  nlb_target_group_arn = var.ddc_infra_config != null ? aws_lb_target_group.shared_nlb_tg.arn : null
+  nlb_dns_name         = var.ddc_infra_config != null ? aws_lb.shared_nlb.dns_name : null
   namespace            = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_namespace : null
   service_account      = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_service_account_name : null
   service_account_arn  = var.ddc_infra_config != null ? module.ddc_infra[0].service_account_arn : null
   s3_bucket_id         = var.ddc_infra_config != null ? module.ddc_infra[0].s3_bucket_id : null
   scylla_ips           = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips : []
+  scylla_datacenter_name = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_datacenter_name : null
+  scylla_keyspace_suffix = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_keyspace_suffix : null
   
   # EKS Addons Configuration (from ddc-infra)
   oidc_provider_arn                   = var.ddc_infra_config != null ? module.ddc_infra[0].oidc_provider_arn : null

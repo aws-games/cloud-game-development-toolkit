@@ -4,12 +4,12 @@
 
 output "nlb_dns_name" {
   description = "Shared NLB DNS name"
-  value = var.ddc_infra_config != null ? aws_lb.shared_nlb[0].dns_name : null
+  value = var.ddc_infra_config != null ? aws_lb.shared_nlb.dns_name : null
 }
 
 output "nlb_zone_id" {
   description = "Shared NLB zone ID"
-  value = var.ddc_infra_config != null ? aws_lb.shared_nlb[0].zone_id : null
+  value = var.ddc_infra_config != null ? aws_lb.shared_nlb.zone_id : null
 }
 
 ################################################################################
@@ -27,10 +27,12 @@ output "ddc_infra" {
     s3_bucket_id          = module.ddc_infra[0].s3_bucket_id
     scylla_ips           = module.ddc_infra[0].scylla_ips
     scylla_seed          = module.ddc_infra[0].scylla_seed
-    nlb_arn              = aws_lb.shared_nlb[0].arn
-    nlb_dns_name         = aws_lb.shared_nlb[0].dns_name
-    nlb_zone_id          = aws_lb.shared_nlb[0].zone_id
-    nlb_target_group_arn = aws_lb_target_group.shared_nlb_tg[0].arn
+    scylla_datacenter_name = module.ddc_infra[0].scylla_datacenter_name
+    scylla_keyspace_suffix = module.ddc_infra[0].scylla_keyspace_suffix
+    nlb_arn              = aws_lb.shared_nlb.arn
+    nlb_dns_name         = aws_lb.shared_nlb.dns_name
+    nlb_zone_id          = aws_lb.shared_nlb.zone_id
+    nlb_target_group_arn = aws_lb_target_group.shared_nlb_tg.arn
   } : null
 }
 
@@ -117,7 +119,7 @@ output "ddc_connection" {
     endpoint_private_dns = "http://service.${local.private_zone_name}"
     
     # Direct load balancer endpoints
-    endpoint_nlb = "http://${aws_lb.shared_nlb[0].dns_name}"
+    endpoint_nlb = "http://${aws_lb.shared_nlb.dns_name}"
     
     # Infrastructure details
     bearer_token_secret_arn = var.ddc_bearer_token_secret_arn != null ? var.ddc_bearer_token_secret_arn : aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn
@@ -126,6 +128,8 @@ output "ddc_connection" {
     namespace = var.ddc_services_config != null ? module.ddc_services[0].namespace : null
     scylla_ips = module.ddc_infra[0].scylla_ips
     scylla_seed = module.ddc_infra[0].scylla_seed
+    scylla_datacenter_name = module.ddc_infra[0].scylla_datacenter_name
+    scylla_keyspace_suffix = module.ddc_infra[0].scylla_keyspace_suffix
     
     # DNS zone information
     private_zone_id = aws_route53_zone.private.zone_id
@@ -154,9 +158,9 @@ output "load_balancers" {
   description = "Load balancer information"
   value = {
     shared_nlb = var.ddc_infra_config != null ? {
-      arn = aws_lb.shared_nlb[0].arn
-      dns_name = aws_lb.shared_nlb[0].dns_name
-      zone_id = aws_lb.shared_nlb[0].zone_id
+      arn = aws_lb.shared_nlb.arn
+      dns_name = aws_lb.shared_nlb.dns_name
+      zone_id = aws_lb.shared_nlb.zone_id
     } : null
   }
 }
@@ -164,8 +168,8 @@ output "load_balancers" {
 output "access_logs" {
   description = "Access logs configuration"
   value = {
-    nlb_enabled = var.enable_nlb_access_logs
-    nlb_bucket = var.enable_nlb_access_logs ? (var.nlb_access_logs_bucket != null ? var.nlb_access_logs_bucket : aws_s3_bucket.nlb_access_logs_bucket[0].id) : null
+    centralized_logging_enabled = var.enable_centralized_logging
+    logs_bucket = var.enable_centralized_logging ? aws_s3_bucket.ddc_logs[0].id : null
   }
 }
 

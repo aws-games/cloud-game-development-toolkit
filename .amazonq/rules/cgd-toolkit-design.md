@@ -527,3 +527,14 @@ This structure is optimized for Amazon Managed Grafana consumption:
 - **CloudWatch Logs** as primary data source for real-time queries
 - **S3** for long-term archival and cost optimization
 - **Organized prefixes** enable easy filtering and correlation across services
+
+#### Application Metrics Gap
+**MISSING**: DDC application metrics (cache hit rates, response times) are not currently configured in CGD Toolkit modules. These metrics require:
+- **DDC application configuration** to expose Prometheus endpoints
+- **ServiceMonitor resources** to scrape application metrics
+- **Custom dashboards** for DDC-specific performance monitoring
+
+**Current Coverage**:
+- ✅ **EKS pod metrics** - Resource usage, health checks (via CloudWatch Container Insights)
+- ✅ **NLB metrics** - Traffic, target health, connection counts (automatic CloudWatch metrics)
+- ❌ **DDC application metrics** - Cache performance, response times (requires application-level configuration)

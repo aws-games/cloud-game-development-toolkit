@@ -119,6 +119,18 @@ variable "scylla_ips" {
   default     = []
 }
 
+variable "scylla_datacenter_name" {
+  description = "ScyllaDB datacenter name (region with -1 suffix removed)"
+  type        = string
+  default     = null
+}
+
+variable "scylla_keyspace_suffix" {
+  description = "ScyllaDB keyspace suffix (region with dashes replaced by underscores)"
+  type        = string
+  default     = null
+}
+
 variable "replication_factor" {
   description = "ScyllaDB replication factor"
   type        = number
@@ -132,7 +144,7 @@ variable "replication_factor" {
 variable "unreal_cloud_ddc_version" {
   type        = string
   description = "Version of the Unreal Cloud DDC Helm chart"
-  default     = "1.2.0"
+  default     = "1.3.0"
 }
 
 variable "unreal_cloud_ddc_helm_base_infra_chart" {

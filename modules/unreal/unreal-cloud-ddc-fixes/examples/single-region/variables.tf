@@ -8,7 +8,7 @@ variable "ghcr_credentials_secret_manager_arn" {
   type        = string
   sensitive   = true
   description = "ARN of the secret in AWS Secrets Manager corresponding to your GitHub credentials (username and accessToken). This is used to allow access to the Unreal Cloud DDC repository in GitHub"
-  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/-XBalRp"
+  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/UnrealCloudDDC-XLISDD"
 }
 
 variable "regions" {
