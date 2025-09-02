@@ -12,27 +12,8 @@ locals {
     kms_key_id         = var.ebs_kms_key_id
   }
 
-  # Active Directory configuration
-  ad_settings = {
-    enabled                   = var.enable_ad_integration
-    directory_id              = var.directory_id
-    directory_name            = var.directory_name
-    directory_ou              = var.directory_ou
-    dns_ip_addresses          = var.dns_ip_addresses
-    admin_password            = var.ad_admin_password
-    manage_users              = var.manage_ad_users
-    configure_dcv_sessions    = true # Always configure DCV when joining AD
-    individual_user_passwords = var.individual_user_passwords
-  }
-
   # Check if any user requires AD joining AND AD integration is enabled
   any_ad_join_required = var.enable_ad_integration && anytrue([for user, config in var.vdi_config : config.join_ad])
-
-  # Users joining AD (for domain join operations only - assumes users already exist)
-  users_joining_ad = var.enable_ad_integration ? {
-    for user, config in var.vdi_config : user => config
-    if config.join_ad
-  } : {}
 
   # Process each user's configuration with defaults
   processed_vdi_config = {
@@ -72,8 +53,8 @@ locals {
 
       # Tags
       tags = merge(var.tags, config.tags != null ? config.tags : {}, {
-        User = user
-        Name = "${var.project_prefix}-${user}-vdi"
+        User        = user
+        Name        = "${var.project_prefix}-${user}-vdi"
         Environment = var.environment
       })
     }
