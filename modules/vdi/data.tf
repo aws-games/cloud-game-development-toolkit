@@ -18,7 +18,7 @@ data "http" "user_public_ip" {
 }
 
 # Data source to find the AMI created by the packer template
-data "aws_ami" "windows_server_2025_vdi" {
+data "aws_ami" "windows_server_2025" {
   count       = length([for user, config in var.vdi_config : user if config.ami == null]) > 0 ? 1 : 0
   most_recent = true
   owners      = ["self"]
