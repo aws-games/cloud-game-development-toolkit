@@ -58,6 +58,7 @@ variable "create_seed_node" {
   type        = bool
   default     = true
 }
+
 variable "existing_security_groups" {
   description = "List of existing security groups to add to ALL Unreal DDC resources (global access)"
   type        = list(string)
@@ -83,8 +84,8 @@ variable "additional_eks_security_groups" {
 variable "scylla_replication_factor" {
   type        = number
   description = "How many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created."
-
 }
+
 variable "scylla_subnets" {
   type        = list(string)
   default     = []
@@ -150,8 +151,6 @@ variable "scylla_db_throughput" {
   nullable    = false
 }
 
-
-
 variable "existing_scylla_seed" {
   type        = string
   description = "The IP address of the seed instance of the ScyllaDB cluster"
@@ -163,8 +162,6 @@ variable "scylla_source_region" {
   description = "Name of the primary region for multi-region deployments"
   default     = null
 }
-
-
 
 ########################################
 # EKS Configurations
@@ -182,6 +179,7 @@ variable "nvme_managed_node_instance_type" {
   description = "Nvme managed node group instance type"
   nullable    = false
 }
+
 variable "nvme_managed_node_desired_size" {
   type        = number
   default     = 2
@@ -232,6 +230,7 @@ variable "worker_managed_node_desired_size" {
     error_message = "Worker desired size needs to be smaller than max size and larger than min size"
   }
 }
+
 variable "worker_managed_node_max_size" {
   type        = number
   default     = 1
@@ -242,6 +241,7 @@ variable "worker_managed_node_max_size" {
     error_message = "Worker max size needs to be larger than min size"
   }
 }
+
 variable "worker_managed_node_min_size" {
   type        = number
   default     = 0
@@ -364,8 +364,6 @@ variable "system_node_group_label" {
   description = "Label applied to system node group"
 }
 
-
-
 ########################################
 # Kubernetes Configuration
 ########################################
@@ -402,4 +400,10 @@ variable "oidc_credentials_secret_manager_arn" {
   type        = string
   description = "ARN for OIDC credentials stored in secret manager (for external service authentication)"
   default     = null
+}
+
+variable "nlb_security_group_id" {
+  type        = string
+  description = "Security group ID of the DDC Network Load Balancer"
+  default     = ""
 }

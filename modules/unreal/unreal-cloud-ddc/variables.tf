@@ -12,6 +12,26 @@ variable "project_prefix" {
   }
 }
 
+variable "access_method" {
+  type = string
+  description = "external/public: Internet → Public NLB | internal/private: VPC → Private NLB"
+  default = "external"
+
+  validation {
+    condition = contains(["external", "internal", "public", "private"], var.access_method)
+    error_message = "Must be 'external'/'public' or 'internal'/'private'"
+  }
+
+  validation {
+    condition = (
+      contains(["external", "public"], var.access_method) && length(var.public_subnets) > 0 && length(var.private_subnets) > 0
+    ) || (
+      contains(["internal", "private"], var.access_method) && length(var.private_subnets) > 0
+    )
+    error_message = "private_subnets always required for services. For external/public access, both public_subnets and private_subnets must be provided. For internal/private access, only private_subnets required."
+  }
+}
+
 
 
 ########################################
@@ -28,31 +48,283 @@ variable "region" {
   default     = null
 }
 
+variable "public_subnets" {
+  type = list(string)
+  description = "Public subnet IDs for external load balancers"
+  default = []
+}
 
+variable "private_subnets" {
+  type = list(string)
+  description = "Private subnet IDs for internal load balancers and services"
+  default = []
+}
 
+variable "allowed_external_cidrs" {
+  type = list(string)
+  description = "CIDR blocks for external access. Use prefix lists for multiple IPs."
+  default = []
 
+  validation {
+    condition = !contains(var.allowed_external_cidrs, "0.0.0.0/0")
+    error_message = "0.0.0.0/0 not allowed for ingress. Specify actual CIDR blocks or use prefix lists."
+  }
+}
+
+variable "external_prefix_list_id" {
+  type = string
+  description = "Managed prefix list ID for external access (recommended for multiple IPs)"
+  default = null
+}
+
+# Note: Always create NLB - tightly coupled to our EKS infrastructure
 
 ########################################
-# Bearer Token Configuration
+# Centralized Logging Configuration (Issue #726)
 ########################################
-variable "ddc_bearer_token_secret_arn" {
-  description = "ARN of existing DDC bearer token secret. If null, will create new token in primary region."
+variable "enable_centralized_logging" {
+  type = bool
+  description = "Enable centralized logging for all DDC services (NLB, ScyllaDB, applications)"
+  default = true
+}
+
+variable "debug_mode" {
   type        = string
-  default     = null
+  description = "Debug mode for development and troubleshooting. 'enabled' allows additional debug features including HTTP access. 'disabled' enforces production security settings."
+  default     = "disabled"
+
+  validation {
+    condition     = contains(["enabled", "disabled"], var.debug_mode)
+    error_message = "debug_mode must be either 'enabled' or 'disabled'."
+  }
+}
+
+variable "scylla_topology_config" {
+  type = object({
+    # Current region configuration
+    current_region = object({
+      datacenter_name       = optional(string, null)  # Auto-generated from region if null
+      keyspace_suffix       = optional(string, null)  # Auto-generated from region if null
+      replication_factor    = optional(number, 3)
+      node_count           = optional(number, 3)
+    })
+
+    # Multi-region peer configuration (for replication setup)
+    peer_regions = optional(map(object({
+      datacenter_name    = optional(string, null)  # Auto-generated from region if null
+      replication_factor = optional(number, 2)
+    })), {})
+
+    # Advanced options
+    enable_cross_region_replication = optional(bool, true)
+    keyspace_naming_strategy       = optional(string, "region_suffix")  # "region_suffix" or "datacenter_suffix"
+  })
+
+  description = <<EOT
+    Advanced ScyllaDB topology configuration for single and multi-region deployments.
+
+    # Current Region Configuration
+    current_region.datacenter_name: ScyllaDB datacenter name (auto-generated: us-east-1 → us-east)
+    current_region.keyspace_suffix: Keyspace naming suffix (auto-generated: us-east-1 → us_east_1)
+    current_region.replication_factor: Number of data copies in this region (recommended: 3)
+    current_region.node_count: Number of ScyllaDB nodes in this region
+
+    # Multi-Region Configuration
+    peer_regions: Map of other regions for cross-region replication
+    enable_cross_region_replication: Whether to set up cross-region data sync
+
+    # Naming Strategy
+    keyspace_naming_strategy: How to name keyspaces
+    - "region_suffix": jupiter_local_ddc_us_east_1 (matches cwwalb pattern)
+    - "datacenter_suffix": jupiter_local_ddc_us_east
+
+    # Example Single Region:
+    scylla_topology_config = {
+      current_region = {
+        replication_factor = 3
+        node_count = 3
+      }
+    }
+
+    # Example Multi-Region:
+    scylla_topology_config = {
+      current_region = {
+        replication_factor = 3
+        node_count = 3
+      }
+      peer_regions = {
+        "us-west-2" = {
+          replication_factor = 2
+        }
+      }
+    }
+  EOT
+
+  default = {
+    current_region = {
+      replication_factor = 3
+      node_count = 3
+    }
+  }
+
+  validation {
+    condition = var.scylla_topology_config.current_region.replication_factor <= var.scylla_topology_config.current_region.node_count
+    error_message = "Replication factor cannot exceed node count in current region."
+  }
+
+  validation {
+    condition = contains(["region_suffix", "datacenter_suffix"], var.scylla_topology_config.keyspace_naming_strategy)
+    error_message = "keyspace_naming_strategy must be 'region_suffix' or 'datacenter_suffix'."
+  }
+}
+
+# Removed centralized_logs_bucket variable - always create our own bucket with proper permissions
+
+variable "log_retention_by_category" {
+  type = object({
+    infrastructure = optional(number, 90)   # NLB, ALB, EKS logs - longer for troubleshooting
+    application    = optional(number, 30)   # DDC app logs - shorter for cost
+    service        = optional(number, 60)   # ScyllaDB logs - medium for analysis
+  })
+  description = "CloudWatch log retention in days by category"
+  default = {}
+
+  validation {
+    condition = alltrue([
+      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.infrastructure),
+      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.application),
+      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.service)
+    ])
+    error_message = "All retention values must be valid CloudWatch retention periods: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653 days."
+  }
+}
+
+variable "log_group_prefix" {
+  type = string
+  description = "CloudWatch log group prefix following /cgd/{module} pattern"
+  default = "/cgd/ddc"
+}
+
+
+
+
+
+########################################
+# DDC Application Configuration
+########################################
+variable "ddc_application_config" {
+  type = object({
+    namespaces = map(object({
+      description      = optional(string, "")
+      prevent_deletion = optional(bool, false)
+      deletion_policy  = optional(string, "retain") # "retain" or "delete"
+    }))
+    bearer_token_secret_arn = optional(string, null)
+  })
+  description = <<EOT
+    DDC application configuration including namespaces and authentication.
+
+    # Namespaces (Map of Objects)
+    namespaces: Map where key = namespace name, value = configuration
+
+    Example:
+    namespaces = {
+      "call-of-duty" = {
+        description = "Call of Duty franchise"
+        prevent_deletion = true
+      }
+      "overwatch" = {
+        description = "Overwatch franchise"
+        prevent_deletion = true
+      }
+      "dev-sandbox" = {
+        description = "Development testing"
+        deletion_policy = "delete"
+      }
+    }
+
+    # Authentication
+    bearer_token_secret_arn: ARN of existing DDC bearer token secret. If null, creates new token.
+  EOT
+
+  default = {
+    namespaces = {
+      "default" = {
+        description = "Default DDC namespace"
+      }
+    }
+  }
+
+  validation {
+    condition = alltrue([
+      for ns_name, ns_config in var.ddc_application_config.namespaces :
+      contains(["retain", "delete"], ns_config.deletion_policy)
+    ])
+    error_message = "deletion_policy must be 'retain' or 'delete'"
+  }
+}
+
+variable "create_bearer_token" {
+  description = "Create new DDC bearer token secret. Set to false in secondary regions to use existing token from primary region."
+  type        = bool
+  default     = true
+}
+
+variable "bearer_token_replica_regions" {
+  type        = list(string)
+  description = "List of AWS regions to replicate the bearer token secret to for multi-region access"
+  default     = []
+}
+
+########################################
+# SSM Automation Configuration
+########################################
+variable "ssm_retry_config" {
+  type = object({
+    max_attempts           = optional(number, 20)
+    retry_interval_seconds = optional(number, 30)
+    initial_delay_seconds  = optional(number, 60)
+  })
+  description = <<EOT
+    SSM automation retry configuration for DDC keyspace initialization.
+
+    max_attempts: Maximum retry attempts to check for DDC readiness (default: 20 = 10 minutes)
+    retry_interval_seconds: Seconds between retry attempts (default: 30)
+    initial_delay_seconds: Initial delay before first check (default: 60)
+
+    Total timeout: initial_delay + (max_attempts * retry_interval)
+    Default: 60s + (20 * 30s) = 660s (11 minutes)
+  EOT
+
+  default = {
+    max_attempts = 20
+    retry_interval_seconds = 30
+    initial_delay_seconds = 60
+  }
+
+  validation {
+    condition = var.ssm_retry_config.max_attempts > 0 && var.ssm_retry_config.max_attempts <= 50
+    error_message = "max_attempts must be between 1 and 50"
+  }
+
+  validation {
+    condition = var.ssm_retry_config.retry_interval_seconds >= 10 && var.ssm_retry_config.retry_interval_seconds <= 300
+    error_message = "retry_interval_seconds must be between 10 and 300 seconds"
+  }
 }
 
 variable "existing_security_groups" {
   type        = list(string)
   description = <<EOT
-    GLOBAL ACCESS: Security group IDs that provide access to ALL DDC load balancers (NLB + ALB).
-    
+    GLOBAL ACCESS: Security group IDs that provide access to DDC load balancers (NLB).
+
     Use this for:
     - General user access (your IP, office network)
     - Shared access across all DDC services
-    
+
     Security Flow:
     User → existing_security_groups → All Load Balancers → DDC Services
-    
+
     Example: [aws_security_group.allow_my_ip.id]
   EOT
   default     = []
@@ -68,26 +340,26 @@ variable "ddc_infra_config" {
     project_prefix = optional(string, "cgd")
     environment    = optional(string, "dev")
     region         = optional(string, null)
-    debug          = optional(bool, false)
+    # debug is inherited from parent module debug_mode
     create_seed_node = optional(bool, true)
     existing_scylla_seed = optional(string, null)
     scylla_source_region = optional(string, null)
 
     # EKS Configuration
-    kubernetes_version      = optional(string, "1.31")
+    kubernetes_version      = optional(string, "1.33")
     eks_node_group_subnets = optional(list(string), [])
-    
+
     # Node Groups
     nvme_managed_node_instance_type   = optional(string, "i3en.large")
     nvme_managed_node_desired_size    = optional(number, 2)
     nvme_managed_node_max_size        = optional(number, 2)
     nvme_managed_node_min_size        = optional(number, 1)
-    
+
     worker_managed_node_instance_type = optional(string, "c5.large")
     worker_managed_node_desired_size  = optional(number, 1)
     worker_managed_node_max_size      = optional(number, 1)
     worker_managed_node_min_size      = optional(number, 0)
-    
+
     system_managed_node_instance_type = optional(string, "m5.large")
     system_managed_node_desired_size  = optional(number, 1)
     system_managed_node_max_size      = optional(number, 2)
@@ -106,31 +378,34 @@ variable "ddc_infra_config" {
     eks_api_access_cidrs = optional(list(string), [])
     eks_cluster_public_access               = optional(bool, true)
     eks_cluster_private_access              = optional(bool, true)
-    
+
     # Kubernetes Configuration
     unreal_cloud_ddc_namespace            = optional(string, "unreal-cloud-ddc")
     unreal_cloud_ddc_service_account_name = optional(string, "unreal-cloud-ddc-sa")
-    
+
     # Certificate Management
     certificate_manager_hosted_zone_arn = optional(list(string), [])
     enable_certificate_manager          = optional(bool, false)
-    
+
     # Additional Security Groups (Targeted Access)
     additional_nlb_security_groups = optional(list(string), [])
     additional_eks_security_groups = optional(list(string), [])
+
+    # Multi-region monitoring (from cwwalb branch)
+    scylla_ips_by_region = optional(map(list(string)), {})
   })
 
   # Security Group Access Patterns:
-  # 
+  #
   # GLOBAL ACCESS (existing_security_groups):
   #   User → Global SG → ALL Load Balancers → All Services
   #   Use for: General access, your IP, office network
-  # 
+  #
   # TARGETED ACCESS (additional_*_security_groups):
   #   additional_nlb_security_groups: DDC NLB only (game clients, build systems)
   #   additional_eks_security_groups: EKS cluster only (kubectl, CI/CD, direct service access)
-  #   additional_alb_security_groups: Monitoring ALB only (ops team, monitoring tools)
-  # 
+
+  #
   # Example Usage:
   #   existing_security_groups = [aws_security_group.allow_my_ip.id]  # Everyone gets basic access
   #   additional_nlb_security_groups = [aws_security_group.game_clients.id]  # Game clients get DDC access
@@ -139,7 +414,7 @@ variable "ddc_infra_config" {
   description = <<EOT
     Configuration object for DDC infrastructure (EKS, ScyllaDB, NLB, Kubernetes resources).
     Set to null to skip creating infrastructure.
-    
+
     # General
     name: "The string included in the naming of resources related to Unreal Cloud DDC. Default is 'unreal-cloud-ddc'"
     project_prefix: "The project prefix for this workload. This is appended to the beginning of most resource names."
@@ -152,7 +427,7 @@ variable "ddc_infra_config" {
     # EKS Configuration
     kubernetes_version: "Kubernetes version to be used by the EKS cluster."
     eks_node_group_subnets: "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
-    
+
     # EKS Access Configuration
     eks_cluster_public_access: "Enable public endpoint access to EKS API server. Default: true (allows external Terraform, CI/CD, kubectl access). Set to false for VPN-only environments."
     eks_cluster_private_access: "Enable private endpoint access to EKS API server from within VPC. Default: true (allows internal services, CodeBuild, VPC-based access)."
@@ -178,59 +453,7 @@ variable "ddc_infra_config" {
   }
 }
 
-########################################
-# DDC Monitoring Configuration (Conditional)
-########################################
-variable "ddc_monitoring_config" {
-  type = object({
-    # General
-    name           = optional(string, "unreal-cloud-ddc")
-    project_prefix = optional(string, "cgd")
-    environment    = optional(string, "dev")
-    region         = optional(string, "us-west-2")
 
-    # ScyllaDB Monitoring Configuration
-    create_scylla_monitoring_stack    = optional(bool, true)
-    scylla_monitoring_instance_type   = optional(string, "t3.xlarge")
-    scylla_monitoring_instance_storage = optional(number, 20)
-
-    # Load Balancer Configuration
-    create_application_load_balancer             = optional(bool, true)
-    internal_facing_application_load_balancer    = optional(bool, false)
-    monitoring_application_load_balancer_subnets = optional(list(string), null)
-    alb_certificate_arn                          = optional(string, null)
-    enable_scylla_monitoring_lb_deletion_protection = optional(bool, false)
-    enable_scylla_monitoring_lb_access_logs         = optional(bool, false)
-    scylla_monitoring_lb_access_logs_bucket         = optional(string, null)
-    scylla_monitoring_lb_access_logs_prefix         = optional(string, null)
-    
-    # Additional Security Groups (Targeted Access)
-    additional_alb_security_groups = optional(list(string), [])
-  })
-
-  # MONITORING ALB ACCESS:
-  #   additional_alb_security_groups: Monitoring ALB only (ops team, monitoring tools)
-  #   Use for: Grafana dashboard access, monitoring team, alerting systems
-  # 
-  # Security Flow:
-  #   Monitoring User → additional_alb_security_groups → Monitoring ALB → Grafana Dashboard
-
-  description = <<EOT
-    Configuration object for DDC monitoring stack (ScyllaDB monitoring, ALB).
-    Set to null to skip creating monitoring infrastructure.
-    
-    # ScyllaDB Monitoring
-    create_scylla_monitoring_stack: "Whether to create ScyllaDB monitoring stack"
-    scylla_monitoring_instance_type: "Instance type for monitoring stack"
-    
-    # Load Balancer Configuration
-    create_application_load_balancer: "Whether to create an application load balancer for the Scylla monitoring dashboard."
-    monitoring_application_load_balancer_subnets: "The subnets in which the ALB will be deployed"
-    alb_certificate_arn: "The ARN of the certificate to use on the ALB"
-  EOT
-
-  default = null
-}
 
 
 
@@ -254,14 +477,14 @@ variable "ddc_services_config" {
     region         = optional(string, "us-west-2")
 
     # Application Settings
-    unreal_cloud_ddc_version             = optional(string, "1.2.0")
-    unreal_cloud_ddc_helm_values         = optional(list(string), [])
-    
+    unreal_cloud_ddc_version             = optional(string, "1.2.0")  # HIGHLY RECOMMENDED: Do not change unless testing fixes
+
     # Multi-region replication
     ddc_replication_region_url = optional(string, null)
-    
+
     # Cleanup Configuration
     auto_cleanup = optional(bool, true)
+    remove_tgb_finalizers = optional(bool, false)
 
     # Credentials
     ghcr_credentials_secret_manager_arn = string
@@ -271,21 +494,22 @@ variable "ddc_services_config" {
   description = <<EOT
     Configuration object for DDC service components (Helm charts only, no AWS infrastructure).
     Set to null to skip deploying services.
-    
+
     # General
     name: "The string included in the naming of resources related to Unreal Cloud DDC applications."
     project_prefix: "The project prefix for this workload."
 
     # Application Settings
-    unreal_cloud_ddc_version: "Version of the Unreal Cloud DDC Helm chart."
+    unreal_cloud_ddc_version: "Version of the Unreal Cloud DDC Helm chart. DEFAULT: 1.2.0 (HIGHLY RECOMMENDED). DDC 1.3.0 has known configuration parsing bugs that cause crashes. Only change if testing fixes or newer versions."
     unreal_cloud_ddc_helm_values: "List of YAML files for Unreal Cloud DDC"
     ddc_replication_region_url: "URL of primary region DDC for replication (secondary regions only)"
-    
+
     # Cleanup Configuration
     auto_cleanup: "Automatically clean up Helm releases during destroy to prevent orphaned AWS resources (ENIs, Load Balancers). If false, manual cleanup required before destroying EKS cluster. Default: true (recommended)."
+    remove_tgb_finalizers: "Remove TargetGroupBinding finalizers immediately after creation to enable single-step destroy. When enabled: Allows 'terraform destroy' to complete without manual intervention. When disabled: Requires manual TGB cleanup before destroy. Default: false."
 
     # Credentials
-    ghcr_credentials_secret_manager_arn: "ARN for credentials stored in secret manager. Needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache."
+    ghcr_credentials_secret_manager_arn: "ARN for credentials stored in secret manager. CRITICAL: Secret name MUST be prefixed with EXACTLY 'ecr-pullthroughcache/' AND have something after the slash (e.g., 'ecr-pullthroughcache/UnrealCloudDDC'). AWS will reject secrets named just 'ecr-pullthroughcache/' or with different prefixes."
     oidc_credentials_secret_manager_arn: "ARN for oidc credentials stored in secret manager."
   EOT
 
@@ -293,12 +517,12 @@ variable "ddc_services_config" {
 
   validation {
     condition     = var.ddc_services_config == null || length(regexall("ecr-pullthroughcache/", var.ddc_services_config.ghcr_credentials_secret_manager_arn)) > 0
-    error_message = "ghcr_credentials_secret_manager_arn needs to be prefixed with 'ecr-pullthroughcache/' to be compatible with ECR pull through cache. Expected pattern: 'ecr-pullthroughcache/${var.project_prefix}-${var.ddc_infra_config.name}-github-credentials' or use ecr_secret_suffix variable to customize."
+    error_message = "CRITICAL: ghcr_credentials_secret_manager_arn MUST be prefixed with EXACTLY 'ecr-pullthroughcache/' AND have something after the slash. AWS requires this exact format. Example: 'ecr-pullthroughcache/UnrealCloudDDC' or 'ecr-pullthroughcache/github-credentials'. Secrets named just 'ecr-pullthroughcache/' or 'pullthroughcache/something' will be REJECTED by AWS."
   }
-  
+
   validation {
-    condition     = var.ddc_services_config == null || can(regex("ecr-pullthroughcache/[a-zA-Z0-9-_]+", var.ddc_services_config.ghcr_credentials_secret_manager_arn))
-    error_message = "ECR pull-through cache secret name must follow pattern 'ecr-pullthroughcache/[name]' where [name] contains only alphanumeric characters, hyphens, and underscores."
+    condition     = var.ddc_services_config == null || can(regex("ecr-pullthroughcache/[a-zA-Z0-9-_]*", var.ddc_services_config.ghcr_credentials_secret_manager_arn))
+    error_message = "ECR pull-through cache secret name must follow pattern 'ecr-pullthroughcache/[name]' where [name] contains only alphanumeric characters, hyphens, and underscores (or can be empty)."
   }
 }
 
@@ -307,22 +531,39 @@ variable "ddc_services_config" {
 ########################################
 # DNS Configuration
 ########################################
-variable "create_route53_private_hosted_zone" {
-  type        = bool
-  description = "Whether to create a private Route53 Hosted Zone for internal DDC communication. This private hosted zone is used for internal communication between DDC services."
-  default     = true
-}
-
-variable "route53_private_hosted_zone_name" {
+variable "route53_public_hosted_zone_name" {
   type        = string
-  description = "The name of the private Route53 Hosted Zone for DDC resources. If not provided, defaults to 'ddc.internal'."
+  description = "The name of the public Route53 Hosted Zone for DDC resources (e.g., 'yourcompany.com'). Creates region-specific DNS like us-east-1.ddc.yourcompany.com"
   default     = null
 }
 
-variable "shared_private_zone_id" {
-  type        = string
-  description = "Zone ID of existing private hosted zone to associate with (for secondary regions). If provided, this VPC will be associated with the existing zone instead of creating a new one."
-  default     = null
+
+
+variable "additional_vpc_associations" {
+  type = map(object({
+    vpc_id = string
+    region = string
+  }))
+  description = "Additional VPCs to associate with private zone (for cross-region access)"
+  default = {}
+}
+
+variable "is_primary_region" {
+  type = bool
+  description = "Whether this is the primary region (for future use)"
+  default = true
+}
+
+variable "create_private_dns_records" {
+  type = bool
+  description = "Create private DNS records (set to false for secondary regions to avoid conflicts)"
+  default = true
+}
+
+variable "certificate_arn" {
+  type = string
+  description = "ACM certificate ARN for HTTPS listeners (created at example level)"
+  default = null
 }
 
 
@@ -330,22 +571,24 @@ variable "shared_private_zone_id" {
 ########################################
 # Tags
 ########################################
-variable "helm_cleanup_timeout" {
-  description = "Timeout in seconds for Helm cleanup during destroy operations"
-  type        = number
-  default     = 300
-}
-
-variable "auto_helm_cleanup" {
-  description = "Automatically clean up Helm releases during destroy to prevent orphaned AWS resources. If false, manual cleanup required."
+variable "enable_auto_cleanup" {
+  description = "Enable automatic cleanup of all resources during destroy (Helm releases, ECR repos, TGB finalizers)"
   type        = bool
   default     = true
 }
 
-variable "enable_deployment_messages" {
-  description = "Enable informational messages during Terraform operations"
+
+
+variable "auto_cleanup_timeout" {
+  description = "Timeout in seconds for auto cleanup operations during destroy (Helm, TGB, etc.)"
+  type        = number
+  default     = 300
+}
+
+variable "auto_cleanup_status_messages" {
+  description = "Show progress messages during cleanup operations with [DDC CLEANUP - COMPONENT]: format"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "tags" {

@@ -20,8 +20,6 @@ variable "region" {
   default     = "us-west-2"
 }
 
-
-
 variable "tags" {
   type        = map(any)
   description = "Tags to apply to resources"
@@ -121,6 +119,18 @@ variable "scylla_ips" {
   default     = []
 }
 
+variable "scylla_datacenter_name" {
+  description = "ScyllaDB datacenter name (region with -1 suffix removed)"
+  type        = string
+  default     = null
+}
+
+variable "scylla_keyspace_suffix" {
+  description = "ScyllaDB keyspace suffix (region with dashes replaced by underscores)"
+  type        = string
+  default     = null
+}
+
 variable "replication_factor" {
   description = "ScyllaDB replication factor"
   type        = number
@@ -134,20 +144,10 @@ variable "replication_factor" {
 variable "unreal_cloud_ddc_version" {
   type        = string
   description = "Version of the Unreal Cloud DDC Helm chart"
-  default     = "1.2.0"
+  default     = "1.3.0"
 }
 
-variable "unreal_cloud_ddc_helm_base_infra_chart" {
-  type        = string
-  description = "Path to base infrastructure Helm chart"
-  default     = null
-}
 
-variable "unreal_cloud_ddc_helm_replication_chart" {
-  type        = string
-  description = "Path to replication Helm chart"
-  default     = null
-}
 
 variable "ddc_replication_region_url" {
   type        = string
@@ -198,4 +198,40 @@ variable "auto_helm_cleanup" {
   description = "Automatically clean up Helm releases during destroy to prevent orphaned AWS resources. If false, manual cleanup required."
   type        = bool
   default     = true
+}
+
+variable "remove_tgb_finalizers" {
+  type = bool
+  description = <<-EOT
+    Remove TargetGroupBinding finalizers immediately after creation to enable single-step destroy.
+    
+    When enabled: Allows 'terraform destroy' to complete without manual intervention.
+    When disabled: Requires manual TGB cleanup before destroy:
+      aws eks update-kubeconfig --region <region> --name <cluster-name>
+      kubectl patch targetgroupbinding <name-prefix>-tgb -n <namespace> --type='merge' -p='{"metadata":{"finalizers":[]}}'
+      kubectl delete targetgroupbinding <name-prefix>-tgb -n <namespace>
+    
+    Risk: Controller cannot clean up target registrations if TGB is deleted outside Terraform.
+    Alternative: Use manual cleanup commands above for full controller cleanup guarantees.
+    
+    Recommended for CI/CD environments where automated destroy is prioritized.
+  EOT
+  default = false
+}
+variable "auto_cleanup_status_messages" {
+  description = "Show progress messages during cleanup operations with [DDC CLEANUP - COMPONENT]: format"
+  type        = bool
+  default     = true
+}
+
+variable "unreal_cloud_ddc_helm_base_infra_chart" {
+  type        = string
+  description = "Path to Helm values template file for base infrastructure"
+  default     = null
+}
+
+variable "unreal_cloud_ddc_helm_replication_chart" {
+  type        = string
+  description = "Path to Helm values template file for replication configuration"
+  default     = null
 }

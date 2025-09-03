@@ -5,7 +5,12 @@ variable "route53_public_hosted_zone_name" {
 }
 
 variable "ghcr_credentials_secret_manager_arn" {
-  description = "ARN of the GitHub Container Registry credentials secret in AWS Secrets Manager"
   type        = string
-  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/-XBalRp" # TODO - remove
+  sensitive   = true
+  description = "ARN of the secret in AWS Secrets Manager corresponding to your GitHub credentials (username and accessToken). This is used to allow access to the Unreal Cloud DDC repository in GitHub"
+  default     = "arn:aws:secretsmanager:us-east-1:644937705968:secret:ecr-pullthroughcache/UnrealCloudDDC-XLISDD"
 }
+
+
+
+

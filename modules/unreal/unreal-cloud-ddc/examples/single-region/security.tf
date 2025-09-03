@@ -3,7 +3,7 @@
 ##########################################
 resource "aws_security_group" "allow_my_ip" {
   name        = "${local.project_prefix}-allow-my-ip"
-  description = "Allow inbound traffic from my IP to DDC and monitoring services"
+  description = "Allow inbound traffic from my IP to DDC services"
   vpc_id      = aws_vpc.unreal_cloud_ddc_vpc.id
 
   tags = merge(local.tags, {

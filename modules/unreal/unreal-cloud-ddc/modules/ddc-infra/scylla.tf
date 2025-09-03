@@ -24,11 +24,11 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
   user_data_replace_on_change = false
   ebs_optimized               = true
 
+  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
+  
   lifecycle {
     ignore_changes = [user_data]
   }
-
-  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
 
   root_block_device {
     encrypted   = true
@@ -65,11 +65,11 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
   user_data_replace_on_change = false
   ebs_optimized               = true
 
+  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
+  
   lifecycle {
     ignore_changes = [user_data]
   }
-
-  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
 
   root_block_device {
     encrypted   = true

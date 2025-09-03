@@ -51,6 +51,9 @@ resource "aws_route53_record" "primary_ddc_monitoring" {
 ##########################################
 resource "aws_acm_certificate" "ddc" {
   domain_name = "*.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  subject_alternative_names = [
+    "*.monitoring.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
+  ]
 
   validation_method = "DNS"
 

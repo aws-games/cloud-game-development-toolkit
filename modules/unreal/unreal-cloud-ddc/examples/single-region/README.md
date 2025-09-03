@@ -1,307 +1,580 @@
-# Unreal Cloud DDC Single Region Example
+# Single Region DDC Deployment Example
 
-This example demonstrates how to deploy **[Unreal Cloud DDC](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)** in a single AWS region using the unified Terraform module.
+This example demonstrates deploying Unreal Cloud DDC in a single AWS region for small to medium-sized game development teams.
 
 ## Architecture
 
-![unreal-cloud-ddc-single-region](../../modules/applications/assets/media/diagrams/unreal-cloud-ddc-single-region.png)
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Game Devs     │───▶│   Public NLB     │───▶│   EKS Cluster   │
+│ (UE Clients)    │    │ ddc.example.com  │    │  DDC Services   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │                        │
+┌─────────────────┐             │               ┌─────────────────┐
+│  Ops/DevOps     │─────────────┼──────────────▶│   ScyllaDB      │
+│ (Monitoring)    │             │               │   (Metadata)    │
+└─────────────────┘             │               └─────────────────┘
+                                │                        │
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │ Monitoring ALB   │    │   S3 Bucket     │
+                       │monitoring.ddc... │    │  (Asset Data)   │
+                       └──────────────────┘    └─────────────────┘
+```
 
-## Connectivity Overview
+## When to Use Single Region
 
-**📖 For comprehensive connectivity and deployment guidance, see the [main module README](../../README.md#connectivity--deployment-guide).**
+### ✅ Ideal Scenarios
+- **Small teams** (5-20 developers)
+- **Co-located teams** (same geographic region)
+- **Prototyping/MVP** projects
+- **Budget-conscious** deployments
+- **Getting started** with Cloud DDC
 
-This example demonstrates **Scenario 1: External Access** deployment with:
+### ❌ Not Recommended For
+- **Distributed global teams** (use multi-region)
+- **Large studios** (50+ developers across regions)
+- **Strict disaster recovery** requirements
+- **Regulatory compliance** requiring data locality
 
-- **EKS public and private access** enabled (default configuration)
-- **Security groups** restricting access to specified IP ranges
-- **Public load balancers** for DDC API and monitoring access
-- **Private services** (EKS pods, ScyllaDB) in private subnets
+## DNS and Certificate Architecture
 
-## Important
+### Domain Structure
+```
+yourcompany.com (Route53 Hosted Zone)
+├── ddc.yourcompany.com (DDC Service - NLB)
+└── monitoring.ddc.yourcompany.com (Monitoring - ALB)
+```
 
-### Key Configuration Requirements
+### Certificate Management
+- **Single wildcard certificate**: `*.ddc.yourcompany.com`
+- **Covers both services**: DDC and monitoring
+- **DNS validation**: Automatic via Route53
+- **Managed by parent module**: No certificate creation in example
 
-#### Provider Configuration
-
-This example uses the unified module. **All provider aliases must be defined** even for single-region:
-
+### Load Balancer Configuration
 ```hcl
-providers = {
-  aws.primary        = aws
-  aws.secondary      = aws          # Required but unused
-  awscc.primary      = awscc
-  awscc.secondary    = awscc        # Required but unused
-  kubernetes.primary = kubernetes   # Must be configured with EKS endpoint
-  kubernetes.secondary = kubernetes # Required but unused
-  helm.primary       = helm         # Must be configured with EKS endpoint
-  helm.secondary     = helm         # Required but unused
+# NLB (DDC Service)
+- Port 80: Direct TCP forwarding to EKS
+- Port 443: TLS termination with certificate
+
+# ALB (Monitoring)  
+- Port 80: HTTP → HTTPS redirect
+- Port 443: HTTPS with certificate
+```
+
+## User Access Patterns
+
+### DevOps Team (Full Access)
+```hcl
+# Configure in security.tf
+resource "aws_security_group" "devops_team" {
+  # EKS API access for kubectl/Terraform
+  # DDC service access for testing
+  # Monitoring dashboard access
+}
+
+# Pass to module
+existing_security_groups = [aws_security_group.devops_team.id]
+```
+
+**Access Includes:**
+- EKS cluster management (kubectl)
+- DDC service endpoints
+- Monitoring dashboards
+- AWS Console/CLI
+
+### Operations Team (Monitoring Only)
+```hcl
+# Configure monitoring-specific access
+ddc_monitoring_config = {
+  additional_alb_security_groups = [aws_security_group.ops_team.id]
 }
 ```
 
-**Critical:** The Kubernetes and Helm providers must be configured with EKS cluster connection details:
+**Access Includes:**
+- Grafana dashboards
+- ScyllaDB monitoring
+- CloudWatch metrics
+- Alert management
 
+### Game Developers (Service Only)
 ```hcl
-provider "kubernetes" {
-  host                   = module.unreal_cloud_ddc.primary_region.eks_endpoint
-  cluster_ca_certificate = base64decode(module.unreal_cloud_ddc.primary_region.cluster_certificate_authority_data)
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc.primary_region.eks_cluster_name]
+# Configure in security.tf
+resource "aws_security_group" "game_developers" {
+  # Only DDC service access (ports 80, 443, 8091)
+  # No EKS or monitoring access
+}
+
+# Pass to module
+existing_security_groups = [aws_security_group.game_developers.id]
+```
+
+**Access Includes:**
+- DDC service endpoints only
+- No backend infrastructure access
+- Unreal Engine DDC configuration
+
+## Remote Developer Considerations
+
+### Challenge: Dynamic IP Addresses
+Remote developers often have changing IP addresses, making static security group rules impractical.
+
+### Solutions
+
+#### Option 1: VPN-Based Access (Recommended)
+```hcl
+# All developers use company VPN
+resource "aws_security_group" "vpn_users" {
+  ingress {
+    from_port   = 80
+    to_port     = 8091
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]  # VPN network
   }
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = module.unreal_cloud_ddc.primary_region.eks_endpoint
-    cluster_ca_certificate = base64decode(module.unreal_cloud_ddc.primary_region.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc.primary_region.eks_cluster_name]
-    }
-  }
-}
+# Configure EKS access for DevOps via VPN
+eks_api_access_cidrs = ["10.0.0.0/8"]
 ```
 
-#### EKS Access Configuration
-
-**Required for external access:** Configure EKS endpoint access for your deployment scenario:
-
+#### Option 2: Regional Office Networks
 ```hcl
-# Get your public IP for external access
-data "http" "public_ip" {
-  url = "https://checkip.amazonaws.com/"
+# Multiple office locations
+variable "office_networks" {
+  default = [
+    "203.0.113.0/24",  # Main Office
+    "198.51.100.0/24", # Remote Office
+  ]
 }
 
-# Configure EKS access in infrastructure_config
-infrastructure_config = {
-  # Default: both endpoints enabled for maximum flexibility
-  eks_cluster_public_access = true   # Allows external Terraform, CI/CD, kubectl
-  eks_cluster_private_access = true  # Allows VPC-based access
-  eks_cluster_public_endpoint_access_cidr = ["${chomp(data.http.public_ip.response_body)}/32"]
-  # ... other config
-}
+# Configure access
+eks_api_access_cidrs = var.office_networks
 ```
 
-**For private-only deployments (VPN/CodeBuild):**
-
+#### Option 3: Dynamic IP Management
 ```hcl
-infrastructure_config = {
-  eks_cluster_public_access = false  # Disable public access
-  eks_cluster_private_access = true  # Keep private access
-  eks_cluster_public_endpoint_access_cidr = []  # No public IPs
-  # ... other config
-}
-```
-
-### Region Configuration
-
-**Important**: The deployment will create resources in the **exact region specified** in the `regions` variable, regardless of your AWS CLI/session default region.
-
-```hcl
-regions = {
-  primary = { region = "us-east-1" }  # Resources deployed HERE, not your session region
-}
-```
-
-**Key constraints:**
-
-- Keys must be exactly `"primary"` (cannot use `"main"`, `"east"`, etc.)
-- Region string must be explicit (not `data.aws_region.current.name`)
-- Your AWS session region does **not** affect where resources are deployed
-
-**⚠️ Avoid using data sources for regions:**
-
-```hcl
-# DON'T DO THIS - risky and unpredictable
-regions = {
-  primary = { region = data.aws_region.current.name }
-}
-
-# DO THIS - explicit and safe
-regions = {
-  primary = { region = "us-east-1" }
-}
-```
-
-**Why explicit regions are safer:**
-
-- **Predictable**: Always deploys to the same region
-- **Team-safe**: Works regardless of individual AWS profile configurations
-- **CI/CD-safe**: No dependency on runtime environment
-- **Change-safe**: Won't propose region changes when team members have different default regions
-
-### GitHub Credentials Setup
-
-Before deployment, you must create GitHub credentials in AWS Secrets Manager **in the same region** as your deployment (matching your `regions.primary.region` value) to access the Unreal Cloud DDC container image. The secret must be prefixed with `ecr-pullthroughcache/` and follow the naming pattern `ecr-pullthroughcache/{project_prefix}-{name}-github-credentials`.
-
-Example secret name: `ecr-pullthroughcache/cgd-unreal-cloud-ddc-github-credentials`
-
-Secret format:
-
-```json
-{
-  "username": "GITHUB-USER-NAME",
-  "accessToken": "GITHUB-ACCESS-TOKEN"
-}
-```
-
-### Deployment Time
-
-The deployment takes approximately 30 minutes, with EKS cluster and node group creation requiring around 20 minutes.
-
-### Post-Deployment
-
-The example deploys Route53 DNS records for accessing your Unreal DDC services:
-
-- **DDC Service**: `ddc.<your-domain>` - Main DDC API endpoint
-- **Monitoring**: `monitoring.ddc.<your-domain>` - ScyllaDB monitoring dashboard
-
-Where `<your-domain>` is the value you provided for `route53_public_hosted_zone_name`.
-
-**DNS Record Locations:**
-
-- **Public Records**: All DNS records are created in your existing **public hosted zone**
-- **Private Zone**: The module also creates a private hosted zone for internal service discovery
-
-These records point to load balancers which may take additional time to become fully available after deployment completes. You can view the provisioning status in the EC2 Load Balancing console.
-
-The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager.
-
-### Post-Deployment Testing
-
-#### Quick Sanity Check
-
-After deployment, test your setup using the provided sanity check script:
-
-```bash
-cd assets/scripts
-./sanity_check.sh
-```
-
-This script automatically tests the DDC API by putting and getting test data.
-
-#### Manual Testing
-
-To manually validate you can put an object:
-
-```bash
-curl http://<unreal_ddc_url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H 'Authorization: ServiceAccount <secret-manager-token>'
-```
-
-#### Comprehensive Testing
-
-For comprehensive testing, use the [benchmarking tools](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks) with an x2idn.32xlarge instance:
-
-```bash
-docker run --network host jupiter_benchmark --seed --seed-remote --host http://<unreal_ddc_url> --namespace ddc \
---header="Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token>" all
-```
-
-**Note**: Specify the namespace as `ddc` since the token only has access to that namespace.
-
-### Monitoring
-
-The deployment includes a ScyllaDB monitoring stack with Prometheus, Alertmanager, and Grafana for real-time insights into database performance. Access the Grafana dashboard using the `monitoring_url` provided in the Terraform outputs. For more information, see the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
-
-### Security Group Access Control
-
-This example demonstrates flexible security group patterns for controlling access to different DDC components:
-
-#### Simple Pattern (Current Example)
-
-```hcl
-# Get IP once, use everywhere
+# Use current IP detection (for development/testing)
 data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
 
-# Create security group with rules
-resource "aws_security_group" "allow_my_ip" {
-  name = "allow_my_ip"
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
+locals {
+  my_ip_cidr = "${chomp(data.http.my_ip.response_body)}/32"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_https" {
-  security_group_id = aws_security_group.allow_my_ip.id
-  cidr_ipv4 = "${chomp(data.http.my_ip.response_body)}/32"
-  from_port = 443
-  to_port = 443
-  ip_protocol = "tcp"
-}
-
-# Use same IP for EKS API access
-ddc_infra_config = {
-  eks_api_access_cidrs = ["${chomp(data.http.my_ip.response_body)}/32"]
-}
+# Add to security group
+eks_api_access_cidrs = [local.my_ip_cidr]
 ```
 
-#### Multi-Team Access Pattern
+**⚠️ Production Recommendation:** Use VPN or office networks for production deployments.
+
+## Unreal Engine Configuration
+
+### DDC Setup for Single Region
+
+```ini
+; DefaultEngine.ini - Add to your project
+[InstalledDerivedDataBackendGraph]
+; Local cache (fastest, individual)
+Local=(Type=FileSystem, ReadOnly=false, Clean=false, Flush=false, PurgeTransient=true, DeleteUnused=true, UnusedFileAge=17, FoldersToClean=-1, Path="%GAMEDIR%DerivedDataCache")
+
+; Cloud DDC (shared, team)
+Cloud=(Type=HTTPDerivedDataBackend, Host="https://ddc.yourcompany.com", EngineDDCGraph=Local)
+
+; Hierarchical setup: try Cloud first, fallback to Local
+Hierarchy=(Type=Hierarchical, Inner=Cloud, Outer=Local)
+```
+
+### Performance Optimization
+```ini
+; Optional: Adjust cache settings for your team size
+[Core.System]
+; Increase cache size for better hit rates
+MaxDerivedDataCacheSize=10240  ; 10GB cache
+
+; Enable compression for slower connections
+[DerivedDataCache]
+EnableCompression=true
+```
+
+### Team Coordination
+```ini
+; Shared team configuration
+; All developers should use identical DDC settings
+; Commit DefaultEngine.ini to version control
+; Document any project-specific cache requirements
+```
+
+## Deployment Guide
+
+### Prerequisites
+
+1. **Epic Games GitHub Organization Access:**
+   - **CRITICAL: You must have access to the Epic Games GitHub organization to pull the Unreal Cloud DDC container image**
+   - **Without this access, the deployment will fail when trying to pull the DDC image**
+   - Follow the [Epic Games Container Images Quick Start](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine) to join the organization
+   - Verify access by visiting [Unreal Cloud DDC Repository](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)
+
+2. **AWS Account Setup:**
+   - AWS CLI configured with appropriate permissions
+   - Route53 hosted zone created
+   - Terraform >= 1.11 installed
+
+3. **GitHub Container Registry (GHCR) Access:**
+   - Create GitHub personal access token
+   - **MUST store in AWS Secrets Manager with prefix `ecr-pullthroughcache/` followed by a name** (e.g., `ecr-pullthroughcache/UnrealCloudDDC`)
+   - **The secret MUST have a value after the `/` or ECR pull-through cache will not work**
+   - Store the secret in AWS Secrets Manager in the same region as your deployment
+   - For setup instructions, see [AWS ECR Pull Through Cache Documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html) and [AWS Secrets Manager Documentation](https://docs.aws.amazon.com/secretsmanager/latest/userguide/create_secret.html)
+
+4. **Network Planning:**
+   - Identify office/VPN IP ranges
+   - Plan VPC CIDR blocks
+   - Consider future multi-region expansion
+
+### Step 1: Configure Variables
 
 ```hcl
-locals {
-  access_cidrs = {
-    devops = {
-      hq_office = "203.0.113.0/24"
-      vpn_range = "10.0.0.0/8"
-    }
-    game_devs = {
-      studio_a = "198.51.100.0/24"
-      studio_b = "192.0.2.0/24"
-    }
-  }
+# terraform.tfvars
+route53_public_hosted_zone_name = "yourcompany.com"
+regions = ["us-east-1"]  # Single region
 
-  devops_cidrs = values(local.access_cidrs.devops)
-  game_dev_cidrs = values(local.access_cidrs.game_devs)
-}
+# GitHub credentials for DDC container images
+ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/github-credentials"
 
-# DevOps security group (EKS + Monitoring access)
-resource "aws_security_group" "devops_access" {
-  name = "devops-access"
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
-}
+# Optional: Customize instance types
+# scylla_instance_type = "i4i.xlarge"
+# kubernetes_version = "1.31"
+```
 
-resource "aws_vpc_security_group_ingress_rule" "devops_https" {
-  for_each = toset(local.devops_cidrs)
-  security_group_id = aws_security_group.devops_access.id
-  cidr_ipv4 = each.value
-  from_port = 443
-  to_port = 443
-  ip_protocol = "tcp"
-}
+### Step 2: Review Security Configuration
 
-# Game developers security group (DDC access only)
-resource "aws_security_group" "game_dev_access" {
-  name = "game-dev-access"
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
-}
+```hcl
+# security.tf - Customize for your team
+resource "aws_security_group" "allow_my_ip" {
+  name_prefix = "ddc-access-"
+  vpc_id      = aws_vpc.unreal_cloud_ddc_vpc.id
 
-resource "aws_vpc_security_group_ingress_rule" "game_dev_ddc" {
-  for_each = toset(local.game_dev_cidrs)
-  security_group_id = aws_security_group.game_dev_access.id
-  cidr_ipv4 = each.value
-  from_port = 80
-  to_port = 80
-  ip_protocol = "tcp"
-}
-
-module "unreal_cloud_ddc" {
-  existing_security_groups = [aws_security_group.devops_access.id]  # Global DevOps access
-
-  ddc_infra_config = {
-    eks_api_access_cidrs = local.devops_cidrs  # Only DevOps can kubectl
-    additional_nlb_security_groups = [aws_security_group.game_dev_access.id]  # Game devs can use DDC
-  }
-
-  ddc_monitoring_config = {
-    # Only DevOps can see monitoring (no additional_alb_security_groups)
+  # Adjust these rules for your access patterns
+  ingress {
+    from_port   = 80
+    to_port     = 8091
+    protocol    = "tcp"
+    cidr_blocks = [local.my_ip_cidr]  # Replace with VPN/office network
   }
 }
 ```
 
-### Production Recommendations
+### Step 3: Deploy Infrastructure
 
-**It is recommended that for production use you change the authentication mode from Service Account to Bearer and use an IDP for authentication with TLS termination.**
+```bash
+# Initialize Terraform
+terraform init
 
-<!-- BEGIN_TF_DOCS -->
+# Review planned changes
+terraform plan
+
+# Deploy infrastructure
+terraform apply
+
+# Note the outputs for UE configuration
+terraform output endpoints
+```
+
+### Step 4: Configure Unreal Engine
+
+```bash
+# Get DDC endpoint from Terraform output
+DDC_ENDPOINT=$(terraform output -raw endpoints | jq -r '.ddc')
+
+# Update your project's DefaultEngine.ini
+echo "[InstalledDerivedDataBackendGraph]" >> Config/DefaultEngine.ini
+echo "Cloud=(Type=HTTPDerivedDataBackend, Host=\"$DDC_ENDPOINT\")" >> Config/DefaultEngine.ini
+```
+
+### Step 5: Verify Deployment
+
+#### Option A: Automated Test Script (macOS/Linux)
+
+```bash
+# IMPORTANT: Run from the same directory where you deployed (e.g., examples/single-region/)
+# The script needs access to terraform outputs from your deployment
+../../assets/scripts/ddc_functional_test.sh
+
+# If using a different directory, customize the script path or use Option B
+
+# This script will:
+# ✅ Auto-detect your NLB and bearer token
+# ✅ Test PUT/GET operations (actual cache functionality)
+# ✅ Verify authentication and end-to-end workflow
+```
+
+#### Option B: Manual Testing (Windows/All Platforms)
+
+**Get connection details:**
+```bash
+# If using this example, endpoints should already be displayed in terminal after deployment:
+# endpoints = {
+#   "ddc" = "https://us-east-1.ddc.yourcompany.com"        # DNS endpoint
+#   "ddc_direct" = "https://nlb-xxxxx.elb.us-east-1.amazonaws.com"  # Direct NLB
+# }
+
+# Or get them manually:
+terraform output endpoints
+terraform output bearer_token_arn
+```
+
+**Test health endpoints:**
+```bash
+# Test NLB connectivity first (direct connection to load balancer)
+curl https://nlb-xxxxx.elb.us-east-1.amazonaws.com/health/live
+curl https://nlb-xxxxx.elb.us-east-1.amazonaws.com/health/ready
+
+# Then test DNS endpoint (goes through Route53 → NLB)
+curl https://us-east-1.ddc.yourcompany.com/health/live
+curl https://us-east-1.ddc.yourcompany.com/health/ready
+
+# Expected response: "Healthy"
+# If NLB works but DNS fails, check Route53 records
+```
+
+**Test DDC functionality:**
+```bash
+# Set your values (replace with actual values from terraform output)
+set DDC_ENDPOINT=https://ddc.yourcompany.com
+set BEARER_TOKEN=your-bearer-token-here
+
+# Test PUT operation (write to cache)
+curl -X PUT "%DDC_ENDPOINT%/api/v1/refs/test-namespace/default/00000000000000000000000000000000000000aa" ^
+  --data "test" ^
+  -H "content-type: application/octet-stream" ^
+  -H "X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA" ^
+  -H "Authorization: Bearer %BEARER_TOKEN%"
+
+# Test GET operation (read from cache)
+curl "%DDC_ENDPOINT%/api/v1/refs/test-namespace/default/00000000000000000000000000000000000000aa.raw" ^
+  -H "Authorization: Bearer %BEARER_TOKEN%"
+
+# Expected: Returns "test" data you just wrote
+```
+
+**Verify EKS cluster (DevOps only):**
+```bash
+# Configure kubectl access
+aws eks update-kubeconfig --region us-east-1 --name <cluster-name>
+
+# Check pod status
+kubectl get pods -n unreal-cloud-ddc
+
+# Expected: All pods should be "Running"
+```
+
+**Check monitoring dashboard:**
+```bash
+# Open monitoring dashboard
+open https://monitoring.ddc.yourcompany.com
+# Or visit the URL in your browser
+```
+
+## Monitoring and Operations
+
+### Health Checks
+
+**DDC Service Health:**
+```bash
+# Check service status
+curl https://ddc.yourcompany.com/health
+
+# Expected response: HTTP 200 OK
+```
+
+**ScyllaDB Health:**
+```bash
+# Access monitoring dashboard
+open https://monitoring.ddc.yourcompany.com
+
+# Check cluster status, node health, cache hit rates
+```
+
+**EKS Cluster Health:**
+```bash
+# DevOps team access
+kubectl get nodes
+kubectl get pods -n unreal-cloud-ddc
+kubectl top nodes
+```
+
+### Performance Monitoring
+
+**Key Metrics to Monitor:**
+- DDC cache hit rate (target: >80%)
+- ScyllaDB latency (target: <10ms)
+- EKS node utilization (target: <80%)
+- Network throughput
+
+**Alerting Setup:**
+- Configure CloudWatch alarms
+- Set up PagerDuty/Slack notifications
+- Monitor certificate expiration
+- Track storage usage
+
+### Backup and Recovery
+
+**Automated Backups:**
+- S3 bucket versioning enabled
+- ScyllaDB snapshots scheduled
+- EKS configuration backed up
+
+**Recovery Procedures:**
+- Document restore procedures
+- Test recovery processes regularly
+- Maintain runbooks for common issues
+
+## Cost Optimization
+
+### Single Region Cost Factors
+
+**Major Cost Components:**
+1. **EKS Cluster:** ~$73/month (control plane)
+2. **EC2 Instances:** Variable based on node types
+3. **ScyllaDB Instances:** i4i.xlarge ~$400/month each
+4. **Load Balancers:** NLB + ALB ~$40/month
+5. **S3 Storage:** Variable based on cache size
+
+**Optimization Strategies:**
+```hcl
+# Use smaller instances for development
+scylla_instance_type = "i4i.large"  # Instead of xlarge
+
+# Reduce node group sizes
+nvme_managed_node_desired_size = 1  # Instead of 2
+worker_managed_node_desired_size = 0  # Scale to zero when not needed
+
+# Enable cluster autoscaling
+system_managed_node_min_size = 0
+system_managed_node_max_size = 3
+```
+
+### Cost Monitoring
+```bash
+# Use AWS Cost Explorer
+# Tag resources for cost allocation
+# Monitor usage patterns
+# Right-size instances based on utilization
+```
+
+## Scaling to Multi-Region
+
+### When to Consider Multi-Region
+
+**Indicators:**
+- Team grows beyond 20-30 developers
+- Developers distributed across time zones
+- Performance complaints from remote locations
+- Disaster recovery requirements
+
+### Migration Path
+
+1. **Deploy secondary region:**
+   ```bash
+   cd ../multi-region
+   # Configure secondary region
+   terraform apply
+   ```
+
+2. **Update DNS configuration:**
+   ```hcl
+   # Switch to region-specific endpoints
+   us-east-1.ddc.yourcompany.com
+   us-west-2.ddc.yourcompany.com
+   ```
+
+3. **Update UE configuration:**
+   ```ini
+   ; Region-specific configuration
+   Cloud=(Type=HTTPDerivedDataBackend, Host="https://us-east-1.ddc.yourcompany.com")
+   ```
+
+4. **Test and validate:**
+   - Verify cross-region replication
+   - Test failover scenarios
+   - Update monitoring dashboards
+
+## Troubleshooting
+
+### Common Issues
+
+**Certificate Validation Fails:**
+```bash
+# Check DNS records
+dig TXT _validation.ddc.yourcompany.com
+
+# Verify Route53 hosted zone
+aws route53 list-hosted-zones
+```
+
+**EKS Access Denied:**
+```bash
+# Check security groups
+aws ec2 describe-security-groups --group-ids <sg-id>
+
+# Verify IP address
+curl https://checkip.amazonaws.com/
+
+# Update kubeconfig
+aws eks update-kubeconfig --region us-east-1 --name <cluster-name>
+```
+
+**DDC Connection Timeout:**
+```bash
+# Test NLB connectivity
+telnet ddc.yourcompany.com 80
+
+# Check target group health
+aws elbv2 describe-target-health --target-group-arn <arn>
+
+# Verify security group rules
+```
+
+**ScyllaDB Performance Issues:**
+```bash
+# Access monitoring dashboard
+open https://monitoring.ddc.yourcompany.com
+
+# Check node status, disk usage, memory utilization
+# Review slow query logs
+# Verify replication factor
+```
+
+### Getting Help
+
+**Internal Support:**
+1. Check monitoring dashboards
+2. Review CloudWatch logs
+3. Consult team runbooks
+
+**External Resources:**
+- [AWS EKS Documentation](https://docs.aws.amazon.com/eks/)
+- [ScyllaDB Documentation](https://docs.scylladb.com/)
+- [Unreal Engine DDC Documentation](https://docs.unrealengine.com/5.0/en-US/derived-data-cache/)
+
+## Next Steps
+
+### Production Readiness
+- [ ] Implement comprehensive monitoring
+- [ ] Set up automated backups
+- [ ] Configure disaster recovery procedures
+- [ ] Document operational runbooks
+- [ ] Train team on DDC usage
+
+### Advanced Features
+- [ ] Integrate with CI/CD pipelines
+- [ ] Set up automated scaling
+- [ ] Implement cost optimization
+- [ ] Consider multi-region expansion
+
+### Team Adoption
+- [ ] Train developers on UE DDC configuration
+- [ ] Establish cache usage guidelines
+- [ ] Monitor adoption and performance
+- [ ] Gather feedback for improvements

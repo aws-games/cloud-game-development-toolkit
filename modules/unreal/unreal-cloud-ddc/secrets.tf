@@ -2,32 +2,41 @@
 # DDC Bearer Token Management
 ################################################################################
 
-# Bearer token secret - created per region for independence
+# Random suffix to prevent name conflicts during recreation
+resource "random_string" "bearer_token_suffix" {
+  count   = var.create_bearer_token == true ? 1 : 0
+  length  = 8
+  special = false
+  upper   = false
+}
+
+# Bearer token secret - create if no existing ARN provided
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  count       = var.ddc_bearer_token_secret_arn == null && var.ddc_infra_config != null ? 1 : 0
-  name        = "${local.name_prefix}-bearer-token"
+  count       = var.create_bearer_token == true ? 1 : 0
+  name        = "${local.name_prefix}-bearer-token-${random_string.bearer_token_suffix[0].result}"
   description = "The bearer token to access Unreal Cloud DDC service"
-  
+
+  # Enable cross-region replication for multi-region DDC deployments
+  dynamic "replica" {
+    for_each = var.bearer_token_replica_regions
+    content {
+      region = replica.value
+    }
+  }
+
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-bearer-token"
   })
 }
 
-ephemeral "random_password" "ddc_token" {
-  count   = var.ddc_bearer_token_secret_arn == null && var.ddc_infra_config != null ? 1 : 0
+resource "random_password" "ddc_token" {
+  count   = var.create_bearer_token == true ? 1 : 0
   length  = 64
   special = false
 }
 
 resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
-  count                    = var.ddc_bearer_token_secret_arn == null && var.ddc_infra_config != null ? 1 : 0
-  secret_id                = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
-  secret_string_wo         = ephemeral.random_password.ddc_token[0].result
-  secret_string_wo_version = 1
-}
-
-# Ephemeral resource for reading created secrets (maximum security)
-ephemeral "aws_secretsmanager_secret_version" "ddc_token" {
-  count     = var.ddc_infra_config != null ? 1 : 0
-  secret_id = aws_secretsmanager_secret_version.unreal_cloud_ddc_token[0].secret_id
+  count         = var.create_bearer_token == true ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
+  secret_string = random_password.ddc_token[0].result
 }

@@ -19,7 +19,7 @@ output "helm_release_version" {
 
 output "replication_helm_release_name" {
   description = "Name of the replication Helm release"
-  value       = var.ddc_replication_region_url != null && var.unreal_cloud_ddc_helm_replication_chart != null ? helm_release.unreal_cloud_ddc_with_replication[0].name : null
+  value       = var.ddc_replication_region_url != null ? helm_release.unreal_cloud_ddc_with_replication[0].name : null
 }
 
 output "ecr_repository_url" {

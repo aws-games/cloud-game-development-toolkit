@@ -19,7 +19,7 @@ resource "aws_security_group" "scylla_security_group" {
 # Scylla Monitoring SG
 ################################################################################
 
-# Monitoring security groups moved to ddc-monitoring module
+
 
 ################################################################################
 # NVME Security Group
@@ -85,6 +85,8 @@ resource "aws_vpc_security_group_ingress_rule" "self_ingress_sg_rules" {
   to_port                      = each.value.port
 }
 
+
+
 resource "aws_vpc_security_group_egress_rule" "self_scylla_egress_sg_rules" {
   security_group_id            = aws_security_group.scylla_security_group.id
   from_port                    = 0
@@ -149,14 +151,15 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_user_sg_ingress_rule" {
   referenced_security_group_id = var.existing_security_groups[count.index]
 }
 
-# ingress rule allowing ports 80 to 8091 from DDC NLB security group
-resource "aws_vpc_security_group_ingress_rule" "cluster_ddc_nlb_ingress_rule" {
+# ingress rule allowing ports 80 to 8091 from additional EKS security groups
+resource "aws_vpc_security_group_ingress_rule" "cluster_additional_eks_sg_ingress_rule" {
+  count                        = length(var.additional_eks_security_groups)
   security_group_id            = aws_security_group.cluster_security_group.id
-  description                  = "Allow traffic from DDC NLB security group to DDC services (ports 80-8091)"
+  description                  = "Allow traffic from additional EKS security groups to DDC services (ports 80-8091)"
   ip_protocol                  = "tcp"
   from_port                    = 80
   to_port                      = 8091
-  referenced_security_group_id = aws_security_group.ddc_nlb.id
+  referenced_security_group_id = var.additional_eks_security_groups[count.index]
 }
 
 # egress rule allowing all outbound traffic

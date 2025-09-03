@@ -75,6 +75,11 @@ output "system_node_group_label" {
   description = "Label for the System node group"
 }
 
+output "cluster_security_group_id" {
+  value       = aws_security_group.cluster_security_group.id
+  description = "ID of the EKS cluster security group"
+}
+
 ################################################################################
 # Region Output
 ################################################################################
@@ -85,33 +90,9 @@ output "region" {
 }
 
 ################################################################################
-# New DDC NLB Outputs (FIXES circular dependency)
+# Load Balancer Outputs Moved to Parent Module
 ################################################################################
-
-output "nlb_arn" {
-  value       = aws_lb.ddc_nlb.arn
-  description = "ARN of the DDC Network Load Balancer"
-}
-
-output "nlb_dns_name" {
-  value       = aws_lb.ddc_nlb.dns_name
-  description = "DNS name of the DDC Network Load Balancer"
-}
-
-output "nlb_zone_id" {
-  value       = aws_lb.ddc_nlb.zone_id
-  description = "Zone ID of the DDC Network Load Balancer"
-}
-
-output "nlb_target_group_arn" {
-  value       = aws_lb_target_group.ddc_nlb_tg.arn
-  description = "ARN of the DDC NLB target group"
-}
-
-output "nlb_security_group_id" {
-  value       = aws_security_group.ddc_nlb.id
-  description = "ID of the DDC NLB security group"
-}
+# NLB outputs removed - parent module now creates and exposes load balancers
 
 
 
@@ -122,11 +103,6 @@ output "nlb_security_group_id" {
 output "ssm_document_name" {
   value       = !var.create_seed_node ? aws_ssm_document.scylla_keyspace_update[0].name : null
   description = "Name of the SSM document for keyspace configuration"
-}
-
-output "ssm_keyspace_replication_fix_name" {
-  value       = var.is_multi_region ? aws_ssm_document.scylla_keyspace_replication_fix[0].name : null
-  description = "Name of the SSM document for multi-region keyspace replication fix"
 }
 
 ################################################################################
@@ -141,4 +117,18 @@ output "service_account_arn" {
 output "ebs_csi_role_arn" {
   value       = aws_iam_role.ebs_csi_iam_role.arn
   description = "ARN of the EBS CSI driver IAM role"
+}
+
+################################################################################
+# ScyllaDB Datacenter Naming Outputs
+################################################################################
+
+output "scylla_datacenter_name" {
+  value       = local.scylla_datacenter_name
+  description = "ScyllaDB datacenter name (region with -1 suffix removed)"
+}
+
+output "scylla_keyspace_suffix" {
+  value       = local.scylla_keyspace_suffix
+  description = "ScyllaDB keyspace suffix (region with dashes replaced by underscores)"
 }

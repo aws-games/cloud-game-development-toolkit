@@ -159,7 +159,8 @@ resource "aws_iam_role" "scylla_role" {
 resource "aws_iam_role_policy_attachments_exclusive" "scylla_policy_attachement" {
   role_name = aws_iam_role.scylla_role.name
   policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   ]
 }
 

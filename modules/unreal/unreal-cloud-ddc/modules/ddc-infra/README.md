@@ -1,39 +1,19 @@
-# Unreal Cloud DDC Infra Module
+# DDC Infrastructure Submodule
 
-[Unreal Cloud Derived Data Cache](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) ([source code](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC)) is a caching system that stores additional data required to use assets, such as compiled shaders. This allows the engine to quickly retrieve this data instead of having to regenerate it, saving time and disk space for the development team. For distributed teams, a cloud-hosted DDC enables efficient collaboration by ensuring all team members have access to the same cached data regardless of their location. This module deploys the core infrastructure for Unreal Engine's Cloud Derived Data Cache (DDC) on AWS. It creates a scalable, secure, and high-performance environment that optimizes asset processing and distribution throughout your game development pipeline, reducing build times and improving team collaboration.
+This submodule creates the core AWS infrastructure for [Unreal Cloud DDC](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) deployment, implementing Epic's recommended architecture with ScyllaDB and Amazon EKS.
 
-The Unreal Cloud Derived Data Cache (DDC) infrastructure module implements Epic's recommended architecture using ScyllaDB, a high-performance Cassandra-compatible database. This module provisions the following AWS resources:
-
-1. ScyllaDB Database Layer:
-    - Deployed on EC2 instances
-    - Supports both single-node and multi-node cluster configurations
-    - Optimized for high-throughput DDC operations
-    - Configured with AWS Systems Manager Session Manager to provide secure shell access without requiring SSH or bastion hosts
-
-2. ScyllaDB Monitoring Stack:
-    - Deployed on an EC2 instance
-    - Uses Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization
-    - Creates a Application Load Balancer for accessing the Grafana UI for real-time insights into ScyllaDB node performance
-
-3. Amazon EKS Cluster with specialized node groups:
-    - System node group: Handles core Kubernetes components and system workloads
-    - NVME node group: Optimized for high-performance storage operations
-    - Worker node group: Manages regional data replication and distribution
-    - Configured with AWS Systems Manager Session Manager to provide secure shell access without requiring SSH or bastion hosts
-
-3. S3 Bucket:
-    - Provides durable storage for cached assets
-    - Enables cross-region asset availability
-    - Serves as a persistent backup layer
+**What this submodule creates**: Complete DDC infrastructure including ScyllaDB cluster for metadata storage, EKS cluster with specialized node groups for DDC services, S3 bucket for asset storage, and comprehensive monitoring stack with Grafana dashboards.
 
 
-## Deployment Architecture
+## Architecture
 
-<br/>
+![DDC Infrastructure Architecture](./assets/media/diagrams/unreal-cloud-ddc-infra.png)
 
-![Unreal Engine Cloud DDC Infra Module Architecture](./assets/media/diagrams/unreal-cloud-ddc-infra.png)
-
-<br/>
+**Core Components:**
+- **ScyllaDB Cluster**: High-performance database for DDC metadata (EC2 instances)
+- **EKS Cluster**: Kubernetes platform with specialized node groups (system, worker, NVME)
+- **S3 Bucket**: Durable storage for cached game assets
+- **Monitoring Stack**: Prometheus + Grafana for ScyllaDB performance monitoring
 
 ## Prerequisites
 
@@ -95,75 +75,253 @@ For example configurations, please see the [examples](../../examples/). -->
 <!-- ## Deployment Instructions -->
 
 
-#### Configuring Node Groups and ScyllaDB Deployment
+## Configuration
 
-The footprint of your Cloud DDC deployment can be configured through 2 variables:
+### Key Variables
 
-<br/>
+**EKS Node Group Configuration (`eks_node_group_subnets`)**:
+- Controls subnet distribution for EKS node groups
+- Each subnet enables node placement in that AZ
+- More subnets = higher availability + increased complexity
 
-EKS Node Group Configuration: `eks_node_group_subnets`
+**ScyllaDB Instance Distribution (`scylla_subnets`)**:
+- Each subnet gets a dedicated ScyllaDB instance
+- Multiple subnets = distributed cluster with high availability
+- Single subnet = standalone instance (development only)
 
-The `eks_node_group_subnets` variable defines the subnet distribution for your EKS node groups. Each specified subnet serves as a potential target for node placement, providing granular control over the geographical distribution of your EKS infrastructure. Adding more subnets to this configuration increases deployment flexibility and enables broader availability zone coverage for your workloads at the cost of increased network complexity and potential inter-AZ data transfer charges.
+**Replication Factor (`scylla_replication_factor`)**:
+- Must be ≤ number of ScyllaDB nodes
+- RF=3 recommended for production (survives 1 node failure)
+- RF=1 for development (no fault tolerance)
 
+### Optional Configuration
 
-<br/>
+**Monitoring Stack**:
+- `create_scylla_monitoring_stack = false` to disable Grafana monitoring
+- `create_application_load_balancer = false` to disable ALB for monitoring
+- Custom certificate ARN via `alb_certificate_arn`
 
-ScyllaDB Instance Distribution: `scylla_subnets`
+**EKS Cluster**:
+- `kubernetes_version` for specific K8s version
+- Node group sizing via `*_managed_node_*_size` variables
+- Instance types via `*_managed_node_instance_type` variables
 
-The `scylla_subnets` variable determines the deployment topology of your ScyllaDB instances. Each specified subnet receives a dedicated ScyllaDB instance, with multiple subnet configurations automatically establishing a distributed cluster architecture. Configurations of two or more subnets enable high availability and data resilience through native ScyllaDB clustering at the cost of increased infrastructure complexity and proportionally higher operational expenses.
+**ScyllaDB**:
+- `scylla_instance_type` for performance tuning
+- `scylla_ami_name` for specific ScyllaDB version
+- Storage configuration via `scylla_db_storage` and `scylla_db_throughput`
+
+## Security Architecture
+
+### Security Group Design
+
+This module creates a comprehensive security group architecture that provides both isolation and controlled access:
+
+#### ScyllaDB Security Group (`scylla_security_group`)
+
+**Purpose**: Isolates ScyllaDB cluster communication and allows monitoring access
+
+**Ingress Rules**:
+- **Port 7000** (TCP): Inter-node RPC communication (from self)
+- **Port 7001** (TCP): SSL inter-node RPC communication (from self)
+- **Port 7199** (TCP): JMX management interface (from self)
+- **Port 9042** (TCP): CQL client connections (from self)
+- **Port 9100** (TCP): Node exporter metrics (from self + monitoring SG)
+- **Port 9142** (TCP): SSL CQL client connections (from self)
+- **Port 9160** (TCP): Thrift client port (from self)
+- **Port 9180** (TCP): Prometheus API metrics (from self + monitoring SG)
+- **Port 10000** (TCP): REST API (from self)
+- **Port 19042** (TCP): Shard-aware transport (from self)
+- **Port 19142** (TCP): SSL shard-aware transport (from self)
+
+**Egress Rules**:
+- **All traffic** to 0.0.0.0/0 (internet access for updates, SSM)
+- **All TCP** to self (inter-node communication)
+
+**Key Security Features**:
+- **Complete isolation**: No direct external access
+- **Self-referencing rules**: Only cluster nodes can communicate
+- **Monitoring access**: Only Grafana can scrape metrics (ports 9180, 9100)
+- **SSM access**: AWS Systems Manager works regardless of security group rules
+
+#### EKS Cluster Security Group (`cluster_security_group`)
+
+**Purpose**: Controls access to DDC application pods running in EKS
+
+**Ingress Rules**:
+- **All traffic** from self (inter-node communication)
+- **TCP 80-8091** from `existing_security_groups` (user access)
+- **TCP 80-8091** from `additional_eks_security_groups` (DevOps access)
+- **TCP 80-8091** from NLB security group (load balancer access)
+
+**Egress Rules**:
+- **All traffic** to 0.0.0.0/0 (internet access for pods)
+
+#### EKS Node Group Security Groups
+
+**NVME Node Group (`nvme_security_group`)**:
+- **Purpose**: High-performance storage nodes for DDC caching
+- **Ingress**: None (managed by EKS)
+- **Egress**: All traffic to 0.0.0.0/0
+
+**Worker Node Group (`worker_security_group`)**:
+- **Purpose**: General workload nodes for DDC services
+- **Ingress**: None (managed by EKS)
+- **Egress**: All traffic to 0.0.0.0/0
+
+**System Node Group (`system_security_group`)**:
+- **Purpose**: Kubernetes system components
+- **Ingress**: None (managed by EKS)
+- **Egress**: All traffic to 0.0.0.0/0
+
+### Administrative Access
+
+**AWS Systems Manager Session Manager**:
+- **All EC2 instances** support SSM Session Manager
+- **No security group rules required** (uses AWS internal network)
+- **Access method**: `aws ssm start-session --target i-xxxxx`
+- **Supported instances**: ScyllaDB nodes, EKS nodes, monitoring instance
+
+**Benefits of SSM**:
+- No SSH keys or bastion hosts required
+- Audit trail of all sessions
+- Works regardless of security group restrictions
+- Integrated with AWS IAM for access control
+
+### Security Best Practices Implemented
+
+1. **Principle of Least Privilege**: Each security group only allows necessary traffic
+2. **Defense in Depth**: Multiple layers of security (network, application, IAM)
+3. **Zero Trust Network**: No implicit trust between components
+4. **Monitoring Integration**: Dedicated rules for metrics collection
+5. **Administrative Access**: Secure shell access via SSM without SSH exposure
+
+## Infrastructure Change Behavior
+
+### ⚠️ CRITICAL: ScyllaDB IP Changes Trigger DDC Redeployment
+
+**When ScyllaDB instances are recreated** (due to instance failure, Terraform changes, etc.):
+
+1. **ScyllaDB gets new private IPs** → `scylla_ips` output changes
+2. **ddc-services module detects change** → Helm template re-renders with new IPs
+3. **DDC pods automatically restart** → Pick up new ScyllaDB connection string
+4. **Brief service interruption** → ~30-60 seconds during pod restart
+
+**This is intentional behavior** - ensures DDC always connects to healthy ScyllaDB nodes.
+
+### Impact Assessment
+
+**✅ Automatic Recovery:**
+- DDC automatically discovers new ScyllaDB IPs
+- No manual intervention required
+- Service resumes once pods restart
+
+**⚠️ Temporary Disruption:**
+- Brief downtime during Helm redeployment
+- Active DDC operations may be interrupted
+- Client reconnection required
+
+**🔧 Mitigation Strategies:**
+- Plan ScyllaDB maintenance during low-usage periods
+- Use multiple ScyllaDB nodes for redundancy
+- Monitor DDC service health during infrastructure changes
+
+### Change Detection Flow
+
+```
+ScyllaDB Instance Recreated
+         ↓
+New Private IP Assigned
+         ↓
+Terraform Detects Output Change
+         ↓
+ddc-services Module Triggered
+         ↓
+Helm Values Updated
+         ↓
+DDC Pods Restart
+         ↓
+Service Restored
+```
+
+### Bring-Your-Own Load Balancer Support
+
+**⚠️ CRITICAL**: This submodule supports bring-your-own NLB integration via `nlb_target_group_arn` parameter, which requires specific Unix socket configuration overrides.
+
+#### Default Pattern: Auto NLB Creation
+```yaml
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+```
+- **NGINX**: Enabled (`nginx.enabled=true`, `nginx.useDomainSockets=true`)
+- **Communication**: NLB → NGINX Proxy → Unix Socket → DDC Application
+- **Health Check**: `/health` (NGINX translates to DDC's `/health/live`)
+- **Containers**: 2 per pod (DDC + NGINX sidecar)
+
+#### Bring-Your-Own NLB Pattern
+```yaml
+service:
+  type: ClusterIP
+```
+- **NGINX**: Disabled (`nginx.enabled=false`)
+- **Communication**: NLB → TargetGroupBinding → DDC Application (port 80)
+- **Health Check**: `/health/live` (direct to DDC application)
+- **Containers**: 1 per pod (DDC only)
+
+#### Critical Configuration Override
+
+When using bring-your-own NLB, the parent module automatically applies **4 required configuration overrides** to disable Unix sockets:
+
+```hcl
+# Automatically configured when nlb_target_group_arn is provided
+nginx.enabled = false
+nginx.useDomainSockets = false
+ASPNETCORE_URLS = "http://0.0.0.0:80"
+Kestrel__Endpoints__Http__Url = "http://0.0.0.0:80"  # Critical override
+```
+
+**Why all 4 are required**: DDC has multiple configuration layers, and only `Kestrel__Endpoints__Http__Url` has sufficient precedence to override persistent file-based Unix socket configuration.
+
+**Without this fix**: Pod crashes with `Invalid url: 'unix:///nginx/jupiter-http.sock'`
 
 ## Troubleshooting
 
 ### Common Issues
 
-**ScyllaDB Cluster Formation Issues:**
+**ScyllaDB Cluster Formation:**
 - **Symptom**: Nodes not joining cluster
-- **Cause**: Security group rules blocking cluster communication
-- **Solution**: Verify ports 7000, 7001, 9042 are open between ScyllaDB security groups
+- **Solution**: Verify security group ports 7000, 7001, 9042 between ScyllaDB instances
 
-**EKS Node Group Launch Failures:**
-- **Symptom**: Node groups stuck in CREATE_FAILED state
-- **Cause**: Insufficient subnet capacity or incorrect instance types
-- **Solution**: Check subnet available IPs and verify instance type availability in AZ
+**EKS Node Group Failures:**
+- **Symptom**: CREATE_FAILED state
+- **Solution**: Check subnet IP capacity and instance type availability in AZ
 
-**Monitoring Stack Access Issues:**
-- **Symptom**: Cannot access Grafana dashboard
-- **Cause**: Security group or certificate configuration
-- **Solution**: Verify ALB security group allows inbound HTTPS and certificate is valid
+**Monitoring Access Issues:**
+- **Symptom**: Cannot access Grafana
+- **Solution**: Verify ALB security group allows HTTPS and certificate is valid
 
 ### Validation Commands
 
-**Check ScyllaDB Cluster Status:**
+**ScyllaDB Cluster Status:**
 ```bash
-# SSH to ScyllaDB instance via Session Manager
-aws ssm start-session --target i-1234567890abcdef0
-
-# Check cluster status
+# Access via Session Manager (no SSH required)
+aws ssm start-session --target i-xxxxx
 nodetool status
-
-# Verify datacenter configuration
-cqlsh -e "SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"
 ```
 
-**Verify EKS Cluster Health:**
+**EKS Cluster Health:**
 ```bash
-# Update kubeconfig
-aws eks update-kubeconfig --region us-east-1 --name unreal-cloud-ddc-cluster
-
-# Check node status
+# Configure kubectl access
+aws eks update-kubeconfig --region <region> --name <cluster-name>
 kubectl get nodes
-
-# Verify system pods
-kubectl get pods -n kube-system
 ```
 
-**Monitor Resource Usage:**
+**Monitoring Stack:**
 ```bash
-# Check EKS cluster logs
-aws logs describe-log-groups --log-group-name-prefix "/aws/eks/unreal-cloud-ddc"
-
-# Monitor ScyllaDB metrics
-curl http://scylla-ip:9180/metrics
+# Check ScyllaDB metrics
+curl http://<scylla-ip>:9180/metrics
 ```
 
 <!-- BEGIN_TF_DOCS -->
@@ -506,243 +664,3 @@ No modules.
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
-
----
-
-# ScyllaDB in Unreal Cloud DDC
-
-This document explains how ScyllaDB works within the Unreal Cloud DDC module, including keyspace management, multi-region replication, and operational procedures.
-
-## Overview
-
-ScyllaDB serves as the metadata database for Unreal Cloud DDC, storing information about cached objects while the actual data resides in S3. The DDC application automatically creates and manages keyspaces, while our Terraform module provides the infrastructure and tools for multi-region configuration.
-
-## Keyspace Architecture
-
-### Automatic Keyspace Creation
-
-The DDC application creates keyspaces automatically when it starts:
-
-- **`jupiter`**: Main/shared keyspace for global metadata
-- **`jupiter_local_ddc_<region>`**: Region-specific keyspace for local caching
-
-### Naming Conventions
-
-Region names are transformed for ScyllaDB compatibility:
-- AWS Region: `us-east-1` → Keyspace: `jupiter_local_ddc_us_east_1` (hyphens become underscores)
-- AWS Region: `us-west-2` → Keyspace: `jupiter_local_ddc_us_west_2`
-
-### Datacenter Names
-
-ScyllaDB datacenter names are derived from AWS regions:
-- `us-east-1` → `us_east` (remove numeric suffix)
-- `us-west-2` → `us_west`
-- `eu-central-1` → `eu_central`
-
-## Replication Strategies
-
-### Single Region Deployment
-
-```sql
-jupiter_local_ddc_us_west_2: {
-  'class': 'NetworkTopologyStrategy', 
-  'us_west': 2
-}
-```
-
-- **Replication Factor**: 2 copies within the single datacenter
-- **Automatic**: Created by DDC application on startup
-
-### Multi-Region Deployment
-
-#### Initial State (after both regions deploy)
-```sql
--- Primary region keyspace
-jupiter_local_ddc_us_west_2: {
-  'class': 'NetworkTopologyStrategy', 
-  'us_west': 2
-}
-
--- Secondary region keyspace  
-jupiter_local_ddc_us_east_1: {
-  'class': 'NetworkTopologyStrategy', 
-  'us_east': 2
-}
-```
-
-#### After SSM Configuration
-```sql
--- Primary region keyspace (configured for cross-region)
-jupiter_local_ddc_us_west_2: {
-  'class': 'NetworkTopologyStrategy', 
-  'us_west': 2, 
-  'us_east': 0
-}
-
--- Secondary region keyspace (configured for cross-region)
-jupiter_local_ddc_us_east_1: {
-  'class': 'NetworkTopologyStrategy', 
-  'us_east': 2, 
-  'us_west': 0
-}
-```
-
-## Connection Architecture
-
-### ScyllaDB IP Distribution
-
-All DDC instances connect to **ALL** ScyllaDB nodes across **ALL** regions:
-
-```yaml
-ConnectionString: Contact Points=10.0.1.100,10.0.1.101,10.0.2.100,10.0.2.101;
-```
-
-**Example Multi-Region Setup:**
-- Region 1 ScyllaDB IPs: `10.0.1.100, 10.0.1.101`
-- Region 2 ScyllaDB IPs: `10.0.2.100, 10.0.2.101`
-- Both DDC deployments connect to all 4 IPs
-
-### Network Requirements
-
-- **VPC Peering**: Required between regions for ScyllaDB communication
-- **Security Groups**: Must allow cross-region traffic on ScyllaDB ports
-- **DNS Resolution**: Cross-region DNS resolution enabled via VPC peering
-
-## Operational Procedures
-
-### Single → Multi-Region Migration
-
-1. **Deploy Secondary Region**
-   ```bash
-   terraform apply  # Deploys infrastructure + DDC services
-   ```
-
-2. **Execute Keyspace Configuration**
-   ```bash
-   # SSM document automatically created by module
-   aws ssm send-command \
-     --document-name "update_keyspaces_document" \
-     --instance-ids "i-1234567890abcdef0"
-   ```
-
-3. **Verify Replication**
-   ```bash
-   cqlsh -e "DESCRIBE KEYSPACES;"
-   cqlsh -e "SELECT * FROM system.peers;"
-   ```
-
-### Multi-Region → Single Region Migration
-
-1. **Create Downgrade SSM Document** (manual process)
-   ```sql
-   ALTER KEYSPACE jupiter_local_ddc_us_west_2 WITH replication = {
-     'class': 'NetworkTopologyStrategy', 
-     'us_west': 2
-   };
-   -- Remove us_east datacenter entirely
-   ```
-
-2. **Execute Downgrade**
-   ```bash
-   aws ssm send-command --document-name "downgrade_keyspaces_document"
-   ```
-
-3. **Destroy Secondary Region**
-   ```bash
-   terraform destroy  # In secondary region
-   ```
-
-### Immediate Multi-Region Deployment
-
-When starting with multi-region from the beginning:
-
-1. **Deploy Both Regions Simultaneously**
-2. **Execute SSM Configuration** (same as migration process)
-3. **No additional steps required**
-
-## Replication Factor Guidelines
-
-### Recommended Settings
-
-- **Single Region**: RF=2 (minimum for fault tolerance)
-- **Multi-Region Primary**: RF=2 per datacenter
-- **Multi-Region Secondary**: RF=2 per datacenter
-
-### ScyllaDB Limitations
-
-- **Incremental Changes**: Can only change RF by 1 at a time
-- **Datacenter Limitation**: Only one datacenter's RF can be changed per operation
-- **Step-by-Step Process**: 0→1→2 progression required
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Keyspace Not Found**
-   - DDC application hasn't started yet
-   - Check DDC pod logs for startup errors
-
-2. **Cross-Region Connectivity**
-   - Verify VPC peering connection
-   - Check security group rules
-   - Test network connectivity between regions
-
-3. **Replication Lag**
-   - Monitor ScyllaDB metrics
-   - Check network latency between regions
-   - Verify ScyllaDB cluster health
-
-### Monitoring Commands
-
-```bash
-# Check keyspace replication
-cqlsh -e "SELECT keyspace_name, replication FROM system_schema.keyspaces;"
-
-# View cluster topology
-cqlsh -e "SELECT * FROM system.peers;"
-
-# Check node status
-nodetool status
-
-# Monitor replication lag
-nodetool netstats
-```
-
-## Data Lifecycle
-
-### What Happens to Data
-
-- **DDC Shutdown**: Keyspaces and data remain in ScyllaDB
-- **Region Removal**: Data persists until manually deleted
-- **Keyspace Deletion**: Must be done manually if desired
-
-### Data Cleanup
-
-```sql
--- Manual keyspace deletion (if needed)
-DROP KEYSPACE jupiter_local_ddc_us_east_1;
-```
-
-## Module Responsibilities
-
-### What Our Terraform Module Does
-
-✅ **Provides ScyllaDB infrastructure** (EC2 instances, security groups, networking)  
-✅ **Creates SSM documents** for keyspace configuration  
-✅ **Manages EKS cluster** for DDC application  
-✅ **Configures networking** (VPC peering, security groups)  
-
-### What Our Module Does NOT Do
-
-❌ **Create keyspaces** (DDC application handles this)  
-❌ **Automatically execute SSM documents** (manual trigger required)  
-❌ **Delete keyspaces** (manual cleanup if desired)  
-❌ **Manage ScyllaDB schema** beyond replication configuration  
-
-## Further Reading
-
-- [ScyllaDB Documentation](https://docs.scylladb.com/)
-- [ScyllaDB Replication Strategies](https://docs.scylladb.com/stable/architecture/ringarchitecture/replication-strategy.html)
-- [ScyllaDB Multi-Datacenter](https://docs.scylladb.com/stable/operating-scylla/procedures/cluster-management/create-cluster-multidc.html)
-- [ScyllaDB CQL Reference](https://docs.scylladb.com/stable/cql/)
-- [Unreal Cloud DDC Documentation](https://github.com/EpicGames/UnrealCloudDDC)

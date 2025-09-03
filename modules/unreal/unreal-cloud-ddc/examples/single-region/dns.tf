@@ -1,5 +1,5 @@
 ##########################################
-# Fetch Route53 Public Hosted Zone for FQDN
+# Fetch Shared NLB DNS Name and Zone ID
 ##########################################
 data "aws_route53_zone" "root" {
   name         = var.route53_public_hosted_zone_name
@@ -15,45 +15,29 @@ resource "aws_route53_record" "ddc_service" {
   name    = local.ddc_fully_qualified_domain_name
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc.ddc_infra.nlb_dns_name
-    zone_id                = module.unreal_cloud_ddc.ddc_infra.nlb_zone_id
-    evaluate_target_health = true
-  }
-}
-
-# Route monitoring traffic to the monitoring ALB
-resource "aws_route53_record" "ddc_monitoring" {
-  zone_id = data.aws_route53_zone.root.id
-  name    = local.monitoring_fully_qualified_domain_name
-  type    = "A"
-  alias {
-    name                   = module.unreal_cloud_ddc.ddc_monitoring.monitoring_alb_dns_name
-    zone_id                = module.unreal_cloud_ddc.ddc_monitoring.monitoring_alb_zone_id
+    name                   = module.unreal_cloud_ddc.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc.nlb_zone_id
     evaluate_target_health = true
   }
 }
 
 ##########################################
-# DDC Certificate Management
+# SSL Certificate for HTTPS
 ##########################################
 resource "aws_acm_certificate" "ddc" {
-  region      = local.region
-  domain_name = "*.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
-
+  domain_name = local.ddc_fully_qualified_domain_name
   validation_method = "DNS"
 
-  #checkov:skip=CKV2_AWS_71: Wildcard is necessary for this domain
-
-  tags = {
-    environment = local.environment
-  }
+  tags = merge(local.tags, {
+    Name = "${local.project_prefix}-ddc-certificate"
+  })
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_route53_record" "ddc_cert" {
+resource "aws_route53_record" "ddc_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.ddc.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -71,13 +55,13 @@ resource "aws_route53_record" "ddc_cert" {
 }
 
 resource "aws_acm_certificate_validation" "ddc" {
-  region                  = local.region
   certificate_arn         = aws_acm_certificate.ddc.arn
-  validation_record_fqdns = [for record in aws_route53_record.ddc_cert : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.ddc_cert_validation : record.fqdn]
 
   lifecycle {
     create_before_destroy = true
   }
+
   timeouts {
     create = "15m"
   }

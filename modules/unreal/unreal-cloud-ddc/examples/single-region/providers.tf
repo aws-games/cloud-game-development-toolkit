@@ -7,7 +7,7 @@
 provider "kubernetes" {
   host                   = module.unreal_cloud_ddc.ddc_infra != null ? module.unreal_cloud_ddc.ddc_infra.cluster_endpoint : null
   cluster_ca_certificate = module.unreal_cloud_ddc.ddc_infra != null ? base64decode(module.unreal_cloud_ddc.ddc_infra.cluster_certificate_authority_data) : null
-  
+
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
@@ -15,12 +15,12 @@ provider "kubernetes" {
   }
 }
 
-# Helm provider configuration for EKS cluster
+# Helm provider configuration for EKS cluster (v3+ syntax)
 provider "helm" {
   kubernetes {
     host                   = module.unreal_cloud_ddc.ddc_infra != null ? module.unreal_cloud_ddc.ddc_infra.cluster_endpoint : null
     cluster_ca_certificate = module.unreal_cloud_ddc.ddc_infra != null ? base64decode(module.unreal_cloud_ddc.ddc_infra.cluster_certificate_authority_data) : null
-    
+
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
