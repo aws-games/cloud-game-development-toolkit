@@ -27,8 +27,6 @@ Before using this Terraform configuration, ensure you have:
 
 ### Step 1: Configure Users
 
-User configuration is managed in the `locals.tf` file. Find the "ADD NEW USERS HERE" section and modify as needed.
-
 **Default Users:**
 - **TroyWood**: Senior Developer (g4dn.2xlarge)
 - **MerleSmith**: Senior Designer (g4dn.4xlarge)
@@ -39,6 +37,25 @@ User configuration is managed in the `locals.tf` file. Find the "ADD NEW USERS H
 - **g4dn.2xlarge**: ~$400-500 (Development, analysts)
 - **g4dn.4xlarge**: ~$800-1000 (Design, DevOps, high performance)
 - **g4dn.8xlarge**: ~$1500-2000 (Data science, ML workloads)
+
+#### Adding New Users
+
+To add new users, find the "Admin user management" section in `locals.tf` and copy the template:
+
+```hcl
+NewUser = {
+  given_name    = "First"
+  family_name   = "Last"
+  email         = "first.last@company.com"
+  role          = "Job Title"
+  public_ip     = "10.20.30.40" 
+  instance_type = "g4dn.2xlarge"  # See cost guide above
+  volumes = {
+    Root = { capacity = 256, type = "gp3", iops = 5000 }
+    Data = { capacity = 512, type = "gp3" }
+  }
+}
+```
 
 ### Step 2: Run Terraform
 
@@ -76,9 +93,8 @@ This example creates a complete VDI environment using the VDI module with the fo
 - **Managed Microsoft AD** [AWS Directory Service](https://aws.amazon.com/directoryservice/)
   - Standard edition with DS Data API enabled
   - Automatic user creation and management
-  - Group membership configuration (Domain Users, Remote Desktop Users)
 - **Domain Join** via [AWS Systems Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managedinstances.html)
-- **DCV Authentication** configured for AD users
+- **DCV Authentication** configured for AD domain users
 
 #### VDI Instances
 - **GPU-Enabled Workstations** using [NVIDIA GRID drivers](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver)
@@ -99,24 +115,6 @@ This example creates a complete VDI environment using the VDI module with the fo
 - **MerleSmith**: Senior Designer (g4dn.4xlarge)
 - **LouPierce**: Senior DevOps (g4dn.4xlarge)
 
-#### Adding New Users
-
-User configuration is managed in the `locals.tf` file. Find the "ADD NEW USERS HERE" section and copy the template:
-
-```hcl
-NewUser = {
-  given_name    = "First"
-  family_name   = "Last"
-  email         = "first.last@company.com"
-  role          = "Job Title"
-  instance_type = "g4dn.2xlarge"  # See cost guide above
-  volumes = {
-    Root = { capacity = 256, type = "gp3", iops = 5000 }
-    Data = { capacity = 512, type = "gp3" }
-  }
-}
-```
-
 #### What Happens Automatically
 Each new user gets:
 - **VDI Instance**: Created with specified instance type and storage
@@ -129,39 +127,24 @@ Each new user gets:
 
 ### Password Retrieval
 
-#### Via AWS CLI
+#### Via AWS Console for Local Admin (Recommended)
+1. Go to [EC2 Console](https://console.aws.amazon.com/ec2/)
+2. Select your VDI instance
+3. Actions → Security → Get Windows Password
+4. Upload the private key file (get from Secrets Manager)
+5. Click "Decrypt Password" to reveal the Administrator password
+
+#### AD User Passwords (For Domain-Joined Instances)
 ```bash
 # Get AD admin password
 aws secretsmanager get-secret-value \
-  --secret-id cgd-vdi-example-ad-admin-password-* \
-  --query SecretString --output text | jq -r '.password'
+  --secret-id cgd-vdi-example-admin-credentials-* \
+  --query SecretString --output text | jq -r '.ad_admin_password'
 
-# Get individual user password
+# Get individual AD user passwords
 aws secretsmanager get-secret-value \
-  --secret-id cgd-vdi-example-ad-user-USERNAME-password-* \
-  --query SecretString --output text | jq -r '.password'
-
-# Get private key for Windows password decryption
-aws secretsmanager get-secret-value \
-  --secret-id cgd-vdi-example-vdi-private-key-USERNAME-* \
-  --query SecretString --output text | jq -r '.private_key_pem'
-```
-
-#### Via AWS Console
-1. Go to [AWS Secrets Manager](https://console.aws.amazon.com/secretsmanager/)
-2. Find the secret named `cgd-vdi-example-ad-user-{username}-password-{suffix}`
-3. Click "Retrieve secret value"
-4. Look for the `password` field
-
-#### Programmatically (PowerShell)
-```powershell
-# From within the instance or with appropriate AWS credentials
-$username = "troywood"
-$region = "us-east-1"
-
-$secretName = (aws secretsmanager list-secrets --region $region --query "SecretList[?contains(Name, 'cgd-vdi-example-ad-user-$username-password')].Name" --output text)
-$secret = aws secretsmanager get-secret-value --region $region --secret-id $secretName --query SecretString --output text | ConvertFrom-Json
-$password = $secret.password
+  --secret-id cgd-vdi-example-user-credentials-* \
+  --query SecretString --output text | jq -r '.USERNAME_ad_password'
 ```
 
 ## Customization Options

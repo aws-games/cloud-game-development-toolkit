@@ -8,24 +8,7 @@ framework:
 output: cli
 quiet: true
 soft-fail-on:
-  # GitHub Actions
   - CKV_GHA_7
-  # AWS Security Group Issues
-  - CKV_AWS_382  # Security groups allowing unrestricted egress
-  # EC2 Instance Issues
-  - CKV_AWS_79   # IMDSv2 (actually configured in launch template)
-  - CKV_AWS_126  # Detailed monitoring for EC2
-  - CKV_AWS_135  # EBS optimization
-  - CKV_AWS_8    # EBS encryption
-  - CKV2_AWS_41  # IAM role attachment validation
-  # Secrets Manager Issues
-  - CKV_AWS_149  # KMS encryption for Secrets Manager
-  - CKV2_AWS_57  # Secret rotation
-  # VPC/Subnet Issues
-  - CKV_AWS_130  # Public IP assignment
-  - CKV2_AWS_11  # VPC flow logging
-  - CKV2_AWS_12  # Default SG restrictions
-  - CKV2_AWS_5   # Security group attachment validation
 skip-framework:
   - dockerfile
   - secrets

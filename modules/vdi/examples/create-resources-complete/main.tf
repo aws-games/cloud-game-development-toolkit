@@ -5,12 +5,12 @@
 module "vdi" {
   source = "../.."
 
+  # Add extracted user IPs
+  user_public_ips = local.user_public_ips
+  
   # General Configuration
   project_prefix = var.project_prefix
   environment    = var.environment
-
-  # Enable automatic public IP detection for security
-  auto_detect_public_ip = true
 
   # Networking - Use the VPC and subnets created in vpc.tf
   vpc_id  = aws_vpc.vdi_vpc.id

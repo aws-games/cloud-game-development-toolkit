@@ -1,10 +1,12 @@
 # Local variables for the VDI module
 locals {
   # Default AMI ID from data source
-  default_ami_id = length(data.aws_ami.windows_server_2025_vdi) > 0 ? data.aws_ami.windows_server_2025_vdi[0].id : null
+  default_ami_id = length(data.aws_ami.windows_server_2025) > 0 ? data.aws_ami.windows_server_2025[0].id : null
 
-  # User's public IP for security group access (if auto-detection is enabled)
-  user_public_ip_cidr = var.auto_detect_public_ip ? "${chomp(data.http.user_public_ip[0].response_body)}/32" : null
+  # per-user IP
+  user_public_ips_cidr = {
+    for user, ip in var.user_public_ips : user => "${ip}/32"
+  }
 
   # Storage configuration
   storage_settings = {

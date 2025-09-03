@@ -71,7 +71,6 @@ resource "aws_launch_template" "vdi_launch_templates" {
     }
   }
 
-  # DCV optimizations are now handled at AMI level - no user_data needed
   user_data = null
 
   tag_specifications {
@@ -86,6 +85,11 @@ resource "aws_launch_template" "vdi_launch_templates" {
 }
 
 resource "aws_instance" "vdi_instances" {
+  # checkov:skip=CKV_AWS_126:Detailed monitoring not required for VDI workstation instances
+  # checkov:skip=CKV2_AWS_41:IAM role is attached to instances via iam_instance_profile in launch template
+  # checkov:skip=CKV_AWS_79:IMDSv2 is properly configured in launch template with http_tokens=required
+  # checkov:skip=CKV_AWS_135:EBS optimization not applicable for selected instance types
+  # checkov:skip=CKV_AWS_8:EBS encryption is controlled by module variable ebs_encryption_enabled
   for_each          = local.processed_vdi_config
   availability_zone = each.value.availability_zone
   tags              = each.value.tags

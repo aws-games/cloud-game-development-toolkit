@@ -27,39 +27,16 @@ Before using this module, ensure you have:
 
 ## Getting Started
 
-### Step 1: Basic Configuration
+### Getting User Public IP Addresses
 
-Configure the module with your VPC and user requirements:
+Before deployment, collect each user's public IP address:
 
-```hcl
-module "vdi_workstations" {
-  source = "./modules/vdi"
+- **Current IP**: Visit `https://whatismyipaddress.com/` or run `curl ifconfig.me`
+- **Office Network**: Get the office public IP from your network administrator
+- **Home Users**: Each user should check their home public IP
+- **Static IPs**: Use static IPs if available from ISP
 
-  # Basic Configuration
-  project_prefix = "cgd"
-  environment    = "dev"
-  vpc_id         = "vpc-12345678"
-  subnets        = ["subnet-12345678", "subnet-87654321"]
-
-  # User Configuration
-  vdi_config = {
-    john = {
-      instance_type     = "g4dn.2xlarge"
-      availability_zone = "us-east-1a"
-      subnet_id        = "subnet-12345678"
-      volumes = {
-        Root = { capacity = 256, type = "gp3", iops = 5000 }
-        Code = { capacity = 512, type = "gp3" }
-      }
-      tags = {
-        given_name  = "John"
-        family_name = "Doe"
-        email       = "john.doe@company.com"
-      }
-    }
-  }
-}
-```
+**Note**: The security groups will allow access from both the specified public IP and the VPC CIDR block for maximum flexibility.
 
 ### Step 2: Deploy Infrastructure
 
@@ -98,7 +75,7 @@ The deployment process typically takes 10-15 minutes depending on the number of 
 
 #### Networking and Access
 - **Flexible Networking** using existing VPC and subnets
-- **Public IP Detection** automatically allows user's IP for secure access
+- **Manual Public IP Configuration** allows administrators to specify user public IPs for secure access
 - **Amazon DCV** for high-performance remote access [Amazon DCV](https://aws.amazon.com/hpc/dcv/)
 - **RDP Support** for standard Windows remote desktop access
 
@@ -126,6 +103,7 @@ module "vdi_workstations" {
       instance_type     = "g4dn.2xlarge"
       availability_zone = "us-east-1a"
       subnet_id        = "subnet-12345678"
+      public_ip        = "10.20.30.40"  # Replace with actual public IP
       volumes = {
         Root = { capacity = 256, type = "gp3", iops = 5000 }
         Code = { capacity = 512, type = "gp3" }
@@ -142,41 +120,60 @@ module "vdi_workstations" {
 module "vdi_workstations" {
   source = "./modules/vdi"
 
-  project_prefix = "cgd"
-  environment    = "dev"
-  vpc_id         = "vpc-12345678"
-  subnets        = ["subnet-12345678", "subnet-87654321"]
+  # Add extracted user IPs
+  user_public_ips = local.user_public_ips
 
-  # AD Configuration
-  enable_ad_integration = true
-  directory_id          = "d-1234567890"
-  directory_name        = "corp.example.com"
-  dns_ip_addresses      = ["10.0.1.100", "10.0.1.101"]
+  # General Configuration
+  project_prefix = var.project_prefix
+  environment    = var.environment
 
+  # Networking - Use the VPC and subnets created in vpc.tf
+  vpc_id  = aws_vpc.vdi_vpc.id
+  subnets = aws_subnet.vdi_public_subnet[*].id
+
+  # Dynamic VDI configuration - automatically generated from vdi_user_data in locals.tf
+  # Users, passwords, secrets, and AD accounts are all created automatically
   vdi_config = {
-    john = {
-      instance_type     = "g4dn.2xlarge"
-      availability_zone = "us-east-1a"
-      subnet_id        = "subnet-12345678"
-      volumes = {
-        Root = { capacity = 256, type = "gp3", iops = 5000 }
-        Code = { capacity = 512, type = "gp3" }
+    for username, user_data in local.vdi_user_data : username => merge(
+      local.vdi_user_defaults,
+      {
+        # User-specific overrides
+        instance_type = lookup(user_data, "instance_type", var.instance_type)
+        volumes       = user_data.volumes
+
+        # Dynamic tags from user data
+        tags = merge(local.common_tags, {
+          given_name  = user_data.given_name
+          family_name = user_data.family_name
+          email       = user_data.email
+          role        = user_data.role
+        })
       }
-      join_ad = true
-      tags = {
-        given_name  = "John"
-        family_name = "Doe"
-        email       = "john.doe@company.com"
-      }
-    }
+    )
+  }
+
+  # Active Directory Configuration (always enabled in this example)
+  enable_ad_integration = true
+  directory_id          = aws_directory_service_directory.managed_ad.id
+  directory_name        = local.directory_name
+  dns_ip_addresses      = aws_directory_service_directory.managed_ad.dns_ip_addresses
+  ad_admin_password     = local.ad_admin_password
+
+  # Enable automatic AD user management and DCV configuration
+  manage_ad_users = true
+
+  # Individual AD user passwords
+  individual_user_passwords = {
+    for user, password in random_password.ad_user_passwords : user => password.result
   }
 }
 ```
 
 ### Adding More Users
 
-To add additional users, simply add new blocks to the `vdi_config` map. Each user gets:
+To add additional users, simply add new blocks to the `vdi_user_data` map locals.tf.
 
+Each user gets:
 - **Individual EC2 instance** with custom specifications
 - **Dedicated launch template** with user-specific configuration
 - **Individual security groups** (or shared ones based on configuration)
@@ -186,31 +183,12 @@ To add additional users, simply add new blocks to the `vdi_config` map. Each use
 
 ### Password Retrieval
 
-#### Via AWS CLI
-```bash
-# Get encrypted password data and decrypt with private key
-aws ec2 get-password-data \
-  --instance-id i-1234567890abcdef0 \
-  --priv-launch-key /path/to/private-key.pem
-
-# Get private key from Terraform output
-terraform output -raw private_keys | jq -r '.["username"]'
-```
-
-#### Via AWS Console
+#### Via AWS Console for Local Admin (Recommended)
 1. Go to [EC2 Console](https://console.aws.amazon.com/ec2/)
 2. Select your VDI instance
 3. Actions → Security → Get Windows Password
-4. Upload the private key file to decrypt the password
-
-#### Programmatically (PowerShell)
-```powershell
-# Get instance password using AWS CLI from PowerShell
-$instanceId = "i-1234567890abcdef0"
-$privateKeyPath = "C:\path\to\private-key.pem"
-
-aws ec2 get-password-data --instance-id $instanceId --priv-launch-key $privateKeyPath
-```
+4. Upload the private key file (get from Terraform outputs)
+5. Click "Decrypt Password" to reveal the Administrator password
 
 ## Customization Options
 
@@ -218,9 +196,17 @@ aws ec2 get-password-data --instance-id $instanceId --priv-launch-key $privateKe
 
 The module can be customized by:
 - **Storage Configuration**: Adjust volume sizes, types, and IOPS per user
-- **Network Security**: Modify CIDR blocks and security group rules
+- **Network Security**: Specify user public IPs and modify CIDR blocks for security group rules
 - **AMI Selection**: Use auto-discovery or specify custom AMI IDs
 - **Encryption**: Enable EBS encryption with optional KMS keys
+
+### Security Group Configuration
+
+Each user gets security group rules allowing access from:
+1. **Their specified public IP** (from `user_public_ips` parameter)
+2. **VPC CIDR block** (for internal/VPN access)
+
+This provides flexibility for users to connect directly from their public IP or through VPN/internal networks.
 
 ## Troubleshooting
 
@@ -272,7 +258,6 @@ See the project's main LICENSE file for license information.
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.4.5 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
 
@@ -297,13 +282,23 @@ No modules.
 | [aws_ssm_association.configure_dcv_ad_auth](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/ssm_association) | resource |
 | [aws_ssm_association.domain_join](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/ssm_association) | resource |
 | [aws_ssm_document.configure_dcv_ad_auth](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/ssm_document) | resource |
+| [aws_vpc_security_group_egress_rule.vdi_all_outbound](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_ad_dynamic_rpc](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_ad_ports](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_dcv_https](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_dcv_https_additional](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_dcv_quic](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_dcv_quic_additional](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_https](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_https_additional](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_rdp](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vdi_rdp_additional](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [null_resource.create_ad_users](https://registry.terraform.io/providers/hashicorp/null/3.2.4/docs/resources/resource) | resource |
 | [tls_private_key.vdi_keys](https://registry.terraform.io/providers/hashicorp/tls/4.0.5/docs/resources/private_key) | resource |
 | [aws_ami.windows_server_2025](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/data-sources/ami) | data source |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/data-sources/availability_zones) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/data-sources/region) | data source |
 | [aws_vpc.selected](https://registry.terraform.io/providers/hashicorp/aws/6.5.0/docs/data-sources/vpc) | data source |
-| [http_http.user_public_ip](https://registry.terraform.io/providers/hashicorp/http/3.4.5/docs/data-sources/http) | data source |
 
 ## Inputs
 
@@ -312,7 +307,6 @@ No modules.
 | <a name="input_ad_admin_password"></a> [ad\_admin\_password](#input\_ad\_admin\_password) | Directory administrator password | `string` | `""` | no |
 | <a name="input_allowed_cidr_blocks"></a> [allowed\_cidr\_blocks](#input\_allowed\_cidr\_blocks) | Default CIDR blocks allowed for VDI access (can be overridden per user) | `list(string)` | <pre>[<br/>  "10.0.0.0/16"<br/>]</pre> | no |
 | <a name="input_ami_prefix"></a> [ami\_prefix](#input\_ami\_prefix) | AMI name prefix for auto-discovery when ami not specified per user | `string` | `"windows-server-2025"` | no |
-| <a name="input_auto_detect_public_ip"></a> [auto\_detect\_public\_ip](#input\_auto\_detect\_public\_ip) | Automatically detect and allow user's public IP for access | `bool` | `true` | no |
 | <a name="input_directory_id"></a> [directory\_id](#input\_directory\_id) | AWS Managed Microsoft AD directory ID (required if enable\_ad\_integration = true) | `string` | `null` | no |
 | <a name="input_directory_name"></a> [directory\_name](#input\_directory\_name) | Fully qualified domain name (FQDN) of the directory | `string` | `null` | no |
 | <a name="input_directory_ou"></a> [directory\_ou](#input\_directory\_ou) | Organizational unit (OU) in the directory for computer accounts | `string` | `null` | no |
@@ -326,6 +320,7 @@ No modules.
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Prefix for resource names | `string` | `"cgd"` | no |
 | <a name="input_subnets"></a> [subnets](#input\_subnets) | List of subnet IDs available for VDI instances (fallback if not specified per user) | `list(string)` | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Default tags applied to all resources | `map(string)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "VDI",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
+| <a name="input_user_public_ips"></a> [user\_public\_ips](#input\_user\_public\_ips) | Map of usernames to their public IP addresses for security group access | `map(string)` | `{}` | no |
 | <a name="input_vdi_config"></a> [vdi\_config](#input\_vdi\_config) | Configuration for each VDI user workstation | <pre>map(object({<br/>    # Required - Core compute and networking<br/>    instance_type     = string<br/>    availability_zone = string<br/>    subnet_id         = string<br/><br/>    # Required - Storage configuration<br/>    volumes = map(object({<br/>      capacity   = number<br/>      type       = string<br/>      iops       = optional(number, 3000)<br/>      throughput = optional(number, 125)<br/>    }))<br/><br/>    # Optional - Customization<br/>    ami                      = optional(string)<br/>    iam_instance_profile     = optional(string)<br/>    existing_security_groups = optional(list(string), [])<br/>    allowed_cidr_blocks      = optional(list(string), ["10.0.0.0/16"])<br/>    key_pair_name            = optional(string)<br/>    admin_password           = optional(string)<br/>    tags                     = optional(map(string), {})<br/><br/>    # Boolean Choices (3 total)<br/>    join_ad                        = optional(bool, false) # AD integration vs local users<br/>    create_default_security_groups = optional(bool, true)  # Convenience vs existing SGs<br/>    create_key_pair                = optional(bool, true)  # Convenience vs existing keys<br/>  }))</pre> | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID where VDI instances will be deployed | `string` | n/a | yes |
 

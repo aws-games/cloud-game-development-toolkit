@@ -18,6 +18,7 @@ locals {
       family_name   = "Wood"
       email         = "troy.wood@company.com"
       role          = "Senior Developer"
+      public_ip     = "96.8.253.176"  # Replace with Troy's home/office public IP 
       instance_type = var.instance_type # g4dn.2xlarge
       volumes = {
         Root   = { capacity = 256, type = "gp3", iops = 5000 }
@@ -31,7 +32,7 @@ locals {
       email         = "merle.smith@company.com"
       role          = "Senior Designer"
       instance_type = "g4dn.4xlarge" # More powerful for design
-      # associate_public_ip_address always true in VDI module
+      public_ip     = "96.8.253.176"  # Replace with Merle's home/office public IP
       volumes = {
         Root     = { capacity = 256, type = "gp3", iops = 5000 }
         Projects = { capacity = 512, type = "gp3" }
@@ -45,7 +46,7 @@ locals {
       email         = "lou.pierce@company.com"
       role          = "Senior DevOps"
       instance_type = "g4dn.4xlarge" # High performance for infrastructure
-      # associate_public_ip_address always true in VDI module
+      public_ip     = "96.8.253.176"  # Replace with Lou's home/office public IP 
       volumes = {
         Root     = { capacity = 256, type = "gp3", iops = 5000 }
         Projects = { capacity = 512, type = "gp3" }
@@ -65,6 +66,12 @@ locals {
     # associate_public_ip_address, create_default_security_groups, create_key_pair always true in VDI module
     allowed_cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
     join_ad             = true
+  }
+
+  # Extract user public IPs from user data
+  user_public_ips = {
+    for username, user_data in local.vdi_user_data : username => user_data.public_ip
+    if lookup(user_data, "public_ip", null) != null
   }
 
   # Validation: directory_name is always required in this example
@@ -140,6 +147,8 @@ resource "random_id" "deployment_id" {
 
 # SECRET 1: VDI User Credentials (All users in one JSON secret)
 resource "aws_secretsmanager_secret" "vdi_user_credentials" {
+  # checkov:skip=CKV_AWS_149:KMS CMK encryption not required for VDI user credentials in example environment
+  # checkov:skip=CKV2_AWS_57:Automatic rotation not suitable for VDI user passwords requiring manual management
   name                    = "${local.name_prefix}-user-credentials-${random_id.deployment_id.hex}"
   description             = "Consolidated VDI user credentials including AD passwords and private keys"
   recovery_window_in_days = 7
@@ -169,6 +178,8 @@ resource "aws_secretsmanager_secret_version" "vdi_user_credentials" {
 
 # SECRET 2: VDI Admin Credentials (AD admin + deployment metadata)
 resource "aws_secretsmanager_secret" "vdi_admin_credentials" {
+  # checkov:skip=CKV_AWS_149:KMS CMK encryption not required for VDI user credentials in example environment
+  # checkov:skip=CKV2_AWS_57:Automatic rotation not suitable for VDI user passwords requiring manual management
   name                    = "${local.name_prefix}-admin-credentials-${random_id.deployment_id.hex}"
   description             = "VDI deployment admin credentials and configuration"
   recovery_window_in_days = 7

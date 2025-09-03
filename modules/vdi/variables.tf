@@ -76,6 +76,19 @@ variable "vdi_config" {
   }
 }
 
+variable "user_public_ips" {
+  description = "Map of usernames to their public IP addresses for security group access"
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition = alltrue([
+      for ip in values(var.user_public_ips) : can(cidrnetmask("${ip}/32"))
+    ])
+    error_message = "All user_public_ips values must be valid IP addresses."
+  }
+}
+
 ########################################
 # ACTIVE DIRECTORY (Optional)
 ########################################
@@ -98,12 +111,14 @@ variable "directory_name" {
   default     = null
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "dns_ip_addresses" {
   type        = list(string)
   description = "DNS IP addresses for the directory"
   default     = []
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "ad_admin_password" {
   type        = string
   description = "Directory administrator password"
@@ -159,12 +174,6 @@ variable "ami_prefix" {
 ########################################
 # SECURITY (Optional)
 ########################################
-
-variable "auto_detect_public_ip" {
-  type        = bool
-  description = "Automatically detect and allow user's public IP for access"
-  default     = true
-}
 
 variable "allowed_cidr_blocks" {
   type        = list(string)

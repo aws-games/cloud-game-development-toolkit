@@ -14,10 +14,6 @@ resource "aws_directory_service_directory" "managed_ad" {
   }
 
   description = "Managed Microsoft AD for VDI workstation domain joining and user management"
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-managed-ad"
-  })
 }
 
 # Create DHCP Options Set for the VPC to use the Managed AD DNS
@@ -38,144 +34,162 @@ resource "aws_vpc_dhcp_options_association" "managed_ad_dhcp_association" {
 
 # Security Group for Managed Microsoft AD (Least Privilege)
 resource "aws_security_group" "managed_ad_sg" {
+  # checkov:skip=CKV2_AWS_5:Security groups are attached to EC2 instances through launch template
   name_prefix = "${local.name_prefix}-managed-ad-"
   vpc_id      = aws_vpc.vdi_vpc.id
   description = "Security group for Managed Microsoft AD with least privilege access"
+}
 
-  # DNS (TCP and UDP)
-  ingress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "DNS TCP"
-  }
+# DNS TCP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_dns_tcp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 53
+  to_port           = 53
+  ip_protocol       = "tcp"
+  description       = "DNS TCP"
+}
 
-  ingress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "DNS UDP"
-  }
+# DNS UDP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_dns_udp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 53
+  to_port           = 53
+  ip_protocol       = "udp"
+  description       = "DNS UDP"
+}
 
-  # Kerberos (TCP and UDP)
-  ingress {
-    from_port   = 88
-    to_port     = 88
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Kerberos TCP"
-  }
-
-  ingress {
-    from_port   = 88
-    to_port     = 88
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Kerberos UDP"
-  }
-
-  # RPC Endpoint Mapper
-  ingress {
-    from_port   = 135
-    to_port     = 135
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "RPC Endpoint Mapper"
-  }
-
-  # LDAP (TCP and UDP)
-  ingress {
-    from_port   = 389
-    to_port     = 389
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "LDAP TCP"
-  }
-
-  ingress {
-    from_port   = 389
-    to_port     = 389
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "LDAP UDP"
-  }
-
-  # SMB/CIFS
-  ingress {
-    from_port   = 445
-    to_port     = 445
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "SMB/CIFS"
-  }
-
-  # Kerberos Password Change (TCP and UDP)
-  ingress {
-    from_port   = 464
-    to_port     = 464
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Kerberos Password Change TCP"
-  }
-
-  ingress {
-    from_port   = 464
-    to_port     = 464
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Kerberos Password Change UDP"
-  }
-
-  # LDAPS (LDAP over SSL)
-  ingress {
-    from_port   = 636
-    to_port     = 636
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "LDAPS"
-  }
-
-  # Global Catalog (TCP and UDP)
-  ingress {
-    from_port   = 3268
-    to_port     = 3268
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Global Catalog TCP"
-  }
-
-  ingress {
-    from_port   = 3269
-    to_port     = 3269
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Global Catalog SSL"
-  }
-
-  # Dynamic RPC ports (required for AD replication and some operations)
-  # Note: This is still a wide range but necessary for AD functionality
-  ingress {
-    from_port   = 1024
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vdi_vpc.cidr_block]
-    description = "Dynamic RPC ports for AD operations"
-  }
-
-  # All outbound traffic (AD needs to communicate outbound)
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound traffic"
-  }
+# Kerberos TCP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_kerberos_tcp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 88
+  to_port           = 88
+  ip_protocol       = "tcp"
+  description       = "Kerberos TCP"
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-managed-ad-sg"
+    Name = "${local.name_prefix}-managed-ad-kerberos-tcp"
   })
+}
+
+# Kerberos UDP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_kerberos_udp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 88
+  to_port           = 88
+  ip_protocol       = "udp"
+  description       = "Kerberos UDP"
+}
+
+# RPC Endpoint Mapper ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_rpc_endpoint" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 135
+  to_port           = 135
+  ip_protocol       = "tcp"
+  description       = "RPC Endpoint Mapper"
+}
+
+# LDAP TCP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_ldap_tcp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 389
+  to_port           = 389
+  ip_protocol       = "tcp"
+  description       = "LDAP TCP"
+}
+
+# LDAP UDP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_ldap_udp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 389
+  to_port           = 389
+  ip_protocol       = "udp"
+  description       = "LDAP UDP"
+}
+
+# SMB/CIFS ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_smb" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 445
+  to_port           = 445
+  ip_protocol       = "tcp"
+  description       = "SMB/CIFS"
+}
+
+# Kerberos Password Change TCP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_kerberos_pwd_tcp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 464
+  to_port           = 464
+  ip_protocol       = "tcp"
+  description       = "Kerberos Password Change TCP"
+}
+
+# Kerberos Password Change UDP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_kerberos_pwd_udp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 464
+  to_port           = 464
+  ip_protocol       = "udp"
+  description       = "Kerberos Password Change UDP"
+}
+
+# LDAPS ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_ldaps" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 636
+  to_port           = 636
+  ip_protocol       = "tcp"
+  description       = "LDAPS"
+}
+
+# Global Catalog TCP ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_global_catalog_tcp" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 3268
+  to_port           = 3268
+  ip_protocol       = "tcp"
+  description       = "Global Catalog TCP"
+}
+
+# Global Catalog SSL ingress rule
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_global_catalog_ssl" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 3269
+  to_port           = 3269
+  ip_protocol       = "tcp"
+  description       = "Global Catalog SSL"
+}
+
+# Dynamic RPC ports ingress rule (required for AD replication and some operations)
+resource "aws_vpc_security_group_ingress_rule" "managed_ad_dynamic_rpc" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = aws_vpc.vdi_vpc.cidr_block
+  from_port         = 1024
+  to_port           = 65535
+  ip_protocol       = "tcp"
+  description       = "Dynamic RPC ports for AD operations"
+}
+
+# All outbound traffic egress rule (AD needs to communicate outbound)
+resource "aws_vpc_security_group_egress_rule" "managed_ad_all_outbound" {
+  security_group_id = aws_security_group.managed_ad_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+  description       = "All outbound traffic"
 }
 
 # Enable Directory Data Access for DS Data API using AWS CLI
