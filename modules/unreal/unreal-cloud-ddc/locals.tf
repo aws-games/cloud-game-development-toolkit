@@ -90,31 +90,43 @@ locals {
   
   # Region configuration
   region = coalesce(var.region, var.ddc_infra_config != null ? var.ddc_infra_config.region : "us-east-1")
-  cluster_name = var.ddc_infra_config != null ? module.ddc_infra[0].cluster_name : null
+  cluster_name = var.ddc_infra_config != null ? module.ddc_infra.cluster_name : null
   
-  # Simple ScyllaDB configuration for compatibility
-  scylla_config = {
+  # Database configuration (controlled by migration mode and target)
+  database_type = var.database_migration_mode && var.scylla_config != null && var.amazon_keyspaces_config != null ? var.database_migration_target : (
+    var.amazon_keyspaces_config != null && var.scylla_config == null ? "keyspaces" : "scylla"
+  )
+  
+  # ScyllaDB configuration (when scylla_config is provided)
+  scylla_config = var.scylla_config != null ? {
     current_datacenter = coalesce(
-      var.scylla_topology_config.current_region.datacenter_name,
+      var.scylla_config.current_region.datacenter_name,
       regex("^(.+)-[0-9]+$", local.region)[0]
     )
     keyspace_suffix = coalesce(
-      var.scylla_topology_config.current_region.keyspace_suffix,
+      var.scylla_config.current_region.keyspace_suffix,
       replace(local.region, "-", "_")
     )
     keyspace_name = "jupiter_local_ddc_${coalesce(
-      var.scylla_topology_config.current_region.keyspace_suffix,
+      var.scylla_config.current_region.keyspace_suffix,
       replace(local.region, "-", "_")
     )}"
-    current_rf = var.scylla_topology_config.current_region.replication_factor
-    current_nodes = var.scylla_topology_config.current_region.node_count
-    is_multi_region = length(var.scylla_topology_config.peer_regions) > 0
+    current_rf = var.scylla_config.current_region.replication_factor
+    current_nodes = var.scylla_config.current_region.node_count
+    is_multi_region = length(var.scylla_config.peer_regions) > 0
     replication_map = {
       (coalesce(
-        var.scylla_topology_config.current_region.datacenter_name,
+        var.scylla_config.current_region.datacenter_name,
         regex("^(.+)-[0-9]+$", local.region)[0]
-      )) = var.scylla_topology_config.current_region.replication_factor
+      )) = var.scylla_config.current_region.replication_factor
     }
     alter_commands = ["-- Simplified for now"]
-  }
+  } : null
+  
+  # Amazon Keyspaces configuration (when amazon_keyspaces_config is provided)
+  keyspaces_config = var.amazon_keyspaces_config != null ? {
+    keyspace_names = keys(var.amazon_keyspaces_config.keyspaces)
+    primary_keyspace = keys(var.amazon_keyspaces_config.keyspaces)[0]
+    is_global = length([for k, v in var.amazon_keyspaces_config.keyspaces : k if v.enable_cross_region_replication]) > 0
+  } : null
 }

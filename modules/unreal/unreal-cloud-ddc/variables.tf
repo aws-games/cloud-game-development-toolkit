@@ -180,7 +180,8 @@ variable "centralized_logging" {
       alltrue([
         for component in keys(var.centralized_logging.service) :
         contains(["scylla"], component)
-      ])
+      ]),
+
     ])
     error_message = <<-EOT
       Unsupported logging component specified. Only these components are supported:
@@ -218,7 +219,42 @@ variable "debug_mode" {
   }
 }
 
-variable "scylla_topology_config" {
+variable "database_migration_mode" {
+  type        = bool
+  description = <<-EOT
+    Enable database migration mode to temporarily allow both Scylla and Keyspaces configurations during migration.
+    
+    CRITICAL WARNINGS:
+    - Only enable during active database migration
+    - Creates both database infrastructures simultaneously (increased costs)
+    - Requires manual coordination of database_migration_target
+    - Must be disabled after migration completion
+    - Not intended for long-term use
+    
+    MIGRATION PROCESS:
+    1. Set database_migration_mode = true, database_migration_target = "scylla"
+    2. Apply (creates both databases, DDC stays on Scylla)
+    3. Optional: Migrate data manually
+    4. Set database_migration_target = "keyspaces"
+    5. Apply (switches DDC to Keyspaces)
+    6. Remove old database config
+    7. Set database_migration_mode = false
+  EOT
+  default     = false
+}
+
+variable "database_migration_target" {
+  type        = string
+  description = "Target database during migration when both are configured. 'scylla' or 'keyspaces'. Only used when database_migration_mode = true."
+  default     = "keyspaces"
+  
+  validation {
+    condition     = contains(["scylla", "keyspaces"], var.database_migration_target)
+    error_message = "database_migration_target must be 'scylla' or 'keyspaces'."
+  }
+}
+
+variable "scylla_config" {
   type = object({
     # Current region configuration
     current_region = object({
@@ -240,7 +276,7 @@ variable "scylla_topology_config" {
   })
 
   description = <<EOT
-    Advanced ScyllaDB topology configuration for single and multi-region deployments.
+    ScyllaDB configuration for single and multi-region deployments.
 
     # Current Region Configuration
     current_region.datacenter_name: ScyllaDB datacenter name (auto-generated: us-east-1 → us-east)
@@ -256,9 +292,15 @@ variable "scylla_topology_config" {
     keyspace_naming_strategy: How to name keyspaces
     - "region_suffix": jupiter_local_ddc_us_east_1 (matches cwwalb pattern)
     - "datacenter_suffix": jupiter_local_ddc_us_east
+    
+    # DDC Keyspace Naming Requirements:
+    ScyllaDB keyspaces are auto-generated following DDC conventions:
+    - Single region: "jupiter_local_ddc_{region_suffix}" (e.g., "jupiter_local_ddc_us_east_1")
+    - Multi-region: Uses replication map with datacenter-specific naming
+    - Names are automatically generated based on region and naming strategy
 
     # Example Single Region:
-    scylla_topology_config = {
+    scylla_config = {
       current_region = {
         replication_factor = 3
         node_count = 3
@@ -266,7 +308,7 @@ variable "scylla_topology_config" {
     }
 
     # Example Multi-Region:
-    scylla_topology_config = {
+    scylla_config = {
       current_region = {
         replication_factor = 3
         node_count = 3
@@ -279,27 +321,97 @@ variable "scylla_topology_config" {
     }
   EOT
 
-  default = {
-    current_region = {
-      replication_factor = 3
-      node_count = 3
-    }
-  }
+  default = null
 
   validation {
-    condition = var.scylla_topology_config.current_region.replication_factor <= var.scylla_topology_config.current_region.node_count
+    condition = var.scylla_config == null || var.scylla_config.current_region.replication_factor <= var.scylla_config.current_region.node_count
     error_message = "Replication factor cannot exceed node count in current region."
   }
 
   validation {
-    condition = contains(["region_suffix", "datacenter_suffix"], var.scylla_topology_config.keyspace_naming_strategy)
+    condition = var.scylla_config == null || contains(["region_suffix", "datacenter_suffix"], var.scylla_config.keyspace_naming_strategy)
     error_message = "keyspace_naming_strategy must be 'region_suffix' or 'datacenter_suffix'."
   }
+  
 }
 
-
-
-
+variable "amazon_keyspaces_config" {
+  type = object({
+    # Keyspaces configuration (map allows multiple keyspaces)
+    keyspaces = map(object({
+      enable_cross_region_replication = optional(bool, false)
+      peer_regions = optional(list(string), [])
+      point_in_time_recovery = optional(bool, false)
+    }))
+  })
+  
+  description = <<EOT
+    Amazon Keyspaces configuration supporting multiple keyspaces.
+    
+    # Keyspaces Configuration
+    keyspaces: Map where KEY = ACTUAL KEYSPACE NAME, value = configuration
+    - The map key becomes the literal keyspace name in Amazon Keyspaces
+    - enable_cross_region_replication: Create global keyspace with multi-region replication
+    - peer_regions: List of regions for global table replication
+    - point_in_time_recovery: Enable point-in-time recovery for tables
+    
+    # DDC Keyspace Naming Requirements:
+    For DDC compatibility, keyspace names should follow the pattern:
+    - Single region: "jupiter_local_ddc_{region_suffix}" (e.g., "jupiter_local_ddc_us_east_1")
+    - Multi-region: Same regional naming per region (e.g., "jupiter_local_ddc_us_east_1", "jupiter_local_ddc_us_west_2")
+    - Custom names are allowed but may require DDC configuration changes
+    
+    # Example Single Region with Multiple Keyspaces:
+    amazon_keyspaces_config = {
+      keyspaces = {
+        "jupiter_local_ddc_us_east_1" = {
+          point_in_time_recovery = false
+        }
+        "custom_keyspace" = {
+          point_in_time_recovery = true
+        }
+      }
+    }
+    
+    # Example Multi-Region:
+    amazon_keyspaces_config = {
+      keyspaces = {
+        "jupiter_local_ddc_us_east_1" = {
+          enable_cross_region_replication = true
+          peer_regions = ["us-west-2"]
+          point_in_time_recovery = true
+        }
+      }
+    }
+  EOT
+  
+  default = null
+  
+  # Allow at least one database backend
+  validation {
+    condition = var.scylla_config != null || var.amazon_keyspaces_config != null
+    error_message = "At least one database backend must be configured: scylla_config or amazon_keyspaces_config."
+  }
+  
+  # Prevent both backends unless in migration mode
+  validation {
+    condition = !(var.scylla_config != null && var.amazon_keyspaces_config != null) || var.database_migration_mode
+    error_message = "Both database backends configured but database_migration_mode = false. To migrate: 1) Set database_migration_mode = true, 2) Add new database config, 3) Apply, 4) Test connectivity, 5) Remove old database config, 6) Set database_migration_mode = false, 7) Apply."
+  }
+  
+  # Validate database sync during migration
+  validation {
+    condition = !(var.scylla_config != null && var.amazon_keyspaces_config != null && var.database_migration_mode) || (
+      # Multi-region settings must match for primary keyspace
+      var.scylla_config.enable_cross_region_replication == values(var.amazon_keyspaces_config.keyspaces)[0].enable_cross_region_replication &&
+      # Peer regions must match (convert Scylla map keys to list for comparison)
+      toset(keys(var.scylla_config.peer_regions)) == toset(values(var.amazon_keyspaces_config.keyspaces)[0].peer_regions) &&
+      # Single region must have empty peer regions
+      (!var.scylla_config.enable_cross_region_replication ? length(var.scylla_config.peer_regions) == 0 && length(values(var.amazon_keyspaces_config.keyspaces)[0].peer_regions) == 0 : true)
+    )
+    error_message = "Database configurations must match during migration: enable_cross_region_replication, peer_regions, and single-region settings must be identical between Scylla and Keyspaces configs."
+  }
+}
 
 ########################################
 # DDC Application Configuration

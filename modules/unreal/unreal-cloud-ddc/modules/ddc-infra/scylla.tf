@@ -3,14 +3,16 @@
 ################################################################################
 
 resource "aws_iam_instance_profile" "scylla_instance_profile" {
+  count = var.scylla_config != null ? 1 : 0
+  
   name = "${local.name_prefix}-scylladb-instance-profile-${var.region}"
-  role = aws_iam_role.scylla_role.name
+  role = aws_iam_role.scylla_role[0].name
 }
 ################################################################################
 # Scylla Instances
 ################################################################################
 resource "aws_instance" "scylla_ec2_instance_seed" {
-  count  = var.create_seed_node ? length([var.scylla_subnets[0]]) : 0
+  count  = var.scylla_config != null && var.create_seed_node ? length([var.scylla_subnets[0]]) : 0
   region = var.region
 
   ami                    = data.aws_ami.scylla_ami.id
@@ -24,7 +26,7 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
   user_data_replace_on_change = false
   ebs_optimized               = true
 
-  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile[0].name
   
   lifecycle {
     ignore_changes = [user_data]
@@ -51,7 +53,7 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
 }
 
 resource "aws_instance" "scylla_ec2_instance_other_nodes" {
-  count  = var.create_seed_node ? var.scylla_replication_factor - 1 : var.scylla_replication_factor
+  count  = var.scylla_config != null ? (var.create_seed_node ? var.scylla_replication_factor - 1 : var.scylla_replication_factor) : 0
   region = var.region
 
   ami                    = data.aws_ami.scylla_ami.id
@@ -65,7 +67,7 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
   user_data_replace_on_change = false
   ebs_optimized               = true
 
-  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile[0].name
   
   lifecycle {
     ignore_changes = [user_data]

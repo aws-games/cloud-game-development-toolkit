@@ -19,16 +19,17 @@ output "nlb_zone_id" {
 output "ddc_infra" {
   description = "DDC infrastructure outputs"
   value = var.ddc_infra_config != null ? {
-    region                = module.ddc_infra[0].region
-    cluster_name          = module.ddc_infra[0].cluster_name
-    cluster_endpoint      = module.ddc_infra[0].cluster_endpoint
-    cluster_arn           = module.ddc_infra[0].cluster_arn
-    cluster_certificate_authority_data = module.ddc_infra[0].cluster_certificate_authority_data
-    s3_bucket_id          = module.ddc_infra[0].s3_bucket_id
-    scylla_ips           = module.ddc_infra[0].scylla_ips
-    scylla_seed          = module.ddc_infra[0].scylla_seed
-    scylla_datacenter_name = module.ddc_infra[0].scylla_datacenter_name
-    scylla_keyspace_suffix = module.ddc_infra[0].scylla_keyspace_suffix
+    region                = module.ddc_infra.region
+    cluster_name          = module.ddc_infra.cluster_name
+    cluster_endpoint      = module.ddc_infra.cluster_endpoint
+    cluster_arn           = module.ddc_infra.cluster_arn
+    cluster_certificate_authority_data = module.ddc_infra.cluster_certificate_authority_data
+    s3_bucket_id          = module.ddc_infra.s3_bucket_id
+    scylla_ips           = module.ddc_infra.scylla_ips
+    scylla_instance_ids  = module.ddc_infra.scylla_instance_ids
+    scylla_seed          = module.ddc_infra.scylla_seed
+    scylla_datacenter_name = module.ddc_infra.scylla_datacenter_name
+    scylla_keyspace_suffix = module.ddc_infra.scylla_keyspace_suffix
     nlb_arn              = aws_lb.nlb.arn
     nlb_dns_name         = aws_lb.nlb.dns_name
     nlb_zone_id          = aws_lb.nlb.zone_id
@@ -43,10 +44,10 @@ output "ddc_infra" {
 output "ddc_services" {
   description = "DDC services outputs"
   value = var.ddc_services_config != null ? {
-    helm_release_name      = module.ddc_services[0].helm_release_name
-    helm_release_namespace = module.ddc_services[0].helm_release_namespace
-    helm_release_version   = module.ddc_services[0].helm_release_version
-    ecr_repository_url     = module.ddc_services[0].ecr_repository_url
+    helm_release_name      = module.ddc_services.helm_release_name
+    helm_release_namespace = module.ddc_services.helm_release_namespace
+    helm_release_version   = module.ddc_services.helm_release_version
+    ecr_repository_url     = module.ddc_services.ecr_repository_url
   } : null
 }
 
@@ -89,15 +90,15 @@ output "private_zone_name" {
 
 output "kubectl_command" {
   description = "kubectl command to connect to EKS cluster"
-  value = var.ddc_infra_config != null ? "aws eks update-kubeconfig --region ${module.ddc_infra[0].region} --name ${module.ddc_infra[0].cluster_name}" : null
+  value = var.ddc_infra_config != null ? "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}" : null
 }
 
 output "scylla_connection_info" {
   description = "ScyllaDB connection information"
   value = var.ddc_infra_config != null ? {
-    region = module.ddc_infra[0].region
-    ips    = module.ddc_infra[0].scylla_ips
-    seed   = module.ddc_infra[0].scylla_seed
+    region = module.ddc_infra.region
+    ips    = module.ddc_infra.scylla_ips
+    seed   = module.ddc_infra.scylla_seed
   } : null
 }
 
@@ -117,8 +118,8 @@ output "bearer_token_secret_arn" {
 output "ddc_connection" {
   description = "DDC connection information for this region"
   value = var.ddc_infra_config != null ? {
-    region = module.ddc_infra[0].region
-    bucket = module.ddc_infra[0].s3_bucket_id
+    region = module.ddc_infra.region
+    bucket = module.ddc_infra.s3_bucket_id
     internet_facing = var.internet_facing
 
     # Private endpoints (always available) - regional pattern
@@ -135,13 +136,14 @@ output "ddc_connection" {
 
     # Infrastructure details
     bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : var.ddc_application_config.bearer_token_secret_arn
-    kubectl_command = "aws eks update-kubeconfig --region ${module.ddc_infra[0].region} --name ${module.ddc_infra[0].cluster_name}"
-    cluster_name = module.ddc_infra[0].cluster_name
-    namespace = var.ddc_services_config != null ? module.ddc_services[0].namespace : null
-    scylla_ips = module.ddc_infra[0].scylla_ips
-    scylla_seed = module.ddc_infra[0].scylla_seed
-    scylla_datacenter_name = module.ddc_infra[0].scylla_datacenter_name
-    scylla_keyspace_suffix = module.ddc_infra[0].scylla_keyspace_suffix
+    kubectl_command = "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}"
+    cluster_name = module.ddc_infra.cluster_name
+    namespace = var.ddc_services_config != null ? module.ddc_services.namespace : null
+    scylla_ips = module.ddc_infra.scylla_ips
+    scylla_instance_ids = module.ddc_infra.scylla_instance_ids
+    scylla_seed = module.ddc_infra.scylla_seed
+    scylla_datacenter_name = module.ddc_infra.scylla_datacenter_name
+    scylla_keyspace_suffix = module.ddc_infra.scylla_keyspace_suffix
 
     # DNS zone information
     private_zone_id = aws_route53_zone.private.zone_id
@@ -226,7 +228,7 @@ output "version_info" {
 
 output "scylla_configuration" {
   description = "ScyllaDB configuration details for debugging and validation"
-  value = {
+  value = var.scylla_config != null ? {
     datacenter_name = local.scylla_config.current_datacenter
     keyspace_name   = local.scylla_config.keyspace_name
     keyspace_suffix = local.scylla_config.keyspace_suffix
@@ -234,14 +236,14 @@ output "scylla_configuration" {
     node_count = local.scylla_config.current_nodes
     is_multi_region = local.scylla_config.is_multi_region
     replication_map = local.scylla_config.replication_map
-    naming_strategy = var.scylla_topology_config.keyspace_naming_strategy
-  }
+    naming_strategy = var.scylla_config.keyspace_naming_strategy
+  } : null
 }
 
 output "ssm_automation" {
   description = "SSM automation configuration for keyspace fixes"
   value = {
-    document_arn = var.ddc_infra_config != null ? aws_ssm_document.scylla_keyspace_replication_fix[0].arn : null
+    document_arn = var.ddc_infra_config != null ? module.ddc_infra.ssm_document_name : null
     retry_config = var.ssm_retry_config
     total_timeout_seconds = var.ssm_retry_config.initial_delay_seconds + (var.ssm_retry_config.max_attempts * var.ssm_retry_config.retry_interval_seconds)
   }

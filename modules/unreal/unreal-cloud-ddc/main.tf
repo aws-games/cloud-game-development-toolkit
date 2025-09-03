@@ -6,12 +6,15 @@
 
 
 ########################################
-# DDC Infrastructure (Conditional)
+# DDC Infrastructure (Always Created)
 ########################################
 module "ddc_infra" {
   source = "./modules/ddc-infra"
-  count  = var.ddc_infra_config != null ? 1 : 0
 
+  # Database Configuration (Mutual Exclusivity)
+  scylla_config = var.scylla_config
+  amazon_keyspaces_config = var.amazon_keyspaces_config
+  
   # Pass through infrastructure config
   name                     = var.ddc_infra_config.name
   project_prefix           = var.ddc_infra_config.project_prefix
@@ -21,7 +24,7 @@ module "ddc_infra" {
   vpc_id                   = var.existing_vpc_id
   existing_security_groups = var.existing_security_groups
 
-  # ScyllaDB Configuration
+  # ScyllaDB Configuration (when scylla_config provided)
   create_seed_node         = var.ddc_infra_config.create_seed_node
   existing_scylla_seed     = var.ddc_infra_config.existing_scylla_seed
   scylla_source_region     = var.ddc_infra_config.scylla_source_region
@@ -79,17 +82,17 @@ module "ddc_infra" {
   log_base_prefix = local.log_base_prefix
   scylla_logging_enabled = local.scylla_logging_enabled
 
+
   tags = var.tags
 }
 
 
 
 ########################################
-# DDC Services (Conditional)
+# DDC Services (Always Created)
 ########################################
 module "ddc_services" {
   source = "./modules/ddc-services"
-  count  = var.ddc_services_config != null ? 1 : 0
 
   providers = {
     kubernetes = kubernetes
@@ -99,28 +102,33 @@ module "ddc_services" {
   # Pass through services config
   name           = var.ddc_services_config.name
   project_prefix = var.ddc_services_config.project_prefix
-  region         = var.ddc_infra_config != null ? module.ddc_infra[0].region : var.ddc_services_config.region
+  region         = var.ddc_infra_config != null ? module.ddc_infra.region : var.ddc_services_config.region
 
   # Use outputs from ddc_infra and parent module NLB
-  cluster_endpoint     = var.ddc_infra_config != null ? module.ddc_infra[0].cluster_endpoint : null
-  cluster_name         = var.ddc_infra_config != null ? module.ddc_infra[0].cluster_name : null
+  cluster_endpoint     = module.ddc_infra.cluster_endpoint
+  cluster_name         = module.ddc_infra.cluster_name
   nlb_arn              = null  # Not used in services module
   nlb_target_group_arn = local.target_group_arn  # Connect to parent NLB target group
   nlb_dns_name         = null  # Not used in services module
-  namespace            = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_namespace : null
-  service_account      = var.ddc_infra_config != null ? var.ddc_infra_config.unreal_cloud_ddc_service_account_name : null
-  service_account_arn  = var.ddc_infra_config != null ? module.ddc_infra[0].service_account_arn : null
-  s3_bucket_id         = var.ddc_infra_config != null ? module.ddc_infra[0].s3_bucket_id : null
-  scylla_ips           = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips : []
-  scylla_dns_name      = var.ddc_infra_config != null ? "scylla.${local.private_zone_name}" : null
-  scylla_datacenter_name = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_datacenter_name : null
-  scylla_keyspace_suffix = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_keyspace_suffix : null
+  namespace            = var.ddc_infra_config.unreal_cloud_ddc_namespace
+  service_account      = var.ddc_infra_config.unreal_cloud_ddc_service_account_name
+  service_account_arn  = module.ddc_infra.service_account_arn
+  s3_bucket_id         = module.ddc_infra.s3_bucket_id
+  
+  # Database connection abstraction (from ddc_infra)
+  database_connection = module.ddc_infra.database_connection
+  
+  # Legacy Scylla parameters (for backward compatibility during transition)
+  scylla_ips           = module.ddc_infra.scylla_ips
+  scylla_dns_name      = local.database_type == "scylla" ? "scylla.${local.private_zone_name}" : null
+  scylla_datacenter_name = module.ddc_infra.scylla_datacenter_name
+  scylla_keyspace_suffix = module.ddc_infra.scylla_keyspace_suffix
 
   # EKS Addons Configuration (from ddc-infra)
-  oidc_provider_arn                   = var.ddc_infra_config != null ? module.ddc_infra[0].oidc_provider_arn : null
-  ebs_csi_role_arn                    = var.ddc_infra_config != null ? module.ddc_infra[0].ebs_csi_role_arn : null
-  enable_certificate_manager          = var.ddc_infra_config != null ? var.ddc_infra_config.enable_certificate_manager : false
-  certificate_manager_hosted_zone_arn = var.ddc_infra_config != null ? var.ddc_infra_config.certificate_manager_hosted_zone_arn : []
+  oidc_provider_arn                   = module.ddc_infra.oidc_provider_arn
+  ebs_csi_role_arn                    = module.ddc_infra.ebs_csi_role_arn
+  enable_certificate_manager          = var.ddc_infra_config.enable_certificate_manager
+  certificate_manager_hosted_zone_arn = var.ddc_infra_config.certificate_manager_hosted_zone_arn
 
   # Service Configuration
   unreal_cloud_ddc_version   = var.ddc_services_config.unreal_cloud_ddc_version
@@ -138,9 +146,9 @@ module "ddc_services" {
   # ScyllaDB Configuration
   replication_factor = var.ddc_infra_config != null ? var.ddc_infra_config.scylla_replication_factor : 3
 
-  # Multi-region SSM coordination
-  ssm_document_name       = var.ddc_infra_config != null ? module.ddc_infra[0].ssm_document_name : null
-  scylla_seed_instance_id = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_seed_instance_id : null
+  # Multi-region SSM coordination (Scylla only)
+  ssm_document_name       = local.database_type == "scylla" ? module.ddc_infra.ssm_document_name : null
+  scylla_seed_instance_id = local.database_type == "scylla" ? module.ddc_infra.scylla_seed_instance_id : null
 
   # Cleanup configuration
   helm_cleanup_timeout = var.auto_cleanup_timeout

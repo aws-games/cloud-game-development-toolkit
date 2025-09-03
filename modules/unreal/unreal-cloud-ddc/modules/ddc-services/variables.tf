@@ -113,32 +113,52 @@ variable "s3_bucket_id" {
   default     = null
 }
 
+########################################
+# Database Connection Abstraction (Primary)
+########################################
+
+variable "database_connection" {
+  type = object({
+    type = string           # "scylla" or "keyspaces"
+    host = string           # Connection endpoint
+    port = number           # Connection port
+    auth_type = string      # "credentials" or "iam"
+    keyspace_name = string  # Keyspace/database name
+    multi_region = bool     # Whether multi-region is enabled
+  })
+  description = "Database connection information from ddc-infra module"
+}
+
+########################################
+# Legacy Database Variables (Backward Compatibility)
+########################################
+
 variable "scylla_ips" {
-  description = "ScyllaDB node IPs (fallback for compatibility)"
+  description = "ScyllaDB node IPs (legacy - use database_connection instead)"
   type        = list(string)
   default     = []
 }
 
 variable "scylla_dns_name" {
-  description = "ScyllaDB cluster DNS name for internal connectivity"
+  description = "ScyllaDB cluster DNS name (legacy - use database_connection instead)"
   type        = string
   default     = null
 }
 
 variable "scylla_datacenter_name" {
-  description = "ScyllaDB datacenter name (region with -1 suffix removed)"
+  description = "ScyllaDB datacenter name (legacy - use database_connection instead)"
   type        = string
   default     = null
 }
 
 variable "scylla_keyspace_suffix" {
-  description = "ScyllaDB keyspace suffix (region with dashes replaced by underscores)"
+  description = "ScyllaDB keyspace suffix (legacy - use database_connection instead)"
   type        = string
   default     = null
 }
 
 variable "replication_factor" {
-  description = "ScyllaDB replication factor"
+  description = "ScyllaDB replication factor (legacy - use database_connection instead)"
   type        = number
   default     = 3
 }

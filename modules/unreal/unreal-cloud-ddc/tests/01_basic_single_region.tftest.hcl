@@ -1,4 +1,3 @@
-# Fetch relevant values from SSM Parameter Store
 # run "setup" {
 #   command = plan
 #   module {
@@ -11,7 +10,9 @@ run "unit_test" {
 
   # variables {
   #   route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
+  #   ghcr_credentials_secret_manager_arn = run.setup.ghcr_credentials_secret_manager_arn
   # }
+
   module {
     source = "./examples/single-region-basic"
   }

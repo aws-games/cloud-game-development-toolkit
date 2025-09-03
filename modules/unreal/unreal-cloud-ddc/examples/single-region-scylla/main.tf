@@ -6,15 +6,13 @@ module "unreal_cloud_ddc" {
     helm       = helm
   }
 
-  # Database Choice: Amazon Keyspaces (managed, serverless)
-  amazon_keyspaces_config = {
-    keyspaces = {
-      "jupiter_local_ddc_us_east_1" = {
-        enable_cross_region_replication = false
-        peer_regions = []
-        point_in_time_recovery = false
-      }
+  # Database Choice: ScyllaDB (self-managed)
+  scylla_config = {
+    current_region = {
+      replication_factor = 3
+      node_count = 3
     }
+    enable_cross_region_replication = false  # Single region
   }
 
   # - Shared -
@@ -33,7 +31,8 @@ module "unreal_cloud_ddc" {
     region = local.primary_region
     eks_node_group_subnets = aws_subnet.private_subnets[*].id
     eks_api_access_cidrs   = ["${chomp(data.http.my_ip.response_body)}/32"]
-    # Note: scylla_subnets not needed for Keyspaces
+    scylla_subnets = aws_subnet.private_subnets[*].id
+    scylla_replication_factor = 3
   }
 
   # - DDC Services Configuration -

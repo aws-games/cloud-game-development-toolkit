@@ -342,25 +342,66 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
     value = "http://0.0.0.0:80"
   }
   
-  # ScyllaDB configuration with dynamic keyspace naming
+  # Database configuration (unified for Scylla and Keyspaces)
   set {
     name  = "env[2].name"
-    value = "Scylla__LocalDatacenterName"
+    value = var.database_connection.type == "scylla" ? "Scylla__LocalDatacenterName" : "Keyspaces__Region"
   }
   
   set {
     name  = "env[2].value"
-    value = var.scylla_datacenter_name
+    value = var.database_connection.type == "scylla" ? var.scylla_datacenter_name : var.region
   }
   
   set {
     name  = "env[3].name"
-    value = "Scylla__LocalKeyspaceSuffix"
+    value = var.database_connection.type == "scylla" ? "Scylla__LocalKeyspaceSuffix" : "Keyspaces__KeyspaceName"
   }
   
   set {
     name  = "env[3].value"
-    value = var.scylla_keyspace_suffix
+    value = var.database_connection.type == "scylla" ? var.scylla_keyspace_suffix : var.database_connection.keyspace_name
+  }
+  
+  # Database connection configuration
+  set {
+    name  = "env[4].name"
+    value = "Database__Type"
+  }
+  
+  set {
+    name  = "env[4].value"
+    value = var.database_connection.type
+  }
+  
+  set {
+    name  = "env[5].name"
+    value = "Database__Host"
+  }
+  
+  set {
+    name  = "env[5].value"
+    value = var.database_connection.host
+  }
+  
+  set {
+    name  = "env[6].name"
+    value = "Database__Port"
+  }
+  
+  set {
+    name  = "env[6].value"
+    value = tostring(var.database_connection.port)
+  }
+  
+  set {
+    name  = "env[7].name"
+    value = "Database__AuthType"
+  }
+  
+  set {
+    name  = "env[7].value"
+    value = var.database_connection.auth_type
   }
 
   depends_on = [
@@ -500,9 +541,9 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
 # SSM Execution for Multi-Region Keyspace Configuration
 ################################################################################
 
-# Execute SSM document to configure keyspaces (only in secondary region)
+# Execute SSM document to configure keyspaces (only for Scylla in secondary region)
 resource "null_resource" "trigger_ssm_keyspace_update" {
-  count = var.ssm_document_name != null && var.ddc_replication_region_url != null ? 1 : 0
+  count = var.database_connection.type == "scylla" && var.ssm_document_name != null && var.ddc_replication_region_url != null ? 1 : 0
 
   triggers = {
     # Trigger only once per deployment (not on every Helm upgrade)

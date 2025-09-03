@@ -33,31 +33,77 @@ output "cluster_certificate_authority_data" {
   description = "Public key for the EKS Cluster"
 }
 
+################################################################################
+# Database Connection Abstraction (Primary Output)
+################################################################################
+
+output "database_connection" {
+  value = local.database_connection
+  description = "Database connection information for DDC services"
+}
+
+################################################################################
+# Scylla-Specific Outputs (Conditional)
+################################################################################
+
 output "peer_security_group_id" {
-  value       = aws_security_group.scylla_security_group.id
-  description = "ID of the Peer Security Group"
+  value       = var.scylla_config != null ? aws_security_group.scylla_security_group.id : null
+  description = "ID of the Peer Security Group (Scylla only)"
 }
 
 output "scylla_seed_instance_id" {
-  value       = var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].id : null
+  value       = var.scylla_config != null && var.create_seed_node && length(aws_instance.scylla_ec2_instance_seed) > 0 ? aws_instance.scylla_ec2_instance_seed[0].id : null
   description = "Instance ID of scylla seed node"
+}
 
+output "scylla_instance_ids" {
+  value = var.scylla_config != null ? (
+    var.create_seed_node && length(aws_instance.scylla_ec2_instance_seed) > 0 ? 
+      concat([aws_instance.scylla_ec2_instance_seed[0].id], aws_instance.scylla_ec2_instance_other_nodes[*].id) : 
+      aws_instance.scylla_ec2_instance_other_nodes[*].id
+  ) : []
+  description = "All ScyllaDB instance IDs for SSM access"
 }
 
 output "scylla_seed" {
-  value       = var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : null
+  value       = var.scylla_config != null && var.create_seed_node && length(aws_instance.scylla_ec2_instance_seed) > 0 ? aws_instance.scylla_ec2_instance_seed[0].private_ip : null
   description = "IP of the Scylla Seed"
 }
 
 output "scylla_ips" {
-  value       = var.create_seed_node ? (concat([aws_instance.scylla_ec2_instance_seed[0].private_ip], flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip))) : flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)
+  value = var.scylla_config != null ? (
+    var.create_seed_node && length(aws_instance.scylla_ec2_instance_seed) > 0 ? 
+      concat([aws_instance.scylla_ec2_instance_seed[0].private_ip], flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)) : 
+      flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)
+  ) : []
   description = "IPs of the Scylla EC2 instances"
 }
 
 output "scylla_security_group" {
-  value       = aws_security_group.scylla_security_group.id
+  value       = var.scylla_config != null ? aws_security_group.scylla_security_group.id : null
   description = "ScyllaDB security group id"
+}
 
+################################################################################
+# Keyspaces-Specific Outputs (Conditional)
+################################################################################
+
+output "keyspace_names" {
+  value = var.amazon_keyspaces_config != null ? keys(awscc_cassandra_keyspace.keyspaces) : []
+  description = "Amazon Keyspaces keyspace names"
+}
+
+output "keyspaces_tables" {
+  value = var.amazon_keyspaces_config != null ? {
+    for keyspace_name in keys(var.amazon_keyspaces_config.keyspaces) :
+    keyspace_name => {
+      cache_entries = try(aws_keyspaces_table.cache_entries_global[keyspace_name].table_name, aws_keyspaces_table.cache_entries[keyspace_name].table_name)
+      s3_objects = aws_keyspaces_table.s3_objects[keyspace_name].table_name
+      namespace_config = aws_keyspaces_table.namespace_config[keyspace_name].table_name
+      cleanup_tracking = aws_keyspaces_table.cleanup_tracking[keyspace_name].table_name
+    }
+  } : {}
+  description = "Amazon Keyspaces table names by keyspace"
 }
 
 output "nvme_node_group_label" {
@@ -101,8 +147,8 @@ output "region" {
 ################################################################################
 
 output "ssm_document_name" {
-  value       = !var.create_seed_node ? aws_ssm_document.scylla_keyspace_update[0].name : null
-  description = "Name of the SSM document for keyspace configuration"
+  value       = var.scylla_config != null && !var.create_seed_node && length(aws_ssm_document.scylla_keyspace_update) > 0 ? aws_ssm_document.scylla_keyspace_update[0].name : null
+  description = "Name of the SSM document for keyspace configuration (Scylla only)"
 }
 
 ################################################################################

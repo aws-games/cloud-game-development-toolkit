@@ -68,7 +68,7 @@ locals {
       "scylla_yaml" : {
         "cluster_name" : local.scylla_variables.scylla-cluster-name,
         "seed_provider" : [{
-        "parameters" : [{ "seeds" : var.create_seed_node ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
+        "parameters" : [{ "seeds" : var.create_seed_node && length(aws_instance.scylla_ec2_instance_seed) > 0 ? aws_instance.scylla_ec2_instance_seed[0].private_ip : var.existing_scylla_seed }] }]
       }
       # Required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       # If scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring
@@ -118,15 +118,38 @@ sudo mount /dev/nvme1n1 /data
 --//--\
 EOF
 
-  scylla_node_ips = concat(
+  scylla_node_ips = var.scylla_config != null ? concat(
     [for instance in aws_instance.scylla_ec2_instance_seed : instance.private_ip],
     [for instance in aws_instance.scylla_ec2_instance_other_nodes : instance.private_ip],
     var.existing_scylla_ips
-  )
+  ) : []
 
+  # Database type detection
+  database_type = var.scylla_config != null ? "scylla" : "keyspaces"
+  
   # ScyllaDB datacenter naming - use replace() for proper region naming
   scylla_datacenter_name = replace(var.region, "-1", "")
   scylla_keyspace_suffix = replace(var.region, "-", "_")
+  
+  # Keyspace naming matches DDC expectations exactly
+  keyspace_name = var.amazon_keyspaces_config != null ? keys(var.amazon_keyspaces_config.keyspaces)[0] : "jupiter_local_ddc_${replace(var.region, "-", "_")}"
+  
+  # Database connection abstraction for ddc-services
+  database_connection = var.scylla_config != null ? {
+    type = "scylla"
+    host = "scylla.${var.region}.compute.internal"  # Will be updated with actual private DNS
+    port = 9042
+    auth_type = "credentials"
+    keyspace_name = local.keyspace_name
+    multi_region = false
+  } : {
+    type = "keyspaces"
+    host = "cassandra.${var.region}.amazonaws.com"
+    port = 9142
+    auth_type = "iam"
+    keyspace_name = local.keyspace_name
+    multi_region = var.amazon_keyspaces_config != null ? length([for k, v in var.amazon_keyspaces_config.keyspaces : k if v.enable_cross_region_replication]) > 0 : false
+  }
 
   scylla_monitoring_user_data = <<MONITORING_EOF
 MIME-Version: 1.0

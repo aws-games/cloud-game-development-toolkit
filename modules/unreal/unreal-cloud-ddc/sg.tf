@@ -221,7 +221,7 @@ resource "aws_vpc_security_group_egress_rule" "nlb_to_cluster" {
 # EKS cluster accepts traffic from NLB
 resource "aws_vpc_security_group_ingress_rule" "eks_cluster_from_nlb" {
   count                        = var.ddc_infra_config != null ? 1 : 0
-  security_group_id            = module.ddc_infra[0].cluster_security_group_id
+  security_group_id            = module.ddc_infra.cluster_security_group_id
   description                  = "Allow traffic from DDC NLB to EKS cluster"
   ip_protocol                  = "tcp"
   from_port                    = 80

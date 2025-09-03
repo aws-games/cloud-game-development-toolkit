@@ -135,6 +135,8 @@ resource "aws_iam_role_policy_attachments_exclusive" "eks_cluster_policy_attache
 # Scylla Role
 ################################################################################
 resource "aws_iam_role" "scylla_role" {
+  count = var.scylla_config != null ? 1 : 0
+  
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -157,7 +159,9 @@ resource "aws_iam_role" "scylla_role" {
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "scylla_policy_attachement" {
-  role_name = aws_iam_role.scylla_role.name
+  count = var.scylla_config != null ? 1 : 0
+  
+  role_name = aws_iam_role.scylla_role[0].name
   policy_arns = [
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -264,6 +268,30 @@ data "aws_iam_policy_document" "unreal_cloud_ddc_policy" {
       "${aws_s3_bucket.unreal_ddc_s3_bucket.arn}/*"
     ]
   }
+  
+  # Amazon Keyspaces permissions (conditional on keyspaces config)
+  dynamic "statement" {
+    for_each = var.amazon_keyspaces_config != null ? [1] : []
+    content {
+      sid    = "KeyspacesAllow"
+      effect = "Allow"
+      actions = [
+        "cassandra:Select",
+        "cassandra:Insert",
+        "cassandra:Update",
+        "cassandra:Delete",
+        "cassandra:Modify",
+        "cassandra:Create",
+        "cassandra:Alter",
+        "cassandra:Drop"
+      ]
+      resources = [
+        "arn:aws:cassandra:${var.region}:*:keyspace/${local.keyspace_name}",
+        "arn:aws:cassandra:${var.region}:*:keyspace/${local.keyspace_name}/*"
+      ]
+    }
+  }
+  
   # Secrets Manager for Service account
   dynamic "statement" {
     for_each = compact([var.oidc_credentials_secret_manager_arn])

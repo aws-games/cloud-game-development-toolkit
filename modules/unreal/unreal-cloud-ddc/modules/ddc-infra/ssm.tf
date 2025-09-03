@@ -5,7 +5,7 @@
 # SSM Document for Multi-Region Keyspace Configuration
 # Created by SECONDARY region when connecting to existing primary
 resource "aws_ssm_document" "scylla_keyspace_update" {
-  count           = !var.create_seed_node ? 1 : 0
+  count           = var.scylla_config != null && !var.create_seed_node ? 1 : 0
   name            = "${local.name_prefix}-scylla-keyspace-update"
   document_format = "YAML"
   document_type   = "Command"

@@ -47,17 +47,17 @@ resource "aws_route53_record" "scylla_cluster" {
   name    = "scylla.${local.private_zone_name}"
   type    = "A"
   ttl     = 300
-  records = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips : []
+  records = var.ddc_infra_config != null ? module.ddc_infra.scylla_ips : []
 }
 
 # Individual ScyllaDB node records for debugging
 resource "aws_route53_record" "scylla_nodes" {
-  count   = var.ddc_infra_config != null ? length(module.ddc_infra[0].scylla_ips) : 0
+  count   = var.ddc_infra_config != null ? length(module.ddc_infra.scylla_ips) : 0
   zone_id = aws_route53_zone.private.zone_id
   name    = "scylla-${count.index + 1}.${local.private_zone_name}"
   type    = "A"
   ttl     = 300
-  records = [var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips[count.index] : ""]
+  records = [var.ddc_infra_config != null ? module.ddc_infra.scylla_ips[count.index] : ""]
 }
 
 ##########################################

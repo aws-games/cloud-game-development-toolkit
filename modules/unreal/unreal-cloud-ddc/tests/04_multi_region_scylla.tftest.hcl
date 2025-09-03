@@ -14,6 +14,6 @@ run "unit_test" {
   # }
 
   module {
-    source = "./examples/multi-region-basic"
+    source = "./examples/multi-region-scylla"
   }
 }

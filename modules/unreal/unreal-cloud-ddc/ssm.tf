@@ -5,7 +5,7 @@
 # SSM document to fix DDC keyspace replication strategy
 # Follows cwwalb approach with dynamic configuration
 resource "aws_ssm_document" "scylla_keyspace_replication_fix" {
-  count = var.ddc_infra_config != null ? 1 : 0
+  count = var.scylla_config != null ? 1 : 0
   
   name          = "${local.name_prefix}-scylla-keyspace-fix"
   document_type = "Command"
@@ -100,15 +100,15 @@ DOC
   })
 }
 
-# SSM association to run the keyspace fix on ScyllaDB seed node
+# SSM association to run the keyspace fix on ScyllaDB seed node (Scylla only)
 resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
-  count = var.ddc_infra_config != null && try(var.ddc_infra_config.create_seed_node, true) == true ? 1 : 0
+  count = var.scylla_config != null && try(var.ddc_infra_config.create_seed_node, true) == true ? 1 : 0
   
   name = aws_ssm_document.scylla_keyspace_replication_fix[0].name
   
   targets {
     key    = "InstanceIds"
-    values = [module.ddc_infra[0].scylla_seed_instance_id]
+    values = [module.ddc_infra.scylla_seed_instance_id]
   }
   
   # Run after DDC services are deployed
@@ -143,10 +143,10 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
 # Outputs for debugging
 ########################################
 
-# Output the generated ALTER commands for debugging
+# Output the generated ALTER commands for debugging (Scylla only)
 output "scylla_alter_commands" {
   description = "Generated ALTER commands for ScyllaDB keyspace replication"
-  value = var.ddc_infra_config != null ? {
+  value = var.scylla_config != null ? {
     keyspace_name = local.scylla_config.keyspace_name
     datacenter_name = local.scylla_config.current_datacenter
     replication_map = local.scylla_config.replication_map

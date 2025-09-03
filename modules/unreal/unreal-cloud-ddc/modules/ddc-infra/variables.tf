@@ -417,3 +417,15 @@ variable "scylla_logging_enabled" {
   description = "Whether ScyllaDB logging is enabled from parent module"
   type        = bool
 }
+
+
+
+variable "scylla_config" {
+  description = "ScyllaDB configuration from parent module (null if using Keyspaces)"
+  default     = null
+}
+
+variable "amazon_keyspaces_config" {
+  description = "Amazon Keyspaces configuration from parent module (null if using Scylla)"
+  default     = null
+}
