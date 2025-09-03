@@ -13,12 +13,12 @@ locals {
   # ADMIN SECTION: VDI User Management
   # For user management/ creation and instance configuration guide, see README.md
   vdi_user_data = {
-    TroyWood = {
-      given_name    = "Troy"
-      family_name   = "Wood"
-      email         = "troy.wood@company.com"
+    ExampleUser = {
+      given_name    = "Example"
+      family_name   = "User"
+      email         = "example.user@company.com"
       role          = "Senior Developer"
-      public_ip     = "96.8.253.176"  # Replace with Troy's home/office public IP 
+      public_ip     = "10.20.30.40"  # Replace with user public IP ##Required for connectivity through security groups##
       instance_type = var.instance_type # g4dn.2xlarge
       volumes = {
         Root   = { capacity = 256, type = "gp3", iops = 5000 }
@@ -26,35 +26,10 @@ locals {
       }
     }
 
-    MerleSmith = {
-      given_name    = "Merle"
-      family_name   = "Smith"
-      email         = "merle.smith@company.com"
-      role          = "Senior Designer"
-      instance_type = "g4dn.4xlarge" # More powerful for design
-      public_ip     = "96.8.253.176"  # Replace with Merle's home/office public IP
-      volumes = {
-        Root     = { capacity = 256, type = "gp3", iops = 5000 }
-        Projects = { capacity = 512, type = "gp3" }
-        Assets   = { capacity = 1024, type = "gp3" } # Large storage for assets
-      }
-    }
+    ### ExampleUser#2 ###
 
-    LouPierce = {
-      given_name    = "Lou"
-      family_name   = "Pierce"
-      email         = "lou.pierce@company.com"
-      role          = "Senior DevOps"
-      instance_type = "g4dn.4xlarge" # High performance for infrastructure
-      public_ip     = "96.8.253.176"  # Replace with Lou's home/office public IP 
-      volumes = {
-        Root     = { capacity = 256, type = "gp3", iops = 5000 }
-        Projects = { capacity = 512, type = "gp3" }
-        Assets   = { capacity = 1024, type = "gp3" }
-      }
-    }
-  }
-
+    ### ExampleUaer#3 ###
+  }  
   # Extract user list dynamically from user data
   vdi_users = toset(keys(local.vdi_user_data))
 
@@ -203,11 +178,11 @@ resource "aws_secretsmanager_secret_version" "vdi_admin_credentials" {
 
 locals {
   # Managed Microsoft AD domain name (REQUIRED)
-  directory_name = "corp.joshral.people.aws.dev"
+  directory_name = "corp.example.company.com"
 
   # Use generated passwords
   ad_admin_password = var.directory_admin_password != null ? var.directory_admin_password : random_password.ad_admin_password.result
 
   # # Optional: Domain name for DNS record
-  # domain_name = "joshral.people.aws.dev"
+  # domain_name = "example.company.com"
 }

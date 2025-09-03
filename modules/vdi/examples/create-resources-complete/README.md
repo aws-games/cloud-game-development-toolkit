@@ -27,17 +27,25 @@ Before using this Terraform configuration, ensure you have:
 
 ### Step 1: Configure Users
 
+<<<<<<< HEAD
 **Default Users:**
 - **TroyWood**: Senior Developer (g4dn.2xlarge)
 - **MerleSmith**: Senior Designer (g4dn.4xlarge)
 - **LouPierce**: Senior DevOps (g4dn.4xlarge)
 
+=======
+>>>>>>> d0592e4 (Removed personal info such as public IPs and personal aws domain. Generalized the user data section in locals.tf)
 **Instance Types and Monthly Costs:**
 - **g4dn.xlarge**: ~$200-300 (Basic tasks, managers)
 - **g4dn.2xlarge**: ~$400-500 (Development, analysts)
 - **g4dn.4xlarge**: ~$800-1000 (Design, DevOps, high performance)
 - **g4dn.8xlarge**: ~$1500-2000 (Data science, ML workloads)
 
+<<<<<<< HEAD
+=======
+**Verify you have provided public IP in the locals.tf file for each user. Security group rules are created off this IP and will determine connectivity**
+
+>>>>>>> d0592e4 (Removed personal info such as public IPs and personal aws domain. Generalized the user data section in locals.tf)
 #### Adding New Users
 
 To add new users, find the "Admin user management" section in `locals.tf` and copy the template:
@@ -110,11 +118,14 @@ This example creates a complete VDI environment using the VDI module with the fo
 
 ### User Management
 
+<<<<<<< HEAD
 #### Current Users
 - **TroyWood**: Senior Developer (g4dn.2xlarge)
 - **MerleSmith**: Senior Designer (g4dn.4xlarge)
 - **LouPierce**: Senior DevOps (g4dn.4xlarge)
 
+=======
+>>>>>>> d0592e4 (Removed personal info such as public IPs and personal aws domain. Generalized the user data section in locals.tf)
 #### What Happens Automatically
 Each new user gets:
 - **VDI Instance**: Created with specified instance type and storage
@@ -247,7 +258,7 @@ See the project's main LICENSE file for license information.
 | <a name="input_directory_admin_password"></a> [directory\_admin\_password](#input\_directory\_admin\_password) | Optional: Manually specify AD administrator password. If not provided, a secure random password will be generated automatically. | `string` | `null` | no |
 | <a name="input_directory_admin_password_secret_name"></a> [directory\_admin\_password\_secret\_name](#input\_directory\_admin\_password\_secret\_name) | Name of the AWS Secrets Manager secret that will store the auto-generated AD administrator password | `string` | `null` | no |
 | <a name="input_directory_edition"></a> [directory\_edition](#input\_directory\_edition) | The edition of the Managed Microsoft AD directory (Standard or Enterprise) | `string` | `"Standard"` | no |
-| <a name="input_directory_name"></a> [directory\_name](#input\_directory\_name) | Name of AWS Directory Service AD domain. Used as the domain name for Managed Microsoft AD. | `string` | `"corp.joshral.people.aws.dev"` | no |
+| <a name="input_directory_name"></a> [directory\_name](#input\_directory\_name) | Name of AWS Directory Service AD domain. Used as the domain name for Managed Microsoft AD. | `string` | `"corp.example.company.com"` | no |
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | Optional: Domain name for DNS record (e.g., example.com). If provided, creates vdi.example.com record. | `string` | `null` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | The EC2 instance type for the VDI instance | `string` | `"g4dn.2xlarge"` | no |

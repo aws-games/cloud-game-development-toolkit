@@ -90,7 +90,7 @@ variable "directory_admin_password" {
 variable "directory_name" {
   type        = string
   description = "Name of AWS Directory Service AD domain. Used as the domain name for Managed Microsoft AD."
-  default     = "corp.joshral.people.aws.dev"
+  default     = "corp.example.company.com"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$", var.directory_name))
