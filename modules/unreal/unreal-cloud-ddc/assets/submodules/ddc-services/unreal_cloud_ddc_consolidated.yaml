@@ -5,9 +5,9 @@ config:
   S3: &s3-connection-info
     BucketName: ${bucket_name}  # Terraform variable: module.ddc_infra.s3_bucket_id
   
-  # ScyllaDB configuration - connects to Terraform-created instances
+  # ScyllaDB configuration - connects via private DNS (preferred) or IPs (fallback)
   Scylla: &scylla-connection-info
-    ConnectionString: Contact Points=${scylla_ips};Default Keyspace=jupiter;  # Terraform variable: module.ddc_infra.scylla_ips
+    ConnectionString: Contact Points=${scylla_connection};Default Keyspace=jupiter;  # DNS preferred, IP fallback
     KeyspaceReplicationStrategy:
       class: "NetworkTopologyStrategy"
       ${region}: ${replication_factor}  # Terraform variables: var.region, var.scylla_replication_factor

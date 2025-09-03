@@ -5,10 +5,15 @@ output "ddc_endpoint" {
 
 output "ddc_endpoint_nlb" {
   description = "DDC direct NLB endpoint"
-  value = "https://${module.unreal_cloud_ddc.ddc_infra.nlb_dns_name}"
+  value = "https://${module.unreal_cloud_ddc.nlb_dns_name}"
 }
 
 output "bearer_token_secret_arn" {
   description = "ARN of the DDC bearer token secret in AWS Secrets Manager"
   value = module.unreal_cloud_ddc.bearer_token_secret_arn
+}
+
+output "security_warning" {
+  description = "Security warnings for the deployment"
+  value = module.unreal_cloud_ddc.ddc_connection.security_warning
 }

@@ -73,6 +73,24 @@ module "eks_blueprints_addons" {
   enable_aws_cloudwatch_metrics = true
   enable_cert_manager           = var.enable_certificate_manager
   cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
+  
+  # Enable Fluent Bit for DDC application log shipping
+  enable_aws_for_fluentbit = local.ddc_logging_enabled
+  aws_for_fluentbit = local.ddc_logging_enabled ? {
+    configuration_values = jsonencode({
+      cloudWatchLogs = {
+        enabled = true
+        logGroupName = "${local.log_base_prefix}/application/ddc"
+        logStreamName = "ddc-${var.cluster_name}"
+      }
+    })
+    role_policies       = {}
+    policy_statements   = []
+  } : {
+    configuration_values = null
+    role_policies       = {}
+    policy_statements   = []
+  }
 
   tags = {
     Environment = var.cluster_name
@@ -270,7 +288,7 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
 
   values = local.base_values
   
-  # Use ClusterIP service type (internal only)
+  # Service configuration - ensure ClusterIP and correct ports
   set {
     name  = "service.type"
     value = "ClusterIP"
@@ -378,21 +396,21 @@ YAML
   ]
 }
 
-# Remove finalizer immediately after creation to prevent destroy deadlock
-resource "null_resource" "remove_tgb_finalizer" {
-  count = var.remove_tgb_finalizers ? 1 : 0
-  
+# Comprehensive cleanup to ensure AWS resources are fully removed before infrastructure destruction
+resource "null_resource" "comprehensive_cleanup" {
   triggers = {
     tgb_name = "${local.name_prefix}-tgb"
     namespace = var.namespace
     cluster_name = var.cluster_name
     region = var.region
     show_messages = var.auto_cleanup_status_messages
+    target_group_arn = var.nlb_target_group_arn
   }
 
+  # Creation-time: Remove finalizers to prevent deadlock
   provisioner "local-exec" {
     command = <<-EOT
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - TGB]: Removing TargetGroupBinding finalizer to prevent destroy deadlock'" : ""}
+      ${self.triggers.show_messages ? "echo '[DDC SETUP - TGB]: Removing TargetGroupBinding finalizer to prevent destroy deadlock'" : ""}
       
       # Configure kubectl
       aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}
@@ -404,7 +422,51 @@ resource "null_resource" "remove_tgb_finalizer" {
       kubectl patch targetgroupbinding ${self.triggers.tgb_name} -n ${self.triggers.namespace} \
         --type='merge' -p='{"metadata":{"finalizers":[]}}' || true
       
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - TGB]: Finalizer removed - TGB can now be destroyed cleanly'" : ""}
+      ${self.triggers.show_messages ? "echo '[DDC SETUP - TGB]: Finalizer removed - TGB can now be destroyed cleanly'" : ""}
+    EOT
+  }
+
+  # Destruction-time: Ensure complete cleanup before proceeding
+  provisioner "local-exec" {
+    when = destroy
+    command = <<-EOT
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Starting comprehensive AWS resource cleanup'" : ""}
+      
+      # Configure kubectl
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Configuring kubectl access'" : ""}
+      if ! aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
+        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: EKS cluster already deleted or inaccessible - cleanup not needed'" : ""}
+        exit 0
+      fi
+      
+      # Force delete TGB if it still exists
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Force deleting TargetGroupBinding to trigger controller cleanup'" : ""}
+      kubectl delete targetgroupbinding ${self.triggers.tgb_name} -n ${self.triggers.namespace} --ignore-not-found=true --timeout=60s || {
+        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: TGB deletion failed or not found - continuing'" : ""}
+      }
+      
+      # Wait for target group to be fully drained (max 2 minutes)
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Waiting for target group to be drained (max 2 minutes)'" : ""}
+      for i in {1..60}; do
+        TARGETS=$(aws elbv2 describe-target-health --target-group-arn ${self.triggers.target_group_arn} --query 'TargetHealthDescriptions[].Target.Id' --output text 2>/dev/null || echo "")
+        if [ -z "$TARGETS" ] || [ "$TARGETS" = "None" ]; then
+          ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Target group fully drained - safe to proceed'" : ""}
+          break
+        fi
+        if [ $((i % 10)) -eq 0 ]; then
+          ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Still waiting for targets to drain... ($i/60) - Targets: $TARGETS'" : ""}
+        fi
+        sleep 2
+      done
+      
+      # Final check and warning
+      FINAL_TARGETS=$(aws elbv2 describe-target-health --target-group-arn ${self.triggers.target_group_arn} --query 'TargetHealthDescriptions[].Target.Id' --output text 2>/dev/null || echo "")
+      if [ -n "$FINAL_TARGETS" ] && [ "$FINAL_TARGETS" != "None" ]; then
+        echo "[DDC CLEANUP - COMPREHENSIVE]: WARNING - Targets still registered after 2 minutes: $FINAL_TARGETS"
+        echo "[DDC CLEANUP - COMPREHENSIVE]: Proceeding anyway - EKS deletion may encounter issues"
+      else
+        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Comprehensive cleanup completed successfully'" : ""}
+      fi
     EOT
   }
 

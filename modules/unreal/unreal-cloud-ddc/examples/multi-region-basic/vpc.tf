@@ -2,7 +2,7 @@
 # Primary Region VPC Infrastructure
 ##########################################
 resource "aws_vpc" "primary" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = local.regions[local.primary_region].vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
   #checkov:skip=CKV2_AWS_11: VPC flow logging disabled by design
@@ -25,8 +25,8 @@ resource "aws_subnet" "primary_public" {
   count  = 2
 
   vpc_id                  = aws_vpc.primary.id
-  cidr_block              = local.public_subnet_cidrs_primary[count.index]
-  availability_zone       = local.azs_primary[count.index]
+  cidr_block              = local.regions[local.primary_region].public_subnet_cidrs[count.index]
+  availability_zone       = local.regions[local.primary_region].azs[count.index]
   map_public_ip_on_launch = true
 
   tags = merge(local.tags, {
@@ -38,8 +38,8 @@ resource "aws_subnet" "primary_private" {
   count  = 2
 
   vpc_id            = aws_vpc.primary.id
-  cidr_block        = local.private_subnet_cidrs_primary[count.index]
-  availability_zone = local.azs_primary[count.index]
+  cidr_block        = local.regions[local.primary_region].private_subnet_cidrs[count.index]
+  availability_zone = local.regions[local.primary_region].azs[count.index]
 
   tags = merge(local.tags, {
     Name = "${local.project_prefix}-primary-private-${count.index + 1}"
@@ -118,7 +118,7 @@ resource "aws_route_table_association" "primary_private_rt_asso" {
 # Secondary Region VPC Infrastructure
 ##########################################
 resource "aws_vpc" "secondary" {
-  cidr_block           = "10.1.0.0/16"
+  cidr_block           = local.regions[local.secondary_region].vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
   #checkov:skip=CKV2_AWS_11: VPC flow logging disabled by design
@@ -141,8 +141,8 @@ resource "aws_subnet" "secondary_public" {
   count  = 2
 
   vpc_id                  = aws_vpc.secondary.id
-  cidr_block              = local.public_subnet_cidrs_secondary[count.index]
-  availability_zone       = local.azs_secondary[count.index]
+  cidr_block              = local.regions[local.secondary_region].public_subnet_cidrs[count.index]
+  availability_zone       = local.regions[local.secondary_region].azs[count.index]
   map_public_ip_on_launch = true
 
   tags = merge(local.tags, {
@@ -154,8 +154,8 @@ resource "aws_subnet" "secondary_private" {
   count  = 2
 
   vpc_id            = aws_vpc.secondary.id
-  cidr_block        = local.private_subnet_cidrs_secondary[count.index]
-  availability_zone = local.azs_secondary[count.index]
+  cidr_block        = local.regions[local.secondary_region].private_subnet_cidrs[count.index]
+  availability_zone = local.regions[local.secondary_region].azs[count.index]
 
   tags = merge(local.tags, {
     Name = "${local.project_prefix}-secondary-private-${count.index + 1}"

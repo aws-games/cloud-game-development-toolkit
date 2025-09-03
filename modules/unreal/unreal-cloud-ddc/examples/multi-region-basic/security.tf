@@ -2,7 +2,6 @@
 # Security Groups for My IP Access (Both Regions)
 ##########################################
 resource "aws_security_group" "allow_my_ip_primary" {
-  provider    = aws.primary
   name        = "${local.project_prefix}-allow-my-ip-primary"
   description = "Allow inbound traffic from my IP to DDC and monitoring services in primary region"
   vpc_id      = aws_vpc.primary.id
@@ -13,7 +12,6 @@ resource "aws_security_group" "allow_my_ip_primary" {
 }
 
 resource "aws_security_group" "allow_my_ip_secondary" {
-  provider    = aws.secondary
   name        = "${local.project_prefix}-allow-my-ip-secondary"
   description = "Allow inbound traffic from my IP to DDC and monitoring services in secondary region"
   vpc_id      = aws_vpc.secondary.id
@@ -93,7 +91,6 @@ resource "aws_vpc_security_group_ingress_rule" "allow_icmp_secondary" {
 # Cross-Region ScyllaDB Security Groups
 ##########################################
 resource "aws_security_group" "scylla_cross_region_primary" {
-  provider    = aws.primary
   name        = "${local.project_prefix}-scylla-cross-region-primary"
   description = "Allow ScyllaDB cross-region communication from secondary region"
   vpc_id      = aws_vpc.primary.id
@@ -104,7 +101,6 @@ resource "aws_security_group" "scylla_cross_region_primary" {
 }
 
 resource "aws_security_group" "scylla_cross_region_secondary" {
-  provider    = aws.secondary
   name        = "${local.project_prefix}-scylla-cross-region-secondary"
   description = "Allow ScyllaDB cross-region communication from primary region"
   vpc_id      = aws_vpc.secondary.id

@@ -5,10 +5,19 @@
 locals {
   # Naming consistency with other modules
   name_prefix = "${var.project_prefix}-${var.name}"
+  
+  # Logging configuration from parent module
+  log_base_prefix = var.log_base_prefix
+  ddc_logging_enabled = var.ddc_logging_enabled
+
+  # ScyllaDB connection with DNS preferred, IP fallback
+  scylla_connection_string = var.scylla_dns_name != null && var.scylla_dns_name != "" ? var.scylla_dns_name : (
+    length(var.scylla_ips) > 0 ? join(",", var.scylla_ips) : ""
+  )
 
   helm_config = {
     bucket_name        = var.s3_bucket_id != null ? var.s3_bucket_id : ""
-    scylla_ips         = length(var.scylla_ips) > 0 ? join(",", var.scylla_ips) : ""
+    scylla_connection  = local.scylla_connection_string  # DNS preferred, IP fallback
     # Use improved datacenter naming from cwwalb branch
     region             = var.scylla_datacenter_name != null ? var.scylla_datacenter_name : (var.region != null ? replace(var.region, "-1", "") : "")
     aws_region         = var.region != null ? var.region : ""

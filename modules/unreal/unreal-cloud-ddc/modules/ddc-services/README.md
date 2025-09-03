@@ -2,6 +2,8 @@
 
 This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) application services on Kubernetes using Helm charts and manages advanced load balancer integration patterns.
 
+> **📖 For complete DDC setup and configuration guidance, see the [Epic Games DDC Documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-a-cloud-type-derived-data-cache-for-unreal-engine).**
+
 **What this submodule creates**: DDC application deployment via Helm, ECR pull-through cache for GitHub container images, Kubernetes service integration with external NLB via TargetGroupBinding, and EKS addons for cluster functionality.
 
 ## Architecture

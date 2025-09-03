@@ -15,8 +15,8 @@ resource "aws_route53_record" "primary_ddc_service" {
   name    = "${local.primary_region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc_primary.ddc_infra.nlb_dns_name
-    zone_id                = module.unreal_cloud_ddc_primary.ddc_infra.nlb_zone_id
+    name                   = module.unreal_cloud_ddc_primary.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc_primary.nlb_zone_id
     evaluate_target_health = true
   }
 }
@@ -27,24 +27,13 @@ resource "aws_route53_record" "secondary_ddc_service" {
   name    = "${local.secondary_region}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   type    = "A"
   alias {
-    name                   = module.unreal_cloud_ddc_secondary.ddc_infra.nlb_dns_name
-    zone_id                = module.unreal_cloud_ddc_secondary.ddc_infra.nlb_zone_id
+    name                   = module.unreal_cloud_ddc_secondary.nlb_dns_name
+    zone_id                = module.unreal_cloud_ddc_secondary.nlb_zone_id
     evaluate_target_health = true
   }
 }
 
-# Route monitoring traffic to the monitoring ALB (primary region only)
-resource "aws_route53_record" "primary_ddc_monitoring" {
-  count   = local.create_monitoring_dns ? 1 : 0
-  zone_id = data.aws_route53_zone.root.id
-  name    = "${local.primary_region}.monitoring.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
-  type    = "A"
-  alias {
-    name                   = module.unreal_cloud_ddc_primary.ddc_monitoring.monitoring_alb_dns_name
-    zone_id                = module.unreal_cloud_ddc_primary.ddc_monitoring.monitoring_alb_zone_id
-    evaluate_target_health = true
-  }
-}
+
 
 ##########################################
 # DDC Certificate Management

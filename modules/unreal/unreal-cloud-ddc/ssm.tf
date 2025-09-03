@@ -102,7 +102,7 @@ DOC
 
 # SSM association to run the keyspace fix on ScyllaDB seed node
 resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
-  count = var.ddc_infra_config != null ? 1 : 0
+  count = var.ddc_infra_config != null && try(var.ddc_infra_config.create_seed_node, true) == true ? 1 : 0
   
   name = aws_ssm_document.scylla_keyspace_replication_fix[0].name
   
@@ -124,9 +124,12 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
   # Run once on creation, then manual execution only
   # schedule_expression = ""  # No automatic schedule - commented out since empty string not allowed
   
-  output_location {
-    s3_bucket_name = local.logs_bucket_id
-    s3_key_prefix  = "ssm-associations/scylla-keyspace-fix"
+  dynamic "output_location" {
+    for_each = local.logs_bucket_id != null ? [1] : []
+    content {
+      s3_bucket_name = local.logs_bucket_id
+      s3_key_prefix  = "ssm-associations/scylla-keyspace-fix"
+    }
   }
   
   tags = merge(var.tags, {

@@ -4,7 +4,7 @@
 
 # Read existing bearer token secret (when reusing from another region)
 data "aws_secretsmanager_secret_version" "existing_token" {
-  count = var.create_bearer_token == false && var.ddc_application_config.bearer_token_secret_arn != null ? 1 : 0
+  count = var.create_bearer_token == false ? 1 : 0
   
   # Dynamically replace the region in the ARN to read from local replica
   secret_id = replace(

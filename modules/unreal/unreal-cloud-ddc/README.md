@@ -5,6 +5,8 @@
 > **⚠️ IMPORTANT**
 >
 > **You MUST have Epic Games GitHub organization access to use this module.** Without access, container image pulls will fail and deployment will not work. Follow the [Epic Games Container Images Quick Start](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine) to join the organization before proceeding.
+>
+> **📖 For complete DDC setup and configuration guidance, see the [Epic Games DDC Documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-a-cloud-type-derived-data-cache-for-unreal-engine).**
 
 ## Version Requirements
 
@@ -174,22 +176,12 @@ For a quickstart, please review the [examples](https://github.com/aws-games/clou
 
 This module provides two types of examples:
 
-- **[Single Region](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/single-region)** - Basic DDC deployment for small teams
-- **[Multi-Region](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/multi-region)** - Cross-region DDC with replication for global teams
+- **[Single Region Basic](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/examples/single-region-basic)** - Basic DDC deployment for small teams
+- **[Multi-Region Basic](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/examples/multi-region-basic)** - Cross-region DDC with replication for global teams
 
 ## Deployment Instructions
 
-### Step 1: Configure Required Variables
-
-```hcl
-# terraform.tfvars
-route53_public_hosted_zone_name = "yourcompany.com"
-
-# GitHub credentials for DDC container images
-ghcr_credentials_secret_manager_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:ecr-pullthroughcache/<Whatever you named it>"
-```
-
-### Step 2: Declare and configure the module
+### Step 1: Declare and configure the module
 
 Note, this is just a condensed sample. See the examples for the related required infrastructure.
 
@@ -204,17 +196,16 @@ module "unreal_cloud_ddc" {
     helm       = helm
   }
 
-
   # - Shared -
   region = local.primary_region
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
-  public_subnets = aws_subnet.public_subnets[*].id
-  private_subnets = aws_subnet.private_subnets[*].id
+  existing_vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
+  existing_load_balancer_subnets = aws_subnet.public_subnets[*].id
+  existing_service_subnets = aws_subnet.private_subnets[*].id
   existing_security_groups = [aws_security_group.allow_my_ip.id]
 
   # DNS Configuration
-  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
-  certificate_arn = aws_acm_certificate.ddc.arn
+  existing_route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  existing_certificate_arn = aws_acm_certificate.ddc.arn
 
   # - DDC Infra Configuration -
   ddc_infra_config = {
@@ -230,7 +221,6 @@ module "unreal_cloud_ddc" {
     ghcr_credentials_secret_manager_arn = var.ghcr_credentials_secret_manager_arn
   }
 }
-
 ```
 
 ### Step 2: Deploy Infrastructure
@@ -435,6 +425,8 @@ Should include at least the following keyspaces:
 
 ## Client Connection Guide
 
+> **📖 For complete DDC setup and configuration guidance, see the [Epic Games DDC Documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-a-cloud-type-derived-data-cache-for-unreal-engine).**
+
 ### Unreal Engine Configuration
 
 **1. Get connection details:**
@@ -629,107 +621,10 @@ kubectl get svc -n unreal-cloud-ddc
 
 ## Security & Access Patterns
 
-### Access Method Control
+For detailed configuration options and deployment patterns, see the [examples](examples/) directory:
 
-**External Access (Default):**
-
-```hcl
-access_method = "external"  # or "public"
-```
-
-- Creates public NLB for internet access
-- DNS: Regional endpoints (us-east-1.ddc.example.com)
-- Security: Restricted CIDR blocks (no 0.0.0.0/0)
-
-**Internal Access:**
-
-```hcl
-access_method = "internal"  # or "private"
-```
-
-- Creates private NLB for VPC-only access
-- DNS: Regional endpoints (us-east-1.ddc.internal)
-- Security: VPC CIDR blocks for automatic inclusion
-
-### Security Best Practices
-
-- Use private subnets for all compute resources
-- Implement least-privilege access with specific CIDR blocks
-- Enable VPC Flow Logs for network monitoring
-- Use AWS Secrets Manager for credentials
-- Deploy close to development teams (regional endpoints)
-
-## Multi-Region Considerations
-
-### DNS Strategy
-
-**Regional Endpoints (Recommended):**
-
-- External: `us-east-1.ddc.example.com`, `us-west-2.ddc.example.com`
-- Internal: `us-east-1.ddc.internal`, `us-west-2.ddc.internal`
-
-**Benefits:**
-
-- Explicit control - developers choose region
-- Easy debugging - clear which region
-- Simple DNS - no complex routing
-- UE configuration - set specific endpoint
-
-## Advanced Configuration
-
-### ScyllaDB Replication Factor Guidelines
-
-**Single Region:**
-
-```hcl
-# Production (recommended)
-scylla_replication_factor = 3  # Survives 1 node failure
-nodes_per_region = 3
-
-# High availability
-scylla_replication_factor = 5  # Survives 2 node failures
-nodes_per_region = 5
-```
-
-**Multi-Region:**
-
-```hcl
-# Balanced approach
-us_east_rf = 3  # Primary region
-us_west_rf = 2  # Secondary region
-```
-
-### Custom Instance Types
-
-```hcl
-ddc_infra_config = {
-  scylla_instance_type = "i4i.xlarge"  # High-performance storage
-  kubernetes_version = "1.31"         # Latest stable version
-}
-```
-
-## Best Practices
-
-### Security
-
-- Use private subnets for all compute resources
-- Implement least-privilege access with specific CIDR blocks
-- Enable VPC Flow Logs for network monitoring
-- Use AWS Secrets Manager for credentials
-
-### Performance
-
-- Deploy close to development teams (regional endpoints)
-- Use appropriate instance types for workload
-- Monitor cache hit rates
-- Implement proper ScyllaDB tuning
-
-### Operations
-
-- Set up automated backups for S3 and ScyllaDB
-- Document runbooks for common issues
-- Test disaster recovery procedures
-- Use regional DNS for optimal routing
+- **Single Region**: Basic deployment for small to medium teams
+- **Multi-Region**: Cross-region deployment for global teams
 
 <!-- BEGIN_TF_DOCS -->
 

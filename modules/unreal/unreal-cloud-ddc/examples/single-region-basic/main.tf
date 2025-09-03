@@ -9,14 +9,14 @@ module "unreal_cloud_ddc" {
 
   # - Shared -
   region = local.primary_region
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
-  public_subnets = aws_subnet.public_subnets[*].id
-  private_subnets = aws_subnet.private_subnets[*].id
+  existing_vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
+  existing_load_balancer_subnets = aws_subnet.public_subnets[*].id
+  existing_service_subnets = aws_subnet.private_subnets[*].id
   existing_security_groups = [aws_security_group.allow_my_ip.id]
 
   # DNS Configuration
-  route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
-  certificate_arn = aws_acm_certificate.ddc.arn
+  existing_route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+  existing_certificate_arn = aws_acm_certificate.ddc.arn
 
   # - DDC Infra Configuration -
   ddc_infra_config = {

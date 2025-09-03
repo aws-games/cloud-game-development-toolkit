@@ -114,9 +114,15 @@ variable "s3_bucket_id" {
 }
 
 variable "scylla_ips" {
-  description = "ScyllaDB node IPs"
+  description = "ScyllaDB node IPs (fallback for compatibility)"
   type        = list(string)
   default     = []
+}
+
+variable "scylla_dns_name" {
+  description = "ScyllaDB cluster DNS name for internal connectivity"
+  type        = string
+  default     = null
 }
 
 variable "scylla_datacenter_name" {
@@ -222,6 +228,16 @@ variable "auto_cleanup_status_messages" {
   description = "Show progress messages during cleanup operations with [DDC CLEANUP - COMPONENT]: format"
   type        = bool
   default     = true
+}
+
+variable "log_base_prefix" {
+  description = "Base prefix for log group names from parent module"
+  type        = string
+}
+
+variable "ddc_logging_enabled" {
+  description = "Whether DDC application logging is enabled from parent module"
+  type        = bool
 }
 
 variable "unreal_cloud_ddc_helm_base_infra_chart" {

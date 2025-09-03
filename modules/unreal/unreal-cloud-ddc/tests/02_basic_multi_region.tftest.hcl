@@ -14,7 +14,7 @@
 #   #   fsxn_aws_profile                = run.setup.fsxn_aws_profile
 #   # }
 #   module {
-#     source = "./examples/multi-region"
+#     source = "./examples/multi-region-basic"
 #   }
 # }
 
@@ -23,6 +23,6 @@
 # # # run "e2e_test" {
 # # #   command = apply
 # # #   module {
-# # #     source = "./examples/multi-region"
+# # #     source = "./examples/multi-region-basic"
 # # #   }
 # # # }

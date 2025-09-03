@@ -18,7 +18,7 @@ module "ddc_infra" {
   environment              = var.ddc_infra_config.environment
   region                   = var.ddc_infra_config.region
   debug                    = var.debug_mode == "enabled"
-  vpc_id                   = var.vpc_id
+  vpc_id                   = var.existing_vpc_id
   existing_security_groups = var.existing_security_groups
 
   # ScyllaDB Configuration
@@ -74,6 +74,10 @@ module "ddc_infra" {
 
   # OIDC Credentials (from services config)
   oidc_credentials_secret_manager_arn = var.ddc_services_config != null ? var.ddc_services_config.oidc_credentials_secret_manager_arn : null
+  
+  # Logging configuration
+  log_base_prefix = local.log_base_prefix
+  scylla_logging_enabled = local.scylla_logging_enabled
 
   tags = var.tags
 }
@@ -108,6 +112,7 @@ module "ddc_services" {
   service_account_arn  = var.ddc_infra_config != null ? module.ddc_infra[0].service_account_arn : null
   s3_bucket_id         = var.ddc_infra_config != null ? module.ddc_infra[0].s3_bucket_id : null
   scylla_ips           = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_ips : []
+  scylla_dns_name      = var.ddc_infra_config != null ? "scylla.${local.private_zone_name}" : null
   scylla_datacenter_name = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_datacenter_name : null
   scylla_keyspace_suffix = var.ddc_infra_config != null ? module.ddc_infra[0].scylla_keyspace_suffix : null
 
@@ -142,6 +147,10 @@ module "ddc_services" {
   auto_helm_cleanup    = var.enable_auto_cleanup
   remove_tgb_finalizers = var.enable_auto_cleanup
   auto_cleanup_status_messages = var.auto_cleanup_status_messages
+  
+  # Logging configuration
+  log_base_prefix = local.log_base_prefix
+  ddc_logging_enabled = local.ddc_logging_enabled
 
   tags = var.tags
   depends_on = [module.ddc_infra]

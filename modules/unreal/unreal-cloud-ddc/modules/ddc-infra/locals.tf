@@ -5,6 +5,10 @@ locals {
   })
 
   name_prefix = "${var.project_prefix}-${var.name}"
+  
+  # Logging configuration from parent module
+  log_base_prefix = var.log_base_prefix
+  scylla_logging_enabled = var.scylla_logging_enabled
   sg_rules_all = [
     { port : 7000, description : "ScyllaDB Inter-node communication (RPC)", protocol : "tcp" },
     { port : 7001, description : "ScyllaDB SSL inter-node communication (RPC)", protocol : "tcp" },
@@ -28,7 +32,35 @@ locals {
       }
       # Required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       # If scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring
-      "start_scylla_on_first_boot" : true
+      "start_scylla_on_first_boot" : true,
+      # CloudWatch agent configuration for log shipping
+      "post_configuration_script" : local.scylla_logging_enabled ? [
+        "yum update -y",
+        "yum install -y amazon-cloudwatch-agent",
+        "cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'",
+        "{",
+        "  \"logs\": {",
+        "    \"logs_collected\": {",
+        "      \"files\": {",
+        "        \"collect_list\": [",
+        "          {",
+        "            \"file_path\": \"/var/log/scylla/scylla.log\",",
+        "            \"log_group_name\": \"${local.log_base_prefix}/service/scylla\",",
+        "            \"log_stream_name\": \"{instance_id}-scylla\",",
+        "            \"timezone\": \"UTC\"",
+        "          }",
+        "        ]",
+        "      }",
+        "    }",
+        "  },",
+        "  \"agent\": {",
+        "    \"region\": \"${var.region}\"",
+        "  }",
+        "}",
+        "EOF",
+        "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+        "systemctl enable amazon-cloudwatch-agent"
+      ] : []
     }
   )
   scylla_user_data_other_nodes = jsonencode(
@@ -40,7 +72,35 @@ locals {
       }
       # Required to ensure that scylla does not pick up the wrong config on boot prior to SSM configuring the instance
       # If scylla boots with an ip that is incorrect you have to delete data and reset the node prior to reconfiguring
-      "start_scylla_on_first_boot" : true
+      "start_scylla_on_first_boot" : true,
+      # CloudWatch agent configuration for log shipping
+      "post_configuration_script" : local.scylla_logging_enabled ? [
+        "yum update -y",
+        "yum install -y amazon-cloudwatch-agent",
+        "cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'",
+        "{",
+        "  \"logs\": {",
+        "    \"logs_collected\": {",
+        "      \"files\": {",
+        "        \"collect_list\": [",
+        "          {",
+        "            \"file_path\": \"/var/log/scylla/scylla.log\",",
+        "            \"log_group_name\": \"${local.log_base_prefix}/service/scylla\",",
+        "            \"log_stream_name\": \"{instance_id}-scylla\",",
+        "            \"timezone\": \"UTC\"",
+        "          }",
+        "        ]",
+        "      }",
+        "    }",
+        "  },",
+        "  \"agent\": {",
+        "    \"region\": \"${var.region}\"",
+        "  }",
+        "}",
+        "EOF",
+        "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+        "systemctl enable amazon-cloudwatch-agent"
+      ] : []
     }
   )
 

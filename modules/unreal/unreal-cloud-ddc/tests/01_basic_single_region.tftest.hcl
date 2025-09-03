@@ -13,7 +13,7 @@ run "unit_test" {
   #   route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
   # }
   module {
-    source = "./examples/single-region"
+    source = "./examples/single-region-basic"
   }
 }
 

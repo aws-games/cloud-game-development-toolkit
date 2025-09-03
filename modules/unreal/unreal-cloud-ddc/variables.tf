@@ -12,24 +12,10 @@ variable "project_prefix" {
   }
 }
 
-variable "access_method" {
-  type = string
-  description = "external/public: Internet → Public NLB | internal/private: VPC → Private NLB"
-  default = "external"
-
-  validation {
-    condition = contains(["external", "internal", "public", "private"], var.access_method)
-    error_message = "Must be 'external'/'public' or 'internal'/'private'"
-  }
-
-  validation {
-    condition = (
-      contains(["external", "public"], var.access_method) && length(var.public_subnets) > 0 && length(var.private_subnets) > 0
-    ) || (
-      contains(["internal", "private"], var.access_method) && length(var.private_subnets) > 0
-    )
-    error_message = "private_subnets always required for services. For external/public access, both public_subnets and private_subnets must be provided. For internal/private access, only private_subnets required."
-  }
+variable "internet_facing" {
+  type        = bool
+  description = "Whether load balancers should be internet-facing (true) or internal (false)"
+  default     = true
 }
 
 
@@ -37,9 +23,9 @@ variable "access_method" {
 ########################################
 # Networking
 ########################################
-variable "vpc_id" {
-  description = "VPC ID for this region"
+variable "existing_vpc_id" {
   type        = string
+  description = "VPC ID where resources will be created"
 }
 
 variable "region" {
@@ -48,16 +34,19 @@ variable "region" {
   default     = null
 }
 
-variable "public_subnets" {
-  type = list(string)
-  description = "Public subnet IDs for external load balancers"
-  default = []
+variable "existing_load_balancer_subnets" {
+  type        = list(string)
+  description = "Subnets for load balancers (public for internet-facing, private for internal)"
+  
+  validation {
+    condition = length(var.existing_load_balancer_subnets) > 0
+    error_message = "At least one load balancer subnet must be provided."
+  }
 }
 
-variable "private_subnets" {
-  type = list(string)
-  description = "Private subnet IDs for internal load balancers and services"
-  default = []
+variable "existing_service_subnets" {
+  type        = list(string)
+  description = "Subnets for services (EKS, databases, applications)"
 }
 
 variable "allowed_external_cidrs" {
@@ -82,10 +71,140 @@ variable "external_prefix_list_id" {
 ########################################
 # Centralized Logging Configuration (Issue #726)
 ########################################
-variable "enable_centralized_logging" {
-  type = bool
-  description = "Enable centralized logging for all DDC services (NLB, ScyllaDB, applications)"
-  default = true
+variable "centralized_logging" {
+  type = object({
+    infrastructure = optional(map(object({
+      enabled        = optional(bool, true)
+      retention_days = optional(number, 90)
+    })), {})
+    application = optional(map(object({
+      enabled        = optional(bool, true)
+      retention_days = optional(number, 30)
+    })), {})
+    service = optional(map(object({
+      enabled        = optional(bool, true)
+      retention_days = optional(number, 60)
+    })), {})
+    log_group_prefix = optional(string, null)
+  })
+  
+  description = <<-EOT
+    Centralized logging configuration for DDC components by category.
+    
+    IMPORTANT: This module only supports specific predefined components. Adding unsupported 
+    components will result in log groups being created but no actual log shipping configured.
+    
+    ## Supported Components by Category:
+    
+    ### infrastructure (AWS managed services):
+    - "nlb" - Network Load Balancer access logs → S3 + CloudWatch
+    - "eks" - EKS control plane logs → CloudWatch
+    
+    ### application (Primary business logic):
+    - "ddc" - DDC application pod logs → CloudWatch (via Fluent Bit)
+    
+    ### service (Supporting services):
+    - "scylla" - ScyllaDB database logs → CloudWatch (via CloudWatch agent)
+    
+    ## Structure:
+    Log groups follow the pattern: {log_group_prefix}/{category}/{component}
+    - Default prefix: "{project_prefix}-{service_name}-{region}"
+    - Example: "cgd-unreal-cloud-ddc-us-east-1/infrastructure/nlb"
+    
+    ## Configuration:
+    - enabled: Enable/disable logging for this component (default: true)
+    - retention_days: CloudWatch log retention in days (defaults: infra=90, app=30, service=60)
+    - log_group_prefix: Custom prefix to replace default naming (optional)
+    
+    ## Examples:
+    
+    # Enable all supported components with defaults
+    centralized_logging = {
+      infrastructure = { nlb = {}, eks = {} }
+      application    = { ddc = {} }
+      service        = { scylla = {} }
+    }
+    
+    # Custom retention and prefix
+    centralized_logging = {
+      infrastructure = { 
+        nlb = { retention_days = 365 }
+        eks = { retention_days = 180 }
+      }
+      application = { 
+        ddc = { retention_days = 14 }
+      }
+      service = { 
+        scylla = { retention_days = 90 }
+      }
+      log_group_prefix = "mycompany-ddc-prod"
+    }
+    
+    # Disable specific components
+    centralized_logging = {
+      infrastructure = { 
+        nlb = { enabled = false }  # Disable NLB logging
+        eks = {}                   # Enable EKS logging
+      }
+      application = { ddc = {} }
+      service     = { scylla = {} }
+    }
+    
+    ## Cost Considerations:
+    - Shorter retention = lower costs
+    - infrastructure logs (90 days default) - needed for troubleshooting
+    - application logs (30 days default) - balance between debugging and cost
+    - service logs (60 days default) - database analysis and performance tuning
+    
+    ## Security:
+    All log groups are created with proper IAM permissions and encryption.
+    S3 bucket includes lifecycle policies for cost optimization.
+  EOT
+  
+  default = null
+
+  # CRITICAL: Enforce only supported components
+  validation {
+    condition = var.centralized_logging == null ? true : alltrue([
+      # Infrastructure: only nlb, eks allowed
+      alltrue([
+        for component in keys(var.centralized_logging.infrastructure) :
+        contains(["nlb", "eks"], component)
+      ]),
+      # Application: only ddc allowed
+      alltrue([
+        for component in keys(var.centralized_logging.application) :
+        contains(["ddc"], component)
+      ]),
+      # Service: only scylla allowed
+      alltrue([
+        for component in keys(var.centralized_logging.service) :
+        contains(["scylla"], component)
+      ])
+    ])
+    error_message = <<-EOT
+      Unsupported logging component specified. Only these components are supported:
+      - infrastructure: nlb, eks
+      - application: ddc
+      - service: scylla
+      
+      Adding unsupported components will create log groups but no actual log shipping.
+      Contact the module maintainers to request support for additional components.
+    EOT
+  }
+
+  # Validate retention days are valid CloudWatch values
+  validation {
+    condition = var.centralized_logging == null ? true : alltrue(flatten([
+      [for category in ["infrastructure", "application", "service"] :
+        [for component, config in var.centralized_logging[category] :
+          contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], 
+                   try(config.retention_days, category == "infrastructure" ? 90 : category == "application" ? 30 : 60))
+        ]
+      ]
+    ]))
+    error_message = "retention_days must be a valid CloudWatch retention period: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653 days."
+  }
 }
 
 variable "debug_mode" {
@@ -176,33 +295,6 @@ variable "scylla_topology_config" {
     condition = contains(["region_suffix", "datacenter_suffix"], var.scylla_topology_config.keyspace_naming_strategy)
     error_message = "keyspace_naming_strategy must be 'region_suffix' or 'datacenter_suffix'."
   }
-}
-
-# Removed centralized_logs_bucket variable - always create our own bucket with proper permissions
-
-variable "log_retention_by_category" {
-  type = object({
-    infrastructure = optional(number, 90)   # NLB, ALB, EKS logs - longer for troubleshooting
-    application    = optional(number, 30)   # DDC app logs - shorter for cost
-    service        = optional(number, 60)   # ScyllaDB logs - medium for analysis
-  })
-  description = "CloudWatch log retention in days by category"
-  default = {}
-
-  validation {
-    condition = alltrue([
-      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.infrastructure),
-      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.application),
-      contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653], var.log_retention_by_category.service)
-    ])
-    error_message = "All retention values must be valid CloudWatch retention periods: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653 days."
-  }
-}
-
-variable "log_group_prefix" {
-  type = string
-  description = "CloudWatch log group prefix following /cgd/{module} pattern"
-  default = "/cgd/ddc"
 }
 
 
@@ -315,18 +407,19 @@ variable "ssm_retry_config" {
 
 variable "existing_security_groups" {
   type        = list(string)
-  description = <<EOT
-    GLOBAL ACCESS: Security group IDs that provide access to DDC load balancers (NLB).
+  description = "Security group IDs for general access to public services"
+  default     = []
+}
 
-    Use this for:
-    - General user access (your IP, office network)
-    - Shared access across all DDC services
+variable "existing_load_balancer_security_groups" {
+  type        = list(string)
+  description = "Additional security group IDs for load balancer access"
+  default     = []
+}
 
-    Security Flow:
-    User → existing_security_groups → All Load Balancers → DDC Services
-
-    Example: [aws_security_group.allow_my_ip.id]
-  EOT
+variable "existing_eks_security_groups" {
+  type        = list(string)
+  description = "Additional security group IDs for EKS API access"
   default     = []
 }
 
@@ -531,7 +624,7 @@ variable "ddc_services_config" {
 ########################################
 # DNS Configuration
 ########################################
-variable "route53_public_hosted_zone_name" {
+variable "existing_route53_public_hosted_zone_name" {
   type        = string
   description = "The name of the public Route53 Hosted Zone for DDC resources (e.g., 'yourcompany.com'). Creates region-specific DNS like us-east-1.ddc.yourcompany.com"
   default     = null
@@ -560,10 +653,10 @@ variable "create_private_dns_records" {
   default = true
 }
 
-variable "certificate_arn" {
-  type = string
-  description = "ACM certificate ARN for HTTPS listeners (created at example level)"
-  default = null
+variable "existing_certificate_arn" {
+  type        = string
+  description = "ACM certificate ARN for HTTPS listeners (required for internet-facing services unless debug_mode enabled)"
+  default     = null
 }
 
 

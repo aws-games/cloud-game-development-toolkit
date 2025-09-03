@@ -407,3 +407,13 @@ variable "nlb_security_group_id" {
   description = "Security group ID of the DDC Network Load Balancer"
   default     = ""
 }
+
+variable "log_base_prefix" {
+  description = "Base prefix for log group names from parent module"
+  type        = string
+}
+
+variable "scylla_logging_enabled" {
+  description = "Whether ScyllaDB logging is enabled from parent module"
+  type        = bool
+}

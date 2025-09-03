@@ -3,13 +3,13 @@
 ################################################################################
 
 output "nlb_dns_name" {
-  description = "Shared NLB DNS name"
-  value = var.ddc_infra_config != null ? aws_lb.shared_nlb.dns_name : null
+  description = "NLB DNS name"
+  value = var.ddc_infra_config != null ? aws_lb.nlb.dns_name : null
 }
 
 output "nlb_zone_id" {
-  description = "Shared NLB zone ID"
-  value = var.ddc_infra_config != null ? aws_lb.shared_nlb.zone_id : null
+  description = "NLB zone ID"
+  value = var.ddc_infra_config != null ? aws_lb.nlb.zone_id : null
 }
 
 ################################################################################
@@ -29,10 +29,10 @@ output "ddc_infra" {
     scylla_seed          = module.ddc_infra[0].scylla_seed
     scylla_datacenter_name = module.ddc_infra[0].scylla_datacenter_name
     scylla_keyspace_suffix = module.ddc_infra[0].scylla_keyspace_suffix
-    nlb_arn              = aws_lb.shared_nlb.arn
-    nlb_dns_name         = aws_lb.shared_nlb.dns_name
-    nlb_zone_id          = aws_lb.shared_nlb.zone_id
-    nlb_target_group_arn = aws_lb_target_group.shared_nlb_tg.arn
+    nlb_arn              = aws_lb.nlb.arn
+    nlb_dns_name         = aws_lb.nlb.dns_name
+    nlb_zone_id          = aws_lb.nlb.zone_id
+    nlb_target_group_arn = aws_lb_target_group.nlb_target_group.arn
   } : null
 }
 
@@ -57,11 +57,17 @@ output "ddc_services" {
 output "dns_endpoints" {
   description = "DNS endpoints for DDC services"
   value = {
-    # Private DNS (always available)
+    # Private DNS (always available) - regional pattern
     private = var.ddc_infra_config != null ? {
       zone_id = aws_route53_zone.private.zone_id
       zone_name = local.private_zone_name
-      ddc_service = "service.${local.private_zone_name}"
+      regional_endpoint = "${local.region}.${local.service_name}.${local.private_zone_name}"
+      scylla_cluster = "scylla.${local.private_zone_name}"
+    } : null
+    
+    # Public DNS (when public hosted zone provided)
+    public = local.public_dns_name != null ? {
+      regional_endpoint = local.public_dns_name
     } : null
   }
 }
@@ -113,13 +119,19 @@ output "ddc_connection" {
   value = var.ddc_infra_config != null ? {
     region = module.ddc_infra[0].region
     bucket = module.ddc_infra[0].s3_bucket_id
-    access_method = var.access_method
+    internet_facing = var.internet_facing
 
-    # Private endpoints (always available)
-    endpoint_private_dns = "${var.debug_mode == "enabled" ? "http" : "https"}://service.${local.private_zone_name}"
+    # Private endpoints (always available) - regional pattern
+    endpoint_private_dns = "${var.debug_mode == "enabled" ? "http" : "https"}://${local.region}.${local.service_name}.${local.private_zone_name}"
+    
+    # Public endpoint (when public hosted zone provided)
+    endpoint_public_dns = local.public_dns_name != null ? "${var.existing_certificate_arn != null ? "https" : "http"}://${local.public_dns_name}" : null
 
     # Direct load balancer endpoints
-    endpoint_nlb = "${var.debug_mode == "enabled" ? "http" : "https"}://${aws_lb.shared_nlb.dns_name}"
+    endpoint_nlb = "${var.debug_mode == "enabled" ? "http" : "https"}://${aws_lb.nlb.dns_name}"
+    
+    # Security warnings
+    security_warning = local.security_warning
 
     # Infrastructure details
     bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : var.ddc_application_config.bearer_token_secret_arn
@@ -141,26 +153,29 @@ output "ddc_connection" {
 # Standardized Module Outputs
 ################################################################################
 
-output "access_method" {
-  description = "Access method configuration (external/internal)"
-  value = var.access_method
+output "internet_facing" {
+  description = "Whether load balancers are internet-facing or internal"
+  value = var.internet_facing
 }
 
 output "security_groups" {
   description = "Security group IDs created by this module"
   value = {
-    external_nlb = local.is_external_access && var.ddc_infra_config != null ? aws_security_group.external_nlb_sg[0].id : null
-    internal_nlb = !local.is_external_access && var.ddc_infra_config != null ? aws_security_group.internal_nlb_sg[0].id : null
+    nlb      = var.ddc_infra_config != null ? aws_security_group.nlb[0].id : null
+    internal = var.ddc_infra_config != null ? aws_security_group.internal[0].id : null
   }
 }
 
 output "load_balancers" {
   description = "Load balancer information"
   value = {
-    shared_nlb = var.ddc_infra_config != null ? {
-      arn = aws_lb.shared_nlb.arn
-      dns_name = aws_lb.shared_nlb.dns_name
-      zone_id = aws_lb.shared_nlb.zone_id
+    nlb = var.ddc_infra_config != null ? {
+      arn = aws_lb.nlb.arn
+      dns_name = aws_lb.nlb.dns_name
+      zone_id = aws_lb.nlb.zone_id
+      internet_facing = var.internet_facing
+      https_enabled = var.existing_certificate_arn != null
+      security_warning = local.security_warning
     } : null
   }
 }
@@ -168,8 +183,8 @@ output "load_balancers" {
 output "access_logs" {
   description = "Access logs configuration"
   value = {
-    centralized_logging_enabled = var.enable_centralized_logging
-    logs_bucket = var.enable_centralized_logging ? aws_s3_bucket.ddc_logs[0].id : null
+    centralized_logging_enabled = var.centralized_logging != null
+    logs_bucket = local.any_logging_enabled ? aws_s3_bucket.logs[0].id : null
   }
 }
 
@@ -177,21 +192,21 @@ output "module_info" {
   description = "Module metadata and configuration summary"
   value = {
     module_version = "2.0.0-standardized"
-    access_method = var.access_method
+    internet_facing = var.internet_facing
     region = var.region
-    vpc_id = var.vpc_id
+    vpc_id = var.existing_vpc_id
     components_enabled = {
       infrastructure = var.ddc_infra_config != null
       services = var.ddc_services_config != null
     }
     networking = {
-      public_subnets = var.public_subnets
-      private_subnets = var.private_subnets
+      load_balancer_subnets = var.existing_load_balancer_subnets
+      service_subnets = var.existing_service_subnets
       allowed_external_cidrs = var.allowed_external_cidrs
       external_prefix_list_id = var.external_prefix_list_id
     }
     dns = {
-      route53_public_hosted_zone_name = var.route53_public_hosted_zone_name
+      route53_public_hosted_zone_name = var.existing_route53_public_hosted_zone_name
       private_zone_name = var.ddc_infra_config != null ? local.private_zone_name : null
     }
   }
