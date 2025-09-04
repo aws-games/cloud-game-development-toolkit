@@ -28,7 +28,7 @@ locals {
 
     ### ExampleUser#2 ###
 
-    ### ExampleUaer#3 ###
+    ### ExampleUser#3 ###
   }
   # Extract user list dynamically from user data
   vdi_users = toset(keys(local.vdi_user_data))
