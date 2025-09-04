@@ -7,7 +7,7 @@ module "vdi" {
 
   # Add extracted user IPs
   user_public_ips = local.user_public_ips
-  
+
   # General Configuration
   project_prefix = var.project_prefix
   environment    = var.environment

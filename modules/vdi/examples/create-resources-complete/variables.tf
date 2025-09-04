@@ -2,12 +2,6 @@
 # GENERAL CONFIGURATION
 ########################################
 
-variable "aws_region" {
-  type        = string
-  description = "The AWS region to deploy resources in"
-  default     = "us-east-1"
-}
-
 variable "name" {
   type        = string
   description = "The name attached to VDI module resources"
@@ -73,12 +67,6 @@ variable "instance_type" {
 ########################################
 # MANAGED MICROSOFT AD CONFIGURATION
 ########################################
-
-variable "directory_admin_password_secret_name" {
-  type        = string
-  description = "Name of the AWS Secrets Manager secret that will store the auto-generated AD administrator password"
-  default     = null # Will be generated with random suffix
-}
 
 variable "directory_admin_password" {
   type        = string

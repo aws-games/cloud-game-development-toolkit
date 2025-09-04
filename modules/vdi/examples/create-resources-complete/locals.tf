@@ -18,7 +18,7 @@ locals {
       family_name   = "User"
       email         = "example.user@company.com"
       role          = "Senior Developer"
-      public_ip     = "10.20.30.40"  # Replace with user public IP ##Required for connectivity through security groups##
+      public_ip     = "10.20.30.40"     # Replace with user public IP ##Required for connectivity through security groups##
       instance_type = var.instance_type # g4dn.2xlarge
       volumes = {
         Root   = { capacity = 256, type = "gp3", iops = 5000 }
@@ -29,7 +29,7 @@ locals {
     ### ExampleUser#2 ###
 
     ### ExampleUaer#3 ###
-  }  
+  }
   # Extract user list dynamically from user data
   vdi_users = toset(keys(local.vdi_user_data))
 
