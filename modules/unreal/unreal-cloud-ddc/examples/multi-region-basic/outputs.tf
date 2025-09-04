@@ -9,6 +9,8 @@ output "us-east-1" {
     ddc_endpoint_nlb = "https://${module.unreal_cloud_ddc_primary.nlb_dns_name}"
     bearer_token_secret_arn = module.unreal_cloud_ddc_primary.bearer_token_secret_arn
     security_warning = module.unreal_cloud_ddc_primary.ddc_connection.security_warning
+    scylla_instance_ids = module.unreal_cloud_ddc_primary.ddc_infra.scylla_instance_ids
+    scylla_ips = module.unreal_cloud_ddc_primary.ddc_infra.scylla_ips
   }
 }
 
@@ -20,6 +22,8 @@ output "us-west-1" {
     ddc_endpoint = "https://${aws_route53_record.secondary_ddc_service.name}"
     ddc_endpoint_nlb = "https://${module.unreal_cloud_ddc_secondary.nlb_dns_name}"
     security_warning = module.unreal_cloud_ddc_secondary.ddc_connection.security_warning
+    scylla_instance_ids = module.unreal_cloud_ddc_secondary.ddc_infra.scylla_instance_ids
+    scylla_ips = module.unreal_cloud_ddc_secondary.ddc_infra.scylla_ips
   }
 }
 

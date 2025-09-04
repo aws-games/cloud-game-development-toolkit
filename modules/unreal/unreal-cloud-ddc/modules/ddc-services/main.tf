@@ -107,79 +107,16 @@ data "aws_eks_cluster" "cluster" {
   name = var.cluster_name
 }
 
-################################################################################
-# ECR Pull-Through Cache
-################################################################################
-
-resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_cache_rule" {
-  ecr_repository_prefix = "github"
-  upstream_registry_url = "ghcr.io"
-  credential_arn        = var.ghcr_credentials_secret_manager_arn
+# GHCR credentials from Secrets Manager
+data "aws_secretsmanager_secret_version" "ghcr_credentials" {
+  secret_id = var.ghcr_credentials_secret_manager_arn
 }
 
-# Trigger ECR pull-through cache authentication by making API call
-resource "null_resource" "trigger_ecr_auth" {
-  triggers = {
-    ecr_rule_id = aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule.registry_id
-    repository  = "github/epicgames/unreal-cloud-ddc"
-    tag         = "${var.unreal_cloud_ddc_version}+helm"
-  }
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "🔄 Triggering ECR pull-through cache authentication..."
-      
-      # Force ECR to authenticate by attempting to describe the repository
-      # This triggers the pull-through cache to create the repo and authenticate
-      echo "📡 Making ECR API call to trigger authentication..."
-      
-      # Try to describe the repository - this will trigger ECR to create it
-      aws ecr describe-repository \
-        --repository-name ${self.triggers.repository} \
-        --region ${var.region} 2>/dev/null || echo "Repository will be created on first pull"
-      
-      echo "✅ ECR authentication trigger completed"
-      echo "ℹ️  ECR will authenticate with GHCR when Helm requests the chart"
-    EOT
-  }
 
-  depends_on = [aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule]
-}
 
-# Simple wait to allow ECR rule to propagate
-resource "time_sleep" "ecr_rule_propagation" {
-  create_duration = "15s"
-  depends_on      = [null_resource.trigger_ecr_auth]
-}
 
-# Clean up ECR repositories created by pull-through cache
-# Evidence: cwwalb deployments left orphaned ECR repos that persist after destroy
-resource "null_resource" "ecr_cleanup" {
-  triggers = {
-    repository_name = "github/epicgames/unreal-cloud-ddc"
-    region         = var.region
-    # Force recreation when ECR rule changes to ensure cleanup runs
-    ecr_rule_id    = aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule.registry_id
-    show_messages  = tostring(var.auto_cleanup_status_messages)
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOT
-      ${try(self.triggers.show_messages, "true") == "true" ? "echo '[DDC CLEANUP - ECR]: Starting ECR repository cleanup'" : ""}
-      
-      # Delete the auto-created repository (ignore errors if it doesn't exist)
-      aws ecr delete-repository \
-        --repository-name ${self.triggers.repository_name} \
-        --region ${self.triggers.region} \
-        --force 2>/dev/null || ${try(self.triggers.show_messages, "true") == "true" ? "echo '[DDC CLEANUP - ECR]: Repository ${self.triggers.repository_name} not found or already deleted'" : "true"}
-      
-      ${try(self.triggers.show_messages, "true") == "true" ? "echo '[DDC CLEANUP - ECR]: ECR cleanup completed'" : ""}
-    EOT
-  }
-
-  depends_on = [aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule]
-}
+# Direct GHCR access - much simpler than ECR pull-through cache
 
 
 
@@ -197,6 +134,7 @@ resource "null_resource" "helm_cleanup" {
     region       = var.region
     timeout      = var.helm_cleanup_timeout
     name_prefix  = "${var.project_prefix}-${var.name}"
+    namespace    = var.namespace
     show_messages = var.auto_cleanup_status_messages
   }
 
@@ -208,23 +146,29 @@ resource "null_resource" "helm_cleanup" {
       ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Cluster: ${self.triggers.cluster_name}'" : ""}
       ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Namespace: ${self.triggers.namespace}'" : ""}
 
-      # Test EKS API access first
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Testing EKS API access'" : ""}
-      if ! aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
-        echo "[DDC CLEANUP - HELM]: ERROR - EKS API ACCESS FAILED!"
-        echo "[DDC CLEANUP - HELM]: COMMON CAUSES:"
-        echo "[DDC CLEANUP - HELM]:   - Your IP changed since deployment"
-        echo "[DDC CLEANUP - HELM]:   - Not in eks_api_access_cidrs allowlist"
-        echo "[DDC CLEANUP - HELM]:   - AWS credentials expired/invalid"
-        echo "[DDC CLEANUP - HELM]:   - EKS cluster already deleted"
+      # Aggressive retry for EKS API access (critical for proper cleanup order)
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Testing EKS API access with retries'" : ""}
+      
+      EKS_ACCESS_SUCCESS=false
+      for attempt in {1..10}; do
+        if aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
+          EKS_ACCESS_SUCCESS=true
+          ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: EKS API access successful on attempt $attempt'" : ""}
+          break
+        fi
+        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: EKS API access failed, attempt $attempt/10. Retrying in 10s...'" : ""}
+        sleep 10
+      done
+      
+      if [ "$EKS_ACCESS_SUCCESS" = "false" ]; then
+        echo "[DDC CLEANUP - HELM]: CRITICAL ERROR - EKS API ACCESS FAILED AFTER 10 ATTEMPTS!"
+        echo "[DDC CLEANUP - HELM]: Cannot proceed - Load Balancer Controller cleanup requires API access"
         echo "[DDC CLEANUP - HELM]: TROUBLESHOOTING:"
         echo "[DDC CLEANUP - HELM]:   1. Check current IP: curl https://checkip.amazonaws.com/"
         echo "[DDC CLEANUP - HELM]:   2. Update eks_api_access_cidrs with current IP"
         echo "[DDC CLEANUP - HELM]:   3. Run: terraform apply (to update EKS access)"
         echo "[DDC CLEANUP - HELM]:   4. Then retry: terraform destroy"
-        echo "[DDC CLEANUP - HELM]: Full troubleshooting guide:"
-        echo "[DDC CLEANUP - HELM]:   https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc#destroy-troubleshooting"
-        echo "[DDC CLEANUP - HELM]: DESTROY STOPPED to prevent orphaned AWS resources!"
+        echo "[DDC CLEANUP - HELM]: DESTROY BLOCKED to prevent ENI orphaning!"
         exit 1
       fi
 
@@ -236,10 +180,11 @@ resource "null_resource" "helm_cleanup" {
       # Primary release
       if helm list -n ${self.triggers.namespace} | grep -q "${self.triggers.name_prefix}-initialize"; then
         ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Removing ${self.triggers.name_prefix}-initialize'" : ""}
-        if ! helm uninstall ${self.triggers.name_prefix}-initialize -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
-          echo "[DDC CLEANUP - HELM]: ERROR - Failed to uninstall ${self.triggers.name_prefix}-initialize"
-          echo "[DDC CLEANUP - HELM]: Troubleshooting: https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc#helm-cleanup-failures"
-          exit 1
+        if ! timeout ${self.triggers.timeout} helm uninstall ${self.triggers.name_prefix}-initialize -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
+          echo "[DDC CLEANUP - HELM]: WARNING - Failed to uninstall ${self.triggers.name_prefix}-initialize"
+          echo "[DDC CLEANUP - HELM]: Attempting force cleanup..."
+          helm uninstall ${self.triggers.name_prefix}-initialize -n ${self.triggers.namespace} --no-hooks --timeout=30s || true
+          echo "[DDC CLEANUP - HELM]: Force cleanup completed - continuing destroy"
         fi
         ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: ${self.triggers.name_prefix}-initialize removed'" : ""}
       else
@@ -249,16 +194,25 @@ resource "null_resource" "helm_cleanup" {
       # Replication release (if exists)
       if helm list -n ${self.triggers.namespace} | grep -q "${self.triggers.name_prefix}-replicate"; then
         ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Removing ${self.triggers.name_prefix}-replicate'" : ""}
-        if ! helm uninstall ${self.triggers.name_prefix}-replicate -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
-          echo "[DDC CLEANUP - HELM]: ERROR - Failed to uninstall ${self.triggers.name_prefix}-replicate"
-          echo "[DDC CLEANUP - HELM]: Troubleshooting: https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc#helm-cleanup-failures"
-          exit 1
+        if ! timeout ${self.triggers.timeout} helm uninstall ${self.triggers.name_prefix}-replicate -n ${self.triggers.namespace} --wait --timeout=${self.triggers.timeout}s; then
+          echo "[DDC CLEANUP - HELM]: WARNING - Failed to uninstall ${self.triggers.name_prefix}-replicate"
+          echo "[DDC CLEANUP - HELM]: Attempting force cleanup..."
+          helm uninstall ${self.triggers.name_prefix}-replicate -n ${self.triggers.namespace} --no-hooks --timeout=30s || true
+          echo "[DDC CLEANUP - HELM]: Force cleanup completed - continuing destroy"
         fi
         ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: ${self.triggers.name_prefix}-replicate removed'" : ""}
       else
         ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: ${self.triggers.name_prefix}-replicate not found (already removed)'" : ""}
       fi
 
+      # Force cleanup TargetGroupBinding to ensure ENI cleanup
+      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Cleaning up TargetGroupBinding to prevent ENI orphaning'" : ""}
+      kubectl delete targetgroupbinding ${self.triggers.name_prefix}-tgb -n ${self.triggers.namespace} --timeout=60s --ignore-not-found=true || {
+        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: TGB cleanup failed, forcing deletion'" : ""}
+        kubectl patch targetgroupbinding ${self.triggers.name_prefix}-tgb -n ${self.triggers.namespace} --type='merge' -p='{"metadata":{"finalizers":[]}}' 2>/dev/null || true
+        kubectl delete targetgroupbinding ${self.triggers.name_prefix}-tgb -n ${self.triggers.namespace} --force --grace-period=0 2>/dev/null || true
+      }
+      
       ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Helm cleanup completed successfully'" : ""}
       ${self.triggers.show_messages ? "echo '[DDC CLEANUP - HELM]: Safe to proceed with infrastructure destruction'" : ""}
     EOT
@@ -277,14 +231,18 @@ resource "null_resource" "helm_cleanup" {
 resource "helm_release" "unreal_cloud_ddc_initialization" {
   name         = "${local.name_prefix}-initialize"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
+  repository   = "oci://ghcr.io/epicgames"
   namespace    = var.namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
-  timeout      = 600  # 10 minutes - appropriate for DDC complexity
+  timeout      = 120  # 2 minutes - faster feedback now that DDC starts successfully
 
   disable_webhooks = true
   cleanup_on_fail  = true
+
+  # GHCR authentication for Helm using existing secret
+  repository_username = jsondecode(data.aws_secretsmanager_secret_version.ghcr_credentials.secret_string)["username"]
+  repository_password = jsondecode(data.aws_secretsmanager_secret_version.ghcr_credentials.secret_string)["accessToken"]
 
   values = local.base_values
   
@@ -297,6 +255,7 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
   set {
     name  = "service.port"
     value = "80"
+    type  = "string"
   }
   
   set {
@@ -305,8 +264,13 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
   }
   
   set {
+    name  = "image.repository"
+    value = split(":", var.ddc_image)[0]
+  }
+  
+  set {
     name  = "image.tag"
-    value = var.unreal_cloud_ddc_version
+    value = split(":", var.ddc_image)[1]
   }
   
   # Disable NGINX sidecar completely for bring-your-own NLB
@@ -324,88 +288,122 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
   set {
     name  = "env[0].name"
     value = "ASPNETCORE_URLS"
+    type  = "string"
   }
   
   set {
     name  = "env[0].value"
     value = "http://0.0.0.0:80"
+    type  = "string"
   }
   
   # Additional Kestrel configuration override
   set {
     name  = "env[1].name"
     value = "Kestrel__Endpoints__Http__Url"
+    type  = "string"
   }
   
   set {
     name  = "env[1].value"
     value = "http://0.0.0.0:80"
+    type  = "string"
   }
   
-  # Database configuration (unified for Scylla and Keyspaces)
+  # Database configuration overrides (critical for Keyspaces)
   set {
     name  = "env[2].name"
-    value = var.database_connection.type == "scylla" ? "Scylla__LocalDatacenterName" : "Keyspaces__Region"
+    value = "Database__Type"
+    type  = "string"
   }
   
   set {
     name  = "env[2].value"
-    value = var.database_connection.type == "scylla" ? var.scylla_datacenter_name : var.region
+    value = var.database_connection.type
+    type  = "string"
   }
   
   set {
     name  = "env[3].name"
-    value = var.database_connection.type == "scylla" ? "Scylla__LocalKeyspaceSuffix" : "Keyspaces__KeyspaceName"
+    value = "Database__Host"
+    type  = "string"
   }
   
   set {
     name  = "env[3].value"
-    value = var.database_connection.type == "scylla" ? var.scylla_keyspace_suffix : var.database_connection.keyspace_name
+    value = var.database_connection.host
+    type  = "string"
   }
   
-  # Database connection configuration
   set {
     name  = "env[4].name"
-    value = "Database__Type"
+    value = "Database__Port"
+    type  = "string"
   }
   
   set {
     name  = "env[4].value"
-    value = var.database_connection.type
+    value = var.database_connection.port
+    type  = "string"
   }
   
   set {
     name  = "env[5].name"
-    value = "Database__Host"
+    value = "Database__AuthType"
+    type  = "string"
   }
   
   set {
     name  = "env[5].value"
-    value = var.database_connection.host
-  }
-  
-  set {
-    name  = "env[6].name"
-    value = "Database__Port"
-  }
-  
-  set {
-    name  = "env[6].value"
-    value = tostring(var.database_connection.port)
-  }
-  
-  set {
-    name  = "env[7].name"
-    value = "Database__AuthType"
-  }
-  
-  set {
-    name  = "env[7].value"
     value = var.database_connection.auth_type
+    type  = "string"
   }
+  
+  # Override UnrealCloudDDC implementation settings dynamically
+  set {
+    name  = "worker.config.UnrealCloudDDC.BlobIndexImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "worker.config.UnrealCloudDDC.ContentIdStoreImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "worker.config.UnrealCloudDDC.ReferencesDbImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "worker.config.UnrealCloudDDC.ReplicationLogWriterImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  # Override main service UnrealCloudDDC implementation settings
+  set {
+    name  = "config.UnrealCloudDDC.BlobIndexImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "config.UnrealCloudDDC.ContentIdStoreImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "config.UnrealCloudDDC.ReferencesDbImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  set {
+    name  = "config.UnrealCloudDDC.ReplicationLogWriterImplementation"
+    value = var.database_connection.type == "scylla" ? "Scylla" : "Keyspaces"
+  }
+  
+  # Remove conflicting hardcoded configurations - let Helm values template handle database config
 
   depends_on = [
-    time_sleep.ecr_rule_propagation,  # Wait for ECR rule to propagate
     module.eks_blueprints_addons      # Terraform handles dependency ordering
   ]
 }
@@ -414,9 +412,54 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
 # TargetGroupBinding - Connect ClusterIP Service to Existing NLB Target Group
 ################################################################################
 
-resource "kubectl_manifest" "target_group_binding" {
-  # Always create TGB when services module is deployed
+# Initial wait for EKS DNS propagation
+resource "time_sleep" "wait_for_eks_dns" {
+  create_duration = "60s"  # Initial wait before checking
   
+  depends_on = [
+    helm_release.unreal_cloud_ddc_initialization,
+    module.eks_blueprints_addons
+  ]
+}
+
+# Verify EKS DNS with fallback to 5-minute total wait
+resource "null_resource" "verify_eks_dns" {
+  triggers = {
+    cluster_endpoint = var.cluster_endpoint
+  }
+  
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "[DNS TIMING]: Starting DNS verification at $(date)"
+      echo "[DNS TIMING]: EKS endpoint: ${var.cluster_endpoint}"
+      
+      # Extract hostname from https://hostname/path
+      EKS_HOSTNAME=$(echo "${var.cluster_endpoint}" | sed 's|https://||' | sed 's|/.*||')
+      echo "[DNS TIMING]: Testing hostname: $EKS_HOSTNAME"
+      
+      # Try DNS resolution up to 8 times (4 minutes after initial 1-minute wait = 5 minutes total)
+      for i in {1..8}; do
+        echo "[DNS TIMING]: DNS check attempt $i/8 at $(date)"
+        if nslookup "$EKS_HOSTNAME" >/dev/null 2>&1; then
+          echo "[DNS TIMING]: SUCCESS - EKS DNS resolved on attempt $i after $((60 + (i-1)*30)) seconds total"
+          exit 0
+        fi
+        if [ $i -lt 8 ]; then
+          echo "[DNS TIMING]: DNS not ready, waiting 30s before retry $((i+1))/8"
+          sleep 30
+        fi
+      done
+      
+      echo "[DNS TIMING]: ERROR - EKS DNS still not resolvable after 5 minutes total"
+      echo "[DNS TIMING]: Final attempt failed at $(date)"
+      exit 1
+    EOT
+  }
+  
+  depends_on = [time_sleep.wait_for_eks_dns]
+}
+
+resource "kubectl_manifest" "target_group_binding" {
   yaml_body = <<YAML
 apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
@@ -432,86 +475,8 @@ spec:
 YAML
   
   depends_on = [
-    helm_release.unreal_cloud_ddc_initialization,
-    module.eks_blueprints_addons
+    null_resource.verify_eks_dns  # DNS verified OR 5-minute timeout
   ]
-}
-
-# Comprehensive cleanup to ensure AWS resources are fully removed before infrastructure destruction
-resource "null_resource" "comprehensive_cleanup" {
-  triggers = {
-    tgb_name = "${local.name_prefix}-tgb"
-    namespace = var.namespace
-    cluster_name = var.cluster_name
-    region = var.region
-    show_messages = var.auto_cleanup_status_messages
-    target_group_arn = var.nlb_target_group_arn
-  }
-
-  # Creation-time: Remove finalizers to prevent deadlock
-  provisioner "local-exec" {
-    command = <<-EOT
-      ${self.triggers.show_messages ? "echo '[DDC SETUP - TGB]: Removing TargetGroupBinding finalizer to prevent destroy deadlock'" : ""}
-      
-      # Configure kubectl
-      aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name}
-      
-      # Wait for TGB to be fully created
-      sleep 10
-      
-      # Remove any finalizers the controller might have added
-      kubectl patch targetgroupbinding ${self.triggers.tgb_name} -n ${self.triggers.namespace} \
-        --type='merge' -p='{"metadata":{"finalizers":[]}}' || true
-      
-      ${self.triggers.show_messages ? "echo '[DDC SETUP - TGB]: Finalizer removed - TGB can now be destroyed cleanly'" : ""}
-    EOT
-  }
-
-  # Destruction-time: Ensure complete cleanup before proceeding
-  provisioner "local-exec" {
-    when = destroy
-    command = <<-EOT
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Starting comprehensive AWS resource cleanup'" : ""}
-      
-      # Configure kubectl
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Configuring kubectl access'" : ""}
-      if ! aws eks update-kubeconfig --region ${self.triggers.region} --name ${self.triggers.cluster_name} 2>/dev/null; then
-        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: EKS cluster already deleted or inaccessible - cleanup not needed'" : ""}
-        exit 0
-      fi
-      
-      # Force delete TGB if it still exists
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Force deleting TargetGroupBinding to trigger controller cleanup'" : ""}
-      kubectl delete targetgroupbinding ${self.triggers.tgb_name} -n ${self.triggers.namespace} --ignore-not-found=true --timeout=60s || {
-        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: TGB deletion failed or not found - continuing'" : ""}
-      }
-      
-      # Wait for target group to be fully drained (max 2 minutes)
-      ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Waiting for target group to be drained (max 2 minutes)'" : ""}
-      for i in {1..60}; do
-        TARGETS=$(aws elbv2 describe-target-health --target-group-arn ${self.triggers.target_group_arn} --query 'TargetHealthDescriptions[].Target.Id' --output text 2>/dev/null || echo "")
-        if [ -z "$TARGETS" ] || [ "$TARGETS" = "None" ]; then
-          ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Target group fully drained - safe to proceed'" : ""}
-          break
-        fi
-        if [ $((i % 10)) -eq 0 ]; then
-          ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Still waiting for targets to drain... ($i/60) - Targets: $TARGETS'" : ""}
-        fi
-        sleep 2
-      done
-      
-      # Final check and warning
-      FINAL_TARGETS=$(aws elbv2 describe-target-health --target-group-arn ${self.triggers.target_group_arn} --query 'TargetHealthDescriptions[].Target.Id' --output text 2>/dev/null || echo "")
-      if [ -n "$FINAL_TARGETS" ] && [ "$FINAL_TARGETS" != "None" ]; then
-        echo "[DDC CLEANUP - COMPREHENSIVE]: WARNING - Targets still registered after 2 minutes: $FINAL_TARGETS"
-        echo "[DDC CLEANUP - COMPREHENSIVE]: Proceeding anyway - EKS deletion may encounter issues"
-      else
-        ${self.triggers.show_messages ? "echo '[DDC CLEANUP - COMPREHENSIVE]: Comprehensive cleanup completed successfully'" : ""}
-      fi
-    EOT
-  }
-
-  depends_on = [kubectl_manifest.target_group_binding]
 }
 
 resource "time_sleep" "wait_for_init" {
@@ -524,11 +489,15 @@ resource "helm_release" "unreal_cloud_ddc_with_replication" {
   count        = var.unreal_cloud_ddc_helm_replication_chart != null && var.ddc_replication_region_url != null ? 1 : 0
   name         = "${local.name_prefix}-replicate"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
+  repository   = "oci://ghcr.io/epicgames"
   namespace    = var.namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
-  timeout      = 600
+  timeout      = 120
+
+  # GHCR authentication for Helm using existing secret
+  repository_username = jsondecode(data.aws_secretsmanager_secret_version.ghcr_credentials.secret_string)["username"]
+  repository_password = jsondecode(data.aws_secretsmanager_secret_version.ghcr_credentials.secret_string)["accessToken"]
 
   values = local.replication_values
 

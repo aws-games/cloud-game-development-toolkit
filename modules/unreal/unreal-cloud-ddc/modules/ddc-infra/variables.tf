@@ -429,3 +429,9 @@ variable "amazon_keyspaces_config" {
   description = "Amazon Keyspaces configuration from parent module (null if using Scylla)"
   default     = null
 }
+
+variable "keyspace_name" {
+  description = "Keyspace name from parent module to avoid duplication"
+  type        = string
+  default     = null
+}

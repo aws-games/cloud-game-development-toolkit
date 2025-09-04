@@ -9,15 +9,20 @@ module "unreal_cloud_ddc_primary" {
     helm       = helm.primary
   }
   
-  # Database Choice: Amazon Keyspaces (global tables)
-  amazon_keyspaces_config = {
-    keyspaces = {
-      "jupiter_local_ddc_us_east_1" = {
-        enable_cross_region_replication = true
-        peer_regions = [local.secondary_region]  # Replicate to us-west-1
-        point_in_time_recovery = true  # Recommended for production
+  # Database Choice: ScyllaDB (multi-region primary)
+  scylla_config = {
+    current_region = {
+      datacenter_name = "us-east"
+      replication_factor = 3
+      node_count = 3
+    }
+    peer_regions = {
+      "us-west-1" = {
+        datacenter_name = "us-west"
+        replication_factor = 2
       }
     }
+    enable_cross_region_replication = true
   }
   
   # Basic Configuration
@@ -37,9 +42,11 @@ module "unreal_cloud_ddc_primary" {
   # Infrastructure Configuration
   ddc_infra_config = {
     region = local.primary_region
+    create_seed_node = true  # Primary creates seed
     eks_node_group_subnets = aws_subnet.primary_private[*].id
     eks_api_access_cidrs   = [local.my_ip_cidr]
-    # Note: scylla_subnets not needed for Keyspaces
+    scylla_subnets = aws_subnet.primary_private[*].id
+    scylla_replication_factor = 3
   }
   
   # Services Configuration
@@ -58,15 +65,20 @@ module "unreal_cloud_ddc_secondary" {
     helm       = helm.secondary
   }
   
-  # Database Choice: Same global Keyspaces (automatically available)
-  amazon_keyspaces_config = {
-    keyspaces = {
-      "jupiter_local_ddc_us_west_1" = {
-        enable_cross_region_replication = true
-        peer_regions = [local.primary_region]  # Reference primary region
-        point_in_time_recovery = false
+  # Database Choice: ScyllaDB (multi-region secondary)
+  scylla_config = {
+    current_region = {
+      datacenter_name = "us-west"
+      replication_factor = 2
+      node_count = 2
+    }
+    peer_regions = {
+      "us-east-1" = {
+        datacenter_name = "us-east"
+        replication_factor = 3
       }
     }
+    enable_cross_region_replication = true
   }
   
   # Basic Configuration
@@ -95,9 +107,13 @@ module "unreal_cloud_ddc_secondary" {
   # Infrastructure Configuration
   ddc_infra_config = {
     region = local.secondary_region
+    create_seed_node = false  # Secondary connects to primary
+    existing_scylla_seed = module.unreal_cloud_ddc_primary.ddc_infra.scylla_seed
+    scylla_source_region = local.primary_region
     eks_node_group_subnets = aws_subnet.secondary_private[*].id
     eks_api_access_cidrs = [local.my_ip_cidr]
-    # Note: No Scylla configuration needed for Keyspaces
+    scylla_subnets = aws_subnet.secondary_private[*].id
+    scylla_replication_factor = 2
   }
   
   # Services Configuration

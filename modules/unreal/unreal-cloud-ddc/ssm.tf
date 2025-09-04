@@ -3,7 +3,6 @@
 ########################################
 
 # SSM document to fix DDC keyspace replication strategy
-# Follows cwwalb approach with dynamic configuration
 resource "aws_ssm_document" "scylla_keyspace_replication_fix" {
   count = var.scylla_config != null ? 1 : 0
   
@@ -13,7 +12,7 @@ resource "aws_ssm_document" "scylla_keyspace_replication_fix" {
   
   content = <<DOC
 schemaVersion: '2.2'
-description: 'Fix DDC keyspace replication strategy for ${local.scylla_config.keyspace_name}'
+description: 'Fix DDC keyspace replication strategy for ${local.scylla_config.local_keyspace_name} - v2'
 parameters:
   executionTimeout:
     type: String
@@ -26,7 +25,7 @@ mainSteps:
       timeoutSeconds: '{{ executionTimeout }}'
       runCommand:
         - |
-          echo "Starting ScyllaDB keyspace replication fix for ${local.scylla_config.keyspace_name}"
+          echo "Starting ScyllaDB keyspace replication fix for ${local.scylla_config.local_keyspace_name}"
           echo "Target replication map: ${jsonencode(local.scylla_config.replication_map)}"
           
           # Retry configuration
@@ -48,12 +47,12 @@ mainSteps:
             echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking DDC keyspace initialization..."
             
             # Check if keyspace exists
-            if cqlsh --request-timeout=30 -e "DESCRIBE KEYSPACE ${local.scylla_config.keyspace_name};" 2>/dev/null >/dev/null; then
-              echo "Keyspace ${local.scylla_config.keyspace_name} found - DDC is ready!"
+            if cqlsh --request-timeout=30 -e "DESCRIBE KEYSPACE ${local.scylla_config.local_keyspace_name};" 2>/dev/null >/dev/null; then
+              echo "Keyspace ${local.scylla_config.local_keyspace_name} found - DDC is ready!"
               SUCCESS=true
               break
             else
-              echo "Keyspace ${local.scylla_config.keyspace_name} not found yet (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+              echo "Keyspace ${local.scylla_config.local_keyspace_name} not found yet (attempt $ATTEMPT/$MAX_ATTEMPTS)"
               
               if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
                 echo "Waiting $RETRY_INTERVAL seconds before next attempt..."
@@ -64,7 +63,7 @@ mainSteps:
           done
           
           if [ "$SUCCESS" = "false" ]; then
-            echo "ERROR: DDC keyspace ${local.scylla_config.keyspace_name} failed to initialize within timeout period"
+            echo "ERROR: DDC keyspace ${local.scylla_config.local_keyspace_name} failed to initialize within timeout period"
             echo "Troubleshooting steps:"
             echo "1. Check DDC pod logs: kubectl logs -n unreal-cloud-ddc -l app.kubernetes.io/name=unreal-cloud-ddc"
             echo "2. Check ScyllaDB connectivity: cqlsh -e 'DESCRIBE KEYSPACES;'"
@@ -73,9 +72,9 @@ mainSteps:
             exit 1
           fi
           
-          echo "Keyspace ${local.scylla_config.keyspace_name} found. Starting replication fixes..."
+          echo "Keyspace ${local.scylla_config.local_keyspace_name} found. Starting replication fixes..."
           
-          # Execute progressive ALTER commands (cwwalb style)
+          # Execute progressive ALTER commands
           %{~ for i, cmd in local.scylla_config.alter_commands ~}
           echo "Step ${i + 1}/${length(local.scylla_config.alter_commands)}: ${cmd}"
           if ! cqlsh --request-timeout=120 -e "${cmd}"; then
@@ -87,7 +86,7 @@ mainSteps:
           
           # Verify final replication configuration
           echo "Verifying final replication configuration..."
-          cqlsh --request-timeout=30 -e "SELECT keyspace_name, replication FROM system_schema.keyspaces WHERE keyspace_name = '${local.scylla_config.keyspace_name}';"
+          cqlsh --request-timeout=30 -e "SELECT keyspace_name, replication FROM system_schema.keyspaces WHERE keyspace_name = '${local.scylla_config.local_keyspace_name}';"
           
           echo "ScyllaDB keyspace replication fix completed successfully!"
           echo "Final replication map: ${jsonencode(local.scylla_config.replication_map)}"
@@ -105,6 +104,13 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
   count = var.scylla_config != null && try(var.ddc_infra_config.create_seed_node, true) == true ? 1 : 0
   
   name = aws_ssm_document.scylla_keyspace_replication_fix[0].name
+  
+  # Force recreation when keyspace name changes
+  lifecycle {
+    replace_triggered_by = [
+      aws_ssm_document.scylla_keyspace_replication_fix[0].content
+    ]
+  }
   
   targets {
     key    = "InstanceIds"
@@ -147,7 +153,7 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
 output "scylla_alter_commands" {
   description = "Generated ALTER commands for ScyllaDB keyspace replication"
   value = var.scylla_config != null ? {
-    keyspace_name = local.scylla_config.keyspace_name
+    keyspace_name = local.scylla_config.local_keyspace_name
     datacenter_name = local.scylla_config.current_datacenter
     replication_map = local.scylla_config.replication_map
     alter_commands = local.scylla_config.alter_commands

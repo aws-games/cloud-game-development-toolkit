@@ -17,3 +17,15 @@ output "security_warning" {
   description = "Security warnings for the deployment"
   value = module.unreal_cloud_ddc.ddc_connection.security_warning
 }
+
+
+
+output "scylla_instance_ids" {
+  description = "ScyllaDB instance IDs for SSM access"
+  value = module.unreal_cloud_ddc.ddc_infra.scylla_instance_ids
+}
+
+output "scylla_ips" {
+  description = "ScyllaDB instance private IPs"
+  value = module.unreal_cloud_ddc.ddc_infra.scylla_ips
+}

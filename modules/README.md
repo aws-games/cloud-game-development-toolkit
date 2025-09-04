@@ -75,11 +75,11 @@ module "service" {
 
 | Module                                                                                        | Description                                                                                                                                                                                                     | Status             |
 | :-------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------- |
-| [:simple-perforce: **Perforce**](../../modules/perforce/README.md)                            | This module allows for deployment of Perforce resources on AWS. These are currently P4 Server (formerly Helix Core), P4Auth (formerly Helix Authentication Service), and P4 Code Review (formerly Helix Swarm). | ✅ External Access |
-| [:simple-unrealengine: **Unreal Horde**](../../modules/unreal/horde/README.md)                | This module allows for deployment of Unreal Horde on AWS.                                                                                                                                                       | ✅ External Access |
-| [:simple-unrealengine: **Unreal Cloud DDC**](../../modules/unreal/unreal-cloud-ddc/README.md) | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS.                                                                                                                              | ✅ External Access |
-| [:simple-jenkins: **Jenkins**](../../modules/jenkins/README.md)                               | This module allows for deployment of Jenkins on AWS.                                                                                                                                                            | ✅ External Access |
-| [:simple-teamcity: **TeamCity**](../../modules/teamcity/README.md)                            | This module allows for deployment of TeamCity resources on AWS.                                                                                                                                                 | ✅ External Access |
+| [:simple-perforce: **Perforce**](./perforce/README.md)                            | This module allows for deployment of Perforce resources on AWS. These are currently P4 Server (formerly Helix Core), P4Auth (formerly Helix Authentication Service), and P4 Code Review (formerly Helix Swarm). | ✅ External Access |
+| [:simple-unrealengine: **Unreal Horde**](./unreal/horde/README.md)                | This module allows for deployment of Unreal Horde on AWS.                                                                                                                                                       | ✅ External Access |
+| [:simple-unrealengine: **Unreal Cloud DDC**](./unreal/unreal-cloud-ddc/README.md) | This module allows for deployment of Unreal Cloud DDC (Derived Data Cache) on AWS.                                                                                                                              | ✅ External Access |
+| [:simple-jenkins: **Jenkins**](./jenkins/README.md)                               | This module allows for deployment of Jenkins on AWS.                                                                                                                                                            | ✅ External Access |
+| [:simple-teamcity: **TeamCity**](./teamcity/README.md)                            | This module allows for deployment of TeamCity resources on AWS.                                                                                                                                                 | ✅ External Access |
 | 🖥️ **VDI (Virtual Desktop Interface)**                                                        | Virtual desktop infrastructure for game development teams.                                                                                                                                                      | 🔜 Coming Soon     |
 | **Monitoring**                                                                                | Pending development - will provide unified monitoring across all CGD services.                                                                                                                                  | 🚧 Future          |
 
@@ -87,20 +87,6 @@ module "service" {
 
 ## Contributing
 
-For detailed information on contributing new modules or enhancing existing ones, see the [general docs on contributing](../../CONTRIBUTING.md).
+For detailed information on contributing new modules or enhancing existing ones, see the [general docs on contributing](../CONTRIBUTING.md).
 
 **Module Structure Standards**: The parent module with submodules pattern described in the Module Architecture section is our standard approach for complex services with multiple components.
-
-# Modules
-
-## Introduction
-
-These modules simplify the deployment of common game development workloads on AWS. Some have pre-requisites that will be outlined in their respective documentation. They are designed to be depended on from other modules (including your own root module), easily integrate with each other, and provide relevant outputs to simplify permissions, networking, and access.
-
-## How to include these modules
-
-We've found that including the **CGD Toolkit** repository as a git submodule in your own infrastructure repository is a good way of depending on the modules within an (existing) Terraform root module. Forking the **CGD Toolkit** and submoduling your fork may be a good approach if you intend to make changes to any modules. We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed. Note how you can use the [module source argument](https://developer.hashicorp.com/terraform/language/modules/sources) to declare modules that use the **CGD Toolkit**'s module source code.
-
-## Contribution
-
-Please follow the guidelines outlines in the [module contribution guide]() guidelines when developing a new module. These are also outlined in the pull-request template for Module additions.

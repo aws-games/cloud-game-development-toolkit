@@ -89,7 +89,24 @@ terraform output security_warning  # Check for any security issues
 
 ## Verification
 
-### Health Check
+### Functional Test Script
+
+Use the automated functional test script to verify your DDC deployment, or run the individual commands manually if you prefer:
+
+```bash
+# Make script executable and run functional test from example directory
+chmod +x ../../assets/scripts/ddc_functional_test.sh
+../../assets/scripts/ddc_functional_test.sh
+```
+
+**What the test does:**
+- Tests DDC health endpoint
+- Performs PUT operation (write to cache)
+- Performs GET operation (read from cache)
+- Validates bearer token authentication
+- Checks EKS cluster connectivity
+
+### Manual Health Check
 
 ```bash
 # Test DDC health endpoint

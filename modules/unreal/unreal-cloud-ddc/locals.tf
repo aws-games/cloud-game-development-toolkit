@@ -2,7 +2,7 @@
 # Random ID for Predictable Naming
 ########################################
 resource "random_id" "suffix" {
-  byte_length = 4
+  byte_length = 1
   keepers = {
     project_prefix = var.project_prefix
     service_name   = "unreal-cloud-ddc"
@@ -107,10 +107,12 @@ locals {
       var.scylla_config.current_region.keyspace_suffix,
       replace(local.region, "-", "_")
     )
-    keyspace_name = "jupiter_local_ddc_${coalesce(
+    # DDC expects two keyspaces:
+    global_keyspace_name = "jupiter"  # Global/shared keyspace
+    local_keyspace_name = "jupiter_local_ddc_${coalesce(
       var.scylla_config.current_region.keyspace_suffix,
       replace(local.region, "-", "_")
-    )}"
+    )}"  # Region-specific local keyspace
     current_rf = var.scylla_config.current_region.replication_factor
     current_nodes = var.scylla_config.current_region.node_count
     is_multi_region = length(var.scylla_config.peer_regions) > 0
@@ -120,7 +122,16 @@ locals {
         regex("^(.+)-[0-9]+$", local.region)[0]
       )) = var.scylla_config.current_region.replication_factor
     }
-    alter_commands = ["-- Simplified for now"]
+    alter_commands = [
+      # Create global keyspace if it doesn't exist
+      "CREATE KEYSPACE IF NOT EXISTS jupiter WITH replication = {'class': 'NetworkTopologyStrategy', '${coalesce(var.scylla_config.current_region.datacenter_name, regex("^(.+)-[0-9]+$", local.region)[0])}': ${var.scylla_config.current_region.replication_factor}};",
+      # Drop the duplicated keyspace
+      "DROP KEYSPACE IF EXISTS jupiter_local_ddc_${coalesce(var.scylla_config.current_region.keyspace_suffix, replace(local.region, "-", "_"))}_local_ddc;",
+      # Progressive ALTER commands for local keyspace replication (following multi-region pattern)
+      "ALTER KEYSPACE jupiter_local_ddc_${coalesce(var.scylla_config.current_region.keyspace_suffix, replace(local.region, "-", "_"))} WITH replication = {'class': 'NetworkTopologyStrategy', '${coalesce(var.scylla_config.current_region.datacenter_name, regex("^(.+)-[0-9]+$", local.region)[0])}': 0};",
+      "ALTER KEYSPACE jupiter_local_ddc_${coalesce(var.scylla_config.current_region.keyspace_suffix, replace(local.region, "-", "_"))} WITH replication = {'class': 'NetworkTopologyStrategy', '${coalesce(var.scylla_config.current_region.datacenter_name, regex("^(.+)-[0-9]+$", local.region)[0])}': 1};",
+      "ALTER KEYSPACE jupiter_local_ddc_${coalesce(var.scylla_config.current_region.keyspace_suffix, replace(local.region, "-", "_"))} WITH replication = {'class': 'NetworkTopologyStrategy', '${coalesce(var.scylla_config.current_region.datacenter_name, regex("^(.+)-[0-9]+$", local.region)[0])}': ${var.scylla_config.current_region.replication_factor}};"
+    ]
   } : null
   
   # Amazon Keyspaces configuration (when amazon_keyspaces_config is provided)

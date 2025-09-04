@@ -230,7 +230,8 @@ output "scylla_configuration" {
   description = "ScyllaDB configuration details for debugging and validation"
   value = var.scylla_config != null ? {
     datacenter_name = local.scylla_config.current_datacenter
-    keyspace_name   = local.scylla_config.keyspace_name
+    local_keyspace_name = local.scylla_config.local_keyspace_name
+    global_keyspace_name = local.scylla_config.global_keyspace_name
     keyspace_suffix = local.scylla_config.keyspace_suffix
     replication_factor = local.scylla_config.current_rf
     node_count = local.scylla_config.current_nodes
@@ -253,3 +254,5 @@ output "ddc_namespaces" {
   description = "DDC namespace configuration"
   value = var.ddc_application_config.namespaces
 }
+
+

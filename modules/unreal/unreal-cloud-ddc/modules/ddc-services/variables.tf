@@ -170,7 +170,13 @@ variable "replication_factor" {
 variable "unreal_cloud_ddc_version" {
   type        = string
   description = "Version of the Unreal Cloud DDC Helm chart"
-  default     = "1.3.0"
+  default     = "1.2.0"
+}
+
+variable "ddc_image" {
+  type        = string
+  description = "Unreal Cloud DDC container image location. Defaults to Epic Games GitHub Container Registry, but you can optionally specify your own customized version."
+  default     = "ghcr.io/epicgames/unreal-cloud-ddc:1.2.0"
 }
 
 

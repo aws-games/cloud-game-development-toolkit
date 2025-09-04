@@ -14,6 +14,7 @@ module "ddc_infra" {
   # Database Configuration (Mutual Exclusivity)
   scylla_config = var.scylla_config
   amazon_keyspaces_config = var.amazon_keyspaces_config
+  keyspace_name = local.scylla_config != null ? local.scylla_config.local_keyspace_name : null
   
   # Pass through infrastructure config
   name                     = var.ddc_infra_config.name

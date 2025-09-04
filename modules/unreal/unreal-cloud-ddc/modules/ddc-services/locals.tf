@@ -33,6 +33,10 @@ locals {
     ddc_region         = var.scylla_keyspace_suffix != null ? var.scylla_keyspace_suffix : (var.region != null ? replace(var.region, "-", "_") : "")
     replication_factor = var.replication_factor
     
+    # Keyspaces credentials (for service-specific auth)
+    keyspaces_username = var.database_connection.type == "keyspaces" ? "keyspaces-service-user-at-644937705968" : ""
+    keyspaces_password = var.database_connection.type == "keyspaces" ? "ng/PN3E7KlkUASDkYyz0oaopiQiHXi+IlbXy/OJYOwLcufuX2nnAsnDtk7Y=" : ""
+    
     # Common configuration
     aws_region         = var.region != null ? var.region : ""
     token              = var.ddc_bearer_token != null ? var.ddc_bearer_token : ""

@@ -42,22 +42,22 @@ resource "aws_route53_record" "service_private" {
 
 # ScyllaDB DNS records for internal service discovery
 resource "aws_route53_record" "scylla_cluster" {
-  count   = var.ddc_infra_config != null ? 1 : 0
+  count   = var.ddc_infra_config != null && local.database_type == "scylla" && length(module.ddc_infra.scylla_ips) > 0 ? 1 : 0
   zone_id = aws_route53_zone.private.zone_id
   name    = "scylla.${local.private_zone_name}"
   type    = "A"
   ttl     = 300
-  records = var.ddc_infra_config != null ? module.ddc_infra.scylla_ips : []
+  records = module.ddc_infra.scylla_ips
 }
 
 # Individual ScyllaDB node records for debugging
 resource "aws_route53_record" "scylla_nodes" {
-  count   = var.ddc_infra_config != null ? length(module.ddc_infra.scylla_ips) : 0
+  count   = var.ddc_infra_config != null && local.database_type == "scylla" ? length(module.ddc_infra.scylla_ips) : 0
   zone_id = aws_route53_zone.private.zone_id
   name    = "scylla-${count.index + 1}.${local.private_zone_name}"
   type    = "A"
   ttl     = 300
-  records = [var.ddc_infra_config != null ? module.ddc_infra.scylla_ips[count.index] : ""]
+  records = [module.ddc_infra.scylla_ips[count.index]]
 }
 
 ##########################################

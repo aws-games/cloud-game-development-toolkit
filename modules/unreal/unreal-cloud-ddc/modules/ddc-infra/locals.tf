@@ -131,8 +131,8 @@ EOF
   scylla_datacenter_name = replace(var.region, "-1", "")
   scylla_keyspace_suffix = replace(var.region, "-", "_")
   
-  # Keyspace naming matches DDC expectations exactly
-  keyspace_name = var.amazon_keyspaces_config != null ? keys(var.amazon_keyspaces_config.keyspaces)[0] : "jupiter_local_ddc_${replace(var.region, "-", "_")}"
+  # Keyspace naming - use parent module's keyspace name if provided
+  keyspace_name = var.keyspace_name != null ? var.keyspace_name : "jupiter_local_ddc_${replace(var.region, "-", "_")}"
   
   # Database connection abstraction for ddc-services
   database_connection = var.scylla_config != null ? {
