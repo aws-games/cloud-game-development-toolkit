@@ -81,7 +81,7 @@ jobs:
 
       # Use GitHub Action secret to assume existing AWS IAM Role using OIDC connection
       - name: Configure AWS credentials from AWS account
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{secrets.AWS_CI_ROLE_ARN}}
           aws-region: ${{vars.AWS_REGION}}
