@@ -430,28 +430,31 @@ resource "null_resource" "verify_eks_dns" {
   
   provisioner "local-exec" {
     command = <<-EOT
-      echo "[DNS TIMING]: Starting DNS verification at $(date)"
+      echo "[DNS TIMING]: Starting kubectl connectivity test at $(date)"
       echo "[DNS TIMING]: EKS endpoint: ${var.cluster_endpoint}"
       
-      # Extract hostname from https://hostname/path
-      EKS_HOSTNAME=$(echo "${var.cluster_endpoint}" | sed 's|https://||' | sed 's|/.*||')
-      echo "[DNS TIMING]: Testing hostname: $EKS_HOSTNAME"
+      # Configure kubectl to use the same cluster
+      aws eks update-kubeconfig --region ${var.region} --name ${var.cluster_name} --alias dns-test
       
-      # Try DNS resolution up to 8 times (4 minutes after initial 1-minute wait = 5 minutes total)
+      # Test actual kubectl connectivity (same as kubectl provider will do)
       for i in {1..8}; do
-        echo "[DNS TIMING]: DNS check attempt $i/8 at $(date)"
-        if nslookup "$EKS_HOSTNAME" >/dev/null 2>&1; then
-          echo "[DNS TIMING]: SUCCESS - EKS DNS resolved on attempt $i after $((60 + (i-1)*30)) seconds total"
+        echo "[DNS TIMING]: kubectl connectivity attempt $i/8 at $(date)"
+        if kubectl --context=dns-test cluster-info >/dev/null 2>&1; then
+          echo "[DNS TIMING]: SUCCESS - kubectl connectivity established on attempt $i after $((60 + (i-1)*30)) seconds total"
+          # Clean up test context
+          kubectl config delete-context dns-test >/dev/null 2>&1 || true
           exit 0
         fi
         if [ $i -lt 8 ]; then
-          echo "[DNS TIMING]: DNS not ready, waiting 30s before retry $((i+1))/8"
+          echo "[DNS TIMING]: kubectl connection failed, waiting 30s before retry $((i+1))/8"
           sleep 30
         fi
       done
       
-      echo "[DNS TIMING]: ERROR - EKS DNS still not resolvable after 5 minutes total"
+      echo "[DNS TIMING]: ERROR - kubectl still cannot connect after 5 minutes total"
       echo "[DNS TIMING]: Final attempt failed at $(date)"
+      # Clean up test context
+      kubectl config delete-context dns-test >/dev/null 2>&1 || true
       exit 1
     EOT
   }
