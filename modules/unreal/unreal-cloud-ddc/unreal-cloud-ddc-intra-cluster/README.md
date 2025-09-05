@@ -91,7 +91,7 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.7.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.10.0 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | 2.17.0 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.38.0 |
 
