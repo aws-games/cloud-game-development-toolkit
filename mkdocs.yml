@@ -20,12 +20,12 @@ theme:
   favicon: docs/media/logos/favicon.ico
   palette:
     # Palette toggle for automatic mode
-    - media: "(prefers-color-scheme)"
+    - media: '(prefers-color-scheme)'
       toggle:
         icon: material/lightbulb-auto
         name: Switch to light mode
     # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
+    - media: '(prefers-color-scheme: light)'
       scheme: default
       #primary: black
       #accent: teal
@@ -33,7 +33,7 @@ theme:
         icon: material/lightbulb
         name: Switch to dark mode
     # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
+    - media: '(prefers-color-scheme: dark)'
       scheme: slate
       #primary: black
       #accent: teal
@@ -79,7 +79,7 @@ markdown_extensions:
   - def_list
   - tables
   - pymdownx.snippets:
-      base_path: "."
+      base_path: '.'
       check_paths: true
       restrict_base_path: false
   - toc:
@@ -91,8 +91,6 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
-
-
 nav:
   - Home: docs/index.md
   - Getting Started: docs/getting-started.md
@@ -102,49 +100,52 @@ nav:
           - Overview: docs/assets/packer/index.md
           - Build Agents:
               - Linux Build Agents:
-                - assets/packer/build-agents/linux/README.md
+                  - assets/packer/build-agents/linux/README.md
               - Windows Build Agent:
-                - assets/packer/build-agents/windows/README.md
+                  - assets/packer/build-agents/windows/README.md
           - P4 Server: assets/packer/perforce/p4-server/README.md
       - Jenkins Pipelines: assets/jenkins-pipelines/README.md
       - Ansible Playbooks: assets/ansible-playbooks/perforce/p4-server/README.md
       - Dockerfiles: docs/assets/dockerfiles.md
   - Modules:
-      - Overview: docs/modules/index.md
+      - Overview: modules/README.md
       - Perforce: # Section
           - Perforce: # Dropdown
               - Installation & Usage:
-                - modules/perforce/README.md
+                  - modules/perforce/README.md
               - Submodules:
                   - P4 Server:
-                    - modules/perforce/modules/p4-server/README.md
+                      - modules/perforce/modules/p4-server/README.md
                   - P4Auth:
-                    - modules/perforce/modules/p4-auth/README.md
+                      - modules/perforce/modules/p4-auth/README.md
                   - P4 Code Review:
-                    - modules/perforce/modules/p4-code-review/README.md
+                      - modules/perforce/modules/p4-code-review/README.md
       - TeamCity: # Section
           - TeamCity: # Dropdown
               - Installation and Usage:
-                - modules/teamcity/README.md
+                  - modules/teamcity/README.md
       - Jenkins: # Section
           - Jenkins: # Dropdown
               - Installation and Usage:
-                - modules/jenkins/README.md
+                  - modules/jenkins/README.md
       - Unreal Engine:
           - Unreal Engine Horde:
               - Installation and Usage:
-                - modules/unreal/horde/README.md
+                  - modules/unreal/horde/README.md
           - Unreal Cloud DDC:
-              - Unreal Engine Cloud DDC Infra:
-                  - Installation and Usage:
-                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md
-              - Unreal Engine Cloud DDC Intra Cluster:
-                  - Installation and Usage:
-                    - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md
+              - Installation & Usage:
+                  - modules/unreal/unreal-cloud-ddc/README.md
+              - Submodules:
+                  - DDC Infra:
+                      - modules/unreal/unreal-cloud-ddc/modules/ddc-infra/README.md
+                  - DDC Services:
+                      - modules/unreal/unreal-cloud-ddc/modules/ddc-services/README.md
+                  - DDC Monitoring:
+                      - modules/unreal/unreal-cloud-ddc/modules/ddc-monitoring/README.md
       - Unity:
           - Accelerator:
               - Installation and Usage:
-                - modules/unity/accelerator/README.md
+                  - modules/unity/accelerator/README.md
   - Samples:
       - Overview: samples/README.md
       - Simple Build Pipeline: samples/simple-build-pipeline/README.md
@@ -163,7 +164,6 @@ plugins:
   - redirects:
       redirect_maps:
         'index.md': 'docs/index.md'
-
 
 extra:
   version:
