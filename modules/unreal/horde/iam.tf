@@ -126,8 +126,8 @@ resource "aws_iam_role_policy_attachment" "unreal_horde_task_execution_policy_at
 }
 
 resource "aws_iam_role_policy_attachment" "unreal_horde_secrets_manager_policy_attachment" {
-  for_each = toset(aws_iam_policy.unreal_horde_secrets_manager_policy[*].arn)
+  count = var.github_credentials_secret_arn != null || var.p4_super_user_username_secret_arn != null ? 1 : 0
 
   role       = aws_iam_role.unreal_horde_task_execution_role.name
-  policy_arn = each.key
+  policy_arn = aws_iam_policy.unreal_horde_secrets_manager_policy[0].arn
 }
