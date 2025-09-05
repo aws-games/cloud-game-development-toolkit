@@ -18,7 +18,7 @@ resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
 
   # Enable cross-region replication for multi-region DDC deployments
   dynamic "replica" {
-    for_each = var.bearer_token_replica_regions
+    for_each = var.bearer_token_replica_regions != null ? var.bearer_token_replica_regions : []
     content {
       region = replica.value
     }

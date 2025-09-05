@@ -12,7 +12,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.16.0, < 3.0.0"  # DO NOT CHANGE - EKS addons remote module requires this version constraint
+      version = ">= 2.16.0, < 3.0.0" # DO NOT CHANGE - EKS addons remote module requires this version constraint
     }
     random = {
       source  = "hashicorp/random"
@@ -26,10 +26,7 @@ terraform {
       source  = "hashicorp/time"
       version = ">= 0.9"
     }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = ">= 1.14.0"
-    }
+
     awscc = {
       source  = "hashicorp/awscc"
       version = ">= 1.0.0"

@@ -5,23 +5,23 @@
 # Private hosted zone for internal DNS (always created)
 resource "aws_route53_zone" "private" {
   name = local.private_zone_name
-  
+
   vpc {
-    vpc_id = var.existing_vpc_id
+    vpc_id = var.vpc_id
   }
-  
+
   tags = merge(var.tags, {
     Name   = "${local.name_prefix}-private-zone"
     Type   = "Private Hosted Zone"
-    Access = var.internet_facing ? "Internet-facing" : "Internal"
+    Access = var.load_balancers_config.nlb != null ? (var.load_balancers_config.nlb.internet_facing ? "Internet-facing" : "Internal") : "Internal"
     Region = var.region
   })
 }
 
 # Additional VPC associations for cross-region access
 resource "aws_route53_zone_association" "additional_vpcs" {
-  for_each = var.additional_vpc_associations
-  
+  for_each = var.additional_vpc_associations != null ? var.additional_vpc_associations : {}
+
   zone_id = aws_route53_zone.private.zone_id
   vpc_id  = each.value.vpc_id
 }
@@ -32,10 +32,10 @@ resource "aws_route53_record" "service_private" {
   zone_id = aws_route53_zone.private.zone_id
   name    = "${local.region}.${local.service_name}.${local.private_zone_name}"
   type    = "A"
-  
+
   alias {
-    name                   = aws_lb.nlb.dns_name
-    zone_id                = aws_lb.nlb.zone_id
+    name                   = aws_lb.nlb[0].dns_name
+    zone_id                = aws_lb.nlb[0].zone_id
     evaluate_target_health = true
   }
 }

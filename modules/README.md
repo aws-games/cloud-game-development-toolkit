@@ -53,19 +53,236 @@ You can also include the **CGD Toolkit** repository as a git submodule in your o
 module "service" {
   source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/service-name?ref=v1.2.0"
 
-  # Access method
-  access_method = "external"  # or "internal"
-
-  # Networking
-  vpc_id = aws_vpc.main.id
-  public_subnets = aws_subnet.public[*].id
-  private_subnets = aws_subnet.private[*].id
+  # Networking (3-tier architecture)
+  application_subnets = var.private_subnets  # Primary business applications
+  service_subnets    = var.private_subnets   # Supporting services (databases, caches)
+  
+  # Load balancer configuration
+  load_balancer_config = {
+    nlb = {
+      internet_facing = true               # External access
+      subnets        = var.public_subnets  # Load balancer placement
+    }
+    # ALB optional - module-specific support
+  }
 
   # Security
-  allowed_external_cidrs = ["203.0.113.0/24"]  # Your office network
+  security_groups = [aws_security_group.office_access.id]
 
   # Service-specific configuration
   # ... see individual module documentation
+}
+```
+
+## Access Patterns
+
+CGD Toolkit modules support three deployment patterns:
+
+### **Pattern 1: Fully Public (Development)**
+**Use Case:** Development, testing, proof-of-concept
+
+```hcl
+module "ddc" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"
+  
+  application_subnets = var.public_subnets   # Applications in public subnets
+  service_subnets    = var.public_subnets    # Services in public subnets
+  
+  load_balancer_config = {
+    nlb = {
+      internet_facing = true
+      subnets        = var.public_subnets
+    }
+  }
+}
+```
+
+### **Pattern 2: Fully Private (High Security)**
+**Use Case:** High security, compliance, production
+
+```hcl
+module "ddc" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"
+  
+  application_subnets = var.private_subnets  # Applications in private subnets
+  service_subnets    = var.private_subnets   # Services in private subnets
+  
+  load_balancer_config = {
+    nlb = {
+      internet_facing = false              # Internal load balancer
+      subnets        = var.private_subnets
+    }
+  }
+  
+  # Requires VPN, Direct Connect, or bastion for access
+}
+```
+
+### **Pattern 3: Hybrid (Recommended)**
+**Use Case:** Production with external access needs
+
+```hcl
+module "ddc" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"
+  
+  application_subnets = var.private_subnets  # Applications secure
+  service_subnets    = var.private_subnets   # Services secure
+  
+  load_balancer_config = {
+    nlb = {
+      internet_facing = true               # External access via load balancer
+      subnets        = var.public_subnets
+    }
+  }
+  
+  security_groups = [aws_security_group.office_access.id]  # Restricted access
+}
+```
+
+## Load Balancer Configuration
+
+Modules use a standardized `load_balancer_config` variable:
+
+### **Network Load Balancer (NLB) - Always Available**
+```hcl
+load_balancer_config = {
+  nlb = {
+    enabled         = true                 # Required for most modules
+    internet_facing = true                 # true = public, false = internal
+    subnets        = var.public_subnets   # Where to place the NLB
+    name_suffix    = "game-clients"        # Optional naming
+  }
+}
+```
+
+### **Application Load Balancer (ALB) - Module-Specific**
+```hcl
+# Only supported by modules with multiple web services (e.g., Perforce)
+load_balancer_config = {
+  nlb = {
+    internet_facing = false
+    subnets        = var.private_subnets
+  }
+  alb = {
+    enabled         = true                 # Module must support ALB
+    internet_facing = true
+    subnets        = var.public_subnets
+    enable_waf     = true                  # Web Application Firewall
+  }
+}
+```
+
+**Important:** All subnet variables are user-defined:
+```hcl
+# Your root module defines subnets
+variable "public_subnets" { type = list(string) }
+variable "private_subnets" { type = list(string) }
+
+# Or use direct resource references
+subnets = aws_subnet.public[*].id
+```
+
+## Multi-Region Deployment
+
+With AWS Provider v6, multi-region is simplified:
+
+```hcl
+# AWS Provider v6 - No provider aliases needed for AWS resources
+module "ddc_us_east_1" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"
+  
+  region = "us-east-1"  # Automatic region inheritance
+  application_subnets = var.private_subnets_us_east_1
+  
+  load_balancer_config = {
+    nlb = {
+      internet_facing = true
+      subnets        = var.public_subnets_us_east_1
+    }
+  }
+  
+  # Non-enhanced providers still require explicit aliases
+  providers = {
+    kubernetes = kubernetes.us_east_1
+    helm       = helm.us_east_1
+  }
+}
+
+module "ddc_us_west_2" {
+  source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"
+  
+  region = "us-west-2"  # Automatic region inheritance
+  application_subnets = var.private_subnets_us_west_2
+  
+  load_balancer_config = {
+    nlb = {
+      internet_facing = true
+      subnets        = var.public_subnets_us_west_2
+    }
+  }
+  
+  # Non-enhanced providers still require explicit aliases
+  providers = {
+    kubernetes = kubernetes.us_west_2
+    helm       = helm.us_west_2
+  }
+}
+
+# Provider aliases required for non-enhanced providers
+provider "kubernetes" {
+  alias = "us_east_1"
+  # Configuration for us-east-1 cluster
+}
+
+provider "kubernetes" {
+  alias = "us_west_2"
+  # Configuration for us-west-2 cluster
+}
+
+provider "helm" {
+  alias = "us_east_1"
+  kubernetes {
+    # Reference us-east-1 cluster
+  }
+}
+
+provider "helm" {
+  alias = "us_west_2"
+  kubernetes {
+    # Reference us-west-2 cluster
+  }
+}
+```
+
+**Important:** While AWS Provider v6 supports [enhanced region support](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade#enhanced-region-support), other providers (Kubernetes, Helm, kubectl) still require [explicit provider aliases](https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations) for multi-region deployments.
+
+## Security Best Practices
+
+### **Network Security**
+- **Private-first**: Deploy applications in private subnets
+- **Restricted access**: Use security groups, never `0.0.0.0/0` for ingress
+- **Load balancer isolation**: Separate load balancer and application subnets
+
+### **Access Control**
+```hcl
+# Create restricted security groups
+resource "aws_security_group" "office_access" {
+  name_prefix = "office-access"
+  vpc_id      = var.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "office_https" {
+  security_group_id = aws_security_group.office_access.id
+  description       = "HTTPS from office network"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4        = "203.0.113.0/24"  # Your office CIDR
+}
+
+# Use in module configuration
+module "service" {
+  security_groups = [aws_security_group.office_access.id]
 }
 ```
 
@@ -83,10 +300,92 @@ module "service" {
 | 🖥️ **VDI (Virtual Desktop Interface)**                                                        | Virtual desktop infrastructure for game development teams.                                                                                                                                                      | 🔜 Coming Soon     |
 | **Monitoring**                                                                                | Pending development - will provide unified monitoring across all CGD services.                                                                                                                                  | 🚧 Future          |
 
-**Note**: Current modules support external access with secured multi-layer security. Internal access patterns are planned for future releases.
-
 ## Contributing
 
-For detailed information on contributing new modules or enhancing existing ones, see the [general docs on contributing](../CONTRIBUTING.md).
+For detailed information on contributing new modules or enhancing existing ones:
 
-**Module Structure Standards**: The parent module with submodules pattern described in the Module Architecture section is our standard approach for complex services with multiple components.
+- **[Module Design Standards](./DESIGN_STANDARDS.md)** - Technical implementation guidelines for module contributors
+- **[Contributing Guide](../CONTRIBUTING.md)** - General contribution process and requirements
+
+**Quick Start for Contributors:**
+1. Review existing module patterns and architecture
+2. Follow the standardized variable naming and structure
+3. Implement comprehensive tests and examples
+4. Ensure security best practices are followed
+
+## Module Architecture
+
+CGD Toolkit modules follow a standardized structure:
+
+```
+modules/service-name/
+├── main.tf              # Parent module orchestration
+├── variables.tf         # Input variables with validation
+├── outputs.tf           # Module outputs
+├── versions.tf          # Terraform and provider version constraints
+├── README.md            # Module documentation
+├── modules/             # Submodules for complex components
+│   ├── infra/          # Infrastructure submodule (AWS resources)
+│   └── services/       # Services submodule (Kubernetes/Helm)
+├── tests/              # Terraform tests
+│   ├── setup/          # Shared test configuration
+│   └── *.tftest.hcl    # Unit and integration tests
+└── examples/           # Working examples
+    ├── single-region-basic/
+    └── multi-region-basic/
+```
+
+### **Key Components**
+- **Parent module**: Orchestrates submodules and provides user interface
+- **Submodules**: Separate AWS resources (`infra/`) from Kubernetes resources (`services/`)
+- **Examples**: Complete, deployable configurations showing usage patterns
+- **Tests**: Automated validation of module functionality
+
+## Troubleshooting
+
+### **Common Issues**
+
+**Provider Configuration Errors**
+```bash
+# Error: Invalid provider configuration
+# Solution: Ensure AWS Provider v6+ for enhanced region support
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0"
+    }
+  }
+}
+```
+
+**Subnet Configuration**
+```bash
+# Error: Load balancer subnets must be provided
+# Solution: Specify subnets in load_balancer_config
+load_balancer_config = {
+  nlb = {
+    subnets = var.public_subnets  # Must provide subnet IDs
+  }
+}
+```
+
+**Security Group Access**
+```bash
+# Error: Cannot access service
+# Solution: Check security group rules and CIDR blocks
+security_groups = [aws_security_group.office_access.id]
+```
+
+### **Getting Help**
+- **Module Documentation**: Each module has detailed README with examples
+- **GitHub Issues**: [Report bugs or request features](https://github.com/aws-games/cloud-game-development-toolkit/issues)
+- **Discussions**: [Ask questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions)
+
+## Next Steps
+
+1. **Choose your access pattern** (public, private, or hybrid)
+2. **Review module-specific documentation** for detailed configuration options
+3. **Start with examples** to understand usage patterns
+4. **Deploy in development** environment first
+5. **Scale to production** with appropriate security controls

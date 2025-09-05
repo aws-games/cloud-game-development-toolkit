@@ -6,6 +6,18 @@ locals {
 
   name_prefix = "${var.project_prefix}-${var.name}"
   
+  # EKS Access Configuration Logic
+  eks_public_enabled = contains(["public", "hybrid"], var.eks_access_config.mode)
+  eks_private_enabled = contains(["private", "hybrid"], var.eks_access_config.mode)
+  
+  # Public access CIDRs (only when public access enabled)
+  eks_public_cidrs = local.eks_public_enabled && var.eks_access_config.public != null ? (
+    var.eks_access_config.public.prefix_list_id != null ? [] : var.eks_access_config.public.allowed_cidrs
+  ) : []
+  
+  # Private access configuration
+  eks_private_config = var.eks_access_config.private
+  
   # Logging configuration from parent module
   log_base_prefix = var.log_base_prefix
   scylla_logging_enabled = var.scylla_logging_enabled

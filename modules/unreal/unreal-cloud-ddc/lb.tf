@@ -4,22 +4,22 @@
 
 
 
-# Network Load Balancer (always created)
+# Network Load Balancer (conditional creation based on presence)
 resource "aws_lb" "nlb" {
+  count = var.load_balancers_config.nlb != null ? 1 : 0
   name               = local.nlb_name
   load_balancer_type = "network"
-  internal           = !var.internet_facing
-  subnets            = var.existing_load_balancer_subnets
-  
+  internal           = !var.load_balancers_config.nlb.internet_facing
+  subnets            = var.load_balancers_config.nlb.subnets
+
   security_groups = concat(
-    var.existing_security_groups,
-    var.existing_load_balancer_security_groups,
-    var.ddc_infra_config != null ? var.ddc_infra_config.additional_nlb_security_groups : [],
+    var.load_balancers_config.nlb.security_groups,
+
     var.ddc_infra_config != null ? [aws_security_group.nlb[0].id] : []
   )
 
   enable_deletion_protection = false
-  
+
   dynamic "access_logs" {
     for_each = local.nlb_logging_enabled && local.logs_bucket_id != null ? [1] : []
     content {
@@ -32,17 +32,19 @@ resource "aws_lb" "nlb" {
   tags = merge(var.tags, {
     Name   = local.nlb_name
     Type   = "Network Load Balancer"
-    Access = var.internet_facing ? "Internet-facing" : "Internal"
+    Access = var.load_balancers_config.nlb.internet_facing ? "Internet-facing" : "Internal"
     Region = var.region
   })
 }
 
-# NLB Target Group (always created - points to our EKS cluster)
+# NLB Target Group (conditional - points to our EKS cluster)
 resource "aws_lb_target_group" "nlb_target_group" {
+  count = var.load_balancers_config.nlb != null ? 1 : 0
+  
   name        = "${local.name_prefix}-nlb-tg-${local.name_suffix}"
   port        = 80
   protocol    = "TCP"
-  vpc_id      = var.existing_vpc_id
+  vpc_id      = var.vpc_id
   target_type = "ip"
 
   health_check {
@@ -50,7 +52,7 @@ resource "aws_lb_target_group" "nlb_target_group" {
     healthy_threshold   = 2
     interval            = 30
     matcher             = "200"
-    path                = "/health/live"  # DDC health endpoint for bring-your-own NLB
+    path                = "/health/live" # DDC health endpoint for bring-your-own NLB
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 5
@@ -58,47 +60,49 @@ resource "aws_lb_target_group" "nlb_target_group" {
   }
 
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-nlb-tg-${local.name_suffix}"
+    Name   = "${local.name_prefix}-nlb-tg-${local.name_suffix}"
     Region = var.region
   })
 }
 
-# NLB HTTP Listener (always created - forwards or redirects based on certificate availability)
+# NLB HTTP Listener (conditional - forwards or redirects based on certificate availability)
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.nlb.arn
+  count = var.load_balancers_config.nlb != null ? 1 : 0
+  
+  load_balancer_arn = aws_lb.nlb[0].arn
   port              = "80"
   protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.nlb_target_group.arn
+    target_group_arn = aws_lb_target_group.nlb_target_group[0].arn
   }
 
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-nlb-http-listener"
+    Name   = "${local.name_prefix}-nlb-http-listener"
     Region = var.region
-    Mode = var.debug_mode == "enabled" ? "Debug" : "Production"
+    Mode   = var.debug_mode == "enabled" ? "Debug" : "Production"
   })
 }
 
-# NLB HTTPS Listener (follows Perforce pattern - always create, use certificate directly)
+# NLB HTTPS Listener (conditional creation)
 resource "aws_lb_listener" "https" {
-  count = var.internet_facing ? 1 : 0
-  
-  load_balancer_arn = aws_lb.nlb.arn
+  count = var.load_balancers_config.nlb != null && var.load_balancers_config.nlb.internet_facing ? 1 : 0
+
+  load_balancer_arn = aws_lb.nlb[0].arn
   port              = "443"
   protocol          = "TLS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = var.existing_certificate_arn
+  certificate_arn   = var.certificate_arn
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.nlb_target_group.arn
+    target_group_arn = aws_lb_target_group.nlb_target_group[0].arn
   }
 
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-nlb-https-listener"
-    Region = var.region
+    Name     = "${local.name_prefix}-nlb-https-listener"
+    Region   = var.region
     Security = "HTTPS-first"
   })
 }
@@ -116,7 +120,7 @@ resource "aws_lb_listener" "https" {
 
 # Warning when using HTTP without HTTPS for internet-facing load balancers
 locals {
-  security_warning = var.internet_facing && var.existing_certificate_arn == null && var.debug_mode == "disabled" ? "SECURITY WARNING: Internet-facing load balancer without HTTPS certificate. Provide existing_certificate_arn or enable debug_mode for testing." : null
+  security_warning = var.load_balancers_config.nlb != null && var.load_balancers_config.nlb.internet_facing && var.certificate_arn == null && var.debug_mode == "disabled" ? "SECURITY WARNING: Internet-facing load balancer without HTTPS certificate. Provide certificate_arn or enable debug_mode for testing." : null
 }
 
 
@@ -136,8 +140,8 @@ resource "aws_s3_bucket" "logs" {
   force_destroy = true
 
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-logs"
-    Type = "Centralized Logging"
+    Name   = "${local.name_prefix}-logs"
+    Type   = "Centralized Logging"
     Region = var.region
   })
 }
@@ -151,7 +155,7 @@ resource "aws_s3_bucket_policy" "logs_policy" {
 
 data "aws_iam_policy_document" "logs_policy" {
   count = local.any_logging_enabled ? 1 : 0
-  
+
   # Allow ELB service account to write access logs
   statement {
     sid    = "AllowELBAccessLogs"
@@ -160,16 +164,16 @@ data "aws_iam_policy_document" "logs_policy" {
       type        = "AWS"
       identifiers = [data.aws_elb_service_account.main.arn]
     }
-    actions = ["s3:PutObject"]
+    actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.logs[0].arn}/*"]
   }
-  
+
   # Allow AWS services to write logs (broad permissions for simplicity)
   statement {
     sid    = "AllowAWSServicesLogs"
     effect = "Allow"
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = [
         "logs.amazonaws.com",
         "vpc-flow-logs.amazonaws.com",
@@ -193,45 +197,45 @@ data "aws_elb_service_account" "main" {}
 # Infrastructure logs (NLB, EKS)
 resource "aws_cloudwatch_log_group" "infrastructure" {
   for_each = local.infrastructure_logging
-  
+
   name              = "${local.log_base_prefix}/infrastructure/${each.key}"
   retention_in_days = each.value.retention_days
-  
+
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-${each.key}-infrastructure-logs"
-    LogType = "Infrastructure"
+    Name        = "${local.name_prefix}-${each.key}-infrastructure-logs"
+    LogType     = "Infrastructure"
     Description = "${title(each.key)} infrastructure logs"
-    Component = each.key
+    Component   = each.key
   })
 }
 
 # Application logs (DDC)
 resource "aws_cloudwatch_log_group" "application" {
   for_each = local.application_logging
-  
+
   name              = "${local.log_base_prefix}/application/${each.key}"
   retention_in_days = each.value.retention_days
-  
+
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-${each.key}-application-logs"
-    LogType = "Application"
+    Name        = "${local.name_prefix}-${each.key}-application-logs"
+    LogType     = "Application"
     Description = "${title(each.key)} application logs"
-    Component = each.key
+    Component   = each.key
   })
 }
 
 # Service logs (ScyllaDB)
 resource "aws_cloudwatch_log_group" "service" {
   for_each = local.service_logging
-  
+
   name              = "${local.log_base_prefix}/service/${each.key}"
   retention_in_days = each.value.retention_days
-  
+
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-${each.key}-service-logs"
-    LogType = "Service"
+    Name        = "${local.name_prefix}-${each.key}-service-logs"
+    LogType     = "Service"
     Description = "${title(each.key)} service logs"
-    Component = each.key
+    Component   = each.key
   })
 }
 

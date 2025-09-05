@@ -29,9 +29,9 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
 
   vpc_config {
     subnet_ids              = var.eks_node_group_subnets
-    endpoint_private_access = var.eks_cluster_private_access
-    endpoint_public_access  = var.eks_cluster_public_access
-    public_access_cidrs     = var.eks_cluster_public_endpoint_access_cidr
+    endpoint_private_access = local.eks_private_enabled
+    endpoint_public_access  = local.eks_public_enabled
+    public_access_cidrs     = local.eks_public_cidrs
     security_group_ids = [
       aws_security_group.system_security_group.id,
       aws_security_group.worker_security_group.id,

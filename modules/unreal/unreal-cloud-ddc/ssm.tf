@@ -4,12 +4,12 @@
 
 # SSM document to fix DDC keyspace replication strategy
 resource "aws_ssm_document" "scylla_keyspace_replication_fix" {
-  count = var.scylla_config != null ? 1 : 0
-  
-  name          = "${local.name_prefix}-scylla-keyspace-fix"
-  document_type = "Command"
+  count = var.ddc_infra_config != null && var.ddc_infra_config.scylla_config != null ? 1 : 0
+
+  name            = "${local.name_prefix}-scylla-keyspace-fix"
+  document_type   = "Command"
   document_format = "YAML"
-  
+
   content = <<DOC
 schemaVersion: '2.2'
 description: 'Fix DDC keyspace replication strategy for ${local.scylla_config.local_keyspace_name} - v2'
@@ -75,14 +75,14 @@ mainSteps:
           echo "Keyspace ${local.scylla_config.local_keyspace_name} found. Starting replication fixes..."
           
           # Execute progressive ALTER commands
-          %{~ for i, cmd in local.scylla_config.alter_commands ~}
+          %{~for i, cmd in local.scylla_config.alter_commands~}
           echo "Step ${i + 1}/${length(local.scylla_config.alter_commands)}: ${cmd}"
           if ! cqlsh --request-timeout=120 -e "${cmd}"; then
             echo "ERROR: Failed to execute ALTER command: ${cmd}"
             exit 1
           fi
           sleep 2  # Brief pause between commands
-          %{~ endfor ~}
+          %{~endfor~}
           
           # Verify final replication configuration
           echo "Verifying final replication configuration..."
@@ -93,43 +93,43 @@ mainSteps:
 DOC
 
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-scylla-keyspace-fix"
-    Type = "ScyllaDB Keyspace Fix"
+    Name   = "${local.name_prefix}-scylla-keyspace-fix"
+    Type   = "ScyllaDB Keyspace Fix"
     Region = var.region
   })
 }
 
 # SSM association to run the keyspace fix on ScyllaDB seed node (Scylla only)
 resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
-  count = var.scylla_config != null && try(var.ddc_infra_config.create_seed_node, true) == true ? 1 : 0
-  
+  count = var.ddc_infra_config != null && var.ddc_infra_config.scylla_config != null && try(var.ddc_infra_config.scylla_config.create_seed_node, true) == true ? 1 : 0
+
   name = aws_ssm_document.scylla_keyspace_replication_fix[0].name
-  
+
   # Force recreation when keyspace name changes
   lifecycle {
     replace_triggered_by = [
       aws_ssm_document.scylla_keyspace_replication_fix[0].content
     ]
   }
-  
+
   targets {
     key    = "InstanceIds"
     values = [module.ddc_infra.scylla_seed_instance_id]
   }
-  
+
   # Run after DDC services are deployed
   depends_on = [
     module.ddc_services
   ]
-  
+
   # Association configuration
   association_name = "${local.name_prefix}-scylla-keyspace-fix"
-  max_concurrency = "1"
-  max_errors      = "0"
-  
+  max_concurrency  = "1"
+  max_errors       = "0"
+
   # Run once on creation, then manual execution only
   # schedule_expression = ""  # No automatic schedule - commented out since empty string not allowed
-  
+
   dynamic "output_location" {
     for_each = local.logs_bucket_id != null ? [1] : []
     content {
@@ -137,10 +137,10 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
       s3_key_prefix  = "ssm-associations/scylla-keyspace-fix"
     }
   }
-  
+
   tags = merge(var.tags, {
-    Name = "${local.name_prefix}-scylla-keyspace-fix-association"
-    Type = "SSM Association"
+    Name   = "${local.name_prefix}-scylla-keyspace-fix-association"
+    Type   = "SSM Association"
     Region = var.region
   })
 }
@@ -152,11 +152,11 @@ resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
 # Output the generated ALTER commands for debugging (Scylla only)
 output "scylla_alter_commands" {
   description = "Generated ALTER commands for ScyllaDB keyspace replication"
-  value = var.scylla_config != null ? {
-    keyspace_name = local.scylla_config.local_keyspace_name
+  value = var.ddc_infra_config != null && var.ddc_infra_config.scylla_config != null ? {
+    keyspace_name   = local.scylla_config.local_keyspace_name
     datacenter_name = local.scylla_config.current_datacenter
     replication_map = local.scylla_config.replication_map
-    alter_commands = local.scylla_config.alter_commands
+    alter_commands  = local.scylla_config.alter_commands
     is_multi_region = local.scylla_config.is_multi_region
   } : null
 }

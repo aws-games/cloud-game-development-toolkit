@@ -8,6 +8,16 @@ output "cluster_endpoint" {
   description = "EKS Cluster Endpoint"
 }
 
+output "eks_access_config" {
+  value = {
+    mode            = var.eks_access_config.mode
+    public_enabled  = local.eks_public_enabled
+    private_enabled = local.eks_private_enabled
+    vpc_endpoint_enabled = var.eks_uses_vpc_endpoint
+  }
+  description = "EKS access configuration details"
+}
+
 output "cluster_version" {
   value       = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
   description = "EKS Cluster Version"

@@ -138,18 +138,7 @@ resource "aws_vpc_security_group_ingress_rule" "self_ingress_cluster_sg_rule" {
   referenced_security_group_id = aws_security_group.cluster_security_group.id
 }
 
-# ingress rule allowing ports 80 to 8091 from user security groups
-resource "aws_vpc_security_group_ingress_rule" "cluster_user_sg_ingress_rule" {
-  #checkov:skip=CKV_AWS_260:This rule only provides this access to user security groups
-  #checkov:skip=CKV_AWS_25:This rule only provides this access to user security groups
-  count                        = length(var.existing_security_groups)
-  security_group_id            = aws_security_group.cluster_security_group.id
-  description                  = "Allow traffic from user security groups to DDC services (ports 80-8091)"
-  ip_protocol                  = "tcp"
-  from_port                    = 80
-  to_port                      = 8091
-  referenced_security_group_id = var.existing_security_groups[count.index]
-}
+# Security group access is now handled at the parent module level via load_balancers_config
 
 # ingress rule allowing ports 80 to 8091 from additional EKS security groups
 resource "aws_vpc_security_group_ingress_rule" "cluster_additional_eks_sg_ingress_rule" {

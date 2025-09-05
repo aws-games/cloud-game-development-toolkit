@@ -59,11 +59,7 @@ variable "create_seed_node" {
   default     = true
 }
 
-variable "existing_security_groups" {
-  description = "List of existing security groups to add to ALL Unreal DDC resources (global access)"
-  type        = list(string)
-  default     = []
-}
+
 
 variable "additional_nlb_security_groups" {
   type        = list(string)
@@ -322,22 +318,30 @@ variable "eks_cluster_logging_types" {
   description = "List of EKS cluster log types to be enabled."
 }
 
-variable "eks_cluster_public_endpoint_access_cidr" {
-  type        = list(string)
-  description = "List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint."
-  default     = []
-}
-
-variable "eks_cluster_public_access" {
-  type        = bool
-  default     = false
-  description = "Allows public access of EKS Control Plane should be used with "
-}
-
-variable "eks_cluster_private_access" {
-  type        = bool
-  default     = true
-  description = "Allows private access of the EKS Control Plane from subnets attached to EKS Cluster "
+variable "eks_access_config" {
+  type = object({
+    # Access mode: private, public, or hybrid
+    mode = optional(string, "hybrid")
+    
+    # Public access configuration (required for public/hybrid)
+    public = optional(object({
+      enabled        = optional(bool, true)
+      allowed_cidrs  = list(string)
+      prefix_list_id = optional(string, null)
+    }), null)
+    
+    # Private access configuration (required for private/hybrid)
+    private = optional(object({
+      enabled         = optional(bool, true)
+      security_groups = list(string)
+    }), null)
+  })
+  description = "EKS API access configuration supporting public, private, and hybrid modes"
+  default = {
+    mode    = "hybrid"
+    public  = null
+    private = null
+  }
 }
 
 variable "worker_node_group_label" {
@@ -416,6 +420,17 @@ variable "log_base_prefix" {
 variable "scylla_logging_enabled" {
   description = "Whether ScyllaDB logging is enabled from parent module"
   type        = bool
+}
+
+variable "vpc_endpoints_config" {
+  description = "VPC endpoints configuration from parent module"
+  default     = null
+}
+
+variable "eks_uses_vpc_endpoint" {
+  description = "Whether EKS uses VPC endpoint (eliminates proxy NLB need)"
+  type        = bool
+  default     = false
 }
 
 
