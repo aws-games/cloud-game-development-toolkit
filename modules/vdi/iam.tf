@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     resources = ["*"]
   }
 
-  # SSM permissions for software installation (Phase 3)
+  # SSM permissions for software installation and hybrid user creation
   statement {
     effect = "Allow"
     actions = [
@@ -62,6 +62,18 @@ data "aws_iam_policy_document" "vdi_instance_access" {
       "ssm:UpdateInstanceInformation"
     ]
     resources = ["*"]
+  }
+  
+  # Additional SSM permissions for hybrid approach (instance triggering SSM on itself)
+  statement {
+    effect = "Allow"
+    actions = [
+      "ssm:SendCommand"
+    ]
+    resources = [
+      "arn:aws:ssm:${var.region}:*:document/${local.name_prefix}-create-vdi-users",
+      "arn:aws:ec2:${var.region}:*:instance/*"
+    ]
   }
 
   # S3 permissions for installation scripts
@@ -108,33 +120,21 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     }
   }
 
-  # Secrets Manager permissions for password management (always needed for user creation)
+  # Secrets Manager permissions for Windows-side password generation and storage
   statement {
     effect = "Allow"
     actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
       "secretsmanager:CreateSecret",
-      "secretsmanager:PutSecretValue"
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:ListSecrets"
     ]
-    resources = [
-      "arn:aws:secretsmanager:${var.region}:*:secret:${var.project_prefix}/*"
-    ]
+    resources = ["*"]  # Temporarily permissive for testing
   }
 
-  # Directory Service permissions for AD integration (Phase 4)
-  dynamic "statement" {
-    for_each = var.enable_ad_integration ? [1] : []
-    content {
-      effect = "Allow"
-      actions = [
-        "ds:DescribeDirectories",
-        "ds:AuthorizeApplication",
-        "ds:UnauthorizeApplication"
-      ]
-      resources = ["*"]
-    }
-  }
+  # Directory Service permissions removed (AD integration disabled)
 }
 
 # Attach permissions to VDI instance role

@@ -1,5 +1,33 @@
 # Virtual Workstations Packer Templates
 
+## 🚨 CRITICAL REQUIREMENTS
+
+### GPU Instance Types Required
+
+**⚠️ ALL TEMPLATES BUILD NVIDIA-OPTIMIZED AMIs**
+
+**For Packer Build:**
+- ✅ **GPU instances**: `g4dn.*`, `g5.*`, `p3.*`, `p4.*` (full functionality)
+- ⚠️ **Non-GPU instances**: `t3.*`, `m5.*`, `c5.*`, `r5.*` (builds succeed, skips NVIDIA drivers)
+- 🔧 **Current defaults**: `g4dn.2xlarge` (recommended for production)
+- 🎓 **Workshop friendly**: C instances work fine for learning/demos
+
+**For Final VDI Deployment:**
+- ✅ **Recommended**: GPU instances for full functionality
+- ⚠️ **Will boot but degraded**: Non-GPU instances (software rendering only)
+- ❌ **GPU apps will fail**: Unreal Engine, CUDA applications
+
+**Instance Compatibility Matrix:**
+
+| Packer Build | Final Instance | Result |
+|--------------|----------------|--------|
+| `g4dn.2xlarge` | `g4dn.xlarge` | ✅ Full GPU acceleration |
+| `g4dn.2xlarge` | `g4dn.4xlarge` | ✅ Full GPU acceleration |
+| `g4dn.2xlarge` | `m5.2xlarge` | ⚠️ Boots, no GPU, slow DCV |
+| `g4dn.2xlarge` | `t3.medium` | ❌ Poor performance, apps fail |
+
+### Directory Structure Required
+
 ⚠️ **CRITICAL: These templates require the complete directory structure and cannot be used standalone without customization.**
 
 ## Directory Structure
@@ -28,6 +56,18 @@ cd cloud-game-development-toolkit
 # Verify structure exists
 ls assets/packer/virtual-workstations/shared/
 # Should show: base_infrastructure.ps1  sysprep.ps1  userdata.ps1
+```
+
+**To override default instance type:**
+```bash
+# Create variables file
+cp variables.pkrvars.hcl.example variables.pkrvars.hcl
+
+# Edit variables.pkrvars.hcl
+instance_type = "g4dn.4xlarge"  # Must be GPU-enabled
+
+# Build with custom variables
+packer build -var-file="variables.pkrvars.hcl" windows-server-2025-lightweight.pkr.hcl
 ```
 
 ## Available Templates

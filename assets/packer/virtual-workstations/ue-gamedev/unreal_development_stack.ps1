@@ -38,15 +38,7 @@ try {
     Write-Host "Epic Games Launcher installed successfully" -ForegroundColor Green
     Write-Host "Note: Unreal Engine 5.3 will need to be installed manually through Epic Games Launcher after first login" -ForegroundColor Yellow
 
-    # Install additional Python packages for Unreal development
-    Write-Host "Installing Python packages for Unreal Engine development..."
-    python -m pip install --no-warn-script-location unreal-engine-python
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Python packages for Unreal Engine installed successfully" -ForegroundColor Green
-    } else {
-        Write-Host "Python packages installation failed" -ForegroundColor Yellow
-    }
+    # Note: Python packages are installed by base infrastructure script
 
 } catch {
     Write-Host "Unreal development stack installation failed: $_" -ForegroundColor Red

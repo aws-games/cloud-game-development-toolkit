@@ -35,10 +35,8 @@ variable "templates" {
     instance_type = string
     ami           = optional(string, null)
     
-    # Software and customization
-    software_packages = optional(list(string), [])
+    # Hardware configuration
     gpu_enabled       = optional(bool, false)
-    custom_scripts    = optional(list(string), [])
     
     # Named volumes with Windows drive mapping
     volumes = map(object({
@@ -56,25 +54,35 @@ variable "templates" {
   }))
   
   description = <<EOF
-Configuration blueprints defining instance types, software packages, and named volumes with Windows drive mapping.
+Configuration blueprints defining instance types and named volumes with Windows drive mapping.
 
-Templates provide reusable configurations that can be referenced by multiple workstations.
+**KEY BECOMES TEMPLATE NAME**: The map key (e.g., "ue-developer") becomes the template name referenced by workstations.
+
+Templates provide reusable configurations that can be referenced by multiple workstations via template_key.
 
 Example:
 templates = {
-  "ue-developer" = {
+  "ue-developer" = {           # ← This key becomes the template name
     instance_type = "g4dn.2xlarge"
     gpu_enabled   = true
-    software_packages = ["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3"]
-    custom_scripts = ["scripts/setup-ue-project.ps1"]
     volumes = {
       Root = { capacity = 256, type = "gp3", windows_drive = "C:" }
       Projects = { capacity = 1024, type = "gp3", windows_drive = "D:" }
     }
   }
+  "basic-workstation" = {      # ← Another template name
+    instance_type = "g4dn.xlarge"
+    gpu_enabled   = true
+  }
 }
 
-Valid software_packages: "chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3", "perforce"
+# Referenced by workstations:
+workstations = {
+  "alice-ws" = {
+    template_key = "ue-developer"    # ← References template by key
+  }
+}
+
 Valid volume types: "gp2", "gp3", "io1", "io2"
 Windows drives: "C:", "D:", "E:", etc.
 EOF
@@ -113,16 +121,7 @@ EOF
     error_message = "Windows drive must be in format 'C:', 'D:', 'E:', etc."
   }
 
-  validation {
-    condition = alltrue([
-      for template_key, config in var.templates : 
-      alltrue([
-        for package in config.software_packages : 
-        contains(["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3", "perforce"], package)
-      ])
-    ])
-    error_message = "software_packages must only contain: chocolatey, visual-studio-2022, git, unreal-engine-5.3, perforce"
-  }
+
 }
 
 # 2. WORKSTATIONS - Physical infrastructure with template references
@@ -136,11 +135,6 @@ variable "workstations" {
     availability_zone = string
     security_groups   = list(string)
     
-    # Software flexibility per workstation
-    software_packages_additions = optional(list(string), [])
-    software_packages_exclusions = optional(list(string), [])
-    custom_scripts    = optional(list(string), [])
-    
     # Optional overrides
     allowed_cidr_blocks = optional(list(string), ["10.0.0.0/16"])
     tags                = optional(map(string), {})
@@ -149,23 +143,31 @@ variable "workstations" {
   description = <<EOF
 Physical infrastructure instances with template references and placement configuration.
 
-Workstations inherit configuration from templates but can add or exclude software packages.
+**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.
+
+Workstations inherit configuration from templates via template_key reference.
 
 Example:
 workstations = {
-  "alice-workstation" = {
-    template_key = "ue-developer"  # Inherits from templates
+  "alice-workstation" = {        # ← This key becomes the workstation name
+    template_key = "ue-developer"  # ← References templates{} key
     subnet_id = "subnet-123"
     availability_zone = "us-east-1a"
     security_groups = ["sg-456"]
-    software_packages_additions = ["perforce"]  # Add to template packages
-    software_packages_exclusions = ["visual-studio-2022"]  # Remove from template
-    custom_scripts = ["scripts/alice-setup.ps1"]
     allowed_cidr_blocks = ["203.0.113.1/32"]
+  }
+  "vdi-001" = {                  # ← Another workstation name
+    template_key = "basic-workstation"
+    subnet_id = "subnet-456"
   }
 }
 
-Valid software_packages: "chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3", "perforce"
+# Referenced by assignments:
+workstation_assignments = {
+  "alice-workstation" = {        # ← Must match workstations{} key
+    user = "alice"                # ← References users{} key
+  }
+}
 EOF
   default     = {}
 
@@ -177,80 +179,89 @@ EOF
     error_message = "Each workstation must reference a valid template_key."
   }
 
-  validation {
-    condition = alltrue([
-      for workstation_key, config in var.workstations : 
-      alltrue([
-        for package in config.software_packages_additions : 
-        contains(["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3", "perforce"], package)
-      ])
-    ])
-    error_message = "software_packages_additions must only contain: chocolatey, visual-studio-2022, git, unreal-engine-5.3, perforce"
-  }
 
-  validation {
-    condition = alltrue([
-      for workstation_key, config in var.workstations : 
-      alltrue([
-        for package in config.software_packages_exclusions : 
-        contains(["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3", "perforce"], package)
-      ])
-    ])
-    error_message = "software_packages_exclusions must only contain: chocolatey, visual-studio-2022, git, unreal-engine-5.3, perforce"
-  }
 }
 
-# 3. LOCAL USERS - Windows user accounts
+# 3. LOCAL USERS - Windows user accounts with group types and connectivity
 variable "users" {
   type = map(object({
-    given_name  = string
-    family_name = string
-    email       = string
-    tags        = optional(map(string), {})
+    given_name        = string
+    family_name       = string
+    email             = string
+    type              = optional(string, "user")  # "administrator" or "user" (Windows group)
+    connectivity_type = optional(string, "public")  # "public" or "private" (network access)
+    tags              = optional(map(string), {})
   }))
-  description = "Local Windows user accounts (managed via Secrets Manager)"
-  default     = {}
-}
+  description = <<EOF
+Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)
 
-# 4. AD USERS - Active Directory user accounts
-variable "ad_users" {
-  type = map(object({
-    given_name       = string
-    family_name      = string
-    email            = string
-    group_membership = optional(list(string), [])  # References ad_groups keys
-    tags             = optional(map(string), {})
-  }))
-  description = "Active Directory user accounts (UNSUPPORTED in current version - planned for future release)"
-  default     = {}
-  
-  validation {
-    condition     = length(var.ad_users) == 0
-    error_message = "Active Directory users are not supported in this version of the VDI module. This feature is planned for a future release. Use the 'users' variable for local user accounts instead."
+**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.
+
+type options (Windows groups):
+- "administrator": User added to Windows Administrators group, created on ALL workstations
+- "user": User added to Windows Users group, created only on assigned workstation
+
+connectivity_type options (network access):
+- "public": User accesses VDI via public internet (default)
+- "private": User accesses VDI via Client VPN (generates VPN config)
+
+Example:
+users = {
+  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"
+    given_name = "VDI"
+    family_name = "Administrator"
+    email = "admin@company.com"
+    type = "administrator"      # Windows Administrators group
+  }
+  "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"
+    given_name = "Naruto"
+    family_name = "Uzumaki"
+    email = "naruto@konoha.com"
+    type = "user"               # Windows Users group
   }
 }
 
-# 5. AD GROUPS - Active Directory groups
-variable "ad_groups" {
-  type = map(object({
-    description = string
-    tags        = optional(map(string), {})
-  }))
-  description = "Active Directory groups for user organization (UNSUPPORTED in current version - planned for future release)"
+# Referenced by assignments:
+workstation_assignments = {
+  "vdi-001" = {
+    user = "naruto-uzumaki"     # ← Must match users{} key
+  }
+}
+EOF
   default     = {}
   
   validation {
-    condition     = length(var.ad_groups) == 0
-    error_message = "Active Directory groups are not supported in this version of the VDI module. This feature is planned for a future release."
+    condition = alltrue([
+      for user_key, config in var.users :
+      contains(["administrator", "user"], config.type)
+    ])
+    error_message = "type must be either 'administrator' or 'user' for each user."
+  }
+  
+  validation {
+    condition = alltrue([
+      for user_key, config in var.users :
+      contains(["public", "private"], config.connectivity_type)
+    ])
+    error_message = "connectivity_type must be either 'public' or 'private' for each user."
+  }
+  
+  validation {
+    condition = alltrue([
+      for user_key, config in var.users :
+      length(trimspace(config.given_name)) > 0 && length(trimspace(config.family_name)) > 0
+    ])
+    error_message = "given_name and family_name cannot be empty or whitespace-only strings. Both are required for Windows user creation."
   }
 }
+
+
 
 # 6. WORKSTATION ASSIGNMENTS - Workstation-centric user mapping
 variable "workstation_assignments" {
   type = map(object({
-    user        = string
-    user_source = string
-    tags        = optional(map(string), {})
+    user = string
+    tags = optional(map(string), {})
   }))
   description = <<EOF
 Workstation assignments mapping workstations to users.
@@ -261,25 +272,15 @@ Example:
 workstation_assignments = {
   "alice-workstation" = {
     user = "alice"          # References users{} key
-    user_source = "local"   # Local Windows account
   }
   "bob-workstation" = {
-    user = "bob-smith"      # References ad_users{} key  
-    user_source = "ad"      # Active Directory account
+    user = "bob-smith"      # References users{} key
   }
 }
 
-Valid user_source: "local" (uses users{}), "ad" (uses ad_users{})
+All users use local Windows accounts with Secrets Manager authentication.
 EOF
   default     = {}
-  
-  validation {
-    condition = alltrue([
-      for assignment in var.workstation_assignments : 
-      contains(["local", "ad"], assignment.user_source)
-    ])
-    error_message = "user_source must be either 'local' or 'ad'"
-  }
 }
 
 ########################################
@@ -307,13 +308,14 @@ variable "dcv_session_permissions" {
   }
 }
 
+
+
 ########################################
 # AUTHENTICATION CONFIGURATION
 ########################################
 
-# Authentication method is automatically inferred:
-# - Local users (user_source = "local") → EC2 keys + Secrets Manager
-# - AD users (user_source = "ad") → EC2 keys + Active Directory
+# Authentication method:
+# - Local users → EC2 keys + Secrets Manager
 # - Admin accounts always get EC2 keys + Secrets Manager (for break-glass access)
 
 variable "dual_admin_pattern" {
@@ -337,66 +339,7 @@ variable "dual_admin_pattern" {
 # Use new 5-tier architecture: templates, workstations, users, groups, assignments
 # Migration guide: See docs/migration-v1-to-v2.md
 
-########################################
-# ACTIVE DIRECTORY (Optional)
-########################################
 
-variable "enable_ad_integration" {
-  type        = bool
-  description = "Enable Active Directory integration for domain-joined VDI (UNSUPPORTED in current version - planned for future release)"
-  default     = false
-  
-  validation {
-    condition     = var.enable_ad_integration == false
-    error_message = "Active Directory integration is not supported in this version of the VDI module. This feature is planned for a future release. Use local users with Secrets Manager authentication instead."
-  }
-}
-
-variable "directory_id" {
-  type        = string
-  description = "AWS Managed Microsoft AD directory ID (required if enable_ad_integration = true)"
-  default     = null
-}
-
-variable "directory_name" {
-  type        = string
-  description = "Fully qualified domain name (FQDN) of the directory"
-  default     = null
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "dns_ip_addresses" {
-  type        = list(string)
-  description = "DNS IP addresses for the directory"
-  default     = null
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "ad_admin_password" {
-  type        = string
-  description = "Directory administrator password"
-  default     = null
-  sensitive   = true
-}
-
-variable "manage_ad_users" {
-  type        = bool
-  description = "Automatically create AD users (vs using existing users)"
-  default     = false
-}
-
-variable "individual_user_passwords" {
-  type        = map(string)
-  description = "Map of individual user passwords for AD users (username -> password)"
-  default     = {}
-  sensitive   = true
-}
-
-variable "directory_ou" {
-  type        = string
-  description = "Organizational unit (OU) in the directory for computer accounts"
-  default     = null
-}
 
 ########################################
 # STORAGE (Optional)
@@ -491,6 +434,36 @@ variable "dns_config" {
 }
 
 ########################################
+# CONNECTIVITY CONFIGURATION
+########################################
+
+variable "connectivity_type" {
+  type        = string
+  description = "VDI connectivity type: 'public' for internet access, 'private' for Client VPN access"
+  default     = "public"
+  
+  validation {
+    condition     = contains(["public", "private"], var.connectivity_type)
+    error_message = "connectivity_type must be either 'public' or 'private'."
+  }
+}
+
+variable "enable_private_connectivity" {
+  type        = bool
+  description = "Enable private connectivity infrastructure (Client VPN endpoint, S3 bucket for configs)"
+  default     = false
+}
+
+variable "client_vpn_config" {
+  type = object({
+    client_cidr_block = optional(string, "192.168.0.0/16")
+    generate_client_configs = optional(bool, true)
+  })
+  description = "Client VPN configuration for private connectivity"
+  default     = {}
+}
+
+########################################
 # SECURITY (Optional)
 ########################################
 
@@ -506,6 +479,12 @@ variable "create_default_security_groups" {
   default     = true
 }
 
+variable "debug_force_user_recreation" {
+  description = "Enable to force user recreation on every terraform apply (debug only)"
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   type        = map(any)
   description = "Tags to apply to resources."
@@ -516,4 +495,9 @@ variable "tags" {
     "ModuleName"     = "terraform-aws-vdi"
     "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi"
   }
+}
+variable "force_user_creation_rerun" {
+  description = "Change this value to force SSM user creation to re-run (e.g., after IAM permission fixes)"
+  type        = string
+  default     = "1"
 }

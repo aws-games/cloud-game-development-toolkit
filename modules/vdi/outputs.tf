@@ -37,7 +37,7 @@ output "connection_info" {
       # Instance details
       instance_id = instance.id
       assigned_user = var.workstation_assignments[workstation_key].user
-      user_source = var.workstation_assignments[workstation_key].user_source
+      user_source = "local"
     }
   }
 }
@@ -77,3 +77,4 @@ output "secrets_manager_arns" {
     for user_key, secret in aws_secretsmanager_secret.user_passwords : user_key => secret.arn
   }
 }
+

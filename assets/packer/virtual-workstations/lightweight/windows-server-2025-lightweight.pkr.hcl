@@ -52,8 +52,12 @@ variable "root_volume_size" {
   default = 80
 }
 
+# Version is controlled by CGD Toolkit maintainers
+# Users should not modify this - it aligns with toolkit releases
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
+  version = "v1.1.5"  # Update this for each toolkit release
+  ami_name = "${var.ami_prefix}-${local.version}"
 }
 
 data "amazon-ami" "windows2025" {
@@ -68,7 +72,7 @@ data "amazon-ami" "windows2025" {
 }
 
 source "amazon-ebs" "lightweight" {
-  ami_name      = "${var.ami_prefix}-${local.timestamp}"
+  ami_name      = local.ami_name
   instance_type = var.instance_type
   region        = var.region
   source_ami    = data.amazon-ami.windows2025.id
@@ -106,11 +110,32 @@ source "amazon-ebs" "lightweight" {
   }
 
   tags = {
-    Name        = "${var.ami_prefix}-${local.timestamp}"
-    Purpose     = "VDI Lightweight Base"
-    BuildDate   = local.timestamp
-    BaseOS      = "Windows Server 2025"
-    Components  = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey"
+    # Core identification
+    Name           = local.ami_name
+    Purpose        = "VDI Lightweight Base"
+    Version        = local.version
+    BuildDate      = local.timestamp
+    
+    # Technical details
+    BaseOS         = "Windows Server 2025"
+    Template       = "lightweight"
+    Architecture   = "x86_64"
+    
+    # Software components
+    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey"
+    
+    # Project tracking
+    Project        = "cloud-game-development-toolkit"
+    Repository     = "https://github.com/aws-games/cloud-game-development-toolkit"
+    
+    # Operational
+    Environment    = "development"
+    ManagedBy      = "packer"
+    Owner          = "aws-games"
+    
+    # Cost tracking
+    CostCenter     = "cgd-toolkit"
+    BillingProject = "vdi-infrastructure"
   }
 }
 

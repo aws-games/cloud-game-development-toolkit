@@ -23,9 +23,9 @@ check "user_references" {
   assert {
     condition = alltrue([
       for workstation_key, config in var.workstation_assignments : 
-      config.user_source == "local" ? contains(keys(var.users), config.user) : contains(keys(var.ad_users), config.user)
+      contains(keys(var.users), config.user)
     ])
-    error_message = "All workstation assignments must reference existing users. Check user and user_source values."
+    error_message = "All workstation assignments must reference existing users. Check user values."
   }
 }
 
@@ -39,12 +39,7 @@ check "workstation_references" {
   }
 }
 
-check "ad_configuration" {
-  assert {
-    condition = local.ad_validation_error == null
-    error_message = local.ad_validation_error != null ? local.ad_validation_error : "AD configuration is valid"
-  }
-}# VDI Workstation EC2 Instances
+# VDI Workstation EC2 Instances
 
 # Key pairs for emergency access (always created)
 resource "aws_key_pair" "workstation_keys" {
@@ -143,8 +138,11 @@ resource "aws_instance" "workstations" {
     }
   }
   
-  # User data for initial configuration (minimal)
-  user_data_base64 = base64encode(file("${path.module}/assets/scripts/user_data_minimal.ps1"))
+  # No user data - using Terraform local-exec to bypass Windows Server 2025 user data issues
+  # All VDI setup handled by terraform-ssm-trigger.tf
+  
+  # Enable automatic instance replacement when user data changes
+  user_data_replace_on_change = true
   
   # Metadata options for security
   metadata_options {
@@ -156,6 +154,8 @@ resource "aws_instance" "workstations" {
   # Instance tags
   tags = merge(each.value.tags, {
     Name = "${local.name_prefix}-${each.key}"
+    WorkstationKey = each.key
+    AssignedUser   = var.workstation_assignments[each.key].user
   })
   
 
@@ -201,47 +201,41 @@ resource "aws_cloudwatch_log_group" "vdi_logs" {
   })
 }# Secrets Manager for VDI User Passwords
 
-# Secrets for local users
+# Secrets for ALL users (admin users on ALL workstations, standard users on assigned workstations)
 resource "aws_secretsmanager_secret" "user_passwords" {
-  for_each = {
-    for assignment_key, assignment in var.workstation_assignments : assignment_key => assignment
-    if assignment.user_source == "local"
-  }
+  for_each = local.workstation_user_combinations
   
-  name = "${var.project_prefix}/${each.key}/users/${each.value.user}"
-  description = "Password for VDI user ${each.value.user} on workstation ${each.key}"
+  name = "${var.project_prefix}/${each.value.workstation}/users/${each.value.user}"
+  description = "Password for ${var.users[each.value.user].type} user ${each.value.user} on workstation ${each.value.workstation}"
   
   recovery_window_in_days = 0  # Force immediate deletion without recovery window
   
   tags = merge(var.tags, {
     Purpose = "VDI User Password"
-    User = each.key
-    UserType = "Local"
+    User = each.value.user
+    Workstation = each.value.workstation
+    UserType = var.users[each.value.user].type
   })
 }
 
-# Generate random passwords for local users
+# VDIAdmin is now handled in the unified user_passwords resources above
+
+# Generate random passwords for ALL users (back to original working approach)
 resource "random_password" "user_passwords" {
-  for_each = {
-    for assignment_key, assignment in var.workstation_assignments : assignment_key => assignment
-    if assignment.user_source == "local"
-  }
+  for_each = local.workstation_user_combinations
   
   length  = 16
   special = true
   
   # Regenerate password when assigned instance changes
   keepers = {
-    instance_id = aws_instance.workstations[each.key].id
+    instance_id = aws_instance.workstations[each.value.workstation].id
   }
 }
 
-# Store passwords in Secrets Manager
+# Store ALL user passwords in Secrets Manager (original working approach)
 resource "aws_secretsmanager_secret_version" "user_passwords" {
-  for_each = {
-    for assignment_key, assignment in var.workstation_assignments : assignment_key => assignment
-    if assignment.user_source == "local"
-  }
+  for_each = local.workstation_user_combinations
   
   secret_id = aws_secretsmanager_secret.user_passwords[each.key].id
   secret_string = jsonencode({
@@ -250,5 +244,9 @@ resource "aws_secretsmanager_secret_version" "user_passwords" {
     given_name = var.users[each.value.user].given_name
     family_name = var.users[each.value.user].family_name
     email = var.users[each.value.user].email
+    user_type = var.users[each.value.user].type
+    workstation = each.value.workstation
   })
 }
+
+# VDIAdmin password versions are managed by user data script
