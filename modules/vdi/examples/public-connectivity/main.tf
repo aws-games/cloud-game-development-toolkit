@@ -90,13 +90,13 @@ module "vdi" {
       given_name  = "Naruto"
       family_name = "Uzumaki"
       email       = "naruto@konoha.com"
-      type        = "user"  # Maps to Windows Users group (standard access)
+      type        = "administrator"  # Windows Administrators group - can install software, troubleshoot
     }
     "sasuke-uchiha" = {
       given_name  = "Sasuke"
       family_name = "Uchiha"
       email       = "sasuke@konoha.com"
-      type        = "user"  # Maps to Windows Users group (standard access)
+      type        = "user"  # Windows Users group - standard access, created only on assigned workstation
     }
   }
 

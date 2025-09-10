@@ -2,6 +2,9 @@
 # Private access via AWS Client VPN with Secrets Manager authentication
 
 # Data source to find latest VDI lightweight AMI (for general users)
+# PREREQUISITE: You must build this AMI using:
+# cd assets/packer/virtual-workstations/lightweight/
+# packer build windows-server-2025-lightweight.pkr.hcl
 data "aws_ami" "vdi_lightweight_ami" {
   most_recent = true
   owners      = ["self"]
@@ -18,6 +21,9 @@ data "aws_ami" "vdi_lightweight_ami" {
 }
 
 # Data source to find latest UE GameDev AMI (for game developers)
+# PREREQUISITE: You must build this AMI using:
+# cd assets/packer/virtual-workstations/ue-gamedev/
+# packer build windows-server-2025-ue-gamedev.pkr.hcl
 data "aws_ami" "vdi_ue_gamedev_ami" {
   most_recent = true
   owners      = ["self"]
@@ -25,22 +31,6 @@ data "aws_ami" "vdi_ue_gamedev_ami" {
   filter {
     name   = "name"
     values = ["vdi-ue-gamedev-windows-server-2025-*"]
-  }
-
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-}
-
-# Fallback to AWS base AMI if custom AMIs not found
-data "aws_ami" "windows_server_2025_base" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["Windows_Server-2025-English-Full-Base-*"]
   }
 
   filter {
@@ -139,16 +129,18 @@ module "vdi" {
       type        = "administrator"  # Maps to Windows Administrators group
     }
     "naruto-uzumaki" = {
-      given_name  = "Naruto"
-      family_name = "Uzumaki"
-      email       = "naruto@konoha.com"
-      type        = "user"  # Maps to Windows Users group (standard access)
+      given_name        = "Naruto"
+      family_name       = "Uzumaki"
+      email             = "naruto@konoha.com"
+      type              = "administrator"  # Windows Administrators group - can install software, troubleshoot
+      connectivity_type = "private"        # Access via Client VPN - gets .ovpn file
     }
     "sasuke-uchiha" = {
-      given_name  = "Sasuke"
-      family_name = "Uchiha"
-      email       = "sasuke@konoha.com"
-      type        = "user"  # Maps to Windows Users group (standard access)
+      given_name        = "Sasuke"
+      family_name       = "Uchiha"
+      email             = "sasuke@konoha.com"
+      type              = "user"           # Windows Users group - standard access, created only on assigned workstation
+      connectivity_type = "private"        # Access via Client VPN - gets .ovpn file
     }
   }
 

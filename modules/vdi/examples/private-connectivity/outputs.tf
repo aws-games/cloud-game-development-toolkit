@@ -4,29 +4,19 @@ output "instance_ids" {
   value       = module.vdi.instance_ids
 }
 
-output "private_ips" {
-  description = "VDI private IP addresses"
-  value       = module.vdi.private_ips
+output "connection_info" {
+  description = "VDI connection information"
+  value       = module.vdi.connection_info
 }
 
-output "user_secrets" {
-  description = "User secrets in Secrets Manager"
-  value       = module.vdi.user_secrets
+output "secrets_manager_arns" {
+  description = "Secrets Manager ARNs for user passwords"
+  value       = module.vdi.secrets_manager_arns
   sensitive   = true
 }
 
-# Client VPN outputs (from main module)
-output "client_vpn_endpoint_id" {
-  description = "Client VPN endpoint ID"
-  value       = module.vdi.client_vpn_endpoint_id
-}
-
-output "vpn_configs_s3_bucket" {
-  description = "S3 bucket containing VPN client configurations"
-  value       = module.vdi.vpn_configs_s3_bucket
-}
-
-output "internal_dns_zone" {
-  description = "Internal DNS zone for private access"
-  value       = module.vdi.internal_dns_zone
+output "password_retrieval_commands" {
+  description = "Commands to retrieve user passwords"
+  value       = module.vdi.password_retrieval_commands
+  sensitive   = true
 }

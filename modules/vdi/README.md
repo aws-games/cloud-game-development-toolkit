@@ -61,15 +61,40 @@ workstations = {
 
 **Connection**: `https://54.123.45.67:8443` or `rdp://54.123.45.67:3389`
 
-### Private Connectivity with AWS Client VPN
+### Private Connectivity (Multiple Options)
 
 **Best for**: Enterprise environments, security-conscious deployments, distributed teams
 
-**How it works**: VPN tunnel to private VDI instances with internal DNS
+**How it works**: VDI instances in private subnets, accessible only via VPC connectivity
+
+#### **VPC Access Methods (Choose One):**
+
+**Option 1: AWS Client VPN (Module Example)**
+- ✅ **Automatic setup** - Module creates VPN endpoint + certificates
+- ✅ **Per-user certificates** - Individual .ovpn files
+- ✅ **Internal DNS** - `john-doe.vdi.internal`
+- 💰 **Cost**: ~$73/month for VPN endpoint
+
+**Option 2: Site-to-Site VPN**
+- ✅ **Office connectivity** - Connect entire office network
+- ✅ **Persistent connection** - Always-on connectivity
+- 💰 **Cost**: ~$36/month per VPN connection
+
+**Option 3: AWS Direct Connect**
+- ✅ **Dedicated connection** - Highest performance
+- ✅ **Enterprise grade** - Consistent network performance
+- 💰 **Cost**: Varies by bandwidth
+
+**Option 4: Bastion Host/Jump Server**
+- ✅ **Cost effective** - Single EC2 instance
+- ✅ **SSH tunneling** - Port forwarding to VDI
+- 💰 **Cost**: ~$10-50/month depending on instance size
+
+#### **Client VPN Example Configuration:**
 
 ```hcl
 module "vdi" {
-  enable_private_connectivity = true  # Creates VPN infrastructure
+  enable_private_connectivity = true  # Creates Client VPN infrastructure
   
   users = {
     "john-doe" = {
@@ -80,25 +105,26 @@ module "vdi" {
   workstations = {
     "vdi-001" = {
       subnet_id = aws_subnet.private_subnet.id
-      allowed_cidr_blocks = ["10.0.0.0/16"]  # VPC CIDR
+      allowed_cidr_blocks = ["10.0.0.0/16"]  # VPC CIDR only
     }
   }
 }
 ```
 
-**Connection**: Connect to VPN → `https://john-doe.vdi.internal:8443`
+**Connection Process**: Download .ovpn → Connect to VPN → `https://john-doe.vdi.internal:8443`
 
 **What gets created automatically**:
-- **Client VPN Endpoint** - Shared by all private users (~$73/month)
-- **Per-User Certificates** - Unique certificate per private user
+- **Client VPN Endpoint** - Shared by all private users
+- **Per-User Certificates** - Unique certificate per private user  
 - **S3 Certificate Storage** - Complete .ovpn files ready for distribution
-- **Internal DNS** - Clean names like `john-doe.vdi.internal`
+- **Internal DNS Zone** - Clean names like `john-doe.vdi.internal`
 
 **Advantages of Private Connectivity**:
 - ✅ **Enhanced Security** - No public internet exposure
 - ✅ **IP Management Simplification** - No more tracking user public IPs
 - ✅ **Clean DNS Names** - `john-doe.vdi.internal` instead of IP addresses
 - ✅ **Mixed Connectivity** - Some users private, others public
+- ✅ **Compliance Ready** - Meets enterprise security requirements
 
 ## Architecture
 
@@ -164,26 +190,44 @@ Each example includes complete infrastructure setup and connection instructions.
 
 ## Deployment Instructions
 
-### Step 1: Build Windows AMI with Packer
+### Step 1: Clone the CGD Toolkit
+
+```bash
+# Clone the complete repository
+git clone https://github.com/aws-games/cloud-game-development-toolkit.git
+cd cloud-game-development-toolkit
+```
+
+### Step 2: Build Windows AMI with Packer
 
 **CRITICAL**: You must build a Windows AMI before deploying VDI workstations.
 
 ```bash
-# Navigate to Packer directory
-cd assets/packer/virtual-workstations/windows/lightweight/
+# Navigate to UE GameDev template directory
+cd assets/packer/virtual-workstations/ue-gamedev/
 
-# Build AMI (20-30 minutes)
-packer build windows-server-2025-lightweight.pkr.hcl
+# Build UE GameDev AMI (45-60 minutes)
+packer build windows-server-2025-ue-gamedev.pkr.hcl
 
 # Note the AMI ID from the output
 # Example: ami-0123456789abcdef0
 ```
 
-**The AMI will be named**: `vdi-lightweight-windows-server-2025-YYYY-MM-DD-HH-MM-SS`
+**The AMI will be named**: `vdi-ue-gamedev-windows-server-2025-YYYY-MM-DD-HH-MM-SS`
 
-### Step 2: Configure the Module
+### Step 3: Use the Examples
 
-**Public Connectivity Example:**
+**Navigate to an example directory and deploy:**
+
+```bash
+# For public internet access
+cd modules/vdi/examples/public-connectivity/
+
+# For private VPN access
+# cd modules/vdi/examples/private-connectivity/
+```
+
+**The public connectivity example includes:**
 
 ```terraform
 module "vdi" {
@@ -191,17 +235,30 @@ module "vdi" {
 
   # Core Configuration
   project_prefix = "gamedev"
+  region         = data.aws_region.current.id
   environment    = "dev"
   vpc_id         = aws_vpc.vdi_vpc.id
 
   # Templates (Reusable Configurations)
   templates = {
-    "developer" = {
-      instance_type = "g4dn.2xlarge"
-      software_packages = ["visual-studio-2022", "git", "unreal-engine-5.3"]
+    "ue-gamedev-workstation" = {
+      instance_type = "g4dn.4xlarge"
+      ami           = data.aws_ami.vdi_ue_gamedev_ami.id
       volumes = {
-        Root = { capacity = 256, type = "gp3" }
-        Projects = { capacity = 1024, type = "gp3" }
+        Root = {
+          capacity      = 300
+          type          = "gp3"
+          windows_drive = "C:"
+          iops          = 3000
+          encrypted     = true
+        }
+        Projects = {
+          capacity      = 2000
+          type          = "gp3"
+          windows_drive = "D:"
+          iops          = 3000
+          encrypted     = true
+        }
       }
     }
   }
@@ -209,38 +266,43 @@ module "vdi" {
   # Workstations (Infrastructure Placement)
   workstations = {
     "vdi-001" = {
-      template_key = "developer"
-      subnet_id = aws_subnet.public_subnet.id
-      availability_zone = "us-east-1a"
+      template_key      = "ue-gamedev-workstation"
+      subnet_id         = aws_subnet.vdi_subnet.id
+      availability_zone = data.aws_availability_zones.available.names[0]
+      security_groups   = [aws_security_group.vdi_sg.id]
+      allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
     }
   }
 
   # Users (Authentication & Identity)
   users = {
-    "john-doe" = {
-      given_name = "John"
-      family_name = "Doe"
-      email = "john@company.com"
-      connectivity_type = "public"
+    "naruto-uzumaki" = {
+      given_name  = "Naruto"
+      family_name = "Uzumaki"
+      email       = "naruto@konoha.com"
+      type        = "administrator"  # "administrator" or "user"
+      # administrator: Added to Windows Administrators group, created on ALL workstations
+      # user: Added to Windows Users group, created only on assigned workstation
     }
   }
 
   # Assignments (User-to-Workstation Mapping)
   workstation_assignments = {
     "vdi-001" = {
-      user = "john-doe"
-      user_source = "local"
+      user = "naruto-uzumaki"
     }
   }
 
-  # Security Configuration
-  allowed_cidr_blocks = ["203.0.113.1/32"]  # User's public IP
+  # Optional features
+  enable_centralized_logging = true
 }
 ```
 
-### Step 3: Deploy Infrastructure
+### Step 4: Deploy Infrastructure
 
 ```bash
+# From the example directory (e.g., modules/vdi/examples/public-connectivity/)
+
 # Initialize Terraform
 terraform init
 
@@ -250,11 +312,11 @@ terraform plan
 # Deploy infrastructure
 terraform apply
 
-# Note the outputs for connection details
+# Get connection details
 terraform output connection_info
 ```
 
-### Step 4: Validate Deployment
+### Step 5: Validate Deployment
 
 **Check installation progress:**
 ```bash
@@ -346,12 +408,62 @@ Password: <from-secrets-manager>
 2. Connect to VPN
 3. Access via internal DNS: `https://john-doe.vdi.internal:8443`
 
+### Private Connectivity Client Setup
+
+**Step 1: Download VPN Configuration**
+
+```bash
+# Get S3 bucket name from Terraform output
+terraform output
+
+# Download your .ovpn file
+aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/vdi-001-john-doe/vdi-001-john-doe.ovpn ./john-doe.ovpn
+```
+
+**Step 2: Install VPN Client**
+
+**Option A: OpenVPN (Free)**
+- **macOS**: `brew install openvpn` or download from [OpenVPN.net](https://openvpn.net/client/)
+- **Windows**: Download from [OpenVPN.net](https://openvpn.net/client/)
+- **Linux**: `sudo apt install openvpn` or `sudo yum install openvpn`
+
+**Option B: AWS VPN Client (Recommended)**
+- Download from [AWS VPN Client](https://aws.amazon.com/vpn/client-vpn-download/)
+- Import .ovpn file directly
+
+**Step 3: Connect to VPN**
+
+```bash
+# OpenVPN command line
+sudo openvpn --config john-doe.ovpn
+
+# Or use GUI client to import and connect
+```
+
+**Step 4: Verify VPN Connection**
+
+```bash
+# Test internal DNS resolution
+nslookup john-doe.vdi.internal
+# Should resolve to private IP (10.0.x.x)
+
+# Test DCV connectivity
+curl -k https://john-doe.vdi.internal:8443
+# Should return DCV login page HTML
+```
+
+**Step 5: Connect via DCV**
+
+- **URL**: `https://john-doe.vdi.internal:8443`
+- **Username**: `john-doe` (your assigned username)
+- **Password**: From Terraform output or Secrets Manager
+
 ### Remote Desktop Protocol (RDP)
 
 **Windows Built-in RDP:**
 
 1. Open Remote Desktop Connection (mstsc)
-2. Enter workstation IP address
+2. Enter workstation IP address or internal DNS name
 3. Use Administrator credentials
 
 ## Architecture Details
@@ -824,23 +936,79 @@ tasks:
 #### 10. Private Connectivity Issues
 
 **VPN Connection Fails:**
-- Verify .ovpn file downloaded from correct S3 folder
-- Check VPN client supports AWS Client VPN
+
+*Symptoms*: VPN client shows connection errors, timeouts, or authentication failures
+
+*Solutions*:
+- Verify .ovpn file downloaded from correct S3 folder: `aws s3 ls s3://cgd-vdi-vpn-configs-XXXXXXXX/`
+- Check VPN client supports AWS Client VPN (OpenVPN protocol)
 - Ensure certificates are valid and not expired
+- Try different VPN client (AWS VPN Client vs OpenVPN)
+- Check local firewall isn't blocking VPN traffic
 
 **Internal DNS Not Resolving:**
+
+*Symptoms*: `john-doe.vdi.internal` doesn't resolve or resolves to wrong IP
+
+*Solutions*:
 ```bash
 # Test DNS resolution after VPN connection
 nslookup john-doe.vdi.internal
 # Should resolve to private IP (10.0.x.x)
+
+# If not resolving, check VPN connection status
+ip route | grep 192.168  # Should show VPN routes
+
+# Test direct private IP access
+curl -k https://10.0.1.100:8443  # Use actual private IP
 ```
 
 **Certificate Issues:**
+
+*Symptoms*: Authentication failures, certificate errors in VPN client
+
+*Solutions*:
 ```bash
 # Check certificate validity
 openssl x509 -in john-doe.crt -text -noout
 # Verify dates and subject
+
+# Re-download certificates from S3
+aws s3 sync s3://cgd-vdi-vpn-configs-XXXXXXXX/vdi-001-john-doe/ ./vpn-config/
+
+# Verify certificate chain
+openssl verify -CAfile ca.crt john-doe.crt
 ```
+
+**VPN Connected But Can't Access VDI:**
+
+*Symptoms*: VPN shows connected, but DCV/RDP connections fail
+
+*Solutions*:
+```bash
+# Check VPN assigned IP
+ifconfig | grep 192.168  # Should show VPN interface
+
+# Test basic connectivity to VDI subnet
+ping 10.0.1.1  # VPC gateway
+
+# Check security group rules allow VPC CIDR
+# Should see 10.0.0.0/16 in allowed_cidr_blocks
+
+# Test specific ports
+telnet john-doe.vdi.internal 8443  # DCV
+telnet john-doe.vdi.internal 3389  # RDP
+```
+
+**Multiple VPN Clients Conflict:**
+
+*Symptoms*: Connection works sometimes, fails other times
+
+*Solutions*:
+- Disconnect from other VPNs (corporate VPN, etc.)
+- Use only one VPN client at a time
+- Check for IP address conflicts (192.168.x.x ranges)
+- Restart network interface: `sudo ifconfig [interface] down && sudo ifconfig [interface] up`
 
 ### Debug Commands
 

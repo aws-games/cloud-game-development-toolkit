@@ -158,9 +158,9 @@ resource "aws_ec2_client_vpn_endpoint" "vdi" {
 
 # Get unique subnets from workstations for VPN associations
 locals {
-  vpn_subnets = local.enable_client_vpn ? toset([
-    for workstation_key, config in var.workstations : config.subnet_id
-  ]) : []
+  vpn_subnets = local.enable_client_vpn ? {
+    for workstation_key, config in var.workstations : workstation_key => config.subnet_id
+  } : {}
 }
 
 # Associate VPN with all subnets used by workstations
@@ -177,7 +177,7 @@ resource "aws_ec2_client_vpn_route" "vdi" {
   
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.vdi[0].id
   destination_cidr_block = data.aws_vpc.selected.cidr_block
-  target_vpc_subnet_id   = tolist(local.vpn_subnets)[0]
+  target_vpc_subnet_id   = values(local.vpn_subnets)[0]
 }
 
 # Authorization rule for VPC access

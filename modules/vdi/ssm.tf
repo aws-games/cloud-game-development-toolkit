@@ -37,7 +37,7 @@ resource "aws_ssm_document" "create_vdi_users" {
         inputs = {
           runCommand = [
             "New-Item -ItemType Directory -Path 'C:\\temp' -Force",
-            "Set-Content -Path 'C:\\temp\\vdi-script.ps1' -Value @'\n${file("${path.module}/create-vdi-users-simple.ps1")}\n'@"
+            "Set-Content -Path 'C:\\temp\\vdi-script.ps1' -Value @'\n${file("${path.module}/assets/scripts/create-vdi-users-simple.ps1")}\n'@"
           ]
         }
       },
