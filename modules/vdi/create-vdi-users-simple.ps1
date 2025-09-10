@@ -50,23 +50,6 @@ $dcvPath = 'C:\Program Files\NICE\DCV\Server\bin\dcv.exe'
 & $dcvPath create-session --owner $AssignedUser "$AssignedUser-session"
 Write-Host "Created DCV session: $AssignedUser-session"
 
-# Share session with Administrator (built-in account)
-& $dcvPath share-session --user Administrator --permissions full "$AssignedUser-session" -ErrorAction SilentlyContinue
-Write-Host "Shared session with Administrator"
-
-# Share session with all administrator-type users (case-insensitive)
-foreach ($SecretName in ($AllSecrets -split '\s+')) {
-    if ($SecretName) {
-        $UserSecretJson = aws secretsmanager get-secret-value --secret-id $SecretName --region $Region --query SecretString --output text
-        if ($UserSecretJson) {
-            $UserData = $UserSecretJson | ConvertFrom-Json
-            # Case-insensitive comparison for administrator type
-            if ($UserData.user_type -ieq 'administrator') {
-                & $dcvPath share-session --user $UserData.username --permissions full "$AssignedUser-session" -ErrorAction SilentlyContinue
-                Write-Host "Shared session with administrator user: $($UserData.username)"
-            }
-        }
-    }
-}
+Write-Host "DCV session created successfully"
 
 Write-Host "VDI setup completed"

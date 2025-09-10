@@ -479,8 +479,8 @@ variable "create_default_security_groups" {
   default     = true
 }
 
-variable "debug_force_user_recreation" {
-  description = "Enable to force user recreation on every terraform apply (debug only)"
+variable "debug_mode" {
+  description = "Enable debug mode to force SSM execution on every terraform apply"
   type        = bool
   default     = false
 }

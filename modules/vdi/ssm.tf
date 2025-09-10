@@ -84,6 +84,6 @@ resource "aws_ssm_association" "vdi_user_creation" {
     AssignedUser   = each.value.user
     ProjectPrefix  = var.project_prefix
     Region         = var.region
-    ForceRun       = var.debug_force_user_recreation ? timestamp() : "disabled"
+    ForceRun       = var.debug_mode ? timestamp() : "disabled"
   }
 }

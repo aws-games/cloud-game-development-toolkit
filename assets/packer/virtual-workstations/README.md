@@ -58,9 +58,22 @@ ls assets/packer/virtual-workstations/shared/
 # Should show: base_infrastructure.ps1  sysprep.ps1  userdata.ps1
 ```
 
-**To override default instance type:**
+**Build with defaults:**
+
+Packer will use your current AWS session and the defaults defined in the template:
+
 ```bash
-# Create variables file
+# Navigate to the template directory
+cd assets/packer/virtual-workstations/lightweight/
+
+# Build with defaults (recommended)
+packer build windows-server-2025-lightweight.pkr.hcl
+```
+
+**To override default instance type (optional):**
+
+```bash
+# Create variables file (optional)
 cp variables.pkrvars.hcl.example variables.pkrvars.hcl
 
 # Edit variables.pkrvars.hcl
@@ -76,7 +89,10 @@ packer build -var-file="variables.pkrvars.hcl" windows-server-2025-lightweight.p
 **Best for:** Runtime software customization via VDI Terraform module
 
 ```bash
+# Navigate to lightweight template directory
 cd assets/packer/virtual-workstations/lightweight/
+
+# Build lightweight AMI
 packer build windows-server-2025-lightweight.pkr.hcl
 ```
 
@@ -87,7 +103,10 @@ packer build windows-server-2025-lightweight.pkr.hcl
 **Best for:** Immediate Unreal Engine development
 
 ```bash
+# Navigate to UE GameDev template directory
 cd assets/packer/virtual-workstations/ue-gamedev/
+
+# Build UE GameDev AMI
 packer build windows-server-2025-ue-gamedev.pkr.hcl
 ```
 
@@ -134,22 +153,27 @@ After building an AMI, use it with the VDI Terraform module:
 module "vdi" {
   source = "path/to/vdi/module"
   
-  # Option 1: Auto-discovery via data source (requires ami_prefix variable)
-  ami_prefix = "vdi-lightweight-windows-server-2025"  # Module uses data source to find latest
+  # Core configuration
+  project_prefix = "gamedev"
+  environment    = "dev"
+  vpc_id         = aws_vpc.vdi_vpc.id
   
-  # Option 2: Specific AMI ID (recommended after Packer build)
-  # ami = "ami-0d22cd2c73f6b623"  # Use the AMI ID from your Packer build output
-  
-  # Configure runtime software (lightweight AMI)
+  # Templates reference your built AMIs
   templates = {
     "developer" = {
-      software_packages = [
-        "chocolatey",
-        "visual-studio-2022", 
-        "unreal-engine-5.3"
-      ]
+      instance_type = "g4dn.2xlarge"
+      ami           = "ami-0d22cd2c73f6b623"  # Use AMI ID from Packer build output
+      volumes = {
+        Root = { capacity = 256, type = "gp3", windows_drive = "C:" }
+        Projects = { capacity = 1024, type = "gp3", windows_drive = "D:" }
+      }
     }
   }
+  
+  # Workstations and users configuration
+  workstations = { /* ... */ }
+  users = { /* ... */ }
+  workstation_assignments = { /* ... */ }
 }
 ```
 

@@ -114,6 +114,7 @@ module "vdi" {
 
   # Optional features
   enable_centralized_logging = true
+  debug_mode = false  # Production mode - only run SSM when parameters change
 
   tags = merge(local.tags, {
     Example = "public-connectivity"

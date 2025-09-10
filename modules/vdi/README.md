@@ -4,7 +4,7 @@
 
 > **⚠️ CRITICAL AMI REQUIREMENT**
 >
-> **You MUST build a Windows AMI using Packer before using this module.** Without a properly configured AMI, instance deployment will fail. Follow the [Packer AMI Build Guide](../../assets/packer/virtual-workstations/windows/README.md) to create the required Windows Server 2025 AMI with DCV and development tools.
+> **You MUST build a Windows AMI using Packer before using this module.** Without a properly configured AMI, instance deployment will fail. Follow the [Packer AMI Build Guide](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) to create the required Windows Server 2025 AMI with DCV and development tools.
 >
 > **📖 For complete VDI setup and configuration guidance, see the [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/).**
 
@@ -132,7 +132,7 @@ module "vdi" {
    - Basic understanding of AWS services ([VPC](https://aws.amazon.com/vpc/), [EC2](https://aws.amazon.com/ec2/))
 
 2. **Windows AMI Requirements** (CRITICAL ⚠️)
-   - Must build Windows Server 2025 AMI using [Packer template](../../assets/packer/virtual-workstations/windows/README.md)
+   - Must build Windows Server 2025 AMI using [Packer template](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations)
    - AMI must include DCV, NVIDIA drivers, and development tools
    - Without proper AMI, instance deployment will fail
 
@@ -469,13 +469,8 @@ Ready for use (all 3 accounts functional)
 
 **VDI Module Session Strategy:**
 ```powershell
-# Boot-time session creation (via User Data):
-dcv create-session --owner=Administrator administrator-session
-dcv create-session --owner=VDIAdmin vdiadmin-session  
-dcv create-session --owner=john-doe john-doe-session
-
-# Admin fleet access (if enable_admin_fleet_access = true)
-dcv share-session --user Administrator --permissions=full john-doe-session
+# Boot-time session creation (via SSM automation):
+dcv create-session --owner=assigned-user assigned-user-session
 ```
 
 **Session Management Commands:**
@@ -483,15 +478,17 @@ dcv share-session --user Administrator --permissions=full john-doe-session
 # List all sessions
 dcv list-sessions
 
-# Share session with admin (troubleshooting)
-dcv share-session --user Administrator --permissions=full john-doe-session
-
-# Remove admin access (restore privacy)
-dcv unshare-session --user Administrator john-doe-session
-
 # Close session
-dcv close-session john-doe-session
+dcv close-session assigned-user-session
+
+# Recreate session with different owner
+dcv create-session --owner new-user new-user-session
 ```
+
+**Administrator Access Options:**
+- **Standard RDP**: Connect as Administrator/vdiadmin for separate admin desktop
+- **SSM Session Manager**: `aws ssm start-session --target instance-id` for command-line access
+- **Fleet Manager**: AWS Console → Fleet Manager → Connect with Remote Desktop
 
 ## AMI Building with Packer
 
