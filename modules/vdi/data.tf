@@ -16,18 +16,10 @@ data "aws_availability_zones" "available" {
 
 
 
-# Data source to find the AMI created by the packer template
-data "aws_ami" "windows_server_2025" {
-  most_recent = true
-  owners      = ["self"]
 
-  filter {
-    name   = "name"
-    values = ["${var.ami_prefix}-*"]
-  }
 
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
+# Data sources for subnet AZ lookup (like Perforce module)
+data "aws_subnet" "workstation_subnets" {
+  for_each = var.workstations
+  id       = each.value.subnet_id
 }

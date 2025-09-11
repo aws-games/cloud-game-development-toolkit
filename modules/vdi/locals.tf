@@ -1,7 +1,9 @@
 # Local variables for VDI module v2.0.0 - 5-Tier Architecture
 locals {
-  # Default AMI ID from data source
-  default_ami_id = data.aws_ami.windows_server_2025.id
+  # AMI must be specified in templates - no default fallback
+  
+  # Private zone name for internal DNS
+  private_zone_name = "${var.project_prefix}.vdi.internal"
 
   # Random ID for unique resource naming
   random_id = random_id.suffix.hex
@@ -24,39 +26,13 @@ locals {
     scripts = "${var.project_prefix}-vdi-scripts-${local.random_id}"
   }
   
-  # Authentication method inference
-  has_ad_users = false
-
-
-  # Validate template references in workstations
-  template_validation = {
-    for workstation_key, config in var.workstations : workstation_key => {
-      template_exists = contains(keys(var.templates), config.template_key)
-      error_message   = "Workstation '${workstation_key}' references non-existent template '${config.template_key}'"
-    }
-  }
-
-  # Validate user references in workstation assignments
-  user_validation = {
-    for workstation_key, config in var.workstation_assignments : workstation_key => {
-      user_exists = contains(keys(var.users), config.user)
-      error_message = "Workstation '${workstation_key}' references non-existent user '${config.user}'"
-    }
-  }
-
-  # Validate workstation references in assignments
-  workstation_validation = {
-    for workstation_key, config in var.workstation_assignments : workstation_key => {
-      workstation_exists = contains(keys(var.workstations), workstation_key)
-      error_message = "Assignment references non-existent workstation '${workstation_key}'"
-    }
-  }
+  # Validation is handled by variable validation blocks in variables.tf
 
   # Process templates with intelligent defaults
   processed_templates = {
-    for template_key, config in var.templates : template_key => {
+    for preset_key, config in var.templates : preset_key => {
       # Compute configuration
-      ami           = config.ami != null ? config.ami : local.default_ami_id
+      ami           = config.ami  # AMI must be specified in templates
       instance_type = config.instance_type
       gpu_enabled   = config.gpu_enabled
       
@@ -78,45 +54,73 @@ locals {
       
       # Optional configuration
       iam_instance_profile = config.iam_instance_profile
+      software_packages    = config.software_packages
       tags = merge(var.tags, config.tags, {
-        Template = template_key
-        Type     = "VDI-Template"
+        Preset = preset_key
+        Type   = "VDI-Preset"
       })
     }
   }
 
-  # Process workstations with template inheritance
+  # STEP 1: Create workstation-to-preset mapping
+  # This creates a lookup table: workstation_key => preset_config (or null if no preset)
+  # Example: "vdi-001" => { ami = "ami-123", instance_type = "g4dn.xlarge", ... }
+  #          "vdi-002" => null (if using direct config)
+  workstation_templates = {
+    for workstation_key, config in var.workstations :
+    workstation_key => config.preset_key != null ? local.processed_templates[config.preset_key] : null
+  }
+
+  # STEP 2: Process each workstation with 3-tier override logic
+  # Priority: workstation config > template config > module defaults
+  # This supports 3 patterns:
+  #   1. Pure template: workstation references template, no overrides
+  #   2. Template + overrides: workstation references template + adds/overrides specific values
+  #   3. Direct config: workstation defines everything directly (template = null)
   processed_workstations = {
-    for workstation_key, config in var.workstations : workstation_key => merge(
-      local.processed_templates[config.template_key],
-      {
-        # Infrastructure placement (workstation-specific)
-        subnet_id         = config.subnet_id
-        availability_zone = config.availability_zone
-        security_groups   = config.security_groups
-        
-        # Software configuration removed - use custom AMIs
-        
-        # Script configuration removed (not implemented)
-        
-        # Security and access
-        allowed_cidr_blocks = config.allowed_cidr_blocks
-        
-        # Tags
-        tags = merge(
-          var.tags,
-          local.processed_templates[config.template_key].tags,
-          config.tags,
-          {
-            Name         = "${local.name_prefix}-${workstation_key}-workstation"
-            Workstation  = workstation_key
-            Template     = config.template_key
-            Environment  = var.environment
-            Type         = "VDI-Workstation"
-          }
-        )
-      }
-    )
+    for workstation_key, config in var.workstations : workstation_key => {
+      # CORE CONFIGURATION with 3-tier priority
+      # coalesce() returns first non-null value from left to right
+      # Example: coalesce("ami-workstation", "ami-preset", "ami-default") = "ami-workstation"
+      ami           = coalesce(config.ami, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].ami : null)
+      instance_type = coalesce(config.instance_type, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].instance_type : null)
+      gpu_enabled   = coalesce(config.gpu_enabled, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].gpu_enabled : null, false)
+      
+      # VOLUME CONFIGURATION (all-or-nothing override)
+      # If workstation defines volumes, use those completely (ignore preset volumes)
+      # If workstation doesn't define volumes, use preset volumes (or empty if no preset)
+      volumes = config.volumes != null ? {
+        # Process workstation-defined volumes and add AWS device mappings
+        for volume_name, volume_config in config.volumes : volume_name => merge(volume_config, {
+          # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
+          device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
+        })
+      } : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {})
+      
+      # OPTIONAL CONFIGURATION with 3-tier priority
+      software_packages    = coalesce(config.software_packages, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].software_packages : null, [])
+      iam_instance_profile = config.iam_instance_profile != null ? config.iam_instance_profile : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].iam_instance_profile : null)
+      
+      # INFRASTRUCTURE PLACEMENT (always workstation-specific, never from preset)
+      subnet_id           = config.subnet_id
+      availability_zone   = data.aws_subnet.workstation_subnets[workstation_key].availability_zone
+      security_groups     = config.security_groups
+      allowed_cidr_blocks = config.allowed_cidr_blocks
+      
+      # TAGS with merge priority: module < preset < workstation < required
+      tags = merge(
+        var.tags,                                    # Module default tags
+        local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].tags : {},  # Preset tags
+        config.tags,                                 # Workstation-specific tags
+        {                                            # Required tags (always applied)
+          Name        = "${local.name_prefix}-${workstation_key}-workstation"
+          Workstation = workstation_key
+          Preset      = config.preset_key != null ? config.preset_key : "direct-config"
+          Environment = var.environment
+          Type        = "VDI-Workstation"
+        }
+      )
+    }
   }
 
 
@@ -141,66 +145,36 @@ locals {
     }
   }
 
-  # Process AD users (removed)
-  processed_ad_users = {}
-
-  # Process AD groups (removed)
-  processed_ad_groups = {}
-
-  # Process workstation assignments with user lookup
-  processed_assignments = {
-    for workstation_key, config in var.workstation_assignments : workstation_key => {
-      # Combined configuration for EC2 instance
-      instance_config = merge(
-        local.processed_workstations[workstation_key],
-        {
-          # User information
-          assigned_user     = config.user
-          user_source       = "local"
-          user_given_name   = local.processed_users[config.user].given_name
-          user_family_name  = local.processed_users[config.user].family_name
-          user_email        = local.processed_users[config.user].email
-          user_type         = local.processed_users[config.user].user_type
-          
-          # Always-enabled features for VDI
-          associate_public_ip_address = true
-          create_key_pair            = true  # Always create for break-glass access
-        }
-      )
-      
-      # Tags combining user, workstation, and assignment info
-      tags = merge(
-        var.tags,
-        local.processed_users[config.user].tags,
-        local.processed_workstations[workstation_key].tags,
-        config.tags,
-        {
-          Name           = "${local.name_prefix}-${workstation_key}"
-          WorkstationKey = workstation_key
-          AssignedUser   = config.user
-          UserSource     = "local"
-          Template       = local.processed_workstations[workstation_key].tags.Template
-          Environment    = var.environment
-          Type           = "VDI-Assignment"
-        }
-      )
-    }
-  }
-
-  # Check if any AD users are defined (removed)
-  any_ad_users = false
-  
-  # Validate AD configuration (removed)
-  ad_validation_error = null
-
-  # Final configuration for EC2 instances (one per workstation assignment)
+  # STEP 3: Final EC2 instance configuration (simplified)
+  # Merge workstation config with user assignment info
   final_instances = {
-    for workstation_key, config in local.processed_assignments : workstation_key => config.instance_config
+    for workstation_key, assignment in var.workstation_assignments : workstation_key => merge(
+      local.processed_workstations[workstation_key],
+      {
+        # User assignment info
+        assigned_user            = assignment.user
+        user_given_name          = local.processed_users[assignment.user].given_name
+        user_family_name         = local.processed_users[assignment.user].family_name
+        user_email               = local.processed_users[assignment.user].email
+        
+        # VDI-specific settings
+        associate_public_ip_address = true
+        create_key_pair             = true
+      }
+    )
   }
 
-  # Assignment tags for enhanced resource tracking
+  # STEP 4: Final tags for instances
   assignment_tags = {
-    for workstation_key, config in local.processed_assignments : workstation_key => config.tags
+    for workstation_key, assignment in var.workstation_assignments : workstation_key => merge(
+      local.processed_workstations[workstation_key].tags,
+      local.processed_users[assignment.user].tags,
+      assignment.tags,
+      {
+        AssignedUser = assignment.user
+        UserSource   = "local"
+      }
+    )
   }
 
   # Emergency key storage paths (S3) - always created
@@ -219,14 +193,10 @@ locals {
     runtime_path = "scripts/runtime/"
   }
 
-  # Missing local values referenced in other files
+  # Legacy aliases for backward compatibility
   final_vdi_config = local.final_instances
-  any_ad_join_required = false
-  processed_groups = {}
 
-  # Software package filtering removed - use custom AMIs
-
-  # Workstation-User combinations: Admin users on ALL workstations, Standard users on assigned workstations only
+  # Workstation-User combinations: Different user types have different access patterns
   workstation_user_combinations = merge(
     # Standard users: only on their assigned workstation
     {
@@ -237,7 +207,16 @@ locals {
       }
       if var.users[assignment_config.user].type == "user"
     },
-    # Admin users: on ALL workstations
+    # Local administrators: admin on their assigned workstation only
+    {
+      for assignment_key, assignment_config in var.workstation_assignments :
+      "${assignment_key}-${assignment_config.user}" => {
+        workstation = assignment_key
+        user = assignment_config.user
+      }
+      if var.users[assignment_config.user].type == "administrator"
+    },
+    # Global administrators: admin on ALL workstations (fleet management)
     {
       for combo in flatten([
         for workstation_key in keys(var.workstation_assignments) : [
@@ -245,7 +224,7 @@ locals {
             workstation = workstation_key
             user = user_key
           }
-          if user_config.type == "administrator"
+          if user_config.type == "global_administrator"
         ]
       ]) : "${combo.workstation}-${combo.user}" => combo
     }

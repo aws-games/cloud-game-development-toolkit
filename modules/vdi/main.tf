@@ -1,43 +1,4 @@
-# VDI Module v2.0.0 - 5-Tier Architecture Implementation
-# Note: AD users are assumed to already exist in the domain
-# The VDI module integrates with existing AD infrastructure
-
-# Key pairs are created in instances.tf
-
-# Emergency private keys are stored in instances.tf
-
-# VDI instances use direct EC2 resources (no launch templates needed for persistent workstations)
-
-# Validation checks for new architecture
-check "template_references" {
-  assert {
-    condition = alltrue([
-      for workstation_key, config in var.workstations : 
-      contains(keys(var.templates), config.template_key)
-    ])
-    error_message = "All workstations must reference existing templates. Check template_key values."
-  }
-}
-
-check "user_references" {
-  assert {
-    condition = alltrue([
-      for workstation_key, config in var.workstation_assignments : 
-      contains(keys(var.users), config.user)
-    ])
-    error_message = "All workstation assignments must reference existing users. Check user values."
-  }
-}
-
-check "workstation_references" {
-  assert {
-    condition = alltrue([
-      for workstation_key, config in var.workstation_assignments : 
-      contains(keys(var.workstations), workstation_key)
-    ])
-    error_message = "All workstation assignments must reference existing workstations. Check workstation keys."
-  }
-}
+# VDI Module - Local Windows user management with EC2 workstations
 
 # VDI Workstation EC2 Instances
 
@@ -99,11 +60,11 @@ resource "aws_instance" "workstations" {
   
   # Root volume configuration
   root_block_device {
-    volume_type = lookup(each.value.volumes, "Root", {}).type
-    volume_size = lookup(each.value.volumes, "Root", {}).capacity
-    iops        = lookup(each.value.volumes, "Root", {}).iops
-    throughput  = lookup(each.value.volumes, "Root", {}).throughput
-    encrypted   = lookup(each.value.volumes, "Root", {}).encrypted
+    volume_type = each.value.volumes["Root"].type
+    volume_size = each.value.volumes["Root"].capacity
+    iops        = each.value.volumes["Root"].iops
+    throughput  = each.value.volumes["Root"].throughput
+    encrypted   = each.value.volumes["Root"].encrypted
     kms_key_id  = var.ebs_kms_key_id
     
     tags = merge(var.tags, {
@@ -138,8 +99,8 @@ resource "aws_instance" "workstations" {
     }
   }
   
-  # No user data - using Terraform local-exec to bypass Windows Server 2025 user data issues
-  # All VDI setup handled by terraform-ssm-trigger.tf
+  # No user data - using SSM for more reliable and debuggable configuration
+  # All VDI setup handled by SSM associations
   
   # Enable automatic instance replacement when user data changes
   user_data_replace_on_change = true
@@ -153,9 +114,10 @@ resource "aws_instance" "workstations" {
   
   # Instance tags
   tags = merge(each.value.tags, {
-    Name = "${local.name_prefix}-${each.key}"
-    WorkstationKey = each.key
-    AssignedUser   = var.workstation_assignments[each.key].user
+    Name             = "${local.name_prefix}-${each.key}"
+    WorkstationKey   = each.key
+    AssignedUser     = var.workstation_assignments[each.key].user
+    "VDI-Workstation" = each.key  # Used by SSM association for targeting
   })
   
 
@@ -233,19 +195,33 @@ resource "random_password" "user_passwords" {
   }
 }
 
-# Store ALL user passwords in Secrets Manager (original working approach)
+# Store ALL user passwords in Secrets Manager with connectivity info
 resource "aws_secretsmanager_secret_version" "user_passwords" {
   for_each = local.workstation_user_combinations
   
   secret_id = aws_secretsmanager_secret.user_passwords[each.key].id
   secret_string = jsonencode({
+    # User credentials
     username = each.value.user
     password = random_password.user_passwords[each.key].result
+    
+    # User details
     given_name = var.users[each.value.user].given_name
     family_name = var.users[each.value.user].family_name
     email = var.users[each.value.user].email
     user_type = var.users[each.value.user].type
     workstation = each.value.workstation
+    
+    # Connectivity information
+    connectivity = {
+      private_ip = aws_instance.workstations[each.value.workstation].private_ip
+      public_ip = aws_instance.workstations[each.value.workstation].public_ip
+      private_dns = aws_instance.workstations[each.value.workstation].private_dns
+      public_dns = aws_instance.workstations[each.value.workstation].public_dns
+      dcv_web_url = "https://${aws_instance.workstations[each.value.workstation].public_ip}:8443"
+      dcv_native_port = 8443
+      instance_id = aws_instance.workstations[each.value.workstation].id
+    }
   })
 }
 

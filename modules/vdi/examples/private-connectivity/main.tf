@@ -40,6 +40,9 @@ data "aws_ami" "vdi_ue_gamedev_ami" {
 }
 
 module "vdi" {
+  # Update source path based on your setup:
+  # Local: "./path/to/modules/vdi" (relative path to where you put the module)
+  # Remote: "github.com/aws-games/cloud-game-development-toolkit//modules/vdi?ref=main"
   source = "../../"
 
   # Core configuration
@@ -50,6 +53,11 @@ module "vdi" {
 
   # Enable private connectivity infrastructure
   enable_private_connectivity = true
+  
+  # Client VPN configuration - avoid CIDR overlap with local network
+  client_vpn_config = {
+    client_cidr_block = "10.100.0.0/16"  # Avoid overlapping with local networks, especially 192.168.x.x/24 home networks
+  }
 
   # 1. TEMPLATES - Configuration blueprints with different AMIs for different roles
   templates = {
@@ -74,10 +82,12 @@ module "vdi" {
           encrypted     = true
         }
       }
+      # Minimal packages - most tools already in UE GameDev AMI
+      software_packages = ["vscode", "notepadplusplus"]
     }
     
-    # General VDI workstation with GPU acceleration
-    general-vdi-workstation = {
+    # DevOps workstation with comprehensive toolchain
+    devops-workstation = {
       instance_type = "g4dn.xlarge"  # 4 vCPU, 16GB RAM, T4 GPU - good for general VDI + software installs
       ami           = data.aws_ami.vdi_lightweight_ami.id  # Lightweight AMI for runtime customization
       gpu_enabled   = true
@@ -97,60 +107,114 @@ module "vdi" {
           encrypted     = true
         }
       }
+      # Full DevOps toolchain
+      software_packages = [
+        "vscode", "terraform", "tfenv", "kubernetes-cli", "docker-desktop", 
+        "postman", "checkov", "7zip"
+      ]
     }
   }
 
-  # 2. WORKSTATIONS - Physical infrastructure with different templates
+  # 2. WORKSTATIONS - Showing three configuration patterns
   workstations = {
+    # Pattern 1: Pure template-based (Naruto - Game Developer)
     "vdi-001" = {
-      template_key      = "ue-gamedev-workstation"  # UE GameDev AMI with pre-installed tools
-      subnet_id         = aws_subnet.vdi_private_subnet.id
-      availability_zone = data.aws_availability_zones.available.names[0]
-      security_groups   = [aws_security_group.vdi_private_sg.id]
-      # No public access - only via Client VPN
+      preset_key      = "ue-gamedev-workstation"  # Uses template exactly as defined
+      subnet_id       = aws_subnet.vdi_private_subnet.id
+      security_groups = [aws_security_group.vdi_private_sg.id]
       allowed_cidr_blocks = ["10.0.0.0/16"]
     }
 
+    # Pattern 2: Template with overrides (Sasuke - DevOps Engineer)
     "vdi-002" = {
-      template_key      = "general-vdi-workstation"  # General VDI with GPU acceleration
-      subnet_id         = aws_subnet.vdi_private_subnet.id
-      availability_zone = data.aws_availability_zones.available.names[0]
-      security_groups   = [aws_security_group.vdi_private_sg.id]
+      preset_key      = "devops-workstation"  # Uses template as base
+      subnet_id       = aws_subnet.vdi_private_subnet.id
+      security_groups = [aws_security_group.vdi_private_sg.id]
+      allowed_cidr_blocks = ["10.0.0.0/16"]
+      # Override: Add extra packages beyond template
+      software_packages = [
+        "vscode", "terraform", "tfenv", "kubernetes-cli", "docker-desktop", 
+        "postman", "checkov", "7zip",
+        "git", "notepadplusplus"  # Additional packages for this workstation
+      ]
+    }
+
+    # Pattern 3: Direct configuration (Boruto - Junior Developer)
+    "vdi-003" = {
+      # No preset_key - direct configuration
+      ami           = data.aws_ami.vdi_lightweight_ami.id
+      instance_type = "g4dn.xlarge"  # Smaller instance for junior dev
+      gpu_enabled   = true
+      volumes = {
+        Root = {
+          capacity      = 150  # Smaller root volume
+          type          = "gp3"
+          windows_drive = "C:"
+          iops          = 3000
+          encrypted     = true
+        }
+        Learning = {
+          capacity      = 200  # Learning materials and projects
+          type          = "gp3"
+          windows_drive = "D:"
+          iops          = 3000
+          encrypted     = true
+        }
+      }
+      # Basic learning tools
+      software_packages = ["vscode", "git", "notepadplusplus"]
+      
+      subnet_id       = aws_subnet.vdi_private_subnet.id
+      security_groups = [aws_security_group.vdi_private_sg.id]
       allowed_cidr_blocks = ["10.0.0.0/16"]
     }
   }
 
-  # 3. LOCAL USERS - Individual identity with Windows group types
+  # 3. LOCAL USERS - Two personas with private VPN access
   users = {
     "vdiadmin" = {
-      given_name  = "VDI"
-      family_name = "Administrator"
-      email       = "admin@company.com"
-      type        = "administrator"  # Maps to Windows Administrators group
+      given_name        = "VDI"
+      family_name       = "Administrator"
+      email             = "admin@example.com"
+      type              = "global_administrator"  # Fleet management - admin on ALL workstations
+      connectivity_type = "private"               # VPN access - gets .ovpn file
     }
+    # Game Developer - UE development, needs high-performance workstation
     "naruto-uzumaki" = {
       given_name        = "Naruto"
       family_name       = "Uzumaki"
-      email             = "naruto@konoha.com"
-      type              = "administrator"  # Windows Administrators group - can install software, troubleshoot
-      connectivity_type = "private"        # Access via Client VPN - gets .ovpn file
+      email             = "naruto@example.com"
+      type              = "administrator"  # Admin on assigned workstation only
+      connectivity_type = "private"        # VPN access - gets .ovpn file
     }
+    # DevOps Engineer - Infrastructure, CI/CD, build systems
     "sasuke-uchiha" = {
       given_name        = "Sasuke"
       family_name       = "Uchiha"
-      email             = "sasuke@konoha.com"
-      type              = "user"           # Windows Users group - standard access, created only on assigned workstation
-      connectivity_type = "private"        # Access via Client VPN - gets .ovpn file
+      email             = "sasuke@example.com"
+      type              = "administrator"  # Admin on assigned workstation only
+      connectivity_type = "private"        # VPN access - gets .ovpn file
+    }
+    # Junior Developer - standard user, VPN access for learning
+    "boruto-uzumaki" = {
+      given_name        = "Boruto"
+      family_name       = "Uzumaki"
+      email             = "boruto@example.com"
+      type              = "user"           # Windows Users group - limited privileges
+      connectivity_type = "private"        # VPN access - gets .ovpn file
     }
   }
 
-  # 4. WORKSTATION ASSIGNMENTS - Workstation to user mapping
+  # 4. WORKSTATION ASSIGNMENTS - Three different patterns
   workstation_assignments = {
     "vdi-001" = {
-      user = "naruto-uzumaki"    # References users{} key
+      user = "naruto-uzumaki"    # Game dev - template-based config
     }
     "vdi-002" = {
-      user = "sasuke-uchiha"  # References users{} key
+      user = "sasuke-uchiha"     # DevOps - template + overrides
+    }
+    "vdi-003" = {
+      user = "boruto-uzumaki"    # Junior dev - direct config
     }
   }
 
@@ -158,6 +222,8 @@ module "vdi" {
 
   # Optional features
   enable_centralized_logging = true
+  
+  # Software packages now defined per-template or per-workstation (see workstations below)
 
   tags = merge(local.tags, {
     Example = "private-connectivity"

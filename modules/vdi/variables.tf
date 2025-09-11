@@ -34,10 +34,10 @@ variable "templates" {
     # Core compute configuration
     instance_type = string
     ami           = optional(string, null)
-    
+
     # Hardware configuration
     gpu_enabled       = optional(bool, false)
-    
+
     # Named volumes with Windows drive mapping
     volumes = map(object({
       capacity      = number
@@ -47,18 +47,19 @@ variable "templates" {
       throughput    = optional(number, 125)
       encrypted     = optional(bool, true)
     }))
-    
+
     # Optional configuration
     iam_instance_profile = optional(string, null)
+    software_packages    = optional(list(string), null)
     tags                 = optional(map(string), {})
   }))
-  
+
   description = <<EOF
 Configuration blueprints defining instance types and named volumes with Windows drive mapping.
 
 **KEY BECOMES TEMPLATE NAME**: The map key (e.g., "ue-developer") becomes the template name referenced by workstations.
 
-Templates provide reusable configurations that can be referenced by multiple workstations via template_key.
+Templates provide reusable configurations that can be referenced by multiple workstations via preset_key.
 
 Example:
 templates = {
@@ -79,7 +80,7 @@ templates = {
 # Referenced by workstations:
 workstations = {
   "alice-ws" = {
-    template_key = "ue-developer"    # ← References template by key
+    preset_key = "ue-developer"      # ← References template by key
   }
 }
 
@@ -90,9 +91,9 @@ EOF
 
   validation {
     condition = alltrue([
-      for template_key, config in var.templates : 
+      for preset_key, config in var.templates :
       alltrue([
-        for volume_name, volume in config.volumes : 
+        for volume_name, volume in config.volumes :
         contains(["gp2", "gp3", "io1", "io2"], volume.type)
       ])
     ])
@@ -101,9 +102,9 @@ EOF
 
   validation {
     condition = alltrue([
-      for template_key, config in var.templates : 
+      for preset_key, config in var.templates :
       alltrue([
-        for volume_name, volume in config.volumes : 
+        for volume_name, volume in config.volumes :
         volume.capacity >= 30 && volume.capacity <= 16384
       ])
     ])
@@ -112,52 +113,73 @@ EOF
 
   validation {
     condition = alltrue([
-      for template_key, config in var.templates : 
+      for preset_key, config in var.templates :
       alltrue([
-        for volume_name, volume in config.volumes : 
+        for volume_name, volume in config.volumes :
         can(regex("^[A-Z]:$", volume.windows_drive))
       ])
     ])
     error_message = "Windows drive must be in format 'C:', 'D:', 'E:', etc."
   }
 
+  validation {
+    condition = alltrue([
+      for preset_key, config in var.templates : 
+      config.ami != null
+    ])
+    error_message = "AMI must be specified for all templates. Use data sources or direct AMI IDs."
+  }
 
 }
 
-# 2. WORKSTATIONS - Physical infrastructure with template references
+# 2. WORKSTATIONS - Physical infrastructure with preset references
 variable "workstations" {
   type = map(object({
-    # Template reference
-    template_key = string
-    
+    # Preset reference (optional - can use direct config instead)
+    preset_key = optional(string, null)
+
     # Infrastructure placement
-    subnet_id         = string
-    availability_zone = string
-    security_groups   = list(string)
-    
+    subnet_id       = string
+    security_groups = list(string)
+
+    # Direct configuration (used when preset_key is null or as overrides)
+    ami                 = optional(string, null)
+    instance_type       = optional(string, null)
+    gpu_enabled         = optional(bool, null)
+    volumes             = optional(map(object({
+      capacity      = number
+      type          = string
+      windows_drive = string
+      iops          = optional(number, 3000)
+      throughput    = optional(number, 125)
+      encrypted     = optional(bool, true)
+    })), null)
+    iam_instance_profile = optional(string, null)
+    software_packages    = optional(list(string), null)
+
     # Optional overrides
     allowed_cidr_blocks = optional(list(string), ["10.0.0.0/16"])
     tags                = optional(map(string), {})
   }))
-  
+
   description = <<EOF
 Physical infrastructure instances with template references and placement configuration.
 
 **KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.
 
-Workstations inherit configuration from templates via template_key reference.
+Workstations inherit configuration from templates via preset_key reference.
 
 Example:
 workstations = {
   "alice-workstation" = {        # ← This key becomes the workstation name
-    template_key = "ue-developer"  # ← References templates{} key
+    preset_key = "ue-developer"    # ← References templates{} key
     subnet_id = "subnet-123"
     availability_zone = "us-east-1a"
     security_groups = ["sg-456"]
     allowed_cidr_blocks = ["203.0.113.1/32"]
   }
   "vdi-001" = {                  # ← Another workstation name
-    template_key = "basic-workstation"
+    preset_key = "basic-workstation"
     subnet_id = "subnet-456"
   }
 }
@@ -173,10 +195,20 @@ EOF
 
   validation {
     condition = alltrue([
-      for workstation_key, config in var.workstations : 
-      length(config.template_key) > 0
+      for workstation_key, config in var.workstations :
+      config.preset_key != null ? contains(keys(var.templates), config.preset_key) : true
     ])
-    error_message = "Each workstation must reference a valid template_key."
+    error_message = "When preset_key is specified, it must reference an existing template."
+  }
+
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.preset_key == null ? (
+        config.ami != null && config.instance_type != null && config.volumes != null
+      ) : true
+    ])
+    error_message = "When preset_key is null, ami, instance_type, and volumes must be specified directly."
   }
 
 
@@ -198,7 +230,8 @@ Local Windows user accounts with Windows group types and network connectivity (m
 **KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.
 
 type options (Windows groups):
-- "administrator": User added to Windows Administrators group, created on ALL workstations
+- "global_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)
+- "administrator": User added to Windows Administrators group, created only on assigned workstation
 - "user": User added to Windows Users group, created only on assigned workstation
 
 connectivity_type options (network access):
@@ -211,7 +244,7 @@ users = {
     given_name = "VDI"
     family_name = "Administrator"
     email = "admin@company.com"
-    type = "administrator"      # Windows Administrators group
+    type = "global_administrator" # Windows Administrators group on ALL workstations
   }
   "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"
     given_name = "Naruto"
@@ -229,15 +262,15 @@ workstation_assignments = {
 }
 EOF
   default     = {}
-  
+
   validation {
     condition = alltrue([
       for user_key, config in var.users :
-      contains(["administrator", "user"], config.type)
+      contains(["global_administrator", "administrator", "user"], config.type)
     ])
-    error_message = "type must be either 'administrator' or 'user' for each user."
+    error_message = "type must be 'global_administrator', 'administrator', or 'user' for each user."
   }
-  
+
   validation {
     condition = alltrue([
       for user_key, config in var.users :
@@ -245,7 +278,7 @@ EOF
     ])
     error_message = "connectivity_type must be either 'public' or 'private' for each user."
   }
-  
+
   validation {
     condition = alltrue([
       for user_key, config in var.users :
@@ -301,7 +334,7 @@ variable "dcv_session_permissions" {
   })
   description = "DCV session management and permission configuration"
   default     = {}
-  
+
   validation {
     condition = contains(["view", "full"], var.dcv_session_permissions.admin_default_permissions)
     error_message = "admin_default_permissions must be either 'view' or 'full'."
@@ -359,15 +392,7 @@ variable "ebs_kms_key_id" {
 
 
 
-########################################
-# SHARED CONFIGURATION
-########################################
 
-variable "ami_prefix" {
-  type        = string
-  description = "AMI name prefix for auto-discovery when ami not specified in templates"
-  default     = "vdi_lightweight_ws2025"
-}
 
 ########################################
 # CENTRALIZED LOGGING (CGD PATTERN)
@@ -383,7 +408,7 @@ variable "log_retention_days" {
   type        = number
   description = "CloudWatch log retention period in days"
   default     = 30
-  
+
   validation {
     condition = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.log_retention_days)
     error_message = "log_retention_days must be a valid CloudWatch log retention value."
@@ -441,7 +466,7 @@ variable "connectivity_type" {
   type        = string
   description = "VDI connectivity type: 'public' for internet access, 'private' for Client VPN access"
   default     = "public"
-  
+
   validation {
     condition     = contains(["public", "private"], var.connectivity_type)
     error_message = "connectivity_type must be either 'public' or 'private'."
@@ -501,3 +526,6 @@ variable "force_user_creation_rerun" {
   type        = string
   default     = "1"
 }
+
+
+

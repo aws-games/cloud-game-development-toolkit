@@ -47,7 +47,15 @@ data "aws_iam_policy_document" "vdi_instance_access" {
       "ec2:DescribeTags",
       "ec2:DescribeInstances"
     ]
-    resources = ["*"]
+    resources = [
+      for workstation_key in keys(var.workstation_assignments) :
+      "arn:aws:ec2:${var.region}:*:instance/*"
+    ]
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/Workstation"
+      values   = [for workstation_key in keys(var.workstation_assignments) : workstation_key]
+    }
   }
 
   # SSM permissions for software installation and hybrid user creation
@@ -126,12 +134,27 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
-      "secretsmanager:CreateSecret",
       "secretsmanager:PutSecretValue",
-      "secretsmanager:UpdateSecret",
+      "secretsmanager:UpdateSecret"
+    ]
+    resources = [
+      for user_key in keys(var.users) :
+      "arn:aws:secretsmanager:${var.region}:*:secret:${var.project_prefix}/*/users/${user_key}-*"
+    ]
+  }
+  
+  # Secrets Manager list permissions (required for finding secrets)
+  statement {
+    effect = "Allow"
+    actions = [
       "secretsmanager:ListSecrets"
     ]
-    resources = ["*"]  # Temporarily permissive for testing
+    resources = ["*"]
+    condition {
+      test     = "StringLike"
+      variable = "secretsmanager:Name"
+      values   = ["${var.project_prefix}/*/users/*"]
+    }
   }
 
   # Directory Service permissions removed (AD integration disabled)

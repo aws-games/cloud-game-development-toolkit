@@ -28,7 +28,7 @@ resource "tls_self_signed_cert" "client_vpn_server" {
   private_key_pem = tls_private_key.client_vpn_server[0].private_key_pem
 
   subject {
-    common_name  = "VDI Client VPN Server"
+    common_name  = "vpn.vdi.internal"
     organization = "CGD Toolkit"
   }
 
@@ -171,14 +171,8 @@ resource "aws_ec2_client_vpn_network_association" "vdi" {
   subnet_id              = each.value
 }
 
-# Route to VPC CIDR
-resource "aws_ec2_client_vpn_route" "vdi" {
-  count = local.enable_client_vpn ? 1 : 0
-  
-  client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.vdi[0].id
-  destination_cidr_block = data.aws_vpc.selected.cidr_block
-  target_vpc_subnet_id   = values(local.vpn_subnets)[0]
-}
+# Note: VPC CIDR route is automatically created by Client VPN when network associations are added
+# No manual route needed for VPC access
 
 # Authorization rule for VPC access
 resource "aws_ec2_client_vpn_authorization_rule" "vdi" {
@@ -188,6 +182,8 @@ resource "aws_ec2_client_vpn_authorization_rule" "vdi" {
   target_network_cidr    = data.aws_vpc.selected.cidr_block
   authorize_all_groups   = true
 }
+
+
 
 ##########################################
 # Generate VPN Client Configuration Files
@@ -231,55 +227,43 @@ resource "aws_s3_bucket_public_access_block" "vpn_configs" {
 
 # Store user certificates alongside their .ovpn files
 resource "aws_s3_object" "user_certificates" {
-  for_each = local.enable_client_vpn ? {
-    for workstation_key, assignment in var.workstation_assignments :
-    workstation_key => assignment if contains(keys(local.private_users), assignment.user)
-  } : {}
+  for_each = local.enable_client_vpn ? local.private_users : {}
   
   bucket  = aws_s3_bucket.vpn_configs[0].id
-  key     = "${each.key}-${each.value.user}/${each.key}-${each.value.user}.crt"
-  content = tls_locally_signed_cert.client_vpn_users[each.value.user].cert_pem
+  key     = "${each.key}/${each.key}.crt"
+  content = tls_locally_signed_cert.client_vpn_users[each.key].cert_pem
   
-  tags = merge(var.tags, {
+  tags = {
     Purpose     = "VPN client certificate"
-    Username    = each.value.user
-    Workstation = each.key
-  })
+    Username    = each.key
+  }
 }
 
 resource "aws_s3_object" "user_private_keys" {
-  for_each = local.enable_client_vpn ? {
-    for workstation_key, assignment in var.workstation_assignments :
-    workstation_key => assignment if contains(keys(local.private_users), assignment.user)
-  } : {}
+  for_each = local.enable_client_vpn ? local.private_users : {}
   
   bucket  = aws_s3_bucket.vpn_configs[0].id
-  key     = "${each.key}-${each.value.user}/${each.key}-${each.value.user}.key"
-  content = tls_private_key.client_vpn_users[each.value.user].private_key_pem
+  key     = "${each.key}/${each.key}.key"
+  content = tls_private_key.client_vpn_users[each.key].private_key_pem
   
-  tags = merge(var.tags, {
+  tags = {
     Purpose     = "VPN client private key"
-    Username    = each.value.user
-    Workstation = each.key
-  })
+    Username    = each.key
+  }
 }
 
 # Store CA certificate in each user folder for convenience
 resource "aws_s3_object" "user_ca_certificates" {
-  for_each = local.enable_client_vpn ? {
-    for workstation_key, assignment in var.workstation_assignments :
-    workstation_key => assignment if contains(keys(local.private_users), assignment.user)
-  } : {}
+  for_each = local.enable_client_vpn ? local.private_users : {}
   
   bucket  = aws_s3_bucket.vpn_configs[0].id
-  key     = "${each.key}-${each.value.user}/${each.key}-ca.crt"
+  key     = "${each.key}/ca.crt"
   content = tls_self_signed_cert.client_vpn_ca[0].cert_pem
   
-  tags = merge(var.tags, {
+  tags = {
     Purpose     = "VPN CA certificate"
-    Username    = each.value.user
-    Workstation = each.key
-  })
+    Username    = each.key
+  }
 }
 
 ##########################################
@@ -301,36 +285,20 @@ resource "aws_route53_zone" "vdi_internal" {
   })
 }
 
-# DNS records for private users (user-based only)
-# Automatically updates when EC2 instances are recreated
-resource "aws_route53_record" "vdi_users" {
-  for_each = local.enable_client_vpn ? {
-    for workstation_key, assignment in var.workstation_assignments :
-    assignment.user => workstation_key if contains(keys(local.private_users), assignment.user)
-  } : {}
-  
-  zone_id = aws_route53_zone.vdi_internal[0].zone_id
-  name    = "${each.key}.vdi.internal"  # john-doe.vdi.internal
-  type    = "A"
-  ttl     = 60  # Lower TTL for faster updates
-  records = [aws_instance.workstations[each.value].private_ip]  # Dynamic reference
-}
+
 
 # Store VPN client configs in S3 per private user
 resource "aws_s3_object" "vpn_client_configs" {
-  for_each = local.enable_client_vpn && var.client_vpn_config.generate_client_configs ? {
-    for workstation_key, assignment in var.workstation_assignments :
-    workstation_key => assignment if contains(keys(local.private_users), assignment.user)
-  } : {}
+  for_each = local.enable_client_vpn && var.client_vpn_config.generate_client_configs ? local.private_users : {}
   
   bucket = aws_s3_bucket.vpn_configs[0].id
-  key    = "${each.key}-${each.value.user}/${each.key}-${each.value.user}.ovpn"
+  key    = "${each.key}/${each.key}.ovpn"
   
   content = <<-EOF
 client
 dev tun
 proto udp
-remote ${aws_ec2_client_vpn_endpoint.vdi[0].dns_name} 443
+remote ${replace(aws_ec2_client_vpn_endpoint.vdi[0].dns_name, "*.", "")} 443
 resolv-retry infinite
 nobind
 persist-key
@@ -343,15 +311,14 @@ verb 3
 ${tls_self_signed_cert.client_vpn_ca[0].cert_pem}</ca>
 
 <cert>
-${tls_locally_signed_cert.client_vpn_users[each.value.user].cert_pem}</cert>
+${tls_locally_signed_cert.client_vpn_users[each.key].cert_pem}</cert>
 
 <key>
-${tls_private_key.client_vpn_users[each.value.user].private_key_pem}</key>
+${tls_private_key.client_vpn_users[each.key].private_key_pem}</key>
 EOF
   
-  tags = merge(var.tags, {
+  tags = {
     Purpose      = "VPN client configuration"
-    Workstation  = each.key
-    Username     = each.value.user
-  })
+    Username     = each.key
+  }
 }
