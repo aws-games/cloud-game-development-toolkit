@@ -35,3 +35,16 @@ resource "aws_route53_record" "internal_p4_server" {
 
   #checkov:skip=CKV2_AWS_23: Route53 A record is necessary for this example deployment
 }
+
+# Route replica traffic to replica instances
+resource "aws_route53_record" "internal_p4_replicas" {
+  for_each = var.p4_server_replicas_config
+  
+  zone_id = aws_route53_zone.perforce_private_hosted_zone[0].zone_id
+  name    = local.replica_domains[each.key]
+  type    = "A"
+  records = [module.p4_server_replicas[each.key].private_ip]
+  ttl     = 300
+
+  #checkov:skip=CKV2_AWS_23: Route53 A record is necessary for replica deployment
+}
