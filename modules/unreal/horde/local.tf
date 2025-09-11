@@ -33,4 +33,27 @@ locals {
     AdminClaimType     = var.admin_claim_type
     AdminClaimValue    = var.admin_claim_value
   }
+
+  dex_config = var.deploy_dex ? {
+    issuer = "https://${var.dex_fqdn}"
+    storage = {
+      type = "memory"
+    }
+    web = {
+      http = "0.0.0.0:${var.dex_container_port}"
+    }
+    connectors = var.dex_connectors
+    staticClients = [{
+      id     = "horde"
+      name   = "Horde"
+      public = true
+      redirectURIs = [
+        "https://${var.fully_qualified_domain_name}/signin-oidc",
+        "http://localhost:5000/signin-oidc",
+        "http://localhost:13340",
+        "http://localhost:8749/ugs.client",
+        "http://localhost:8749/",
+      ]
+    }]
+  } : null
 }

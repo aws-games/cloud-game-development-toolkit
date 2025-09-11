@@ -75,6 +75,30 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_external" {
   tags = local.tags
 }
 
+# External target group for dex traffic
+resource "aws_lb_target_group" "unreal_horde_dex_target_group_external" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
+  count       = var.create_external_alb && var.deploy_dex ? 1 : 0
+  name        = "${local.name_prefix}-ext-dex-tg"
+  port        = var.dex_container_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 10
+    interval            = 30
+  }
+
+  tags = local.tags
+}
+
 # External ALB listener forwards to web server target group
 resource "aws_lb_listener" "unreal_horde_external_alb_https_listener" {
   count             = var.create_external_alb ? 1 : 0
@@ -104,6 +128,21 @@ resource "aws_lb_listener_rule" "unreal_horde_external_alb_grpc_rule" {
   }
   action {
     target_group_arn = aws_lb_target_group.unreal_horde_grpc_target_group_external[0].arn
+    type             = "forward"
+  }
+}
+
+# External ALB listener forwards dex requests to dex target group
+resource "aws_lb_listener_rule" "unreal_horde_external_alb_dex_rule" {
+  count        = var.create_external_alb && var.deploy_dex ? 1 : 0
+  listener_arn = aws_lb_listener.unreal_horde_external_alb_https_listener[0].arn
+  condition {
+    host_header {
+      values = [var.dex_fqdn]
+    }
+  }
+  action {
+    target_group_arn = aws_lb_target_group.unreal_horde_dex_target_group_external[0].arn
     type             = "forward"
   }
 }
@@ -209,6 +248,30 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_internal" {
   tags = local.tags
 }
 
+# Internal target group for dex traffic
+resource "aws_lb_target_group" "unreal_horde_dex_target_group_internal" {
+  #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
+  count       = var.create_internal_alb && var.deploy_dex ? 1 : 0
+  name        = "${local.name_prefix}-int-dex-tg"
+  port        = var.dex_container_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 10
+    interval            = 30
+  }
+
+  tags = local.tags
+}
+
 # Internal ALB listener forwards to web server target group
 resource "aws_lb_listener" "unreal_horde_internal_alb_https_listener" {
   count             = var.create_internal_alb ? 1 : 0
@@ -238,6 +301,21 @@ resource "aws_lb_listener_rule" "unreal_horde_internal_alb_grpc_rule" {
   }
   action {
     target_group_arn = aws_lb_target_group.unreal_horde_grpc_target_group_internal[0].arn
+    type             = "forward"
+  }
+}
+
+# Internal ALB listener forwards dex requests to dex target group
+resource "aws_lb_listener_rule" "unreal_horde_internal_alb_dex_rule" {
+  count        = var.create_internal_alb && var.deploy_dex ? 1 : 0
+  listener_arn = aws_lb_listener.unreal_horde_internal_alb_https_listener[0].arn
+  condition {
+    host_header {
+      values = [var.dex_fqdn]
+    }
+  }
+  action {
+    target_group_arn = aws_lb_target_group.unreal_horde_dex_target_group_internal[0].arn
     type             = "forward"
   }
 }

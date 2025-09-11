@@ -189,6 +189,13 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
             Region: "${data.aws_region.current.region}",
           },
         } * ${jsonencode(var.extra_server_config)}' > /app/config/server.json
+
+        %{if var.deploy_dex~}
+        echo '${yamlencode(local.dex_config)}' > /app/config/dex.yaml
+        %{if var.dex_auth_secret_arn != null~}
+        echo $DEX_AUTH_JSON > /app/config/dex_auth.json
+        %{endif}
+        %{endif}
         EOF
       ]
       secrets = [for config in [
@@ -200,6 +207,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           name      = "P4_SUPER_PASSWORD"
           valueFrom = var.p4_super_user_password_secret_arn
         },
+        {
+          name      = "DEX_AUTH_JSON"
+          valueFrom = var.dex_auth_secret_arn
+        }
       ] : config.valueFrom != null ? config : null]
       readonly_root_filesystem = false
       mountPoints = [
@@ -262,6 +273,46 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           awslogs-stream-prefix = "[P4TRUST]"
         }
       },
+    }] : [],
+    var.deploy_dex ? [{
+      name                     = var.dex_container_name,
+      image                    = "public.ecr.aws/bitnami/dex:2"
+      essential                = true
+      readonly_root_filesystem = false
+      command                  = ["serve", "/app/config/dex.yaml"]
+      mountPoints = [
+        {
+          sourceVolume  = "unreal-horde-config",
+          containerPath = "/app/config"
+        }
+      ]
+      portMappings = [
+        {
+          containerPort = var.dex_container_port
+          hostPort      = var.dex_container_port
+        }
+      ]
+      healthCheck = {
+        command = [
+          "CMD-SHELL", "curl http://localhost:${var.dex_container_port} || exit 1",
+        ]
+        interval    = 5
+        retries     = 3
+        startPeriod = 10
+        timeout     = 5
+      }
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "[DEX]"
+        }
+      },
+      dependsOn = [{
+        containerName = "unreal-horde-config"
+        condition     = "SUCCESS"
+      }],
     }] : []
   ))
   tags = {
@@ -303,6 +354,16 @@ resource "aws_ecs_service" "unreal_horde" {
     }
   }
 
+  # External target group for dex traffic
+  dynamic "load_balancer" {
+    for_each = var.create_external_alb && var.deploy_dex ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.unreal_horde_dex_target_group_external[0].arn
+      container_name   = var.dex_container_name
+      container_port   = var.dex_container_port
+    }
+  }
+
   # Internal target group for API traffic
   dynamic "load_balancer" {
     for_each = var.create_internal_alb ? [1] : []
@@ -320,6 +381,16 @@ resource "aws_ecs_service" "unreal_horde" {
       target_group_arn = aws_lb_target_group.unreal_horde_grpc_target_group_internal[0].arn
       container_name   = var.container_name
       container_port   = var.container_grpc_port
+    }
+  }
+
+  # Internal target group for dex traffic
+  dynamic "load_balancer" {
+    for_each = var.create_internal_alb && var.deploy_dex ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.unreal_horde_dex_target_group_internal[0].arn
+      container_name   = var.dex_container_name
+      container_port   = var.dex_container_port
     }
   }
 

@@ -137,6 +137,9 @@ data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
       var.p4_super_user_username_secret_arn != null ? [
         var.p4_super_user_username_secret_arn,
         var.p4_super_user_password_secret_arn,
+      ] : [],
+      var.dex_auth_secret_arn != null ? [
+        var.dex_auth_secret_arn,
       ] : []
     )
   }

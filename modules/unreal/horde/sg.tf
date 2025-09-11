@@ -66,6 +66,16 @@ resource "aws_vpc_security_group_egress_rule" "unreal_horde_internal_alb_outboun
   ip_protocol                  = "tcp"
 }
 
+resource "aws_vpc_security_group_egress_rule" "unreal_horde_internal_alb_outbound_service_dex" {
+  count                        = var.create_internal_alb && var.deploy_dex ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_internal_alb_sg[0].id
+  description                  = "Allow outbound traffic from internal Unreal Horde ALB to Unreal Horde service dex channel."
+  referenced_security_group_id = aws_security_group.unreal_horde_sg.id
+  from_port                    = var.dex_container_port
+  to_port                      = var.dex_container_port
+  ip_protocol                  = "tcp"
+}
+
 ########################################
 # Unreal Horde Service Security Group
 ########################################
@@ -116,6 +126,16 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_external_al
   ip_protocol                  = "tcp"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_external_alb_dex" {
+  count                        = var.create_external_alb && var.deploy_dex ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_sg.id
+  description                  = "Allow inbound dex traffic from Unreal Horde external ALB."
+  referenced_security_group_id = aws_security_group.unreal_horde_external_alb_sg[0].id
+  from_port                    = var.dex_container_port
+  to_port                      = var.dex_container_port
+  ip_protocol                  = "tcp"
+}
+
 # Inbound access to Containers from Internal ALB on API port
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_alb_api" {
   count                        = var.create_internal_alb ? 1 : 0
@@ -134,6 +154,16 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_al
   referenced_security_group_id = aws_security_group.unreal_horde_internal_alb_sg[0].id
   from_port                    = var.container_grpc_port
   to_port                      = var.container_grpc_port
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_inbound_internal_alb_dex" {
+  count                        = var.create_internal_alb && var.deploy_dex ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_sg.id
+  description                  = "Allow inbound dex traffic from Unreal Horde internal ALB."
+  referenced_security_group_id = aws_security_group.unreal_horde_internal_alb_sg[0].id
+  from_port                    = var.dex_container_port
+  to_port                      = var.dex_container_port
   ip_protocol                  = "tcp"
 }
 

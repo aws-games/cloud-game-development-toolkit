@@ -81,10 +81,14 @@ No modules.
 | [aws_lb_listener.unreal_horde_external_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.unreal_horde_internal_alb_http_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.unreal_horde_internal_alb_https_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_listener_rule.unreal_horde_external_alb_dex_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_listener_rule.unreal_horde_external_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
+| [aws_lb_listener_rule.unreal_horde_internal_alb_dex_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_listener_rule.unreal_horde_internal_alb_grpc_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_target_group.unreal_horde_api_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_lb_target_group.unreal_horde_api_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unreal_horde_dex_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unreal_horde_dex_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_lb_target_group.unreal_horde_grpc_target_group_external](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_lb_target_group.unreal_horde_grpc_target_group_internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_s3_bucket.ansible_playbooks](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
@@ -109,6 +113,7 @@ No modules.
 | [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_external_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_dex](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_internal_alb_outbound_service_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.unreal_horde_outbound_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -116,8 +121,10 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.unreal_horde_docdb_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_elasticache_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_dex](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_external_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_dex](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_inbound_internal_alb_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unreal_horde_service_inbound_agents](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.unreal_horde](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
@@ -166,7 +173,13 @@ No modules.
 | <a name="input_custom_unreal_horde_role"></a> [custom\_unreal\_horde\_role](#input\_custom\_unreal\_horde\_role) | ARN of the custom IAM Role you wish to use with Unreal Horde. | `string` | `null` | no |
 | <a name="input_database_connection_string"></a> [database\_connection\_string](#input\_database\_connection\_string) | The database connection string that Horde should use. | `string` | `null` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Set this flag to enable ECS execute permissions on the Unreal Horde container and force new service deployments on Terraform apply. | `bool` | `false` | no |
+| <a name="input_deploy_dex"></a> [deploy\_dex](#input\_deploy\_dex) | Set this flag to deploy dex and use it for authentication | `bool` | `false` | no |
 | <a name="input_desired_container_count"></a> [desired\_container\_count](#input\_desired\_container\_count) | The desired number of containers running Unreal Horde. | `number` | `1` | no |
+| <a name="input_dex_auth_secret_arn"></a> [dex\_auth\_secret\_arn](#input\_dex\_auth\_secret\_arn) | The secret containing the dex auth config json | `string` | `null` | no |
+| <a name="input_dex_connectors"></a> [dex\_connectors](#input\_dex\_connectors) | The connector to use for dex auth | <pre>list(object({<br/>    type   = string<br/>    id     = string<br/>    name   = string<br/>    config = any<br/>  }))</pre> | `null` | no |
+| <a name="input_dex_container_name"></a> [dex\_container\_name](#input\_dex\_container\_name) | The name of the dex containerd | `string` | `"unreal-horde-dex"` | no |
+| <a name="input_dex_container_port"></a> [dex\_container\_port](#input\_dex\_container\_port) | The port to serve the dex container on | `number` | `5556` | no |
+| <a name="input_dex_fqdn"></a> [dex\_fqdn](#input\_dex\_fqdn) | The url dex will be available at | `string` | `null` | no |
 | <a name="input_docdb_backup_retention_period"></a> [docdb\_backup\_retention\_period](#input\_docdb\_backup\_retention\_period) | Number of days to retain backups for DocumentDB cluster. | `number` | `7` | no |
 | <a name="input_docdb_instance_class"></a> [docdb\_instance\_class](#input\_docdb\_instance\_class) | The instance class for the Horde DocumentDB cluster. | `string` | `"db.t4g.medium"` | no |
 | <a name="input_docdb_instance_count"></a> [docdb\_instance\_count](#input\_docdb\_instance\_count) | The number of instances to provision for the Horde DocumentDB cluster. | `number` | `2` | no |

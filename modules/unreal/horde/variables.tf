@@ -326,20 +326,12 @@ variable "oidc_client_secret" {
   type        = string
   description = "The client secret used for authenticating with the OIDC provider."
   default     = null
-  validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_secret != null : var.oidc_client_secret == null
-    error_message = "An OIDC client secret must be provided for Okta and OpenIdConnect authentication methods."
-  }
 }
 
 variable "oidc_signin_redirect" {
   type        = string
   description = "The sign-in redirect URL for the OIDC provider."
   default     = null
-  validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_signin_redirect != null : var.oidc_signin_redirect == null
-    error_message = "An OIDC sign-in redirect URL must be provided for Okta and OpenIdConnect authentication methods."
-  }
 }
 
 variable "admin_claim_type" {
@@ -521,4 +513,56 @@ variable "enable_new_agents_by_default" {
   type        = bool
   description = "Set this flag to automatically enable new agents that enroll with the Horde Server."
   default     = false
+}
+
+# DEX
+variable "deploy_dex" {
+  type        = bool
+  description = "Set this flag to deploy dex and use it for authentication"
+  default     = false
+}
+
+variable "dex_fqdn" {
+  type        = string
+  description = "The url dex will be available at"
+  default     = null
+
+  validation {
+    condition     = !var.deploy_dex || var.dex_fqdn != null
+    error_message = "if deploy_dex is true, dex_fqdn must be set"
+  }
+}
+
+variable "dex_container_name" {
+  type        = string
+  description = "The name of the dex containerd"
+  default     = "unreal-horde-dex"
+}
+
+variable "dex_container_port" {
+  type        = number
+  description = "The port to serve the dex container on"
+  default     = 5556
+}
+
+variable "dex_auth_secret_arn" {
+  type        = string
+  description = "The secret containing the dex auth config json"
+  default     = null
+}
+
+variable "dex_connectors" {
+  type = list(object({
+    type   = string
+    id     = string
+    name   = string
+    config = any
+  }))
+  description = "The connector to use for dex auth"
+  default     = null
+
+  validation {
+    condition     = !var.deploy_dex || var.dex_connectors != null
+    error_message = "if deploy_dex is true, dex_connectors must be set"
+  }
 }
