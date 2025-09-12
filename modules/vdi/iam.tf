@@ -129,27 +129,16 @@ data "aws_iam_policy_document" "vdi_instance_access" {
   }
 
   # Secrets Manager permissions for Windows-side password generation and storage
+  # NOTE: All Secrets Manager actions require "*" resources due to dynamic secret naming
+  # and cross-workstation access patterns for fleet administrators
+  # Security is provided by the SSM script only processing secrets with specific naming patterns
   statement {
     effect = "Allow"
     actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
       "secretsmanager:PutSecretValue",
-      "secretsmanager:UpdateSecret"
-    ]
-    resources = [
-      for user_key in keys(var.users) :
-      "arn:aws:secretsmanager:${var.region}:*:secret:${var.project_prefix}/*/users/${user_key}-*"
-    ]
-  }
-
-  # Secrets Manager list permissions (required for finding secrets)
-  # NOTE: ListSecrets is a service-level operation that requires "*" resources
-  # Cannot be restricted to specific secret ARNs - AWS will reject the policy
-  # Security is provided by the SSM script only processing secrets with specific naming patterns
-  statement {
-    effect = "Allow"
-    actions = [
+      "secretsmanager:UpdateSecret",
       "secretsmanager:ListSecrets"
     ]
     resources = ["*"]

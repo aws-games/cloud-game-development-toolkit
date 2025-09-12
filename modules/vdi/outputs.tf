@@ -22,9 +22,9 @@ output "connection_info" {
       dcv_endpoint = var.create_client_vpn ? "https://${instance.private_ip}:8443" : "https://${instance.public_ip}:8443"
       rdp_endpoint = var.create_client_vpn ? "${instance.private_ip}:3389" : "${instance.public_ip}:3389"
 
-      # Custom DNS endpoints (user-friendly names)
-      custom_dcv_endpoint = var.create_client_vpn ? "https://${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal:8443" : null
-      custom_rdp_endpoint = var.create_client_vpn ? "${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal:3389" : null
+      # Custom DNS endpoints (user-friendly names) - only when DNS records exist
+      custom_dcv_endpoint = contains(keys(aws_route53_record.user_dns_records), workstation_key) ? "https://${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal:8443" : null
+      custom_rdp_endpoint = contains(keys(aws_route53_record.user_dns_records), workstation_key) ? "${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal:3389" : null
 
       # Session info
       dcv_session_name = "${var.workstations[workstation_key].assigned_user}-session"
@@ -33,13 +33,13 @@ output "connection_info" {
       instance_id         = instance.id
       assigned_user       = var.workstations[workstation_key].assigned_user
       user_source         = "local"
-      secrets_manager_arn = var.workstations[workstation_key].assigned_user != null ? aws_secretsmanager_secret.user_passwords["${workstation_key}-${var.workstations[workstation_key].assigned_user}"].arn : null
+      secrets_manager_arn = var.workstations[workstation_key].assigned_user != null ? awscc_secretsmanager_secret.user_passwords["${workstation_key}-${var.workstations[workstation_key].assigned_user}"].id : null
 
       # IP addresses and DNS for reference
       public_ip   = instance.public_ip
       private_ip  = instance.private_ip
       private_dns = instance.private_dns
-      custom_dns  = var.create_client_vpn ? "${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal" : null
+      custom_dns  = contains(keys(aws_route53_record.user_dns_records), workstation_key) ? "${var.workstations[workstation_key].assigned_user}.${var.project_prefix}.vdi.internal" : null
     }
   }
 }

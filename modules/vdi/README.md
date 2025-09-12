@@ -280,6 +280,7 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.0.0 |
 | <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.0.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0.0 |
@@ -291,6 +292,7 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.0.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
@@ -337,8 +339,6 @@ No modules.
 | [aws_s3_object.user_certificates](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_s3_object.user_private_keys](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_s3_object.vpn_client_configs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
-| [aws_secretsmanager_secret.user_passwords](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
-| [aws_secretsmanager_secret_version.user_passwords](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_security_group.workstation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_ssm_association.software_installation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association) | resource |
 | [aws_ssm_association.vdi_user_creation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association) | resource |
@@ -350,8 +350,8 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.https_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.rdp_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.rdp_access_additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [awscc_secretsmanager_secret.user_passwords](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
-| [random_password.user_passwords](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_string.bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [time_sleep.wait_for_ssm_agent](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) | resource |
 | [tls_cert_request.client_vpn_server](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/cert_request) | resource |

@@ -4,8 +4,8 @@
 # 2. Copy the repository's contents to the runner, so the workflow can access them.
 # 3. Build and deploy the documentation
 #====================================================================================================
-#checkov:skip=CKV_GHA_7:workflow_dispatch inputs required for documentation versioning - controlled environment
 name: Build Docs and Publish to gh-pages
+#checkov:skip=CKV_GHA_7:workflow_dispatch inputs required for documentation versioning - controlled environment
 on:
   #push:
   #  branches:

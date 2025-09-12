@@ -22,7 +22,7 @@ For user prompts that seem complex or long-running (>30 seconds), offer to creat
 ### Example Steering Document Offer
 "This looks like a complex task that may take more than 30 seconds. Would you like me to create a comprehensive steering document that will:
 1. Outline the current state and your request
-2. Create a detailed step-by-step execution plan with file locations and code snippets  
+2. Create a detailed step-by-step execution plan with file locations and code snippets
 3. Track my progress as I complete each task
 4. Provide regular updates and ask how you'd like to proceed
 5. Give a final summary and validation check

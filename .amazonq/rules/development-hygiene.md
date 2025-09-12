@@ -86,7 +86,7 @@ terraform test -filter="01_basic_single_region.tftest.hcl"
 ### Test Setup Directory (REQUIRED)
 **MANDATORY**: All modules must have a `tests/setup/` directory that retrieves test values from CI AWS account.
 
-**Purpose**: 
+**Purpose**:
 - Store test configuration values in AWS Systems Manager Parameter Store
 - Avoid hardcoding sensitive or environment-specific values in test files
 - Enable consistent testing across different environments
@@ -129,12 +129,12 @@ run "setup" {
 
 run "unit_test" {
   command = plan
-  
+
   variables {
     route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
     ghcr_credentials_secret_arn = run.setup.ghcr_credentials_secret_arn
   }
-  
+
   module {
     source = "./examples/single-region-basic"
   }
@@ -161,11 +161,11 @@ run "setup" {
 
 run "unit_test" {
   command = plan  # Unit tests use plan only
-  
+
   variables {
     route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
   }
-  
+
   module {
     source = "./examples/single-region-basic"  # Always reference examples
   }
@@ -280,7 +280,7 @@ terraform validate
 ### Essential Sections (Must Have)
 
 1. **Header with Service Warning** - Title, license, critical access warnings
-2. **Version Requirements** - Terraform/provider versions with explanations  
+2. **Version Requirements** - Terraform/provider versions with explanations
 3. **Features** - Key capabilities bullet list
 4. **Architecture** - Diagrams (single + multi-region), component explanations
 5. **Prerequisites** - Tools, access, network requirements, service-specific setup
@@ -294,7 +294,7 @@ terraform validate
 ### Standard Sections (Should Have)
 
 12. **User Personas** - DevOps vs End Users with access requirements
-13. **Deployment Patterns** - Single vs multi-region guidance  
+13. **Deployment Patterns** - Single vs multi-region guidance
 14. **Security & Access Patterns** - Network architecture, access methods
 15. **Best Practices** - Security, performance, operations guidelines
 

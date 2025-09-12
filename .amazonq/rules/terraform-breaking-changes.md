@@ -66,7 +66,7 @@ moved {
 }
 
 moved {
-  from = aws_security_group.app_sg  
+  from = aws_security_group.app_sg
   to   = aws_security_group.application_sg
 }
 
@@ -87,7 +87,7 @@ moved {
 
 ### Changes Made:
 - [ ] Module call names changed: `old_name` → `new_name`
-- [ ] Resource logical names changed: `old_resource` → `new_resource`  
+- [ ] Resource logical names changed: `old_resource` → `new_resource`
 - [ ] Variable names changed: `old_var` → `new_var`
 - [ ] Output names changed: `old_output` → `new_output`
 
@@ -225,7 +225,7 @@ jobs:
 
 **CGD Toolkit modules are PUBLIC and used by external teams.**
 - Breaking changes affect multiple organizations
-- Poor migration experiences damage project reputation  
+- Poor migration experiences damage project reputation
 - Always err on the side of caution
 - When in doubt, create new resources instead of renaming existing ones
 
