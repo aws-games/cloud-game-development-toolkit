@@ -21,12 +21,11 @@ resource "aws_route53_zone" "private" {
 
 # User DNS records in main private zone
 resource "aws_route53_record" "user_dns_records" {
-  for_each = var.enable_private_connectivity ? var.workstation_assignments : {}
-  
+  for_each = var.create_client_vpn ? var.workstations : {}
+
   zone_id = aws_route53_zone.private.zone_id
-  name    = "${each.value.user}.${var.project_prefix}.vdi.internal"
+  name    = "${each.value.assigned_user}.${var.project_prefix}.vdi.internal"
   type    = "A"
   ttl     = 300
   records = [aws_instance.workstations[each.key].private_ip]
 }
-

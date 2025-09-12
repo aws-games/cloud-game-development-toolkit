@@ -19,7 +19,7 @@ resource "aws_iam_role" "vdi_instance_role" {
   })
 
   tags = merge(var.tags, local.assignment_tags[each.key], {
-    Purpose = "VDI-Instance-Role"
+    Purpose  = "VDI-Instance-Role"
     RoleType = "Default"
   })
 }
@@ -31,7 +31,7 @@ resource "aws_iam_instance_profile" "vdi_instance_profile" {
   role     = aws_iam_role.vdi_instance_role[each.key].name
 
   tags = merge(var.tags, local.assignment_tags[each.key], {
-    Purpose = "VDI-Instance-Profile"
+    Purpose     = "VDI-Instance-Profile"
     ProfileType = "Default"
   })
 }
@@ -39,7 +39,7 @@ resource "aws_iam_instance_profile" "vdi_instance_profile" {
 # IAM policy document for VDI permissions
 data "aws_iam_policy_document" "vdi_instance_access" {
   for_each = aws_iam_role.vdi_instance_role
-  
+
   # Basic EC2 permissions for instance metadata and tags
   statement {
     effect = "Allow"
@@ -48,13 +48,13 @@ data "aws_iam_policy_document" "vdi_instance_access" {
       "ec2:DescribeInstances"
     ]
     resources = [
-      for workstation_key in keys(var.workstation_assignments) :
+      for workstation_key in keys(var.workstations) :
       "arn:aws:ec2:${var.region}:*:instance/*"
     ]
     condition {
       test     = "StringEquals"
       variable = "ec2:ResourceTag/Workstation"
-      values   = [for workstation_key in keys(var.workstation_assignments) : workstation_key]
+      values   = [for workstation_key in keys(var.workstations) : workstation_key]
     }
   }
 
@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     ]
     resources = ["*"]
   }
-  
+
   # Additional SSM permissions for hybrid approach (instance triggering SSM on itself)
   statement {
     effect = "Allow"
@@ -86,7 +86,7 @@ data "aws_iam_policy_document" "vdi_instance_access" {
 
   # S3 permissions for installation scripts
   dynamic "statement" {
-    for_each = [1]  # S3 buckets always created
+    for_each = [1] # S3 buckets always created
     content {
       effect = "Allow"
       actions = [
@@ -142,19 +142,17 @@ data "aws_iam_policy_document" "vdi_instance_access" {
       "arn:aws:secretsmanager:${var.region}:*:secret:${var.project_prefix}/*/users/${user_key}-*"
     ]
   }
-  
+
   # Secrets Manager list permissions (required for finding secrets)
+  # NOTE: ListSecrets is a service-level operation that requires "*" resources
+  # Cannot be restricted to specific secret ARNs - AWS will reject the policy
+  # Security is provided by the SSM script only processing secrets with specific naming patterns
   statement {
     effect = "Allow"
     actions = [
       "secretsmanager:ListSecrets"
     ]
     resources = ["*"]
-    condition {
-      test     = "StringLike"
-      variable = "secretsmanager:Name"
-      values   = ["${var.project_prefix}/*/users/*"]
-    }
   }
 
   # Directory Service permissions removed (AD integration disabled)

@@ -99,9 +99,9 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.7.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.51.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.89.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.26.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.5 |
 
 ## Modules
 

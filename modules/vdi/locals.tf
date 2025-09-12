@@ -1,7 +1,7 @@
 # Local variables for VDI module v2.0.0 - 5-Tier Architecture
 locals {
   # AMI must be specified in templates - no default fallback
-  
+
   # Private zone name for internal DNS
   private_zone_name = "${var.project_prefix}.vdi.internal"
 
@@ -10,34 +10,28 @@ locals {
 
   # Base naming prefix
   name_prefix = "${var.project_prefix}-${var.environment}"
-  
+
   # Single log group pattern (simplified)
   log_group_name = "/${var.project_prefix}/vdi/logs"
-  
-  # Storage configuration
-  storage_settings = {
-    encryption_enabled = var.ebs_encryption_enabled
-    kms_key_id         = var.ebs_kms_key_id
-  }
 
   # S3 bucket names (always created)
   s3_bucket_names = {
     keys    = "${var.project_prefix}-vdi-keys-${local.random_id}"
     scripts = "${var.project_prefix}-vdi-scripts-${local.random_id}"
   }
-  
+
   # Validation is handled by variable validation blocks in variables.tf
 
   # Process templates with intelligent defaults
   processed_templates = {
-    for preset_key, config in var.templates : preset_key => {
+    for preset_key, config in var.presets : preset_key => {
       # Compute configuration
-      ami           = config.ami  # AMI must be specified in templates
+      ami           = config.ami # AMI must be specified in templates
       instance_type = config.instance_type
       gpu_enabled   = config.gpu_enabled
-      
+
       # Software configuration removed - use custom AMIs
-      
+
       # Volume processing with Windows drive mapping
       volumes = {
         for volume_name, volume_config in config.volumes : volume_name => {
@@ -51,7 +45,7 @@ locals {
           device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
         }
       }
-      
+
       # Optional configuration
       iam_instance_profile = config.iam_instance_profile
       software_packages    = config.software_packages
@@ -85,7 +79,7 @@ locals {
       ami           = coalesce(config.ami, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].ami : null)
       instance_type = coalesce(config.instance_type, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].instance_type : null)
       gpu_enabled   = coalesce(config.gpu_enabled, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].gpu_enabled : null, false)
-      
+
       # VOLUME CONFIGURATION (all-or-nothing override)
       # If workstation defines volumes, use those completely (ignore preset volumes)
       # If workstation doesn't define volumes, use preset volumes (or empty if no preset)
@@ -96,23 +90,23 @@ locals {
           device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
         })
       } : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {})
-      
+
       # OPTIONAL CONFIGURATION with 3-tier priority
       software_packages    = coalesce(config.software_packages, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].software_packages : null, [])
       iam_instance_profile = config.iam_instance_profile != null ? config.iam_instance_profile : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].iam_instance_profile : null)
-      
+
       # INFRASTRUCTURE PLACEMENT (always workstation-specific, never from preset)
       subnet_id           = config.subnet_id
       availability_zone   = data.aws_subnet.workstation_subnets[workstation_key].availability_zone
       security_groups     = config.security_groups
       allowed_cidr_blocks = config.allowed_cidr_blocks
-      
+
       # TAGS with merge priority: module < preset < workstation < required
       tags = merge(
-        var.tags,                                    # Module default tags
-        local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].tags : {},  # Preset tags
-        config.tags,                                 # Workstation-specific tags
-        {                                            # Required tags (always applied)
+        var.tags,                                                                                                      # Module default tags
+        local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].tags : {}, # Preset tags
+        config.tags,                                                                                                   # Workstation-specific tags
+        {                                                                                                              # Required tags (always applied)
           Name        = "${local.name_prefix}-${workstation_key}-workstation"
           Workstation = workstation_key
           Preset      = config.preset_key != null ? config.preset_key : "direct-config"
@@ -132,7 +126,7 @@ locals {
       email       = config.email
       user_type   = "local"
       username    = user_key
-      
+
       tags = merge(var.tags, config.tags, {
         User        = user_key
         GivenName   = config.given_name
@@ -148,15 +142,15 @@ locals {
   # STEP 3: Final EC2 instance configuration (simplified)
   # Merge workstation config with user assignment info
   final_instances = {
-    for workstation_key, assignment in var.workstation_assignments : workstation_key => merge(
+    for workstation_key, config in var.workstations : workstation_key => merge(
       local.processed_workstations[workstation_key],
       {
-        # User assignment info
-        assigned_user            = assignment.user
-        user_given_name          = local.processed_users[assignment.user].given_name
-        user_family_name         = local.processed_users[assignment.user].family_name
-        user_email               = local.processed_users[assignment.user].email
-        
+        # User assignment info (from assigned_user field)
+        assigned_user    = config.assigned_user
+        user_given_name  = config.assigned_user != null ? local.processed_users[config.assigned_user].given_name : null
+        user_family_name = config.assigned_user != null ? local.processed_users[config.assigned_user].family_name : null
+        user_email       = config.assigned_user != null ? local.processed_users[config.assigned_user].email : null
+
         # VDI-specific settings
         associate_public_ip_address = true
         create_key_pair             = true
@@ -166,70 +160,53 @@ locals {
 
   # STEP 4: Final tags for instances
   assignment_tags = {
-    for workstation_key, assignment in var.workstation_assignments : workstation_key => merge(
+    for workstation_key, config in var.workstations : workstation_key => merge(
       local.processed_workstations[workstation_key].tags,
-      local.processed_users[assignment.user].tags,
-      assignment.tags,
+      config.assigned_user != null ? local.processed_users[config.assigned_user].tags : {},
+      config.tags,
       {
-        AssignedUser = assignment.user
+        AssignedUser = config.assigned_user
         UserSource   = "local"
       }
     )
   }
 
-  # Emergency key storage paths (S3) - always created
-  emergency_key_paths = {
-    for workstation_key, config in var.workstation_assignments : workstation_key => {
-      bucket_name = local.s3_bucket_names.keys
-      object_key  = "${workstation_key}/ec2-key/${workstation_key}-private-key.pem"
-      full_path   = "s3://${local.s3_bucket_names.keys}/${workstation_key}/ec2-key/${workstation_key}-private-key.pem"
-    }
-  }
 
-  # Installation script paths (S3) - always created
-  installation_script_paths = {
-    bucket_name = local.s3_bucket_names.scripts
-    base_path   = "scripts/"
-    runtime_path = "scripts/runtime/"
-  }
-
-  # Legacy aliases for backward compatibility
-  final_vdi_config = local.final_instances
 
   # Workstation-User combinations: Different user types have different access patterns
   workstation_user_combinations = merge(
     # Standard users: only on their assigned workstation
     {
-      for assignment_key, assignment_config in var.workstation_assignments :
-      "${assignment_key}-${assignment_config.user}" => {
-        workstation = assignment_key
-        user = assignment_config.user
+      for workstation_key, config in var.workstations :
+      "${workstation_key}-${config.assigned_user}" => {
+        workstation = workstation_key
+        user        = config.assigned_user
       }
-      if var.users[assignment_config.user].type == "user"
+      if config.assigned_user != null && var.users[config.assigned_user].type == "user"
     },
     # Local administrators: admin on their assigned workstation only
     {
-      for assignment_key, assignment_config in var.workstation_assignments :
-      "${assignment_key}-${assignment_config.user}" => {
-        workstation = assignment_key
-        user = assignment_config.user
+      for workstation_key, config in var.workstations :
+      "${workstation_key}-${config.assigned_user}" => {
+        workstation = workstation_key
+        user        = config.assigned_user
       }
-      if var.users[assignment_config.user].type == "administrator"
+      if config.assigned_user != null && var.users[config.assigned_user].type == "administrator"
     },
     # Global administrators: admin on ALL workstations (fleet management)
     {
       for combo in flatten([
-        for workstation_key in keys(var.workstation_assignments) : [
+        for workstation_key in keys(var.workstations) : [
           for user_key, user_config in var.users : {
             workstation = workstation_key
-            user = user_key
+            user        = user_key
           }
-          if user_config.type == "global_administrator"
+          if user_config.type == "fleet_administrator"
         ]
       ]) : "${combo.workstation}-${combo.user}" => combo
     }
   )
-}# Random ID for unique resource naming
+} # Random ID for unique resource naming
 resource "random_id" "suffix" {
   byte_length = 4
 }

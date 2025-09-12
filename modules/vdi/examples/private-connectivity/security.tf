@@ -3,7 +3,7 @@ resource "aws_security_group" "vdi_private_sg" {
   name_prefix = "${local.project_prefix}-vdi-"
   vpc_id      = aws_vpc.vdi_vpc.id
   description = "Security group for VDI workstations"
-  
+
   tags = merge(local.tags, {
     Name = "${local.project_prefix}-vdi-private-sg"
   })

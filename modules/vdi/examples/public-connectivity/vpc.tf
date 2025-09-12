@@ -2,6 +2,8 @@
 # VPC
 ##########################################
 resource "aws_vpc" "vdi_vpc" {
+  #checkov:skip=CKV2_AWS_11:VPC flow logging not required for VDI examples - adds cost without benefit
+  #checkov:skip=CKV2_AWS_12:Default security group restrictions handled by module security groups
   cidr_block           = local.vpc_cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -15,6 +17,7 @@ resource "aws_vpc" "vdi_vpc" {
 # Subnets
 ##########################################
 resource "aws_subnet" "vdi_subnet" {
+  #checkov:skip=CKV_AWS_130:Public IP assignment required for VDI public connectivity pattern
   vpc_id                  = aws_vpc.vdi_vpc.id
   cidr_block              = local.public_subnet_cidr
   availability_zone       = data.aws_availability_zones.available.names[0]

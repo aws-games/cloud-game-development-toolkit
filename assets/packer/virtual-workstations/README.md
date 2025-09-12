@@ -99,7 +99,7 @@ packer build windows-server-2025-lightweight.pkr.hcl
 **Includes:** Windows Server 2025 + DCV + AWS CLI + PowerShell + Git + Perforce + Python + Chocolatey
 **Build Time:** ~25 minutes
 
-### UE GameDev AMI  
+### UE GameDev AMI
 **Best for:** Immediate Unreal Engine development
 
 ```bash
@@ -140,7 +140,7 @@ All templates use the shared base infrastructure script that provides:
 
 **Each template references shared scripts:**
 - `../shared/base_infrastructure.ps1` - Common infrastructure setup
-- `../shared/sysprep.ps1` - EC2Launch configuration  
+- `../shared/sysprep.ps1` - EC2Launch configuration
 - `../shared/userdata.ps1` - Packer WinRM connectivity
 
 **This is why the complete directory structure is required.**
@@ -152,12 +152,12 @@ After building an AMI, use it with the VDI Terraform module:
 ```hcl
 module "vdi" {
   source = "path/to/vdi/module"
-  
+
   # Core configuration
   project_prefix = "gamedev"
   environment    = "dev"
   vpc_id         = aws_vpc.vdi_vpc.id
-  
+
   # Templates reference your built AMIs
   templates = {
     "developer" = {
@@ -169,7 +169,7 @@ module "vdi" {
       }
     }
   }
-  
+
   # Workstations and users configuration
   workstations = { /* ... */ }
   users = { /* ... */ }

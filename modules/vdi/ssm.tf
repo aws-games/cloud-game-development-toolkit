@@ -1,8 +1,8 @@
 # Simple SSM solution using file() function to avoid variable escaping issues
 
 resource "aws_ssm_document" "create_vdi_users" {
-  name          = "${local.name_prefix}-create-vdi-users"
-  document_type = "Command"
+  name            = "${local.name_prefix}-create-vdi-users"
+  document_type   = "Command"
   document_format = "JSON"
 
   content = jsonencode({
@@ -63,9 +63,9 @@ resource "aws_ssm_document" "install_software" {
     for workstation_key, config in local.processed_workstations :
     workstation_key if config.software_packages != null
   ]) > 0 ? 1 : 0
-  
-  name          = "${local.name_prefix}-install-software"
-  document_type = "Command"
+
+  name            = "${local.name_prefix}-install-software"
+  document_type   = "Command"
   document_format = "JSON"
 
   content = jsonencode({
@@ -86,7 +86,7 @@ resource "aws_ssm_document" "install_software" {
         action = "aws:runPowerShellScript"
         name   = "installSoftware"
         inputs = {
-          timeoutSeconds = "3600"  # 1 hour timeout for software installation
+          timeoutSeconds = "3600" # 1 hour timeout for software installation
           runCommand = [
             "Write-Host 'Starting background software installation for workstation {{ WorkstationKey }}'",
             "$packages = '{{ SoftwareList }}' -split ','",
@@ -111,53 +111,57 @@ resource "aws_ssm_document" "install_software" {
 
 # Wait for SSM agent to be fully ready (predictable timing for critical user creation)
 resource "time_sleep" "wait_for_ssm_agent" {
-  for_each = var.workstation_assignments
-  
-  depends_on = [aws_instance.workstations]
-  create_duration = "180s"  # 3 minutes - reduced from 5 minutes
+  for_each = var.workstations
+
+  depends_on      = [aws_instance.workstations]
+  create_duration = "180s" # 3 minutes - reduced from 5 minutes
 }
 
 # Critical path: User creation with guaranteed timing
 resource "aws_ssm_association" "vdi_user_creation" {
-  for_each = var.workstation_assignments
-  
+  for_each = {
+    for workstation_key, config in var.workstations :
+    workstation_key => config
+    if config.assigned_user != null
+  }
+
   depends_on = [time_sleep.wait_for_ssm_agent]
-  
-  name = aws_ssm_document.create_vdi_users.name
+
+  name             = aws_ssm_document.create_vdi_users.name
   association_name = "vdi-setup-${aws_instance.workstations[each.key].id}"
-  
+
   targets {
     key    = "InstanceIds"
     values = [aws_instance.workstations[each.key].id]
   }
-  
+
   parameters = {
     WorkstationKey = each.key
-    AssignedUser   = each.value.user
+    AssignedUser   = each.value.assigned_user
     ProjectPrefix  = var.project_prefix
     Region         = var.region
-    ForceRun       = var.debug_mode ? timestamp() : "disabled"
+    ForceRun       = "disabled"
   }
 }
 
 # Optional: Background software installation (runs after user creation, no delay needed)
 resource "aws_ssm_association" "software_installation" {
   for_each = {
-    for workstation_key, assignment in var.workstation_assignments :
-    workstation_key => assignment
-    if local.processed_workstations[workstation_key].software_packages != null
+    for workstation_key, config in var.workstations :
+    workstation_key => config
+    if config.assigned_user != null && local.processed_workstations[workstation_key].software_packages != null
   }
-  
+
   depends_on = [aws_ssm_association.vdi_user_creation]
-  
-  name = aws_ssm_document.install_software[0].name
+
+  name             = aws_ssm_document.install_software[0].name
   association_name = "software-install-${each.key}"
-  
+
   targets {
     key    = "InstanceIds"
     values = [aws_instance.workstations[each.key].id]
   }
-  
+
   parameters = {
     WorkstationKey = each.key
     SoftwareList   = join(",", local.processed_workstations[each.key].software_packages)

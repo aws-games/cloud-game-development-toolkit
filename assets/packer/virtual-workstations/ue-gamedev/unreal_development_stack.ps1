@@ -12,9 +12,9 @@ try {
     # Install Visual Studio 2022 Community with game development workloads
     Write-Host "Installing Visual Studio 2022 Community with game development workloads..."
     Write-Host "This installation may take 30-45 minutes. Please be patient..." -ForegroundColor Yellow
-    
+
     choco install -y visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Visual Studio 2022 Community installed successfully" -ForegroundColor Green
     } else {
@@ -24,17 +24,17 @@ try {
     # Install Unreal Engine 5.3 via Epic Games Launcher
     Write-Host "Installing Epic Games Launcher and Unreal Engine 5.3..."
     Write-Host "This installation may take 20-30 minutes. Please be patient..." -ForegroundColor Yellow
-    
+
     # Download Epic Games Launcher
     $epicLauncherUrl = "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"
     $epicLauncherPath = "C:\temp\EpicGamesLauncherInstaller.msi"
-    
+
     New-Item -ItemType Directory -Force -Path C:\temp
     Invoke-WebRequest -Uri $epicLauncherUrl -OutFile $epicLauncherPath -TimeoutSec 300
-    
+
     # Install Epic Games Launcher
     Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $epicLauncherPath, "/quiet", "/norestart" -Wait
-    
+
     Write-Host "Epic Games Launcher installed successfully" -ForegroundColor Green
     Write-Host "Note: Unreal Engine 5.3 will need to be installed manually through Epic Games Launcher after first login" -ForegroundColor Yellow
 

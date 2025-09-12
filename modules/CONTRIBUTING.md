@@ -237,7 +237,7 @@ resource "aws_lb" "load_balancer" { }  # Verbose
 # ✅ EXCELLENT - Universal requirements
 terraform {
   required_version = ">= 1.11"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -544,7 +544,7 @@ VPN/VDI Users → Private NLB → NLB Target (ALB, EKS, EC2, etc.)
 
 **Regional Isolation Pattern:**
 - **Separate module instances** per region
-- **Regional endpoints** for user control  
+- **Regional endpoints** for user control
 - **Manual disaster recovery** (users switch endpoints)
 - **Cross-region connectivity** via VPC peering or Transit Gateway
 

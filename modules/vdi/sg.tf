@@ -1,5 +1,6 @@
 # Default security groups for VDI instances (created when create_default_security_groups = true)
 resource "aws_security_group" "workstation" {
+  #checkov:skip=CKV2_AWS_5:Security group is attached to EC2 instances via workstation security_groups variable
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config
   } : {}
@@ -36,8 +37,8 @@ resource "aws_vpc_security_group_ingress_rule" "rdp_access_additional" {
       for workstation_key, config in local.final_instances : [
         for idx, cidr in config.allowed_cidr_blocks : {
           workstation_key = workstation_key
-          cidr = cidr
-          key  = "${workstation_key}-${idx}"
+          cidr            = cidr
+          key             = "${workstation_key}-${idx}"
         } if idx > 0
       ]
     ]) : user_cidr.key => user_cidr

@@ -24,19 +24,33 @@ variable "vpc_id" {
   description = "VPC ID where VDI instances will be deployed"
 }
 
+
+
+variable "tags" {
+  type        = map(any)
+  description = "Tags to apply to resources."
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "-"
+    "ModuleName"     = "terraform-aws-vdi"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi"
+  }
+}
+
 ########################################
 # VDI ARCHITECTURE - 5-TIER DESIGN
 ########################################
 
 # 1. TEMPLATES - Configuration blueprints with named volumes
-variable "templates" {
+variable "presets" {
   type = map(object({
     # Core compute configuration
     instance_type = string
     ami           = optional(string, null)
 
     # Hardware configuration
-    gpu_enabled       = optional(bool, false)
+    gpu_enabled = optional(bool, true)
 
     # Named volumes with Windows drive mapping
     volumes = map(object({
@@ -57,13 +71,13 @@ variable "templates" {
   description = <<EOF
 Configuration blueprints defining instance types and named volumes with Windows drive mapping.
 
-**KEY BECOMES TEMPLATE NAME**: The map key (e.g., "ue-developer") becomes the template name referenced by workstations.
+**KEY BECOMES PRESET NAME**: The map key (e.g., "ue-developer") becomes the preset name referenced by workstations.
 
-Templates provide reusable configurations that can be referenced by multiple workstations via preset_key.
+Presets provide reusable configurations that can be referenced by multiple workstations via preset_key.
 
 Example:
-templates = {
-  "ue-developer" = {           # ← This key becomes the template name
+presets = {
+  "ue-developer" = {           # ← This key becomes the preset name
     instance_type = "g4dn.2xlarge"
     gpu_enabled   = true
     volumes = {
@@ -71,7 +85,7 @@ templates = {
       Projects = { capacity = 1024, type = "gp3", windows_drive = "D:" }
     }
   }
-  "basic-workstation" = {      # ← Another template name
+  "basic-workstation" = {      # ← Another preset name
     instance_type = "g4dn.xlarge"
     gpu_enabled   = true
   }
@@ -80,7 +94,7 @@ templates = {
 # Referenced by workstations:
 workstations = {
   "alice-ws" = {
-    preset_key = "ue-developer"      # ← References template by key
+    preset_key = "ue-developer"      # ← References preset by key
   }
 }
 
@@ -91,7 +105,7 @@ EOF
 
   validation {
     condition = alltrue([
-      for preset_key, config in var.templates :
+      for preset_key, config in var.presets :
       alltrue([
         for volume_name, volume in config.volumes :
         contains(["gp2", "gp3", "io1", "io2"], volume.type)
@@ -102,7 +116,7 @@ EOF
 
   validation {
     condition = alltrue([
-      for preset_key, config in var.templates :
+      for preset_key, config in var.presets :
       alltrue([
         for volume_name, volume in config.volumes :
         volume.capacity >= 30 && volume.capacity <= 16384
@@ -113,7 +127,7 @@ EOF
 
   validation {
     condition = alltrue([
-      for preset_key, config in var.templates :
+      for preset_key, config in var.presets :
       alltrue([
         for volume_name, volume in config.volumes :
         can(regex("^[A-Z]:$", volume.windows_drive))
@@ -124,7 +138,7 @@ EOF
 
   validation {
     condition = alltrue([
-      for preset_key, config in var.templates : 
+      for preset_key, config in var.presets :
       config.ami != null
     ])
     error_message = "AMI must be specified for all templates. Use data sources or direct AMI IDs."
@@ -141,12 +155,13 @@ variable "workstations" {
     # Infrastructure placement
     subnet_id       = string
     security_groups = list(string)
+    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)
 
     # Direct configuration (used when preset_key is null or as overrides)
-    ami                 = optional(string, null)
-    instance_type       = optional(string, null)
-    gpu_enabled         = optional(bool, null)
-    volumes             = optional(map(object({
+    ami           = optional(string, null)
+    instance_type = optional(string, null)
+    gpu_enabled   = optional(bool, null)
+    volumes = optional(map(object({
       capacity      = number
       type          = string
       windows_drive = string
@@ -176,6 +191,7 @@ workstations = {
     subnet_id = "subnet-123"
     availability_zone = "us-east-1a"
     security_groups = ["sg-456"]
+    assigned_user = "alice"  # User assigned to this workstation
     allowed_cidr_blocks = ["203.0.113.1/32"]
   }
   "vdi-001" = {                  # ← Another workstation name
@@ -184,21 +200,17 @@ workstations = {
   }
 }
 
-# Referenced by assignments:
-workstation_assignments = {
-  "alice-workstation" = {        # ← Must match workstations{} key
-    user = "alice"                # ← References users{} key
-  }
-}
+# User assignment is now direct:
+# assigned_user = "alice"  # References users{} key directly in workstation
 EOF
   default     = {}
 
   validation {
     condition = alltrue([
       for workstation_key, config in var.workstations :
-      config.preset_key != null ? contains(keys(var.templates), config.preset_key) : true
+      config.preset_key != null ? contains(keys(var.presets), config.preset_key) : true
     ])
-    error_message = "When preset_key is specified, it must reference an existing template."
+    error_message = "When preset_key is specified, it must reference an existing preset."
   }
 
   validation {
@@ -211,18 +223,26 @@ EOF
     error_message = "When preset_key is null, ami, instance_type, and volumes must be specified directly."
   }
 
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.assigned_user != null ? contains(keys(var.users), config.assigned_user) : true
+    ])
+    error_message = "When assigned_user is specified, it must reference an existing user key (case-sensitive). Example: assigned_user = \"john-doe\" must match a key in users = { \"john-doe\" = {...} }"
+  }
+
 
 }
 
 # 3. LOCAL USERS - Windows user accounts with group types and connectivity
 variable "users" {
   type = map(object({
-    given_name        = string
-    family_name       = string
-    email             = string
-    type              = optional(string, "user")  # "administrator" or "user" (Windows group)
-    connectivity_type = optional(string, "public")  # "public" or "private" (network access)
-    tags              = optional(map(string), {})
+    given_name     = string
+    family_name    = string
+    email          = string
+    type           = optional(string, "user") # "administrator" or "user" (Windows group)
+    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN
+    tags           = optional(map(string), {})
   }))
   description = <<EOF
 Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)
@@ -230,13 +250,13 @@ Local Windows user accounts with Windows group types and network connectivity (m
 **KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.
 
 type options (Windows groups):
-- "global_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)
+- "fleet_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)
 - "administrator": User added to Windows Administrators group, created only on assigned workstation
 - "user": User added to Windows Users group, created only on assigned workstation
 
-connectivity_type options (network access):
-- "public": User accesses VDI via public internet (default)
-- "private": User accesses VDI via Client VPN (generates VPN config)
+use_client_vpn options (VPN access):
+- false: User accesses VDI via public internet or external VPN (default)
+- true: User accesses VDI via module's Client VPN (generates VPN config)
 
 Example:
 users = {
@@ -244,7 +264,7 @@ users = {
     given_name = "VDI"
     family_name = "Administrator"
     email = "admin@company.com"
-    type = "global_administrator" # Windows Administrators group on ALL workstations
+    type = "fleet_administrator" # Windows Administrators group on ALL workstations
   }
   "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"
     given_name = "Naruto"
@@ -254,29 +274,33 @@ users = {
   }
 }
 
-# Referenced by assignments:
-workstation_assignments = {
-  "vdi-001" = {
-    user = "naruto-uzumaki"     # ← Must match users{} key
-  }
-}
+# User assignment is now direct:
+# assigned_user = "naruto-uzumaki"  # References users{} key directly in workstation
 EOF
   default     = {}
 
   validation {
     condition = alltrue([
       for user_key, config in var.users :
-      contains(["global_administrator", "administrator", "user"], config.type)
+      contains(["fleet_administrator", "administrator", "user"], config.type)
     ])
-    error_message = "type must be 'global_administrator', 'administrator', or 'user' for each user."
+    error_message = "type must be 'fleet_administrator', 'administrator', or 'user' for each user."
   }
 
   validation {
     condition = alltrue([
       for user_key, config in var.users :
-      contains(["public", "private"], config.connectivity_type)
+      can(config.use_client_vpn) && (config.use_client_vpn == true || config.use_client_vpn == false)
     ])
-    error_message = "connectivity_type must be either 'public' or 'private' for each user."
+    error_message = "use_client_vpn must be either true or false for each user."
+  }
+
+  validation {
+    condition = var.create_client_vpn || !anytrue([
+      for user_key, config in var.users :
+      config.use_client_vpn == true
+    ])
+    error_message = "Cannot set use_client_vpn = true for any user when create_client_vpn = false. Either enable create_client_vpn or set all users to use_client_vpn = false."
   }
 
   validation {
@@ -290,77 +314,13 @@ EOF
 
 
 
-# 6. WORKSTATION ASSIGNMENTS - Workstation-centric user mapping
-variable "workstation_assignments" {
-  type = map(object({
-    user = string
-    tags = optional(map(string), {})
-  }))
-  description = <<EOF
-Workstation assignments mapping workstations to users.
 
-Key must match a workstation key. Maps each workstation to a specific user.
-
-Example:
-workstation_assignments = {
-  "alice-workstation" = {
-    user = "alice"          # References users{} key
-  }
-  "bob-workstation" = {
-    user = "bob-smith"      # References users{} key
-  }
-}
-
-All users use local Windows accounts with Secrets Manager authentication.
-EOF
-  default     = {}
-}
 
 ########################################
 # DCV SESSION MANAGEMENT
 ########################################
 
-variable "enable_admin_fleet_access" {
-  type        = bool
-  description = "Enable admin accounts (Administrator, VDIAdmin, DomainAdmin) to access all VDI instances in the deployment"
-  default     = true
-}
 
-variable "dcv_session_permissions" {
-  type = object({
-    admin_default_permissions = optional(string, "full")  # "view" or "full"
-    user_can_share_session   = optional(bool, false)     # Allow users to share their own sessions
-    auto_create_user_session = optional(bool, true)      # Create session for assigned user at boot
-  })
-  description = "DCV session management and permission configuration"
-  default     = {}
-
-  validation {
-    condition = contains(["view", "full"], var.dcv_session_permissions.admin_default_permissions)
-    error_message = "admin_default_permissions must be either 'view' or 'full'."
-  }
-}
-
-
-
-########################################
-# AUTHENTICATION CONFIGURATION
-########################################
-
-# Authentication method:
-# - Local users → EC2 keys + Secrets Manager
-# - Admin accounts always get EC2 keys + Secrets Manager (for break-glass access)
-
-variable "dual_admin_pattern" {
-  type = object({
-    enabled                   = optional(bool, true)   # Use dual admin accounts
-    administrator_unchanging  = optional(bool, true)   # Administrator account never rotates (break-glass)
-    managed_admin_name       = optional(string, "VDIAdmin")  # Managed admin account name
-    user_can_change_password = optional(bool, false)   # Allow users to change their own passwords
-  })
-  description = "Dual admin account pattern configuration (no automatic rotation - use AD for that)"
-  default     = {}
-}
 
 
 
@@ -377,12 +337,6 @@ variable "dual_admin_pattern" {
 ########################################
 # STORAGE (Optional)
 ########################################
-
-variable "ebs_encryption_enabled" {
-  type        = bool
-  description = "Enable EBS encryption for VDI volumes"
-  default     = false
-}
 
 variable "ebs_kms_key_id" {
   type        = string
@@ -410,79 +364,30 @@ variable "log_retention_days" {
   default     = 30
 
   validation {
-    condition = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.log_retention_days)
+    condition     = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.log_retention_days)
     error_message = "log_retention_days must be a valid CloudWatch log retention value."
   }
 }
 
-variable "log_group_prefix" {
-  type        = string
-  description = "Prefix for CloudWatch log group names (useful for multi-module deployments)"
-  default     = null
-}
 
-########################################
-# S3 BUCKET CONFIGURATION
-########################################
-
-variable "s3_bucket_prefix" {
-  type        = string
-  description = "Prefix for S3 bucket names (will be combined with project_prefix and random suffix)"
-  default     = "vdi"
-}
-
-# Note: S3 buckets are always created for emergency keys and installation scripts
-# This ensures proper functionality of break-glass access and software installation
-
-########################################
-# DNS CONFIGURATION (Optional)
-########################################
-
-variable "dns_config" {
-  type = object({
-    private_zone = object({
-      enabled     = optional(bool, true)
-      domain_name = optional(string, "vdi.internal")
-      vpc_id      = optional(string, null)
-    })
-    regional_endpoints = object({
-      enabled = optional(bool, false)
-      pattern = optional(string, "{region}.{domain}")
-    })
-    load_balancer_alias = object({
-      enabled   = optional(bool, false)
-      subdomain = optional(string, "lb")
-    })
-  })
-  description = "DNS configuration for VDI instances and services"
-  default     = null
-}
 
 ########################################
 # CONNECTIVITY CONFIGURATION
 ########################################
 
-variable "connectivity_type" {
-  type        = string
-  description = "VDI connectivity type: 'public' for internet access, 'private' for Client VPN access"
-  default     = "public"
 
-  validation {
-    condition     = contains(["public", "private"], var.connectivity_type)
-    error_message = "connectivity_type must be either 'public' or 'private'."
-  }
-}
 
-variable "enable_private_connectivity" {
+variable "create_client_vpn" {
   type        = bool
-  description = "Enable private connectivity infrastructure (Client VPN endpoint, S3 bucket for configs)"
+  description = "Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs)"
   default     = false
 }
 
 variable "client_vpn_config" {
   type = object({
-    client_cidr_block = optional(string, "192.168.0.0/16")
+    client_cidr_block       = optional(string, "192.168.0.0/16")
     generate_client_configs = optional(bool, true)
+    split_tunnel            = optional(bool, true)
   })
   description = "Client VPN configuration for private connectivity"
   default     = {}
@@ -492,40 +397,10 @@ variable "client_vpn_config" {
 # SECURITY (Optional)
 ########################################
 
-variable "allowed_cidr_blocks" {
-  type        = list(string)
-  description = "Default CIDR blocks allowed for VDI access (can be overridden per user)"
-  default     = ["10.0.0.0/16"]
-}
+
 
 variable "create_default_security_groups" {
   type        = bool
   description = "Create default security groups for VDI workstations"
   default     = true
 }
-
-variable "debug_mode" {
-  description = "Enable debug mode to force SSM execution on every terraform apply"
-  type        = bool
-  default     = false
-}
-
-variable "tags" {
-  type        = map(any)
-  description = "Tags to apply to resources."
-  default = {
-    "IaC"            = "Terraform"
-    "ModuleBy"       = "CGD-Toolkit"
-    "RootModuleName" = "-"
-    "ModuleName"     = "terraform-aws-vdi"
-    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi"
-  }
-}
-variable "force_user_creation_rerun" {
-  description = "Change this value to force SSM user creation to re-run (e.g., after IAM permission fixes)"
-  type        = string
-  default     = "1"
-}
-
-
-

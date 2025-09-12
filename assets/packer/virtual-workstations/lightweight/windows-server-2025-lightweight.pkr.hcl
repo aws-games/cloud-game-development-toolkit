@@ -1,7 +1,7 @@
 # ⚠️  IMPORTANT: This template requires the complete virtual-workstations directory structure
 # You must clone/download the entire assets/packer/virtual-workstations/ folder
 # This template references shared scripts in ../shared/ and cannot be used standalone without customization
-# 
+#
 # Required structure:
 # assets/packer/virtual-workstations/
 # ├── shared/           (REQUIRED - contains base infrastructure scripts)
@@ -57,7 +57,7 @@ variable "root_volume_size" {
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
   version = "v1.1.5"  # Update this for each toolkit release
-  ami_name = "${var.ami_prefix}-${local.version}"
+  ami_name = "${var.ami_prefix}-${local.timestamp}"
 }
 
 data "amazon-ami" "windows2025" {
@@ -115,27 +115,22 @@ source "amazon-ebs" "lightweight" {
     Purpose        = "VDI Lightweight Base"
     Version        = local.version
     BuildDate      = local.timestamp
-    
+
     # Technical details
     BaseOS         = "Windows Server 2025"
     Template       = "lightweight"
     Architecture   = "x86_64"
-    
+
     # Software components
-    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey"
-    
+    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,Git,Perforce,Python,Chocolatey"
+
     # Project tracking
     Project        = "cloud-game-development-toolkit"
     Repository     = "https://github.com/aws-games/cloud-game-development-toolkit"
-    
+
     # Operational
     Environment    = "development"
     ManagedBy      = "packer"
-    Owner          = "aws-games"
-    
-    # Cost tracking
-    CostCenter     = "cgd-toolkit"
-    BillingProject = "vdi-infrastructure"
   }
 }
 

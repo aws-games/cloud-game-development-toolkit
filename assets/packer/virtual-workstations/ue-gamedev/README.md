@@ -74,7 +74,7 @@ Use the resulting AMI with the VDI Terraform module:
 ```hcl
 module "vdi" {
   source = "./modules/vdi"
-  
+
   templates = {
     "ue-developer" = {
       instance_type = "g4dn.xlarge"
@@ -82,7 +82,7 @@ module "vdi" {
       # No need for software_packages - already installed
     }
   }
-  
+
   users = {
     "game-dev" = {
       given_name = "Game"

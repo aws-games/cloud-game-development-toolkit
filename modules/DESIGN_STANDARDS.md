@@ -68,6 +68,7 @@ modules/service-name/
 **Why**: When modules have submodules, the parent focuses on user experience while submodules handle implementation details.
 
 **Responsibilities**:
+
 - Create some resources directly (DNS zones, security groups, etc.)
 - Provide clean, user-friendly variable interface
 - Validate inputs with helpful error messages
@@ -219,7 +220,7 @@ resource "aws_s3_bucket" "main" { }    # Still not descriptive
 
 **Our Standard Logical Names**:
 - **`nlb`**: Network Load Balancer
-- **`alb`**: Application Load Balancer  
+- **`alb`**: Application Load Balancer
 - **`main`**: Primary resource of its type (EKS cluster, VPC)
 - **`internal`**: Internal communication security group
 - **`artifacts`**: Artifact storage bucket
@@ -290,14 +291,14 @@ resource "aws_eks_cluster" "main" {
   name     = local.cluster_name
   role_arn = aws_iam_role.cluster.arn
   version  = var.kubernetes_version
-  
+
   vpc_config {
     subnet_ids              = var.existing_service_subnets
     endpoint_private_access = var.eks_cluster_private_access
     endpoint_public_access  = var.eks_cluster_public_access
     public_access_cidrs     = var.eks_cluster_public_access_cidrs
   }
-  
+
   # Direct configuration gives us full control
 }
 
@@ -326,7 +327,7 @@ module "eks" {
 module "eks_addons" {
   source = "registry.terraform.io/example/eks-addons/aws"
   version = "~> 2.0"
-  
+
   # Only when:
   # 1. Module is extremely stable and well-maintained
   # 2. Provides significant complexity reduction
@@ -349,7 +350,7 @@ module "eks_addons" {
 # ✅ RECOMMENDED - Fork and customize
 module "custom_component" {
   source = "./modules/forked-module"  # Local fork
-  
+
   # Benefits:
   # - Full control over changes
   # - No waiting for upstream fixes
@@ -417,7 +418,7 @@ resource "aws_eks_node_group" "main" {
 # Example: EKS add-ons where complexity reduction justifies remote module
 module "eks_addons" {
   source = "registry.terraform.io/example/eks-addons/aws"
-  
+
   # Why acceptable:
   # - Handles complex EKS add-on lifecycle management
   # - Significantly reduces implementation complexity
@@ -482,7 +483,7 @@ module "vpc" {
 # Infrastructure category maps to AWS services
 infrastructure = {
   "nlb" = {}     # Network Load Balancer access logs
-  "alb" = {}     # Application Load Balancer access logs  
+  "alb" = {}     # Application Load Balancer access logs
   "eks" = {}     # EKS control plane logs
   "rds" = {}     # RDS database logs (when applicable)
 }
@@ -547,7 +548,7 @@ variable "centralized_logging" {
     })), {})
     log_group_prefix = optional(string, null)
   })
-  
+
   description = "Centralized logging configuration by category"
   default = null
 }
@@ -587,15 +588,15 @@ module "ddc" {
 ```hcl
 module "perforce" {
   centralized_logging = {
-    infrastructure = { 
+    infrastructure = {
       nlb = { retention_days = 365 }
       alb = { retention_days = 180 }
       eks = { retention_days = 90 }
     }
-    application = { 
+    application = {
       perforce = { retention_days = 60 }
     }
-    service = { 
+    service = {
       "p4-auth" = { retention_days = 30 }
       "p4-review" = { retention_days = 30 }
     }
@@ -608,7 +609,7 @@ module "perforce" {
 ```hcl
 module "jenkins" {
   centralized_logging = {
-    infrastructure = { 
+    infrastructure = {
       alb = { enabled = false }  # Disable ALB logging
       eks = {}                   # Enable EKS logging only
     }
@@ -645,13 +646,13 @@ resource "aws_cloudwatch_log_group" "vdi_logs" {
 - No separate infrastructure services to log
 - Simpler structure matches module reality
 
-##### **Standard 3-Tier Pattern (DDC/Perforce Module Example)**  
+##### **Standard 3-Tier Pattern (DDC/Perforce Module Example)**
 **When modules have distinct infrastructure, application, and service components:**
 
 ```hcl
 # Standard pattern for complex modules
 infrastructure = { "nlb" = {}, "eks" = {} }
-application    = { "ddc" = {} }  
+application    = { "ddc" = {} }
 service        = { "scylla" = {} }
 ```
 
@@ -746,7 +747,7 @@ resource "random_id" "suffix" {
 locals {
   name_prefix = "${var.project_prefix}-${local.name}"
   name_suffix = random_id.suffix.hex
-  
+
   # Predictable names across all resources
   nlb_name    = "${local.name_prefix}-nlb-${local.name_suffix}"
   bucket_name = "${local.name_prefix}-logs-${local.name_suffix}"
@@ -889,7 +890,7 @@ module "services" {
 module "ddc_us_east_1" {
   source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc"
   region = "us-east-1"  # AWS Provider v6 handles this automatically
-  
+
   # Non-enhanced providers need explicit aliases
   providers = {
     kubernetes = kubernetes.us_east_1
@@ -900,8 +901,8 @@ module "ddc_us_east_1" {
 module "ddc_us_west_2" {
   source = "git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc"
   region = "us-west-2"  # AWS Provider v6 handles this automatically
-  
-  # Non-enhanced providers need explicit aliases  
+
+  # Non-enhanced providers need explicit aliases
   providers = {
     kubernetes = kubernetes.us_west_2
     helm       = helm.us_west_2
@@ -930,7 +931,7 @@ provider "kubernetes" {
 # Uses AWS provider passed from parent
 resource "aws_eks_cluster" "main" { }
 
-# modules/unreal-cloud-ddc/modules/services/main.tf  
+# modules/unreal-cloud-ddc/modules/services/main.tf
 # Uses Kubernetes/Helm providers passed from parent
 resource "helm_release" "ddc" { }
 ```
@@ -1014,11 +1015,11 @@ provider "kubernetes" {
 ```hcl
 # ✅ RECOMMENDED - Clear dependency logic
 provider "kubernetes" {
-  host = module.infra.cluster_endpoint != null ? 
+  host = module.infra.cluster_endpoint != null ?
     module.infra.cluster_endpoint : null
-  cluster_ca_certificate = module.infra.cluster_ca_data != null ? 
+  cluster_ca_certificate = module.infra.cluster_ca_data != null ?
     base64decode(module.infra.cluster_ca_data) : null
-  
+
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command = "aws"
@@ -1102,7 +1103,7 @@ company-perforce-infrastructure/
 - **Single-region viable**: Both applications work perfectly fine in single-region deployments
 - **Multi-region benefit**: Global teams get better performance with regional data locality
 
-**Primary Purpose: Performance, NOT Disaster Recovery**: 
+**Primary Purpose: Performance, NOT Disaster Recovery**:
 - **Performance-driven**: Multi-region DDC/Perforce is for **active global usage** and low-latency access
 - **DR as side benefit**: Cross-region replication for performance means either region *could* serve as DR
 - **Nuanced DR considerations**: While data replication enables DR capabilities, full DR requires application-specific planning
@@ -1191,7 +1192,7 @@ module "ddc_us_west_2" {
 module "ddc_us_east_1" {
   source = "./modules/unreal-cloud-ddc"
   region = "us-east-1"  # AWS Provider v6 magic - auto-inherits region
-  
+
   # Only non-enhanced providers need aliases
   providers = {
     kubernetes = kubernetes.us_east_1
@@ -1202,7 +1203,7 @@ module "ddc_us_east_1" {
 module "ddc_us_west_2" {
   source = "./modules/unreal-cloud-ddc"
   region = "us-west-2"  # AWS Provider v6 magic - auto-inherits region
-  
+
   # Only non-enhanced providers need aliases
   providers = {
     kubernetes = kubernetes.us_west_2
@@ -1277,12 +1278,12 @@ module "infra" {
 module "ddc_primary" {
   source = "../../modules/unreal-cloud-ddc"
   region = "us-east-1"
-  
+
   providers = {
     kubernetes = kubernetes.primary
     helm       = helm.primary
   }
-  
+
   scylla_config = {
     current_region = {
       datacenter_name = "us_east"
@@ -1291,7 +1292,7 @@ module "ddc_primary" {
     }
     enable_cross_region_replication = true
   }
-  
+
   # Primary creates bearer token for replication
   bearer_token_replica_regions = ["us-west-2"]
 }
@@ -1300,12 +1301,12 @@ module "ddc_primary" {
 module "ddc_secondary" {
   source = "../../modules/unreal-cloud-ddc"
   region = "us-west-2"
-  
+
   providers = {
     kubernetes = kubernetes.secondary
     helm       = helm.secondary
   }
-  
+
   scylla_config = {
     current_region = {
       datacenter_name = "us_west"
@@ -1314,11 +1315,11 @@ module "ddc_secondary" {
     }
     enable_cross_region_replication = true
   }
-  
+
   # Secondary uses primary's bearer token
   create_bearer_token = false
   bearer_token_secret_arn = module.ddc_primary.bearer_token_secret_arn
-  
+
   depends_on = [module.ddc_primary]  # Ensures proper ordering
 }
 ```
@@ -1337,10 +1338,10 @@ module "ddc_secondary" {
 ```hcl
 # Always create private zone for internal routing
 resource "aws_route53_zone" "private" {
-  name = var.existing_route53_public_hosted_zone_name != null ? 
-    "${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}" : 
+  name = var.existing_route53_public_hosted_zone_name != null ?
+    "${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}" :
     "${var.project_prefix}.internal"
-  
+
   vpc {
     vpc_id = var.existing_vpc_id
   }
@@ -1362,10 +1363,10 @@ resource "aws_route53_record" "service_internal" {
 ```hcl
 # Regional DNS pattern (our default)
 locals {
-  regional_dns_name = var.existing_route53_public_hosted_zone_name != null ? 
-    "${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}" : 
+  regional_dns_name = var.existing_route53_public_hosted_zone_name != null ?
+    "${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}" :
     null
-    
+
   service_name = "ddc"  # or "perforce", "jenkins", etc.
 }
 
@@ -1390,12 +1391,12 @@ resource "aws_route53_record" "global_latency" {
   zone_id = var.existing_route53_public_hosted_zone_id
   name    = "ddc"  # Global endpoint: ddc.company.com
   type    = "A"
-  
+
   set_identifier = "us-east-1"
   latency_routing_policy {
     region = "us-east-1"
   }
-  
+
   alias {
     name    = module.ddc_primary.nlb_dns_name
     zone_id = module.ddc_primary.nlb_zone_id
@@ -1406,12 +1407,12 @@ resource "aws_route53_record" "global_latency_secondary" {
   zone_id = var.existing_route53_public_hosted_zone_id
   name    = "ddc"  # Same global endpoint
   type    = "A"
-  
+
   set_identifier = "us-west-2"
   latency_routing_policy {
     region = "us-west-2"
   }
-  
+
   alias {
     name    = module.ddc_secondary.nlb_dns_name
     zone_id = module.ddc_secondary.nlb_zone_id
@@ -1438,7 +1439,7 @@ output "dns_endpoints" {
       public_dns  = local.regional_dns_name
       private_dns = "${local.service_name}.${aws_route53_zone.private.name}"
     }
-    
+
     # Load balancer details for global routing
     load_balancer = {
       nlb_dns_name = aws_lb.nlb.dns_name
@@ -1481,13 +1482,13 @@ output "dns_endpoints" {
 resource "aws_acm_certificate" "service_cert" {
   domain_name       = "*.ddc.company.com"
   validation_method = "DNS"
-  
+
   subject_alternative_names = [
     "ddc.company.com",
     "*.us-east-1.ddc.company.com",
     "*.us-west-2.ddc.company.com"
   ]
-  
+
   lifecycle {
     create_before_destroy = true
   }
@@ -1496,10 +1497,10 @@ resource "aws_acm_certificate" "service_cert" {
 # Module accepts certificate reference
 module "ddc" {
   source = "../../modules/unreal-cloud-ddc"
-  
+
   # Pass existing certificate ARN
   existing_certificate_arn = aws_acm_certificate.service_cert.arn
-  
+
   # Module configures HTTPS listeners
   # Module handles certificate attachment to load balancers
 }
@@ -1518,21 +1519,21 @@ module "ddc" {
 # User provides existing network infrastructure
 module "ddc" {
   source = "../../modules/unreal-cloud-ddc"
-  
+
   # Existing VPC (user-created)
   existing_vpc_id = "vpc-12345678"
-  
+
   # Existing subnets (user-created)
   existing_load_balancer_subnets = [
     "subnet-12345678",  # Public subnet for internet-facing LB
     "subnet-87654321"   # Public subnet for HA
   ]
-  
+
   existing_service_subnets = [
     "subnet-abcdef12",  # Private subnet for EKS/services
     "subnet-21fedcba"   # Private subnet for HA
   ]
-  
+
   # Module creates resources within provided network
 }
 ```
@@ -1566,12 +1567,12 @@ resource "aws_vpc_security_group_ingress_rule" "office_https" {
 # Module accepts user-controlled security groups
 module "ddc" {
   source = "../../modules/unreal-cloud-ddc"
-  
+
   # User-controlled external access
   existing_security_groups = [
     aws_security_group.office_access.id
   ]
-  
+
   # Module creates internal security groups for service communication
 }
 ```
@@ -1593,10 +1594,10 @@ data "aws_route53_zone" "company" {
 # Module uses existing zone for public DNS records
 module "ddc" {
   source = "../../modules/unreal-cloud-ddc"
-  
+
   # Reference existing public zone
   existing_route53_public_hosted_zone_name = "company.com"
-  
+
   # Module creates records like: us-east-1.ddc.company.com
   # Module does NOT create the company.com zone
 }
@@ -1616,7 +1617,7 @@ resource "aws_vpc_peering_connection" "cross_region" {
   vpc_id      = var.primary_vpc_id    # us-east-1
   peer_vpc_id = var.secondary_vpc_id  # us-west-2
   peer_region = "us-west-2"
-  
+
   # Users manage cross-region network connectivity
 }
 
@@ -1660,13 +1661,13 @@ resource "aws_security_group" "external_access" {
 # MODULE RESPONSIBILITIES (inside module)
 module "ddc" {
   source = "../../modules/unreal-cloud-ddc"
-  
+
   # Use existing infrastructure
   existing_vpc_id                          = aws_vpc.main.id
   existing_certificate_arn                 = aws_acm_certificate.ddc.arn
   existing_security_groups                 = [aws_security_group.external_access.id]
   existing_route53_public_hosted_zone_name = "company.com"
-  
+
   # Module creates: EKS, NLB, private DNS, internal security groups
 }
 ```
@@ -1795,7 +1796,7 @@ terraform apply  # Separate state file
 # Module A requires
 kubernetes = { version = ">= 2.30.0" }
 
-# Module B requires  
+# Module B requires
 kubernetes = { version = ">= 2.33.0, < 2.35.0" }
 
 # Root module must satisfy BOTH
@@ -1826,7 +1827,7 @@ provider "kubernetes" {
 }
 
 provider "kubernetes" {
-  alias = "us_west_2" 
+  alias = "us_west_2"
   # Same version as declared above
 }
 ```
@@ -1943,8 +1944,8 @@ output "security_group_ids" {
 }
 ```
 
-**Include**: Connection info, integration points, automation helpers  
-**Exclude**: Internal implementation details, rarely used attributes  
+**Include**: Connection info, integration points, automation helpers
+**Exclude**: Internal implementation details, rarely used attributes
 **Request Pattern**: Users can request additional outputs via PR
 
 ## Breaking Changes Prevention

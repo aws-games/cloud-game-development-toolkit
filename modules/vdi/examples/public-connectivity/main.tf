@@ -13,23 +13,23 @@ module "vdi" {
   environment    = "dev"
   vpc_id         = aws_vpc.vdi_vpc.id
 
-  # 1. TEMPLATES - Configuration blueprints with different AMIs for different roles
-  templates = {
+  # 1. PRESETS - Configuration blueprints with different AMIs for different roles
+  presets = {
     # Game developer workstation with pre-built UE + Visual Studio
     ue-gamedev-workstation = {
-      instance_type = "g4dn.4xlarge"  # 16 vCPU, 64GB RAM, T4 GPU - optimal for UE compilation + rendering
-      ami           = data.aws_ami.vdi_ue_gamedev_ami.id  # UE GameDev AMI with VS2022 + Epic Launcher
+      instance_type = "g4dn.4xlarge"                     # 16 vCPU, 64GB RAM, T4 GPU - optimal for UE compilation + rendering
+      ami           = data.aws_ami.vdi_ue_gamedev_ami.id # UE GameDev AMI with VS2022 + Epic Launcher
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 300  # Windows + VS2022 + UE5 + tools
+          capacity      = 300 # Windows + VS2022 + UE5 + tools
           type          = "gp3"
           windows_drive = "C:"
           iops          = 3000
           encrypted     = true
         }
         Projects = {
-          capacity      = 2000  # UE projects, assets, builds (2TB)
+          capacity      = 2000 # UE projects, assets, builds (2TB)
           type          = "gp3"
           windows_drive = "D:"
           iops          = 3000
@@ -39,31 +39,31 @@ module "vdi" {
       # Minimal packages - most tools already in UE GameDev AMI
       software_packages = ["vscode", "notepadplusplus"]
     }
-    
+
     # DevOps workstation with comprehensive toolchain
     devops-workstation = {
-      instance_type = "g4dn.xlarge"  # 4 vCPU, 16GB RAM, T4 GPU - good for general VDI + software installs
-      ami           = data.aws_ami.vdi_lightweight_ami.id  # Lightweight AMI for runtime customization
+      instance_type = "g4dn.xlarge"                       # 4 vCPU, 16GB RAM, T4 GPU - good for general VDI + software installs
+      ami           = data.aws_ami.vdi_lightweight_ami.id # Lightweight AMI for runtime customization
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 200  # Room for user-installed software
+          capacity      = 200 # Room for user-installed software
           type          = "gp3"
           windows_drive = "C:"
           iops          = 3000
           encrypted     = true
         }
         UserData = {
-          capacity      = 500  # Large workspace for user files and applications
+          capacity      = 500 # Large workspace for user files and applications
           type          = "gp3"
           windows_drive = "D:"
           iops          = 3000
           encrypted     = true
         }
       }
-      # Full DevOps toolchain
+      # Full DevOps toolchain (uses Chocolatey)
       software_packages = [
-        "vscode", "terraform", "kubernetes-cli", "docker-desktop", 
+        "vscode", "terraform", "kubernetes-cli", "docker-desktop",
         "postman", "checkov", "notepadplusplus"
       ]
     }
@@ -73,42 +73,45 @@ module "vdi" {
   workstations = {
     # Pattern 1: Pure template-based (Naruto - Game Developer)
     "vdi-001" = {
-      preset_key      = "ue-gamedev-workstation"  # Uses template exactly as defined
-      subnet_id       = aws_subnet.vdi_subnet.id
-      security_groups = [aws_security_group.vdi_sg.id]
+      preset_key          = "ue-gamedev-workstation" # Uses template exactly as defined
+      assigned_user       = "naruto-uzumaki"         # User assigned to this workstation
+      subnet_id           = aws_subnet.vdi_subnet.id
+      security_groups     = [aws_security_group.vdi_sg.id]
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
     }
 
     # Pattern 2: Template with overrides (Sasuke - DevOps Engineer)
     "vdi-002" = {
-      preset_key      = "devops-workstation"  # Uses template as base
-      subnet_id       = aws_subnet.vdi_subnet.id
-      security_groups = [aws_security_group.vdi_sg.id]
+      preset_key          = "devops-workstation" # Uses template as base
+      assigned_user       = "sasuke-uchiha"      # User assigned to this workstation
+      subnet_id           = aws_subnet.vdi_subnet.id
+      security_groups     = [aws_security_group.vdi_sg.id]
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
       # Override: Add extra packages beyond template
       software_packages = [
-        "vscode", "terraform", "kubernetes-cli", "docker-desktop", 
+        "vscode", "terraform", "kubernetes-cli", "docker-desktop",
         "postman", "checkov", "notepadplusplus",
-        "git", "7zip"  # Additional packages for this specific workstation
+        "git", "7zip" # Additional packages for this specific workstation
       ]
     }
 
     # Pattern 3: Direct configuration (Boruto - Junior Developer)
     "vdi-003" = {
       # No preset_key - direct configuration
+      assigned_user = "boruto-uzumaki" # User assigned to this workstation
       ami           = data.aws_ami.vdi_lightweight_ami.id
-      instance_type = "g4dn.xlarge"  # Smaller instance for junior dev
+      instance_type = "g4dn.xlarge" # Smaller instance for junior dev
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 150  # Smaller root volume
+          capacity      = 150 # Smaller root volume
           type          = "gp3"
           windows_drive = "C:"
           iops          = 3000
           encrypted     = true
         }
         Learning = {
-          capacity      = 200  # Learning materials and projects
+          capacity      = 200 # Learning materials and projects
           type          = "gp3"
           windows_drive = "D:"
           iops          = 3000
@@ -117,9 +120,9 @@ module "vdi" {
       }
       # Basic learning tools
       software_packages = ["vscode", "git", "notepadplusplus"]
-      
-      subnet_id       = aws_subnet.vdi_subnet.id
-      security_groups = [aws_security_group.vdi_sg.id]
+
+      subnet_id           = aws_subnet.vdi_subnet.id
+      security_groups     = [aws_security_group.vdi_sg.id]
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
     }
   }
@@ -130,55 +133,44 @@ module "vdi" {
       given_name  = "VDI"
       family_name = "Administrator"
       email       = "admin@example.com"
-      type        = "global_administrator"  # Fleet management - admin on ALL workstations
+      type        = "fleet_administrator" # Fleet management - admin on ALL workstations
     }
     # Game Developer - focuses on UE development, content creation
     "naruto-uzumaki" = {
       given_name  = "Naruto"
       family_name = "Uzumaki"
       email       = "naruto@example.com"
-      type        = "administrator"  # Admin on assigned workstation only
+      type        = "administrator" # Admin on assigned workstation only
     }
     # DevOps Engineer - focuses on infrastructure, CI/CD, build systems
     "sasuke-uchiha" = {
       given_name  = "Sasuke"
       family_name = "Uchiha"
       email       = "sasuke@example.com"
-      type        = "administrator"  # Admin on assigned workstation only
+      type        = "administrator" # Admin on assigned workstation only
     }
     # Junior Developer - standard user permissions, learning environment
     "boruto-uzumaki" = {
       given_name  = "Boruto"
       family_name = "Uzumaki"
       email       = "boruto@example.com"
-      type        = "user"  # Windows Users group - limited privileges for safety
+      type        = "user" # Windows Users group - limited privileges for safety
     }
   }
 
-  # 4. WORKSTATION ASSIGNMENTS - Three different patterns
-  workstation_assignments = {
-    "vdi-001" = {
-      user = "naruto-uzumaki"    # Game dev - template-based config
-    }
-    "vdi-002" = {
-      user = "sasuke-uchiha"     # DevOps - template + overrides
-    }
-    "vdi-003" = {
-      user = "boruto-uzumaki"    # Junior dev - direct config
-    }
-  }
+
 
   # DCV session management (Windows DCV creates single shared session automatically)
 
   # Optional features
   enable_centralized_logging = true
-  debug_mode = false  # Production mode - only run SSM when parameters change
-  
+
+
   # Software packages now defined per-template or per-workstation (see below)
 
   tags = merge(local.tags, {
-    Example = "public-connectivity"
-    AuthMethod = "secrets-manager"
+    Example      = "public-connectivity"
+    AuthMethod   = "secrets-manager"
     Connectivity = "public-internet"
   })
 }
