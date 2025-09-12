@@ -1,3 +1,13 @@
+# ⚠️  IMPORTANT: This template requires the complete virtual-workstations directory structure
+# You must clone/download the entire assets/packer/virtual-workstations/ folder
+# This template references shared scripts in ../shared/ and cannot be used standalone without customization
+#
+# Required structure:
+# assets/packer/virtual-workstations/
+# ├── shared/           (REQUIRED - contains base infrastructure scripts)
+# ├── lightweight/      (other templates)
+# └── ue-gamedev/       (this template)
+
 packer {
   required_plugins {
     amazon = {
@@ -34,16 +44,20 @@ variable "associate_public_ip_address" {
 
 variable "ami_prefix" {
   type    = string
-  default = "windows-server-2025"
+  default = "vdi-ue-gamedev-windows-server-2025"
 }
 
 variable "root_volume_size" {
   type    = number
-  default = 128
+  default = 150
 }
 
+# Version is controlled by CGD Toolkit maintainers
+# Users should not modify this - it aligns with toolkit releases
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
+  version = "v1.1.5"  # Update this for each toolkit release
+  ami_name = "${var.ami_prefix}-${local.timestamp}"
 }
 
 data "amazon-ami" "windows2025" {
@@ -57,8 +71,8 @@ data "amazon-ami" "windows2025" {
   owners      = ["amazon"]
 }
 
-source "amazon-ebs" "base" {
-  ami_name      = "${var.ami_prefix}-${local.timestamp}"
+source "amazon-ebs" "ue-gamedev" {
+  ami_name      = local.ami_name
   instance_type = var.instance_type
   region        = var.region
   source_ami    = data.amazon-ami.windows2025.id
@@ -80,7 +94,7 @@ source "amazon-ebs" "base" {
   winrm_insecure              = true
   winrm_username              = "Administrator"
   winrm_use_ssl               = true
-  user_data_file              = "./userdata.ps1"
+  user_data_file              = "../shared/userdata.ps1"
 
   vpc_id                      = var.vpc_id
   subnet_id                   = var.subnet_id
@@ -91,47 +105,57 @@ source "amazon-ebs" "base" {
     volume_size           = var.root_volume_size
     volume_type           = "gp3"
     delete_on_termination = true
-    iops                  = "16000"
-    throughput            = "1000"
+    iops                  = "5000"
+    throughput            = "250"
+  }
+
+  tags = {
+    # Core identification
+    Name           = local.ami_name
+    Purpose        = "VDI Unreal Engine GameDev"
+    Version        = local.version
+    BuildDate      = local.timestamp
+
+    # Technical details
+    BaseOS         = "Windows Server 2025"
+    Template       = "ue-gamedev"
+    Architecture   = "x86_64"
+
+    # Software components
+    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey,VisualStudio2022,UnrealEngine5.3"
+
+    # Project tracking
+    Project        = "cloud-game-development-toolkit"
+    Repository     = "https://github.com/aws-games/cloud-game-development-toolkit"
+
+    # Operational
+    Environment    = "development"
+    ManagedBy      = "packer"
   }
 }
 
 build {
-  sources = ["source.amazon-ebs.base"]
+  sources = ["source.amazon-ebs.ue-gamedev"]
 
-  # Install GRID drivers and DCV
+  # Install shared base infrastructure (DCV, NVIDIA, AWS tools, common dev tools)
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
-    script            = "./base_setup_with_gpu_check.ps1"
+    script            = "../shared/base_infrastructure.ps1"
   }
 
-  # Configure Active Directory Administration Tools
+  # Install Unreal Engine development stack (Visual Studio + UE5.3)
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
-    script            = "./ad_preperation.ps1"
+    script            = "./unreal_development_stack.ps1"
   }
 
-  # Run the dev tools installation script
+  # Configure EC2Launch v2 for VDI deployment
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
-    script            = "./dev_tools.ps1"
-  }
-
-  # Run the Unreal Engine development environment setup script
-  provisioner "powershell" {
-    elevated_user     = "Administrator"
-    elevated_password = build.Password
-    script            = "./unreal_dev.ps1"
-  }
-
-  # Configure EC2Launch v2 for password retrieval
-  provisioner "powershell" {
-    elevated_user     = "Administrator"
-    elevated_password = build.Password
-    script            = "./sysprep.ps1"
+    script            = "../shared/sysprep.ps1"
   }
 
   # Clean restart before sysprep
@@ -144,7 +168,7 @@ build {
     elevated_user     = "Administrator"
     elevated_password = build.Password
     inline = [
-      "Write-Host 'Starting sysprep...'",
+      "Write-Host 'Starting sysprep for UE GameDev VDI AMI...'",
       "Start-Process -FilePath \"$${env:ProgramFiles}\\Amazon\\EC2Launch\\ec2launch.exe\" -ArgumentList 'sysprep', '--shutdown' -WindowStyle Hidden -Wait:$false",
       "Start-Sleep -Seconds 5"
     ]

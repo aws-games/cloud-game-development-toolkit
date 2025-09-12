@@ -1,0 +1,62 @@
+param(
+    [string]$WorkstationKey,
+    [string]$AssignedUser,
+    [string]$ProjectPrefix,
+    [string]$Region,
+    [string]$ForceRun
+)
+
+Write-Host "Creating VDI users for $WorkstationKey"
+
+# Get all secrets for this workstation
+$AllSecrets = aws secretsmanager list-secrets --region $Region --query "SecretList[?starts_with(Name, '$ProjectPrefix/$WorkstationKey/users/')].Name" --output text
+
+foreach ($SecretName in ($AllSecrets -split '\s+')) {
+    if ($SecretName) {
+        Write-Host "Processing secret: $SecretName"
+        $UserSecretJson = aws secretsmanager get-secret-value --secret-id $SecretName --region $Region --query SecretString --output text
+
+        if ($UserSecretJson) {
+            $UserData = $UserSecretJson | ConvertFrom-Json
+            $UserPassword = ConvertTo-SecureString $UserData.password -AsPlainText -Force
+            $Username = $UserData.username
+
+            # Create user using PowerShell cmdlets (requires RSAT)
+            $UserPassword = ConvertTo-SecureString $UserData.password -AsPlainText -Force
+            $FullName = "$($UserData.given_name) $($UserData.family_name)"
+
+            # Create user
+            New-LocalUser -Name $Username -Password $UserPassword -FullName $FullName -Description "VDI User" -ErrorAction SilentlyContinue
+            Set-LocalUser -Name $Username -Password $UserPassword -ErrorAction SilentlyContinue
+
+            # Add to Remote Desktop Users group
+            Add-LocalGroupMember -Group 'Remote Desktop Users' -Member $Username -ErrorAction SilentlyContinue
+
+            # Add to Administrators group if needed
+            if ($UserData.user_type -eq 'administrator' -or $UserData.user_type -eq 'fleet_administrator') {
+                Add-LocalGroupMember -Group 'Administrators' -Member $Username -ErrorAction SilentlyContinue
+            }
+
+            Write-Host "Processed user: $Username"
+        }
+    }
+}
+
+# DCV session management
+Start-Service dcvserver -ErrorAction SilentlyContinue
+$dcvPath = 'C:\Program Files\NICE\DCV\Server\bin\dcv.exe'
+
+# Close existing sessions
+& $dcvPath list-sessions | ForEach-Object {
+    if ($_ -match "Session: '(.+)'") {
+        & $dcvPath close-session $matches[1]
+    }
+}
+
+# Create new session for assigned user
+& $dcvPath create-session --owner $AssignedUser "$AssignedUser-session"
+Write-Host "Created DCV session: $AssignedUser-session"
+
+Write-Host "DCV session created successfully"
+
+Write-Host "VDI setup completed"

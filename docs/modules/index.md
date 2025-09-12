@@ -1,4 +1,4 @@
----
+<!-- ---
 title: Modules
 description: Terraform modules for game development on AWS
 ---
@@ -116,4 +116,4 @@ The modules contained in the **CGD Toolkit** are designed to simplify infrastruc
 
 If your module relies on a container or image that is not distributed through the **CGD Toolkit** we require a disclaimer and the usage of end-user credentials passed as a variable to the module. *This repository is not to be used to redistribute software that may be subject to licensing or contractual agreements*.
 
-If your module relies on a custom Amazon Machine Image (AMI) or container we ask that you provide a Packer template or Dockerfile in the `assets/` directory and include instructions to create the image prior to infrastructure deployment.
+If your module relies on a custom Amazon Machine Image (AMI) or container we ask that you provide a Packer template or Dockerfile in the `assets/` directory and include instructions to create the image prior to infrastructure deployment. -->

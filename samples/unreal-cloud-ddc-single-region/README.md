@@ -7,7 +7,7 @@ At the heart of the system is an instance of ScyllaDB, a high-performance NoSQL 
 
 ### Predeployment - Set Up Github Content Repository Credentials
 
-The [Unreal Cloud DDC Intra Cluster module](../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
+The [Unreal Cloud DDC Inter Cluster module](../modules/unreal/unreal-cloud-ddc-intra-cluster) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
 ```json
 {
   "username":"GITHUB-USER-NAME-PLACEHOLDER",
@@ -99,9 +99,9 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.10.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.53.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.89.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.26.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.5 |
 
 ## Modules
 
