@@ -9,7 +9,7 @@ resource "aws_security_group" "allow_my_ip" {
 }
 
 data "http" "my_ip" {
-  url = "https://api.ipify.org"
+  url = "https://checkip.amazonaws.com/"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_https" {

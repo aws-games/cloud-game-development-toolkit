@@ -32,7 +32,7 @@ jobs:
     steps:
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -71,7 +71,7 @@ jobs:
 
       # Post the tf plan as a comment in the triggering PR
       - name: Update Pull Request
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const output = `#### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
@@ -108,7 +108,7 @@ jobs:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -155,7 +155,7 @@ jobs:
           ref: ${{ github.ref }}
       # Retrieve necessary AWS permissions
       - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
