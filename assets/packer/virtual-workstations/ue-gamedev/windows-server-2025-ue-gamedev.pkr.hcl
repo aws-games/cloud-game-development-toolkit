@@ -56,7 +56,7 @@ variable "root_volume_size" {
 # Users should not modify this - it aligns with toolkit releases
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
-  version = "v1.1.5"  # Update this for each toolkit release
+  version = "v1.1.6"  # Update this for each toolkit release
   ami_name = "${var.ami_prefix}-${local.timestamp}"
 }
 

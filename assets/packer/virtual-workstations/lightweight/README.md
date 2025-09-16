@@ -42,20 +42,56 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
 - **Instance Type:** g4dn.2xlarge (for GPU driver testing)
 - **Storage:** 80GB root volume
 
-## Usage with VDI Module
+## Using the AMI
 
-Use the resulting AMI with the VDI Terraform module for runtime software customization:
+### Option 1: AWS Console (Manual Deployment)
+
+1. **Launch Instance:**
+   - Go to EC2 Console → Launch Instance
+   - Search for your AMI ID (from Packer build output)
+   - Select GPU instance type: `g4dn.xlarge` or larger
+   - Configure security group to allow RDP (port 3389) or DCV (port 8443)
+
+2. **Connect via DCV:**
+   - Install DCV Client: https://download.nice-dcv.com/
+   - Connect to: `https://<instance-ip>:8443`
+   - Login with Administrator account
+
+3. **Install Additional Software:**
+   - Use Chocolatey: `choco install vscode`
+   - Use PowerShell: Install modules as needed
+   - Manual installers: Download and install directly
+
+### Option 2: Terraform (Infrastructure as Code)
 
 ```hcl
-templates = {
-  "developer" = {
-    instance_type = "g4dn.xlarge"
-    software_packages = [
-      "chocolatey",
-      "git",
-      "visual-studio-2022",
-      "unreal-engine-5.3"
-    ]
+resource "aws_instance" "workstation" {
+  ami           = "ami-0123456789abcdef0"  # Your AMI ID
+  instance_type = "g4dn.xlarge"
+  subnet_id     = var.subnet_id
+
+  vpc_security_group_ids = [aws_security_group.workstation.id]
+
+  tags = {
+    Name = "Developer Workstation"
+  }
+}
+```
+
+### Option 3: VDI Module (Advanced Automation)
+
+For multi-user environments with automated user management:
+
+```hcl
+module "vdi" {
+  source = "path/to/vdi/module"
+
+  presets = {
+    "developer" = {
+      ami           = "ami-0123456789abcdef0"  # Your AMI ID
+      instance_type = "g4dn.xlarge"
+      software_packages = ["vscode", "git"]
+    }
   }
 }
 ```
@@ -63,8 +99,7 @@ templates = {
 ## Alternative AMIs
 
 For faster boot times with pre-installed software, consider:
-- **[UE GameDev AMI](../ue-gamedev/)** - Full Unreal Engine development stack
-- **[Artists AMI](../artists/)** - Creative tools and applications
+- **[UE GameDev AMI](../ue-gamedev/)** - Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
 
 ## Troubleshooting
 

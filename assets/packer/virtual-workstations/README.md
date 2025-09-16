@@ -39,9 +39,7 @@ assets/packer/virtual-workstations/
 │   ├── sysprep.ps1               # EC2Launch configuration
 │   └── userdata.ps1              # Packer WinRM setup
 ├── lightweight/               # Base VDI AMI
-├── ue-gamedev/               # Unreal Engine development AMI
-├── artists/                  # Creative tools AMI (planned)
-└── old/                      # Previous templates (archived)
+└── ue-gamedev/               # Unreal Engine development AMI
 ```
 
 ## Prerequisites
@@ -110,19 +108,10 @@ cd assets/packer/virtual-workstations/ue-gamedev/
 packer build windows-server-2025-ue-gamedev.pkr.hcl
 ```
 
-**Includes:** Lightweight base + Visual Studio 2022 + Unreal Engine 5.3
+**Includes:** Lightweight base + Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
 **Build Time:** ~45 minutes
 
-### Artists AMI (Planned)
-**Best for:** Creative workflows
 
-```bash
-# Coming soon
-cd assets/packer/virtual-workstations/artists/
-packer build windows-server-2025-artists.pkr.hcl
-```
-
-**Will Include:** Lightweight base + Blender + Maya + Creative Suite
 
 ## Shared Infrastructure
 
