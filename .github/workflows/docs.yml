@@ -5,6 +5,7 @@
 # 3. Build and deploy the documentation
 #====================================================================================================
 name: Build Docs and Publish to gh-pages
+#checkov:skip=CKV_GHA_7:workflow_dispatch inputs required for documentation versioning - controlled environment
 on:
   #push:
   #  branches:

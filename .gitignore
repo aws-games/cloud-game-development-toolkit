@@ -62,9 +62,13 @@ site/
 # Python
 *.venv
 
-# SSH keys
+# SSH keys and Private Keys - NEVER commit these!
 id_ed25519
 id_ed25519.pub
+*.pem
+*.key
+*.p12
+*.pfx
 
 # drawio temp and backup files
 *.drawio.bkp

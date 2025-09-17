@@ -5,7 +5,7 @@ Write-Host "Configuring EC2Launch v2 for password retrieval (minimal config)..."
 # Create EC2Launch v2 config directory
 New-Item -Path "C:\ProgramData\Amazon\EC2Launch\config" -ItemType Directory -Force | Out-Null
 
-# EC2Launch v2 config - Sets random hostname and password, configures DNS suffixes for Active Directory administration
+# EC2Launch v2 config - Sets random hostname and password, minimal configuration
 $agentConfig = @'
 version: 1.0
 config:
@@ -17,7 +17,7 @@ config:
       - task: setDnsSuffix
         inputs:
           suffixes:
-            # add your domain suffixes here(my.domain.com)
+            - ec2.internal
       - task: setAdminAccount
         inputs:
           password:
