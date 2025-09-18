@@ -9,7 +9,7 @@ module "teamcity" {
     "teamcity-simple" = {
       image         = "jetbrains/teamcity-agent"
       cpu           = 256
-      memory        = 256
+      memory        = 512
       desired_count = 3
     }
   }
