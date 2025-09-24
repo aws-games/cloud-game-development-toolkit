@@ -34,6 +34,22 @@ data "aws_iam_policy_document" "default_policy" {
       var.storage_type == "FSxN" && var.protocol == "ISCSI" ? var.fsxn_password : null
     ])
   }
+
+  # S3 permissions for replica configuration scripts
+  dynamic "statement" {
+    for_each = var.replica_scripts_bucket_arn != null ? [1] : []
+    content {
+      effect = "Allow"
+      actions = [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+      resources = [
+        var.replica_scripts_bucket_arn,
+        "${var.replica_scripts_bucket_arn}/*"
+      ]
+    }
+  }
 }
 
 resource "aws_iam_policy" "default_policy" {
