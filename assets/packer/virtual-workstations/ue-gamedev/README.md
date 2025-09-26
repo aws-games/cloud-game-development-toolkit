@@ -54,11 +54,11 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
 
 **Unreal Engine Installation:**
 - Epic Games Launcher is pre-installed
-- Unreal Engine 5.3 must be installed manually after first login:
+- Unreal Engine must be installed manually after first login:
   1. Launch Epic Games Launcher from desktop
   2. Create/sign in to Epic Games account
   3. Navigate to Unreal Engine tab
-  4. Click "Install Engine" and select version 5.3
+  4. Click "Install Engine" and select desired version
   5. Choose installation location (recommend D:\\ drive)
 
 **Why Manual UE Installation:**

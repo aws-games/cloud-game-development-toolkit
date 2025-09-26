@@ -212,13 +212,13 @@ workstations = {
 - `null`: Default AWS behavior (no capacity reservation)
 
 ### Software Installation
-**Available packages**: `chocolatey`, `visual-studio-2022`, `git`, `unreal-engine-5.3`, `perforce`
+**Available packages**: Any valid [Chocolatey package](https://community.chocolatey.org/packages). Common examples: `git`, `vscode`, `notepadplusplus`, `7zip`
 
 ```hcl
 presets = {
   "ue-dev" = {
     instance_type = "g4dn.2xlarge"
-    software_packages = ["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3"]
+    software_packages = ["git", "vscode", "notepadplusplus"]
   }
 }
 ```
