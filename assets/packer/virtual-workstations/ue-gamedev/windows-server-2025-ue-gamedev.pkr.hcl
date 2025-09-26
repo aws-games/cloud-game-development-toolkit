@@ -129,7 +129,7 @@ source "amazon-ebs" "ue-gamedev" {
     Architecture   = "x86_64"
 
     # Software components
-    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey,VisualStudio2022,UnrealEngine5.3"
+    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey,VisualStudio2022,EpicGamesLauncher"
 
     # Project tracking
     Project        = "cloud-game-development-toolkit"
@@ -151,7 +151,7 @@ build {
     script            = "../shared/base_infrastructure.ps1"
   }
 
-  # Install Unreal Engine development stack (Visual Studio + UE5.3)
+  # Install Unreal Engine development stack (Visual Studio + Epic Games Launcher)
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
