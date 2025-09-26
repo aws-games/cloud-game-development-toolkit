@@ -108,7 +108,7 @@ resource "aws_ecs_task_definition" "task_definition" {
           },
           {
             name  = "SWARM_HOST" # cannot update naming until the Perforce container image is updated
-            value = var.fully_qualified_domain_name
+            value = "https://${var.fully_qualified_domain_name}"
           },
           {
             name  = "SWARM_REDIS" # cannot update naming until the Perforce container image is updated
