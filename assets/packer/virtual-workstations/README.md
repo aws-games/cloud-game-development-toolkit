@@ -81,6 +81,18 @@ instance_type = "g4dn.4xlarge"  # Must be GPU-enabled
 packer build -var-file="variables.pkrvars.hcl" windows-server-2025-lightweight.pkr.hcl
 ```
 
+**On-Demand Capacity Reservations (ODCR):**
+
+Use existing capacity reservations during AMI builds:
+
+```bash
+# Use ODCR if available, fall back to On-Demand if not
+packer build -var capacity_reservation_preference=open windows-server-2025-lightweight.pkr.hcl
+
+# Never use ODCR, always On-Demand
+packer build -var capacity_reservation_preference=none windows-server-2025-lightweight.pkr.hcl
+```
+
 ## Available Templates
 
 ### Lightweight AMI

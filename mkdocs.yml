@@ -133,13 +133,10 @@ nav:
               - Installation and Usage:
                   - modules/unreal/horde/README.md
           - Unreal Cloud DDC:
-              - Installation & Usage:
-                  - modules/unreal/unreal-cloud-ddc/README.md
-              - Submodules:
-                  - DDC Infrastructure:
-                      - modules/unreal/unreal-cloud-ddc/modules/ddc-infra/README.md
-                  - DDC Application:
-                      - modules/unreal/unreal-cloud-ddc/modules/ddc-app/README.md
+              - DDC Infrastructure:
+                  - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/README.md
+              - DDC Intra-Cluster:
+                  - modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md
       - Unity:
           - Accelerator:
               - Installation and Usage:
@@ -168,10 +165,6 @@ plugins:
         'index.md': 'docs/index.md'
 
 extra:
-  version:
-    provider: mike
-    default: latest
-    alias: true
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/aws-games/cloud-game-development-toolkit

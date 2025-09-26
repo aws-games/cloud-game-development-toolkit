@@ -152,8 +152,9 @@ locals {
         user_email       = config.assigned_user != null ? local.processed_users[config.assigned_user].email : null
 
         # VDI-specific settings
-        associate_public_ip_address = true
-        create_key_pair             = true
+        associate_public_ip_address     = true
+        create_key_pair                 = true
+        capacity_reservation_preference = coalesce(config.capacity_reservation_preference, var.capacity_reservation_preference)
       }
     )
   }
