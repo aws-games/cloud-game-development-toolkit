@@ -617,6 +617,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
   rule {
     id     = "access-logs-lifecycle"
     status = "Enabled"
+    filter {}
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
