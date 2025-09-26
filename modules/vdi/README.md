@@ -24,7 +24,7 @@
 workstations = {
   "vdi-001" = {
     preset_key = "my-preset"
-    assigned_user = "john-doe"
+    assigned_user = "naruto-uzumaki"
     subnet_id = aws_subnet.public_subnet.id
     allowed_cidr_blocks = ["198.51.100.1/32"]  # Replace with user's public IP
   }
@@ -40,10 +40,10 @@ module "vdi" {
   create_client_vpn = true  # Creates Client VPN infrastructure
 
   users = {
-    "john-doe" = {
-      given_name = "John"
-      family_name = "Doe"
-      email = "john@company.com"
+    "naruto-uzumaki" = {
+      given_name = "Naruto"
+      family_name = "Uzumaki"
+      email = "naruto@example.com"
       type = "administrator"
       use_client_vpn = true  # Gets VPN access + certificates
     }
@@ -52,7 +52,7 @@ module "vdi" {
   workstations = {
     "vdi-001" = {
       preset_key = "my-preset"
-      assigned_user = "john-doe"
+      assigned_user = "naruto-uzumaki"
       subnet_id = aws_subnet.private_subnet.id
       allowed_cidr_blocks = ["10.0.0.0/16"]  # VPC CIDR only
     }
@@ -178,6 +178,39 @@ rm temp_key.pem
 
 ## Advanced Configuration
 
+### On-Demand Capacity Reservations (ODCR)
+Optimize costs by leveraging existing capacity reservations:
+
+```hcl
+# Module-level default (applies to all workstations)
+module "vdi" {
+  capacity_reservation_preference = "open"  # Use ODCR if available
+
+  workstations = {
+    "ws1" = { subnet_id = "subnet-123" }  # Inherits "open"
+    "ws2" = { subnet_id = "subnet-456" }  # Inherits "open"
+  }
+}
+
+# Per-workstation control
+workstations = {
+  "prod-ws" = {
+    capacity_reservation_preference = "open"  # Use ODCR
+    subnet_id = "subnet-123"
+  }
+  "dev-ws" = {
+    capacity_reservation_preference = "none"  # Regular On-Demand
+    subnet_id = "subnet-456"
+  }
+}
+```
+
+**Options:**
+
+- `"open"`: Use ODCR if available, fall back to On-Demand
+- `"none"`: Never use ODCR, always On-Demand
+- `null`: Default AWS behavior (no capacity reservation)
+
 ### Software Installation
 **Available packages**: `chocolatey`, `visual-studio-2022`, `git`, `unreal-engine-5.3`, `perforce`
 
@@ -244,8 +277,8 @@ telnet <instance-ip> 8443
 aws ssm start-session --target <instance-id>
 
 # VPN testing
-ping john-doe.vdi.internal
-nslookup john-doe.vdi.internal
+ping naruto-uzumaki.vdi.internal
+nslookup naruto-uzumaki.vdi.internal
 ```
 
 ### Password Retrieval
@@ -255,7 +288,7 @@ terraform output -json private_keys | jq -r '."vdi-001"' > temp_key.pem
 aws ec2 get-password-data --instance-id <id> --priv-launch-key temp_key.pem
 
 # User passwords
-aws secretsmanager get-secret-value --secret-id "cgd/users/john-doe"
+aws secretsmanager get-secret-value --secret-id "cgd/users/naruto-uzumaki"
 ```
 ## Known Limitations
 

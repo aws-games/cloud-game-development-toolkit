@@ -1,11 +1,18 @@
-# Local-Only Example
+# Private Connectivity VDI Example
 
 ## Overview
-Demonstrates VDI deployment with local Windows users and Secrets Manager authentication. No Active Directory complexity.
+Demonstrates VDI deployment with **private network access** via AWS Client VPN:
+- **Private Network Access**: AWS Client VPN with certificate-based authentication
+- **Internal DNS**: Custom domain names for easy connection
+- **Multi-User VPN**: Each user gets their own .ovpn configuration file
+- **Enterprise Security**: No public internet exposure, VPC-only access
 
 ## Prerequisites
 1. AWS credentials configured
-2. VPC and subnet for deployment
+2. VPN client software (AWS VPN Client or OpenVPN)
+3. **Custom AMIs built using Packer templates** (required for this example)
+
+**Note**: This example requires specific custom AMIs because the data sources reference them by name. You can customize the example to use different AMIs by modifying `data.tf`.
 
 ## Deployment
 ```bash
@@ -14,39 +21,50 @@ terraform apply
 ```
 
 ## What Gets Created
-- **Local User**: john-doe (Windows local account)
-- **VDI Instance**: Single workstation with software packages
-- **Authentication**: Secrets Manager with 3 accounts per VDI:
-  - Administrator (EC2 key pair - break-glass)
-  - VDIAdmin (Secrets Manager - automation)
-  - john-doe (Secrets Manager - daily use)
+- **3 VDI instances** in private subnets (no public IPs)
+- **AWS Client VPN endpoint** with certificate-based authentication
+- **Private DNS zone** (cgd.vdi.internal) for easy connection
+- **VPN certificates** and .ovpn files for each user
+- **NAT Gateway** for outbound internet access (Windows updates, software downloads)
 
-## Connection
+## Connection (Private VPN Access)
 
-### Method 1: Secrets Manager (Recommended)
+### Step 1: Download VPN Configuration
 ```bash
-# Get secret ARN
-SECRET_ARN=$(terraform output -raw secrets_manager | jq -r '."vdi-001".secret_arn')
+# Get VPN configs bucket
+terraform output vpn_configs_bucket
 
-# Get passwords
-aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query SecretString --output text | jq
+# Download your .ovpn file
+# macOS/Linux:
+aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/naruto-uzumaki/naruto-uzumaki.ovpn ~/Downloads/
+
+# Windows (PowerShell):
+aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/naruto-uzumaki/naruto-uzumaki.ovpn $env:USERPROFILE\Downloads\
+
+# Windows (Command Prompt):
+aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/naruto-uzumaki/naruto-uzumaki.ovpn %USERPROFILE%\Downloads\
 ```
 
-### Method 2: EC2 Key Pair (Break-glass)
-```bash
-# Get private key
-terraform output -raw private_keys | jq -r '."vdi-001"' > temp_key.pem
-chmod 600 temp_key.pem
+### Step 2: Connect to VPN
+1. **AWS VPN Client** (recommended): Import .ovpn file
+2. **OpenVPN**: Use .ovpn file with any OpenVPN client
+3. **Wait 2-3 minutes** for VPN connection to establish
 
-# Get Administrator password
-INSTANCE_ID=$(terraform output -raw vdi_connection_info | jq -r '."vdi-001".instance_id')
-aws ec2 get-password-data --instance-id $INSTANCE_ID --priv-launch-key temp_key.pem
+### Step 3: Get User Passwords
+```bash
+# Get connection info
+terraform output connection_info
+
+# Get user password from Secrets Manager
+aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumaki" --query SecretString --output text | jq -r '.password'
 ```
 
-### Connect via DCV
-1. Get instance IP: `terraform output vdi_connection_info`
-2. Open browser: `https://<instance-ip>:8443`
-3. Login with retrieved credentials
+### Step 4: Connect via DCV (Private DNS)
+1. **vdi-001 (UE GameDev)**: `https://naruto-uzumaki.cgd.vdi.internal:8443`
+2. **vdi-002 (DevOps)**: `https://sasuke-uchiha.cgd.vdi.internal:8443`
+3. **vdi-003 (Junior Dev)**: `https://boruto-uzumaki.cgd.vdi.internal:8443`
+
+**Alternative**: Use private IPs directly if DNS doesn't resolve
 
 ## Software Packages
 - Chocolatey (package manager)
