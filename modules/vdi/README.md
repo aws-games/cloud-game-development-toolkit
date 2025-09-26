@@ -24,7 +24,7 @@
 workstations = {
   "vdi-001" = {
     preset_key = "my-preset"
-    assigned_user = "john-doe"
+    assigned_user = "naruto-uzumaki"
     subnet_id = aws_subnet.public_subnet.id
     allowed_cidr_blocks = ["198.51.100.1/32"]  # Replace with user's public IP
   }
@@ -40,10 +40,10 @@ module "vdi" {
   create_client_vpn = true  # Creates Client VPN infrastructure
 
   users = {
-    "john-doe" = {
-      given_name = "John"
-      family_name = "Doe"
-      email = "john@company.com"
+    "naruto-uzumaki" = {
+      given_name = "Naruto"
+      family_name = "Uzumaki"
+      email = "naruto@example.com"
       type = "administrator"
       use_client_vpn = true  # Gets VPN access + certificates
     }
@@ -52,7 +52,7 @@ module "vdi" {
   workstations = {
     "vdi-001" = {
       preset_key = "my-preset"
-      assigned_user = "john-doe"
+      assigned_user = "naruto-uzumaki"
       subnet_id = aws_subnet.private_subnet.id
       allowed_cidr_blocks = ["10.0.0.0/16"]  # VPC CIDR only
     }
@@ -178,14 +178,47 @@ rm temp_key.pem
 
 ## Advanced Configuration
 
+### On-Demand Capacity Reservations (ODCR)
+Optimize costs by leveraging existing capacity reservations:
+
+```hcl
+# Module-level default (applies to all workstations)
+module "vdi" {
+  capacity_reservation_preference = "open"  # Use ODCR if available
+
+  workstations = {
+    "ws1" = { subnet_id = "subnet-123" }  # Inherits "open"
+    "ws2" = { subnet_id = "subnet-456" }  # Inherits "open"
+  }
+}
+
+# Per-workstation control
+workstations = {
+  "prod-ws" = {
+    capacity_reservation_preference = "open"  # Use ODCR
+    subnet_id = "subnet-123"
+  }
+  "dev-ws" = {
+    capacity_reservation_preference = "none"  # Regular On-Demand
+    subnet_id = "subnet-456"
+  }
+}
+```
+
+**Options:**
+
+- `"open"`: Use ODCR if available, fall back to On-Demand
+- `"none"`: Never use ODCR, always On-Demand
+- `null`: Default AWS behavior (no capacity reservation)
+
 ### Software Installation
-**Available packages**: `chocolatey`, `visual-studio-2022`, `git`, `unreal-engine-5.3`, `perforce`
+**Available packages**: Any valid [Chocolatey package](https://community.chocolatey.org/packages). Common examples: `git`, `vscode`, `notepadplusplus`, `7zip`
 
 ```hcl
 presets = {
   "ue-dev" = {
     instance_type = "g4dn.2xlarge"
-    software_packages = ["chocolatey", "visual-studio-2022", "git", "unreal-engine-5.3"]
+    software_packages = ["git", "vscode", "notepadplusplus"]
   }
 }
 ```
@@ -244,8 +277,8 @@ telnet <instance-ip> 8443
 aws ssm start-session --target <instance-id>
 
 # VPN testing
-ping john-doe.vdi.internal
-nslookup john-doe.vdi.internal
+ping naruto-uzumaki.vdi.internal
+nslookup naruto-uzumaki.vdi.internal
 ```
 
 ### Password Retrieval
@@ -255,7 +288,7 @@ terraform output -json private_keys | jq -r '."vdi-001"' > temp_key.pem
 aws ec2 get-password-data --instance-id <id> --priv-launch-key temp_key.pem
 
 # User passwords
-aws secretsmanager get-secret-value --secret-id "cgd/users/john-doe"
+aws secretsmanager get-secret-value --secret-id "cgd/users/naruto-uzumaki"
 ```
 ## Known Limitations
 
@@ -267,7 +300,7 @@ aws secretsmanager get-secret-value --secret-id "cgd/users/john-doe"
 
 ## Contributing
 
-See the [Contributing Guidelines](../../../CONTRIBUTING.md) for information on how to contribute to this project.
+See the [Contributing Guidelines](../../CONTRIBUTING.md) for information on how to contribute to this project.
 
 ## License
 
@@ -371,6 +404,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_capacity_reservation_preference"></a> [capacity\_reservation\_preference](#input\_capacity\_reservation\_preference) | Capacity reservation preference for EC2 instances | `string` | `null` | no |
 | <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br>    client_cidr_block       = optional(string, "192.168.0.0/16")<br>    generate_client_configs = optional(bool, true)<br>    split_tunnel            = optional(bool, true)<br>  })</pre> | `{}` | no |
 | <a name="input_create_client_vpn"></a> [create\_client\_vpn](#input\_create\_client\_vpn) | Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs) | `bool` | `false` | no |
 | <a name="input_create_default_security_groups"></a> [create\_default\_security\_groups](#input\_create\_default\_security\_groups) | Create default security groups for VDI workstations | `bool` | `true` | no |
@@ -384,7 +418,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "terraform-aws-vdi",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi",<br>  "RootModuleName": "-"<br>}</pre> | no |
 | <a name="input_users"></a> [users](#input\_users) | Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)<br><br>**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.<br><br>type options (Windows groups):<br>- "fleet\_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)<br>- "administrator": User added to Windows Administrators group, created only on assigned workstation<br>- "user": User added to Windows Users group, created only on assigned workstation<br><br>use\_client\_vpn options (VPN access):<br>- false: User accesses VDI via public internet or external VPN (default)<br>- true: User accesses VDI via module's Client VPN (generates VPN config)<br><br>Example:<br>users = {<br>  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"<br>    given\_name = "VDI"<br>    family\_name = "Administrator"<br>    email = "admin@company.com"<br>    type = "fleet\_administrator" # Windows Administrators group on ALL workstations<br>  }<br>  "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"<br>    given\_name = "Naruto"<br>    family\_name = "Uzumaki"<br>    email = "naruto@konoha.com"<br>    type = "user"               # Windows Users group<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "naruto-uzumaki"  # References users{} key directly in workstation | <pre>map(object({<br>    given_name     = string<br>    family_name    = string<br>    email          = string<br>    type           = optional(string, "user") # "administrator" or "user" (Windows group)<br>    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN<br>    tags           = optional(map(string), {})<br>  }))</pre> | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID where VDI instances will be deployed | `string` | n/a | yes |
-| <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br><br>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br><br>Workstations inherit configuration from templates via preset\_key reference.<br><br>Example:<br>workstations = {<br>  "alice-workstation" = {        # ← This key becomes the workstation name<br>    preset\_key = "ue-developer"    # ← References templates{} key<br>    subnet\_id = "subnet-123"<br>    availability\_zone = "us-east-1a"<br>    security\_groups = ["sg-456"]<br>    assigned\_user = "alice"  # User assigned to this workstation<br>    allowed\_cidr\_blocks = ["203.0.113.1/32"]<br>  }<br>  "vdi-001" = {                  # ← Another workstation name<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-456"<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "alice"  # References users{} key directly in workstation | <pre>map(object({<br>    # Preset reference (optional - can use direct config instead)<br>    preset_key = optional(string, null)<br><br>    # Infrastructure placement<br>    subnet_id       = string<br>    security_groups = list(string)<br>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br><br>    # Direct configuration (used when preset_key is null or as overrides)<br>    ami           = optional(string, null)<br>    instance_type = optional(string, null)<br>    gpu_enabled   = optional(bool, null)<br>    volumes = optional(map(object({<br>      capacity      = number<br>      type          = string<br>      windows_drive = string<br>      iops          = optional(number, 3000)<br>      throughput    = optional(number, 125)<br>      encrypted     = optional(bool, true)<br>    })), null)<br>    iam_instance_profile = optional(string, null)<br>    software_packages    = optional(list(string), null)<br><br>    # Optional overrides<br>    allowed_cidr_blocks = optional(list(string), ["10.0.0.0/16"])<br>    tags                = optional(map(string), {})<br>  }))</pre> | `{}` | no |
+| <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br><br>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br><br>Workstations inherit configuration from templates via preset\_key reference.<br><br>Example:<br>workstations = {<br>  "alice-workstation" = {        # ← This key becomes the workstation name<br>    preset\_key = "ue-developer"    # ← References templates{} key<br>    subnet\_id = "subnet-123"<br>    availability\_zone = "us-east-1a"<br>    security\_groups = ["sg-456"]<br>    assigned\_user = "alice"  # User assigned to this workstation<br>    allowed\_cidr\_blocks = ["203.0.113.1/32"]<br>  }<br>  "vdi-001" = {                  # ← Another workstation name<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-456"<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "alice"  # References users{} key directly in workstation | <pre>map(object({<br>    # Preset reference (optional - can use direct config instead)<br>    preset_key = optional(string, null)<br><br>    # Infrastructure placement<br>    subnet_id       = string<br>    security_groups = list(string)<br>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br><br>    # Direct configuration (used when preset_key is null or as overrides)<br>    ami           = optional(string, null)<br>    instance_type = optional(string, null)<br>    gpu_enabled   = optional(bool, null)<br>    volumes = optional(map(object({<br>      capacity      = number<br>      type          = string<br>      windows_drive = string<br>      iops          = optional(number, 3000)<br>      throughput    = optional(number, 125)<br>      encrypted     = optional(bool, true)<br>    })), null)<br>    iam_instance_profile = optional(string, null)<br>    software_packages    = optional(list(string), null)<br><br>    # Optional overrides<br>    allowed_cidr_blocks             = optional(list(string), null)<br>    capacity_reservation_preference = optional(string, null)<br>    tags                            = optional(map(string), null)<br>  }))</pre> | `{}` | no |
 
 ## Outputs
 

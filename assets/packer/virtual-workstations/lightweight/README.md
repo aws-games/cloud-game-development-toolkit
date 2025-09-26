@@ -99,7 +99,7 @@ module "vdi" {
 ## Alternative AMIs
 
 For faster boot times with pre-installed software, consider:
-- **[UE GameDev AMI](../ue-gamedev/)** - Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
+- **[UE GameDev AMI](../ue-gamedev/README.md)** - Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
 
 ## Troubleshooting
 

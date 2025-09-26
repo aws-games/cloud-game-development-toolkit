@@ -1,5 +1,5 @@
 # Unreal Engine Development Stack Installation
-# Adds Visual Studio 2022 + Unreal Engine 5.3 to base infrastructure
+# Adds Visual Studio 2022 + Epic Games Launcher to base infrastructure
 
 $ErrorActionPreference = "Stop"
 
@@ -21,9 +21,9 @@ try {
         Write-Host "Visual Studio 2022 Community installation failed with exit code: $LASTEXITCODE" -ForegroundColor Red
     }
 
-    # Install Unreal Engine 5.3 via Epic Games Launcher
-    Write-Host "Installing Epic Games Launcher and Unreal Engine 5.3..."
-    Write-Host "This installation may take 20-30 minutes. Please be patient..." -ForegroundColor Yellow
+    # Install Epic Games Launcher
+    Write-Host "Installing Epic Games Launcher..."
+    Write-Host "This installation may take 10-15 minutes. Please be patient..." -ForegroundColor Yellow
 
     # Download Epic Games Launcher
     $epicLauncherUrl = "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"
@@ -36,7 +36,7 @@ try {
     Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $epicLauncherPath, "/quiet", "/norestart" -Wait
 
     Write-Host "Epic Games Launcher installed successfully" -ForegroundColor Green
-    Write-Host "Note: Unreal Engine 5.3 will need to be installed manually through Epic Games Launcher after first login" -ForegroundColor Yellow
+    Write-Host "Note: Unreal Engine will need to be installed manually through Epic Games Launcher after first login" -ForegroundColor Yellow
 
     # Note: Python packages are installed by base infrastructure script
 
@@ -48,7 +48,6 @@ try {
 # Configure additional PATH entries for Unreal Engine
 Write-Host "Configuring PATH for Unreal Engine development..."
 $ueToolPaths = @(
-    "C:\Program Files\Epic Games\UE_5.3\Engine\Binaries\Win64",           # Unreal Engine
     "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\Common7\IDE", # Visual Studio
     "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin" # MSBuild
 )

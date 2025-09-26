@@ -1,17 +1,22 @@
-# Multi-AMI VDI Example
+# Public Connectivity VDI Example
 
 ## Overview
-Demonstrates VDI deployment with **multiple AMI types** for different user roles:
+Demonstrates VDI deployment with **public internet access** and **multiple AMI types** for different user roles:
+- **Public Internet Access**: Direct connection via Internet Gateway with IP restrictions
 - **UE GameDev AMI**: Pre-built with Visual Studio 2022 + Epic Games Launcher
-- **Lightweight AMI**: Basic Windows for general users
-- **Custom AMI Integration**: Shows how to use your own Packer-built AMIs
+- **Lightweight AMI**: Basic Windows for runtime software installation
+- **Multi-User Support**: Different workstation configurations for different roles
 
 ## Architecture
 
-### Multi-AMI Pattern
+### Public Connectivity + Multi-AMI Pattern
 ```
-vdi-001 (john-doe)  → UE GameDev AMI    → g4dn.4xlarge (16 vCPU, 64GB, T4 GPU)
-vdi-002 (jane-smith) → Lightweight AMI  → m5.large (2 vCPU, 8GB)
+vdi-001 (naruto-uzumaki)  → UE GameDev AMI    → g4dn.4xlarge (Game Developer)
+vdi-002 (sasuke-uchiha)   → Lightweight AMI   → g4dn.xlarge  (DevOps Engineer)
+vdi-003 (boruto-uzumaki)  → Lightweight AMI   → g4dn.xlarge  (Junior Developer)
+                    ↓
+            Public Internet Access
+         (Your IP: Security Group Rules)
 ```
 
 ### User Management
@@ -22,6 +27,8 @@ vdi-002 (jane-smith) → Lightweight AMI  → m5.large (2 vCPU, 8GB)
 ## Prerequisites
 
 ### Required AMIs
+**Note**: This example requires specific custom AMIs because the data sources reference them by name. You can customize the example to use different AMIs by modifying `data.tf`.
+
 Build custom AMIs using Packer templates:
 
 ```bash
@@ -49,15 +56,17 @@ terraform apply
 ## What Gets Created
 
 ### Infrastructure
-- **2 VDI instances** with different AMIs and instance types
+- **3 VDI instances** with different AMIs and configurations
 - **VPC + subnet + security groups** for public internet access
+- **Internet Gateway** for direct public connectivity
 - **S3 buckets** for emergency keys and scripts
 - **CloudWatch log groups** for centralized logging
 
-### Users (Created via User Data)
-- **vdiadmin**: Administrator account on BOTH instances
-- **john-doe**: Standard user on vdi-001 (UE GameDev)
-- **jane-smith**: Standard user on vdi-002 (Lightweight)
+### Users (Created via SSM)
+- **vdiadmin**: Fleet administrator account on ALL instances
+- **naruto-uzumaki**: Administrator on vdi-001 (UE GameDev workstation)
+- **sasuke-uchiha**: Administrator on vdi-002 (DevOps workstation)
+- **boruto-uzumaki**: Standard user on vdi-003 (Junior developer workstation)
 
 ### Authentication
 - **Secrets Manager**: All user passwords stored securely
@@ -76,18 +85,22 @@ terraform output connection_info
 # Get all password retrieval commands
 terraform output password_retrieval_commands
 
-# Example: Get john-doe password
-aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:cgd/vdi-001/users/john-doe-XXXXX" --query SecretString --output text | jq -r '.password'
+# Example: Get naruto-uzumaki password
+aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:cgd/vdi-001/users/naruto-uzumaki-XXXXX" --query SecretString --output text | jq -r '.password'
 ```
 
-### Connect via DCV
+### Connect via DCV (Public Internet)
 1. **vdi-001 (UE GameDev)**: `https://<vdi-001-ip>:8443`
-   - Login: `john-doe` + password from Secrets Manager
+   - Login: `naruto-uzumaki` + password from Secrets Manager
    - **Pre-installed**: Visual Studio 2022, Epic Games Launcher, Git, Perforce
 
-2. **vdi-002 (Lightweight)**: `https://<vdi-002-ip>:8443`
-   - Login: `jane-smith` + password from Secrets Manager
-   - **Basic Windows** with DCV only
+2. **vdi-002 (DevOps)**: `https://<vdi-002-ip>:8443`
+   - Login: `sasuke-uchiha` + password from Secrets Manager
+   - **Runtime installed**: VS Code, Terraform, Docker, Kubernetes CLI
+
+3. **vdi-003 (Junior Dev)**: `https://<vdi-003-ip>:8443`
+   - Login: `boruto-uzumaki` + password from Secrets Manager
+   - **Basic tools**: VS Code, Git, Notepad++
 
 ### Admin Access
 - **vdiadmin** account available on BOTH instances
@@ -95,10 +108,16 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 
 ## Key Features
 
+### ✅ Public Internet Connectivity
+- **Direct access** via Internet Gateway (no VPN required)
+- **IP-based security** with automatic detection of your public IP
+- **Cost-effective** for individual developers and small teams
+- **Simple setup** - no certificate management or VPN clients
+
 ### ✅ Multi-AMI Support
 - Different AMIs for different roles (GameDev vs General)
 - Automatic AMI discovery via data sources
-- Fallback to AWS base AMI if custom AMIs unavailable
+- **Requires custom AMIs** - build using Packer templates
 
 ### ✅ Infrastructure-Focused
 - **No runtime software installation** (unreliable)
@@ -115,6 +134,7 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 - **Centralized password management** via Secrets Manager
 - **Break-glass access** via EC2 key pairs
 - **Audit logging** via CloudWatch
+- **ODCR support** for cost optimization with capacity reservations
 
 ## Troubleshooting
 
@@ -130,9 +150,9 @@ aws ec2 get-console-output --instance-id <instance-id> --region us-east-1
 ```
 
 ### AMI Not Found
-If custom AMIs aren't built:
-1. Build AMIs using Packer templates
-2. Or temporarily use AWS base AMI (will need manual software installation)
+If custom AMIs aren't built, Terraform will fail with data source error:
+1. **Required**: Build AMIs using Packer templates (see Prerequisites)
+2. **No fallback**: Data sources require specific AMI names to exist
 
 ### DCV Connection Issues
 1. Check security group allows port 8443 from your IP
@@ -170,7 +190,7 @@ If custom AMIs aren't built:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.13.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.1 |
 | <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules

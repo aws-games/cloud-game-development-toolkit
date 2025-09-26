@@ -52,6 +52,12 @@ variable "root_volume_size" {
   default = 150
 }
 
+variable "capacity_reservation_preference" {
+  type        = string
+  default     = null
+  description = "Capacity reservation preference: 'open' (use ODCR if available), 'none' (never use ODCR), or null (no preference specified)"
+}
+
 # Version is controlled by CGD Toolkit maintainers
 # Users should not modify this - it aligns with toolkit releases
 locals {
@@ -96,9 +102,10 @@ source "amazon-ebs" "ue-gamedev" {
   winrm_use_ssl               = true
   user_data_file              = "../shared/userdata.ps1"
 
-  vpc_id                      = var.vpc_id
-  subnet_id                   = var.subnet_id
-  associate_public_ip_address = var.associate_public_ip_address
+  vpc_id                          = var.vpc_id
+  subnet_id                       = var.subnet_id
+  associate_public_ip_address     = var.associate_public_ip_address
+  capacity_reservation_preference = var.capacity_reservation_preference
 
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
@@ -122,7 +129,7 @@ source "amazon-ebs" "ue-gamedev" {
     Architecture   = "x86_64"
 
     # Software components
-    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey,VisualStudio2022,UnrealEngine5.3"
+    Components     = "DCV,NVIDIA,AWS-CLI,PowerShell,AD-Tools,Git,Perforce,Python,Chocolatey,VisualStudio2022,EpicGamesLauncher"
 
     # Project tracking
     Project        = "cloud-game-development-toolkit"
@@ -144,7 +151,7 @@ build {
     script            = "../shared/base_infrastructure.ps1"
   }
 
-  # Install Unreal Engine development stack (Visual Studio + UE5.3)
+  # Install Unreal Engine development stack (Visual Studio + Epic Games Launcher)
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
