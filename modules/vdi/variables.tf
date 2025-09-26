@@ -423,7 +423,7 @@ variable "capacity_reservation_preference" {
   type        = string
   default     = null
   validation {
-    condition = var.capacity_reservation_preference == null || contains(["open", "none"], var.capacity_reservation_preference)
+    condition     = var.capacity_reservation_preference == null || contains(["open", "none"], var.capacity_reservation_preference)
     error_message = "Must be null, 'open', or 'none'."
   }
 }
