@@ -7,7 +7,7 @@ At the heart of the system is an instance of ScyllaDB, a high-performance NoSQL 
 
 ### Predeployment - Set Up Github Content Repository Credentials
 
-The [Unreal Cloud DDC Inter Cluster module](../modules/unreal/unreal-cloud-ddc-intra-cluster) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
+The [Unreal Cloud DDC Intra Cluster module](../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
 ```json
 {
   "username":"GITHUB-USER-NAME-PLACEHOLDER",

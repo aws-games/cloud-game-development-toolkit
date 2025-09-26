@@ -131,7 +131,6 @@ module "vdi" {
 
 ## Alternative Templates
 
-- **[Lightweight AMI](../lightweight/)** - Runtime software customization
-- **[Artists AMI](../artists/)** - Creative tools (planned)
+- **[Lightweight AMI](../lightweight/README.md)** - Runtime software customization
 
 For faster iteration during development, consider the lightweight template with runtime software installation via the VDI module.
