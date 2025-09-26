@@ -53,9 +53,9 @@ variable "root_volume_size" {
 }
 
 variable "capacity_reservation_preference" {
-  type    = string
-  default = null
-  description = "Capacity reservation preference: 'open' to use ODCR, null for default behavior"
+  type        = string
+  default     = null
+  description = "Capacity reservation preference: 'open' (use ODCR if available), 'none' (never use ODCR), or null (no preference specified)"
 }
 
 # Version is controlled by CGD Toolkit maintainers

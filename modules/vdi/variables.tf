@@ -173,9 +173,9 @@ variable "workstations" {
     software_packages    = optional(list(string), null)
 
     # Optional overrides
-    allowed_cidr_blocks             = optional(list(string), ["10.0.0.0/16"])
+    allowed_cidr_blocks             = optional(list(string), null)
     capacity_reservation_preference = optional(string, null)
-    tags                            = optional(map(string), {})
+    tags                            = optional(map(string), null)
   }))
 
   description = <<EOF
