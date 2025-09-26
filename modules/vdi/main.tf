@@ -107,6 +107,14 @@ resource "aws_instance" "workstations" {
   # Enable automatic instance replacement when user data changes
   user_data_replace_on_change = true
 
+  # Capacity reservation specification for ODCR support
+  dynamic "capacity_reservation_specification" {
+    for_each = each.value.capacity_reservation_preference != null ? [1] : []
+    content {
+      capacity_reservation_preference = each.value.capacity_reservation_preference
+    }
+  }
+
   # Metadata options for security
   metadata_options {
     http_endpoint               = "enabled"

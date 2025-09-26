@@ -1,5 +1,3 @@
-# IAM Configuration for VDI Module v2.0.0
-
 # IAM role for VDI instances (only create if user doesn't provide custom profile)
 resource "aws_iam_role" "vdi_instance_role" {
   for_each = { for k, v in local.final_instances : k => v if v.iam_instance_profile == null }

@@ -52,6 +52,12 @@ variable "root_volume_size" {
   default = 80
 }
 
+variable "capacity_reservation_preference" {
+  type    = string
+  default = null
+  description = "Capacity reservation preference: 'open' to use ODCR, null for default behavior"
+}
+
 # Version is controlled by CGD Toolkit maintainers
 # Users should not modify this - it aligns with toolkit releases
 locals {
@@ -96,9 +102,10 @@ source "amazon-ebs" "lightweight" {
   winrm_use_ssl               = true
   user_data_file              = "../shared/userdata.ps1"
 
-  vpc_id                      = var.vpc_id
-  subnet_id                   = var.subnet_id
-  associate_public_ip_address = var.associate_public_ip_address
+  vpc_id                          = var.vpc_id
+  subnet_id                       = var.subnet_id
+  associate_public_ip_address     = var.associate_public_ip_address
+  capacity_reservation_preference = var.capacity_reservation_preference
 
   launch_block_device_mappings {
     device_name           = "/dev/sda1"

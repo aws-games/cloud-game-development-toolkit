@@ -173,8 +173,9 @@ variable "workstations" {
     software_packages    = optional(list(string), null)
 
     # Optional overrides
-    allowed_cidr_blocks = optional(list(string), ["10.0.0.0/16"])
-    tags                = optional(map(string), {})
+    allowed_cidr_blocks             = optional(list(string), ["10.0.0.0/16"])
+    capacity_reservation_preference = optional(string, null)
+    tags                            = optional(map(string), {})
   }))
 
   description = <<EOF
@@ -229,6 +230,14 @@ EOF
       config.assigned_user != null ? contains(keys(var.users), config.assigned_user) : true
     ])
     error_message = "When assigned_user is specified, it must reference an existing user key (case-sensitive). Example: assigned_user = \"john-doe\" must match a key in users = { \"john-doe\" = {...} }"
+  }
+
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.capacity_reservation_preference == null || contains(["open", "none"], config.capacity_reservation_preference)
+    ])
+    error_message = "capacity_reservation_preference must be null, 'open', or 'none' for each workstation."
   }
 
 
@@ -403,4 +412,18 @@ variable "create_default_security_groups" {
   type        = bool
   description = "Create default security groups for VDI workstations"
   default     = true
+}
+
+########################################
+# CAPACITY RESERVATIONS (Optional)
+########################################
+
+variable "capacity_reservation_preference" {
+  description = "Capacity reservation preference for EC2 instances"
+  type        = string
+  default     = null
+  validation {
+    condition = var.capacity_reservation_preference == null || contains(["open", "none"], var.capacity_reservation_preference)
+    error_message = "Must be null, 'open', or 'none'."
+  }
 }
