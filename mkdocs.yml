@@ -140,7 +140,10 @@ nav:
       - Unity:
           - Accelerator:
               - Installation and Usage:
-                  - modules/unity/accelerator/README.md
+                - modules/unity/accelerator/README.md
+          - Licensing Server:
+              - Installation and Usage:
+                - modules/unity/floating-license-server/README.md
       - VDI:
           - VDI:
               - Installation & Usage:
