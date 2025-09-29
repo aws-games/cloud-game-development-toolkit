@@ -154,7 +154,7 @@ locals {
         # VDI-specific settings
         associate_public_ip_address     = true
         create_key_pair                 = true
-        capacity_reservation_preference = coalesce(config.capacity_reservation_preference, var.capacity_reservation_preference)
+        capacity_reservation_preference = coalesce(config.capacity_reservation_preference, var.capacity_reservation_preference, "open")
       }
     )
   }
