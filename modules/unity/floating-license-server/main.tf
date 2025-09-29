@@ -110,7 +110,7 @@ resource "aws_vpc_security_group_egress_rule" "unity_license_server_egress_all" 
 }
 
 #############################################################
-# Elastic Network Interface and Elasti IP (if needed)
+# Elastic Network Interface and Elastic IP (if needed)
 #############################################################
 
 # Data source to fetch existing ENI if specified
@@ -223,7 +223,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_access_role.name
 }
 
-# Data source to get the latest Ubuntu 24.04 LTS AMI from Canonical Ltd AWS account
+# Data source to get the latest Ubuntu 24.04 LTS AMI from Canonical Ltd's official AWS account
 data "aws_ami" "ubuntu_latest" {
   most_recent = true
   owners      = ["099720109477"]
