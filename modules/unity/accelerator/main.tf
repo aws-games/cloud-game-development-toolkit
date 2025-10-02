@@ -172,7 +172,7 @@ resource "aws_ecs_task_definition" "unity_accelerator_task_definition" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.unity_accelerator_log_group.name
-          awslogs-region        = data.aws_region.current.name
+          awslogs-region        = data.aws_region.current.region
           awslogs-stream-prefix = "[APP]"
         }
       }
@@ -485,7 +485,7 @@ data "aws_iam_policy_document" "cloudwatch_logs_policy" {
       "logs:DescribeLogStreams"
     ]
     resources = [
-      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.name_prefix}-log-group:*"
+      "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:${local.name_prefix}-log-group:*"
     ]
   }
 }
@@ -779,7 +779,7 @@ resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
 resource "aws_vpc_endpoint" "ssm_vpce" {
   count               = var.debug == true ? 1 : 0
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ssm"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = var.service_subnets
   security_group_ids  = [aws_security_group.vpc_endpoint_sg[0].id]
@@ -789,7 +789,7 @@ resource "aws_vpc_endpoint" "ssm_vpce" {
 resource "aws_vpc_endpoint" "ssmmessages_vpce" {
   count               = var.debug == true ? 1 : 0
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ssmmessages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = var.service_subnets
   security_group_ids  = [aws_security_group.vpc_endpoint_sg[0].id]
@@ -799,7 +799,7 @@ resource "aws_vpc_endpoint" "ssmmessages_vpce" {
 resource "aws_vpc_endpoint" "ec2messages_vpce" {
   count               = var.debug == true ? 1 : 0
   vpc_id              = var.vpc_id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
+  service_name        = "com.amazonaws.${data.aws_region.current.region}.ec2messages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = var.service_subnets
   security_group_ids  = [aws_security_group.vpc_endpoint_sg[0].id]

@@ -209,8 +209,8 @@ data "aws_iam_policy_document" "build_farm_fsxz_policy" {
       "fsx:ListTagsForResource"
     ]
     resources = concat(
-      ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"],
-      [for fs in values(aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system) : "arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/${fs.id}/*"]
+      ["arn:aws:fsx:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"],
+      [for fs in values(aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system) : "arn:aws:fsx:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:volume/${fs.id}/*"]
     )
   }
   statement {
@@ -218,14 +218,14 @@ data "aws_iam_policy_document" "build_farm_fsxz_policy" {
     actions = [
       "fsx:DescribeSnapshots"
     ]
-    resources = ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"]
+    resources = ["arn:aws:fsx:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:snapshot/*/*"]
   }
   statement {
     effect = "Allow"
     actions = [
       "fsx:DescribeVolumes"
     ]
-    resources = ["arn:aws:fsx:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/*/*"]
+    resources = ["arn:aws:fsx:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:volume/*/*"]
   }
 }
 resource "aws_iam_policy" "build_farm_fsxz_policy" {
