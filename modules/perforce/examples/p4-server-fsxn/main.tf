@@ -55,7 +55,7 @@ provider "netapp-ontap" {
       password = var.fsxn_password
       aws_lambda = {
         function_name         = module.perforce.p4_server_lambda_link_name
-        region                = data.aws_region.current.name
+        region                = data.aws_region.current.region
         shared_config_profile = var.fsxn_aws_profile
       }
     }
@@ -99,7 +99,7 @@ module "perforce" {
     fsxn_svm_name                     = aws_fsx_ontap_storage_virtual_machine.p4_server_svm.name
     amazon_fsxn_svm_id                = aws_fsx_ontap_storage_virtual_machine.p4_server_svm.id
     fsxn_aws_profile                  = var.fsxn_aws_profile
-    fsxn_region                       = data.aws_region.current.name
+    fsxn_region                       = data.aws_region.current.region
 
     # Networking & Security
     instance_subnet_id = aws_subnet.public_subnets[0].id

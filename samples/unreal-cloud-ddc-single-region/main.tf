@@ -84,7 +84,7 @@ module "unreal_cloud_ddc_infra" {
   depends_on = [module.unreal_cloud_ddc_vpc]
   source     = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra"
   name       = "unreal-cloud-ddc"
-  region     = data.aws_region.current.name
+  region     = data.aws_region.current.region
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
   eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
@@ -131,8 +131,8 @@ module "unreal_cloud_ddc_intra_cluster" {
     templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
       scylla_ips         = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       bucket_name        = module.unreal_cloud_ddc_infra.s3_bucket_id
-      region             = substr(data.aws_region.current.name, length(data.aws_region.current.name) - 1, 1) == "1" ? substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2) : data.aws_region.current.name
-      aws_region         = data.aws_region.current.name
+      region             = substr(data.aws_region.current.region, length(data.aws_region.current.region) - 1, 1) == "1" ? substr(data.aws_region.current.region, 0, length(data.aws_region.current.region) - 2) : data.aws_region.current.region
+      aws_region         = data.aws_region.current.region
       security_group_ids = aws_security_group.unreal_ddc_load_balancer_access_security_group.id
       token              = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
     })

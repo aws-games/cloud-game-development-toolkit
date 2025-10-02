@@ -70,7 +70,7 @@ resource "aws_ecs_service" "teamcity_agent" {
       log_driver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.teamcity_agent.name
-        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-region"        = data.aws_region.current.region
         "awslogs-stream-prefix" = "[AGENT - ${each.key}]"
       }
     }

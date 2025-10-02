@@ -138,5 +138,5 @@ resource "aws_nat_gateway" "nat_gateway" {
 
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.unreal_cloud_ddc_vpc.id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
+  service_name = "com.amazonaws.${data.aws_region.current.region}.s3"
 }
