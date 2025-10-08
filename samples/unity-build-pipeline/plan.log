@@ -1,0 +1,22 @@
+[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mDeprecated attribute[0m
+[33m│[0m [0m
+[33m│[0m [0m[0m  on ../../modules/perforce/modules/p4-auth/main.tf line 119, in resource "aws_ecs_task_definition" "task_definition":
+[33m│[0m [0m 119:           awslogs-region        = data.aws_region.current[4m.name[0m[0m
+[33m│[0m [0m
+[33m│[0m [0mThe attribute "name" is deprecated. Refer to the provider documentation for
+[33m│[0m [0mdetails.
+[33m│[0m [0m
+[33m│[0m [0m(and 3 more similar warnings elsewhere)
+[33m╵[0m[0m
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mUnsupported attribute[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on outputs.tf line 22, in output "p4_auth_admin_secret_arn":
+[31m│[0m [0m  22:   value       = module.perforce[4m.p4_auth_admin_password_secret_arn[0m[0m
+[31m│[0m [0m    [90m├────────────────[0m
+[31m│[0m [0m[0m    [90m│[0m [1mmodule.perforce[0m is a object
+[31m│[0m [0m[0m
+[31m│[0m [0mThis object does not have an attribute named
+[31m│[0m [0m"p4_auth_admin_password_secret_arn".
+[31m╵[0m[0m
