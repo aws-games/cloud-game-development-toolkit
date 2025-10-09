@@ -107,3 +107,23 @@ module "teamcity" {
 
   tags = local.tags
 }
+
+##########################################
+# Unity Accelerator
+##########################################
+
+module "unity_accelerator" {
+  source = "../../modules/unity/accelerator"
+
+  vpc_id          = aws_vpc.unity_pipeline_vpc.id
+  service_subnets = aws_subnet.private_subnets[*].id
+  lb_subnets      = aws_subnet.public_subnets[*].id
+
+  cluster_name        = aws_ecs_cluster.unity_pipeline_cluster.name
+  alb_certificate_arn = aws_acm_certificate.shared.arn
+  environment         = "dev"
+
+  depends_on = [aws_acm_certificate_validation.shared]
+
+  tags = local.tags
+}

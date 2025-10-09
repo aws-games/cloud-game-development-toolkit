@@ -30,3 +30,22 @@ output "teamcity_url" {
   description = "The URL for the TeamCity server."
   value       = "https://${local.teamcity_fqdn}"
 }
+
+##########################################
+# Unity Accelerator Outputs
+##########################################
+
+output "unity_accelerator_url" {
+  description = "The URL for the Unity Accelerator dashboard."
+  value       = "https://${local.unity_accelerator_fqdn}"
+}
+
+output "unity_accelerator_dashboard_username_secret_arn" {
+  description = "ARN of the secret containing Unity Accelerator dashboard username"
+  value       = module.unity_accelerator.unity_accelerator_dashboard_username_arn
+}
+
+output "unity_accelerator_dashboard_password_secret_arn" {
+  description = "ARN of the secret containing Unity Accelerator dashboard password"
+  value       = module.unity_accelerator.unity_accelerator_dashboard_password_arn
+}

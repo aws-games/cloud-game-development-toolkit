@@ -31,6 +31,19 @@ resource "aws_route53_record" "teamcity_public" {
   }
 }
 
+# Public Unity Accelerator Record
+resource "aws_route53_record" "unity_accelerator_public" {
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = local.unity_accelerator_fqdn
+  type    = "A"
+
+  alias {
+    name                   = module.unity_accelerator.alb_dns_name
+    zone_id                = module.unity_accelerator.alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
 ##########################################
 # Certificate Management
 ##########################################
