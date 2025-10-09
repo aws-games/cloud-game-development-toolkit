@@ -78,3 +78,32 @@ module "perforce" {
 
   tags = local.tags
 }
+
+##########################################
+# TeamCity
+##########################################
+
+module "teamcity" {
+  source = "../../modules/teamcity"
+
+  vpc_id              = aws_vpc.unity_pipeline_vpc.id
+  service_subnets     = aws_subnet.private_subnets[*].id
+  alb_subnets         = aws_subnet.public_subnets[*].id
+  alb_certificate_arn = aws_acm_certificate.shared.arn
+
+  cluster_name = aws_ecs_cluster.unity_pipeline_cluster.name
+  environment  = "dev"
+
+  build_farm_config = {
+    "unity-builder" = {
+      image         = "jetbrains/teamcity-agent"
+      cpu           = 2048
+      memory        = 4096
+      desired_count = 2
+    }
+  }
+
+  depends_on = [aws_acm_certificate_validation.shared]
+
+  tags = local.tags
+}

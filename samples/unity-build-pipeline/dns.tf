@@ -18,6 +18,19 @@ resource "aws_route53_record" "p4_server_public" {
   records = [module.perforce.p4_server_eip_public_ip]
 }
 
+# Public TeamCity Record
+resource "aws_route53_record" "teamcity_public" {
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = local.teamcity_fqdn
+  type    = "A"
+
+  alias {
+    name                   = module.teamcity.external_alb_dns_name
+    zone_id                = module.teamcity.external_alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
 ##########################################
 # Certificate Management
 ##########################################

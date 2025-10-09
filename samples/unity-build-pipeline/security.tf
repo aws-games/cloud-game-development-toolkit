@@ -32,3 +32,13 @@ resource "aws_vpc_security_group_ingress_rule" "allow_perforce" {
   ip_protocol       = "tcp"
   cidr_ipv4         = "${local.my_ip}/32"
 }
+
+# Allow Perforce traffic from VPC (includes TeamCity agents)
+resource "aws_vpc_security_group_ingress_rule" "perforce_from_vpc" {
+  security_group_id = aws_security_group.allow_my_ip.id
+  description       = "Allow Perforce traffic from VPC (TeamCity agents)"
+  from_port         = 1666
+  to_port           = 1666
+  ip_protocol       = "tcp"
+  cidr_ipv4         = local.vpc_cidr_block
+}

@@ -21,3 +21,12 @@ output "perforce_super_user_username_secret_arn" {
   description = "ARN of the secret containing Perforce super user username"
   value       = module.perforce.p4_server_super_user_username_secret_arn
 }
+
+##########################################
+# TeamCity Outputs
+##########################################
+
+output "teamcity_url" {
+  description = "The URL for the TeamCity server."
+  value       = "https://${local.teamcity_fqdn}"
+}

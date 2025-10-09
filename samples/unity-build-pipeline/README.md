@@ -588,6 +588,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_perforce"></a> [perforce](#module\_perforce) | ../../modules/perforce | n/a |
+| <a name="module_teamcity"></a> [teamcity](#module\_teamcity) | ../../modules/teamcity | n/a |
 
 ## Resources
 
@@ -605,6 +606,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | [aws_route.public_internet_access](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route) | resource |
 | [aws_route53_record.certificate_validation](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.p4_server_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
+| [aws_route53_record.teamcity_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
 | [aws_route_table.private_rt](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table) | resource |
 | [aws_route_table.public_rt](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table) | resource |
 | [aws_route_table_association.private_rt_asso](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association) | resource |
@@ -615,6 +617,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | [aws_vpc.unity_pipeline_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_perforce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.perforce_from_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/route53_zone) | data source |
 | [http_http.my_ip](https://registry.terraform.io/providers/hashicorp/http/3.5.0/docs/data-sources/http) | data source |
@@ -633,4 +636,5 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | <a name="output_p4_server_connection_string"></a> [p4\_server\_connection\_string](#output\_p4\_server\_connection\_string) | The connection string for the P4 Server. Set your P4PORT environment variable to this value. |
 | <a name="output_perforce_super_user_password_secret_arn"></a> [perforce\_super\_user\_password\_secret\_arn](#output\_perforce\_super\_user\_password\_secret\_arn) | ARN of the secret containing Perforce super user password |
 | <a name="output_perforce_super_user_username_secret_arn"></a> [perforce\_super\_user\_username\_secret\_arn](#output\_perforce\_super\_user\_username\_secret\_arn) | ARN of the secret containing Perforce super user username |
+| <a name="output_teamcity_url"></a> [teamcity\_url](#output\_teamcity\_url) | The URL for the TeamCity server. |
 <!-- END_TF_DOCS -->

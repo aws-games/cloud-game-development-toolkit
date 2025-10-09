@@ -46,8 +46,7 @@ locals {
   ##################################################
 
   tags = {
-    Project     = "unity-build-pipeline"
-    Environment = "dev"
-    ManagedBy   = "terraform"
+    Project   = "unity-build-pipeline"
+    ManagedBy = "terraform"
   }
 }
