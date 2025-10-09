@@ -62,16 +62,19 @@ resource "aws_ecs_service" "teamcity_agent" {
 
   enable_execute_command = var.debug
 
-  service_connect_configuration {
-    enabled   = true
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  dynamic "service_connect_configuration" {
+    for_each = var.cluster_name == null ? [1] : []
+    content {
+      enabled   = true
+      namespace = aws_service_discovery_http_namespace.teamcity[0].arn
 
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.teamcity_agent.name
-        "awslogs-region"        = data.aws_region.current.name
-        "awslogs-stream-prefix" = "[AGENT - ${each.key}]"
+      log_configuration {
+        log_driver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.teamcity_agent.name
+          "awslogs-region"        = data.aws_region.current.name
+          "awslogs-stream-prefix" = "[AGENT - ${each.key}]"
+        }
       }
     }
   }

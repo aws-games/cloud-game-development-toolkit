@@ -10,8 +10,11 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
   count = var.cluster_name != null ? 0 : 1
   name  = "${local.name_prefix}-cluster"
 
-  service_connect_defaults {
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  dynamic "service_connect_defaults" {
+    for_each = var.cluster_name == null ? [1] : []
+    content {
+      namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+    }
   }
 
   setting {
@@ -137,24 +140,27 @@ resource "aws_ecs_service" "teamcity" {
   }
 
   # to let the agent talk to the service w/o hitting ALB
-  service_connect_configuration {
-    enabled   = true
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  dynamic "service_connect_configuration" {
+    for_each = var.cluster_name == null ? [1] : []
+    content {
+      enabled   = true
+      namespace = aws_service_discovery_http_namespace.teamcity[0].arn
 
-    service {
-      port_name      = "teamcity-server"
-      discovery_name = "teamcity-server"
-      client_alias {
-        port = var.container_port
+      service {
+        port_name      = "teamcity-server"
+        discovery_name = "teamcity-server"
+        client_alias {
+          port = var.container_port
+        }
       }
-    }
 
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        awslogs-group         = aws_cloudwatch_log_group.teamcity_log_group.name
-        awslogs-region        = data.aws_region.current.name
-        awslogs-stream-prefix = "[CONNECT]"
+      log_configuration {
+        log_driver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.teamcity_log_group.name
+          awslogs-region        = data.aws_region.current.name
+          awslogs-stream-prefix = "[CONNECT]"
+        }
       }
     }
   }
