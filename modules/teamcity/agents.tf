@@ -15,6 +15,11 @@ resource "aws_ecs_task_definition" "teamcity_agent" {
   memory                   = each.value.memory
   execution_role_arn       = aws_iam_role.teamcity_agent_task_execution_role.arn
   task_role_arn            = aws_iam_role.teamcity_agent_default_role.arn
+
+  ephemeral_storage {
+    size_in_gib = 50 # Increase from default 20GB to 50GB for Unity builds
+  }
+
   container_definitions = jsonencode([
     {
       name      = "teamcity-agent"
@@ -22,17 +27,24 @@ resource "aws_ecs_task_definition" "teamcity_agent" {
       cpu       = each.value.cpu
       memory    = each.value.memory
       essential = true
-      environment = [
-        {
-          name  = "SERVER_URL"
-          value = "http://teamcity-server.teamcity-namespace:8111"
-        },
-        {
-          name  = "AGENT_NAME"
-          value = "${each.key}-agent"
-        },
-
-      ]
+      environment = concat(
+        [
+          {
+            name  = "SERVER_URL"
+            value = "http://teamcity-server.teamcity-namespace:8111"
+          },
+          {
+            name  = "AGENT_NAME"
+            value = "${each.key}-agent"
+          }
+        ],
+        [
+          for k, v in each.value.environment : {
+            name  = k
+            value = v
+          }
+        ]
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -62,19 +74,16 @@ resource "aws_ecs_service" "teamcity_agent" {
 
   enable_execute_command = var.debug
 
-  dynamic "service_connect_configuration" {
-    for_each = var.cluster_name == null ? [1] : []
-    content {
-      enabled   = true
-      namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  service_connect_configuration {
+    enabled   = true
+    namespace = local.service_connect_namespace_arn
 
-      log_configuration {
-        log_driver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.teamcity_agent.name
-          "awslogs-region"        = data.aws_region.current.name
-          "awslogs-stream-prefix" = "[AGENT - ${each.key}]"
-        }
+    log_configuration {
+      log_driver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.teamcity_agent.name
+        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-stream-prefix" = "[AGENT - ${each.key}]"
       }
     }
   }

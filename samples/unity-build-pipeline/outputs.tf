@@ -49,3 +49,27 @@ output "unity_accelerator_dashboard_password_secret_arn" {
   description = "ARN of the secret containing Unity Accelerator dashboard password"
   value       = module.unity_accelerator.unity_accelerator_dashboard_password_arn
 }
+
+##########################################
+# Unity License Server Outputs
+##########################################
+
+output "unity_license_server_url" {
+  description = "The URL for the Unity License Server dashboard (if deployed)."
+  value       = var.unity_license_server_file_path != null ? "https://${local.unity_license_fqdn}" : "Not deployed - set unity_license_server_file_path variable to deploy"
+}
+
+output "unity_license_server_dashboard_password_secret_arn" {
+  description = "ARN of the secret containing Unity License Server dashboard password (if deployed)"
+  value       = var.unity_license_server_file_path != null ? module.unity_license_server[0].dashboard_password_secret_arn : null
+}
+
+output "unity_license_server_services_config_url" {
+  description = "Presigned URL for downloading the services-config.json file (valid for 1 hour, if deployed)"
+  value       = var.unity_license_server_file_path != null ? module.unity_license_server[0].services_config_presigned_url : null
+}
+
+output "unity_license_server_registration_request_url" {
+  description = "Presigned URL for downloading the server-registration-request.xml file (valid for 1 hour, if deployed)"
+  value       = var.unity_license_server_file_path != null ? module.unity_license_server[0].registration_request_presigned_url : null
+}

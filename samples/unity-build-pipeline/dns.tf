@@ -44,6 +44,20 @@ resource "aws_route53_record" "unity_accelerator_public" {
   }
 }
 
+# Public Unity License Server Record
+resource "aws_route53_record" "unity_license_server_public" {
+  count   = var.unity_license_server_file_path != null ? 1 : 0
+  zone_id = data.aws_route53_zone.root.zone_id
+  name    = local.unity_license_fqdn
+  type    = "A"
+
+  alias {
+    name                   = module.unity_license_server[0].alb_dns_name
+    zone_id                = module.unity_license_server[0].alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
 ##########################################
 # Certificate Management
 ##########################################

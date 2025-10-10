@@ -277,21 +277,38 @@ In Unity Editor preferences:
 4. Port: `10080`
 5. Enable "Download" and "Upload"
 
-#### Step 5: Configure Unity License Server
+#### Step 5: Configure Unity License Server (Optional)
 
-**Upload License File**:
+The Unity Floating License Server is optional - only deploy if you have Unity Pro/Enterprise licenses. Skip if you didn't set `unity_license_server_file_path` during deployment.
 
-```bash
-# SSH to the license server instance
-# Copy your services-config.json to /opt/unity-license-server/
-```
+**Register the license server with Unity:**
 
-**Configure Unity Editor**:
+1. Download the server registration request file:
+   ```bash
+   wget $(terraform output -raw unity_license_server_registration_request_url) \
+     -O server-registration-request.xml
+   ```
 
-1. Go to Unity Hub → Preferences → License Management
-2. Select "Add license file"
-3. Enter server: `https://unity-license.yourdomain.com`
-4. Complete activation
+2. Upload `server-registration-request.xml` to https://id.unity.com/ and download the licenses zip file Unity provides
+
+3. Upload the licenses zip to S3 (keep the original filename):
+   ```bash
+   aws s3 cp Unity_v202x.x_Linux.zip \
+     s3://$(terraform output -raw unity_license_server_s3_bucket)/
+   ```
+
+4. Verify license import in the dashboard:
+   ```bash
+   # Get dashboard URL
+   echo $(terraform output -raw unity_license_server_url)
+
+   # Get admin password
+   aws secretsmanager get-secret-value \
+     --secret-id $(terraform output -raw unity_license_server_dashboard_password_secret_arn) \
+     --query SecretString --output text
+   ```
+
+The build agents are automatically configured with the license server URL via the `UNITY_LICENSE_SERVER_URL` environment variable. Unity will check out licenses during builds and return them when complete.
 
 #### Step 6: Create Your First Build Configuration
 
@@ -362,6 +379,62 @@ VPC (10.0.0.0/16)
 - **S3 Lifecycle**: Artifacts transition to cheaper storage tiers
 - **Spot Instances**: Optional for TeamCity build agents
 - **Scheduling**: Can stop/start non-critical services outside work hours
+
+## Build Agent Storage Strategies
+
+TeamCity build agents need access to source code and Unity assets. This sample uses ephemeral storage by default, but larger studios should consider persistent storage for performance.
+
+### Ephemeral Storage (Current Default)
+
+**How it works:** Each agent gets 50GB that's wiped when the container stops. Every new agent downloads the full repository and re-imports all Unity assets.
+
+**Best for:** Small teams, infrequent builds, demos
+**Cost:** $0/month
+**Build overhead:** 5-15 minutes per build (full P4 sync + Unity import)
+
+### EFS Persistent Storage
+
+**How it works:** Mount a shared EFS volume to `/opt/buildAgent/work`. TeamCity creates a unique working directory per agent (hash-based naming like `a54a2cadb9b4d269`). Each agent maintains its own Perforce workspace and Unity Library cache on EFS, persisting across container restarts.
+
+**Storage pattern:** With 5 agents, you'll have 5 separate directories on EFS, each containing a full P4 workspace + Unity cache. Total storage = (project size + Unity cache) × number of agents.
+
+**Setup:**
+1. Create EFS file system in your VPC
+2. Mount EFS to `/opt/buildAgent/work` in agent task definition
+3. TeamCity automatically isolates each agent to its own subdirectory
+4. First build per agent syncs fully; subsequent builds sync incrementally
+
+**Best for:** Medium teams (10-50 devs), frequent builds
+**Cost:** ~$5-30/month (15-100GB per agent × agent count)
+**Build overhead:** 30 seconds - 2 minutes (incremental sync + Unity cache reuse)
+
+### NetApp ONTAP FlexClone
+
+**How it works:** Run a scheduled job (Lambda/ECS task) that maintains a "golden" FlexVol on FSx for NetApp ONTAP—fully synced to latest Perforce changelist with Unity Library pre-imported. When a build starts, create an instant FlexClone (writable snapshot) and attach it to the agent. Agent works on the clone in isolation. After the build, delete the clone.
+
+**Storage pattern:** One golden volume (repository + Unity cache) + thin clones for active builds. 100GB repo with 10 parallel builds = 100GB parent + ~10GB deltas (not 1TB).
+
+**Setup:**
+1. Deploy FSx for NetApp ONTAP in your VPC
+2. Create golden volume update automation (nightly or on-demand)
+3. Integrate TeamCity with NetApp API to create/destroy clones per build
+4. Mount clone as `/opt/buildAgent/work` when agent starts
+
+**Update strategy:** Golden volume updates on schedule (e.g., nightly) or triggered by significant P4 changes. Builds use snapshot from last update, plus incremental P4 sync for any new changes.
+
+**Best for:** Large teams (50+ devs), high build frequency, large repos (100GB+), snapshot-based testing
+**Cost:** ~$230+/month (1TB minimum)
+**Build overhead:** < 30 seconds (clone creation + small P4 delta sync)
+
+### Quick Comparison
+
+| Approach | Monthly Cost | Storage Per Agent | Best Build Frequency |
+|----------|--------------|-------------------|---------------------|
+| **Ephemeral** | $0 | 0 (wiped) | < 10/day |
+| **EFS** | $5-30/agent | Full copy per agent | 10-100/day |
+| **NetApp** | $230+ | Shared + thin deltas | 100+/day |
+
+**Recommendation:** Start with ephemeral. Add EFS when builds exceed 10/day. Consider NetApp only at enterprise scale (50+ agents, 100GB+ repos).
 
 ## Outputs
 
@@ -590,6 +663,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | <a name="module_perforce"></a> [perforce](#module\_perforce) | ../../modules/perforce | n/a |
 | <a name="module_teamcity"></a> [teamcity](#module\_teamcity) | ../../modules/teamcity | n/a |
 | <a name="module_unity_accelerator"></a> [unity\_accelerator](#module\_unity\_accelerator) | ../../modules/unity/accelerator | n/a |
+| <a name="module_unity_license_server"></a> [unity\_license\_server](#module\_unity\_license\_server) | ../../modules/unity/floating-license-server | n/a |
 
 ## Resources
 
@@ -609,6 +683,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | [aws_route53_record.p4_server_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.teamcity_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
 | [aws_route53_record.unity_accelerator_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
+| [aws_route53_record.unity_license_server_public](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record) | resource |
 | [aws_route_table.private_rt](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table) | resource |
 | [aws_route_table.public_rt](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table) | resource |
 | [aws_route_table_association.private_rt_asso](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association) | resource |
@@ -620,6 +695,9 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | [aws_vpc_security_group_ingress_rule.allow_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_perforce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_from_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_license_server_from_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_license_server_http](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_license_server_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/availability_zones) | data source |
 | [aws_route53_zone.root](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/route53_zone) | data source |
 | [http_http.my_ip](https://registry.terraform.io/providers/hashicorp/http/3.5.0/docs/data-sources/http) | data source |
@@ -629,6 +707,7 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_route53_public_hosted_zone_name"></a> [route53\_public\_hosted\_zone\_name](#input\_route53\_public\_hosted\_zone\_name) | The fully qualified domain name of your existing Route53 Hosted Zone (e.g., 'example.com'). | `string` | n/a | yes |
+| <a name="input_unity_license_server_file_path"></a> [unity\_license\_server\_file\_path](#input\_unity\_license\_server\_file\_path) | Local path to the Linux version of the Unity Floating License Server zip file. Download from Unity ID portal at https://id.unity.com/. Set to null to skip Unity License Server deployment. | `string` | `null` | no |
 
 ## Outputs
 
@@ -642,4 +721,8 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | <a name="output_unity_accelerator_dashboard_password_secret_arn"></a> [unity\_accelerator\_dashboard\_password\_secret\_arn](#output\_unity\_accelerator\_dashboard\_password\_secret\_arn) | ARN of the secret containing Unity Accelerator dashboard password |
 | <a name="output_unity_accelerator_dashboard_username_secret_arn"></a> [unity\_accelerator\_dashboard\_username\_secret\_arn](#output\_unity\_accelerator\_dashboard\_username\_secret\_arn) | ARN of the secret containing Unity Accelerator dashboard username |
 | <a name="output_unity_accelerator_url"></a> [unity\_accelerator\_url](#output\_unity\_accelerator\_url) | The URL for the Unity Accelerator dashboard. |
+| <a name="output_unity_license_server_dashboard_password_secret_arn"></a> [unity\_license\_server\_dashboard\_password\_secret\_arn](#output\_unity\_license\_server\_dashboard\_password\_secret\_arn) | ARN of the secret containing Unity License Server dashboard password (if deployed) |
+| <a name="output_unity_license_server_registration_request_url"></a> [unity\_license\_server\_registration\_request\_url](#output\_unity\_license\_server\_registration\_request\_url) | Presigned URL for downloading the server-registration-request.xml file (valid for 1 hour, if deployed) |
+| <a name="output_unity_license_server_services_config_url"></a> [unity\_license\_server\_services\_config\_url](#output\_unity\_license\_server\_services\_config\_url) | Presigned URL for downloading the services-config.json file (valid for 1 hour, if deployed) |
+| <a name="output_unity_license_server_url"></a> [unity\_license\_server\_url](#output\_unity\_license\_server\_url) | The URL for the Unity License Server dashboard (if deployed). |
 <!-- END_TF_DOCS -->

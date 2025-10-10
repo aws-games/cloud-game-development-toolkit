@@ -96,10 +96,13 @@ module "teamcity" {
 
   build_farm_config = {
     "unity-builder" = {
-      image         = "jetbrains/teamcity-agent"
-      cpu           = 2048
-      memory        = 4096
+      image         = "968702293218.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest"
+      cpu           = 4096 # 4 vCPU recommended for Unity builds
+      memory        = 8192 # 8 GB RAM recommended for Unity builds
       desired_count = 2
+      environment = var.unity_license_server_file_path != null ? {
+        UNITY_LICENSE_SERVER_URL = "http://${module.unity_license_server[0].instance_private_ip}:8080"
+      } : {}
     }
   }
 
@@ -124,6 +127,38 @@ module "unity_accelerator" {
   environment         = "dev"
 
   depends_on = [aws_acm_certificate_validation.shared]
+
+  tags = local.tags
+}
+
+##########################################
+# Unity Floating License Server
+##########################################
+
+module "unity_license_server" {
+  count  = var.unity_license_server_file_path != null ? 1 : 0
+  source = "../../modules/unity/floating-license-server"
+
+  name                           = "unity-license-server"
+  unity_license_server_file_path = var.unity_license_server_file_path
+
+  vpc_id     = aws_vpc.unity_pipeline_vpc.id
+  vpc_subnet = aws_subnet.private_subnets[0].id
+
+  # Deploy ALB for dashboard access
+  create_alb                     = true
+  alb_is_internal                = false
+  alb_subnets                    = aws_subnet.public_subnets[*].id
+  alb_certificate_arn            = aws_acm_certificate.shared.arn
+  enable_alb_deletion_protection = false
+
+  # Don't add public IP to the ENI since we're using ALB
+  add_eni_public_ip = false
+
+  depends_on = [
+    aws_acm_certificate_validation.shared,
+    aws_nat_gateway.nat_gateway
+  ]
 
   tags = local.tags
 }
