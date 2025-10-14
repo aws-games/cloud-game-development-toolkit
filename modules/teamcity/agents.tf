@@ -15,6 +15,11 @@ resource "aws_ecs_task_definition" "teamcity_agent" {
   memory                   = each.value.memory
   execution_role_arn       = aws_iam_role.teamcity_agent_task_execution_role.arn
   task_role_arn            = aws_iam_role.teamcity_agent_default_role.arn
+
+  ephemeral_storage {
+    size_in_gib = each.value.ephemeral_storage_gib
+  }
+
   container_definitions = jsonencode([
     {
       name      = "teamcity-agent"
@@ -22,17 +27,24 @@ resource "aws_ecs_task_definition" "teamcity_agent" {
       cpu       = each.value.cpu
       memory    = each.value.memory
       essential = true
-      environment = [
-        {
-          name  = "SERVER_URL"
-          value = "http://teamcity-server.teamcity-namespace:8111"
-        },
-        {
-          name  = "AGENT_NAME"
-          value = "${each.key}-agent"
-        },
-
-      ]
+      environment = concat(
+        [
+          {
+            name  = "SERVER_URL"
+            value = "http://teamcity-server.teamcity-namespace:8111"
+          },
+          {
+            name  = "AGENT_NAME"
+            value = "${each.key}-agent"
+          }
+        ],
+        [
+          for k, v in each.value.environment : {
+            name  = k
+            value = v
+          }
+        ]
+      )
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -64,7 +76,7 @@ resource "aws_ecs_service" "teamcity_agent" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+    namespace = local.service_connect_namespace_arn
 
     log_configuration {
       log_driver = "awslogs"
