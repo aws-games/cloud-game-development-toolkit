@@ -10,8 +10,11 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
   count = var.cluster_name != null ? 0 : 1
   name  = "${local.name_prefix}-cluster"
 
-  service_connect_defaults {
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+  dynamic "service_connect_defaults" {
+    for_each = var.cluster_name == null ? [1] : []
+    content {
+      namespace = aws_service_discovery_http_namespace.teamcity.arn
+    }
   }
 
   setting {
@@ -23,7 +26,6 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
 }
 
 resource "aws_service_discovery_http_namespace" "teamcity" {
-  count       = var.cluster_name != null ? 0 : 1
   name        = "${local.name_prefix}-namespace"
   description = "Service Connect namespace for TeamCity services"
   tags        = local.tags
@@ -139,7 +141,7 @@ resource "aws_ecs_service" "teamcity" {
   # to let the agent talk to the service w/o hitting ALB
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+    namespace = local.service_connect_namespace_arn
 
     service {
       port_name      = "teamcity-server"
