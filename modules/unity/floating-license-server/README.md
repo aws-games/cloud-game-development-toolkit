@@ -139,6 +139,7 @@ No modules.
 | <a name="output_created_unity_license_server_security_group_id"></a> [created\_unity\_license\_server\_security\_group\_id](#output\_created\_unity\_license\_server\_security\_group\_id) | Id of the security group created by the script, for the Unity License Server instance. Null if an ENI was provided externally instead of created through the script. |
 | <a name="output_dashboard_password_secret_arn"></a> [dashboard\_password\_secret\_arn](#output\_dashboard\_password\_secret\_arn) | ARN of the secret containing the dashboard password. |
 | <a name="output_eni_id"></a> [eni\_id](#output\_eni\_id) | Elastic Network ID (ENI) used when binding the Unity Floating License Server. |
+| <a name="output_instance_private_ip"></a> [instance\_private\_ip](#output\_instance\_private\_ip) | The EC2 instance's private IP address. |
 | <a name="output_instance_public_ip"></a> [instance\_public\_ip](#output\_instance\_public\_ip) | The resulting EC2 instance's public IP, if configured. |
 | <a name="output_registration_request_filename"></a> [registration\_request\_filename](#output\_registration\_request\_filename) | Filename for the server registration request file. |
 | <a name="output_registration_request_presigned_url"></a> [registration\_request\_presigned\_url](#output\_registration\_request\_presigned\_url) | Presigned URL for downloading the server registration request file (valid for 1 hour). |
