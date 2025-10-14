@@ -29,7 +29,7 @@ resource "tls_cert_request" "client_vpn_server" {
   private_key_pem = tls_private_key.client_vpn_server[0].private_key_pem
 
   subject {
-    common_name         = "*.cvpn-endpoint.prod.clientvpn.${data.aws_region.current.name}.amazonaws.com"
+    common_name         = "*.cvpn-endpoint.prod.clientvpn.${data.aws_region.current.region}.amazonaws.com"
     organization        = "CGD Toolkit"
     organizational_unit = "VPN Services"
     country             = "US"
@@ -37,7 +37,7 @@ resource "tls_cert_request" "client_vpn_server" {
 
   # CRITICAL: Add SAN for modern TLS validation
   dns_names = [
-    "*.cvpn-endpoint.prod.clientvpn.${data.aws_region.current.name}.amazonaws.com"
+    "*.cvpn-endpoint.prod.clientvpn.${data.aws_region.current.region}.amazonaws.com"
   ]
 }
 
