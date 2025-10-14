@@ -62,6 +62,7 @@ resource "aws_lb" "perforce" {
 
   #checkov:skip=CKV_AWS_91: Access logging not required for example deployment
   #checkov:skip=CKV_AWS_150: Load balancer deletion protection disabled for example deployment
+  #checkov:skip=CKV2_AWS_28: WAF not required for NLB in example deployment
 
 
   dynamic "access_logs" {
@@ -145,6 +146,8 @@ resource "aws_lb" "perforce_web_services" {
   drop_invalid_header_fields = true
   #checkov:skip=CKV_AWS_91: Access logging not required for example deployment
   #checkov:skip=CKV_AWS_150: Load balancer deletion protection disabled for example deployment
+  #checkov:skip=CKV2_AWS_28: WAF not required for ALB in example deployment
+  #checkov:skip=CKV2_AWS_20: HTTP listener does not redirect to HTTPS for internal P4 server communication
 
   dynamic "access_logs" {
     for_each = (
@@ -219,6 +222,9 @@ resource "aws_lb_listener" "perforce_web_services_http_listener" {
   load_balancer_arn = aws_lb.perforce_web_services[0].arn
   port              = "80"
   protocol          = "HTTP"
+
+  #checkov:skip=CKV_AWS_2: HTTP protocol required for internal P4 server communication
+  #checkov:skip=CKV_AWS_103: TLS not applicable for HTTP listener
 
   default_action {
     type = "fixed-response"
@@ -299,6 +305,8 @@ resource "aws_lb_listener" "perforce_web_services" {
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
+
+  #checkov:skip=CKV_AWS_103: TLS 1.2 policy is appropriate for this use case
 
   # This is to prevent the NLB's Target Group (the ALB) from failing health checks. This must be a fixed response so the NLB knows the ALB is reachable. It expects this instead of a redirect, which would give a 301 response. Otherwise the NLB's Target Group health check would need to expect a 301 (redirect).
   default_action {
@@ -413,6 +421,7 @@ resource "aws_s3_bucket" "shared_lb_access_logs_bucket" {
   #checkov:skip=CKV2_AWS_62: Event notifications not necessary
   #checkov:skip=CKV2_AWS_61: S3 lifecycle configuration can be conditionally created
   #checkov:skip=CKV2_AWS_6: S3 Buckets have public access blocked by default
+  #checkov:skip=CKV_AWS_57: S3 bucket encryption is handled by AWS for ALB access logs
 
   tags = merge(var.tags, {
     Name = "${var.project_prefix}-perforce-lb-access-logs-${random_string.shared_lb_access_logs_bucket[0].result}"
