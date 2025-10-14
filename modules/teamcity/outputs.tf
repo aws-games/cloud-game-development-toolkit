@@ -14,6 +14,6 @@ output "security_group_id" {
 }
 
 output "teamcity_cluster_id" {
-  value       = aws_ecs_cluster.teamcity_cluster[0].id
+  value       = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].id : aws_ecs_cluster.teamcity_cluster[0].id
   description = "The ID of the ECS cluster"
 }
