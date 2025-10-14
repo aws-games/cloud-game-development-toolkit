@@ -40,6 +40,9 @@ locals {
       value = local.database_master_password
     }
   ] : []
+
+  # Service Connect namespace
+  service_connect_namespace_arn = aws_service_discovery_http_namespace.teamcity.arn
 }
 data "aws_region" "current" {}
 
