@@ -8,6 +8,11 @@ output "shared_application_load_balancer_arn" {
   description = "The ARN of the shared application load balancer."
 }
 
+output "shared_nlb_security_group_id" {
+  value       = var.create_shared_network_load_balancer ? aws_security_group.perforce_network_load_balancer[0].id : null
+  description = "The security group ID of the shared NLB."
+}
+
 # P4 Server
 output "p4_server_eip_public_ip" {
   value       = var.p4_server_config != null ? module.p4_server[0].eip_public_ip : null
@@ -111,4 +116,14 @@ output "p4_server_lambda_link_name" {
   value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
   module.p4_server[0].lambda_link_name : null)
   description = "The name of the Lambda link for the P4 Server instance to use with FSxN."
+}
+# Private Hosted Zone
+output "private_hosted_zone_id" {
+  value       = var.create_route53_private_hosted_zone ? aws_route53_zone.perforce_private_hosted_zone[0].zone_id : null
+  description = "The ID of the private hosted zone for internal Perforce communication."
+}
+
+output "private_hosted_zone_name" {
+  value       = var.create_route53_private_hosted_zone ? aws_route53_zone.perforce_private_hosted_zone[0].name : null
+  description = "The name of the private hosted zone for internal Perforce communication."
 }

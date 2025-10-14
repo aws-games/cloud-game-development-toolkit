@@ -137,6 +137,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_external_alb_security_group_id"></a> [external\_alb\_security\_group\_id](#output\_external\_alb\_security\_group\_id) | Security group ID attached to external ALB. |
 | <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your Teamcity service. |
 | <a name="output_teamcity_cluster_id"></a> [teamcity\_cluster\_id](#output\_teamcity\_cluster\_id) | The ID of the ECS cluster |

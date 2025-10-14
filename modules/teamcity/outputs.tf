@@ -13,6 +13,11 @@ output "security_group_id" {
   description = "The default security group of your Teamcity service."
 }
 
+output "external_alb_security_group_id" {
+  value       = var.create_external_alb ? aws_security_group.teamcity_alb_sg[0].id : null
+  description = "Security group ID attached to external ALB."
+}
+
 output "teamcity_cluster_id" {
   value       = aws_ecs_cluster.teamcity_cluster[0].id
   description = "The ID of the ECS cluster"
