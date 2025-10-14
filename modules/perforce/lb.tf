@@ -186,7 +186,7 @@ resource "null_resource" "parent_module_certificate" {
 
 }
 
-# External ALB listener forwards to HTTPS listener
+/* # External ALB listener forwards to HTTPS listener
 resource "aws_lb_listener" "perforce_web_services_http_listener" {
   count             = var.create_shared_application_load_balancer ? 1 : 0
   load_balancer_arn = aws_lb.perforce_web_services[0].arn
@@ -211,6 +211,81 @@ resource "aws_lb_listener" "perforce_web_services_http_listener" {
       Intent             = "Return redirect to HTTPS protocol/port."
     }
   )
+} */
+
+# HTTP listener - forward to services (no redirect)
+resource "aws_lb_listener" "perforce_web_services_http_listener" {
+  count             = var.create_shared_application_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.perforce_web_services[0].arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Please use a valid subdomain."
+      status_code  = "200"
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = "Internal"
+      TrafficDestination = "SELF"
+      Intent             = "Allow HTTP for internal P4 server communication."
+    }
+  )
+}
+
+# HTTP listener rules for P4 Code Review
+resource "aws_lb_listener_rule" "p4_code_review_http" {
+  count        = var.create_shared_application_load_balancer && var.p4_code_review_config != null ? 1 : 0
+  listener_arn = aws_lb_listener.perforce_web_services_http_listener[0].arn
+  priority     = 100
+  action {
+    type             = "forward"
+    target_group_arn = module.p4_code_review[0].target_group_arn
+  }
+  condition {
+    host_header {
+      values = [var.p4_code_review_config.fully_qualified_domain_name]
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = "Internal"
+      TrafficDestination = "${var.project_prefix}-${var.p4_code_review_config.name}-service"
+    }
+  )
+
+  depends_on = [aws_ecs_cluster.perforce_web_services_cluster]
+}
+
+# HTTP listener rules for P4 Auth
+resource "aws_lb_listener_rule" "perforce_p4_auth_http" {
+  count        = var.create_shared_application_load_balancer && var.p4_auth_config != null ? 1 : 0
+  listener_arn = aws_lb_listener.perforce_web_services_http_listener[0].arn
+  priority     = 200
+  action {
+    type             = "forward"
+    target_group_arn = module.p4_auth[0].target_group_arn
+  }
+  condition {
+    host_header {
+      values = [var.p4_auth_config.fully_qualified_domain_name]
+    }
+  }
+
+  tags = merge(var.tags,
+    {
+      TrafficSource      = "Internal"
+      TrafficDestination = "${var.project_prefix}-${var.p4_auth_config.name}-service"
+    }
+  )
+
+  depends_on = [aws_ecs_cluster.perforce_web_services_cluster]
 }
 
 # 4. Create the ALB Listeners only if null_resource has completed, and target groups (in submodules) exist
