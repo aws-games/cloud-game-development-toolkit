@@ -13,7 +13,7 @@ resource "aws_ecs_cluster" "teamcity_cluster" {
   dynamic "service_connect_defaults" {
     for_each = var.cluster_name == null ? [1] : []
     content {
-      namespace = aws_service_discovery_http_namespace.teamcity[0].arn
+      namespace = aws_service_discovery_http_namespace.teamcity.arn
     }
   }
 
