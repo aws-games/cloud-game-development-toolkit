@@ -189,33 +189,6 @@ resource "null_resource" "parent_module_certificate" {
 
 }
 
-/* # External ALB listener forwards to HTTPS listener
-resource "aws_lb_listener" "perforce_web_services_http_listener" {
-  count             = var.create_shared_application_load_balancer ? 1 : 0
-  load_balancer_arn = aws_lb.perforce_web_services[0].arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      status_code = "HTTP_301"
-      protocol    = "HTTPS"
-      port        = aws_lb_listener.perforce_web_services[0].port
-    }
-  }
-
-  tags = merge(var.tags,
-    {
-      TrafficSource = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name :
-      "${var.project_prefix}-perforce-shared-nlb")
-      TrafficDestination = "SELF"
-      Intent             = "Return redirect to HTTPS protocol/port."
-    }
-  )
-} */
-
 # HTTP listener - forward to services (no redirect)
 resource "aws_lb_listener" "perforce_web_services_http_listener" {
   count             = var.create_shared_application_load_balancer ? 1 : 0
