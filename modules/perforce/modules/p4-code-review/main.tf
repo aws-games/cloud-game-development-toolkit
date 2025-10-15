@@ -109,8 +109,8 @@ resource "aws_ecs_task_definition" "task_definition" {
             value = var.p4d_port
           },
           {
-            name  = "SWARM_HOST"                         # cannot update naming until the Perforce container image is updated
-            value = "${var.fully_qualified_domain_name}" # tflint-ignore: terraform_deprecated_interpolation
+            name  = "SWARM_HOST"
+            value = var.fully_qualified_domain_name
           },
           {
             name  = "SWARM_REDIS" # cannot update naming until the Perforce container image is updated
