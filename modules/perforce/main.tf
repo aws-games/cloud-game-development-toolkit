@@ -23,6 +23,11 @@ module "p4_server" {
     )
   )
   fully_qualified_domain_name = var.p4_server_config.fully_qualified_domain_name
+  p4_code_review_url = (
+    var.p4_code_review_config != null ?
+    "https://${var.p4_code_review_config.fully_qualified_domain_name}" :
+    null
+  )
 
   # Compute
   instance_type         = var.p4_server_config.instance_type

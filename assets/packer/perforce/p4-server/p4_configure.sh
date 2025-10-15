@@ -82,6 +82,37 @@ setup_helix_auth() {
     >> $LOG_FILE 2>> $LOG_FILE
 }
 
+# Setup Helix Swarm Extension
+setup_helix_swarm() {
+  local p4port=$1
+  local super=$2
+  local super_password=$3
+  local swarm_url=$4
+
+  log_message "Starting Helix Swarm Extension configuration."
+
+  # Login as super user
+  echo "$super_password" | p4 -p "$p4port" -u "$super" login
+
+  # Create .swarm depot for Code Review data storage
+  log_message "Creating .swarm depot"
+  p4 -p "$p4port" -u "$super" depot -o .swarm | \
+    sed 's/^Owner:.*/Owner: perforce/' | \
+    p4 -p "$p4port" -u "$super" depot -i
+
+  # Configure Helix Swarm Extension with HTTPS URL
+  log_message "Configuring Helix Swarm Extension with URL: $swarm_url"
+  p4 -p "$p4port" -u "$super" extension --configure Perforce::helix-swarm -o | \
+    sed "s|Swarm-URL:.*|Swarm-URL: $swarm_url/|" | \
+    p4 -p "$p4port" -u "$super" extension --configure Perforce::helix-swarm -i
+
+  # Set P4.Swarm.URL property
+  log_message "Setting P4.Swarm.URL property"
+  p4 -p "$p4port" -u "$super" property -a -n P4.Swarm.URL -v "$swarm_url"
+
+  log_message "Helix Swarm Extension configuration completed."
+}
+
 # Function to create and mount XFS on EBS
 prepare_ebs_volume() {
     local ebs_volume=$1
@@ -319,6 +350,7 @@ print_help() {
     echo "  --username <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin username"
     echo "  --password <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin password"
     echo "  --auth <url>             P4Auth URL"
+    echo "  --swarm <url>            P4 Code Review (Swarm) URL"
     echo "  --fqdn <hostname>        Fully Qualified Domain Name for the P4 Server"
     echo "  --hx_logs <path>         Path for P4 Server logs"
     echo "  --hx_metadata <path>     Path for P4 Server metadata"
@@ -334,7 +366,7 @@ print_help() {
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,swarm:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -370,6 +402,10 @@ while true; do
             ;;
         --auth)
             P4_AUTH_URL="$2"
+            shift 2
+            ;;
+        --swarm)
+            P4_SWARM_URL="$2"
             shift 2
             ;;
         --fqdn)
@@ -750,6 +786,14 @@ if [ -z $P4_AUTH_URL ]; then
 else
   log_message "Configuring P4 Auth Extension against $P4_AUTH_URL"
   setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$P4_AUTH_URL" "oidc" "email" "email"
+fi
+
+# Check if the P4_SWARM_URL is empty. if not, configure Helix Swarm Extension
+if [ -z $P4_SWARM_URL ]; then
+  log_message "P4 Code Review (Swarm) URL was not provided. Skipping configuration."
+else
+  log_message "Configuring Helix Swarm Extension for $P4_SWARM_URL"
+  setup_helix_swarm "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$P4_SWARM_URL"
 fi
 
 if [ "${UNICODE,,}" = "true" ]; then

@@ -96,6 +96,7 @@ resource "aws_instance" "server_instance" {
     password_secret      = local.password_secret
     fqdn                 = var.fully_qualified_domain_name != null ? var.fully_qualified_domain_name : ""
     auth_url             = var.auth_service_url != null ? var.auth_service_url : ""
+    p4_code_review_url   = var.p4_code_review_url != null ? var.p4_code_review_url : ""
     is_fsxn              = local.is_fsxn
     fsxn_password        = var.fsxn_password
     fsxn_svm_name        = var.fsxn_svm_name
