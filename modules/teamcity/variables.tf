@@ -236,8 +236,10 @@ variable "build_farm_config" {
     desired_count = number
     cpu           = number
     memory        = number
+    environment   = optional(map(string), {})
   }))
-  default = {}
+  default     = {}
+  description = "Build agent configurations. Each agent can have custom environment variables via the 'environment' map."
 }
 
 variable "agent_log_group_retention_in_days" {
