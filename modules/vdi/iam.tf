@@ -166,3 +166,21 @@ resource "aws_iam_role_policy_attachment" "vdi_cloudwatch_agent" {
   role       = aws_iam_role.vdi_instance_role[each.key].name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
+
+# Attach additional user-specified IAM policies to the default VDI role
+resource "aws_iam_role_policy_attachment" "additional_policies" {
+  for_each = {
+    for combo in flatten([
+      for workstation_key, role in aws_iam_role.vdi_instance_role : [
+        for policy_arn in local.final_instances[workstation_key].additional_policy_arns : {
+          workstation_key = workstation_key
+          policy_arn      = policy_arn
+          key             = "${workstation_key}-${replace(policy_arn, "/[^a-zA-Z0-9]/", "-")}"
+        }
+      ]
+    ]) : combo.key => combo
+  }
+
+  role       = aws_iam_role.vdi_instance_role[each.value.workstation_key].name
+  policy_arn = each.value.policy_arn
+}
