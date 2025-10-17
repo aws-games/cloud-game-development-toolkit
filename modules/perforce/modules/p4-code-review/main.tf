@@ -47,6 +47,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   cpu                      = var.container_cpu
   memory                   = var.container_memory
 
+  #checkov:skip=CKV_AWS_97: Task definition secrets are managed via AWS Secrets Manager
+
   volume {
     name = local.data_volume_name
   }
@@ -107,8 +109,8 @@ resource "aws_ecs_task_definition" "task_definition" {
             value = var.p4d_port
           },
           {
-            name  = "SWARM_HOST" # cannot update naming until the Perforce container image is updated
-            value = "https://${var.fully_qualified_domain_name}"
+            name  = "SWARM_HOST"
+            value = var.fully_qualified_domain_name
           },
           {
             name  = "SWARM_REDIS" # cannot update naming until the Perforce container image is updated
@@ -124,6 +126,7 @@ resource "aws_ecs_task_definition" "task_definition" {
           }
         ],
         readonlyRootFilesystem = false
+        #checkov:skip=CKV_AWS_81: Read-only root filesystem disabled for application requirements
         mountPoints = [
           {
             sourceVolume  = local.data_volume_name
@@ -143,6 +146,7 @@ resource "aws_ecs_task_definition" "task_definition" {
           "echo \"/p4/a\\\t'sso' => 'enabled',\" > ${local.data_path}/sso.sed && sed -i -f ${local.data_path}/sso.sed ${local.data_path}/config.php && rm -rf ${local.data_path}/cache",
         ] : []),
         readonly_root_filesystem = false
+        #checkov:skip=CKV_AWS_81: Read-only root filesystem disabled for configuration container requirements
 
         logConfiguration = {
           logDriver = "awslogs"
