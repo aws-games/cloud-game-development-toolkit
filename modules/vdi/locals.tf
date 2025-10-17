@@ -47,9 +47,9 @@ locals {
       }
 
       # Optional configuration
-      iam_instance_profile = config.iam_instance_profile
+      iam_instance_profile   = config.iam_instance_profile
       additional_policy_arns = config.additional_policy_arns
-      software_packages    = config.software_packages
+      software_packages      = config.software_packages
       tags = merge(var.tags, config.tags, {
         Preset = preset_key
         Type   = "VDI-Preset"

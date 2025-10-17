@@ -64,7 +64,7 @@ variable "presets" {
 
     # Optional configuration
     iam_instance_profile   = optional(string, null)
-    additional_policy_arns = optional(list(string), [])  # Additional IAM policy ARNs to attach to the VDI instance role
+    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role
     software_packages      = optional(list(string), null)
     tags                   = optional(map(string), {})
   }))
@@ -174,7 +174,7 @@ variable "workstations" {
       encrypted     = optional(bool, true)
     })), null)
     iam_instance_profile   = optional(string, null)
-    additional_policy_arns = optional(list(string), [])  # Additional IAM policy ARNs to attach to the VDI instance role
+    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role
     software_packages      = optional(list(string), null)
 
     # Optional overrides
