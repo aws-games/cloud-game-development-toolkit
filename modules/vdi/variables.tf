@@ -63,9 +63,10 @@ variable "presets" {
     }))
 
     # Optional configuration
-    iam_instance_profile = optional(string, null)
-    software_packages    = optional(list(string), null)
-    tags                 = optional(map(string), {})
+    iam_instance_profile   = optional(string, null)
+    additional_policy_arns = optional(list(string), [])  # Additional IAM policy ARNs to attach to the VDI instance role
+    software_packages      = optional(list(string), null)
+    tags                   = optional(map(string), {})
   }))
 
   description = <<EOF
@@ -100,6 +101,9 @@ workstations = {
 
 Valid volume types: "gp2", "gp3", "io1", "io2"
 Windows drives: "C:", "D:", "E:", etc.
+
+additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
+Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
 EOF
   default     = {}
 
@@ -169,8 +173,9 @@ variable "workstations" {
       throughput    = optional(number, 125)
       encrypted     = optional(bool, true)
     })), null)
-    iam_instance_profile = optional(string, null)
-    software_packages    = optional(list(string), null)
+    iam_instance_profile   = optional(string, null)
+    additional_policy_arns = optional(list(string), [])  # Additional IAM policy ARNs to attach to the VDI instance role
+    software_packages      = optional(list(string), null)
 
     # Optional overrides
     allowed_cidr_blocks             = optional(list(string), null)
@@ -203,6 +208,9 @@ workstations = {
 
 # User assignment is now direct:
 # assigned_user = "alice"  # References users{} key directly in workstation
+
+additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
+Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
 EOF
   default     = {}
 
