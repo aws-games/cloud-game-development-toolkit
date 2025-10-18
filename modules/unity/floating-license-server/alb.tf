@@ -71,7 +71,7 @@ resource "aws_lb_target_group" "unity_license_server_tg" {
     timeout             = 5
     healthy_threshold   = 5
     unhealthy_threshold = 2
-    port                = 80
+    port                = "traffic-port"
     protocol            = "HTTP"
     matcher             = "200"
   }
