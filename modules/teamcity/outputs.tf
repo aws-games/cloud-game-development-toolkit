@@ -17,3 +17,8 @@ output "teamcity_cluster_id" {
   value       = aws_ecs_cluster.teamcity_cluster[0].id
   description = "The ID of the ECS cluster"
 }
+
+output "agent_security_group_id" {
+  value       = aws_security_group.teamcity_agent_sg.id
+  description = "The security group ID for TeamCity build agents"
+}

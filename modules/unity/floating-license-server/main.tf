@@ -84,11 +84,11 @@ resource "aws_security_group" "unity_license_server_sg" {
   })
 }
 
-# Ingress rule from ALB, if created
+# Ingress rule from ALB, if created (only when module creates the security group)
 resource "aws_vpc_security_group_ingress_rule" "unity_license_server_ingress_from_alb_8080" {
   #checkov:skip=CKV_AWS_260:Dashboard is password-protected
 
-  count                        = var.create_alb ? 1 : 0
+  count                        = var.create_alb && !local.eni_provided ? 1 : 0
   security_group_id            = aws_security_group.unity_license_server_sg[0].id
   referenced_security_group_id = aws_security_group.unity_license_server_alb_sg[0].id
   description                  = "Allows HTTP traffic on from the Application Load Balancer"
@@ -97,10 +97,11 @@ resource "aws_vpc_security_group_ingress_rule" "unity_license_server_ingress_fro
   ip_protocol                  = "TCP"
 }
 
-# Egress rule for all outbound traffic
+# Egress rule for all outbound traffic (only when module creates the security group)
 resource "aws_vpc_security_group_egress_rule" "unity_license_server_egress_all" {
   #checkov:skip=CKV_AWS_382
 
+  count             = !local.eni_provided ? 1 : 0
   security_group_id = aws_security_group.unity_license_server_sg[0].id
   description       = "Allow all outbound traffic"
   ip_protocol       = "-1"
