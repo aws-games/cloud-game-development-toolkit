@@ -197,7 +197,7 @@ workstations = {
     subnet_id = "subnet-123"
     availability_zone = "us-east-1a"
     security_groups = ["sg-456"]
-    assigned_user = "alice"  # User assigned to this workstation
+    # assigned_user = "alice"  # User assigned to this workstation
     allowed_cidr_blocks = ["203.0.113.1/32"]
   }
   "vdi-001" = {                  # ← Another workstation name
