@@ -18,8 +18,16 @@ An [Amazon S3](https://aws.amazon.com/pm/serv-s3/) bucket is created and mounted
 
 Upon deployment, two created files will be copied to the S3 bucket:
 
-- The services configuration file `services-config.json`, which should be deployed to all client computers intending to use the Licensing Server.
 - The server registration request file `server-registration-request.xml`, which contains machine binding information from the server.
+- The services configuration file `services-config.json`, which must be deployed to all client computers intending to use the Licensing Server.
+  - Note that this file must be placed in the following location:
+
+      | OS      |Path|
+      |---------|----|
+      | Windows |`%PROGRAMDATA%\Unity\config\`|
+      | Linux   |`/usr/share/unity3d/config/`|
+      | Mac     |`/Library/Application Support/Unity/config/`|
+
 
 The `server-registration-request.xml` will need to be uploaded to the [Unity ID portal](https://id.unity.com/) (where the Licensing Server executable was downloaded from) to register the server. Once successful, download the licenses zip file. Without renaming the file, upload it to the S3 bucket. A background process will detect the uploaded licenses file, and import them into the Unity Licensing Server, finishing the process.
 
