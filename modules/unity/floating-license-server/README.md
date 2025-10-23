@@ -18,8 +18,16 @@ An [Amazon S3](https://aws.amazon.com/pm/serv-s3/) bucket is created and mounted
 
 Upon deployment, two created files will be copied to the S3 bucket:
 
-- The services configuration file `services-config.json`, which should be deployed to all client computers intending to use the Licensing Server.
 - The server registration request file `server-registration-request.xml`, which contains machine binding information from the server.
+- The services configuration file `services-config.json`, which must be deployed to all client computers intending to use the Licensing Server.
+  - Note that this file must be placed in the following location:
+
+      | OS      |Path|
+      |---------|----|
+      | Windows |`%PROGRAMDATA%\Unity\config\`|
+      | Linux   |`/usr/share/unity3d/config/`|
+      | Mac     |`/Library/Application Support/Unity/config/`|
+
 
 The `server-registration-request.xml` will need to be uploaded to the [Unity ID portal](https://id.unity.com/) (where the Licensing Server executable was downloaded from) to register the server. Once successful, download the licenses zip file. Without renaming the file, upload it to the S3 bucket. A background process will detect the uploaded licenses file, and import them into the Unity Licensing Server, finishing the process.
 
@@ -39,11 +47,11 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.0.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.51.0 |
-| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.4.0 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | ~> 1.51 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.4 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
 
 ## Providers
 
@@ -63,40 +71,40 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_eip.unity_license_server_eip](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/eip) | resource |
-| [aws_iam_instance_profile.ec2_profile](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_role.ec2_access_role](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.access_policy](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/iam_role_policy) | resource |
-| [aws_iam_role_policy_attachment.ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/instance) | resource |
-| [aws_lb.unity_license_server_alb](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/lb) | resource |
-| [aws_lb_listener.unity_license_server_https_dashboard_listener](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/lb_listener) | resource |
-| [aws_lb_listener.unity_license_server_https_dashboard_redirect](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.unity_license_server_tg](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group_attachment.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/lb_target_group_attachment) | resource |
-| [aws_network_interface.unity_license_server_eni](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/network_interface) | resource |
-| [aws_s3_bucket.alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.unity_license_server_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.lb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.block_public_access](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_server_side_encryption_configuration.bucket_encryption](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
-| [aws_s3_object.unity_license_file](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/s3_object) | resource |
-| [aws_security_group.unity_license_server_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/security_group) | resource |
-| [aws_security_group.unity_license_server_sg](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.unity_license_server_alb_egress_service_8080](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unity_license_server_egress_all](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unity_license_server_ingress_from_alb_8080](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [awscc_secretsmanager_secret.admin_password_arn](https://registry.terraform.io/providers/hashicorp/awscc/1.51.0/docs/resources/secretsmanager_secret) | resource |
+| [aws_eip.unity_license_server_eip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip) | resource |
+| [aws_iam_instance_profile.ec2_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
+| [aws_iam_role.ec2_access_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.access_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.ssm_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
+| [aws_lb.unity_license_server_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
+| [aws_lb_listener.unity_license_server_https_dashboard_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unity_license_server_https_dashboard_redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_target_group.unity_license_server_tg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group_attachment.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment) | resource |
+| [aws_network_interface.unity_license_server_eni](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/network_interface) | resource |
+| [aws_s3_bucket.alb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket.unity_license_server_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.lb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_public_access_block.block_public_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_s3_bucket_server_side_encryption_configuration.bucket_encryption](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
+| [aws_s3_object.unity_license_file](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
+| [aws_security_group.unity_license_server_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.unity_license_server_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.unity_license_server_alb_egress_service_8080](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unity_license_server_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_license_server_ingress_from_alb_8080](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [awscc_secretsmanager_secret.admin_password_arn](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [null_resource.generate_presigned_urls](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.wait_for_user_data](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [random_string.alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
-| [aws_ami.ubuntu_latest](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/data-sources/ami) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/data-sources/instance) | data source |
-| [aws_network_interface.existing_eni](https://registry.terraform.io/providers/hashicorp/aws/6.0.0/docs/data-sources/network_interface) | data source |
+| [random_string.alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [aws_ami.ubuntu_latest](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/instance) | data source |
+| [aws_network_interface.existing_eni](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/network_interface) | data source |
 | [local_file.config_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 | [local_file.registration_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
