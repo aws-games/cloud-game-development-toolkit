@@ -365,6 +365,7 @@ variable "p4_auth_config" {
     p4d_super_user_arn          = optional(string, null)
     p4d_super_user_password_arn = optional(string, null)
     scim_bearer_token_arn       = optional(string, null)
+    extra_env                   = optional(map(string), null)
   })
 
   default = null
@@ -422,6 +423,8 @@ variable "p4_auth_config" {
     p4d_super_user_password_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user password for p4d."
 
     scim_bearer_token_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token."
+
+    extra_env : "Extra configuration environment variables to set on the p4 auth svc container."
 
 
   EOT
