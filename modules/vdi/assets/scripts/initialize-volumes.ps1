@@ -30,28 +30,28 @@ Write-Host "Initializing EBS volumes..."
 try {
     # Stop ShellHWDetection service as recommended by AWS
     Stop-Service -Name ShellHWDetection -ErrorAction SilentlyContinue
-    
+
     # Bring offline disks online first
     Get-Disk | Where-Object { $_.OperationalStatus -eq 'Offline' -and $_.Number -ne 0 } | ForEach-Object {
         Write-Host "Bringing disk $($_.Number) online (Size: $([math]::Round($_.Size/1GB, 2))GB)"
         Set-Disk -Number $_.Number -IsOffline $false
     }
-    
+
     # Get all RAW disks (uninitialized) excluding boot disk
     $rawDisks = Get-Disk | Where-Object { $_.PartitionStyle -eq 'RAW' -and $_.Number -ne 0 }
-    
+
     Write-Host "Found $($rawDisks.Count) uninitialized (RAW) disks"
-    
+
     # Initialize RAW disks
     if ($rawDisks.Count -gt 0) {
         Write-Host "Initializing $($rawDisks.Count) RAW disks with auto-assigned drive letters"
-        
+
         $rawDisks | ForEach-Object {
             $disk = $_
             $serialNumber = $disk.SerialNumber
-            
+
             $partitionStyle = if ($disk.Size -gt 2TB) { "GPT" } else { "MBR" }
-            
+
             # Check if this is an ephemeral drive (instance store)
             if ($serialNumber -and $serialNumber.StartsWith('AWS')) {
                 Write-Host "Initializing ephemeral disk $($disk.Number) with $partitionStyle (auto-assign)"
@@ -61,15 +61,15 @@ try {
                 $disk | Initialize-Disk -PartitionStyle $partitionStyle -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel "Data" -Confirm:$false
             }
         }
-        
+
         Write-Host "All RAW disks initialized successfully"
     } else {
         Write-Host "No RAW disks found to initialize"
     }
-    
+
     # Restart ShellHWDetection service
     Start-Service -Name ShellHWDetection -ErrorAction SilentlyContinue
-    
+
 } catch {
     Write-Host "Failed to initialize disks: $_" -ForegroundColor Yellow
     return
@@ -79,15 +79,15 @@ try {
 Write-Host "Extending partitions to use full disk space..."
 try {
     $allDisks = Get-Disk | Where-Object { $_.Number -ne 0 }
-    
+
     foreach ($disk in $allDisks) {
         $partitions = Get-Partition -DiskNumber $disk.Number | Where-Object { $_.Type -eq 'Basic' }
-        
+
         foreach ($partition in $partitions) {
             try {
                 $maxSize = (Get-PartitionSupportedSize -DriveLetter $partition.DriveLetter).SizeMax
                 $currentSize = $partition.Size
-                
+
                 if ($maxSize -gt ($currentSize + 100MB)) {
                     Write-Host "Extending partition $($partition.DriveLetter): from $([math]::Round($currentSize/1GB, 2))GB to $([math]::Round($maxSize/1GB, 2))GB"
                     Resize-Partition -DriveLetter $partition.DriveLetter -Size $maxSize

@@ -35,11 +35,11 @@ locals {
       # Volume processing with auto-assigned drive letters
       volumes = {
         for volume_name, volume_config in config.volumes : volume_name => {
-          capacity    = volume_config.capacity
-          type        = volume_config.type
-          iops        = volume_config.iops
-          throughput  = volume_config.throughput
-          encrypted   = volume_config.encrypted
+          capacity   = volume_config.capacity
+          type       = volume_config.type
+          iops       = volume_config.iops
+          throughput = volume_config.throughput
+          encrypted  = volume_config.encrypted
           # Add device mapping for Windows (AWS supports /dev/sdf to /dev/sdp)
           device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
         }
@@ -86,12 +86,12 @@ locals {
         for volume_name, volume_config in merge(
           local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
           config.volumes != null ? config.volumes : {}
-        ) : volume_name => merge(volume_config, {
-          # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
-          device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(merge(
-            local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
-            config.volumes != null ? config.volumes : {}
-          )), volume_name) - 1, 1)}"
+          ) : volume_name => merge(volume_config, {
+            # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
+            device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(merge(
+              local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
+              config.volumes != null ? config.volumes : {}
+            )), volume_name) - 1, 1)}"
         })
       }
 

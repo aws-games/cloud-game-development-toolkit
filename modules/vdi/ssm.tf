@@ -96,7 +96,7 @@ resource "aws_ssm_document" "initialize_volumes" {
         name   = "initializeVolumes"
         inputs = {
           timeoutSeconds = "900"
-          runCommand = split("\n", file("${path.module}/assets/scripts/initialize-volumes.ps1"))
+          runCommand     = split("\n", file("${path.module}/assets/scripts/initialize-volumes.ps1"))
         }
       }
     ]
@@ -263,5 +263,3 @@ resource "aws_ssm_association" "software_installation" {
     ForceRun       = var.debug ? timestamp() : "false"
   }
 }
-
-

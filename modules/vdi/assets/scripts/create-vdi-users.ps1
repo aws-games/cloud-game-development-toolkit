@@ -57,7 +57,7 @@ if ($AssignedUser -and $AssignedUser -ne "none") {
     Write-Host "Configuring DCV for user: $AssignedUser"
     try {
         $registryPath = "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management"
-        
+
         # Create registry keys if they don't exist
         $regKey = "HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv"
         if (-not (Test-Path "Registry::$regKey")) {
@@ -66,17 +66,17 @@ if ($AssignedUser -and $AssignedUser -ne "none") {
         if (-not (Test-Path "Registry::$registryPath")) {
             New-Item -Path "Registry::$registryPath" -Force | Out-Null
         }
-        
+
         # Enable automatic session creation for assigned user
         Set-ItemProperty -Path "Registry::$registryPath" -Name "create-session" -Value 1 -Type DWord
         Set-ItemProperty -Path "Registry::$registryPath" -Name "owner" -Value $AssignedUser -Type String
-        
+
         Write-Host "Configured DCV for automatic session creation"
-        
+
         # Restart DCV service to apply configuration
         Restart-Service -Name dcvserver -Force -ErrorAction SilentlyContinue
         Write-Host "DCV service restarted"
-        
+
     } catch {
         Write-Host "Failed to configure DCV: $_" -ForegroundColor Yellow
     }

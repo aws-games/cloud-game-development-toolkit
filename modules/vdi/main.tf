@@ -191,11 +191,11 @@ resource "awscc_secretsmanager_secret" "user_passwords" {
   # AWS auto-generates secure passwords - no passwords in Terraform state!
   generate_secret_string = {
     secret_string_template = jsonencode({
-      username = each.value.user
-      given_name = var.users[each.value.user].given_name
+      username    = each.value.user
+      given_name  = var.users[each.value.user].given_name
       family_name = var.users[each.value.user].family_name
-      email = var.users[each.value.user].email
-      user_type = var.users[each.value.user].type
+      email       = var.users[each.value.user].email
+      user_type   = var.users[each.value.user].type
       workstation = each.value.workstation
       instance_id = aws_instance.workstations[each.value.workstation].id
     })
@@ -205,9 +205,9 @@ resource "awscc_secretsmanager_secret" "user_passwords" {
     exclude_lowercase          = false
     exclude_uppercase          = false
     exclude_numbers            = false
-    exclude_punctuation        = false # Include special characters
+    exclude_punctuation        = false              # Include special characters
     exclude_characters         = "\"'`$\\|&<>;#%()" # Exclude PowerShell problematic chars
-    require_each_included_type = true   # Force inclusion of each character type
+    require_each_included_type = true               # Force inclusion of each character type
   }
 
   tags = [
@@ -234,14 +234,15 @@ resource "awscc_secretsmanager_secret" "user_passwords" {
 
 # DNS parameters for connectivity
 resource "aws_ssm_parameter" "vdi_dns" {
+  #checkov:skip=CKV2_AWS_34:DNS connection URLs are not sensitive data - encryption not required
   for_each = local.workstation_user_combinations
 
-  name  = "/${var.project_prefix}/${each.value.workstation}/users/${each.value.user}/dns"
-  type  = "String"
+  name = "/${var.project_prefix}/${each.value.workstation}/users/${each.value.user}/dns"
+  type = "String"
   value = jsonencode({
     private_dns = "https://${aws_instance.workstations[each.value.workstation].private_dns}:8443"
-    public_dns = "https://${aws_instance.workstations[each.value.workstation].public_dns}:8443"
-    custom_dns = var.users[each.value.user].type != "fleet_administrator" ? "https://${each.value.user}.${local.private_zone_name}:8443" : "null"
+    public_dns  = "https://${aws_instance.workstations[each.value.workstation].public_dns}:8443"
+    custom_dns  = var.users[each.value.user].type != "fleet_administrator" ? "https://${each.value.user}.${local.private_zone_name}:8443" : "null"
   })
 
   tags = merge(var.tags, {
