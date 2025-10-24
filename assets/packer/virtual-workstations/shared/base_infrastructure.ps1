@@ -6,7 +6,7 @@ Write-Host "Starting shared VDI base infrastructure setup..."
 
 # Install NVIDIA GRID drivers if GPU instance
 $instanceType = (Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-type" -TimeoutSec 10)
-if ($instanceType -match "^(g3|g4|g5|p2|p3|p4)") {
+if ($instanceType -match "^(g3|g4|g5|g6|p2|p3|p4)") {
     Write-Host "GPU instance detected ($instanceType), installing NVIDIA GRID drivers..."
 
     # Install AWS.Tools.S3 module for NVIDIA driver download
