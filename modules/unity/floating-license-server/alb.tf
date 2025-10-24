@@ -135,6 +135,8 @@ resource "aws_s3_bucket" "alb_access_logs_bucket" {
   #checkov:skip=CKV2_AWS_62: Event notifications not necessary
   #checkov:skip=CKV_AWS_144: Cross-region replication not necessary for access logs
   #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
+  #checkov:skip=CKV2_AWS_6: Public access block configured separately
+  #checkov:skip=CKV2_AWS_61: Lifecycle configuration configured separately
 
   count         = var.create_alb && var.enable_alb_access_logs && var.alb_access_logs_bucket == null ? 1 : 0
   bucket        = "${var.name}-alb-access-logs-${random_string.alb_access_logs_bucket_suffix[0].result}"

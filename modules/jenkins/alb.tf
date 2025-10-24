@@ -44,6 +44,8 @@ resource "aws_s3_bucket" "jenkins_alb_access_logs_bucket" {
   #checkov:skip=CKV_AWS_145: KMS encryption with CMK not currently supported
   #checkov:skip=CKV_AWS_18: S3 access logs not necessary
   #checkov:skip=CKV2_AWS_62: Event notifications not necessary
+  #checkov:skip=CKV2_AWS_6: Public access block configured separately
+  #checkov:skip=CKV2_AWS_61: Lifecycle configuration configured separately
 
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-alb-access-logs-${random_string.jenkins_alb_access_logs_bucket_suffix[0].result}"
