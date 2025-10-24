@@ -34,6 +34,7 @@ workstations = {
 ### Private Connectivity
 **When**: Workstations in private subnets with NAT Gateway routes
 **Access**: Via VPN, Direct Connect, or Site-to-Site VPN
+**DNS Requirement**: AWS Client VPN connection required to resolve private DNS names (`username.vdi.internal`)
 
 ```hcl
 module "vdi" {
@@ -161,7 +162,11 @@ aws secretsmanager get-secret-value \
 ### Connect via DCV
 1. **Download [DCV Client](https://download.nice-dcv.com/)** (recommended) or use web browser
 2. **Connect to VPN** (private connectivity only)
-3. **Open DCV**: `https://workstation-ip:8443` or `https://username.vdi.internal:8443`
+   - **Required for private DNS**: To access workstations via `https://username.vdi.internal:8443`, you must be connected to AWS Client VPN
+   - **Private DNS resolution**: Custom DNS names only resolve when connected to the VPN
+3. **Open DCV**: 
+   - **Public**: `https://workstation-public-ip:8443`
+   - **Private (VPN required)**: `https://username.vdi.internal:8443` or `https://workstation-private-ip:8443`
 4. **Accept certificate warning** (self-signed certificates)
 5. **Login** with credentials from Secrets Manager
 
@@ -174,6 +179,135 @@ aws ec2 get-password-data \
   --instance-id $(terraform output -json connection_info | jq -r '."vdi-001".instance_id') \
   --priv-launch-key temp_key.pem --query 'PasswordData' --output text
 rm temp_key.pem
+```
+
+## Password Management
+
+### ⚠️ Critical: Password Stability
+Passwords are **stable and persistent** after initial creation. The module uses lifecycle rules to prevent password regeneration on subsequent `terraform apply` operations.
+
+### Password Generation
+The module generates secure 16-character passwords containing only:
+- **Letters**: a-z, A-Z (both cases)
+- **Numbers**: 0-9
+- **No special characters** to avoid script escaping issues
+
+Example passwords: `Abc123def456ghij`, `9Kl2mNp8qRs4tUv7`
+
+### Initial Setup
+The module creates initial passwords in AWS Secrets Manager during deployment. These are auto-generated, secure passwords that provide first-time access to workstations.
+
+
+
+### Force Re-provisioning
+
+To retry any failed scripts or force a complete re-run:
+
+```hcl
+module "vdi" {
+  debug = true  # Forces all scripts to re-run
+  # ... other config
+}
+```
+
+**What debug mode does:**
+- **User Script**: Re-creates all users and reconfigures DCV
+- **Volume Script**: Re-initializes disks and reassigns drive letters ⚠️
+- **Software Script**: Re-installs all Chocolatey packages
+
+**⚠️ Volume Script Warning**: Re-running volume initialization may change drive letters on existing systems, potentially breaking:
+- Application shortcuts and saved file paths
+- User bookmarks and recent file lists  
+- Software that hardcodes drive letters
+
+Consider notifying users before setting `debug = true`.
+
+After successful provisioning, set back to `false`.
+
+### Password Changes
+**After initial login, password management is user/administrator responsibility:**
+
+1. **User Self-Service**: Users change passwords directly in Windows (Ctrl+Alt+Del → Change Password)
+2. **Admin Management**: Administrators update passwords via Windows user management tools
+3. **Source of Truth**: Windows becomes the authoritative password source after initial setup
+4. **Secrets Manager**: Contains initial passwords for reference, but does not sync with Windows changes
+
+### Enterprise Integration
+For production environments, consider:
+- **AWS IAM Identity Center** - Centralized SSO with password policies
+- **Active Directory** - Domain-joined workstations with AD authentication  
+- **Third-party Identity Providers** - SAML/OIDC integration
+
+> **Note**: The module focuses on infrastructure provisioning. Advanced password lifecycle management should be handled by dedicated identity services.
+
+## ⚠️ CRITICAL: Volume Configuration Rules
+
+### Required Root Volume
+```hcl
+volumes = {
+  Root = {                    # ← MUST be exactly "Root" (case-sensitive)
+    windows_drive = "C:"      # ← MUST be "C:" (Windows boot requirement)
+    capacity = 256
+    type = "gp3"
+  }
+}
+```
+
+### Instance Store Management (G4dn Instances)
+**Automatic Drive Letter Assignment**: The module automatically handles instance store drives on G4dn instances to prevent conflicts:
+
+- **Instance Store** → **T:** drive (Temp/Cache usage)
+- **EBS Volumes** → **D:, E:, F:** drives (as configured)
+- **Root Volume** → **C:** drive (always)
+
+**G4dn Instance Store Sizes**:
+- `g4dn.xlarge`: 125GB NVMe SSD → T:
+- `g4dn.2xlarge`: 225GB NVMe SSD → T:
+- `g4dn.4xlarge`: 225GB NVMe SSD → T:
+- `g4dn.8xlarge`: 900GB NVMe SSD → T:
+
+**Benefits**:
+- ✅ **No drive letter conflicts** - Instance store moved to T:
+- ✅ **High-performance temp storage** - Use NVMe for builds/cache
+- ✅ **Predictable EBS mapping** - Your volumes get correct letters
+- ✅ **Cost efficiency** - Utilize included instance store
+
+### Data Loss Warnings
+- **Changing volume names**: Requires manual data migration
+- **Changing drive letters**: Causes volume recreation and **permanent data loss**
+- **Removing volumes**: Data will be **permanently lost**
+- **Root volume changes**: Can make Windows unbootable
+- **Instance store data**: Lost on stop/terminate (use for temp files only)
+
+### Safe Volume Operations
+- **Adding new volumes**: ✅ Safe, automatically initialized
+- **Increasing volume sizes**: ✅ Safe, partitions automatically extended
+- **Changing volume types**: ✅ Safe (performance change only)
+- **Changing IOPS/throughput**: ✅ Safe (performance change only)
+
+### Volume Change Lifecycle
+
+| Change Type | Automatic Handling | Data Safety | User Action Required |
+|-------------|-------------------|-------------|---------------------|
+| **Add Volume** | ✅ Auto-initialized | ✅ Safe | None |
+| **Increase Size** | ✅ Auto-extended | ✅ Safe | None |
+| **Remove Volume** | ⚠️ Orphaned drive letters | ❌ **Data lost** | Manual cleanup |
+| **Change Drive Letter** | ❌ Volume recreated | ❌ **Data lost** | Backup/restore |
+| **Rename Volume** | ❌ Volume recreated | ❌ **Data lost** | Backup/restore |
+
+### Volume Naming & Drive Letter Assignment
+- **Terraform names** ("Root", "Projects", "Cache") are organizational only
+- **Windows sees** drive letters and volume labels
+- **"Root" is special** - handled by `root_block_device`, everything else uses `ebs_block_device`
+- **Instance store** - Automatically assigned to T: for temp/cache usage
+- **EBS volumes** - Get configured drive letters (D:, E:, F:, etc.)
+
+**Final Drive Layout Example**:
+```
+C: = Root EBS (300GB) - Windows OS
+D: = Projects EBS (2TB) - User data  
+E: = Learning EBS (200GB) - Additional storage
+T: = Instance Store (225GB) - Temp/cache (lost on stop)
 ```
 
 ## Advanced Configuration
@@ -243,6 +377,12 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 - Check AMI is in correct region
 - Ensure Packer build completed successfully
 
+**Drive Letter Issues**
+- Check drive assignment: `Get-Disk | Format-Table Number, Size, BusType`
+- Verify T: drive exists: `Get-Partition | Where-Object DriveLetter -eq 'T'`
+- Instance store should be on T:, EBS volumes on D:, E:, etc.
+- Force drive reassignment: Set `force_run_provisioning = "true"` and apply
+
 **Connection Timeouts**
 - Check security group allows your IP: `curl https://checkip.amazonaws.com/`
 - Verify instance is running: `aws ec2 describe-instances`
@@ -265,7 +405,19 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 
 **User Accounts Not Created**
 - Check SSM command status: `aws ssm list-command-invocations --instance-id <id>`
-- Retry user creation: `aws ssm send-command --document-name "setup-dcv-users-sessions"`
+- Check user creation status: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"`
+- Check detailed messages: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_message"`
+- Force retry: Set `force_run_scripts = "true"` in module config and apply
+
+**Volume Initialization Issues**
+- Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
+- Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
+- Force retry: Set `force_run_scripts = "true"` (⚠️ may change drive letters)
+
+**Software Installation Problems**
+- Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`
+- Check failed packages: `aws ssm get-parameter --name "/{project}/{workstation}/software_message"`
+- Force retry: Set `force_run_scripts = "true"` to reinstall all packages
 
 ### Debug Commands
 ```bash

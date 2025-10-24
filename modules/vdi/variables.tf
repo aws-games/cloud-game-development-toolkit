@@ -101,6 +101,13 @@ workstations = {
 
 Valid volume types: "gp2", "gp3", "io1", "io2"
 Windows drives: "C:", "D:", "E:", etc.
+⚠️ **RESERVED**: "T:" is reserved for instance store (when present)
+
+⚠️ **DRIVE LETTER CHANGES**: Changing windows_drive on existing systems may break:
+- Application shortcuts and saved file paths
+- User bookmarks and recent file lists
+- Software that hardcodes drive letters
+Consider notifying users before making drive letter changes.
 
 additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
 Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
@@ -138,6 +145,17 @@ EOF
       ])
     ])
     error_message = "Windows drive must be in format 'C:', 'D:', 'E:', etc."
+  }
+
+  validation {
+    condition = alltrue([
+      for preset_key, config in var.presets :
+      alltrue([
+        for volume_name, volume in config.volumes :
+        volume.windows_drive != "T:"
+      ])
+    ])
+    error_message = "Drive letter 'T:' is reserved for instance store (ephemeral storage) when present. Use D:, E:, F:, etc. for EBS volumes."
   }
 
   validation {
@@ -209,6 +227,14 @@ workstations = {
 # User assignment is now direct:
 # assigned_user = "alice"  # References users{} key directly in workstation
 
+⚠️ **RESERVED DRIVE LETTERS**: "T:" is reserved for instance store (when present)
+
+⚠️ **DRIVE LETTER CHANGES**: Changing windows_drive on existing systems may break:
+- Application shortcuts and saved file paths  
+- User bookmarks and recent file lists
+- Software that hardcodes drive letters
+Consider notifying users before making drive letter changes.
+
 additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
 Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
 EOF
@@ -246,6 +272,17 @@ EOF
       config.capacity_reservation_preference == null || contains(["open", "none"], config.capacity_reservation_preference)
     ])
     error_message = "capacity_reservation_preference must be null, 'open', or 'none' for each workstation."
+  }
+
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.volumes == null || alltrue([
+        for volume_name, volume in config.volumes :
+        volume.windows_drive != "T:"
+      ])
+    ])
+    error_message = "Drive letter 'T:' is reserved for instance store (ephemeral storage) on G4dn instances. Use D:, E:, F:, etc. for EBS volumes."
   }
 
 
@@ -434,4 +471,22 @@ variable "capacity_reservation_preference" {
     condition     = var.capacity_reservation_preference == null || contains(["open", "none"], var.capacity_reservation_preference)
     error_message = "Must be null, 'open', or 'none'."
   }
+}
+
+########################################
+# PROVISIONING CONTROL
+########################################
+
+variable "debug" {
+  description = <<EOF
+Enable debug mode to force re-run all VDI scripts and accelerate testing. Set to true to trigger, false for normal operation.
+
+⚠️  WARNING: Volume script changes can cause data access issues on existing systems:
+- Changing drive letters may break application shortcuts and saved paths
+- Users may temporarily lose access to data until they update their shortcuts
+- Consider notifying users before making drive letter changes
+- New volumes and disk initialization are always safe
+EOF
+  type        = bool
+  default     = false
 }

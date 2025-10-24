@@ -7,6 +7,7 @@ module "vdi" {
   # Remote: "github.com/aws-games/cloud-game-development-toolkit//modules/vdi?ref=main"
   source = "../../"
 
+  debug = true
   # Core configuration
   project_prefix = local.project_prefix
   region         = data.aws_region.current.id
@@ -78,6 +79,15 @@ module "vdi" {
       subnet_id           = aws_subnet.vdi_subnet.id
       security_groups     = [aws_security_group.vdi_sg.id]
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
+      volumes = {
+        Learning = {
+          capacity      = 200 # Learning materials and projects
+          type          = "gp3"
+          windows_drive = "E:"
+          iops          = 3000
+          encrypted     = true
+        }
+      }
     }
 
     # Pattern 2: Template with overrides (Sasuke - DevOps Engineer)
@@ -166,7 +176,7 @@ module "vdi" {
   enable_centralized_logging = true
 
 
-  # Software packages now defined per-template or per-workstation (see below)
+
 
   tags = merge(local.tags, {
     Example      = "public-connectivity"
