@@ -80,12 +80,6 @@ module "vdi" {
           type      = "gp3"
           iops      = 3000
           encrypted = true
-        },
-        Goku = {
-          capacity  = 500 # Learning materials and projects
-          type      = "gp3"
-          iops      = 3000
-          encrypted = true
         }
       }
     }
