@@ -334,21 +334,21 @@ users = {
   "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"
     given_name = "VDI"
     family_name = "Administrator"
-    email = "admin@company.com"
+    email = "admin@example.com"
     type = "fleet_administrator" # Windows Administrators group on ALL workstations
     use_client_vpn = false      # Accesses via public internet/external VPN
   }
   "alice" = {                 # ← Public connectivity user
     given_name = "Alice"
     family_name = "Smith"
-    email = "alice@company.com"
+    email = "alice@example.com"
     type = "user"               # Windows Users group
     use_client_vpn = false      # Accesses via public internet (allowed_cidr_blocks)
   }
   "bob" = {                   # ← Private connectivity user
     given_name = "Bob"
     family_name = "Johnson"
-    email = "bob@company.com"
+    email = "bob@example.com"
     type = "user"               # Windows Users group
     use_client_vpn = true       # Accesses via module's Client VPN
   }
