@@ -88,6 +88,7 @@ resource "aws_ssm_document" "initialize_volumes" {
         type        = "String"
         description = "Force execution trigger"
       }
+
     }
     mainSteps = [
       {
@@ -232,6 +233,7 @@ resource "aws_ssm_association" "volume_initialization" {
     Region         = var.region
     VolumeHash     = md5(jsonencode(each.value.volumes))
     ForceRun       = var.debug ? timestamp() : "false"
+
   }
 }
 

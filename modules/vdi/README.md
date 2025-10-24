@@ -148,6 +148,24 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/D
 
 ## Connection Guide
 
+### ⚠️ CRITICAL: Wait for Windows Boot
+**After `terraform apply` completes, wait 5-10 minutes for Windows initialization before attempting login.**
+
+During boot, you'll see:
+- "Wrong username or password" errors (expected)
+- DCV connection failures (expected)
+- Certificate warnings (expected)
+
+**Check boot status:**
+```bash
+aws ec2 get-console-output --instance-id $(terraform output -json connection_info | jq -r '."vdi-001".instance_id') --latest
+```
+
+**Ready when you see:**
+- `EC2Launch: EC2 Launch has completed`
+- User creation script completion
+- DCV service startup messages
+
 ### Get Credentials
 ```bash
 # Get connection info
@@ -240,44 +258,72 @@ For production environments, consider:
 
 > **Note**: The module focuses on infrastructure provisioning. Advanced password lifecycle management should be handled by dedicated identity services.
 
-## ⚠️ CRITICAL: Volume Configuration Rules
+## CRITICAL: Volume Configuration Rules
+
+### TERRAFORM LIMITATION: Instance Replacement Warning
+
+**ANY change to volume configuration forces complete instance replacement and data loss on root volume.**
+
+This is a Terraform AWS provider limitation, not a module bug. Changes that trigger replacement:
+- Adding/removing volumes
+- Changing volume names, sizes, types, or any properties
+- Changing volume tags or metadata
+- Module updates that modify volume configuration
+
+**What you lose:**
+- ALL EBS volume data is lost - Terraform defaults delete_on_termination=true for all volumes
+- Root volume data is lost - All installed software, user profiles, configurations
+- Instance store data is lost - Temporary/cache data (expected)
+
+**COMPLETE DATA LOSS** - Instance replacement destroys all attached volumes
+
+**Mitigation strategies:**
+1. Use custom AMIs - Pre-install software to minimize root volume data loss
+2. Store data on additional volumes - Keep user data off C: drive
+3. Backup before changes - Create AMI snapshots before volume modifications
+4. Avoid volume changes - Plan volume configuration carefully during initial deployment
 
 ### Required Root Volume
 ```hcl
 volumes = {
   Root = {                    # ← MUST be exactly "Root" (case-sensitive)
-    windows_drive = "C:"      # ← MUST be "C:" (Windows boot requirement)
-    capacity = 256
+    capacity = 256            # ← Root volume automatically gets C: drive
     type = "gp3"
   }
 }
 ```
 
-### Instance Store Management (G4dn Instances)
-**Automatic Drive Letter Assignment**: The module automatically handles instance store drives on G4dn instances to prevent conflicts:
+### Drive Letter Assignment
+**Automatic Assignment**: The module uses Windows auto-assignment for all drive letters:
 
-- **Instance Store** → **T:** drive (Temp/Cache usage)
-- **EBS Volumes** → **D:, E:, F:** drives (as configured)
-- **Root Volume** → **C:** drive (always)
+- **Root Volume** → **C:** drive (Windows boot requirement)
+- **EBS Volumes** → **Auto-assigned** (typically D:, E:, F:, etc.)
+- **Instance Store** → **Auto-assigned** (typically next available letter)
 
 **G4dn Instance Store Sizes**:
-- `g4dn.xlarge`: 125GB NVMe SSD → T:
-- `g4dn.2xlarge`: 225GB NVMe SSD → T:
-- `g4dn.4xlarge`: 225GB NVMe SSD → T:
-- `g4dn.8xlarge`: 900GB NVMe SSD → T:
+- `g4dn.xlarge`: 125GB NVMe SSD (auto-assigned)
+- `g4dn.2xlarge`: 225GB NVMe SSD (auto-assigned)
+- `g4dn.4xlarge`: 225GB NVMe SSD (auto-assigned)
+- `g4dn.8xlarge`: 900GB NVMe SSD (auto-assigned)
 
 **Benefits**:
-- ✅ **No drive letter conflicts** - Instance store moved to T:
-- ✅ **High-performance temp storage** - Use NVMe for builds/cache
-- ✅ **Predictable EBS mapping** - Your volumes get correct letters
+- ✅ **Simple configuration** - No drive letter conflicts
+- ✅ **Windows native behavior** - Uses standard assignment logic
+- ✅ **User customizable** - Users can reassign letters via Disk Management
 - ✅ **Cost efficiency** - Utilize included instance store
 
 ### Data Loss Warnings
-- **Changing volume names**: Requires manual data migration
-- **Changing drive letters**: Causes volume recreation and **permanent data loss**
-- **Removing volumes**: Data will be **permanently lost**
-- **Root volume changes**: Can make Windows unbootable
-- **Instance store data**: Lost on stop/terminate (use for temp files only)
+
+**CRITICAL: Terraform forces instance replacement for ANY volume configuration change**
+
+- Adding volumes: Instance replacement, root volume data lost
+- Removing volumes: Instance replacement, root volume + removed volume data lost
+- Changing volume properties: Instance replacement, root volume data lost
+- Changing volume names: Instance replacement, root volume data lost
+- Root volume changes: Instance replacement, complete data loss
+- Instance store data: Lost on stop/terminate (use for temp files only)
+
+**ALL EBS volumes are deleted during instance replacement due to Terraform defaults**
 
 ### Safe Volume Operations
 - **Adding new volumes**: ✅ Safe, automatically initialized
@@ -297,17 +343,18 @@ volumes = {
 
 ### Volume Naming & Drive Letter Assignment
 - **Terraform names** ("Root", "Projects", "Cache") are organizational only
-- **Windows sees** drive letters and volume labels
+- **Windows sees** drive letters and volume labels set by initialization script
 - **"Root" is special** - handled by `root_block_device`, everything else uses `ebs_block_device`
-- **Instance store** - Automatically assigned to T: for temp/cache usage
-- **EBS volumes** - Get configured drive letters (D:, E:, F:, etc.)
+- **All volumes** - Use Windows auto-assignment (typically D:, E:, F:, etc.)
+- **Volume labels** - Instance store labeled "Ephemeral", EBS volumes labeled "Data"
+- **Users can reassign** - Use Windows Disk Management to change letters after deployment
 
-**Final Drive Layout Example**:
+**Typical Drive Layout Example**:
 ```
 C: = Root EBS (300GB) - Windows OS
-D: = Projects EBS (2TB) - User data  
-E: = Learning EBS (200GB) - Additional storage
-T: = Instance Store (225GB) - Temp/cache (lost on stop)
+D: = Data (2TB) - EBS volume (auto-assigned)
+E: = Data (200GB) - EBS volume (auto-assigned)  
+F: = Ephemeral (225GB) - Instance store (auto-assigned, lost on stop)
 ```
 
 ## Advanced Configuration
@@ -412,7 +459,7 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 **Volume Initialization Issues**
 - Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
 - Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
-- Force retry: Set `force_run_scripts = "true"` (⚠️ may change drive letters)
+- Force retry: Set `debug = true` (WARNING: triggers instance replacement)
 
 **Software Installation Problems**
 - Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`

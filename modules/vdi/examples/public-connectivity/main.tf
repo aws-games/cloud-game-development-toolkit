@@ -7,7 +7,6 @@ module "vdi" {
   # Remote: "github.com/aws-games/cloud-game-development-toolkit//modules/vdi?ref=main"
   source = "../../"
 
-  debug = true
   # Core configuration
   project_prefix = local.project_prefix
   region         = data.aws_region.current.id
@@ -23,18 +22,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 300 # Windows + VS2022 + UE5 + tools
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 300 # Windows + VS2022 + UE5 + tools (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         Projects = {
-          capacity      = 2000 # UE projects, assets, builds (2TB)
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 2000 # UE projects, assets, builds (2TB)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Minimal packages - most tools already in UE GameDev AMI
@@ -48,18 +45,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 200 # Room for user-installed software
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 200 # Room for user-installed software (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         UserData = {
-          capacity      = 500 # Large workspace for user files and applications
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 500 # Large workspace for user files and applications
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Full DevOps toolchain (uses Chocolatey)
@@ -81,11 +76,16 @@ module "vdi" {
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
       volumes = {
         Learning = {
-          capacity      = 200 # Learning materials and projects
-          type          = "gp3"
-          windows_drive = "E:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 200 # Learning materials and projects
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
+        },
+        Goku = {
+          capacity  = 500 # Learning materials and projects
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
     }
@@ -114,18 +114,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 150 # Smaller root volume
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 150 # Smaller root volume (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         Learning = {
-          capacity      = 200 # Learning materials and projects
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 200 # Learning materials and projects
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Basic learning tools

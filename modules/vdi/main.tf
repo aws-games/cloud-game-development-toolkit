@@ -93,10 +93,9 @@ resource "aws_instance" "workstations" {
       kms_key_id  = var.ebs_kms_key_id
 
       tags = merge(var.tags, {
-        Name         = "${local.name_prefix}-${each.key}-${ebs_block_device.key}-volume"
-        Workstation  = each.key
-        VolumeType   = ebs_block_device.key
-        WindowsDrive = ebs_block_device.value.windows_drive
+        Name        = "${local.name_prefix}-${each.key}-${ebs_block_device.key}-volume"
+        Workstation = each.key
+        VolumeType  = ebs_block_device.key
       })
     }
   }

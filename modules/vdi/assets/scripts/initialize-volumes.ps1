@@ -23,6 +23,8 @@ try {
 # WARNING: Drive letter changes can cause data access issues
 Write-Host "WARNING: Changing drive letters on existing systems may cause applications to lose access to data" -ForegroundColor Yellow
 
+
+
 # Initialize and format EBS volumes
 Write-Host "Initializing EBS volumes..."
 try {
@@ -42,12 +44,22 @@ try {
     
     # Initialize RAW disks
     if ($rawDisks.Count -gt 0) {
-        Write-Host "Initializing $($rawDisks.Count) RAW disks"
+        Write-Host "Initializing $($rawDisks.Count) RAW disks with auto-assigned drive letters"
         
         $rawDisks | ForEach-Object {
-            $partitionStyle = if ($_.Size -gt 2TB) { "GPT" } else { "MBR" }
-            Write-Host "Initializing disk $($_.Number) with $partitionStyle"
-            $_ | Initialize-Disk -PartitionStyle $partitionStyle -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel "Data" -Confirm:$false
+            $disk = $_
+            $serialNumber = $disk.SerialNumber
+            
+            $partitionStyle = if ($disk.Size -gt 2TB) { "GPT" } else { "MBR" }
+            
+            # Check if this is an ephemeral drive (instance store)
+            if ($serialNumber -and $serialNumber.StartsWith('AWS')) {
+                Write-Host "Initializing ephemeral disk $($disk.Number) with $partitionStyle (auto-assign)"
+                $disk | Initialize-Disk -PartitionStyle $partitionStyle -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel "Ephemeral" -Confirm:$false
+            } else {
+                Write-Host "Initializing EBS disk $($disk.Number) with $partitionStyle (auto-assign)"
+                $disk | Initialize-Disk -PartitionStyle $partitionStyle -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel "Data" -Confirm:$false
+            }
         }
         
         Write-Host "All RAW disks initialized successfully"
@@ -90,34 +102,6 @@ try {
     return
 }
 
-# Organize drive letters based on Terraform configuration
-Write-Host "Organizing drive letters..."
-try {
-    $partitions = Get-Partition | Where-Object { $_.DriveLetter -ne $null -and $_.DriveLetter -ne 'C' }
-    
-    foreach ($partition in $partitions) {
-        $disk = Get-Disk -Number $partition.DiskNumber
-        $serialNumber = $disk.SerialNumber
-        
-        # AWS Official Detection: EBS starts with "vol", Instance store starts with "AWS"
-        if ($serialNumber -and $serialNumber.StartsWith('AWS')) {
-            # Instance store -> T: drive
-            if ($partition.DriveLetter -ne 'T') {
-                Write-Host "Moving instance store to T: drive"
-                try {
-                    Remove-PartitionAccessPath -DiskNumber $partition.DiskNumber -PartitionNumber $partition.PartitionNumber -AccessPath "$($partition.DriveLetter):"
-                    Add-PartitionAccessPath -DiskNumber $partition.DiskNumber -PartitionNumber $partition.PartitionNumber -AccessPath "T:"
-                } catch {
-                    Write-Host "Failed to reassign instance store: $_" -ForegroundColor Yellow
-                }
-            }
-        }
-    }
-} catch {
-    Write-Host "Failed to organize drive letters: $_" -ForegroundColor Yellow
-    return
-}
-
 # Store volume hash to prevent unnecessary re-runs
 try {
     aws ssm put-parameter --name $hashParam --value $VolumeHash --overwrite --region $Region | Out-Null
@@ -126,4 +110,4 @@ try {
     Write-Host "Failed to store volume hash: $_" -ForegroundColor Yellow
 }
 
-Write-Host "Volume initialization completed"
+Write-Host "Volume initialization complete - using auto-assigned drive letters"
