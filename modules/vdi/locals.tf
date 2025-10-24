@@ -32,15 +32,14 @@ locals {
 
       # Software configuration removed - use custom AMIs
 
-      # Volume processing with Windows drive mapping
+      # Volume processing with auto-assigned drive letters
       volumes = {
         for volume_name, volume_config in config.volumes : volume_name => {
-          capacity      = volume_config.capacity
-          type          = volume_config.type
-          windows_drive = volume_config.windows_drive
-          iops          = volume_config.iops
-          throughput    = volume_config.throughput
-          encrypted     = volume_config.encrypted
+          capacity    = volume_config.capacity
+          type        = volume_config.type
+          iops        = volume_config.iops
+          throughput  = volume_config.throughput
+          encrypted   = volume_config.encrypted
           # Add device mapping for Windows (AWS supports /dev/sdf to /dev/sdp)
           device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
         }
