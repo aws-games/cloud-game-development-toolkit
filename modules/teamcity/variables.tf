@@ -232,12 +232,23 @@ variable "aurora_instance_count" {
 
 variable "build_farm_config" {
   type = map(object({
-    image         = string
-    desired_count = number
-    cpu           = number
-    memory        = number
+    image                 = string
+    desired_count         = number
+    cpu                   = number
+    memory                = number
+    environment           = optional(map(string), {})
+    ephemeral_storage_gib = optional(number, 20)
   }))
-  default = {}
+  default     = {}
+  description = <<-EOT
+    Map of build agent configurations where each key is the agent name and the value defines:
+    - image: Container image for the build agent
+    - desired_count: Number of agent instances to run
+    - cpu: CPU units to allocate (1024 = 1 vCPU)
+    - memory: Memory in MiB to allocate
+    - environment: Optional map of custom environment variables for non-sensitive configuration
+    - ephemeral_storage_gib: Optional ephemeral storage size in GiB (defaults to 20 GiB)
+  EOT
 }
 
 variable "agent_log_group_retention_in_days" {
