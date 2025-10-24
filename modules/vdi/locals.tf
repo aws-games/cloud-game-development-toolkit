@@ -47,8 +47,9 @@ locals {
       }
 
       # Optional configuration
-      iam_instance_profile = config.iam_instance_profile
-      software_packages    = config.software_packages
+      iam_instance_profile   = config.iam_instance_profile
+      additional_policy_arns = config.additional_policy_arns
+      software_packages      = config.software_packages
       tags = merge(var.tags, config.tags, {
         Preset = preset_key
         Type   = "VDI-Preset"
@@ -94,6 +95,10 @@ locals {
       # OPTIONAL CONFIGURATION with 3-tier priority
       software_packages    = coalesce(config.software_packages, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].software_packages : null, [])
       iam_instance_profile = config.iam_instance_profile != null ? config.iam_instance_profile : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].iam_instance_profile : null)
+      additional_policy_arns = concat(
+        config.additional_policy_arns,
+        local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].additional_policy_arns : []
+      )
 
       # INFRASTRUCTURE PLACEMENT (always workstation-specific, never from preset)
       subnet_id           = config.subnet_id
@@ -154,7 +159,7 @@ locals {
         # VDI-specific settings
         associate_public_ip_address     = true
         create_key_pair                 = true
-        capacity_reservation_preference = coalesce(config.capacity_reservation_preference, var.capacity_reservation_preference)
+        capacity_reservation_preference = config.capacity_reservation_preference != null ? config.capacity_reservation_preference : var.capacity_reservation_preference
       }
     )
   }
