@@ -101,6 +101,7 @@ resource "aws_vpc_security_group_ingress_rule" "unity_license_server_ingress_fro
 resource "aws_vpc_security_group_egress_rule" "unity_license_server_egress_all" {
   #checkov:skip=CKV_AWS_382
 
+  count             = !local.eni_provided ? 1 : 0
   security_group_id = aws_security_group.unity_license_server_sg[0].id
   description       = "Allow all outbound traffic"
   ip_protocol       = "-1"
