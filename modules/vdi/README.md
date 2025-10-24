@@ -34,6 +34,7 @@ workstations = {
 ### Private Connectivity
 **When**: Workstations in private subnets with NAT Gateway routes
 **Access**: Via VPN, Direct Connect, or Site-to-Site VPN
+**DNS Requirement**: AWS Client VPN connection required to resolve private DNS names (`username.vdi.internal`)
 
 ```hcl
 module "vdi" {
@@ -147,6 +148,24 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/D
 
 ## Connection Guide
 
+### ⚠️ CRITICAL: Wait for Windows Boot
+**After `terraform apply` completes, wait 5-10 minutes for Windows initialization before attempting login.**
+
+During boot, you'll see:
+- "Wrong username or password" errors (expected)
+- DCV connection failures (expected)
+- Certificate warnings (expected)
+
+**Check boot status:**
+```bash
+aws ec2 get-console-output --instance-id $(terraform output -json connection_info | jq -r '."vdi-001".instance_id') --latest
+```
+
+**Ready when you see:**
+- `EC2Launch: EC2 Launch has completed`
+- User creation script completion
+- DCV service startup messages
+
 ### Get Credentials
 ```bash
 # Get connection info
@@ -161,7 +180,11 @@ aws secretsmanager get-secret-value \
 ### Connect via DCV
 1. **Download [DCV Client](https://download.nice-dcv.com/)** (recommended) or use web browser
 2. **Connect to VPN** (private connectivity only)
-3. **Open DCV**: `https://workstation-ip:8443` or `https://username.vdi.internal:8443`
+   - **Required for private DNS**: To access workstations via `https://username.vdi.internal:8443`, you must be connected to AWS Client VPN
+   - **Private DNS resolution**: Custom DNS names only resolve when connected to the VPN
+3. **Open DCV**:
+   - **Public**: `https://workstation-public-ip:8443`
+   - **Private (VPN required)**: `https://username.vdi.internal:8443` or `https://workstation-private-ip:8443`
 4. **Accept certificate warning** (self-signed certificates)
 5. **Login** with credentials from Secrets Manager
 
@@ -174,6 +197,164 @@ aws ec2 get-password-data \
   --instance-id $(terraform output -json connection_info | jq -r '."vdi-001".instance_id') \
   --priv-launch-key temp_key.pem --query 'PasswordData' --output text
 rm temp_key.pem
+```
+
+## Password Management
+
+### ⚠️ Critical: Password Stability
+Passwords are **stable and persistent** after initial creation. The module uses lifecycle rules to prevent password regeneration on subsequent `terraform apply` operations.
+
+### Password Generation
+The module generates secure 16-character passwords containing only:
+- **Letters**: a-z, A-Z (both cases)
+- **Numbers**: 0-9
+- **No special characters** to avoid script escaping issues
+
+Example passwords: `Abc123def456ghij`, `9Kl2mNp8qRs4tUv7`
+
+### Initial Setup
+The module creates initial passwords in AWS Secrets Manager during deployment. These are auto-generated, secure passwords that provide first-time access to workstations.
+
+
+
+### Force Re-provisioning
+
+To retry any failed scripts or force a complete re-run:
+
+```hcl
+module "vdi" {
+  debug = true  # Forces all scripts to re-run
+  # ... other config
+}
+```
+
+**What debug mode does:**
+- **User Script**: Re-creates all users and reconfigures DCV
+- **Volume Script**: Re-initializes disks and reassigns drive letters ⚠️
+- **Software Script**: Re-installs all Chocolatey packages
+
+**⚠️ Volume Script Warning**: Re-running volume initialization may change drive letters on existing systems, potentially breaking:
+- Application shortcuts and saved file paths
+- User bookmarks and recent file lists
+- Software that hardcodes drive letters
+
+Consider notifying users before setting `debug = true`.
+
+After successful provisioning, set back to `false`.
+
+### Password Changes
+**After initial login, password management is user/administrator responsibility:**
+
+1. **User Self-Service**: Users change passwords directly in Windows (Ctrl+Alt+Del → Change Password)
+2. **Admin Management**: Administrators update passwords via Windows user management tools
+3. **Source of Truth**: Windows becomes the authoritative password source after initial setup
+4. **Secrets Manager**: Contains initial passwords for reference, but does not sync with Windows changes
+
+### Enterprise Integration
+For production environments, consider:
+- **AWS IAM Identity Center** - Centralized SSO with password policies
+- **Active Directory** - Domain-joined workstations with AD authentication
+- **Third-party Identity Providers** - SAML/OIDC integration
+
+> **Note**: The module focuses on infrastructure provisioning. Advanced password lifecycle management should be handled by dedicated identity services.
+
+## CRITICAL: Volume Configuration Rules
+
+### TERRAFORM LIMITATION: Instance Replacement Warning
+
+**ANY change to volume configuration forces complete instance replacement and data loss on root volume.**
+
+This is a Terraform AWS provider limitation, not a module bug. Changes that trigger replacement:
+- Adding/removing volumes
+- Changing volume names, sizes, types, or any properties
+- Changing volume tags or metadata
+- Module updates that modify volume configuration
+
+**What you lose:**
+- ALL EBS volume data is lost - Terraform defaults delete_on_termination=true for all volumes
+- Root volume data is lost - All installed software, user profiles, configurations
+- Instance store data is lost - Temporary/cache data (expected)
+
+**COMPLETE DATA LOSS** - Instance replacement destroys all attached volumes
+
+**Mitigation strategies:**
+1. Use custom AMIs - Pre-install software to minimize root volume data loss
+2. Store data on additional volumes - Keep user data off C: drive
+3. Backup before changes - Create AMI snapshots before volume modifications
+4. Avoid volume changes - Plan volume configuration carefully during initial deployment
+
+### Required Root Volume
+```hcl
+volumes = {
+  Root = {                    # ← MUST be exactly "Root" (case-sensitive)
+    capacity = 256            # ← Root volume automatically gets C: drive
+    type = "gp3"
+  }
+}
+```
+
+### Drive Letter Assignment
+**Automatic Assignment**: The module uses Windows auto-assignment for all drive letters:
+
+- **Root Volume** → **C:** drive (Windows boot requirement)
+- **EBS Volumes** → **Auto-assigned** (typically D:, E:, F:, etc.)
+- **Instance Store** → **Auto-assigned** (typically next available letter)
+
+**G4dn Instance Store Sizes**:
+- `g4dn.xlarge`: 125GB NVMe SSD (auto-assigned)
+- `g4dn.2xlarge`: 225GB NVMe SSD (auto-assigned)
+- `g4dn.4xlarge`: 225GB NVMe SSD (auto-assigned)
+- `g4dn.8xlarge`: 900GB NVMe SSD (auto-assigned)
+
+**Benefits**:
+- ✅ **Simple configuration** - No drive letter conflicts
+- ✅ **Windows native behavior** - Uses standard assignment logic
+- ✅ **User customizable** - Users can reassign letters via Disk Management
+- ✅ **Cost efficiency** - Utilize included instance store
+
+### Data Loss Warnings
+
+**CRITICAL: Terraform forces instance replacement for ANY volume configuration change**
+
+- Adding volumes: Instance replacement, root volume data lost
+- Removing volumes: Instance replacement, root volume + removed volume data lost
+- Changing volume properties: Instance replacement, root volume data lost
+- Changing volume names: Instance replacement, root volume data lost
+- Root volume changes: Instance replacement, complete data loss
+- Instance store data: Lost on stop/terminate (use for temp files only)
+
+**ALL EBS volumes are deleted during instance replacement due to Terraform defaults**
+
+### Safe Volume Operations
+- **Adding new volumes**: ✅ Safe, automatically initialized
+- **Increasing volume sizes**: ✅ Safe, partitions automatically extended
+- **Changing volume types**: ✅ Safe (performance change only)
+- **Changing IOPS/throughput**: ✅ Safe (performance change only)
+
+### Volume Change Lifecycle
+
+| Change Type | Automatic Handling | Data Safety | User Action Required |
+|-------------|-------------------|-------------|---------------------|
+| **Add Volume** | ✅ Auto-initialized | ✅ Safe | None |
+| **Increase Size** | ✅ Auto-extended | ✅ Safe | None |
+| **Remove Volume** | ⚠️ Orphaned drive letters | ❌ **Data lost** | Manual cleanup |
+| **Change Drive Letter** | ❌ Volume recreated | ❌ **Data lost** | Backup/restore |
+| **Rename Volume** | ❌ Volume recreated | ❌ **Data lost** | Backup/restore |
+
+### Volume Naming & Drive Letter Assignment
+- **Terraform names** ("Root", "Projects", "Cache") are organizational only
+- **Windows sees** drive letters and volume labels set by initialization script
+- **"Root" is special** - handled by `root_block_device`, everything else uses `ebs_block_device`
+- **All volumes** - Use Windows auto-assignment (typically D:, E:, F:, etc.)
+- **Volume labels** - Instance store labeled "Ephemeral", EBS volumes labeled "Data"
+- **Users can reassign** - Use Windows Disk Management to change letters after deployment
+
+**Typical Drive Layout Example**:
+```
+C: = Root EBS (300GB) - Windows OS
+D: = Data (2TB) - EBS volume (auto-assigned)
+E: = Data (200GB) - EBS volume (auto-assigned)
+F: = Ephemeral (225GB) - Instance store (auto-assigned, lost on stop)
 ```
 
 ## Advanced Configuration
@@ -243,6 +424,12 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 - Check AMI is in correct region
 - Ensure Packer build completed successfully
 
+**Drive Letter Issues**
+- Check drive assignment: `Get-Disk | Format-Table Number, Size, BusType`
+- Verify T: drive exists: `Get-Partition | Where-Object DriveLetter -eq 'T'`
+- Instance store should be on T:, EBS volumes on D:, E:, etc.
+- Force drive reassignment: Set `force_run_provisioning = "true"` and apply
+
 **Connection Timeouts**
 - Check security group allows your IP: `curl https://checkip.amazonaws.com/`
 - Verify instance is running: `aws ec2 describe-instances`
@@ -265,7 +452,19 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 
 **User Accounts Not Created**
 - Check SSM command status: `aws ssm list-command-invocations --instance-id <id>`
-- Retry user creation: `aws ssm send-command --document-name "setup-dcv-users-sessions"`
+- Check user creation status: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"`
+- Check detailed messages: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_message"`
+- Force retry: Set `force_run_scripts = "true"` in module config and apply
+
+**Volume Initialization Issues**
+- Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
+- Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
+- Force retry: Set `debug = true` (WARNING: triggers instance replacement)
+
+**Software Installation Problems**
+- Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`
+- Check failed packages: `aws ssm get-parameter --name "/{project}/{workstation}/software_message"`
+- Force retry: Set `force_run_scripts = "true"` to reinstall all packages
 
 ### Debug Commands
 ```bash
@@ -311,7 +510,7 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.13 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.0.0 |
@@ -325,7 +524,7 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.0.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.60.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
@@ -376,8 +575,11 @@ No modules.
 | [aws_security_group.workstation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_ssm_association.software_installation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association) | resource |
 | [aws_ssm_association.vdi_user_creation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association) | resource |
+| [aws_ssm_association.volume_initialization](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_association) | resource |
 | [aws_ssm_document.create_vdi_users](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_document) | resource |
+| [aws_ssm_document.initialize_volumes](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_document) | resource |
 | [aws_ssm_document.install_software](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_document) | resource |
+| [aws_ssm_parameter.vdi_dns](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_vpc_security_group_egress_rule.all_outbound](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.dcv_https_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.dcv_quic_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -410,17 +612,18 @@ No modules.
 | <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br>    client_cidr_block       = optional(string, "192.168.0.0/16")<br>    generate_client_configs = optional(bool, true)<br>    split_tunnel            = optional(bool, true)<br>  })</pre> | `{}` | no |
 | <a name="input_create_client_vpn"></a> [create\_client\_vpn](#input\_create\_client\_vpn) | Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs) | `bool` | `false` | no |
 | <a name="input_create_default_security_groups"></a> [create\_default\_security\_groups](#input\_create\_default\_security\_groups) | Create default security groups for VDI workstations | `bool` | `true` | no |
+| <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode to force re-run all VDI scripts and accelerate testing. Set to true to trigger, false for normal operation.<br><br>⚠️  WARNING: Volume script changes can cause data access issues on existing systems:<br>- Changing drive letters may break application shortcuts and saved paths<br>- Users may temporarily lose access to data until they update their shortcuts<br>- Consider notifying users before making drive letter changes<br>- New volumes and disk initialization are always safe | `bool` | `false` | no |
 | <a name="input_ebs_kms_key_id"></a> [ebs\_kms\_key\_id](#input\_ebs\_kms\_key\_id) | KMS key ID for EBS encryption (if encryption enabled) | `string` | `null` | no |
 | <a name="input_enable_centralized_logging"></a> [enable\_centralized\_logging](#input\_enable\_centralized\_logging) | Enable centralized logging with CloudWatch log groups following CGD Toolkit patterns | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | CloudWatch log retention period in days | `number` | `30` | no |
-| <a name="input_presets"></a> [presets](#input\_presets) | Configuration blueprints defining instance types and named volumes with Windows drive mapping.<br><br>**KEY BECOMES PRESET NAME**: The map key (e.g., "ue-developer") becomes the preset name referenced by workstations.<br><br>Presets provide reusable configurations that can be referenced by multiple workstations via preset\_key.<br><br>Example:<br>presets = {<br>  "ue-developer" = {           # ← This key becomes the preset name<br>    instance\_type = "g4dn.2xlarge"<br>    gpu\_enabled   = true<br>    volumes = {<br>      Root = { capacity = 256, type = "gp3", windows\_drive = "C:" }<br>      Projects = { capacity = 1024, type = "gp3", windows\_drive = "D:" }<br>    }<br>  }<br>  "basic-workstation" = {      # ← Another preset name<br>    instance\_type = "g4dn.xlarge"<br>    gpu\_enabled   = true<br>  }<br>}<br><br># Referenced by workstations:<br>workstations = {<br>  "alice-ws" = {<br>    preset\_key = "ue-developer"      # ← References preset by key<br>  }<br>}<br><br>Valid volume types: "gp2", "gp3", "io1", "io2"<br>Windows drives: "C:", "D:", "E:", etc.<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Core compute configuration<br>    instance_type = string<br>    ami           = optional(string, null)<br><br>    # Hardware configuration<br>    gpu_enabled = optional(bool, true)<br><br>    # Named volumes with Windows drive mapping<br>    volumes = map(object({<br>      capacity      = number<br>      type          = string<br>      windows_drive = string<br>      iops          = optional(number, 3000)<br>      throughput    = optional(number, 125)<br>      encrypted     = optional(bool, true)<br>    }))<br><br>    # Optional configuration<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br>    tags                   = optional(map(string), {})<br>  }))</pre> | `{}` | no |
+| <a name="input_presets"></a> [presets](#input\_presets) | Configuration blueprints defining instance types and named volumes with Windows drive mapping.<br><br>**KEY BECOMES PRESET NAME**: The map key (e.g., "ue-developer") becomes the preset name referenced by workstations.<br><br>Presets provide reusable configurations that can be referenced by multiple workstations via preset\_key.<br><br>Example:<br>presets = {<br>  "ue-developer" = {           # ← This key becomes the preset name<br>    instance\_type = "g4dn.2xlarge"<br>    gpu\_enabled   = true<br>    volumes = {<br>      Root = { capacity = 256, type = "gp3" }  # Root volume automatically gets C:<br>      Projects = { capacity = 1024, type = "gp3", windows\_drive = "Z:" }  # Specify drive letter<br>      Cache = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter (Y:, X:, etc.)<br>    }<br>  }<br>  "basic-workstation" = {      # ← Another preset name<br>    instance\_type = "g4dn.xlarge"<br>    gpu\_enabled   = true<br>    volumes = {<br>      Root = { capacity = 200, type = "gp3" }  # Root volume automatically gets C:<br>      UserData = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter<br>    }<br>  }<br>}<br><br># Referenced by workstations:<br>workstations = {<br>  "alice-ws" = {<br>    preset\_key = "ue-developer"      # ← References preset by key<br>  }<br>}<br><br>Valid volume types: "gp2", "gp3", "io1", "io2"<br>Drive letters are auto-assigned by Windows (typically C: for root, D:, E:, F:, etc. for additional volumes).<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Core compute configuration<br>    instance_type = string<br>    ami           = optional(string, null)<br><br>    # Hardware configuration<br>    gpu_enabled = optional(bool, true)<br><br>    # Named volumes with auto-assigned drive letters<br>    volumes = map(object({<br>      capacity   = number<br>      type       = string<br>      iops       = optional(number, 3000)<br>      throughput = optional(number, 125)<br>      encrypted  = optional(bool, true)<br>    }))<br><br>    # Optional configuration<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br>    tags                   = optional(map(string), {})<br>  }))</pre> | `{}` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Prefix for resource names | `string` | `"cgd"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region for deployment | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "terraform-aws-vdi",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi",<br>  "RootModuleName": "-"<br>}</pre> | no |
-| <a name="input_users"></a> [users](#input\_users) | Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)<br><br>**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.<br><br>type options (Windows groups):<br>- "fleet\_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)<br>- "administrator": User added to Windows Administrators group, created only on assigned workstation<br>- "user": User added to Windows Users group, created only on assigned workstation<br><br>use\_client\_vpn options (VPN access):<br>- false: User accesses VDI via public internet or external VPN (default)<br>- true: User accesses VDI via module's Client VPN (generates VPN config)<br><br>Example:<br>users = {<br>  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"<br>    given\_name = "VDI"<br>    family\_name = "Administrator"<br>    email = "admin@company.com"<br>    type = "fleet\_administrator" # Windows Administrators group on ALL workstations<br>  }<br>  "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"<br>    given\_name = "Naruto"<br>    family\_name = "Uzumaki"<br>    email = "naruto@konoha.com"<br>    type = "user"               # Windows Users group<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "naruto-uzumaki"  # References users{} key directly in workstation | <pre>map(object({<br>    given_name     = string<br>    family_name    = string<br>    email          = string<br>    type           = optional(string, "user") # "administrator" or "user" (Windows group)<br>    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN<br>    tags           = optional(map(string), {})<br>  }))</pre> | `{}` | no |
+| <a name="input_users"></a> [users](#input\_users) | Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)<br><br>**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.<br><br>type options (Windows groups):<br>- "fleet\_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)<br>- "administrator": User added to Windows Administrators group, created only on assigned workstation<br>- "user": User added to Windows Users group, created only on assigned workstation<br><br>use\_client\_vpn options (VPN access):<br>- false: User accesses VDI via public internet or external VPN (default)<br>- true: User accesses VDI via module's Client VPN (generates VPN config)<br><br>Example:<br>users = {<br>  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"<br>    given\_name = "VDI"<br>    family\_name = "Administrator"<br>    email = "admin@example.com"<br>    type = "fleet\_administrator" # Windows Administrators group on ALL workstations<br>    use\_client\_vpn = false      # Accesses via public internet/external VPN<br>  }<br>  "alice" = {                 # ← Public connectivity user<br>    given\_name = "Alice"<br>    family\_name = "Smith"<br>    email = "alice@example.com"<br>    type = "user"               # Windows Users group<br>    use\_client\_vpn = false      # Accesses via public internet (allowed\_cidr\_blocks)<br>  }<br>  "bob" = {                   # ← Private connectivity user<br>    given\_name = "Bob"<br>    family\_name = "Johnson"<br>    email = "bob@example.com"<br>    type = "user"               # Windows Users group<br>    use\_client\_vpn = true       # Accesses via module's Client VPN<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "naruto-uzumaki"  # References users{} key directly in workstation | <pre>map(object({<br>    given_name     = string<br>    family_name    = string<br>    email          = string<br>    type           = optional(string, "user") # "administrator" or "user" (Windows group)<br>    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN<br>    tags           = optional(map(string), {})<br>  }))</pre> | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID where VDI instances will be deployed | `string` | n/a | yes |
-| <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br><br>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br><br>Workstations inherit configuration from templates via preset\_key reference.<br><br>Example:<br>workstations = {<br>  "alice-workstation" = {        # ← This key becomes the workstation name<br>    preset\_key = "ue-developer"    # ← References templates{} key<br>    subnet\_id = "subnet-123"<br>    availability\_zone = "us-east-1a"<br>    security\_groups = ["sg-456"]<br>    # assigned\_user = "alice"  # User assigned to this workstation<br>    allowed\_cidr\_blocks = ["203.0.113.1/32"]<br>  }<br>  "vdi-001" = {                  # ← Another workstation name<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-456"<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "alice"  # References users{} key directly in workstation<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Preset reference (optional - can use direct config instead)<br>    preset_key = optional(string, null)<br><br>    # Infrastructure placement<br>    subnet_id       = string<br>    security_groups = list(string)<br>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br><br>    # Direct configuration (used when preset_key is null or as overrides)<br>    ami           = optional(string, null)<br>    instance_type = optional(string, null)<br>    gpu_enabled   = optional(bool, null)<br>    volumes = optional(map(object({<br>      capacity      = number<br>      type          = string<br>      windows_drive = string<br>      iops          = optional(number, 3000)<br>      throughput    = optional(number, 125)<br>      encrypted     = optional(bool, true)<br>    })), null)<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br><br>    # Optional overrides<br>    allowed_cidr_blocks             = optional(list(string), null)<br>    capacity_reservation_preference = optional(string, null)<br>    tags                            = optional(map(string), null)<br>  }))</pre> | `{}` | no |
+| <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br><br>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br><br>Workstations inherit configuration from templates via preset\_key reference.<br><br>Example:<br>workstations = {<br>  # Public connectivity - user accesses via internet<br>  "alice-workstation" = {<br>    preset\_key = "ue-developer"<br>    subnet\_id = "subnet-public-123"     # Public subnet<br>    security\_groups = ["sg-vdi-public"]<br>    assigned\_user = "alice"<br>    allowed\_cidr\_blocks = ["203.0.113.1/32"]  # Alice's home IP<br>  }<br>  # Private connectivity - user accesses via VPN<br>  "bob-workstation" = {<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-private-456"    # Private subnet<br>    security\_groups = ["sg-vdi-private"]<br>    assigned\_user = "bob"<br>    # No allowed\_cidr\_blocks - accessed via Client VPN<br>  }<br>  # Additional volumes at workstation level<br>  "dev-workstation" = {<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-private-789"<br>    security\_groups = ["sg-vdi-private"]<br>    volumes = {<br>      ExtraStorage = { capacity = 2000, type = "gp3", windows\_drive = "Y:" }<br>    }<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "alice"  # References users{} key directly in workstation<br><br>Drive letters are auto-assigned by Windows. Users can reassign them via Disk Management if needed.<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Preset reference (optional - can use direct config instead)<br>    preset_key = optional(string, null)<br><br>    # Infrastructure placement<br>    subnet_id       = string<br>    security_groups = list(string)<br>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br><br>    # Direct configuration (used when preset_key is null or as overrides)<br>    ami           = optional(string, null)<br>    instance_type = optional(string, null)<br>    gpu_enabled   = optional(bool, null)<br>    volumes = optional(map(object({<br>      capacity   = number<br>      type       = string<br>      iops       = optional(number, 3000)<br>      throughput = optional(number, 125)<br>      encrypted  = optional(bool, true)<br>    })), null)<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br><br>    # Optional overrides<br>    allowed_cidr_blocks             = optional(list(string), null)<br>    capacity_reservation_preference = optional(string, null)<br>    tags                            = optional(map(string), null)<br>  }))</pre> | `{}` | no |
 
 ## Outputs
 

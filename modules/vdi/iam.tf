@@ -62,6 +62,7 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
+      "ssm:PutParameter",
       "ssm:SendCommand",
       "ssm:ListCommandInvocations",
       "ssm:DescribeInstanceInformation",

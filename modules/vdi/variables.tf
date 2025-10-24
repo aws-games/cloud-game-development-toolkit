@@ -52,14 +52,13 @@ variable "presets" {
     # Hardware configuration
     gpu_enabled = optional(bool, true)
 
-    # Named volumes with Windows drive mapping
+    # Named volumes with auto-assigned drive letters
     volumes = map(object({
-      capacity      = number
-      type          = string
-      windows_drive = string
-      iops          = optional(number, 3000)
-      throughput    = optional(number, 125)
-      encrypted     = optional(bool, true)
+      capacity   = number
+      type       = string
+      iops       = optional(number, 3000)
+      throughput = optional(number, 125)
+      encrypted  = optional(bool, true)
     }))
 
     # Optional configuration
@@ -82,13 +81,18 @@ presets = {
     instance_type = "g4dn.2xlarge"
     gpu_enabled   = true
     volumes = {
-      Root = { capacity = 256, type = "gp3", windows_drive = "C:" }
-      Projects = { capacity = 1024, type = "gp3", windows_drive = "D:" }
+      Root = { capacity = 256, type = "gp3" }  # Root volume automatically gets C:
+      Projects = { capacity = 1024, type = "gp3", windows_drive = "Z:" }  # Specify drive letter
+      Cache = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter (Y:, X:, etc.)
     }
   }
   "basic-workstation" = {      # ← Another preset name
     instance_type = "g4dn.xlarge"
     gpu_enabled   = true
+    volumes = {
+      Root = { capacity = 200, type = "gp3" }  # Root volume automatically gets C:
+      UserData = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter
+    }
   }
 }
 
@@ -100,7 +104,7 @@ workstations = {
 }
 
 Valid volume types: "gp2", "gp3", "io1", "io2"
-Windows drives: "C:", "D:", "E:", etc.
+Drive letters are auto-assigned by Windows (typically C: for root, D:, E:, F:, etc. for additional volumes).
 
 additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
 Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
@@ -129,16 +133,19 @@ EOF
     error_message = "All volume capacities must be between 30 and 16384 GiB."
   }
 
+
+
+
+
   validation {
     condition = alltrue([
       for preset_key, config in var.presets :
-      alltrue([
-        for volume_name, volume in config.volumes :
-        can(regex("^[A-Z]:$", volume.windows_drive))
-      ])
+      length([for volume_name, volume in config.volumes : volume_name if lower(volume_name) == "root"]) <= 1
     ])
-    error_message = "Windows drive must be in format 'C:', 'D:', 'E:', etc."
+    error_message = "Only one root volume is allowed per preset. The root volume is automatically assigned C: by AWS."
   }
+
+
 
   validation {
     condition = alltrue([
@@ -147,6 +154,10 @@ EOF
     ])
     error_message = "AMI must be specified for all templates. Use data sources or direct AMI IDs."
   }
+
+
+
+
 
 }
 
@@ -166,12 +177,11 @@ variable "workstations" {
     instance_type = optional(string, null)
     gpu_enabled   = optional(bool, null)
     volumes = optional(map(object({
-      capacity      = number
-      type          = string
-      windows_drive = string
-      iops          = optional(number, 3000)
-      throughput    = optional(number, 125)
-      encrypted     = optional(bool, true)
+      capacity   = number
+      type       = string
+      iops       = optional(number, 3000)
+      throughput = optional(number, 125)
+      encrypted  = optional(bool, true)
     })), null)
     iam_instance_profile   = optional(string, null)
     additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role
@@ -192,22 +202,37 @@ Workstations inherit configuration from templates via preset_key reference.
 
 Example:
 workstations = {
-  "alice-workstation" = {        # ← This key becomes the workstation name
-    preset_key = "ue-developer"    # ← References templates{} key
-    subnet_id = "subnet-123"
-    availability_zone = "us-east-1a"
-    security_groups = ["sg-456"]
-    # assigned_user = "alice"  # User assigned to this workstation
-    allowed_cidr_blocks = ["203.0.113.1/32"]
+  # Public connectivity - user accesses via internet
+  "alice-workstation" = {
+    preset_key = "ue-developer"
+    subnet_id = "subnet-public-123"     # Public subnet
+    security_groups = ["sg-vdi-public"]
+    assigned_user = "alice"
+    allowed_cidr_blocks = ["203.0.113.1/32"]  # Alice's home IP
   }
-  "vdi-001" = {                  # ← Another workstation name
+  # Private connectivity - user accesses via VPN
+  "bob-workstation" = {
     preset_key = "basic-workstation"
-    subnet_id = "subnet-456"
+    subnet_id = "subnet-private-456"    # Private subnet
+    security_groups = ["sg-vdi-private"]
+    assigned_user = "bob"
+    # No allowed_cidr_blocks - accessed via Client VPN
+  }
+  # Additional volumes at workstation level
+  "dev-workstation" = {
+    preset_key = "basic-workstation"
+    subnet_id = "subnet-private-789"
+    security_groups = ["sg-vdi-private"]
+    volumes = {
+      ExtraStorage = { capacity = 2000, type = "gp3", windows_drive = "Y:" }
+    }
   }
 }
 
 # User assignment is now direct:
 # assigned_user = "alice"  # References users{} key directly in workstation
+
+Drive letters are auto-assigned by Windows. Users can reassign them via Disk Management if needed.
 
 additional_policy_arns: List of additional IAM policy ARNs to attach to the VDI instance role.
 Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"]
@@ -249,6 +274,35 @@ EOF
   }
 
 
+
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.volumes == null || length([for volume_name, volume in config.volumes : volume_name if lower(volume_name) == "root"]) <= 1
+    ])
+    error_message = "Only one root volume is allowed per workstation. The root volume is automatically assigned C: by AWS."
+  }
+
+  validation {
+    condition = alltrue([
+      for workstation_key, config in var.workstations :
+      config.preset_key == null || config.volumes == null || (
+        length([for volume_name, volume in config.volumes : volume_name if lower(volume_name) == "root"]) == 0 ||
+        length([for volume_name, volume in var.presets[config.preset_key].volumes : volume_name if lower(volume_name) == "root"]) == 0
+      )
+    ])
+    error_message = "Cannot define root volume in both preset and workstation. Root volume should be defined in either preset OR workstation, not both."
+  }
+
+
+
+
+
+
+
+
+
+
 }
 
 # 3. LOCAL USERS - Windows user accounts with group types and connectivity
@@ -280,14 +334,23 @@ users = {
   "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"
     given_name = "VDI"
     family_name = "Administrator"
-    email = "admin@company.com"
+    email = "admin@example.com"
     type = "fleet_administrator" # Windows Administrators group on ALL workstations
+    use_client_vpn = false      # Accesses via public internet/external VPN
   }
-  "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"
-    given_name = "Naruto"
-    family_name = "Uzumaki"
-    email = "naruto@konoha.com"
+  "alice" = {                 # ← Public connectivity user
+    given_name = "Alice"
+    family_name = "Smith"
+    email = "alice@example.com"
     type = "user"               # Windows Users group
+    use_client_vpn = false      # Accesses via public internet (allowed_cidr_blocks)
+  }
+  "bob" = {                   # ← Private connectivity user
+    given_name = "Bob"
+    family_name = "Johnson"
+    email = "bob@example.com"
+    type = "user"               # Windows Users group
+    use_client_vpn = true       # Accesses via module's Client VPN
   }
 }
 
@@ -434,4 +497,22 @@ variable "capacity_reservation_preference" {
     condition     = var.capacity_reservation_preference == null || contains(["open", "none"], var.capacity_reservation_preference)
     error_message = "Must be null, 'open', or 'none'."
   }
+}
+
+########################################
+# PROVISIONING CONTROL
+########################################
+
+variable "debug" {
+  description = <<EOF
+Enable debug mode to force re-run all VDI scripts and accelerate testing. Set to true to trigger, false for normal operation.
+
+⚠️  WARNING: Volume script changes can cause data access issues on existing systems:
+- Changing drive letters may break application shortcuts and saved paths
+- Users may temporarily lose access to data until they update their shortcuts
+- Consider notifying users before making drive letter changes
+- New volumes and disk initialization are always safe
+EOF
+  type        = bool
+  default     = false
 }

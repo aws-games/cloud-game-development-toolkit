@@ -32,15 +32,14 @@ locals {
 
       # Software configuration removed - use custom AMIs
 
-      # Volume processing with Windows drive mapping
+      # Volume processing with auto-assigned drive letters
       volumes = {
         for volume_name, volume_config in config.volumes : volume_name => {
-          capacity      = volume_config.capacity
-          type          = volume_config.type
-          windows_drive = volume_config.windows_drive
-          iops          = volume_config.iops
-          throughput    = volume_config.throughput
-          encrypted     = volume_config.encrypted
+          capacity   = volume_config.capacity
+          type       = volume_config.type
+          iops       = volume_config.iops
+          throughput = volume_config.throughput
+          encrypted  = volume_config.encrypted
           # Add device mapping for Windows (AWS supports /dev/sdf to /dev/sdp)
           device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
         }
@@ -81,16 +80,20 @@ locals {
       instance_type = coalesce(config.instance_type, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].instance_type : null)
       gpu_enabled   = coalesce(config.gpu_enabled, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].gpu_enabled : null, false)
 
-      # VOLUME CONFIGURATION (all-or-nothing override)
-      # If workstation defines volumes, use those completely (ignore preset volumes)
-      # If workstation doesn't define volumes, use preset volumes (or empty if no preset)
-      volumes = config.volumes != null ? {
-        # Process workstation-defined volumes and add AWS device mappings
-        for volume_name, volume_config in config.volumes : volume_name => merge(volume_config, {
-          # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
-          device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
+      # VOLUME CONFIGURATION (merge preset + workstation volumes)
+      # Workstation volumes override preset volumes by name, preset volumes remain unless overridden
+      volumes = {
+        for volume_name, volume_config in merge(
+          local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
+          config.volumes != null ? config.volumes : {}
+          ) : volume_name => merge(volume_config, {
+            # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
+            device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(merge(
+              local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
+              config.volumes != null ? config.volumes : {}
+            )), volume_name) - 1, 1)}"
         })
-      } : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {})
+      }
 
       # OPTIONAL CONFIGURATION with 3-tier priority
       software_packages    = coalesce(config.software_packages, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].software_packages : null, [])
@@ -199,7 +202,7 @@ locals {
       }
       if config.assigned_user != null && var.users[config.assigned_user].type == "administrator"
     },
-    # Global administrators: admin on ALL workstations (fleet management)
+    # Fleet administrators: admin on ALL workstations (fleet management)
     {
       for combo in flatten([
         for workstation_key in keys(var.workstations) : [
@@ -212,7 +215,9 @@ locals {
       ]) : "${combo.workstation}-${combo.user}" => combo
     }
   )
-} # Random ID for unique resource naming
+}
+
+# Random ID for unique resource naming
 resource "random_id" "suffix" {
   byte_length = 4
 }
