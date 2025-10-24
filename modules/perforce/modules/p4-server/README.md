@@ -135,6 +135,7 @@ No modules.
 | <a name="input_logs_volume_size"></a> [logs\_volume\_size](#input\_logs\_volume\_size) | The size of the logs volume in GiB. Defaults to 32 GiB. | `number` | `32` | no |
 | <a name="input_metadata_volume_size"></a> [metadata\_volume\_size](#input\_metadata\_volume\_size) | The size of the metadata volume in GiB. Defaults to 32 GiB. | `number` | `32` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to P4 Server module resources. | `string` | `"p4-server"` | no |
+| <a name="input_p4_code_review_url"></a> [p4\_code\_review\_url](#input\_p4\_code\_review\_url) | The URL for the P4 Code Review (Swarm) service. Used to configure the Helix Swarm Extension. | `string` | `null` | no |
 | <a name="input_p4_server_type"></a> [p4\_server\_type](#input\_p4\_server\_type) | The Perforce P4 Server type. | `string` | n/a | yes |
 | <a name="input_plaintext"></a> [plaintext](#input\_plaintext) | Whether to enable plaintext authentication for P4 Server. This is not recommended for production environments unless you are using a load balancer for TLS termination. | `bool` | `false` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |

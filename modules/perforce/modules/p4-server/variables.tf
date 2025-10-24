@@ -36,6 +36,12 @@ variable "auth_service_url" {
   default     = null
 }
 
+variable "p4_code_review_url" {
+  type        = string
+  description = "The URL for the P4 Code Review (Swarm) service. Used to configure the Helix Swarm Extension."
+  default     = null
+}
+
 ########################################
 # Compute
 ########################################

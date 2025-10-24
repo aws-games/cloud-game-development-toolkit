@@ -11,6 +11,7 @@ For a video walkthrough demonstrating how to use this module, see this YouTube V
   of [P4 Code Review (formerly Helix Swarm)](https://www.perforce.com/products/helix-swarm)
 - Dynamic creation and configuration
   of [P4Auth (formerly Helix Authentication Service)](https://help.perforce.com/helix-core/integrations-plugins/helix-auth-svc/current/Content/HAS/overview-of-has.html)
+- **Automated Helix Swarm Extension configuration** - When deploying P4 Code Review alongside P4 Server, the module automatically configures the Helix Swarm Extension on the P4 Server, eliminating manual post-deployment configuration steps
 
 ## Architecture
 

@@ -15,6 +15,9 @@ LOGS_VOLUME_NAME=${logs_volume_name}
     %{ if auth_url != "" ~}
     --auth ${auth_url} \
     %{ endif ~}
+    %{ if p4_code_review_url != "" ~}
+    --swarm ${p4_code_review_url} \
+    %{ endif ~}
     %{ if is_fsxn ~}
     --fsxn_password ${fsxn_password} \
     --fsxn_svm_name ${fsxn_svm_name} \
