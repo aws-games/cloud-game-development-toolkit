@@ -68,6 +68,8 @@ terraform apply
 - **sasuke-uchiha**: Administrator on vdi-002 (DevOps workstation)
 - **boruto-uzumaki**: Standard user on vdi-003 (Junior developer workstation)
 
+**Status Tracking**: User creation status tracked in SSM Parameter Store at `/{project}/{workstation}/users/{username}/status_*`
+
 ### Authentication
 - **Secrets Manager**: All user passwords stored securely
 - **EC2 Key Pairs**: Emergency break-glass access
@@ -125,9 +127,11 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 - **Role-based templates** with appropriate instance types
 
 ### ✅ Reliable User Creation
-- **EC2 user data** creates users immediately at boot
-- **No SSM dependencies** or timing issues
+- **SSM associations** create users with proper timing
+- **Status tracking** via SSM Parameter Store
+- **Force retry** capability with `force_run_provisioning = "true"`
 - **Idempotent** user creation with error handling
+- **Simplified passwords** (letters and numbers only)
 
 ### ✅ Enterprise-Ready
 - **Multi-user support** with proper Windows groups
@@ -139,14 +143,16 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 ## Troubleshooting
 
 ### User Creation Issues
-Check user data execution logs:
+Check SSM command execution and status:
 ```bash
-# Get console output
-aws ec2 get-console-output --instance-id <instance-id> --region us-east-1
+# Check SSM command status
+aws ssm list-command-invocations --instance-id <instance-id>
 
-# Or RDP to instance and check:
-# C:\temp\vdi-setup.log
-# C:\temp\vdi-setup-complete.txt
+# Check user creation status
+aws ssm get-parameter --name "/cgd/vdi-001/users/naruto-uzumaki/status_user_creation"
+
+# Force retry user creation
+# Set force_run_provisioning = "true" in main.tf and apply
 ```
 
 ### AMI Not Found
