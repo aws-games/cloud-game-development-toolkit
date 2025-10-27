@@ -245,3 +245,8 @@ variable "scim_bearer_token_arn" {
     error_message = "scim_bearer_token_arn is only useful if p4d_super_user_arn and p4d_super_user_password_arn are also set, did you mean to set all three?"
   }
 }
+
+variable "extra_env" {
+  type        = map(string)
+  description = "Extra configuration environment variables to set on the p4 auth svc container."
+}
