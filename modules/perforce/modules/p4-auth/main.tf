@@ -97,6 +97,10 @@ resource "aws_ecs_task_definition" "task_definition" {
             value = "${local.data_path}/bearer_token.txt"
           }
         ] : [],
+        [for key, value in var.extra_env : {
+          name  = key
+          value = value
+        }],
       )
       secrets = concat([],
         var.p4d_super_user_password_arn != null ? [

@@ -110,6 +110,7 @@ module "p4_auth" {
   p4d_super_user_arn          = var.p4_auth_config.p4d_super_user_arn
   p4d_super_user_password_arn = var.p4_auth_config.p4d_super_user_password_arn
   scim_bearer_token_arn       = var.p4_auth_config.scim_bearer_token_arn
+  extra_env                   = var.p4_auth_config.extra_env
 
   depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
 }

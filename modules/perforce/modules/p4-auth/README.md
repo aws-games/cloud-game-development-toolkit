@@ -158,6 +158,7 @@ No modules.
 | <a name="input_enable_alb_deletion_protection"></a> [enable\_alb\_deletion\_protection](#input\_enable\_alb\_deletion\_protection) | Enables deletion protection for the P4Auth ALB. Defaults to true. | `bool` | `false` | no |
 | <a name="input_enable_web_based_administration"></a> [enable\_web\_based\_administration](#input\_enable\_web\_based\_administration) | Flag for enabling web based administration of P4Auth. | `bool` | `false` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the P4Auth load balancer. | `list(string)` | `[]` | no |
+| <a name="input_extra_env"></a> [extra\_env](#input\_extra\_env) | Extra configuration environment variables to set on the p4 auth svc container. | `map(string)` | n/a | yes |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where P4Auth will be available. | `string` | `null` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the P4Auth load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to P4Auth module resources. | `string` | `"p4-auth"` | no |
@@ -168,7 +169,7 @@ No modules.
 | <a name="input_s3_enable_force_destroy"></a> [s3\_enable\_force\_destroy](#input\_s3\_enable\_force\_destroy) | Enables force destroy for the S3 bucket for P4Auth access log storage. Defaults to true. | `bool` | `true` | no |
 | <a name="input_scim_bearer_token_arn"></a> [scim\_bearer\_token\_arn](#input\_scim\_bearer\_token\_arn) | If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token. | `string` | `null` | no |
 | <a name="input_subnets"></a> [subnets](#input\_subnets) | A list of subnets to deploy the P4Auth ECS Service into. Private subnets are recommended. | `list(string)` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-auth",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "p4-auth",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br/>  "RootModuleName": "terraform-aws-perforce"<br/>}</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy P4Auth into. | `string` | n/a | yes |
 
 ## Outputs
