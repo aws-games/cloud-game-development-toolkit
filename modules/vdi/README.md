@@ -324,11 +324,11 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.60.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.59.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
 
 ## Modules
 
