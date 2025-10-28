@@ -249,4 +249,5 @@ variable "scim_bearer_token_arn" {
 variable "extra_env" {
   type        = map(string)
   description = "Extra configuration environment variables to set on the p4 auth svc container."
+  default     = null
 }
