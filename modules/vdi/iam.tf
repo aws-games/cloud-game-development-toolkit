@@ -1,4 +1,3 @@
-# IAM role for VDI instances (only create if user doesn't provide custom profile)
 resource "aws_iam_role" "vdi_instance_role" {
   for_each = { for k, v in local.final_instances : k => v if v.iam_instance_profile == null }
   name     = "${local.name_prefix}-${each.key}-vdi-role"
@@ -22,7 +21,6 @@ resource "aws_iam_role" "vdi_instance_role" {
   })
 }
 
-# IAM instance profile for VDI instances (only create if user doesn't provide custom profile)
 resource "aws_iam_instance_profile" "vdi_instance_profile" {
   for_each = aws_iam_role.vdi_instance_role
   name     = "${local.name_prefix}-${each.key}-vdi-profile"
@@ -34,11 +32,9 @@ resource "aws_iam_instance_profile" "vdi_instance_profile" {
   })
 }
 
-# IAM policy document for VDI permissions
 data "aws_iam_policy_document" "vdi_instance_access" {
   for_each = aws_iam_role.vdi_instance_role
 
-  # Basic EC2 permissions for instance metadata and tags
   statement {
     effect = "Allow"
     actions = [
@@ -56,7 +52,6 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     }
   }
 
-  # SSM permissions for software installation and hybrid user creation
   statement {
     effect = "Allow"
     actions = [
@@ -71,7 +66,7 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     resources = ["*"]
   }
 
-  # Additional SSM permissions for hybrid approach (instance triggering SSM on itself)
+
   statement {
     effect = "Allow"
     actions = [
@@ -83,7 +78,6 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     ]
   }
 
-  # S3 permissions for installation scripts
   dynamic "statement" {
     for_each = [1] # S3 buckets always created
     content {
@@ -99,7 +93,6 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     }
   }
 
-  # S3 permissions for DCV licensing (required for EC2 DCV licensing)
   statement {
     effect = "Allow"
     actions = [
@@ -110,7 +103,6 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     ]
   }
 
-  # CloudWatch Logs permissions for centralized logging
   dynamic "statement" {
     for_each = var.enable_centralized_logging ? [1] : []
     content {
@@ -142,11 +134,8 @@ data "aws_iam_policy_document" "vdi_instance_access" {
     ]
     resources = ["*"]
   }
-
-  # Directory Service permissions removed (AD integration disabled)
 }
 
-# Attach permissions to VDI instance role
 resource "aws_iam_role_policy" "vdi_instance_access" {
   for_each = aws_iam_role.vdi_instance_role
   name     = "${local.name_prefix}-${each.key}-instance-access"
@@ -154,21 +143,18 @@ resource "aws_iam_role_policy" "vdi_instance_access" {
   policy   = data.aws_iam_policy_document.vdi_instance_access[each.key].json
 }
 
-# Attach AWS managed policy for SSM
 resource "aws_iam_role_policy_attachment" "vdi_ssm_managed_instance_core" {
   for_each   = aws_iam_role.vdi_instance_role
   role       = aws_iam_role.vdi_instance_role[each.key].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Attach AWS managed policy for CloudWatch Agent (if centralized logging enabled)
 resource "aws_iam_role_policy_attachment" "vdi_cloudwatch_agent" {
   for_each   = var.enable_centralized_logging ? aws_iam_role.vdi_instance_role : {}
   role       = aws_iam_role.vdi_instance_role[each.key].name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-# Attach additional user-specified IAM policies to the default VDI role
 resource "aws_iam_role_policy_attachment" "additional_policies" {
   for_each = {
     for combo in flatten([

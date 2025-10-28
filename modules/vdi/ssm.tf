@@ -1,6 +1,4 @@
-# Simple SSM solution using file() function to avoid variable escaping issues
-
-# User creation document
+# SSM solution using file() function to avoid variable escaping issues
 resource "aws_ssm_document" "create_vdi_users" {
   name            = "${local.name_prefix}-create-vdi-users"
   document_type   = "Command"
@@ -58,7 +56,6 @@ resource "aws_ssm_document" "create_vdi_users" {
   tags = var.tags
 }
 
-# Volume initialization document
 resource "aws_ssm_document" "initialize_volumes" {
   name            = "${local.name_prefix}-initialize-volumes"
   document_type   = "Command"
@@ -84,6 +81,10 @@ resource "aws_ssm_document" "initialize_volumes" {
         type        = "String"
         description = "Hash of volume configuration"
       }
+      VolumeMapping = {
+        type        = "String"
+        description = "JSON mapping of volume sizes to names"
+      }
       ForceRun = {
         type        = "String"
         description = "Force execution trigger"
@@ -93,11 +94,24 @@ resource "aws_ssm_document" "initialize_volumes" {
     mainSteps = [
       {
         action = "aws:runPowerShellScript"
-        name   = "initializeVolumes"
+        name   = "writeScript"
+        inputs = {
+          runCommand = [
+            "New-Item -ItemType Directory -Path 'C:\\temp' -Force",
+            "Set-Content -Path 'C:\\temp\\vdi-volume-script.ps1' -Value @'\n${file("${path.module}/assets/scripts/initialize-volumes.ps1")}\n'@"
+          ]
+        }
+      },
+      {
+        action = "aws:runPowerShellScript"
+        name   = "executeScript"
         inputs = {
           timeoutSeconds = "900"
-          runCommand     = split("\n", file("${path.module}/assets/scripts/initialize-volumes.ps1"))
+          runCommand = [
+            "powershell.exe -ExecutionPolicy Unrestricted -File 'C:\\temp\\vdi-volume-script.ps1' -WorkstationKey '{{ WorkstationKey }}' -ProjectPrefix '{{ ProjectPrefix }}' -Region '{{ Region }}' -VolumeHash '{{ VolumeHash }}' -VolumeMapping '{{ VolumeMapping }}' -ForceRun '{{ ForceRun }}'"
+          ]
         }
+
       }
     ]
   })
@@ -105,7 +119,6 @@ resource "aws_ssm_document" "initialize_volumes" {
   tags = var.tags
 }
 
-# Software installation document (optional background installation)
 resource "aws_ssm_document" "install_software" {
   count = length([
     for workstation_key, config in local.processed_workstations :
@@ -178,7 +191,6 @@ resource "aws_ssm_document" "install_software" {
   tags = var.tags
 }
 
-# Wait for SSM agent to be fully ready (predictable timing for critical user creation)
 resource "time_sleep" "wait_for_ssm_agent" {
   for_each = var.workstations
 
@@ -186,7 +198,6 @@ resource "time_sleep" "wait_for_ssm_agent" {
   create_duration = "180s" # 3 minutes - reduced from 5 minutes
 }
 
-# User creation association (critical path)
 resource "aws_ssm_association" "vdi_user_creation" {
   for_each = {
     for workstation_key, config in var.workstations :
@@ -209,18 +220,24 @@ resource "aws_ssm_association" "vdi_user_creation" {
     AssignedUser   = each.value.assigned_user
     ProjectPrefix  = var.project_prefix
     Region         = var.region
-    ForceRun       = var.debug ? timestamp() : "false"
+    ForceRun       = var.debug || var.force_run_user_script ? timestamp() : "false"
   }
+
+
 }
 
-# Volume initialization association (runs in parallel)
 resource "aws_ssm_association" "volume_initialization" {
   for_each = var.workstations
 
-  depends_on = [time_sleep.wait_for_ssm_agent]
+  depends_on = [aws_volume_attachment.workstation_volume_attachments, time_sleep.wait_for_ssm_agent]
 
   name             = aws_ssm_document.initialize_volumes.name
   association_name = "vdi-volumes-${each.key}"
+
+  apply_only_at_cron_interval      = false
+  wait_for_success_timeout_seconds = 900
+  max_concurrency                  = "1"
+  max_errors                       = "0"
 
   targets {
     key    = "InstanceIds"
@@ -231,13 +248,23 @@ resource "aws_ssm_association" "volume_initialization" {
     WorkstationKey = each.key
     ProjectPrefix  = var.project_prefix
     Region         = var.region
-    VolumeHash     = md5(jsonencode(each.value.volumes))
-    ForceRun       = var.debug ? timestamp() : "false"
+    VolumeHash     = md5(jsonencode(local.processed_workstations[each.key].volumes))
+    VolumeMapping = jsonencode({
+      for volume_name, volume_config in local.processed_workstations[each.key].volumes :
+      volume_config.device_name => volume_name
+      if volume_name != "Root" # Exclude Root volume
+    })
+    ForceRun = var.force_run_volume_script ? timestamp() : md5(jsonencode(local.processed_workstations[each.key].volumes))
+  }
 
+  lifecycle {
+    replace_triggered_by = [
+      aws_volume_attachment.workstation_volume_attachments
+    ]
   }
 }
 
-# Software installation (runs after user creation)
+
 resource "aws_ssm_association" "software_installation" {
   for_each = {
     for workstation_key, config in var.workstations :
@@ -260,6 +287,6 @@ resource "aws_ssm_association" "software_installation" {
     ProjectPrefix  = var.project_prefix
     Region         = var.region
     SoftwareList   = join(",", local.processed_workstations[each.key].software_packages)
-    ForceRun       = var.debug ? timestamp() : "false"
+    ForceRun       = var.debug || var.force_run_software_script ? timestamp() : "false"
   }
 }

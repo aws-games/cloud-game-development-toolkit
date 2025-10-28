@@ -1,6 +1,3 @@
-# S3 buckets for VDI module (always created)
-
-# Keys bucket
 resource "aws_s3_bucket" "keys" {
   #checkov:skip=CKV_AWS_18:Access logging not required for internal VDI keys bucket
   #checkov:skip=CKV2_AWS_61:Lifecycle policy not needed - emergency keys should be retained
@@ -14,7 +11,6 @@ resource "aws_s3_bucket" "keys" {
   })
 }
 
-# Scripts bucket
 resource "aws_s3_bucket" "scripts" {
   #checkov:skip=CKV_AWS_18:Access logging not required for internal VDI scripts bucket
   #checkov:skip=CKV2_AWS_61:Lifecycle policy not needed - scripts should be retained
@@ -28,7 +24,6 @@ resource "aws_s3_bucket" "scripts" {
   })
 }
 
-# Bucket versioning
 resource "aws_s3_bucket_versioning" "keys" {
   bucket = aws_s3_bucket.keys.id
   versioning_configuration {
@@ -43,7 +38,6 @@ resource "aws_s3_bucket_versioning" "scripts" {
   }
 }
 
-# Bucket encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "keys" {
   bucket = aws_s3_bucket.keys.id
   rule {
@@ -62,7 +56,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "scripts" {
   }
 }
 
-# Block public access
 resource "aws_s3_bucket_public_access_block" "keys" {
   bucket = aws_s3_bucket.keys.id
 

@@ -76,11 +76,11 @@ module "vdi" {
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
       volumes = {
         Learning = {
-          capacity  = 200 # Learning materials and projects
+          capacity  = 300 # Learning materials and projects
           type      = "gp3"
           iops      = 3000
           encrypted = true
-        }
+        },
       }
     }
 
@@ -160,15 +160,7 @@ module "vdi" {
     }
   }
 
-
-
-  # DCV session management (Windows DCV creates single shared session automatically)
-
-  # Optional features
   enable_centralized_logging = true
-
-
-
 
   tags = merge(local.tags, {
     Example      = "public-connectivity"

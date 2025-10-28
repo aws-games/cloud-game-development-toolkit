@@ -1,7 +1,3 @@
-########################################
-# CORE CONFIGURATION
-########################################
-
 variable "project_prefix" {
   type        = string
   description = "Prefix for resource names"
@@ -25,24 +21,6 @@ variable "vpc_id" {
 }
 
 
-
-variable "tags" {
-  type        = map(any)
-  description = "Tags to apply to resources."
-  default = {
-    "IaC"            = "Terraform"
-    "ModuleBy"       = "CGD-Toolkit"
-    "RootModuleName" = "-"
-    "ModuleName"     = "terraform-aws-vdi"
-    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi"
-  }
-}
-
-########################################
-# VDI ARCHITECTURE - 5-TIER DESIGN
-########################################
-
-# 1. TEMPLATES - Configuration blueprints with named volumes
 variable "presets" {
   type = map(object({
     # Core compute configuration
@@ -133,10 +111,6 @@ EOF
     error_message = "All volume capacities must be between 30 and 16384 GiB."
   }
 
-
-
-
-
   validation {
     condition = alltrue([
       for preset_key, config in var.presets :
@@ -145,8 +119,6 @@ EOF
     error_message = "Only one root volume is allowed per preset. The root volume is automatically assigned C: by AWS."
   }
 
-
-
   validation {
     condition = alltrue([
       for preset_key, config in var.presets :
@@ -154,14 +126,8 @@ EOF
     ])
     error_message = "AMI must be specified for all templates. Use data sources or direct AMI IDs."
   }
-
-
-
-
-
 }
 
-# 2. WORKSTATIONS - Physical infrastructure with preset references
 variable "workstations" {
   type = map(object({
     # Preset reference (optional - can use direct config instead)
@@ -305,7 +271,7 @@ EOF
 
 }
 
-# 3. LOCAL USERS - Windows user accounts with group types and connectivity
+
 variable "users" {
   type = map(object({
     given_name     = string
@@ -396,27 +362,7 @@ EOF
 
 
 
-########################################
-# DCV SESSION MANAGEMENT
-########################################
 
-
-
-
-
-########################################
-# LEGACY CONFIGURATION (REMOVED IN v2.0.0)
-########################################
-
-# BREAKING CHANGE: vdi_instances and vdi_users variables removed
-# Use new 5-tier architecture: templates, workstations, users, groups, assignments
-# Migration guide: See docs/migration-v1-to-v2.md
-
-
-
-########################################
-# STORAGE (Optional)
-########################################
 
 variable "ebs_kms_key_id" {
   type        = string
@@ -428,9 +374,7 @@ variable "ebs_kms_key_id" {
 
 
 
-########################################
-# CENTRALIZED LOGGING (CGD PATTERN)
-########################################
+
 
 variable "enable_centralized_logging" {
   type        = bool
@@ -451,10 +395,6 @@ variable "log_retention_days" {
 
 
 
-########################################
-# CONNECTIVITY CONFIGURATION
-########################################
-
 
 
 variable "create_client_vpn" {
@@ -473,10 +413,6 @@ variable "client_vpn_config" {
   default     = {}
 }
 
-########################################
-# SECURITY (Optional)
-########################################
-
 
 
 variable "create_default_security_groups" {
@@ -485,9 +421,7 @@ variable "create_default_security_groups" {
   default     = true
 }
 
-########################################
-# CAPACITY RESERVATIONS (Optional)
-########################################
+
 
 variable "capacity_reservation_preference" {
   description = "Capacity reservation preference for EC2 instances"
@@ -499,9 +433,7 @@ variable "capacity_reservation_preference" {
   }
 }
 
-########################################
-# PROVISIONING CONTROL
-########################################
+
 
 variable "debug" {
   description = <<EOF
@@ -515,4 +447,80 @@ Enable debug mode to force re-run all VDI scripts and accelerate testing. Set to
 EOF
   type        = bool
   default     = false
+}
+
+variable "force_run_user_script" {
+  description = <<EOF
+Force user creation script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.
+
+⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.
+
+When to use:
+- User creation failed and needs retry
+- User configuration changes not applied
+- DCV session issues requiring user recreation
+
+Usage:
+1. Set force_run_user_script = true
+2. Run terraform apply
+3. Remove force_run_user_script (or set to false)
+4. Run terraform apply again
+EOF
+  type        = bool
+  default     = false
+}
+
+variable "force_run_volume_script" {
+  description = <<EOF
+Force volume initialization script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.
+
+⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.
+
+When to use:
+- Adding volumes that aren't being initialized automatically
+- Removing volumes and need to clean up drive letters
+- Volume configuration changes that didn't trigger automatically
+- RAW disks that need formatting
+
+Usage:
+1. Set force_run_volume_script = true
+2. Run terraform apply
+3. Remove force_run_volume_script (or set to false)
+4. Run terraform apply again
+EOF
+  type        = bool
+  default     = false
+}
+
+variable "force_run_software_script" {
+  description = <<EOF
+Force software installation script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.
+
+⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.
+
+When to use:
+- Software installation failed and needs retry
+- Adding new software packages
+- Chocolatey package issues requiring reinstallation
+
+Usage:
+1. Set force_run_software_script = true
+2. Run terraform apply
+3. Remove force_run_software_script (or set to false)
+4. Run terraform apply again
+EOF
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  type        = map(any)
+  description = "Tags to apply to resources."
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "-"
+    "ModuleName"     = "terraform-aws-vdi"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi"
+  }
 }
