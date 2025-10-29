@@ -1,4 +1,4 @@
-# Default security groups for VDI instances (created when create_default_security_groups = true)
+
 resource "aws_security_group" "workstation" {
   #checkov:skip=CKV2_AWS_5:Security group is attached to EC2 instances via workstation security_groups variable
   for_each = var.create_default_security_groups ? {
@@ -16,7 +16,6 @@ resource "aws_security_group" "workstation" {
   })
 }
 
-# RDP access ingress rules
 resource "aws_vpc_security_group_ingress_rule" "rdp_access" {
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config
@@ -30,7 +29,6 @@ resource "aws_vpc_security_group_ingress_rule" "rdp_access" {
   description       = "RDP access from allowed CIDR"
 }
 
-# Additional RDP access for allowed CIDR blocks
 resource "aws_vpc_security_group_ingress_rule" "rdp_access_additional" {
   for_each = var.create_default_security_groups ? {
     for user_cidr in flatten([
@@ -52,7 +50,6 @@ resource "aws_vpc_security_group_ingress_rule" "rdp_access_additional" {
   description       = "RDP access from additional CIDR"
 }
 
-# NICE DCV HTTPS access ingress rules
 resource "aws_vpc_security_group_ingress_rule" "dcv_https_access" {
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config
@@ -66,7 +63,6 @@ resource "aws_vpc_security_group_ingress_rule" "dcv_https_access" {
   description       = "NICE DCV HTTPS access from allowed CIDR"
 }
 
-# NICE DCV QUIC (UDP) access ingress rules
 resource "aws_vpc_security_group_ingress_rule" "dcv_quic_access" {
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config
@@ -80,7 +76,6 @@ resource "aws_vpc_security_group_ingress_rule" "dcv_quic_access" {
   description       = "NICE DCV QUIC access from allowed CIDR"
 }
 
-# HTTPS access ingress rules
 resource "aws_vpc_security_group_ingress_rule" "https_access" {
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config
@@ -94,11 +89,6 @@ resource "aws_vpc_security_group_ingress_rule" "https_access" {
   description       = "HTTPS access from allowed CIDR"
 }
 
-# Domain joining traffic removed (AD integration disabled)
-
-# Dynamic RPC ports removed (AD integration disabled)
-
-# All outbound traffic egress rules
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {
   for_each = var.create_default_security_groups ? {
     for workstation_key, config in local.final_instances : workstation_key => config

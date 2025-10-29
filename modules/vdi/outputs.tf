@@ -1,6 +1,3 @@
-# VDI Module Essential Outputs
-
-# Instance information
 output "public_ips" {
   description = "Map of workstation public IP addresses"
   value = {
@@ -13,7 +10,6 @@ output "ami_id" {
   value       = "AMIs specified per template - see template configurations"
 }
 
-# Connection information
 output "connection_info" {
   description = "Complete connection information for VDI workstations"
   value = {
@@ -44,7 +40,6 @@ output "connection_info" {
   }
 }
 
-# Emergency access
 output "private_keys" {
   description = "Private keys for emergency access (sensitive)"
   value = {
@@ -60,9 +55,6 @@ output "emergency_key_paths" {
   }
 }
 
-
-
-# Private DNS zone for cross-region associations
 output "private_zone_id" {
   description = "Private hosted zone ID for creating additional VPC associations"
   value       = aws_route53_zone.private.zone_id
@@ -73,7 +65,6 @@ output "private_zone_name" {
   value       = aws_route53_zone.private.name
 }
 
-# VPN configuration bucket
 output "vpn_configs_bucket" {
   description = "S3 bucket name for VPN configuration files"
   value       = var.create_client_vpn ? aws_s3_bucket.vpn_configs[0].id : null

@@ -1,6 +1,3 @@
-# DNS Architecture for VDI Module
-
-# Private hosted zone for internal DNS (always created)
 resource "aws_route53_zone" "private" {
   name = local.private_zone_name
 
@@ -15,11 +12,6 @@ resource "aws_route53_zone" "private" {
   })
 }
 
-
-
-
-
-# User DNS records in main private zone
 resource "aws_route53_record" "user_dns_records" {
   for_each = var.create_client_vpn ? var.workstations : {}
 
