@@ -2,8 +2,7 @@ param(
     [string]$WorkstationKey,
     [string]$AssignedUser,
     [string]$ProjectPrefix,
-    [string]$Region,
-    [string]$ForceRun
+    [string]$Region
 )
 
 Write-Host "Creating VDI users for $WorkstationKey"

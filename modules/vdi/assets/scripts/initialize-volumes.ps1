@@ -3,8 +3,7 @@ param(
     [string]$ProjectPrefix,
     [string]$Region,
     [string]$VolumeHash,
-    [string]$VolumeMapping,
-    [string]$ForceRun
+    [string]$VolumeMapping
 )
 
 # Exit codes for different scenarios
@@ -103,7 +102,7 @@ foreach ($deviceName in $previousVolumeMap.PSObject.Properties.Name) {
 }
 
 # Idempotency check - skip if already completed and no changes detected
-if (Test-Path $markerFile -and $ForceRun -notmatch "^\d{4}-\d{2}-\d{2}" -and $addedVolumes.Count -eq 0) {
+if (Test-Path $markerFile -and $addedVolumes.Count -eq 0) {
     try {
         $markerContent = Get-Content $markerFile | ConvertFrom-Json
         if ($markerContent.VolumeHash -eq $VolumeHash) {
