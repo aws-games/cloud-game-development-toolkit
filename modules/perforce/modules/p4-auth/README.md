@@ -80,9 +80,9 @@ curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.50.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.97.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.34.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
 
 ## Modules
 
@@ -158,7 +158,7 @@ No modules.
 | <a name="input_enable_alb_deletion_protection"></a> [enable\_alb\_deletion\_protection](#input\_enable\_alb\_deletion\_protection) | Enables deletion protection for the P4Auth ALB. Defaults to true. | `bool` | `false` | no |
 | <a name="input_enable_web_based_administration"></a> [enable\_web\_based\_administration](#input\_enable\_web\_based\_administration) | Flag for enabling web based administration of P4Auth. | `bool` | `false` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the P4Auth load balancer. | `list(string)` | `[]` | no |
-| <a name="input_extra_env"></a> [extra\_env](#input\_extra\_env) | Extra configuration environment variables to set on the p4 auth svc container. | `map(string)` | n/a | yes |
+| <a name="input_extra_env"></a> [extra\_env](#input\_extra\_env) | Extra configuration environment variables to set on the p4 auth svc container. | `map(string)` | `null` | no |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name where P4Auth will be available. | `string` | `null` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the P4Auth load balancer to have a public IP. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to P4Auth module resources. | `string` | `"p4-auth"` | no |
