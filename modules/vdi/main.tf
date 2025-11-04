@@ -76,9 +76,13 @@ resource "aws_instance" "workstations" {
     }
   }
 
+  # Instance Store Configuration
+  # /dev/sdb = Instance store (NVMe SSD included with g4dn instances)
+  # This reserves /dev/sdb so EBS volumes start at /dev/sdf
+  # Windows will see this as an additional disk and auto-assign a drive letter
   ephemeral_block_device {
-    device_name  = "/dev/sdb"
-    virtual_name = "ephemeral0"
+    device_name  = "/dev/sdb"   # Reserved for instance store
+    virtual_name = "ephemeral0" # AWS naming for first instance store volume
   }
 
   metadata_options {
@@ -155,6 +159,37 @@ resource "aws_ebs_volume" "workstation_volumes" {
 resource "aws_volume_attachment" "workstation_volume_attachments" {
   for_each = aws_ebs_volume.workstation_volumes
 
+  # CRITICAL: Linux EBS Device Naming to Windows Drive Letter Mapping
+  # This complex logic was extremely difficult to figure out and is KEY to the module working correctly.
+  #
+  # AWS/Linux Side Device Naming:
+  # - Root volume: /dev/sda1 (handled by EC2 instance root_block_device) → Windows C:
+  # - Instance store: /dev/sdb (defined in ephemeral_block_device) → Windows auto-assigned
+  # - EBS volumes: /dev/sdf, /dev/sdg, /dev/sdh, etc. → Windows auto-assigned drive letters
+  #
+  # Why /dev/sdf and not /dev/sdc?
+  # - /dev/sda = Root volume (reserved)
+  # - /dev/sdb = Instance store (reserved)
+  # - /dev/sdc, /dev/sdd, /dev/sde = Reserved by AWS (cannot be used)
+  # - /dev/sdf+ = Available for EBS volumes
+  #
+  # The Magic Formula Explained:
+  # 1. Get all volumes for THIS workstation: filter by Workstation tag
+  # 2. Sort volume names alphabetically: ensures consistent device assignment
+  # 3. Find index of current volume in sorted list: 0, 1, 2, etc.
+  # 4. Map to device letter: "fghijklmnop"[index] = f, g, h, etc.
+  # 5. Result: /dev/sdf, /dev/sdg, /dev/sdh, etc.
+  #
+  # Windows Drive Letter Assignment (handled by SSM script):
+  # - Windows sees these as Disk 1, Disk 2, Disk 3, etc.
+  # - SSM script initializes disks and lets Windows auto-assign drive letters
+  # - Typically becomes D:, E:, F:, etc. (but can vary)
+  #
+  # Why This Complexity?
+  # - Ensures consistent device naming across terraform apply/destroy cycles
+  # - Prevents device conflicts when adding/removing volumes
+  # - Allows Windows to handle drive letter assignment natively
+  # - Supports volume reordering without breaking existing assignments
   device_name = "/dev/sd${substr("fghijklmnop",
     index(sort([
       for k, v in aws_ebs_volume.workstation_volumes : v.tags["VolumeType"]
