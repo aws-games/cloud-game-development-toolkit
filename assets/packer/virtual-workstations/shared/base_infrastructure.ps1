@@ -4,6 +4,9 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "Starting shared VDI base infrastructure setup..."
 
+# Ensure temp directory exists for all downloads
+New-Item -ItemType Directory -Force -Path "C:\temp" | Out-Null
+
 # Install NVIDIA GRID drivers if GPU instance
 $instanceType = (Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-type" -TimeoutSec 10)
 if ($instanceType -match "^(g3|g4|g5|g6|p2|p3|p4)") {
@@ -88,7 +91,7 @@ if ($currentPath -notlike "*$dcvPath*") {
 }
 
 if ($currentPath -notlike "*$nvidiaPath*") {
-    [Environment]::SetEnvironmentVariable("Path", "$currentPath;$dcvPath;$nvidiaPath", "Machine")
+    [Environment]::SetEnvironmentVariable("Path", "$currentPath;$nvidiaPath", "Machine")
     Write-Host "Added NVIDIA tools to system PATH"
 }
 
@@ -110,11 +113,27 @@ try {
 
     # Ensure SSM Agent service is configured properly
     Set-Service -Name AmazonSSMAgent -StartupType Automatic
-    Start-Service -Name AmazonSSMAgent -ErrorAction SilentlyContinue
+    Start-Service -Name AmazonSSMAgent
 
     Write-Host "SSM Agent installed and configured successfully"
+
+    # Verify SSM Agent installation immediately
+    Write-Host "Verifying SSM Agent installation..."
+    $ssmService = Get-Service -Name "AmazonSSMAgent"
+    if ($ssmService) {
+        Write-Host "SSM Agent service found - Status: $($ssmService.Status), StartType: $($ssmService.StartType)"
+        $ssmExePath = "C:\Program Files\Amazon\SSM\amazon-ssm-agent.exe"
+        if (Test-Path $ssmExePath) {
+            Write-Host "SSM Agent executable found at: $ssmExePath"
+        } else {
+            Write-Host "SSM Agent executable NOT found at: $ssmExePath" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "SSM Agent service NOT found" -ForegroundColor Red
+    }
 } catch {
-    Write-Host "SSM Agent installation failed: $_" -ForegroundColor Yellow
+    Write-Host "SSM Agent installation failed: $_" -ForegroundColor Red
+    throw "SSM Agent installation is required for VDI functionality"
 }
 
 # Install AWS CLI
@@ -129,8 +148,42 @@ try {
     # AWS CLI will be available in PATH automatically after installation
 
     Write-Host "AWS CLI installed successfully"
+
+    # CRITICAL: Windows MSI installers update system PATH but current PowerShell session doesn't see it
+    # Without this refresh, 'aws' command fails with "not recognized" even though installation succeeded
+    # This caused VDI user creation scripts to fail because they couldn't run AWS CLI commands
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    Write-Host "Refreshed PATH - AWS CLI now available in current PowerShell session"
+
+    # Verify AWS CLI installation immediately
+    Write-Host "Verifying AWS CLI installation..."
+    $awsCliPath = "${env:ProgramFiles}\Amazon\AWSCLIV2\aws.exe"
+    if (Test-Path $awsCliPath) {
+        Write-Host "AWS CLI executable found at: $awsCliPath"
+        try {
+            $awsVersion = & $awsCliPath --version 2>&1
+            Write-Host "AWS CLI version check: $awsVersion"
+        } catch {
+            Write-Host "AWS CLI executable exists but version check failed: $_" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "AWS CLI executable NOT found at expected location: $awsCliPath" -ForegroundColor Red
+        Write-Host "Checking alternate locations..."
+        $altPaths = @(
+            "${env:ProgramFiles(x86)}\Amazon\AWSCLIV2\aws.exe",
+            "C:\Program Files\Amazon\AWSCLIV2\aws.exe",
+            "C:\Program Files (x86)\Amazon\AWSCLIV2\aws.exe"
+        )
+        foreach ($altPath in $altPaths) {
+            if (Test-Path $altPath) {
+                Write-Host "Found AWS CLI at alternate location: $altPath"
+                break
+            }
+        }
+    }
 } catch {
-    Write-Host "AWS CLI installation failed: $_" -ForegroundColor Yellow
+    Write-Host "AWS CLI installation failed: $_" -ForegroundColor Red
+    throw "AWS CLI installation is required for VDI functionality"
 }
 
 # Install PowerShell modules for management
@@ -213,4 +266,27 @@ try {
 
 # Tools will be available in PATH automatically after installation
 
+# Final validation - ensure critical components are working
+Write-Host "Running final validation checks..."
+
+# Validate AWS CLI is functional
+Write-Host "Final AWS CLI validation..."
+try {
+    $awsVersion = aws --version 2>&1
+    Write-Host "AWS CLI final check passed: $awsVersion"
+} catch {
+    Write-Host "CRITICAL: AWS CLI not functional after installation" -ForegroundColor Red
+    throw "AWS CLI validation failed - AMI would be broken"
+}
+
+# Validate SSM Agent service is running
+Write-Host "Final SSM Agent validation..."
+$ssmService = Get-Service -Name "AmazonSSMAgent"
+if ($ssmService.Status -ne "Running") {
+    Write-Host "CRITICAL: SSM Agent service not running" -ForegroundColor Red
+    throw "SSM Agent validation failed - AMI would be broken"
+}
+Write-Host "SSM Agent final check passed: $($ssmService.Status)"
+
+Write-Host "All validation checks passed - AMI will be functional" -ForegroundColor Green
 Write-Host "Shared VDI base infrastructure setup completed successfully"

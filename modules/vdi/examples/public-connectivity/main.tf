@@ -22,18 +22,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 300 # Windows + VS2022 + UE5 + tools
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 300 # Windows + VS2022 + UE5 + tools (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         Projects = {
-          capacity      = 2000 # UE projects, assets, builds (2TB)
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 2000 # UE projects, assets, builds (2TB)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Minimal packages - most tools already in UE GameDev AMI
@@ -47,18 +45,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 200 # Room for user-installed software
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 200 # Room for user-installed software (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         UserData = {
-          capacity      = 500 # Large workspace for user files and applications
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 500 # Large workspace for user files and applications
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Full DevOps toolchain (uses Chocolatey)
@@ -78,6 +74,14 @@ module "vdi" {
       subnet_id           = aws_subnet.vdi_subnet.id
       security_groups     = [aws_security_group.vdi_sg.id]
       allowed_cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"]
+      volumes = {
+        Learning = {
+          capacity  = 300 # Learning materials and projects
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
+        },
+      }
     }
 
     # Pattern 2: Template with overrides (Sasuke - DevOps Engineer)
@@ -104,18 +108,16 @@ module "vdi" {
       gpu_enabled   = true
       volumes = {
         Root = {
-          capacity      = 150 # Smaller root volume
-          type          = "gp3"
-          windows_drive = "C:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 150 # Smaller root volume (automatically gets C:)
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
         Learning = {
-          capacity      = 200 # Learning materials and projects
-          type          = "gp3"
-          windows_drive = "D:"
-          iops          = 3000
-          encrypted     = true
+          capacity  = 200 # Learning materials and projects
+          type      = "gp3"
+          iops      = 3000
+          encrypted = true
         }
       }
       # Basic learning tools
@@ -158,15 +160,7 @@ module "vdi" {
     }
   }
 
-
-
-  # DCV session management (Windows DCV creates single shared session automatically)
-
-  # Optional features
   enable_centralized_logging = true
-
-
-  # Software packages now defined per-template or per-workstation (see below)
 
   tags = merge(local.tags, {
     Example      = "public-connectivity"

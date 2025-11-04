@@ -5,15 +5,27 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "Installing Unreal Engine development stack..."
 
-# Refresh environment to ensure Chocolatey is available
+# CRITICAL: Chocolatey was installed in base_infrastructure.ps1 but this PowerShell session can't see it
+# Windows installers update system PATH but current session still has old PATH from when it started
+# Without this refresh, 'choco' command fails and Visual Studio never gets installed
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+Write-Host "Refreshed PATH - Chocolatey now available in current PowerShell session"
+
+# Verify Chocolatey is available
+try {
+    $chocoVersion = choco --version
+    Write-Host "Chocolatey found: $chocoVersion"
+} catch {
+    Write-Host "Chocolatey not found in PATH - this is required for Unreal development stack" -ForegroundColor Red
+    throw "Chocolatey dependency not met"
+}
 
 try {
     # Install Visual Studio 2022 Community with game development workloads
     Write-Host "Installing Visual Studio 2022 Community with game development workloads..."
     Write-Host "This installation may take 30-45 minutes. Please be patient..." -ForegroundColor Yellow
 
-    choco install -y visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Microsoft.VisualStudio.Component.Windows10SDK.18362 --add Component.Unreal"
+    choco install -y visualstudio2022community --package-parameters "--passive --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop --add Microsoft.VisualStudio.Workload.NetCrossPlat --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.22621 --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.DiagnosticTools --add Microsoft.VisualStudio.Component.VC.ASAN --add Component.Unreal"
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Visual Studio 2022 Community installed successfully" -ForegroundColor Green
@@ -45,16 +57,18 @@ try {
     throw
 }
 
-# Configure additional PATH entries for Unreal Engine
+# Configure additional PATH entries for Unreal Engine development
 Write-Host "Configuring PATH for Unreal Engine development..."
+
+# Refresh PATH first to include any recent installations (like AWS CLI)
+$currentPath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+
 $ueToolPaths = @(
     "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\Common7\IDE", # Visual Studio
     "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin" # MSBuild
 )
 
-$currentPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
 $pathsToAdd = @()
-
 foreach ($toolPath in $ueToolPaths) {
     if ($currentPath -notlike "*$toolPath*") {
         $pathsToAdd += $toolPath

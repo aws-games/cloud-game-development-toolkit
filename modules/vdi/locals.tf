@@ -1,52 +1,88 @@
-# Local variables for VDI module v2.0.0 - 5-Tier Architecture
 locals {
-  # AMI must be specified in templates - no default fallback
-
-  # Private zone name for internal DNS
   private_zone_name = "${var.project_prefix}.vdi.internal"
-
-  # Random ID for unique resource naming
-  random_id = random_id.suffix.hex
-
-  # Base naming prefix
-  name_prefix = "${var.project_prefix}-${var.environment}"
-
-  # Single log group pattern (simplified)
-  log_group_name = "/${var.project_prefix}/vdi/logs"
-
-  # S3 bucket names (always created)
+  random_id         = random_id.suffix.hex
+  name_prefix       = "${var.project_prefix}-${var.environment}"
+  log_group_name    = "/${var.project_prefix}/vdi/logs"
   s3_bucket_names = {
     keys    = "${var.project_prefix}-vdi-keys-${local.random_id}"
     scripts = "${var.project_prefix}-vdi-scripts-${local.random_id}"
   }
 
-  # Validation is handled by variable validation blocks in variables.tf
+  # ========================================================================
+  # DEVICE ASSIGNMENT LOGIC - Why this complexity exists:
+  #
+  # Problem: AWS requires unique device names (/dev/sdf, /dev/sdg, etc.) for EBS volumes
+  # Challenge: Volumes can come from presets AND workstation overrides, need deterministic assignment
+  # Solution: Pre-calculate device mappings to avoid conflicts and ensure consistency
+  #
+  # Example scenario:
+  # - Preset has: Root, Projects, Cache volumes
+  # - Workstation adds: ExtraStorage volume
+  # - Final result: Root=/dev/sda1, Cache=/dev/sdf, ExtraStorage=/dev/sdg, Projects=/dev/sdh
+  # - Same config always produces same device names (deterministic)
+  # ========================================================================
 
-  # Process templates with intelligent defaults
+  # Step 1: Merge preset + workstation volumes per workstation
+  # Why: Workstations can inherit volumes from presets AND add their own volumes
+  # Result: Complete volume list for each workstation (preset volumes + workstation volumes)
+  workstation_merged_volumes = {
+    for workstation_key, config in var.workstations : workstation_key => merge(
+      # Get volumes from preset (if workstation uses a preset)
+      local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
+      # Add/override with workstation-specific volumes
+      config.volumes != null ? config.volumes : {}
+    )
+  }
+
+  # Step 2: Extract and sort non-root volume names for consistent device ordering
+  # Why: Root volume always gets /dev/sda1, other volumes need /dev/sdf, /dev/sdg, etc.
+  # Why sort: Ensures same volume names always get same device assignments
+  workstation_data_volumes = {
+    for workstation_key, volumes in local.workstation_merged_volumes : workstation_key =>
+    sort([for k in keys(volumes) : k if k != "Root"]) # Exclude Root, sort alphabetically
+  }
+
+  # Step 3: Create volume name -> device path mapping for workstations
+  # Why: Pre-calculate device assignments to avoid complex inline logic
+  # Logic: "fghijklmnop" = available device letters (f=/dev/sdf, g=/dev/sdg, etc.)
+  # Result: {"Projects" => "/dev/sdf", "Cache" => "/dev/sdg", "ExtraStorage" => "/dev/sdh"}
+  workstation_device_map = {
+    for workstation_key, volume_names in local.workstation_data_volumes : workstation_key => {
+      for i, volume_name in volume_names : volume_name => "/dev/sd${substr("fghijklmnop", i, 1)}"
+    }
+  }
+
+  # Step 4: Same logic for preset templates (needed for preset processing)
+  # Why: Presets also need device assignments when they're processed independently
+  preset_device_map = {
+    for preset_key, config in var.presets : preset_key => {
+      for i, volume_name in sort([for k in keys(config.volumes) : k if k != "Root"]) :
+      volume_name => "/dev/sd${substr("fghijklmnop", i, 1)}"
+    }
+  }
+
+
   processed_templates = {
     for preset_key, config in var.presets : preset_key => {
-      # Compute configuration
+
       ami           = config.ami # AMI must be specified in templates
       instance_type = config.instance_type
       gpu_enabled   = config.gpu_enabled
 
-      # Software configuration removed - use custom AMIs
 
-      # Volume processing with Windows drive mapping
       volumes = {
         for volume_name, volume_config in config.volumes : volume_name => {
-          capacity      = volume_config.capacity
-          type          = volume_config.type
-          windows_drive = volume_config.windows_drive
-          iops          = volume_config.iops
-          throughput    = volume_config.throughput
-          encrypted     = volume_config.encrypted
-          # Add device mapping for Windows (AWS supports /dev/sdf to /dev/sdp)
-          device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
+          capacity   = volume_config.capacity
+          type       = volume_config.type
+          iops       = volume_config.iops
+          throughput = volume_config.throughput
+          encrypted  = volume_config.encrypted
+          # Device assignment: Root volume = /dev/sda1 (AWS requirement), others use pre-calculated mapping
+          device_name = volume_name == "Root" ? "/dev/sda1" : local.preset_device_map[preset_key][volume_name]
         }
       }
 
-      # Optional configuration
+
       iam_instance_profile   = config.iam_instance_profile
       additional_policy_arns = config.additional_policy_arns
       software_packages      = config.software_packages
@@ -81,16 +117,17 @@ locals {
       instance_type = coalesce(config.instance_type, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].instance_type : null)
       gpu_enabled   = coalesce(config.gpu_enabled, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].gpu_enabled : null, false)
 
-      # VOLUME CONFIGURATION (all-or-nothing override)
-      # If workstation defines volumes, use those completely (ignore preset volumes)
-      # If workstation doesn't define volumes, use preset volumes (or empty if no preset)
-      volumes = config.volumes != null ? {
-        # Process workstation-defined volumes and add AWS device mappings
-        for volume_name, volume_config in config.volumes : volume_name => merge(volume_config, {
-          # AWS device mapping: Root = /dev/sda1, others = /dev/sdf, /dev/sdg, etc.
-          device_name = volume_name == "Root" ? "/dev/sda1" : "/dev/sd${substr("fghijklmnop", index(keys(config.volumes), volume_name) - 1, 1)}"
+      # VOLUME CONFIGURATION (merge preset + workstation volumes)
+      # Workstation volumes override preset volumes by name, preset volumes remain unless overridden
+      volumes = {
+        for volume_name, volume_config in merge(
+          local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {},
+          config.volumes != null ? config.volumes : {}
+          ) : volume_name => merge(volume_config, {
+            # Device assignment: Root volume = /dev/sda1 (AWS requirement), others use pre-calculated mapping
+            device_name = volume_name == "Root" ? "/dev/sda1" : local.workstation_device_map[workstation_key][volume_name]
         })
-      } : (local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].volumes : {})
+      }
 
       # OPTIONAL CONFIGURATION with 3-tier priority
       software_packages    = coalesce(config.software_packages, local.workstation_templates[workstation_key] != null ? local.workstation_templates[workstation_key].software_packages : null, [])
@@ -123,7 +160,7 @@ locals {
   }
 
 
-  # Process local users
+
   processed_users = {
     for user_key, config in var.users : user_key => {
       given_name  = config.given_name
@@ -199,7 +236,7 @@ locals {
       }
       if config.assigned_user != null && var.users[config.assigned_user].type == "administrator"
     },
-    # Global administrators: admin on ALL workstations (fleet management)
+    # Fleet administrators: admin on ALL workstations (fleet management)
     {
       for combo in flatten([
         for workstation_key in keys(var.workstations) : [
@@ -212,7 +249,9 @@ locals {
       ]) : "${combo.workstation}-${combo.user}" => combo
     }
   )
-} # Random ID for unique resource naming
+}
+
+
 resource "random_id" "suffix" {
   byte_length = 4
 }
