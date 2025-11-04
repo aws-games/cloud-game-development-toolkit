@@ -6,13 +6,14 @@
 
 ## Features
 
+- **Amazon DCV Integration** - High-performance streaming protocol optimized for graphics workloads
+- **Dual Connectivity** - Public internet or private VPN access with custom DNS support
+- **Game Development Ready** - GPU instances, high-performance storage, UE-optimized AMIs
+- **Intelligent Drive Management** - Automatic Windows drive letter assignment and volume lifecycle
 - **Complete VDI Infrastructure** - EC2 workstations, security, IAM, and user management
-- **Flexible Authentication** - EC2 key pairs (emergency) and Secrets Manager (managed)
-- **Security by Default** - Least privilege IAM, encrypted storage, restricted access
-- **Dual Connectivity** - Public internet or private VPN access
-- **Game Development Ready** - GPU instances, high-performance storage
-- **Runtime Software Installation** - Automated via SSM
-- **Amazon DCV Integration** - High-performance remote desktop
+- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access
+- **Flexible Authentication** - EC2 key pairs (emergency) and Secrets Manager (production)
+- **Runtime Software Installation** - Automated package installation via SSM and Chocolatey
 
 ## Connectivity Patterns
 
@@ -146,8 +147,10 @@ cd cloud-game-development-toolkit
 
 ### 2. Choose AMI
 
-**Option A**: Use any Windows Server AMI
-**Option B**: Build UE GameDev AMI for game development:
+- **Option A**: Build a toolkit AMI (e.g., UE GameDev for game development)
+- **Option B**: Use any existing Windows Server AMI
+
+**Example - To build the UE GameDev AMI:**
 
 ```bash
 cd assets/packer/virtual-workstations/ue-gamedev/
@@ -171,15 +174,39 @@ terraform output connection_info
 
 ### 5. Connect (Private Only)
 
-For private connectivity, download VPN config:
+### AWS Client VPN Setup (Private Connectivity)
+
+**Why AWS Client VPN is Required:**
+
+For private connectivity, AWS Client VPN is essential because:
+- **Custom DNS Resolution**: Private workstation URLs like `https://username.vdi.internal:8443` only resolve when connected to the VPN
+- **Network Access**: Private subnets are not accessible from the internet - VPN provides secure tunnel access
+- **Security**: Eliminates need to expose workstations to public internet
+
+**Setup Process:**
+
+1. **Deploy with VPN enabled**: Set `create_client_vpn = true` in your Terraform configuration
+2. **Download VPN configuration**: The module automatically generates `.ovpn` files in S3
+3. **Install VPN client**: Download [AWS VPN Client](https://aws.amazon.com/vpn/client-vpn-download/) (recommended)
+4. **Import configuration**: Use the `.ovpn` file generated for your user
+
+**Using the Generated .ovpn File:**
 
 ```bash
+# Download your VPN configuration
 aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/Downloads/
+
+# Import into AWS VPN Client or OpenVPN
+# AWS VPN Client: File → Manage Profiles → Add Profile
+# OpenVPN: Import the .ovpn file directly
 ```
 
-**VPN Client Requirements:**
-- **AWS VPN Client** (recommended): Full compatibility with custom DNS resolution
-- **OpenVPN/Other clients**: May require manual configuration for DNS resolution
+**For detailed setup instructions**: See [AWS Client VPN User Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-user/)
+
+**Connection Flow:**
+1. Connect to AWS Client VPN using your `.ovpn` file
+2. Access workstation via private DNS: `https://username.vdi.internal:8443`
+3. Login with credentials from Secrets Manager
 
 ## Connection Guide
 
@@ -250,35 +277,13 @@ rm temp_key.pem
 - **User changes**: Users can change passwords in Windows - Secrets Manager will not update without additional configuration/custom logic (out of scope for this module)
 - **Lifecycle**: Users can manage passwords in Windows or continue using Secrets Manager passwords
 
-### Force Script Re-execution
+### Automatic Script Re-execution
 
-**Purpose**: These variables provide convenience automation for common post-deployment tasks, but come with timing limitations due to AWS SSM's asynchronous nature.
+The module automatically re-runs configuration scripts when you modify infrastructure. Changes to volumes, users, or software packages trigger the appropriate scripts to run via AWS SSM - no manual intervention required.
 
-```hcl
-module "vdi" {
-  force_run_user_script    = true  # User creation issues
-  force_run_volume_script  = true  # Volume initialization issues
-  force_run_software_script = true # Software installation issues
-  debug = true                     # Force ALL scripts (nuclear option)
-}
-```
+Scripts only execute when infrastructure actually changes, providing clean Terraform plans and predictable behavior.
 
-**Usage**: Set to `true` → apply → **wait 5-10 minutes** → verify results → remove variable → apply again
-
-**Validated Behavior**:
-
-- ✅ **Reliable execution**: SSM scripts consistently run when `force_run_*_script = true` is set
-- ✅ **Predictable timing**: Script execution takes 5-10 minutes consistently
-- ⚠️ **Asynchronous nature**: Terraform cannot wait for or report script completion status
-- ⚠️ **Requires patience**: Not immediate like manual administration
-
-**Alternative: Manual Administration**
-For immediate, deterministic results, RDP to the instance as Administrator and run the operations manually. This approach offers:
-
-- ✅ **Immediate execution** - no waiting for SSM
-- ✅ **Real-time feedback** - see results and errors immediately
-- ✅ **Full control** - handle edge cases and troubleshoot issues directly
-- ✅ **Deterministic workflow** - integrates better with CI/CD pipelines requiring predictable timing
+**Manual Alternative**: For immediate results or troubleshooting, you can RDP to the instance as Administrator and run operations manually.
 
 ## Volume Configuration
 
@@ -294,6 +299,9 @@ volumes = {
     capacity = 256            # ← Root volume automatically gets C: drive
     type = "gp3"
   }
+  # Add additional drives as needed (auto-assigned D:, E:, F:, etc.)
+  # Projects = { capacity = 1000, type = "gp3" }
+  # Cache = { capacity = 500, type = "gp3" }
 }
 ```
 
@@ -312,123 +320,30 @@ volumes = {
 - `g4dn.4xlarge`: 225GB NVMe SSD (auto-assigned)
 - `g4dn.8xlarge`: 900GB NVMe SSD (auto-assigned)
 
-**Benefits**:
-
-- ✅ **Simple configuration** - No drive letter conflicts
-- ✅ **Windows native behavior** - Uses standard assignment logic
-- ✅ **User customizable** - Users can reassign letters via Disk Management
-- ✅ **Cost efficiency** - Utilize included instance store
+**Benefits**: Simple configuration with no drive letter conflicts, Windows native behavior, user customizable via Disk Management, and cost efficiency by utilizing included instance store.
 
 ### Volume Change Lifecycle
 
 | Change Type            | Automatic Handling                                    | Data Safety             | User Action Required                                  |
 | ---------------------- | ----------------------------------------------------- | ----------------------- | ----------------------------------------------------- |
-| **Add Volume**         | ✅ **Reliable** with `force_run_volume_script = true` | ✅ Safe                 | Wait 5-10 minutes after apply                         |
-| **Increase Size**      | ✅ **Reliable** with `force_run_volume_script = true` | ✅ Safe                 | Wait for AWS optimization + SSM (5-15 min)            |
+| **Add Volume**         | ✅ **Fully automatic** | ✅ Safe                 | Wait 5-10 minutes after apply                         |
+| **Increase Size**      | ✅ **Fully automatic** | ✅ Safe                 | Wait for AWS optimization + SSM (5-15 min)            |
 | **Reduce Size**        | ❌ **BLOCKED BY AWS**                                 | ⚠️ **Not Supported**    | See Volume Size Reduction                             |
 | **Remove Volume**      | ✅ **Immediate and reliable**                         | ❌ **Volume data lost** | None (drive letters cleaned up)                       |
 | **Change Volume Type** | ✅ Auto-applied                                       | ✅ Safe                 | Wait for optimization (5-15 min typical, up to 6 hrs) |
 | **Rename Volume**      | ✅ Terraform only                                     | ✅ Safe                 | None                                                  |
 
-### ⚠️ Volume Size Reduction - NOT SUPPORTED
+### Volume Limitations
 
-**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform limitation, not a module limitation.
+**Volume Size Reduction**: Not supported by AWS - EBS volumes cannot be reduced in size.
 
-**What Happens**: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):
-
-```bash
-terraform apply
-# ❌ Error: InvalidParameterValue: Cannot decrease volume size from 500 to 200
-# ❌ The apply will FAIL IMMEDIATELY - no waiting required
-```
-
-**Fail-Fast Behavior**:
-
-- ✅ **Terraform validates volume sizes** before making AWS API calls
-- ✅ **Error appears within seconds** of running `terraform apply`
-- ✅ **No resources are modified** when size reduction is attempted
-- ✅ **Clear error message** explains the limitation
-
-**Workaround for Size Reduction**:
-
-1. **Create new smaller volume** in Terraform config
-2. **Manually migrate data** from old to new volume via RDP
-3. **Remove old volume** from Terraform config
-4. **Apply changes** - old volume will be deleted
-
-### ⚠️ Volume Modification Limitations
-
-**AWS has TWO separate limitations that BOTH must be satisfied:**
-
-#### 1. Modification State Limitation
-
-**Requirement**: Wait for current modification to complete optimization.
-**Duration**: 5-15 minutes typically, up to 6 hours for large volumes.
-
-**Check State**:
-
-```bash
-aws ec2 describe-volumes-modifications --volume-id vol-1234567890abcdef0
-```
-
-**States**:
-
-- `optimizing`: Volume being modified (wait required)
-- `completed`: Optimization finished (but rate limit may still apply)
-- `failed`: Modification failed (can retry)
-
-#### 2. Rate Limit (THE REAL BLOCKER)
-
-**AWS Platform Constraint**: Exactly 6 hours between ANY volume modifications, regardless of optimization state.
-
-**What Happens**:
-
-```bash
-terraform apply
-# ❌ Error: VolumeModificationRateExceeded:
-# ❌ Wait at least 6 hours between modifications per EBS volume
-```
-
-**Critical Facts**:
-
-- This is a **hard-coded AWS platform limitation**, NOT a service quota
-- Cannot be increased through Service Quotas console
-- Cannot be overridden by AWS Support
-- Even if `describe-volumes-modifications` shows "completed", the 6-hour timer still applies
-- Timer starts from the **previous modification start time**, not completion time
-
-**No Workaround**: You MUST wait the full 6 hours. There are no exceptions.
-
-**Example Error Message**:
-
-```
-Error: updating EBS Volume (vol-1234567890abcdef0): InvalidParameterValue:
-Cannot decrease volume size from 500 to 200
-```
-
-### Volume Naming & Drive Letter Assignment
-
-- **Terraform names** ("Root", "Projects", "Cache") are organizational only
-- **Windows sees** drive letters and volume labels set by initialization script
-- **"Root" is special** - handled by `root_block_device`, everything else uses `ebs_block_device`
-- **All volumes** - Use Windows auto-assignment (typically D:, E:, F:, etc.)
-- **Volume labels** - Instance store labeled "Ephemeral", EBS volumes labeled "Data"
-- **Users can reassign** - Use Windows Disk Management to change letters after deployment
-
-**Typical Drive Layout Example**:
-
-```
-C: = Root EBS (300GB) - Windows OS
-D: = Data (2TB) - EBS volume (auto-assigned)
-E: = Data (200GB) - EBS volume (auto-assigned)
-F: = Ephemeral (225GB) - Instance store (auto-assigned, lost on stop)
-```
+**Volume Modification Rate Limit**: AWS enforces a 6-hour wait between volume modifications. This is a hard platform limitation that cannot be overridden.
 
 ## Advanced Configuration
 
 ### On-Demand Capacity Reservations (ODCR)
 
-Optimize costs by leveraging existing capacity reservations:
+Use existing capacity reservations if available. See [AWS ODCR Documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html) for details.
 
 ```hcl
 # Module-level default (applies to all workstations)
@@ -448,17 +363,11 @@ workstations = {
     subnet_id = "subnet-123"
   }
   "dev-ws" = {
-    capacity_reservation_preference = "none"  # Regular On-Demand
+    # capacity_reservation_preference = "none"  # Optional - omit if you don't use ODCR
     subnet_id = "subnet-456"
   }
 }
 ```
-
-**Options:**
-
-- `"open"`: Use ODCR if available, fall back to On-Demand
-- `"none"`: Never use ODCR, always On-Demand
-- `null`: Default AWS behavior (no capacity reservation)
 
 ### Software Installation
 
@@ -473,17 +382,7 @@ presets = {
 }
 ```
 
-### AMI Building
 
-```bash
-# Lightweight AMI (20-30 minutes)
-cd assets/packer/virtual-workstations/windows/lightweight/
-packer build windows-server-2025-lightweight.pkr.hcl
-
-# UE GameDev AMI (45-60 minutes) - includes Visual Studio, Epic Games Launcher
-cd assets/packer/virtual-workstations/ue-gamedev/
-packer build windows-server-2025-ue-gamedev.pkr.hcl
-```
 
 ## Troubleshooting
 
@@ -498,7 +397,7 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 **Drive Letter Issues**
 
 - Check drive assignment: `Get-Disk | Format-Table Number, Size, BusType`
-- Force drive reassignment: Set `force_run_volume_script = true` and apply
+- Volume scripts re-run automatically when volume configuration changes
 
 **Connection Timeouts**
 
@@ -509,6 +408,7 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 **Password Retrieval Issues**
 
 - Wait 5-10 minutes after instance launch for password generation
+- Check Secrets Manager if user passwords not available
 - Use S3 backup key if Terraform output fails
 
 **DCV "Connecting" Spinner**
@@ -528,19 +428,35 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 
 - Check SSM command status: `aws ssm list-command-invocations --instance-id <id>`
 - Check user creation status: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"`
-- Force retry: Set `force_run_user_script = true`
+- Scripts re-run automatically when user configuration changes
 
 **Volume Initialization Issues**
 
 - Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
 - Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
-- Force retry: Set `force_run_volume_script = true`
+- Scripts re-run automatically when volume configuration changes
+
+**Volume Resize Issues**
+
+- Check disk sizes vs partition sizes: `Get-Disk | Format-Table Number, Size, BusType`
+- Check partition sizes: `Get-Partition | Format-Table DiskNumber, DriveLetter, Size`
+- Manual partition extension: `Resize-Partition -DriveLetter F -Size (Get-PartitionSupportedSize -DriveLetter F).SizeMax`
+
+**Manual Volume Initialization (if SSM script failed)**
+
+```powershell
+# Initialize any RAW disks
+Get-Disk | Where-Object { $_.PartitionStyle -eq 'RAW' } |
+Initialize-Disk -PartitionStyle MBR -PassThru |
+New-Partition -AssignDriveLetter -UseMaximumSize |
+Format-Volume -FileSystem NTFS -Confirm:$false
+```
 
 **Software Installation Problems**
 
 - Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`
 - Check failed packages: `aws ssm get-parameter --name "/{project}/{workstation}/software_message"`
-- Force retry: Set `force_run_software_script = true`
+- Scripts re-run automatically when software configuration changes
 
 ### Debug Commands
 
@@ -555,6 +471,11 @@ aws ssm start-session --target <instance-id>
 # VPN testing
 ping naruto-uzumaki.vdi.internal
 nslookup naruto-uzumaki.vdi.internal
+
+# Volume troubleshooting
+INSTANCE_ID=$(terraform output -json connection_info | jq -r '."vdi-001".instance_id')
+aws ssm list-command-invocations --instance-id $INSTANCE_ID --filters Key=DocumentName,Values=cgd-dev-initialize-volumes
+aws ssm get-command-invocation --command-id <COMMAND_ID> --instance-id $INSTANCE_ID
 ```
 
 ### Password Retrieval
@@ -565,7 +486,7 @@ terraform output -json private_keys | jq -r '."vdi-001"' > temp_key.pem
 aws ec2 get-password-data --instance-id <id> --priv-launch-key temp_key.pem
 
 # User passwords
-aws secretsmanager get-secret-value --secret-id "cgd/users/naruto-uzumaki"
+aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumaki"
 ```
 
 
@@ -596,7 +517,7 @@ This project is licensed under the MIT-0 License. See the [LICENSE](../../../LIC
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
 | <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.60.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
@@ -623,6 +544,7 @@ No modules.
 | [aws_iam_instance_profile.vdi_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_role.vdi_instance_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.vdi_instance_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.additional_policies](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vdi_cloudwatch_agent](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.vdi_ssm_managed_instance_core](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_instance.workstations](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
@@ -683,18 +605,13 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_capacity_reservation_preference"></a> [capacity\_reservation\_preference](#input\_capacity\_reservation\_preference) | Capacity reservation preference for EC2 instances | `string` | `null` | no |
-| <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br/>    client_cidr_block       = optional(string, "192.168.0.0/16")<br/>    generate_client_configs = optional(bool, true)<br/>    split_tunnel            = optional(bool, true)<br/>  })</pre> | `{}` | no |
+| <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br>    client_cidr_block       = optional(string, "192.168.0.0/16")<br>    generate_client_configs = optional(bool, true)<br>    split_tunnel            = optional(bool, true)<br>  })</pre> | `{}` | no |
 | <a name="input_create_client_vpn"></a> [create\_client\_vpn](#input\_create\_client\_vpn) | Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs) | `bool` | `false` | no |
 | <a name="input_create_default_security_groups"></a> [create\_default\_security\_groups](#input\_create\_default\_security\_groups) | Create default security groups for VDI workstations | `bool` | `true` | no |
-| <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode to force re-run all VDI scripts and accelerate testing. Set to true to trigger, false for normal operation.<br><br>⚠️  WARNING: Volume script changes can cause data access issues on existing systems:<br>- Changing drive letters may break application shortcuts and saved paths<br>- Users may temporarily lose access to data until they update their shortcuts<br>- Consider notifying users before making drive letter changes<br>- New volumes and disk initialization are always safe | `bool` | `false` | no |
 | <a name="input_ebs_kms_key_id"></a> [ebs\_kms\_key\_id](#input\_ebs\_kms\_key\_id) | KMS key ID for EBS encryption (if encryption enabled) | `string` | `null` | no |
 | <a name="input_enable_centralized_logging"></a> [enable\_centralized\_logging](#input\_enable\_centralized\_logging) | Enable centralized logging with CloudWatch log groups following CGD Toolkit patterns | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod, etc.) | `string` | `"dev"` | no |
-| <a name="input_force_run_software_script"></a> [force\_run\_software\_script](#input\_force\_run\_software\_script) | Force software installation script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.<br><br>⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.<br><br>When to use:<br>- Software installation failed and needs retry<br>- Adding new software packages<br>- Chocolatey package issues requiring reinstallation<br><br>Usage:<br>1. Set force\_run\_software\_script = true<br>2. Run terraform apply<br>3. Remove force\_run\_software\_script (or set to false)<br>4. Run terraform apply again | `bool` | `false` | no |
-| <a name="input_force_run_user_script"></a> [force\_run\_user\_script](#input\_force\_run\_user\_script) | Force user creation script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.<br><br>⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.<br><br>When to use:<br>- User creation failed and needs retry<br>- User configuration changes not applied<br>- DCV session issues requiring user recreation<br><br>Usage:<br>1. Set force\_run\_user\_script = true<br>2. Run terraform apply<br>3. Remove force\_run\_user\_script (or set to false)<br>4. Run terraform apply again | `bool` | `false` | no |
-| <a name="input_force_run_volume_script"></a> [force\_run\_volume\_script](#input\_force\_run\_volume\_script) | Force volume initialization script to re-execute. Uses timestamp() which causes Terraform plans to always show changes.<br><br>⚠️ WARNING: Set to true only when needed, then immediately set back to false to avoid constant plan changes.<br><br>When to use:<br>- Adding volumes that aren't being initialized automatically<br>- Removing volumes and need to clean up drive letters<br>- Volume configuration changes that didn't trigger automatically<br>- RAW disks that need formatting<br><br>Usage:<br>1. Set force\_run\_volume\_script = true<br>2. Run terraform apply<br>3. Remove force\_run\_volume\_script (or set to false)<br>4. Run terraform apply again | `bool` | `false` | no |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | CloudWatch log retention period in days | `number` | `30` | no |
-<<<<<<< HEAD
 | <a name="input_presets"></a> [presets](#input\_presets) | Configuration blueprints defining instance types and named volumes with Windows drive mapping.<br><br>**KEY BECOMES PRESET NAME**: The map key (e.g., "ue-developer") becomes the preset name referenced by workstations.<br><br>Presets provide reusable configurations that can be referenced by multiple workstations via preset\_key.<br><br>Example:<br>presets = {<br>  "ue-developer" = {           # ← This key becomes the preset name<br>    instance\_type = "g4dn.2xlarge"<br>    gpu\_enabled   = true<br>    volumes = {<br>      Root = { capacity = 256, type = "gp3" }  # Root volume automatically gets C:<br>      Projects = { capacity = 1024, type = "gp3", windows\_drive = "Z:" }  # Specify drive letter<br>      Cache = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter (Y:, X:, etc.)<br>    }<br>  }<br>  "basic-workstation" = {      # ← Another preset name<br>    instance\_type = "g4dn.xlarge"<br>    gpu\_enabled   = true<br>    volumes = {<br>      Root = { capacity = 200, type = "gp3" }  # Root volume automatically gets C:<br>      UserData = { capacity = 500, type = "gp3" }  # Auto-assigned high-alphabet letter<br>    }<br>  }<br>}<br><br># Referenced by workstations:<br>workstations = {<br>  "alice-ws" = {<br>    preset\_key = "ue-developer"      # ← References preset by key<br>  }<br>}<br><br>Valid volume types: "gp2", "gp3", "io1", "io2"<br>Drive letters are auto-assigned by Windows (typically C: for root, D:, E:, F:, etc. for additional volumes).<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Core compute configuration<br>    instance_type = string<br>    ami           = optional(string, null)<br><br>    # Hardware configuration<br>    gpu_enabled = optional(bool, true)<br><br>    # Named volumes with auto-assigned drive letters<br>    volumes = map(object({<br>      capacity   = number<br>      type       = string<br>      iops       = optional(number, 3000)<br>      throughput = optional(number, 125)<br>      encrypted  = optional(bool, true)<br>    }))<br><br>    # Optional configuration<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br>    tags                   = optional(map(string), {})<br>  }))</pre> | `{}` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Prefix for resource names | `string` | `"cgd"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS region for deployment | `string` | n/a | yes |
@@ -702,15 +619,6 @@ No modules.
 | <a name="input_users"></a> [users](#input\_users) | Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)<br><br>**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.<br><br>type options (Windows groups):<br>- "fleet\_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)<br>- "administrator": User added to Windows Administrators group, created only on assigned workstation<br>- "user": User added to Windows Users group, created only on assigned workstation<br><br>use\_client\_vpn options (VPN access):<br>- false: User accesses VDI via public internet or external VPN (default)<br>- true: User accesses VDI via module's Client VPN (generates VPN config)<br><br>Example:<br>users = {<br>  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"<br>    given\_name = "VDI"<br>    family\_name = "Administrator"<br>    email = "admin@example.com"<br>    type = "fleet\_administrator" # Windows Administrators group on ALL workstations<br>    use\_client\_vpn = false      # Accesses via public internet/external VPN<br>  }<br>  "alice" = {                 # ← Public connectivity user<br>    given\_name = "Alice"<br>    family\_name = "Smith"<br>    email = "alice@example.com"<br>    type = "user"               # Windows Users group<br>    use\_client\_vpn = false      # Accesses via public internet (allowed\_cidr\_blocks)<br>  }<br>  "bob" = {                   # ← Private connectivity user<br>    given\_name = "Bob"<br>    family\_name = "Johnson"<br>    email = "bob@example.com"<br>    type = "user"               # Windows Users group<br>    use\_client\_vpn = true       # Accesses via module's Client VPN<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "naruto-uzumaki"  # References users{} key directly in workstation | <pre>map(object({<br>    given_name     = string<br>    family_name    = string<br>    email          = string<br>    type           = optional(string, "user") # "administrator" or "user" (Windows group)<br>    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN<br>    tags           = optional(map(string), {})<br>  }))</pre> | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID where VDI instances will be deployed | `string` | n/a | yes |
 | <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br><br>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br><br>Workstations inherit configuration from templates via preset\_key reference.<br><br>Example:<br>workstations = {<br>  # Public connectivity - user accesses via internet<br>  "alice-workstation" = {<br>    preset\_key = "ue-developer"<br>    subnet\_id = "subnet-public-123"     # Public subnet<br>    security\_groups = ["sg-vdi-public"]<br>    assigned\_user = "alice"<br>    allowed\_cidr\_blocks = ["203.0.113.1/32"]  # Alice's home IP<br>  }<br>  # Private connectivity - user accesses via VPN<br>  "bob-workstation" = {<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-private-456"    # Private subnet<br>    security\_groups = ["sg-vdi-private"]<br>    assigned\_user = "bob"<br>    # No allowed\_cidr\_blocks - accessed via Client VPN<br>  }<br>  # Additional volumes at workstation level<br>  "dev-workstation" = {<br>    preset\_key = "basic-workstation"<br>    subnet\_id = "subnet-private-789"<br>    security\_groups = ["sg-vdi-private"]<br>    volumes = {<br>      ExtraStorage = { capacity = 2000, type = "gp3", windows\_drive = "Y:" }<br>    }<br>  }<br>}<br><br># User assignment is now direct:<br># assigned\_user = "alice"  # References users{} key directly in workstation<br><br>Drive letters are auto-assigned by Windows. Users can reassign them via Disk Management if needed.<br><br>additional\_policy\_arns: List of additional IAM policy ARNs to attach to the VDI instance role.<br>Example: ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", "arn:aws:iam::123456789012:policy/MyCustomPolicy"] | <pre>map(object({<br>    # Preset reference (optional - can use direct config instead)<br>    preset_key = optional(string, null)<br><br>    # Infrastructure placement<br>    subnet_id       = string<br>    security_groups = list(string)<br>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br><br>    # Direct configuration (used when preset_key is null or as overrides)<br>    ami           = optional(string, null)<br>    instance_type = optional(string, null)<br>    gpu_enabled   = optional(bool, null)<br>    volumes = optional(map(object({<br>      capacity   = number<br>      type       = string<br>      iops       = optional(number, 3000)<br>      throughput = optional(number, 125)<br>      encrypted  = optional(bool, true)<br>    })), null)<br>    iam_instance_profile   = optional(string, null)<br>    additional_policy_arns = optional(list(string), []) # Additional IAM policy ARNs to attach to the VDI instance role<br>    software_packages      = optional(list(string), null)<br><br>    # Optional overrides<br>    allowed_cidr_blocks             = optional(list(string), null)<br>    capacity_reservation_preference = optional(string, null)<br>    tags                            = optional(map(string), null)<br>  }))</pre> | `{}` | no |
-=======
-| <a name="input_presets"></a> [presets](#input\_presets) | Configuration blueprints defining instance types and named volumes with Windows drive mapping.<br/><br/>**KEY BECOMES PRESET NAME**: The map key (e.g., "ue-developer") becomes the preset name referenced by workstations.<br/><br/>Presets provide reusable configurations that can be referenced by multiple workstations via preset\_key.<br/><br/>Example:<br/>presets = {<br/>  "ue-developer" = {           # ← This key becomes the preset name<br/>    instance\_type = "g4dn.2xlarge"<br/>    gpu\_enabled   = true<br/>    volumes = {<br/>      Root = { capacity = 256, type = "gp3", windows\_drive = "C:" }<br/>      Projects = { capacity = 1024, type = "gp3", windows\_drive = "D:" }<br/>    }<br/>  }<br/>  "basic-workstation" = {      # ← Another preset name<br/>    instance\_type = "g4dn.xlarge"<br/>    gpu\_enabled   = true<br/>  }<br/>}<br/><br/># Referenced by workstations:<br/>workstations = {<br/>  "alice-ws" = {<br/>    preset\_key = "ue-developer"      # ← References preset by key<br/>  }<br/>}<br/><br/>Valid volume types: "gp2", "gp3", "io1", "io2"<br/>Windows drives: "C:", "D:", "E:", etc. | <pre>map(object({<br/>    # Core compute configuration<br/>    instance_type = string<br/>    ami           = optional(string, null)<br/><br/>    # Hardware configuration<br/>    gpu_enabled = optional(bool, true)<br/><br/>    # Named volumes with Windows drive mapping<br/>    volumes = map(object({<br/>      capacity      = number<br/>      type          = string<br/>      windows_drive = string<br/>      iops          = optional(number, 3000)<br/>      throughput    = optional(number, 125)<br/>      encrypted     = optional(bool, true)<br/>    }))<br/><br/>    # Optional configuration<br/>    iam_instance_profile = optional(string, null)<br/>    software_packages    = optional(list(string), null)<br/>    tags                 = optional(map(string), {})<br/>  }))</pre> | `{}` | no |
-| <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Prefix for resource names | `string` | `"cgd"` | no |
-| <a name="input_region"></a> [region](#input\_region) | AWS region for deployment | `string` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "terraform-aws-vdi",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/vdi",<br/>  "RootModuleName": "-"<br/>}</pre> | no |
-| <a name="input_users"></a> [users](#input\_users) | Local Windows user accounts with Windows group types and network connectivity (managed via Secrets Manager)<br/><br/>**KEY BECOMES WINDOWS USERNAME**: The map key (e.g., "john-doe") becomes the actual Windows username created on VDI instances.<br/><br/>type options (Windows groups):<br/>- "fleet\_administrator": User added to Windows Administrators group, created on ALL workstations (fleet management)<br/>- "administrator": User added to Windows Administrators group, created only on assigned workstation<br/>- "user": User added to Windows Users group, created only on assigned workstation<br/><br/>use\_client\_vpn options (VPN access):<br/>- false: User accesses VDI via public internet or external VPN (default)<br/>- true: User accesses VDI via module's Client VPN (generates VPN config)<br/><br/>Example:<br/>users = {<br/>  "vdiadmin" = {              # ← This key becomes Windows username "vdiadmin"<br/>    given\_name = "VDI"<br/>    family\_name = "Administrator"<br/>    email = "admin@company.com"<br/>    type = "fleet\_administrator" # Windows Administrators group on ALL workstations<br/>  }<br/>  "naruto-uzumaki" = {         # ← This key becomes Windows username "naruto-uzumaki"<br/>    given\_name = "Naruto"<br/>    family\_name = "Uzumaki"<br/>    email = "naruto@konoha.com"<br/>    type = "user"               # Windows Users group<br/>  }<br/>}<br/><br/># User assignment is now direct:<br/># assigned\_user = "naruto-uzumaki"  # References users{} key directly in workstation | <pre>map(object({<br/>    given_name     = string<br/>    family_name    = string<br/>    email          = string<br/>    type           = optional(string, "user") # "administrator" or "user" (Windows group)<br/>    use_client_vpn = optional(bool, false)    # Whether this user connects via module's Client VPN<br/>    tags           = optional(map(string), {})<br/>  }))</pre> | `{}` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID where VDI instances will be deployed | `string` | n/a | yes |
-| <a name="input_workstations"></a> [workstations](#input\_workstations) | Physical infrastructure instances with template references and placement configuration.<br/><br/>**KEY BECOMES WORKSTATION NAME**: The map key (e.g., "alice-workstation") becomes the workstation identifier used throughout the module.<br/><br/>Workstations inherit configuration from templates via preset\_key reference.<br/><br/>Example:<br/>workstations = {<br/>  "alice-workstation" = {        # ← This key becomes the workstation name<br/>    preset\_key = "ue-developer"    # ← References templates{} key<br/>    subnet\_id = "subnet-123"<br/>    availability\_zone = "us-east-1a"<br/>    security\_groups = ["sg-456"]<br/>    assigned\_user = "alice"  # User assigned to this workstation<br/>    allowed\_cidr\_blocks = ["203.0.113.1/32"]<br/>  }<br/>  "vdi-001" = {                  # ← Another workstation name<br/>    preset\_key = "basic-workstation"<br/>    subnet\_id = "subnet-456"<br/>  }<br/>}<br/><br/># User assignment is now direct:<br/># assigned\_user = "alice"  # References users{} key directly in workstation | <pre>map(object({<br/>    # Preset reference (optional - can use direct config instead)<br/>    preset_key = optional(string, null)<br/><br/>    # Infrastructure placement<br/>    subnet_id       = string<br/>    security_groups = list(string)<br/>    assigned_user   = optional(string, null) # User assigned to this workstation (for administrator/user types only)<br/><br/>    # Direct configuration (used when preset_key is null or as overrides)<br/>    ami           = optional(string, null)<br/>    instance_type = optional(string, null)<br/>    gpu_enabled   = optional(bool, null)<br/>    volumes = optional(map(object({<br/>      capacity      = number<br/>      type          = string<br/>      windows_drive = string<br/>      iops          = optional(number, 3000)<br/>      throughput    = optional(number, 125)<br/>      encrypted     = optional(bool, true)<br/>    })), null)<br/>    iam_instance_profile = optional(string, null)<br/>    software_packages    = optional(list(string), null)<br/><br/>    # Optional overrides<br/>    allowed_cidr_blocks             = optional(list(string), null)<br/>    capacity_reservation_preference = optional(string, null)<br/>    tags                            = optional(map(string), null)<br/>  }))</pre> | `{}` | no |
->>>>>>> origin/main
 
 ## Outputs
 
@@ -726,132 +634,50 @@ No modules.
 | <a name="output_vpn_configs_bucket"></a> [vpn\_configs\_bucket](#output\_vpn\_configs\_bucket) | S3 bucket name for VPN configuration files |
 <!-- END_TF_DOCS -->
 
-## Known Limitations
+## Volume Management
 
-### Volume Size Reduction
+### Dynamic Volume Operations
 
-**Issue:** EBS volumes cannot be reduced in size (AWS platform limitation).
+**Adding/Resizing Volumes:**
 
-**Behavior:** Terraform will fail immediately with clear error message - no waiting required.
+1. Add or modify volumes in Terraform configuration
+2. Run `terraform apply`
+3. **Wait 5-10 minutes** for automatic SSM volume script execution
+4. Verify volumes are initialized via RDP
 
-**Workaround:** Create new smaller volume, migrate data manually, remove old volume.
+**How it works:**
 
-### Dynamic Volume Addition
-
-**Two Approaches Available:**
-
-#### Option 1: SSM Automation (Reliable)
-
-**Best for**: Most use cases - reliable automation with predictable timing
-
-1. Add volumes to Terraform configuration
-2. Set `force_run_volume_script = true`
-3. Run `terraform apply`
-4. **Wait 5-10 minutes** for SSM volume script to execute
-5. Verify volumes are initialized via RDP
-6. Set `force_run_volume_script = false` and apply again
-
-**Validated Results**:
-
-- ✅ **Consistently works** across add/resize/delete operations
+- ✅ **Fully automated** - Lifecycle rules handle all triggering
+- ✅ **Reliable triggering** - Automatically detects volume changes
 - ✅ **Predictable timing** - 5-10 minutes for script execution
-- ✅ **Proper cleanup** - drive letters managed automatically
+- ✅ **Proper cleanup** - Drive letters managed automatically
+- ✅ **Clean plans** - No continuous Terraform drift
 
-**Trade-offs**: Requires patience for SSM execution, but reliable when `force_run_volume_script = true` is used.
+**Alternative: Manual Administration**
 
-#### Option 2: Manual Administration (Deterministic)
+For immediate results, you can skip waiting for SSM and manually initialize volumes:
 
-**Best for**: Production environments requiring predictable timing
+1. RDP to instance as Administrator after `terraform apply`
+2. Run PowerShell commands to initialize volumes immediately
+3. Complete in under 2 minutes with full control
 
-1. Add volumes to Terraform configuration
-2. Run `terraform apply` (volumes created but uninitialized)
-3. **Immediately** RDP to instance as Administrator
-4. Run PowerShell commands to initialize volumes
-5. **Complete in under 2 minutes** with full control
+### Volume Limitations
 
-**Trade-offs**: Requires manual steps but provides immediate, predictable results.
+**Volume Size Reduction - NOT SUPPORTED**
 
-**Troubleshooting SSM Volume Script:**
-To determine if the script ran and what happened:
+**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform limitation, not a module limitation.
+
+**What Happens**: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):
 
 ```bash
-# Get instance ID
-INSTANCE_ID=$(terraform output -json connection_info | jq -r '."vdi-001".instance_id')
-
-# Check if SSM association executed
-aws ssm list-command-invocations --instance-id $INSTANCE_ID --filters Key=DocumentName,Values=cgd-dev-initialize-volumes
-
-# Get detailed execution results
-aws ssm get-command-invocation --command-id <COMMAND_ID> --instance-id $INSTANCE_ID
-
-# Check volume script status in SSM parameters
-aws ssm get-parameter --name "/cgd/vdi-001/volume_status" --query 'Parameter.Value' --output text
-aws ssm get-parameter --name "/cgd/vdi-001/volume_message" --query 'Parameter.Value' --output text
+terraform apply
+# ❌ Error: InvalidParameterValue: Cannot decrease volume size from 500 to 200
+# ❌ The apply will FAIL IMMEDIATELY - no waiting required
 ```
 
-**Manual Initialization (if script failed):**
+**Workaround for Size Reduction**:
 
-```powershell
-# Initialize any RAW disks
-Get-Disk | Where-Object { $_.PartitionStyle -eq 'RAW' } |
-Initialize-Disk -PartitionStyle MBR -PassThru |
-New-Partition -AssignDriveLetter -UseMaximumSize |
-Format-Volume -FileSystem NTFS -Confirm:$false
-```
-
-### Volume Resize Troubleshooting
-
-**Issue:** Volume increased in AWS but partition not extended to use full space.
-
-**Check Current State:**
-
-```powershell
-# Check disk sizes vs partition sizes
-Get-Disk | Format-Table Number, Size, BusType
-Get-Partition | Format-Table DiskNumber, DriveLetter, Size
-```
-
-**Manual Partition Extension:**
-
-```powershell
-# Extend partition to use full disk (replace F: with your drive letter)
-$DriveLetter = "F"
-$Partition = Get-Partition -DriveLetter $DriveLetter
-$MaxSize = (Get-PartitionSupportedSize -DriveLetter $DriveLetter).SizeMax
-Resize-Partition -DriveLetter $DriveLetter -Size $MaxSize
-```
-
-**Troubleshoot SSM Volume Resize:**
-Same SSM troubleshooting commands as above - the volume script handles both initialization and resize operations.
-
-## Volume Management Summary
-
-**Based on comprehensive testing, the VDI module's volume management is reliable when used correctly:**
-
-### ✅ **What Works Reliably:**
-
-- **Volume Addition**: Consistent with `force_run_volume_script = true` (5-10 min)
-- **Volume Resize**: Reliable with proper AWS timing constraints (6-hour rule)
-- **Volume Deletion**: Immediate and reliable with automatic cleanup
-- **Drive Letter Management**: Automatic assignment and cleanup via SSM
-
-### ⏱️ **Timing Expectations:**
-
-- **EBS Operations**: Immediate (create, attach, detach, delete)
-- **SSM Script Execution**: 5-10 minutes consistently
-- **AWS Volume Modifications**: Subject to 6-hour rate limits
-
-### 🛠️ **Best Practices:**
-
-1. **Always use `force_run_volume_script = true`** when adding/resizing volumes
-2. **Wait 5-10 minutes** after `terraform apply` for SSM scripts
-3. **Check AWS volume modification state** before making multiple changes
-4. **Use manual PowerShell commands** when immediate results are required
-5. **Plan volume changes** around AWS 6-hour rate limits
-
-### 🔧 **Troubleshooting Tools:**
-
-- **SSM command history**: Verify script execution
-- **PowerShell disk commands**: Check current state
-- **AWS CLI volume status**: Monitor modification progress
-- **Manual initialization**: Fallback for immediate control
+1. **Create new smaller volume** in Terraform config
+2. **Manually migrate data** from old to new volume via RDP
+3. **Remove old volume** from Terraform config
+4. **Apply changes** - old volume will be deleted
