@@ -8,11 +8,11 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.5"
+      version = "~> 3.7"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 2.0"
+      version = "~> 3.5"
     }
   }
 }
