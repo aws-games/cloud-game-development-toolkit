@@ -17,7 +17,7 @@ try {
 
     Write-Host "Downloading SSM Agent..."
     Invoke-WebRequest -Uri $ssmAgentUrl -OutFile $ssmAgentPath -TimeoutSec 300
-    
+
     Write-Host "Installing SSM Agent..."
     Start-Process -FilePath $ssmAgentPath -ArgumentList "/S" -Wait
 
@@ -39,24 +39,24 @@ try {
 
     Write-Host "Downloading AWS CLI..."
     Invoke-WebRequest -Uri $awsCliUrl -OutFile $awsCliPath -TimeoutSec 300
-    
+
     Write-Host "Installing AWS CLI..."
     Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $awsCliPath, "/quiet", "/norestart" -Wait
 
     Write-Host "Verifying AWS CLI installation..."
     Start-Sleep -Seconds 10  # Wait for installation to complete
-    
+
     # Check if AWS CLI executable exists
     $awsExePath = "${env:ProgramFiles}\Amazon\AWSCLIV2\aws.exe"
     if (Test-Path $awsExePath) {
         Write-Host "AWS CLI executable found at: $awsExePath" -ForegroundColor Green
-        
+
         # Test AWS CLI functionality
         $awsVersion = & $awsExePath --version 2>&1
         Write-Host "AWS CLI version: $awsVersion" -ForegroundColor Green
     } else {
         Write-Host "AWS CLI executable NOT found at expected location" -ForegroundColor Red
-        
+
         # Check alternate locations
         $altPaths = @(
             "${env:ProgramFiles(x86)}\Amazon\AWSCLIV2\aws.exe",
@@ -79,7 +79,7 @@ Write-Host "`n3. Testing PATH availability..." -ForegroundColor Yellow
 try {
     # Refresh PATH environment
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
-    
+
     # Test if 'aws' command works from PATH
     $awsFromPath = aws --version 2>&1
     Write-Host "AWS CLI from PATH: $awsFromPath" -ForegroundColor Green
