@@ -1,3 +1,23 @@
+locals {
+  unreal_horde_agent_userdata_windows = base64encode(templatefile("${path.module}/config/agent/agent-config.ps1", {
+    p4_trust_bucket             = local.need_p4_trust ? aws_s3_bucket.ansible_playbooks[0].id : null
+    fully_qualified_domain_name = var.fully_qualified_domain_name
+    dotnet_runtime_version      = var.agent_dotnet_runtime_version
+  }))
+}
+
+# Need to fetch the AMI info to determine the platform
+data "aws_ami" "unreal_horde_agent_ami" {
+  for_each = var.agents
+
+  most_recent = true
+
+  filter {
+    name   = "image-id"
+    values = [each.value.ami]
+  }
+}
+
 resource "aws_launch_template" "unreal_horde_agent_template" {
   for_each    = var.agents
   name_prefix = "unreal_horde_agent-${each.key}"
@@ -17,6 +37,8 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
       }
     }
   }
+
+  user_data = data.aws_ami.unreal_horde_agent_ami[each.key].platform == "windows" ? local.unreal_horde_agent_userdata_windows : null
 
   vpc_security_group_ids = [aws_security_group.unreal_horde_agent_sg[0].id]
 
