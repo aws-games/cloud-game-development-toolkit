@@ -2,6 +2,7 @@ formatter: markdown table
 sections:
   show:
     - header
+    - requirements
     - inputs
     - providers
     - modules
@@ -17,9 +18,3 @@ output:
 sort:
   enabled: true
   by: required
-settings:
-  indent: 4
-  escape: false
-  default: false
-  required: false
-  type: true
