@@ -57,11 +57,11 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.0.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.51.0 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.4.1 |
-| <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | ~> 1.51 |
+| <a name="provider_local"></a> [local](#provider\_local) | ~> 2.4 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.7 |
 
 ## Modules
 
@@ -100,18 +100,14 @@ No modules.
 | [null_resource.generate_presigned_urls](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.wait_for_user_data](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_string.alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
-| [aws_ami.ubuntu_latest](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/instance) | data source |
-| [aws_network_interface.existing_eni](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/network_interface) | data source |
-| [local_file.config_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
-| [local_file.registration_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_unity_license_server_file_path"></a> [unity\_license\_server\_file\_path](#input\_unity\_license\_server\_file\_path) | Local path to the Linux version of the Unity Floating License Server zip file. | `string` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the Unity Floating License Server will be deployed. | `string` | n/a | yes |
+| <a name="input_vpc_subnet"></a> [vpc\_subnet](#input\_vpc\_subnet) | The subnet where the EC2 instance running the Unity Floating License Server will be deployed. | `string` | n/a | yes |
 | <a name="input_add_eni_public_ip"></a> [add\_eni\_public\_ip](#input\_add\_eni\_public\_ip) | If true and "existing\_eni\_id" is not provided, an Elastic IP (EIP) will be created and associated with the newly created Elastic Network Interface (ENI) to be used with the Unity Floating License Server. If "existing\_eni\_id" is provided, this variable is ignored and no new EIP will be added to the provided ENI. | `bool` | `true` | no |
 | <a name="input_alb_access_logs_bucket"></a> [alb\_access\_logs\_bucket](#input\_alb\_access\_logs\_bucket) | ID of the S3 bucket for Application Load Balancer access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_alb_access_logs_prefix"></a> [alb\_access\_logs\_prefix](#input\_alb\_access\_logs\_prefix) | Log prefix for Unity License Server Application Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
@@ -128,31 +124,9 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources created by this module. | `map(any)` | <pre>{<br>  "environment": "Dev",<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "UnityFloatingLicenseServer",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
 | <a name="input_unity_license_server_admin_password_arn"></a> [unity\_license\_server\_admin\_password\_arn](#input\_unity\_license\_server\_admin\_password\_arn) | ARN of the AWS Secrets Manager secret containing the Unity Floating License Server admin dashboard password. Password must be the only value and stored as text, not as key/value JSON. If not passed, one will be created randomly. Password must be between 8-12 characters. | `string` | `null` | no |
 | <a name="input_unity_license_server_bucket_name"></a> [unity\_license\_server\_bucket\_name](#input\_unity\_license\_server\_bucket\_name) | Name of the Unity Floating License Server-specific S3 bucket to create. | `string` | `"unity-license-server-"` | no |
-| <a name="input_unity_license_server_file_path"></a> [unity\_license\_server\_file\_path](#input\_unity\_license\_server\_file\_path) | Local path to the Linux version of the Unity Floating License Server zip file. | `string` | n/a | yes |
 | <a name="input_unity_license_server_instance_ami_id"></a> [unity\_license\_server\_instance\_ami\_id](#input\_unity\_license\_server\_instance\_ami\_id) | The Ubuntu-based AMI ID to use in the EC2 instance running the Unity Floating License Server. Defaults to the latest Ubuntu Server 24.04 LTS AMI. | `string` | `null` | no |
 | <a name="input_unity_license_server_instance_ebs_size"></a> [unity\_license\_server\_instance\_ebs\_size](#input\_unity\_license\_server\_instance\_ebs\_size) | The size of the EBS volume in GB. | `string` | `"20"` | no |
 | <a name="input_unity_license_server_instance_type"></a> [unity\_license\_server\_instance\_type](#input\_unity\_license\_server\_instance\_type) | The instance type to use for the Unity Floating License Server. Defaults to t3.small. | `string` | `"t3.small"` | no |
 | <a name="input_unity_license_server_name"></a> [unity\_license\_server\_name](#input\_unity\_license\_server\_name) | Name of the Unity Floating License Server. | `string` | `"UnityLicenseServer"` | no |
 | <a name="input_unity_license_server_port"></a> [unity\_license\_server\_port](#input\_unity\_license\_server\_port) | Port the Unity Floating License Server will listen on (between 1025 and 65535). Defaults to 8080. | `string` | `"8080"` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the Unity Floating License Server will be deployed. | `string` | n/a | yes |
-| <a name="input_vpc_subnet"></a> [vpc\_subnet](#input\_vpc\_subnet) | The subnet where the EC2 instance running the Unity Floating License Server will be deployed. | `string` | n/a | yes |
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_alb_dns_name"></a> [alb\_dns\_name](#output\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB). |
-| <a name="output_alb_security_group_id"></a> [alb\_security\_group\_id](#output\_alb\_security\_group\_id) | ID of the Application Load Balancer's (ALB) security group. |
-| <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | Zone ID for Application Load Balancer (ALB). |
-| <a name="output_created_unity_license_server_security_group_id"></a> [created\_unity\_license\_server\_security\_group\_id](#output\_created\_unity\_license\_server\_security\_group\_id) | Id of the security group created by the script, for the Unity License Server instance. Null if an ENI was provided externally instead of created through the script. |
-| <a name="output_dashboard_password_secret_arn"></a> [dashboard\_password\_secret\_arn](#output\_dashboard\_password\_secret\_arn) | ARN of the secret containing the dashboard password. |
-| <a name="output_eni_id"></a> [eni\_id](#output\_eni\_id) | Elastic Network ID (ENI) used when binding the Unity Floating License Server. |
-| <a name="output_instance_private_ip"></a> [instance\_private\_ip](#output\_instance\_private\_ip) | The EC2 instance's private IP address. |
-| <a name="output_instance_public_ip"></a> [instance\_public\_ip](#output\_instance\_public\_ip) | The resulting EC2 instance's public IP, if configured. |
-| <a name="output_registration_request_filename"></a> [registration\_request\_filename](#output\_registration\_request\_filename) | Filename for the server registration request file. |
-| <a name="output_registration_request_presigned_url"></a> [registration\_request\_presigned\_url](#output\_registration\_request\_presigned\_url) | Presigned URL for downloading the server registration request file (valid for 1 hour). |
-| <a name="output_services_config_filename"></a> [services\_config\_filename](#output\_services\_config\_filename) | Filename for the services config file. |
-| <a name="output_services_config_presigned_url"></a> [services\_config\_presigned\_url](#output\_services\_config\_presigned\_url) | Presigned URL for downloading the services configuration file (valid for 1 hour). |
-| <a name="output_unity_license_server_port"></a> [unity\_license\_server\_port](#output\_unity\_license\_server\_port) | Port the Unity Floating License Server will listen on. |
-| <a name="output_unity_license_server_s3_bucket"></a> [unity\_license\_server\_s3\_bucket](#output\_unity\_license\_server\_s3\_bucket) | S3 bucket name used by the Unity License Server service. |
 <!-- END_TF_DOCS -->
