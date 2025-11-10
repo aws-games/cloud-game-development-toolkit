@@ -117,6 +117,16 @@ No modules.
 | [random_string.unreal_horde](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
 | [random_string.unreal_horde_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
 | [random_string.unreal_horde_ansible_playbooks_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_ecs_cluster.unreal_horde_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.horde_agents_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unreal_horde_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unreal_horde_elasticache_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unreal_horde_secrets_manager_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/region) | data source |
 
 ## Inputs
 
@@ -187,4 +197,17 @@ No modules.
 | <a name="input_unreal_horde_cloudwatch_log_retention_in_days"></a> [unreal\_horde\_cloudwatch\_log\_retention\_in\_days](#input\_unreal\_horde\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for Unreal Horde. | `string` | `365` | no |
 | <a name="input_unreal_horde_external_alb_subnets"></a> [unreal\_horde\_external\_alb\_subnets](#input\_unreal\_horde\_external\_alb\_subnets) | A list of subnets to deploy the Unreal Horde load balancer into. Public subnets are recommended. | `list(string)` | `[]` | no |
 | <a name="input_unreal_horde_internal_alb_subnets"></a> [unreal\_horde\_internal\_alb\_subnets](#input\_unreal\_horde\_internal\_alb\_subnets) | A list of subnets to deploy the Unreal Horde internal load balancer into. Private subnets are recommended. | `list(string)` | `[]` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_agent_security_group_id"></a> [agent\_security\_group\_id](#output\_agent\_security\_group\_id) | n/a |
+| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | n/a |
+| <a name="output_external_alb_sg_id"></a> [external\_alb\_sg\_id](#output\_external\_alb\_sg\_id) | n/a |
+| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | n/a |
+| <a name="output_internal_alb_dns_name"></a> [internal\_alb\_dns\_name](#output\_internal\_alb\_dns\_name) | n/a |
+| <a name="output_internal_alb_sg_id"></a> [internal\_alb\_sg\_id](#output\_internal\_alb\_sg\_id) | n/a |
+| <a name="output_internal_alb_zone_id"></a> [internal\_alb\_zone\_id](#output\_internal\_alb\_zone\_id) | n/a |
+| <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->

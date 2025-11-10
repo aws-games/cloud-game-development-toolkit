@@ -102,6 +102,10 @@ No modules.
 | [netapp-ontap_san_lun-map.logs_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_lun-map) | resource |
 | [netapp-ontap_san_lun-map.metadata_lun_map](https://registry.terraform.io/providers/NetApp/netapp-ontap/2.3.0/docs/resources/san_lun-map) | resource |
 | [random_string.p4_server](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_ami.existing_server_ami](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ami) | data source |
+| [aws_iam_policy_document.default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_subnet.instance_subnet](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
@@ -142,4 +146,17 @@ No modules.
 | <a name="input_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#input\_super\_user\_username\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used. | `string` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-server",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
 | <a name="input_unicode"></a> [unicode](#input\_unicode) | Whether to enable Unicode configuration for P4 Server the -xi flag for p4d. Set to true to enable Unicode support. | `bool` | `false` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_eip_id"></a> [eip\_id](#output\_eip\_id) | The ID of the Elastic IP associated with your P4 Server instance. |
+| <a name="output_eip_public_ip"></a> [eip\_public\_ip](#output\_eip\_public\_ip) | The public IP of your P4 Server instance. |
+| <a name="output_instance_id"></a> [instance\_id](#output\_instance\_id) | Instance ID for the P4 Server instance |
+| <a name="output_lambda_link_name"></a> [lambda\_link\_name](#output\_lambda\_link\_name) | Lambda function name for the FSxN Link |
+| <a name="output_private_ip"></a> [private\_ip](#output\_private\_ip) | Private IP for the P4 Server instance |
+| <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your P4 Server instance. |
+| <a name="output_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#output\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
+| <a name="output_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#output\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
 <!-- END_TF_DOCS -->

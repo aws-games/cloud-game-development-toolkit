@@ -82,6 +82,16 @@ No modules.
 | [awscc_secretsmanager_secret.dashboard_password_arn](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
 | [awscc_secretsmanager_secret.dashboard_username_arn](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
 | [random_string.unity_accelerator_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/caller_identity) | data source |
+| [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_efs_file_system.efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/efs_file_system) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_lb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/region) | data source |
+| [aws_subnet.nlb_subnets](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
@@ -119,4 +129,16 @@ No modules.
 | <a name="input_unity_accelerator_lb_access_logs_bucket"></a> [unity\_accelerator\_lb\_access\_logs\_bucket](#input\_unity\_accelerator\_lb\_access\_logs\_bucket) | ID of the S3 bucket for Unity Accelerator Application Load Balancer and Network Load Balancer access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_unity_accelerator_log_stdout"></a> [unity\_accelerator\_log\_stdout](#input\_unity\_accelerator\_log\_stdout) | When true, outputs logs to stdout only. When false, writes logs to the persist directory. | `string` | `"true"` | no |
 | <a name="input_unity_accelerator_nlb_access_logs_prefix"></a> [unity\_accelerator\_nlb\_access\_logs\_prefix](#input\_unity\_accelerator\_nlb\_access\_logs\_prefix) | Log prefix for Unity Accelerator Network Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_alb_dns_name"></a> [alb\_dns\_name](#output\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_alb_security_group_id"></a> [alb\_security\_group\_id](#output\_alb\_security\_group\_id) | ID of the Application Load Balancer's (ALB) security group |
+| <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | Zone ID for Application Load Balancer (ALB) |
+| <a name="output_nlb_dns_name"></a> [nlb\_dns\_name](#output\_nlb\_dns\_name) | DNS endpoint of Network Load Balancer (NLB) |
+| <a name="output_nlb_zone_id"></a> [nlb\_zone\_id](#output\_nlb\_zone\_id) | Zone ID for Network Load Balancer (NLB) |
+| <a name="output_unity_accelerator_dashboard_password_arn"></a> [unity\_accelerator\_dashboard\_password\_arn](#output\_unity\_accelerator\_dashboard\_password\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's username. |
+| <a name="output_unity_accelerator_dashboard_username_arn"></a> [unity\_accelerator\_dashboard\_username\_arn](#output\_unity\_accelerator\_dashboard\_username\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's password. |
 <!-- END_TF_DOCS -->

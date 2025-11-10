@@ -85,6 +85,15 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.service_inbound_alb](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.teamcity_agent_inbound](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.teamcity_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_ecs_cluster.teamcity_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_efs_file_system.efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/efs_file_system) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.teamcity_agent_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.teamcity_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.teamcity_execution_database_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/region) | data source |
 
 ## Inputs
 
@@ -122,4 +131,13 @@ No modules.
 | <a name="input_teamcity_cloudwatch_log_retention_in_days"></a> [teamcity\_cloudwatch\_log\_retention\_in\_days](#input\_teamcity\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for TeamCity. | `string` | `365` | no |
 | <a name="input_teamcity_efs_performance_mode"></a> [teamcity\_efs\_performance\_mode](#input\_teamcity\_efs\_performance\_mode) | The performance mode of the EFS file system used by the TeamCity service. Defaults to general purpose. | `string` | `"generalPurpose"` | no |
 | <a name="input_teamcity_efs_throughput_mode"></a> [teamcity\_efs\_throughput\_mode](#input\_teamcity\_efs\_throughput\_mode) | The throughput mode of the EFS file system used by the TeamCity service. Defaults to bursting. | `string` | `"bursting"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
+| <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your Teamcity service. |
+| <a name="output_teamcity_cluster_id"></a> [teamcity\_cluster\_id](#output\_teamcity\_cluster\_id) | The ID of the ECS cluster |
 <!-- END_TF_DOCS -->

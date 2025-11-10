@@ -100,6 +100,13 @@ No modules.
 | [null_resource.generate_presigned_urls](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.wait_for_user_data](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [random_string.alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [aws_ami.ubuntu_latest](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_instance.unity_license_server](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/instance) | data source |
+| [aws_network_interface.existing_eni](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/network_interface) | data source |
+| [local_file.config_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
+| [local_file.registration_url](https://registry.terraform.io/providers/hashicorp/local/latest/docs/data-sources/file) | data source |
 
 ## Inputs
 
@@ -129,4 +136,23 @@ No modules.
 | <a name="input_unity_license_server_instance_type"></a> [unity\_license\_server\_instance\_type](#input\_unity\_license\_server\_instance\_type) | The instance type to use for the Unity Floating License Server. Defaults to t3.small. | `string` | `"t3.small"` | no |
 | <a name="input_unity_license_server_name"></a> [unity\_license\_server\_name](#input\_unity\_license\_server\_name) | Name of the Unity Floating License Server. | `string` | `"UnityLicenseServer"` | no |
 | <a name="input_unity_license_server_port"></a> [unity\_license\_server\_port](#input\_unity\_license\_server\_port) | Port the Unity Floating License Server will listen on (between 1025 and 65535). Defaults to 8080. | `string` | `"8080"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_alb_dns_name"></a> [alb\_dns\_name](#output\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB). |
+| <a name="output_alb_security_group_id"></a> [alb\_security\_group\_id](#output\_alb\_security\_group\_id) | ID of the Application Load Balancer's (ALB) security group. |
+| <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | Zone ID for Application Load Balancer (ALB). |
+| <a name="output_created_unity_license_server_security_group_id"></a> [created\_unity\_license\_server\_security\_group\_id](#output\_created\_unity\_license\_server\_security\_group\_id) | Id of the security group created by the script, for the Unity License Server instance. Null if an ENI was provided externally instead of created through the script. |
+| <a name="output_dashboard_password_secret_arn"></a> [dashboard\_password\_secret\_arn](#output\_dashboard\_password\_secret\_arn) | ARN of the secret containing the dashboard password. |
+| <a name="output_eni_id"></a> [eni\_id](#output\_eni\_id) | Elastic Network ID (ENI) used when binding the Unity Floating License Server. |
+| <a name="output_instance_private_ip"></a> [instance\_private\_ip](#output\_instance\_private\_ip) | The EC2 instance's private IP address. |
+| <a name="output_instance_public_ip"></a> [instance\_public\_ip](#output\_instance\_public\_ip) | The resulting EC2 instance's public IP, if configured. |
+| <a name="output_registration_request_filename"></a> [registration\_request\_filename](#output\_registration\_request\_filename) | Filename for the server registration request file. |
+| <a name="output_registration_request_presigned_url"></a> [registration\_request\_presigned\_url](#output\_registration\_request\_presigned\_url) | Presigned URL for downloading the server registration request file (valid for 1 hour). |
+| <a name="output_services_config_filename"></a> [services\_config\_filename](#output\_services\_config\_filename) | Filename for the services config file. |
+| <a name="output_services_config_presigned_url"></a> [services\_config\_presigned\_url](#output\_services\_config\_presigned\_url) | Presigned URL for downloading the services configuration file (valid for 1 hour). |
+| <a name="output_unity_license_server_port"></a> [unity\_license\_server\_port](#output\_unity\_license\_server\_port) | Port the Unity Floating License Server will listen on. |
+| <a name="output_unity_license_server_s3_bucket"></a> [unity\_license\_server\_s3\_bucket](#output\_unity\_license\_server\_s3\_bucket) | S3 bucket name used by the Unity License Server service. |
 <!-- END_TF_DOCS -->

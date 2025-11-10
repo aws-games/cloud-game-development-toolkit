@@ -79,6 +79,18 @@ No modules.
 | [random_string.fsxz](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
 | [random_string.jenkins](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
 | [random_string.jenkins_alb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/caller_identity) | data source |
+| [aws_ecs_cluster.jenkins_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ecs_cluster) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.build_farm_fsxz_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.build_farm_s3_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_fleet_plugin_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ec2_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.jenkins_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/region) | data source |
+| [aws_vpc.build_farm_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/vpc) | data source |
 
 ## Inputs
 
@@ -120,4 +132,15 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Jenkins module resources. | `string` | `"jenkins"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "Jenkins",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_alb_security_group_id"></a> [alb\_security\_group\_id](#output\_alb\_security\_group\_id) | Security group associated with the Jenkins load balancer |
+| <a name="output_build_farm_security_group_id"></a> [build\_farm\_security\_group\_id](#output\_build\_farm\_security\_group\_id) | Security group associated with the build farm autoscaling groups |
+| <a name="output_jenkins_alb_dns_name"></a> [jenkins\_alb\_dns\_name](#output\_jenkins\_alb\_dns\_name) | The DNS name of the Jenkins application load balancer. |
+| <a name="output_jenkins_alb_zone_id"></a> [jenkins\_alb\_zone\_id](#output\_jenkins\_alb\_zone\_id) | The zone ID of the Jenkins ALB. |
+| <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service hosting jenkins |
+| <a name="output_service_target_group_arn"></a> [service\_target\_group\_arn](#output\_service\_target\_group\_arn) | The ARN of the Jenkins service target group |
 <!-- END_TF_DOCS -->

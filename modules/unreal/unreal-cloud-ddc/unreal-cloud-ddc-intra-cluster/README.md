@@ -114,6 +114,13 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 | [helm_release.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
 | [kubernetes_namespace.unreal_cloud_ddc](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |
 | [kubernetes_service_account.unreal_cloud_ddc_service_account](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_eks_cluster.unreal_cloud_ddc_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
+| [aws_iam_openid_connect_provider.oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider) | data source |
+| [aws_iam_policy_document.unreal_cloud_ddc_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_lb.unreal_cloud_ddc_load_balancer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lb) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_s3_bucket.unreal_cloud_ddc_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 
 ## Inputs
 
@@ -133,6 +140,13 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 | <a name="input_unreal_cloud_ddc_namespace"></a> [unreal\_cloud\_ddc\_namespace](#input\_unreal\_cloud\_ddc\_namespace) | Namespace for Unreal Cloud DDC | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_unreal_cloud_ddc_service_account_name"></a> [unreal\_cloud\_ddc\_service\_account\_name](#input\_unreal\_cloud\_ddc\_service\_account\_name) | Name of Unreal Cloud DDC service account. | `string` | `"unreal-cloud-ddc-sa"` | no |
 | <a name="input_unreal_cloud_ddc_version"></a> [unreal\_cloud\_ddc\_version](#input\_unreal\_cloud\_ddc\_version) | Version of the Unreal Cloud DDC Helm chart. | `string` | `"1.2.0"` | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_unreal_cloud_ddc_load_balancer_name"></a> [unreal\_cloud\_ddc\_load\_balancer\_name](#output\_unreal\_cloud\_ddc\_load\_balancer\_name) | n/a |
+| <a name="output_unreal_cloud_ddc_load_balancer_zone_id"></a> [unreal\_cloud\_ddc\_load\_balancer\_zone\_id](#output\_unreal\_cloud\_ddc\_load\_balancer\_zone\_id) | n/a |
 <!-- END_TF_DOCS -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

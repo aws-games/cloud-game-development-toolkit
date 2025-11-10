@@ -200,6 +200,8 @@ packer build perforce_x86.pkr.hcl
 | [aws_vpc_security_group_ingress_rule.perforce_web_services_inbound_from_perforce_nlb](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [null_resource.parent_module_certificate](https://registry.terraform.io/providers/hashicorp/null/3.2.4/docs/resources/resource) | resource |
 | [random_string.shared_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.shared_lb_access_logs_bucket_lb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
@@ -230,4 +232,31 @@ packer build perforce_x86.pkr.hcl
 | <a name="input_shared_nlb_access_logs_prefix"></a> [shared\_nlb\_access\_logs\_prefix](#input\_shared\_nlb\_access\_logs\_prefix) | Log prefix for shared NLB access logs. | `string` | `"perforce-nlb-"` | no |
 | <a name="input_shared_nlb_subnets"></a> [shared\_nlb\_subnets](#input\_shared\_nlb\_subnets) | A list of subnets to attach to the shared network load balancer. | `list(string)` | `null` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "terraform-aws-perforce",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "-"<br>}</pre> | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_p4_auth_alb_dns_name"></a> [p4\_auth\_alb\_dns\_name](#output\_p4\_auth\_alb\_dns\_name) | The DNS name of the P4Auth ALB. |
+| <a name="output_p4_auth_alb_security_group_id"></a> [p4\_auth\_alb\_security\_group\_id](#output\_p4\_auth\_alb\_security\_group\_id) | Security group associated with the P4Auth load balancer. |
+| <a name="output_p4_auth_alb_zone_id"></a> [p4\_auth\_alb\_zone\_id](#output\_p4\_auth\_alb\_zone\_id) | The hosted zone ID of the P4Auth ALB. |
+| <a name="output_p4_auth_perforce_cluster_name"></a> [p4\_auth\_perforce\_cluster\_name](#output\_p4\_auth\_perforce\_cluster\_name) | Name of the ECS cluster hosting P4Auth. |
+| <a name="output_p4_auth_service_security_group_id"></a> [p4\_auth\_service\_security\_group\_id](#output\_p4\_auth\_service\_security\_group\_id) | Security group associated with the ECS service running P4Auth. |
+| <a name="output_p4_auth_target_group_arn"></a> [p4\_auth\_target\_group\_arn](#output\_p4\_auth\_target\_group\_arn) | The service target group for the P4Auth. |
+| <a name="output_p4_code_review_alb_dns_name"></a> [p4\_code\_review\_alb\_dns\_name](#output\_p4\_code\_review\_alb\_dns\_name) | The DNS name of the P4 Code Review ALB. |
+| <a name="output_p4_code_review_alb_security_group_id"></a> [p4\_code\_review\_alb\_security\_group\_id](#output\_p4\_code\_review\_alb\_security\_group\_id) | Security group associated with the P4 Code Review load balancer. |
+| <a name="output_p4_code_review_alb_zone_id"></a> [p4\_code\_review\_alb\_zone\_id](#output\_p4\_code\_review\_alb\_zone\_id) | The hosted zone ID of the P4 Code Review ALB. |
+| <a name="output_p4_code_review_perforce_cluster_name"></a> [p4\_code\_review\_perforce\_cluster\_name](#output\_p4\_code\_review\_perforce\_cluster\_name) | Name of the ECS cluster hosting P4 Code Review. |
+| <a name="output_p4_code_review_service_security_group_id"></a> [p4\_code\_review\_service\_security\_group\_id](#output\_p4\_code\_review\_service\_security\_group\_id) | Security group associated with the ECS service running P4 Code Review. |
+| <a name="output_p4_code_review_target_group_arn"></a> [p4\_code\_review\_target\_group\_arn](#output\_p4\_code\_review\_target\_group\_arn) | The service target group for the P4 Code Review. |
+| <a name="output_p4_server_eip_id"></a> [p4\_server\_eip\_id](#output\_p4\_server\_eip\_id) | The ID of the Elastic IP associated with your P4 Server instance. |
+| <a name="output_p4_server_eip_public_ip"></a> [p4\_server\_eip\_public\_ip](#output\_p4\_server\_eip\_public\_ip) | The public IP of your P4 Server instance. |
+| <a name="output_p4_server_instance_id"></a> [p4\_server\_instance\_id](#output\_p4\_server\_instance\_id) | Instance ID for the P4 Server instance |
+| <a name="output_p4_server_lambda_link_name"></a> [p4\_server\_lambda\_link\_name](#output\_p4\_server\_lambda\_link\_name) | The name of the Lambda link for the P4 Server instance to use with FSxN. |
+| <a name="output_p4_server_private_ip"></a> [p4\_server\_private\_ip](#output\_p4\_server\_private\_ip) | Private IP for the P4 Server instance |
+| <a name="output_p4_server_security_group_id"></a> [p4\_server\_security\_group\_id](#output\_p4\_server\_security\_group\_id) | The default security group of your P4 Server instance. |
+| <a name="output_p4_server_super_user_password_secret_arn"></a> [p4\_server\_super\_user\_password\_secret\_arn](#output\_p4\_server\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
+| <a name="output_p4_server_super_user_username_secret_arn"></a> [p4\_server\_super\_user\_username\_secret\_arn](#output\_p4\_server\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
+| <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
+| <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 <!-- END_TF_DOCS -->

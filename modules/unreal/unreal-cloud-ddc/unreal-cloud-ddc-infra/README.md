@@ -160,6 +160,13 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.scylla_monitoring_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.scylla_monitoring_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [tls_certificate.eks_tls_certificate](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate) | data source |
 
 ## Inputs
 
@@ -212,6 +219,24 @@ No modules.
 | <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
 | <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br>  "unreal-cloud-ddc/node-type": "worker"<br>}</pre> | no |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | ARN of the EKS Cluster |
+| <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
+| <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
+| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
+| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
+| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
+| <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
+| <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | OIDC provider for the EKS Cluster |
+| <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
+| <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
+| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
+| <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
+| <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
