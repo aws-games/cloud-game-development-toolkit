@@ -18,6 +18,8 @@ repos:
     hooks:
       - id: checkov
         args: ["--config-file", ".config/.checkov.yml", "--quiet"]
+        env:
+          LOG_LEVEL: ERROR
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.99.5"
     hooks:
