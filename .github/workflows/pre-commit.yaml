@@ -68,7 +68,7 @@ jobs:
 
           {
             echo "#!/usr/bin/bash"
-            echo "docker run --rm quay.io/terraform-docs/terraform-docs:0.20.0 \"\$@\""
+            echo "docker run --rm -v \$GITHUB_WORKSPACE:\$GITHUB_WORKSPACE -w \$GITHUB_WORKSPACE quay.io/terraform-docs/terraform-docs:0.20.0 \"\$@\""
           } >> $RUNNER_TEMP/docker-aliases/terraform-docs
           chmod +x $RUNNER_TEMP/docker-aliases/terraform-docs
 
