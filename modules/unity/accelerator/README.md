@@ -25,9 +25,9 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.15.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.50.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.6 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | ~> 1.51 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.7 |
 
 ## Modules
 
@@ -97,6 +97,8 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_service_subnets"></a> [service\_subnets](#input\_service\_subnets) | The subnets in which the Unity Accelerator service will be deployed. | `list(string)` | n/a | yes |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the service will be deployed. | `string` | n/a | yes |
 | <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the SSL certificate to use for the Application Load Balancer. | `string` | `null` | no |
 | <a name="input_alb_is_internal"></a> [alb\_is\_internal](#input\_alb\_is\_internal) | Set this flag to determine whether the Application Load Balancer to create is internal (true) or external (false). Value is ignored if no ALB is created. | `bool` | `false` | no |
 | <a name="input_cloudwatch_log_retention_in_days"></a> [cloudwatch\_log\_retention\_in\_days](#input\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for Unity Accelerator. | `string` | `365` | no |
@@ -118,8 +120,7 @@ No modules.
 | <a name="input_lb_subnets"></a> [lb\_subnets](#input\_lb\_subnets) | The subnets in which the Application Load Balancer and Network Load Balancer will be deployed. | `list(string)` | `[]` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name applied to resources in the Unity Accelerator module. | `string` | `"unity-accelerator"` | no |
 | <a name="input_nlb_is_internal"></a> [nlb\_is\_internal](#input\_nlb\_is\_internal) | Set this flag to determine whether the Network Load Balancer to create is internal (true) or external (false). Value is ignored if no NLB is created. | `bool` | `false` | no |
-| <a name="input_service_subnets"></a> [service\_subnets](#input\_service\_subnets) | The subnets in which the Unity Accelerator service will be deployed. | `list(string)` | n/a | yes |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "UnityAccelerator",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "UnityAccelerator",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
 | <a name="input_unity_accelerator_alb_access_logs_prefix"></a> [unity\_accelerator\_alb\_access\_logs\_prefix](#input\_unity\_accelerator\_alb\_access\_logs\_prefix) | Log prefix for Unity Accelerator Application Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
 | <a name="input_unity_accelerator_dashboard_password_arn"></a> [unity\_accelerator\_dashboard\_password\_arn](#input\_unity\_accelerator\_dashboard\_password\_arn) | ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard password. Password must be the only value and stored as text, not as key/value JSON. If not passed, one will be created randomly. | `string` | `null` | no |
 | <a name="input_unity_accelerator_dashboard_username_arn"></a> [unity\_accelerator\_dashboard\_username\_arn](#input\_unity\_accelerator\_dashboard\_username\_arn) | ARN of the AWS Secrets Manager secret containing the Unity Accelerator web dashboard username. Username must be the only value and stored as text, not as key/value JSON. If not passed, one will be created and defaulted to 'uauser'. | `string` | `null` | no |
@@ -128,7 +129,6 @@ No modules.
 | <a name="input_unity_accelerator_lb_access_logs_bucket"></a> [unity\_accelerator\_lb\_access\_logs\_bucket](#input\_unity\_accelerator\_lb\_access\_logs\_bucket) | ID of the S3 bucket for Unity Accelerator Application Load Balancer and Network Load Balancer access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_unity_accelerator_log_stdout"></a> [unity\_accelerator\_log\_stdout](#input\_unity\_accelerator\_log\_stdout) | When true, outputs logs to stdout only. When false, writes logs to the persist directory. | `string` | `"true"` | no |
 | <a name="input_unity_accelerator_nlb_access_logs_prefix"></a> [unity\_accelerator\_nlb\_access\_logs\_prefix](#input\_unity\_accelerator\_nlb\_access\_logs\_prefix) | Log prefix for Unity Accelerator Network Load Balancer access logs. If null the project prefix and module name are used. | `string` | `null` | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the VPC in which the service will be deployed. | `string` | n/a | yes |
 
 ## Outputs
 

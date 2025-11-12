@@ -307,8 +307,8 @@ Tearing down the resources created by the _Simple Build Pipeline_ is as easy as 
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.6 |
+| <a name="provider_http"></a> [http](#provider\_http) | ~> 3.5 |
 
 ## Modules
 

@@ -1,12 +1,7 @@
 formatter: markdown table
-sections:
-  show:
-    - header
-    - inputs
-    - providers
-    - modules
-    - resources
-    - footer
+sort:
+  enabled: true
+  by: required
 output:
   file: README.md
   mode: inject
@@ -14,12 +9,3 @@ output:
     <!-- BEGIN_TF_DOCS -->
     {{ .Content }}
     <!-- END_TF_DOCS -->
-sort:
-  enabled: true
-  by: required
-settings:
-  indent: 4
-  escape: false
-  default: false
-  required: false
-  type: true

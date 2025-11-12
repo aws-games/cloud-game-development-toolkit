@@ -17,14 +17,25 @@ repos:
     rev: "3.2.457"
     hooks:
       - id: checkov
-        args: ["--config-file", ".config/.checkov.yml"]
+        args: ["--config-file", ".config/.checkov.yml", "--quiet"]
+        env:
+          LOG_LEVEL: ERROR
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.99.5"
     hooks:
       - id: terraform_docs
         args:
-          - --hook-config=--add-to-existing-file=true
-          - --hook-config=--create-file-if-not-exist=false
+          # Uses antonbabenko/pre-commit-terraform (supports monorepo with multiple modules)
+          # --hook-config: antonbabenko wrapper settings for file handling
+          - --hook-config=--add-to-existing-file=true     # Update existing README.md files (requires BOTH <!-- BEGIN_TF_DOCS --> and <!-- END_TF_DOCS --> markers)
+          - --hook-config=--create-file-if-not-exist=false # Don't create new README.md files
+          # --args: terraform-docs binary arguments
+          - --args=--config=.config/.terraform-docs.yml   # Use our terraform-docs config file
+          - --args=--lockfile=false                        # Ignore .terraform.lock.hcl, use versions.tf instead (fixes version mismatches)
       - id: terraform_validate
+        args:
+          - --tf-init-args=-upgrade                       # Always upgrade to match versions.tf (source of truth)
+          - --hook-config=--retry-once-with-cleanup=true  # If validation fails, delete corrupted .terraform dirs and retry
+          - --args=-no-color                              # Cleaner output
       - id: terraform_fmt
       - id: terraform_tflint
