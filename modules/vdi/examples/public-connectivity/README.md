@@ -196,13 +196,8 @@ If custom AMIs aren't built, Terraform will fail with data source error:
 
 | Name | Version |
 |------|---------|
-<<<<<<< HEAD
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | >= 3.0.0 |
-=======
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.15.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
->>>>>>> origin/main
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | ~> 3.0 |
 
 ## Modules
 

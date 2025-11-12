@@ -13,8 +13,8 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.6 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.7 |
 
 ## Modules
 
@@ -96,7 +96,6 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-<<<<<<< HEAD
 | <a name="input_build_farm_subnets"></a> [build\_farm\_subnets](#input\_build\_farm\_subnets) | The subnets to deploy the build farms into. | `list(string)` | n/a | yes |
 | <a name="input_jenkins_alb_subnets"></a> [jenkins\_alb\_subnets](#input\_jenkins\_alb\_subnets) | A list of subnet ids to deploy the Jenkins load balancer into. Public subnets are recommended. | `list(string)` | n/a | yes |
 | <a name="input_jenkins_service_subnets"></a> [jenkins\_service\_subnets](#input\_jenkins\_service\_subnets) | A list of subnets to deploy the Jenkins service into. Private subnets are recommended. | `list(string)` | n/a | yes |
@@ -104,12 +103,6 @@ No modules.
 | <a name="input_artifact_buckets"></a> [artifact\_buckets](#input\_artifact\_buckets) | List of Amazon S3 buckets you wish to create to store build farm artifacts. | <pre>map(<br>    object({<br>      name                 = string<br>      enable_force_destroy = optional(bool, true)<br>      enable_versioning    = optional(bool, true)<br>      tags                 = optional(map(string), {})<br>    })<br>  )</pre> | `null` | no |
 | <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object in this map corresponds to an ASG used by Jenkins as build agents. | <pre>map(object(<br>    {<br>      ami = string<br>      #TODO: Support mixed instances / spot with custom policies<br>      instance_type     = string<br>      ebs_optimized     = optional(bool, true)<br>      enable_monitoring = optional(bool, true)<br>    }<br>  ))</pre> | `{}` | no |
 | <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "SINGLE_AZ_1")<br>      route_table_ids     = optional(list(string), null)<br>      tags                = optional(map(string), null)<br>    }<br>  ))</pre> | `{}` | no |
-=======
-| <a name="input_artifact_buckets"></a> [artifact\_buckets](#input\_artifact\_buckets) | List of Amazon S3 buckets you wish to create to store build farm artifacts. | <pre>map(<br/>    object({<br/>      name                 = string<br/>      enable_force_destroy = optional(bool, true)<br/>      enable_versioning    = optional(bool, true)<br/>      tags                 = optional(map(string), {})<br/>    })<br/>  )</pre> | `null` | no |
-| <a name="input_build_farm_compute"></a> [build\_farm\_compute](#input\_build\_farm\_compute) | Each object in this map corresponds to an ASG used by Jenkins as build agents. | <pre>map(object(<br/>    {<br/>      ami = string<br/>      #TODO: Support mixed instances / spot with custom policies<br/>      instance_type     = string<br/>      ebs_optimized     = optional(bool, true)<br/>      enable_monitoring = optional(bool, true)<br/>    }<br/>  ))</pre> | `{}` | no |
-| <a name="input_build_farm_fsx_openzfs_storage"></a> [build\_farm\_fsx\_openzfs\_storage](#input\_build\_farm\_fsx\_openzfs\_storage) | Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents. | <pre>map(object(<br/>    {<br/>      storage_capacity    = number<br/>      throughput_capacity = number<br/>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br/>      deployment_type     = optional(string, "SINGLE_AZ_1")<br/>      route_table_ids     = optional(list(string), null)<br/>      tags                = optional(map(string), null)<br/>    }<br/>  ))</pre> | `{}` | no |
-| <a name="input_build_farm_subnets"></a> [build\_farm\_subnets](#input\_build\_farm\_subnets) | The subnets to deploy the build farms into. | `list(string)` | n/a | yes |
->>>>>>> origin/main
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the Jenkins service load balancer. | `string` | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The ARN of the cluster to deploy the Jenkins service into. Defaults to null and a cluster will be created. | `string` | `null` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the Jenkins container. | `number` | `1024` | no |
@@ -138,12 +131,7 @@ No modules.
 | <a name="input_jenkins_service_desired_container_count"></a> [jenkins\_service\_desired\_container\_count](#input\_jenkins\_service\_desired\_container\_count) | The desired number of containers running the Jenkins service. | `number` | `1` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Jenkins module resources. | `string` | `"jenkins"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
-<<<<<<< HEAD
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "Jenkins",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
-=======
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "Jenkins",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy the Jenkins service and build farms into. | `string` | n/a | yes |
->>>>>>> origin/main
 
 ## Outputs
 
