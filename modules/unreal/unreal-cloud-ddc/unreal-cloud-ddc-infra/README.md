@@ -82,15 +82,19 @@ The `scylla_subnets` variable determines the deployment topology of your ScyllaD
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=5.89.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
-| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.6 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
+<<<<<<< HEAD
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >=5.89.0 |
+=======
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.15.0 |
+>>>>>>> origin/main
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | >= 4.0.6 |
 
@@ -159,7 +163,7 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.scylla_monitoring_lb_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
+| [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
@@ -178,7 +182,7 @@ No modules.
 | <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
-| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br>  "api",<br>  "audit",<br>  "authenticator",<br>  "controllerManager",<br>  "scheduler"<br>]</pre> | no |
+| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
 | <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
 | <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
 | <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
@@ -195,7 +199,7 @@ No modules.
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
 | <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
-| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br>  "unreal-cloud-ddc/node-type": "nvme"<br>}</pre> | no |
+| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_region"></a> [region](#input\_region) | The AWS region to deploy to | `string` | `"us-west-2"` | no |
 | <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
@@ -212,13 +216,19 @@ No modules.
 | <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
 | <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
 | <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
+<<<<<<< HEAD
 | <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br>  "pool": "system-pool"<br>}</pre> | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "Unreal DDC"<br>}</pre> | no |
+=======
+| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
+>>>>>>> origin/main
 | <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
 | <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
-| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br>  "unreal-cloud-ddc/node-type": "worker"<br>}</pre> | no |
+| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "worker"<br/>}</pre> | no |
 
 ## Outputs
 
