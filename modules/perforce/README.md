@@ -258,5 +258,7 @@ packer build perforce_x86.pkr.hcl
 | <a name="output_p4_server_super_user_password_secret_arn"></a> [p4\_server\_super\_user\_password\_secret\_arn](#output\_p4\_server\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
 | <a name="output_p4_server_super_user_username_secret_arn"></a> [p4\_server\_super\_user\_username\_secret\_arn](#output\_p4\_server\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
+| <a name="output_shared_application_load_balancer_dns_name"></a> [shared\_application\_load\_balancer\_dns\_name](#output\_shared\_application\_load\_balancer\_dns\_name) | The DNS name of the shared application load balancer. |
+| <a name="output_shared_application_load_balancer_zone_id"></a> [shared\_application\_load\_balancer\_zone\_id](#output\_shared\_application\_load\_balancer\_zone\_id) | The zone ID of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 <!-- END_TF_DOCS -->

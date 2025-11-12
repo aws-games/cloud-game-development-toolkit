@@ -7,6 +7,7 @@ resource "aws_elasticache_subnet_group" "subnet_group" {
 
 # Single Node Elasticache Cluster for P4 Code Review
 resource "aws_elasticache_cluster" "cluster" {
+  #checkov:skip=CKV_AWS_134:Automatic backups not required for development/sample environments
   count                = var.existing_redis_connection != null ? 0 : 1
   cluster_id           = "${local.name_prefix}-elasticache-redis-cluster"
   engine               = "redis"
