@@ -7,7 +7,9 @@ module "unreal_cloud_ddc" {
   environment    = local.environment
 
 
-  debug = true
+  # Development & Debugging
+  debug = true # Enable verbose logging and debugging output for troubleshooting
+
   vpc_id         = aws_vpc.main.id
   certificate_arn = aws_acm_certificate.ddc.arn
   route53_hosted_zone_name = var.route53_public_hosted_zone_name
@@ -25,6 +27,7 @@ module "unreal_cloud_ddc" {
 
   # DDC Application Configuration
   ddc_application_config = {
+    enable_single_region_validation = true # Validate single-region deployment constraints (disable for production)
     ddc_namespaces = {
       "project1" = {
         description = "Main project"
@@ -33,7 +36,6 @@ module "unreal_cloud_ddc" {
         description = "Secondary project"
       }
     }
-    enable_single_region_validation = true
   }
 
 
@@ -55,7 +57,7 @@ module "unreal_cloud_ddc" {
       }
       subnets = aws_subnet.private[*].id
     }
-    
+
     # NO custom_nodepool_config specified = uses defaults:
     # custom_nodepool_config = {
     #   enabled = true                    # Always creates custom nodepool
@@ -72,4 +74,7 @@ module "unreal_cloud_ddc" {
   # Centralized Logging
   enable_centralized_logging = true
   log_retention_days         = 30
+
+  # Tags - pass example tags to module
+  tags = local.tags
 }

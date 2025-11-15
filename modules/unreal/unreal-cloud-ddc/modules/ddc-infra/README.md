@@ -1,8 +1,8 @@
 # DDC Infrastructure Submodule
 
-This submodule creates the core AWS infrastructure for [Unreal Cloud DDC](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) deployment, implementing Epic's recommended architecture with ScyllaDB and Amazon EKS.
+This submodule creates the core AWS infrastructure for [Unreal Cloud DDC](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) deployment, implementing Epic's recommended architecture with ScyllaDB and Amazon EKS Auto Mode.
 
-**What this submodule creates**: Complete DDC infrastructure including ScyllaDB cluster for metadata storage, EKS cluster with specialized node groups for DDC services, S3 bucket for asset storage, and comprehensive monitoring stack with Grafana dashboards.
+**What this submodule creates**: Complete DDC infrastructure including ScyllaDB cluster for metadata storage, EKS Auto Mode cluster with custom NodePools for NVMe instances, S3 bucket for asset storage, and IAM roles for multi-region sharing.
 
 
 ## Architecture
@@ -11,9 +11,10 @@ This submodule creates the core AWS infrastructure for [Unreal Cloud DDC](https:
 
 **Core Components:**
 - **ScyllaDB Cluster**: High-performance database for DDC metadata (EC2 instances)
-- **EKS Cluster**: Kubernetes platform with specialized node groups (system, worker, NVME)
+- **EKS Auto Mode Cluster**: Kubernetes platform with automatic compute provisioning
+- **Custom NodePools**: NVMe instance families for DDC performance requirements
 - **S3 Bucket**: Durable storage for cached game assets
-- **Monitoring Stack**: Prometheus + Grafana for ScyllaDB performance monitoring
+- **IAM Roles**: Cross-region sharing for multi-region deployments
 
 ## Prerequisites
 
@@ -79,32 +80,29 @@ For example configurations, please see the [examples](../../examples/). -->
 
 ### Key Variables
 
-**EKS Node Group Configuration (`eks_node_group_subnets`)**:
-- Controls subnet distribution for EKS node groups
-- Each subnet enables node placement in that AZ
-- More subnets = higher availability + increased complexity
+**EKS Auto Mode Configuration (`eks_node_group_subnets`)**:
+- Controls subnet distribution for EKS Auto Mode compute
+- Each subnet enables automatic node placement in that AZ
+- More subnets = higher availability for automatic scaling
 
-**ScyllaDB Instance Distribution (`scylla_subnets`)**:
+**ScyllaDB Instance Distribution (`scylla_config.subnets`)**:
 - Each subnet gets a dedicated ScyllaDB instance
 - Multiple subnets = distributed cluster with high availability
 - Single subnet = standalone instance (development only)
 
-**Replication Factor (`scylla_replication_factor`)**:
+**Replication Factor (`scylla_config.current_region.replication_factor`)**:
 - Must be ≤ number of ScyllaDB nodes
 - RF=3 recommended for production (survives 1 node failure)
 - RF=1 for development (no fault tolerance)
 
 ### Optional Configuration
 
-**Monitoring Stack**:
-- `create_scylla_monitoring_stack = false` to disable Grafana monitoring
-- `create_application_load_balancer = false` to disable ALB for monitoring
-- Custom certificate ARN via `alb_certificate_arn`
+**Monitoring Stack**: Not implemented in current version
 
-**EKS Cluster**:
+**EKS Auto Mode Cluster**:
 - `kubernetes_version` for specific K8s version
-- Node group sizing via `*_managed_node_*_size` variables
-- Instance types via `*_managed_node_instance_type` variables
+- Automatic compute provisioning based on pod requirements
+- Custom NodePools for NVMe instance families
 
 **ScyllaDB**:
 - `scylla_instance_type` for performance tuning
@@ -157,22 +155,13 @@ This module creates a comprehensive security group architecture that provides bo
 **Egress Rules**:
 - **All traffic** to 0.0.0.0/0 (internet access for pods)
 
-#### EKS Node Group Security Groups
+#### EKS Auto Mode Security Groups
 
-**NVME Node Group (`nvme_security_group`)**:
-- **Purpose**: High-performance storage nodes for DDC caching
-- **Ingress**: None (managed by EKS)
+**EKS Auto Mode Nodes**:
+- **Purpose**: Automatically provisioned nodes based on pod requirements
+- **Ingress**: Managed by EKS Auto Mode
 - **Egress**: All traffic to 0.0.0.0/0
-
-**Worker Node Group (`worker_security_group`)**:
-- **Purpose**: General workload nodes for DDC services
-- **Ingress**: None (managed by EKS)
-- **Egress**: All traffic to 0.0.0.0/0
-
-**System Node Group (`system_security_group`)**:
-- **Purpose**: Kubernetes system components
-- **Ingress**: None (managed by EKS)
-- **Egress**: All traffic to 0.0.0.0/0
+- **Custom NodePools**: Restrict to NVMe instance families for DDC performance
 
 ### Administrative Access
 
@@ -294,9 +283,9 @@ Kestrel__Endpoints__Http__Url = "http://0.0.0.0:80"  # Critical override
 - **Symptom**: Nodes not joining cluster
 - **Solution**: Verify security group ports 7000, 7001, 9042 between ScyllaDB instances
 
-**EKS Node Group Failures:**
-- **Symptom**: CREATE_FAILED state
-- **Solution**: Check subnet IP capacity and instance type availability in AZ
+**EKS Auto Mode Failures:**
+- **Symptom**: Pods stuck in Pending state
+- **Solution**: Check Custom NodePool configuration and NVMe instance availability
 
 **Monitoring Access Issues:**
 - **Symptom**: Cannot access Grafana

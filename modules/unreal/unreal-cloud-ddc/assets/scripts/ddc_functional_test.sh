@@ -11,6 +11,28 @@ echo "================================="
 # Get DDC endpoint and bearer token directly from Terraform outputs
 echo "📋 Getting configuration from Terraform outputs..."
 
+# Test if Terraform is working first
+TERRAFORM_TEST=$(terraform version 2>/dev/null || echo "FAILED")
+if echo "$TERRAFORM_TEST" | grep -q "FAILED"; then
+    echo "❌ Terraform not found or not working"
+    echo "💡 Install Terraform or check PATH"
+    exit 1
+fi
+
+# Test if we can read Terraform outputs
+TERRAFORM_OUTPUT_TEST=$(terraform output 2>&1 || echo "FAILED")
+if echo "$TERRAFORM_OUTPUT_TEST" | grep -q "Error\|FAILED"; then
+    echo "❌ Terraform configuration has errors:"
+    echo "$TERRAFORM_OUTPUT_TEST"
+    echo ""
+    echo "🔧 TROUBLESHOOTING STEPS:"
+    echo "   1. Run 'terraform refresh' to sync state with AWS"
+    echo "   2. If that fails, run 'terraform validate' to check syntax"
+    echo "   3. If validation fails, fix Terraform syntax errors"
+    echo "   4. Run 'terraform apply' if state is out of sync"
+    exit 1
+fi
+
 # Get DNS endpoint and debug mode from Terraform outputs
 DDC_DNS_ENDPOINT=$(terraform output -raw ddc_endpoint 2>/dev/null || echo "")
 DEBUG_MODE=$(terraform output -json module_info 2>/dev/null | jq -r '.debug_mode // "disabled"' 2>/dev/null || echo "disabled")
@@ -19,6 +41,7 @@ if [ -z "$DDC_DNS_ENDPOINT" ]; then
     echo "❌ Could not get DDC endpoint from terraform outputs"
     echo "💡 Make sure you're running this from your terraform directory"
     echo "💡 And that 'terraform apply' completed successfully"
+    echo "💡 Try 'terraform refresh' to sync state with AWS"
     exit 1
 fi
 
@@ -82,7 +105,17 @@ fi
 
 if [ -n "$CLUSTER_NAME" ] && [ -n "$REGION" ]; then
     echo "   🔧 Configuring kubectl access..."
-    aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION" > /dev/null 2>&1
+    echo "   📋 Using cluster: $CLUSTER_NAME in $REGION"
+    
+    # Test EKS access with better error handling
+    EKS_UPDATE_RESULT=$(aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION" 2>&1 || echo "FAILED")
+    if echo "$EKS_UPDATE_RESULT" | grep -q "FAILED\|Error\|ResourceNotFoundException"; then
+        echo "   ❌ EKS cluster access failed: $EKS_UPDATE_RESULT"
+        echo "   💡 Cluster name in Terraform state may be wrong"
+        echo "   💡 Run 'terraform refresh' to sync state with AWS"
+        echo "   💡 Or check: aws eks list-clusters --region $REGION"
+        NLB_WORKS=false
+    else
     
     echo "   🔍 Getting NLB hostname from service..."
     NLB_HOSTNAME=$(kubectl get service -n "$NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
@@ -102,8 +135,12 @@ if [ -n "$CLUSTER_NAME" ] && [ -n "$REGION" ]; then
         echo "   ⚠️  Could not get NLB hostname from service"
         NLB_WORKS=false
     fi
+    fi
 else
     echo "   ⚠️  Could not get cluster info from Terraform outputs"
+    echo "   📋 Cluster: '$CLUSTER_NAME', Region: '$REGION'"
+    echo "   💡 Run 'terraform refresh' to sync state with AWS"
+    echo "   💡 Terraform state may have wrong cluster name"
     NLB_WORKS=false
 fi
 

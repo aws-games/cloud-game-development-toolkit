@@ -1,5 +1,4 @@
 
-
 ################################################################################
 # EKS Cluster Readiness
 ################################################################################
@@ -30,40 +29,6 @@ resource "null_resource" "wait_for_eks_ready" {
 
 ################################################################################
 # DDC Application Deployment
-################################################################################
-#
-# 🎯 DIRECT DEPLOYMENT STRATEGY
-#
-# Simple, direct deployment from source registries - no caching, no Docker required.
-#
-# 📦 SUPPORTED DEPLOYMENT PATHS:
-# 1. **Epic's Official Charts** (Default)
-#    • Chart: oci://ghcr.io/epicgames/unreal-cloud-ddc:1.2.0+helm
-#    • Image: ghcr.io/epicgames/unreal-cloud-ddc:1.2.0
-#    • Auth: Uses ghcr_credentials_secret_arn for GHCR access
-#
-# 2. **Public OCI Registries**
-#    • Any public OCI registry (Docker Hub, GHCR, etc.)
-#    • No authentication required
-#    • Direct deployment
-#
-# 3. **Local Development**
-#    • Local Helm charts (file paths)
-#    • Custom values files
-#    • Development/testing scenarios
-#
-# 🔐 AUTHENTICATION:
-# • GHCR: Automatic via ghcr_credentials_secret_arn secret
-# • Public registries: No auth needed
-# • Private registries: User must handle auth setup
-#
-# 💡 BENEFITS:
-# ✅ No Docker dependency
-# ✅ Simple, fast deployment
-# ✅ Minimal tool requirements (just Helm + kubectl)
-# ✅ Clear, predictable behavior
-# ✅ Easy debugging and troubleshooting
-#
 ################################################################################
 
 resource "null_resource" "helm_ddc_app" {
@@ -144,19 +109,101 @@ resource "null_resource" "helm_ddc_app" {
   provisioner "local-exec" {
     when = destroy
     command = <<-EOT
-      echo "[DDC-APP CLEANUP] Starting DDC application cleanup..."
+      echo "[DDC-APP CLEANUP] Starting comprehensive EKS Auto Mode cleanup..."
 
       # Configure kubectl (ignore failures if cluster deleted)
-      aws eks update-kubeconfig --name ${self.triggers.cluster_name} --region ${self.triggers.region} || {
-        echo "[DDC-APP CLEANUP] Cluster already deleted, skipping cleanup"
+      if ! aws eks update-kubeconfig --name ${self.triggers.cluster_name} --region ${self.triggers.region}; then
+        echo "[DDC-APP CLEANUP] Cluster already deleted, checking for orphaned AWS resources..."
+        
+        # Clean up orphaned load balancers
+        echo "[DDC-APP CLEANUP] Scanning for orphaned load balancers..."
+        aws elbv2 describe-load-balancers --query "LoadBalancers[?contains(LoadBalancerName, '${self.triggers.cluster_name}')].LoadBalancerArn" --output text | while read -r LB_ARN; do
+          if [ -n "$LB_ARN" ]; then
+            echo "[DDC-APP CLEANUP] Deleting orphaned load balancer: $LB_ARN"
+            aws elbv2 delete-load-balancer --load-balancer-arn "$LB_ARN" || true
+          fi
+        done
+        
+        # Clean up orphaned security groups
+        echo "[DDC-APP CLEANUP] Scanning for orphaned security groups..."
+        aws ec2 describe-security-groups --filters "Name=group-name,Values=*${self.triggers.cluster_name}*" --query "SecurityGroups[].GroupId" --output text | tr '\t' '\n' | while read -r SG_ID; do
+          if [ -n "$SG_ID" ]; then
+            echo "[DDC-APP CLEANUP] Deleting orphaned security group: $SG_ID"
+            aws ec2 delete-security-group --group-id "$SG_ID" || true
+          fi
+        done
+        
+        echo "[DDC-APP CLEANUP] Orphaned resource cleanup completed"
         exit 0
       }
 
-      # Clean up DDC application resources
+      # Cluster is still active - perform graceful cleanup
+      echo "[DDC-APP CLEANUP] Cluster active - performing graceful cleanup..."
+      
+      # Step 1: Delete all Services with LoadBalancer type FIRST (triggers LBC cleanup)
+      echo "[DDC-APP CLEANUP] Deleting LoadBalancer services to trigger AWS Load Balancer Controller cleanup..."
+      kubectl get services --all-namespaces -o json | jq -r '.items[] | select(.spec.type=="LoadBalancer") | "\(.metadata.namespace) \(.metadata.name)"' | while read -r NAMESPACE SERVICE; do
+        if [ -n "$SERVICE" ]; then
+          echo "[DDC-APP CLEANUP] Deleting LoadBalancer service: $NAMESPACE/$SERVICE"
+          kubectl delete service "$SERVICE" -n "$NAMESPACE" --timeout=60s || true
+        fi
+      done
+      
+      # Step 2: Delete all Ingress resources (triggers ALB cleanup if any)
+      echo "[DDC-APP CLEANUP] Deleting Ingress resources..."
+      kubectl delete ingress --all --all-namespaces --timeout=60s || true
+      
+      # Step 3: Clean up DDC Helm release
       echo "[DDC-APP CLEANUP] Cleaning up DDC Helm release..."
-      helm uninstall ${self.triggers.name_prefix}-app -n ${self.triggers.namespace} || true
+      helm uninstall ${self.triggers.name_prefix}-app -n ${self.triggers.namespace} --timeout=120s || true
+      
+      # Step 4: Wait for controllers to complete cleanup (check finalizers)
+      echo "[DDC-APP CLEANUP] Waiting for controllers to remove finalizers..."
+      for i in {1..24}; do  # 12 minutes max (24 * 30s)
+        REMAINING_FINALIZERS=$(kubectl get svc,ingress --all-namespaces -o json 2>/dev/null | jq '[.items[] | select(.metadata.finalizers != null)] | length' || echo "0")
+        if [ "$REMAINING_FINALIZERS" -eq 0 ]; then
+          echo "[DDC-APP CLEANUP] SUCCESS: All finalizers removed by controllers"
+          break
+        fi
+        echo "[DDC-APP CLEANUP] Waiting for $REMAINING_FINALIZERS resources with finalizers... (attempt $i/24)"
+        sleep 30
+        if [ $i -eq 24 ]; then
+          echo "[DDC-APP CLEANUP] WARNING: Timeout waiting for finalizers - checking controller health..."
+          
+          # Check controller health
+          LBC_PODS=$(kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller --no-headers 2>/dev/null | wc -l)
+          EDNS_PODS=$(kubectl get pods -n kube-system -l app.kubernetes.io/name=external-dns --no-headers 2>/dev/null | wc -l)
+          
+          echo "[DDC-APP CLEANUP] AWS Load Balancer Controller pods: $LBC_PODS"
+          echo "[DDC-APP CLEANUP] External-DNS pods: $EDNS_PODS"
+          
+          # Show stuck resources
+          echo "[DDC-APP CLEANUP] Resources still with finalizers:"
+          kubectl get svc,ingress --all-namespaces -o json | jq '.items[] | select(.metadata.finalizers != null) | {name: .metadata.name, namespace: .metadata.namespace, finalizers: .metadata.finalizers}'
+          
+          # CRITICAL: Halt terraform destroy to prevent orphaned resources
+          echo "[DDC-APP CLEANUP] ERROR: Cleanup timeout - manual intervention required"
+          echo "[DDC-APP CLEANUP] ERROR: Controllers failed to remove finalizers within 12 minutes"
+          echo "[DDC-APP CLEANUP] ERROR: Halting terraform destroy to prevent orphaned AWS resources"
+          exit 1
+        fi
+      done
+      
+      # Step 5: Final verification - check for remaining AWS resources
+      echo "[DDC-APP CLEANUP] Verifying AWS Load Balancer Controller cleanup..."
+      REMAINING_LBS=$(aws elbv2 describe-load-balancers --region ${self.triggers.region} --output json 2>/dev/null | jq -r ".LoadBalancers[] | select(.LoadBalancerName | startswith(\"k8s-\")) | .LoadBalancerArn" || echo "")
+      if [ -n "$REMAINING_LBS" ]; then
+        echo "[DDC-APP CLEANUP] WARNING: Load balancers still exist after cleanup: $REMAINING_LBS"
+      else
+        echo "[DDC-APP CLEANUP] SUCCESS: No load balancers remain"
+      fi
+      
+      echo "[DDC-APP CLEANUP] Verifying External-DNS cleanup..."
+      # Note: Cannot verify Route53 records without hosted zone ID
+      # External-DNS cleanup is verified by finalizer removal above
+      echo "[DDC-APP CLEANUP] External-DNS cleanup verified via finalizer removal"
 
-      echo "[DDC-APP CLEANUP] SUCCESS: Cleanup completed"
+      echo "[DDC-APP CLEANUP] SUCCESS: Comprehensive cleanup completed"
     EOT
   }
 
@@ -165,179 +212,38 @@ resource "null_resource" "helm_ddc_app" {
   ]
 }
 
-
-
 ################################################################################
-# Multi-Region Replication Enablement
-################################################################################
-#
-# 🔄 REPLICATION MODES SUPPORTED:
-#
-# 📤 SPECULATIVE (Push): Proactively pushes new data to peer regions
-# 📥 ON-DEMAND (Pull): Pulls missing data from peers when requested
-# 🔄 HYBRID: Combines both strategies for maximum performance
-#
-# 🔄 THE APPROACH:
-#
-# 1. TERRAFORM DEPENDENCY TREE:
-#    - Region 1 deploys first with regional endpoint (e.g. "us-east-1.dev.ddc.example.com", no region 2 yet)
-#    - Region 2 deploys second with regional endpoint (e.g. "us-west-2.dev.ddc.example.com", exists now)
-#    - us-east-1 depends on us-west-2 to properly replicate to it (chicken-egg problem)
-#
-# 2. DDC HANDLES BROKEN ENDPOINTS:
-#    - DDC documentation indicates it can handle endpoints that don't exist yet
-#    - DDC won't replicate but has retry logic
-#    - Once peer region is up, replication should start automatically (based on if you have speculative, on-demand, or hybrid enabled in the module)
-#
-# 3. WE USE DERIVED VALUES (PREDICTABLE ENDPOINTS):
-#    - We know what endpoints WILL BE: "${region}.${environment}.ddc.example.com"
-#    - Set them up from the start when multi-region is enabled
-#    - DDC starts working once region 2 is up, DNS records exist and health checks pass
-#
-# 4. THIS RESOURCE: Optional restart for immediate verification
-#    - Not required for functionality (DDC should be self-healing)
-#    - Useful for testing/debugging multi-region connectivity
-#
-# 🎯 WHEN THIS RUNS:
-# - When DDC application configuration changes (content_hash trigger)
-# - When peer region endpoints become available (multi-region architecture)
-# - Each region's DDC needs to restart when peer region is deployed
-
+# (Optional) Testing: Single-Region DDC Functional Validation
 ################################################################################
 
-# COMMENTED OUT FOR TESTING DDC SELF-HEALING
-# Enable if DDC doesn't automatically discover peer endpoints
-# resource "null_resource" "ddc_replication_config" {
-#   count = var.ddc_application_config.enable_multi_region_replication ? 1 : 0
-#   triggers = {
-#     content_hash = md5(jsonencode(var.ddc_application_config))
-#   }
-#   provisioner "local-exec" {
-#     interpreter = ["/bin/bash", "-c"]
-#     command = <<-EOT
-#       aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.region}
-#       kubectl rollout restart deployment/${local.name_prefix} -n ${var.namespace}
-#       kubectl rollout restart deployment/${local.name_prefix}-worker -n ${var.namespace}
-#     EOT
-#   }
-#   depends_on = [null_resource.helm_ddc_app]
-# }
-
-################################################################################
-# (Optional) Testing: DDC Readiness Validation
-################################################################################
-#
-# Tests DDC connectivity and functionality after deployment.
-# Optionally checks multi-region replication if enabled.
-################################################################################
-
-resource "null_resource" "ddc_readiness_check" {
-  count = local.enable_ddc_readiness_check ? 1 : 0
+resource "null_resource" "ddc_single_region_readiness_check" {
+  count = var.ddc_application_config.enable_single_region_validation ? 1 : 0
 
   triggers = {
     cluster_name = var.cluster_name
     region = var.region
-    nlb_dns_name = var.nlb_dns_name
     deployment_hash = null_resource.helm_ddc_app.triggers.values_hash
   }
 
   provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
     command = <<-EOT
       set -e
-      echo "[DDC-READINESS] Starting DDC application readiness check..."
-
-      # Step 1: Configure kubectl access
-      echo "[DDC-READINESS] Configuring kubectl access to cluster ${var.cluster_name}..."
-      aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.region}
-
-      # Step 2: Wait for DDC pods to be ready
-      echo "[DDC-READINESS] Waiting for DDC pods to be ready (max 1 minute)..."
-      timeout 60s kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=unreal-cloud-ddc -n ${var.namespace} --timeout=60s${var.debug ? " -v=10" : null}
-
-      # Step 3: Wait for LoadBalancer to get external IP (NLB provisioning)
-      echo "[DDC-READINESS] Waiting for LoadBalancer to provision (max 5 minutes)..."
-      timeout 300s kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].hostname}' service/${local.name_prefix} -n ${var.namespace} --timeout=300s
+      echo "[DDC-READINESS] Running single-region DDC functional test..."
       
-      # Get actual NLB hostname from LoadBalancer service
-      NLB_HOSTNAME=$(kubectl get service ${local.name_prefix} -n ${var.namespace} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+      # Use path relative to where terraform is executed
+      SCRIPT_PATH="../../../assets/scripts/ddc_functional_test.sh"
       
-      if [ -n "$NLB_HOSTNAME" ]; then
-        echo "[DDC-READINESS] LoadBalancer provisioned: $NLB_HOSTNAME"
-        echo "[DDC-READINESS] Waiting for service endpoints to be ready..."
-        timeout 30s kubectl wait --for=jsonpath='{.subsets[0].addresses[0].ip}' endpoints/${local.name_prefix} -n ${var.namespace} --timeout=30s
-      else
-        echo "[DDC-READINESS] ERROR: LoadBalancer hostname not available"
+      if [ ! -f "$SCRIPT_PATH" ]; then
+        echo "[DDC-READINESS] ERROR: Single-region functional test script not found at $SCRIPT_PATH"
+        echo "[DDC-READINESS] Make sure you're running terraform from an example directory"
         exit 1
       fi
-
-      # Step 4: Test DDC health endpoints - Layered approach
-      echo "[DDC-READINESS] Testing DDC health endpoints..."
       
-      # Test 1: Direct NLB access (HTTP) - For RCA investigation
-      echo "[DDC-READINESS] Test 1: Direct NLB HTTP access (for troubleshooting)"
-      NLB_HTTP_URL="http://$NLB_HOSTNAME/health/live"
-      if curl -f -s "$NLB_HTTP_URL" > /dev/null 2>&1; then
-        echo "[DDC-READINESS] NLB direct access: WORKING"
-        NLB_WORKS=true
-      else
-        echo "[DDC-READINESS] NLB direct access: FAILED - $NLB_HTTP_URL"
-        echo "[DDC-READINESS] This indicates a problem with NLB target health or pod connectivity"
-        NLB_WORKS=false
-      fi
+      chmod +x "$SCRIPT_PATH"
+      "$SCRIPT_PATH"
       
-      # Test 2: Route53 DNS access (HTTPS) - Primary success criteria
-      ROUTE53_DNS="${var.nlb_dns_name != null ? var.nlb_dns_name : ""}"
-      if [ -n "$ROUTE53_DNS" ]; then
-        echo "[DDC-READINESS] Test 2: Route53 DNS HTTPS access (primary test)"
-        ROUTE53_HTTPS_URL="https://$ROUTE53_DNS/health/live"
-        
-        for i in {1..6}; do # 30 seconds total (6 * 5s)
-          echo "[DDC-READINESS] Attempt $i/6: Testing $ROUTE53_HTTPS_URL"
-          if curl -f -s "$ROUTE53_HTTPS_URL" > /dev/null 2>&1; then
-            echo "[DDC-READINESS] SUCCESS: Route53 DNS HTTPS health check passed"
-            echo "[DDC-READINESS] Route53 DNS: $ROUTE53_DNS"
-            echo "[DDC-READINESS] NLB Hostname: $NLB_HOSTNAME"
-            echo "[DDC-READINESS] Health URL: $ROUTE53_HTTPS_URL"
-            break
-          fi
-          echo "[DDC-READINESS] Health check attempt $i/6 failed, retrying in 5s..."
-          # Show more debug info on failure
-          echo "[DDC-READINESS] Debug: curl -f -s $ROUTE53_HTTPS_URL"
-          curl -f -s "$ROUTE53_HTTPS_URL" || echo "[DDC-READINESS] Curl exit code: $?"
-          sleep 5
-          if [ $i -eq 6 ]; then
-            echo "[DDC-READINESS] ERROR: Route53 DNS health check failed after 30 seconds"
-            echo "[DDC-READINESS] Route53 DNS: $ROUTE53_DNS"
-            echo "[DDC-READINESS] NLB Hostname: $NLB_HOSTNAME"
-            echo "[DDC-READINESS] Failed URL: $ROUTE53_HTTPS_URL"
-            if [ "$NLB_WORKS" = "true" ]; then
-              echo "[DDC-READINESS] RCA: NLB works directly, issue is with DNS/SSL/Route53"
-            else
-              echo "[DDC-READINESS] RCA: Both NLB and DNS failed, issue is with NLB target health"
-            fi
-            exit 1
-          fi
-        done
-      else
-        echo "[DDC-READINESS] WARNING: No Route53 DNS configured, skipping DNS health check"
-        echo "[DDC-READINESS] SUCCESS: Direct NLB access confirmed working"
-      fi
-
-      # Step 5: Test multi-region replication (if enabled)
-      if [ "${var.ddc_application_config.enable_multi_region_replication}" = "true" ]; then
-        echo "[DDC-READINESS] Testing multi-region replication configuration..."
-
-        # Check if replication endpoints are configured in pods
-        echo "[DDC-READINESS] Checking DDC pod configuration for peer endpoints..."
-        kubectl get pods -l app.kubernetes.io/name=unreal-cloud-ddc -n ${var.namespace} -o yaml | grep -i "ddc.example.com" || {
-          echo "[DDC-READINESS] WARNING: No peer region endpoints found in pod configuration"
-          echo "[DDC-READINESS] This is expected if peer regions are not yet deployed"
-        }
-
-        echo "[DDC-READINESS] Multi-region replication check completed"
-      fi
-
-      echo "[DDC-READINESS] SUCCESS: DDC application is ready and responding to requests"
+      echo "[DDC-READINESS] SUCCESS: Single-region functional test completed"
     EOT
   }
 
@@ -346,24 +252,48 @@ resource "null_resource" "ddc_readiness_check" {
   ]
 }
 
+################################################################################
+# (Optional) Testing: Multi-Region DDC Functional Validation
+################################################################################
+
+resource "null_resource" "ddc_multi_region_readiness_check" {
+  count = var.ddc_application_config.enable_multi_region_validation ? 1 : 0
+
+  triggers = {
+    cluster_name = var.cluster_name
+    region = var.region
+    deployment_hash = null_resource.helm_ddc_app.triggers.values_hash
+    peer_endpoint = var.ddc_application_config.peer_region_ddc_endpoint
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command = <<-EOT
+      set -e
+      echo "[DDC-MULTI-REGION] Running multi-region DDC functional test..."
+      
+      # Use path relative to where terraform is executed
+      SCRIPT_PATH="../../../assets/scripts/ddc_functional_test_multi_region.sh"
+      
+      if [ ! -f "$SCRIPT_PATH" ]; then
+        echo "[DDC-MULTI-REGION] ERROR: Multi-region functional test script not found at $SCRIPT_PATH"
+        exit 1
+      fi
+      
+      chmod +x "$SCRIPT_PATH"
+      "$SCRIPT_PATH"
+      
+      echo "[DDC-MULTI-REGION] SUCCESS: Multi-region functional test completed"
+    EOT
+  }
+
+  depends_on = [
+    null_resource.helm_ddc_app
+  ]
+}
 
 ################################################################################
 # ScyllaDB Multi-Region Keyspace Configuration
-################################################################################
-#
-# WHAT THIS DOES:
-# ScyllaDB requires keyspaces to be created with proper replication settings
-# across all regions BEFORE DDC can use them for multi-region replication.
-#
-# THE PROBLEM:
-# - DDC creates keyspaces automatically, but only for the local region
-# - Multi-region replication needs keyspaces configured in ALL regions
-# - This must happen AFTER both regions' ScyllaDB clusters are running
-#
-# THE SOLUTION:
-# - SSM document runs CQL commands on the seed node
-# - Creates/alters keyspaces with NetworkTopologyStrategy for all regions
-# - Only runs for ScyllaDB (not needed for Keyspaces service)
 ################################################################################
 
 resource "null_resource" "trigger_ssm_keyspace_update" {

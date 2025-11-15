@@ -7,6 +7,12 @@ resource "aws_security_group" "scylla_security_group" {
   description = "Security group for ScyllaDB"
   vpc_id      = var.vpc_id
 
+  # CRITICAL: Prevents cyclic dependency during destroy
+  # This SG has self-referencing rules (referenced_security_group_id = this SG)
+  # Creates circular dependency: SG rules depend on SG, but rules reference same SG
+  # Without this, Terraform can't determine destroy order and hangs
+  revoke_rules_on_delete = true
+
   tags = merge(var.tags,
     {
       Name = "${local.name_prefix}-scylla-sg"

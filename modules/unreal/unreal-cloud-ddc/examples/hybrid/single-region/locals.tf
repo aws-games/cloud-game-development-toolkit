@@ -1,15 +1,10 @@
 locals {
+  # General
   project_prefix = "cgd"
   name           = "unreal-cloud-ddc"
   environment    = "dev"
   name_prefix    = "${local.project_prefix}-${local.name}-${local.environment}"
-
-
-  # Single region configuration
   region = "us-east-1"
-  kubernetes_version = "1.33"
-  unreal_cloud_ddc_version = "1.2.0"
-  scylla_instance_type = "i4i.xlarge"
 
   # Network access
   my_ip_cidr = "${chomp(data.http.my_ip.response_body)}/32"
@@ -24,13 +19,19 @@ locals {
   ddc_subdomain = "ddc"
   ddc_fully_qualified_domain_name = "${local.region}.${local.environment}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
 
-
-
-  # Common tags
+  # Common tags - standardized with CGD Toolkit patterns
   tags = {
+    # Project identification
     ProjectPrefix = local.project_prefix
-    Environment = local.environment
-    IaC = "Terraform"
-    ModuleBy = "CGD-Toolkit"
+    Environment   = local.environment
+
+    # Infrastructure as Code metadata
+    IaC        = "Terraform"
+    ModuleBy   = "CGD-Toolkit"
+    ModuleName = "unreal-cloud-ddc"
+
+    # Deployment context
+    DeployedBy = "terraform-example"
+    Region     = local.region
   }
 }

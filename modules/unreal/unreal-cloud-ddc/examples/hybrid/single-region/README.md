@@ -63,52 +63,65 @@ module "unreal_cloud_ddc" {
   source = "../../.."
 
   # Core Infrastructure
-  project_prefix = "cgd"
-  vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
+  name           = local.name
+  project_prefix = local.project_prefix
+  environment    = local.environment
+  vpc_id         = aws_vpc.main.id
   certificate_arn = aws_acm_certificate.ddc.arn
   route53_hosted_zone_name = var.route53_public_hosted_zone_name
-  
-  # Load Balancer (internet-facing)
+
+  # Load Balancer Configuration
   load_balancers_config = {
     nlb = {
       internet_facing = true
-      subnets = aws_subnet.public_subnets[*].id
+      subnets         = aws_subnet.public[*].id
     }
   }
-  
-  # Security (your IP only)
-  allowed_external_cidrs = ["<your-ip>/32"]
 
-  # DDC Application
+  # Security
+  allowed_external_cidrs = [local.my_ip_cidr]
+
+  # DDC Application Configuration
   ddc_application_config = {
-    namespaces = {
-      "civ" = { description = "The Civilization series" }
-      "dev-sandbox" = { description = "Development testing" }
+    ddc_namespaces = {
+      "project1" = {
+        description = "Main project"
+      }
+      "project2" = {
+        description = "Secondary project"
+      }
     }
+    enable_single_region_validation = true
   }
 
-  # DDC Infrastructure (EKS + ScyllaDB)
+  # DDC Infrastructure Configuration
   ddc_infra_config = {
-    region = "us-east-1"
-    eks_node_group_subnets = aws_subnet.private_subnets[*].id
-    endpoint_public_access = true
+    region                 = local.region
+    eks_node_group_subnets = aws_subnet.private[*].id
+
+    # EKS API Access Configuration (hybrid)
+    endpoint_public_access  = true
     endpoint_private_access = true
-    public_access_cidrs = ["<your-ip>/32"]
-    
+    public_access_cidrs     = [local.my_ip_cidr]
+
+    # ScyllaDB Configuration
     scylla_config = {
       current_region = {
         replication_factor = 3
       }
-      subnets = aws_subnet.private_subnets[*].id
+      subnets = aws_subnet.private[*].id
     }
   }
 
-  # GitHub Container Registry Access
+  # GHCR Credentials
   ghcr_credentials_secret_arn = var.ghcr_credentials_secret_arn
 
   # Centralized Logging
   enable_centralized_logging = true
-  log_retention_days = 30
+  log_retention_days         = 30
+  
+  # Tags - pass example tags to module
+  tags = local.tags
 }
 ```
 
@@ -130,11 +143,9 @@ terraform output
 
 **Expected Output**:
 ```
-ddc_connection = {
-  endpoint_public_dns = "https://us-east-1.ddc.yourcompany.com"
-  kubectl_command = "aws eks update-kubeconfig --region us-east-1 --name cgd-unreal-cloud-ddc-cluster-us-east-1"
-  security_warning = null
-}
+ddc_endpoint = "https://us-east-1.dev.ddc.yourcompany.com"
+bearer_token_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:cgd2-unreal-cloud-ddc-dev-token-AbCdEf"
+kubectl_command = "aws eks update-kubeconfig --region us-east-1 --name cgd2-unreal-cloud-ddc-dev-cluster"
 ```
 
 ## Verification
@@ -143,7 +154,7 @@ ddc_connection = {
 
 ```bash
 # Get the endpoint from Terraform output
-DDC_ENDPOINT=$(terraform output -raw ddc_connection | jq -r '.endpoint_public_dns')
+DDC_ENDPOINT=$(terraform output -raw ddc_endpoint)
 
 # Test health endpoint
 curl "$DDC_ENDPOINT/health/live"
@@ -154,7 +165,7 @@ curl "$DDC_ENDPOINT/health/live"
 
 ```bash
 # Configure kubectl (use command from terraform output)
-aws eks update-kubeconfig --region us-east-1 --name cgd-unreal-cloud-ddc-cluster-us-east-1
+$(terraform output -raw kubectl_command)
 
 # Check all pods are running
 kubectl get pods -n unreal-cloud-ddc
@@ -192,7 +203,7 @@ curl "$DDC_ENDPOINT/api/v1/refs/ddc/default/000000000000000000000000000000000000
 ```ini
 [DDC]
 ; Cloud DDC configuration
-Cloud=(Type=HTTPDerivedDataBackend, Host="https://us-east-1.ddc.yourcompany.com")
+Cloud=(Type=HTTPDerivedDataBackend, Host="<DDC_ENDPOINT_FROM_OUTPUT>")
 
 ; Local cache as fallback
 Local=(Type=FileSystem, Path=%GAMEDIR%DerivedDataCache, MaxFileAge=60)
@@ -232,7 +243,7 @@ When you outgrow this basic setup:
 curl https://checkip.amazonaws.com/
 
 # Test direct NLB access
-terraform output ddc_endpoint_nlb
+terraform output nlb_dns_name
 
 # Check pod logs
 kubectl logs -f deployment/cgd-unreal-cloud-ddc-initialize -n unreal-cloud-ddc

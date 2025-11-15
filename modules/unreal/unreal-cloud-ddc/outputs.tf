@@ -41,19 +41,7 @@ output "ddc_infra" {
   } : null
 }
 
-################################################################################
-# DDC Services Outputs
-################################################################################
 
-output "ddc_services" {
-  description = "DDC services outputs"
-  value = var.ddc_infra_config != null && length(module.ddc_app) > 0 ? {
-    helm_release_name      = module.ddc_app[0].helm_release_name
-    helm_release_namespace = module.ddc_app[0].helm_release_namespace
-    helm_release_version   = module.ddc_app[0].helm_release_version
-    deployment_status      = module.ddc_app[0].deployment_status
-  } : null
-}
 
 ################################################################################
 # DNS Outputs
@@ -147,7 +135,7 @@ output "ddc_connection" {
     bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : var.ddc_application_config.bearer_token_secret_arn
     kubectl_command         = "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}"
     cluster_name            = module.ddc_infra.cluster_name
-    namespace               = var.ddc_infra_config != null && length(module.ddc_app) > 0 ? module.ddc_app[0].namespace : null
+    namespace               = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_namespace : null
     scylla_ips              = module.ddc_infra.scylla_ips
     scylla_instance_ids     = module.ddc_infra.scylla_instance_ids
     scylla_seed             = module.ddc_infra.scylla_seed

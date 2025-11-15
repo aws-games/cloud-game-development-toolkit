@@ -29,7 +29,11 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
   iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile[0].name
   
   # Ensure proper destroy order - instances depend on IGW for internet access
-  depends_on = [var.internet_gateway_id]
+  # and security group rules for proper cleanup sequence
+  depends_on = [
+    var.internet_gateway_id,
+    aws_vpc_security_group_ingress_rule.self_ingress_sg_rules
+  ]
   
   lifecycle {
     ignore_changes = [user_data]
@@ -73,7 +77,11 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
   iam_instance_profile = aws_iam_instance_profile.scylla_instance_profile[0].name
   
   # Ensure proper destroy order - instances depend on IGW for internet access
-  depends_on = [var.internet_gateway_id]
+  # and security group rules for proper cleanup sequence
+  depends_on = [
+    var.internet_gateway_id,
+    aws_vpc_security_group_ingress_rule.self_ingress_sg_rules
+  ]
   
   lifecycle {
     ignore_changes = [user_data]

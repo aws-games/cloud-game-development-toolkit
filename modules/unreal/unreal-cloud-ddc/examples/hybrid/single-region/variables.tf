@@ -20,3 +20,5 @@ variable "ghcr_credentials_secret_arn" {
 
 
 
+
+

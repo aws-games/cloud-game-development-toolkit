@@ -54,10 +54,21 @@ locals {
   primary_ddc_fully_qualified_domain_name = "${local.primary_region}.${local.environment}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   secondary_ddc_fully_qualified_domain_name = "${local.secondary_region}.${local.environment}.${local.ddc_subdomain}.${var.route53_public_hosted_zone_name}"
   
-  # Common tags
+  # Common tags - standardized with CGD Toolkit patterns
   tags = {
-    Environment = local.environment
-    Project     = local.project_prefix
-    ManagedBy   = "Terraform"
+    # Project identification
+    ProjectPrefix = local.project_prefix
+    Environment   = local.environment
+    
+    # Infrastructure as Code metadata
+    IaC        = "Terraform"
+    ModuleBy   = "CGD-Toolkit"
+    ModuleName = "unreal-cloud-ddc"
+    
+    # Deployment context
+    DeployedBy = "terraform-example"
+    
+    # Multi-region context
+    DeploymentType = "multi-region"
   }
 }

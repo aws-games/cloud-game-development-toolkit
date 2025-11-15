@@ -8,13 +8,28 @@ resource "random_string" "bearer_token_suffix" {
   length  = 8
   special = false
   upper   = false
+  
+  # Force new suffix when name_prefix changes to avoid naming conflicts
+  keepers = {
+    name_prefix = local.name_prefix
+  }
+  
+  lifecycle {
+    create_before_destroy = true  # Create new random suffix before destroying old one
+  }
 }
 
 # Bearer token secret - create if no existing ARN provided
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
-  count       = var.create_bearer_token == true ? 1 : 0
-  name        = "${local.name_prefix}-bearer-token-${random_string.bearer_token_suffix[0].result}"
-  description = "The bearer token to access Unreal Cloud DDC service"
+  count                   = var.create_bearer_token == true ? 1 : 0
+  name                    = "${local.name_prefix}-bearer-token-${random_string.bearer_token_suffix[0].result}"
+  description             = "The bearer token to access Unreal Cloud DDC service"
+  force_overwrite_replica_secret = true  # Overwrite replicas instead of failing on conflicts
+  recovery_window_in_days = 0  # Skip 30-day pending deletion period that causes "already scheduled for deletion" errors
+  
+  lifecycle {
+    create_before_destroy = true  # Create new secret with different random suffix before destroying old one
+  }
 
   # Enable cross-region replication for multi-region DDC deployments
   dynamic "replica" {

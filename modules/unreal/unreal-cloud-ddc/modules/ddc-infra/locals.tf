@@ -38,21 +38,14 @@ locals {
   scylla_keyspace_suffix = replace(var.region, "-", "_")
   keyspace_name = var.keyspace_name
 
-  # Database connection abstraction
-  database_connection = var.scylla_config != null ? {
+  # Database connection abstraction (ScyllaDB only)
+  database_connection = {
     type = "scylla"
     host = "scylla.${var.region}.compute.internal"
     port = 9042
     auth_type = "credentials"
     keyspace_name = local.keyspace_name
     multi_region = false
-  } : {
-    type = "keyspaces"
-    host = "cassandra.${var.region}.amazonaws.com"
-    port = 9142
-    auth_type = "iam"
-    keyspace_name = local.keyspace_name
-    multi_region = var.amazon_keyspaces_config != null ? length([for k, v in var.amazon_keyspaces_config.keyspaces : k if v.enable_cross_region_replication]) > 0 : false
   }
 
   ################################################################################

@@ -18,35 +18,10 @@ variable "project_prefix" {
   default     = "cgd"
 }
 
-variable "tags" {
-  type        = map(any)
-  description = "Tags to apply to resources."
-  default = {
-    "IaC"            = "Terraform"
-    "ModuleBy"       = "CGD-Toolkit"
-    "RootModuleName" = "terraform-aws-unreal-cloud-ddc"
-    "ModuleName"     = "infrastructure"
-    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc"
-  }
-}
-
 variable "environment" {
   type        = string
   description = "The current environment (e.g. dev, prod, etc.)"
   default     = "dev"
-}
-
-variable "debug" {
-  description = "Enable debug mode"
-  type        = bool
-  default     = false
-}
-
-
-
-variable "vpc_id" {
-  description = "String for VPC ID"
-  type        = string
 }
 
 variable "region" {
@@ -67,24 +42,33 @@ variable "is_primary_region" {
   default     = true
 }
 
-
-
-
-
-variable "additional_nlb_security_groups" {
-  type        = list(string)
-  description = "Additional security group IDs to attach specifically to the DDC Network Load Balancer (for game developer access)"
-  default     = []
+variable "debug" {
+  description = "Enable debug mode"
+  type        = bool
+  default     = false
 }
 
-variable "additional_eks_security_groups" {
-  type        = list(string)
-  description = "Additional security group IDs to attach specifically to the EKS cluster (for DevOps kubectl access)"
-  default     = []
+variable "scylla_config" {
+  description = "ScyllaDB configuration from parent module (null if using Keyspaces)"
+  default     = null
+}
+
+
+
+variable "keyspace_name" {
+  description = "Keyspace name from parent module to avoid duplication"
+  type        = string
+  default     = null
+}
+
+variable "internet_gateway_id" {
+  type        = string
+  description = "Internet Gateway ID for proper dependency ordering during destroy"
+  default     = null
 }
 
 ########################################
-# ScyllaDB Configuration
+# COMPUTE CONFIGURATION
 ########################################
 
 variable "scylla_replication_factor" {
@@ -92,10 +76,30 @@ variable "scylla_replication_factor" {
   description = "How many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created."
 }
 
-variable "scylla_subnets" {
-  type        = list(string)
-  default     = []
-  description = "A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended."
+variable "scylla_instance_type" {
+  type        = string
+  default     = "i4i.2xlarge"
+  description = "The type and size of the Scylla instance."
+  nullable    = false
+  validation {
+    condition     = contains(["i8g", "i7ie", "i4g", "i4i", "im4gn", "is4gen", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0])
+    error_message = "Must be an instance family that contains NVME"
+  }
+  validation {
+    condition     = (contains(["arm64"], var.scylla_architecture) && contains(["i8g", "i4g", "im4gn", "is4gen"], split(".", var.scylla_instance_type)[0])) || (contains(["x86_64"], var.scylla_architecture) && contains(["i7ie", "i4i", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0]))
+    error_message = "Chip architecture must match instance type"
+  }
+}
+
+variable "scylla_architecture" {
+  type        = string
+  default     = "x86_64"
+  description = "The chip architecture to use when finding the scylla image. Valid values: x86_64, arm64"
+  nullable    = false
+  validation {
+    condition     = contains(["x86_64", "arm64"], var.scylla_architecture)
+    error_message = "Must be a supported chip architecture"
+  }
 }
 
 variable "scylla_ami_name" {
@@ -117,31 +121,21 @@ variable "scylla_ips_by_region" {
   description = "Map of ScyllaDB IPs organized by region for monitoring dashboard separation"
 }
 
-variable "scylla_instance_type" {
+variable "existing_scylla_seed" {
   type        = string
-  default     = "i4i.2xlarge"
-  description = "The type and size of the Scylla instance."
-  nullable    = false
-  validation {
-    condition     = contains(["i8g", "i7ie", "i4g", "i4i", "im4gn", "is4gen", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0])
-    error_message = "Must be an instance family that contains NVME"
-  }
-  validation {
-    condition     = (contains(["arm64"], var.scylla_architecture) && contains(["i8g", "i4g", "im4gn", "is4gen"], split(".", var.scylla_instance_type)[0])) || (contains(["x86_64"], var.scylla_architecture) && contains(["i7ie", "i4i", "i4i", "i3", "i3en"], split(".", var.scylla_instance_type)[0]))
-    error_message = "Chip architecture must match instance type"
-  }
+  description = "The IP address of the seed instance of the ScyllaDB cluster"
+  default     = null
 }
 
-variable "scylla_architecture" {
+variable "scylla_source_region" {
   type        = string
-  default     = "x86_64"
-  description = "The chip architecture to use when finding the scylla image. Valid"
-  nullable    = false
-  validation {
-    condition     = contains(["x86_64", "arm64"], var.scylla_architecture)
-    error_message = "Must be a supported chip architecture"
-  }
+  description = "Name of the primary region for multi-region deployments"
+  default     = null
 }
+
+########################################
+# STORAGE & LOGGING CONFIGURATION
+########################################
 
 variable "scylla_db_storage" {
   type        = number
@@ -157,47 +151,19 @@ variable "scylla_db_throughput" {
   nullable    = false
 }
 
-variable "existing_scylla_seed" {
-  type        = string
-  description = "The IP address of the seed instance of the ScyllaDB cluster"
-  default     = null
+variable "enable_centralized_logging" {
+  description = "Whether centralized logging is enabled from parent module"
+  type        = bool
 }
 
-variable "scylla_source_region" {
+variable "log_group_prefix" {
+  description = "Log group prefix from parent module"
   type        = string
-  description = "Name of the primary region for multi-region deployments"
-  default     = null
 }
 
-########################################
-# EKS Configurations
-########################################
-
-variable "eks_node_group_subnets" {
-  type        = list(string)
-  default     = []
-  description = "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
-}
-
-variable "nlb_subnet_id" {
-  type        = string
-  description = "Specific subnet ID for NLB placement (passed to ddc-app for service annotations)"
-  default     = null
-}
-
-
-
-
-
-variable "kubernetes_version" {
-  type        = string
-  default     = "1.31"
-  description = "Kubernetes version to be used by the EKS cluster."
-  nullable    = false
-  validation {
-    condition     = contains(["1.31", "1.32", "1.33"], var.kubernetes_version)
-    error_message = "Version number must be supported version in AWS Kubernetes"
-  }
+variable "log_retention_days" {
+  description = "Log retention days from parent module"
+  type        = number
 }
 
 variable "eks_cluster_cloudwatch_log_group_prefix" {
@@ -218,7 +184,45 @@ variable "eks_cluster_logging_types" {
   description = "List of EKS cluster log types to be enabled."
 }
 
-# EKS API Access Configuration (direct AWS provider mapping)
+########################################
+# NETWORKING CONFIGURATION
+########################################
+
+variable "vpc_id" {
+  description = "String for VPC ID"
+  type        = string
+}
+
+variable "scylla_subnets" {
+  type        = list(string)
+  default     = []
+  description = "A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended."
+}
+
+variable "eks_node_group_subnets" {
+  type        = list(string)
+  default     = []
+  description = "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
+}
+
+variable "nlb_subnet_id" {
+  type        = string
+  description = "Specific subnet ID for NLB placement (passed to ddc-app for service annotations)"
+  default     = null
+}
+
+variable "route53_hosted_zone_name" {
+  type        = string
+  description = "Route53 hosted zone name for External-DNS (e.g., 'example.com' or 'cgd.internal')"
+  default     = null
+}
+
+variable "eks_uses_vpc_endpoint" {
+  type        = bool
+  description = "Whether EKS uses VPC endpoint for API access"
+  default     = false
+}
+
 variable "endpoint_public_access" {
   type        = bool
   description = "Enable public API server endpoint"
@@ -237,11 +241,20 @@ variable "public_access_cidrs" {
   default     = null
 }
 
-
-
 ########################################
-# Kubernetes Configuration
+# KUBERNETES CONFIGURATION
 ########################################
+
+variable "kubernetes_version" {
+  type        = string
+  default     = "1.31"
+  description = "Kubernetes version to be used by the EKS cluster."
+  nullable    = false
+  validation {
+    condition     = contains(["1.31", "1.32", "1.33"], var.kubernetes_version)
+    error_message = "Version number must be supported version in AWS Kubernetes"
+  }
+}
 
 # CRITICAL: This namespace name MUST match exactly in:
 # - Helm release namespace
@@ -281,51 +294,6 @@ variable "enable_certificate_manager" {
 variable "oidc_credentials_secret_manager_arn" {
   type        = string
   description = "ARN for OIDC credentials stored in secret manager (for external service authentication)"
-  default     = null
-}
-
-
-
-
-
-variable "enable_centralized_logging" {
-  description = "Whether centralized logging is enabled from parent module"
-  type        = bool
-}
-
-variable "log_group_prefix" {
-  description = "Log group prefix from parent module"
-  type        = string
-}
-
-variable "log_retention_days" {
-  description = "Log retention days from parent module"
-  type        = number
-}
-
-
-
-
-
-variable "scylla_config" {
-  description = "ScyllaDB configuration from parent module (null if using Keyspaces)"
-  default     = null
-}
-
-variable "amazon_keyspaces_config" {
-  description = "Amazon Keyspaces configuration from parent module (null if using Scylla)"
-  default     = null
-}
-
-variable "keyspace_name" {
-  description = "Keyspace name from parent module to avoid duplication"
-  type        = string
-  default     = null
-}
-
-variable "internet_gateway_id" {
-  type        = string
-  description = "Internet Gateway ID for proper dependency ordering during destroy"
   default     = null
 }
 
@@ -375,25 +343,29 @@ variable "eks_access_entries" {
 }
 
 ########################################
-# Custom NodePool Configuration
+# SECURITY CONFIGURATION
 ########################################
 
-
-
-########################################
-# Route53 Configuration
-########################################
-
-variable "route53_hosted_zone_name" {
-  type        = string
-  description = "Route53 hosted zone name for External-DNS (e.g., 'example.com' or 'cgd.internal')"
-  default     = null
+variable "additional_nlb_security_groups" {
+  type        = list(string)
+  description = "Additional security group IDs to attach specifically to the DDC Network Load Balancer (for game developer access)"
+  default     = []
 }
 
-variable "eks_uses_vpc_endpoint" {
-  type        = bool
-  description = "Whether EKS uses VPC endpoint for API access"
-  default     = false
+variable "additional_eks_security_groups" {
+  type        = list(string)
+  description = "Additional security group IDs to attach specifically to the EKS cluster (for DevOps kubectl access)"
+  default     = []
 }
 
-# Custom NodePool configuration removed - always created by default for DDC NVMe requirements
+variable "tags" {
+  type        = map(any)
+  description = "Tags to apply to resources."
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "terraform-aws-unreal-cloud-ddc"
+    "ModuleName"     = "infrastructure"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc"
+  }
+}

@@ -87,8 +87,21 @@ test_region() {
     echo ""
     echo "💓 Level 2: Health Endpoints (No Auth Required)"
     
-    # Test primary endpoint health
-    HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+    # Get DNS host and IP for --resolve (bypassing local DNS cache)
+    # Using Cloudflare DNS for reliable, fast DNS resolution
+    DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
+    DNS_IP=$(dig @1.1.1.1 +short "$DNS_HOST" | head -1)
+    
+    # Test primary endpoint health using --resolve if DNS available
+    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+            HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$DNS_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+        else
+            HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$DNS_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+        fi
+    else
+        HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+    fi
     if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
         echo "   ✅ Primary /health/live: $HEALTH_LIVE"
     else
@@ -96,7 +109,16 @@ test_region() {
         return 1
     fi
     
-    HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+    # Test readiness endpoint using --resolve if DNS available
+    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$DNS_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+        else
+            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$DNS_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+        fi
+    else
+        HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+    fi
     if echo "$HEALTH_READY" | grep -qi "healthy"; then
         echo "   ✅ Primary /health/ready: $HEALTH_READY"
     else
@@ -117,9 +139,24 @@ test_region() {
     # Level 3: API Authentication Test
     echo ""
     echo "🔐 Level 3: API Authentication"
-    API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
-        -H "Authorization: ServiceAccount $bearer_token" \
-        "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
+    # Test API status using --resolve if DNS available
+    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+            API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:443:$DNS_IP" \
+                -H "Authorization: ServiceAccount $bearer_token" \
+                "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
+        else
+            API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:80:$DNS_IP" \
+                -H "Authorization: ServiceAccount $bearer_token" \
+                "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
+        fi
+    else
+        API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
+            -H "Authorization: ServiceAccount $bearer_token" \
+            "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
+    fi
     
     STATUS_CODE=$(echo "$API_STATUS" | grep "HTTP_STATUS:" | cut -d: -f2)
     if [ "$STATUS_CODE" = "200" ]; then
@@ -152,13 +189,36 @@ test_region() {
     
     echo "📤 Testing PUT operation..."
     echo "=========================="
-    PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $bearer_token")
+    # PUT operation using --resolve if DNS available
+    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+            PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:443:$DNS_IP" \
+                "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+                -X PUT \
+                --data "$TEST_DATA" \
+                -H 'content-type: application/octet-stream' \
+                -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+                -H "Authorization: ServiceAccount $bearer_token")
+        else
+            PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:80:$DNS_IP" \
+                "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+                -X PUT \
+                --data "$TEST_DATA" \
+                -H 'content-type: application/octet-stream' \
+                -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+                -H "Authorization: ServiceAccount $bearer_token")
+        fi
+    else
+        PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $bearer_token")
+    fi
     
     PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
     echo "PUT Status: $PUT_STATUS"
@@ -178,9 +238,24 @@ test_region() {
     echo ""
     echo "📥 Testing GET operation..."
     echo "=========================="
-    GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-        -H "Authorization: ServiceAccount $bearer_token")
+    # GET operation using --resolve if DNS available
+    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+            GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:443:$DNS_IP" \
+                "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+                -H "Authorization: ServiceAccount $bearer_token")
+        else
+            GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+                --resolve "$DNS_HOST:80:$DNS_IP" \
+                "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+                -H "Authorization: ServiceAccount $bearer_token")
+        fi
+    else
+        GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $bearer_token")
+    fi
     
     GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
     echo "GET Status: $GET_STATUS"
@@ -211,6 +286,28 @@ test_region() {
 # Get configuration from Terraform outputs
 echo "📋 Getting configuration from Terraform outputs..."
 
+# Test if Terraform is working first
+TERRAFORM_TEST=$(terraform version 2>/dev/null || echo "FAILED")
+if echo "$TERRAFORM_TEST" | grep -q "FAILED"; then
+    echo "❌ Terraform not found or not working"
+    echo "💡 Install Terraform or check PATH"
+    exit 1
+fi
+
+# Test if we can read Terraform outputs
+TERRAFORM_OUTPUT_TEST=$(terraform output 2>&1 || echo "FAILED")
+if echo "$TERRAFORM_OUTPUT_TEST" | grep -q "Error\|FAILED"; then
+    echo "❌ Terraform configuration has errors:"
+    echo "$TERRAFORM_OUTPUT_TEST"
+    echo ""
+    echo "🔧 TROUBLESHOOTING STEPS:"
+    echo "   1. Run 'terraform refresh' to sync state with AWS"
+    echo "   2. If that fails, run 'terraform validate' to check syntax"
+    echo "   3. If validation fails, fix Terraform syntax errors"
+    echo "   4. Run 'terraform apply' if state is out of sync"
+    exit 1
+fi
+
 # Get primary region configuration
 PRIMARY_DDC_DNS_ENDPOINT=$(terraform output -raw primary_ddc_endpoint 2>/dev/null || echo "")
 PRIMARY_DDC_DIRECT_ENDPOINT=$(terraform output -raw primary_ddc_endpoint_nlb 2>/dev/null || echo "")
@@ -229,6 +326,7 @@ if [ -z "$PRIMARY_DDC_DNS_ENDPOINT" ] && [ -z "$PRIMARY_DDC_DIRECT_ENDPOINT" ]; 
     echo "❌ Could not get primary region DDC endpoints from terraform outputs"
     echo "💡 Make sure you're running this from your multi-region terraform directory"
     echo "💡 And that 'terraform apply' completed successfully"
+    echo "💡 Try 'terraform refresh' to sync state with AWS"
     exit 1
 fi
 
@@ -236,6 +334,7 @@ if [ -z "$SECONDARY_DDC_DNS_ENDPOINT" ] && [ -z "$SECONDARY_DDC_DIRECT_ENDPOINT"
     echo "❌ Could not get secondary region DDC endpoints from terraform outputs"
     echo "💡 Make sure you're running this from your multi-region terraform directory"
     echo "💡 And that 'terraform apply' completed successfully"
+    echo "💡 Try 'terraform refresh' to sync state with AWS"
     exit 1
 fi
 
@@ -315,13 +414,39 @@ TEST_DATA="multi-region-test-$(date +%s)"
 TEST_IOHASH=$(echo -n "$TEST_DATA" | sha1sum | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')
 
 echo "📤 Step 1: PUT data to primary region ($PRIMARY_REGION)..."
-PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-    "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-    -X PUT \
-    --data "$TEST_DATA" \
-    -H 'content-type: application/octet-stream' \
-    -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-    -H "Authorization: ServiceAccount $BEARER_TOKEN")
+# Get DNS info for primary endpoint (using Cloudflare DNS)
+PRIMARY_DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
+PRIMARY_DNS_IP=$(dig @1.1.1.1 +short "$PRIMARY_DNS_HOST" | head -1)
+
+if [ -n "$PRIMARY_DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$PRIMARY_DNS_HOST"* ]]; then
+    if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+        PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            --resolve "$PRIMARY_DNS_HOST:443:$PRIMARY_DNS_IP" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN")
+    else
+        PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            --resolve "$PRIMARY_DNS_HOST:80:$PRIMARY_DNS_IP" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN")
+    fi
+else
+    PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+        -X PUT \
+        --data "$TEST_DATA" \
+        -H 'content-type: application/octet-stream' \
+        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+        -H "Authorization: ServiceAccount $BEARER_TOKEN")
+fi
 
 PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
 if [ "$PUT_STATUS" = "200" ] || [ "$PUT_STATUS" = "201" ]; then
@@ -347,9 +472,27 @@ echo "✅ Replication wait complete"
 
 echo ""
 echo "📥 Step 3: GET data from secondary region ($SECONDARY_REGION)..."
-GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-    "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-    -H "Authorization: ServiceAccount $BEARER_TOKEN")
+# Get DNS info for secondary endpoint (using Cloudflare DNS)
+SECONDARY_DNS_HOST=$(echo "$SECONDARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
+SECONDARY_DNS_IP=$(dig @1.1.1.1 +short "$SECONDARY_DNS_HOST" | head -1)
+
+if [ -n "$SECONDARY_DNS_IP" ] && [[ "$SECONDARY_ENDPOINT" == *"$SECONDARY_DNS_HOST"* ]]; then
+    if [[ "$SECONDARY_ENDPOINT" == https://* ]]; then
+        GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            --resolve "$SECONDARY_DNS_HOST:443:$SECONDARY_DNS_IP" \
+            "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN")
+    else
+        GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            --resolve "$SECONDARY_DNS_HOST:80:$SECONDARY_DNS_IP" \
+            "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN")
+    fi
+else
+    GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+        "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+        -H "Authorization: ServiceAccount $BEARER_TOKEN")
+fi
 
 GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
 GET_DATA=$(echo "$GET_RESPONSE" | grep -v "HTTP_STATUS:")

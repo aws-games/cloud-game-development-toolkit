@@ -90,6 +90,9 @@ module "unreal_cloud_ddc_primary" {
   # Centralized Logging
   enable_centralized_logging = true
   log_retention_days         = 30
+  
+  # Tags - pass example tags to module
+  tags = local.tags
 }
 
 # Secondary Region (us-west-1)
@@ -176,6 +179,9 @@ module "unreal_cloud_ddc_secondary" {
   # Centralized Logging - enabled in both regions
   enable_centralized_logging = true
   log_retention_days         = 30
+  
+  # Tags - pass example tags to module
+  tags = local.tags
 
   depends_on = [module.unreal_cloud_ddc_primary]
 }

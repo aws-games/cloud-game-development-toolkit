@@ -112,12 +112,12 @@ locals {
 # • namespace_policies → global.namespaces.Policies
 # 
 # WHY yamlencode() over templatefile():
-# ✅ Guaranteed valid YAML output (no syntax errors)
-# ✅ Type safety - Terraform validates HCL structure at plan time
-# ✅ Better IDE support (autocomplete, syntax highlighting)
-# ✅ Easier maintenance - no mixed HCL/YAML templating
-# ✅ Cleaner code - no %{ for } loops in templates
-# ✅ Better error messages for invalid configurations
+# • Guaranteed valid YAML output (no syntax errors)
+# • Type safety - Terraform validates HCL structure at plan time
+# • Better IDE support (autocomplete, syntax highlighting)
+# • Easier maintenance - no mixed HCL/YAML templating
+# • Cleaner code - no %{ for } loops in templates
+# • Better error messages for invalid configurations
 # 
 # Trade-off: Large diffs in terraform plan when values change
 # (acceptable for much cleaner, maintainable source code)
@@ -188,6 +188,9 @@ locals {
             
             # EKS Auto Mode requires IP targeting (not Instance targeting)
             "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
+            
+            # Use Terraform-managed security groups (no circular dependency with VPC CIDR rules)
+            "service.beta.kubernetes.io/aws-load-balancer-security-groups" = var.nlb_security_group_id
             
             # Health check configuration for DDC endpoints
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-path"                = "/health/live"

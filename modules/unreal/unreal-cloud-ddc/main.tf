@@ -80,11 +80,9 @@ module "ddc_infra" {
   # EKS access entries
   eks_access_entries = var.eks_access_entries
 
-
-
   # Route53 configuration for External-DNS
   route53_hosted_zone_name = var.route53_hosted_zone_name
-  
+
   # EKS VPC endpoint configuration
   eks_uses_vpc_endpoint = false  # Not using VPC endpoints
 
@@ -165,6 +163,9 @@ module "ddc_app" {
   
   # Load balancer configuration
   load_balancers_config = var.load_balancers_config
+  
+  # Security group for explicit lifecycle management
+  nlb_security_group_id = var.ddc_infra_config != null ? aws_security_group.nlb[0].id : null
 
   tags       = local.default_tags
   depends_on = [module.ddc_infra]

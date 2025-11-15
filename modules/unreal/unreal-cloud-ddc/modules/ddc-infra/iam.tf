@@ -339,28 +339,7 @@ data "aws_iam_policy_document" "unreal_cloud_ddc_policy" {
     ]
   }
   
-  # Amazon Keyspaces permissions (conditional on keyspaces config)
-  dynamic "statement" {
-    for_each = var.amazon_keyspaces_config != null ? [1] : []
-    content {
-      sid    = "KeyspacesAllow"
-      effect = "Allow"
-      actions = [
-        "cassandra:Select",
-        "cassandra:Insert",
-        "cassandra:Update",
-        "cassandra:Delete",
-        "cassandra:Modify",
-        "cassandra:Create",
-        "cassandra:Alter",
-        "cassandra:Drop"
-      ]
-      resources = [
-        "arn:aws:cassandra:${var.region}:*:keyspace/${local.keyspace_name}",
-        "arn:aws:cassandra:${var.region}:*:keyspace/${local.keyspace_name}/*"
-      ]
-    }
-  }
+
   
   # Secrets Manager for Service account
   dynamic "statement" {

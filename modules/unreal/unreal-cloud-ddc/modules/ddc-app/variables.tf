@@ -14,170 +14,27 @@ variable "project_prefix" {
   default     = "cgd"
 }
 
-variable "region" {
-  description = "The AWS region to deploy to"
-  type        = string
-  default     = "us-west-2"
-}
-
 variable "environment" {
   type        = string
   description = "Environment name for deployment (dev, staging, prod, etc.)"
   default     = "dev"
 }
 
-variable "tags" {
-  type        = map(any)
-  description = "Tags to apply to resources"
-  default = {
-    "IaC"            = "Terraform"
-    "ModuleBy"       = "CGD-Toolkit"
-    "RootModuleName" = "-"
-    "ModuleName"     = "ddc-app"
-    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/modules/ddc-app"
-  }
-}
-
-########################################
-# Infrastructure Inputs (from ddc-infra)
-########################################
-
-variable "cluster_name" {
-  description = "EKS cluster name"
+variable "region" {
+  description = "The AWS region to deploy to"
   type        = string
-  default     = null
+  default     = "us-west-2"
 }
 
-variable "nlb_dns_name" {
-  description = "DDC NLB DNS name"
-  type        = string
-  default     = null
-}
-
-variable "namespace" {
-  description = "Kubernetes namespace"
-  type        = string
-  default     = null
-}
-
-variable "service_account_arn" {
-  description = "ARN of the service account IAM role"
-  type        = string
-  default     = null
-}
-
-variable "s3_bucket_id" {
-  description = "S3 bucket ID"
-  type        = string
-  default     = null
-}
-
-########################################
-# Database Connection Abstraction (Primary)
-########################################
-
-variable "database_connection" {
-  type = object({
-    type = string           # "scylla" or "keyspaces"
-    host = string           # Connection endpoint
-    port = number           # Connection port
-    auth_type = string      # "credentials" or "iam"
-    keyspace_name = string  # Keyspace/database name
-    multi_region = bool     # Whether multi-region is enabled
-  })
-  description = "Database connection information from ddc-infra module"
-}
-
-########################################
-# Database Variables
-########################################
-
-variable "scylla_ips" {
-  description = "ScyllaDB node IPs (legacy - use database_connection instead)"
-  type        = list(string)
-  default     = []
-}
-
-variable "scylla_dns_name" {
-  description = "ScyllaDB cluster DNS name (legacy - use database_connection instead)"
-  type        = string
-  default     = null
-}
-
-variable "scylla_datacenter_name" {
-  description = "ScyllaDB datacenter name (legacy - use database_connection instead)"
-  type        = string
-  default     = null
-}
-
-variable "scylla_keyspace_suffix" {
-  description = "ScyllaDB keyspace suffix (legacy - use database_connection instead)"
-  type        = string
-  default     = null
-}
-
-variable "replication_factor" {
-  description = "ScyllaDB replication factor (legacy - use database_connection instead)"
-  type        = number
-  default     = 3
-}
-
-########################################
-# Service Configuration
-########################################
-
-
-
-
-
-variable "ddc_endpoint_pattern" {
-  type        = string
-  description = "DDC hostname for this region (e.g., 'us-east-1.dev.ddc.example.com')"
-}
-
-variable "ddc_bearer_token" {
-  type        = string
-  description = "DDC bearer token"
-  sensitive   = true
-}
-
-########################################
-# Credentials
-########################################
-
-variable "ghcr_credentials_secret_arn" {
-  type        = string
-  description = "ARN for GHCR credentials in secret manager"
-}
-
-variable "ssm_document_name" {
-  type        = string
-  description = "Name of SSM document for keyspace configuration (from ddc-infra)"
-  default     = null
-}
-
-variable "scylla_seed_instance_id" {
-  type        = string
-  description = "Instance ID of ScyllaDB seed node for SSM execution"
-  default     = null
-}
-
-variable "enable_centralized_logging" {
-  description = "Whether centralized logging is enabled from parent module"
+variable "debug" {
   type        = bool
+  description = "Enable debug mode for detailed troubleshooting output, YAML file generation, and chart preservation in path.root/generated/debug-charts/"
+  default     = false
 }
 
-variable "log_group_prefix" {
-  description = "Log group prefix from parent module"
-  type        = string
-}
-
-variable "log_retention_days" {
-  description = "Log retention days from parent module"
-  type        = number
-}
-
-
+########################################
+# COMPUTE CONFIGURATION
+########################################
 
 variable "ddc_application_config" {
   type = object({
@@ -286,20 +143,55 @@ DDC handles multi-region deployment automatically:
 EOT
 }
 
-variable "kubernetes_service_account_name" {
-  type        = string
-  description = "Kubernetes service account name from ddc_infra_config"
+variable "replication_factor" {
+  description = "ScyllaDB replication factor (legacy - use database_connection instead)"
+  type        = number
+  default     = 3
 }
 
-variable "debug" {
+########################################
+# STORAGE & LOGGING CONFIGURATION
+########################################
+
+variable "enable_centralized_logging" {
+  description = "Whether centralized logging is enabled from parent module"
   type        = bool
-  description = "Enable debug mode for detailed troubleshooting output, YAML file generation, and chart preservation in path.root/generated/debug-charts/"
-  default     = false
 }
+
+variable "log_group_prefix" {
+  description = "Log group prefix from parent module"
+  type        = string
+}
+
+variable "log_retention_days" {
+  description = "Log retention days from parent module"
+  type        = number
+}
+
+variable "s3_bucket_id" {
+  description = "S3 bucket ID"
+  type        = string
+  default     = null
+}
+
+########################################
+# NETWORKING CONFIGURATION
+########################################
 
 variable "vpc_id" {
   type        = string
   description = "VPC ID for AWS Load Balancer Controller configuration"
+}
+
+variable "ddc_endpoint_pattern" {
+  type        = string
+  description = "DDC hostname for this region (e.g., 'us-east-1.dev.ddc.example.com')"
+}
+
+variable "nlb_dns_name" {
+  description = "DDC NLB DNS name"
+  type        = string
+  default     = null
 }
 
 variable "certificate_arn" {
@@ -316,6 +208,117 @@ variable "load_balancers_config" {
   })
   description = "Load balancer configuration from parent module"
   default     = null
+}
+
+variable "nlb_security_group_id" {
+  type        = string
+  description = "Terraform-managed NLB security group ID to prevent EKS Auto Mode orphaned resources"
+}
+
+########################################
+# KUBERNETES CONFIGURATION
+########################################
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+  default     = null
+}
+
+variable "namespace" {
+  description = "Kubernetes namespace"
+  type        = string
+  default     = null
+}
+
+variable "kubernetes_service_account_name" {
+  type        = string
+  description = "Kubernetes service account name from ddc_infra_config"
+}
+
+variable "service_account_arn" {
+  description = "ARN of the service account IAM role"
+  type        = string
+  default     = null
+}
+
+########################################
+# SECURITY CONFIGURATION
+########################################
+
+variable "ddc_bearer_token" {
+  type        = string
+  description = "DDC bearer token"
+  sensitive   = true
+}
+
+variable "ghcr_credentials_secret_arn" {
+  type        = string
+  description = "ARN for GHCR credentials in secret manager"
+}
+
+########################################
+# DATABASE CONFIGURATION
+########################################
+
+variable "database_connection" {
+  type = object({
+    type = string           # "scylla" or "keyspaces"
+    host = string           # Connection endpoint
+    port = number           # Connection port
+    auth_type = string      # "credentials" or "iam"
+    keyspace_name = string  # Keyspace/database name
+    multi_region = bool     # Whether multi-region is enabled
+  })
+  description = "Database connection information from ddc-infra module"
+}
+
+variable "scylla_ips" {
+  description = "ScyllaDB node IPs (legacy - use database_connection instead)"
+  type        = list(string)
+  default     = []
+}
+
+variable "scylla_dns_name" {
+  description = "ScyllaDB cluster DNS name (legacy - use database_connection instead)"
+  type        = string
+  default     = null
+}
+
+variable "scylla_datacenter_name" {
+  description = "ScyllaDB datacenter name (legacy - use database_connection instead)"
+  type        = string
+  default     = null
+}
+
+variable "scylla_keyspace_suffix" {
+  description = "ScyllaDB keyspace suffix (legacy - use database_connection instead)"
+  type        = string
+  default     = null
+}
+
+variable "ssm_document_name" {
+  type        = string
+  description = "Name of SSM document for keyspace configuration (from ddc-infra)"
+  default     = null
+}
+
+variable "scylla_seed_instance_id" {
+  type        = string
+  description = "Instance ID of ScyllaDB seed node for SSM execution"
+  default     = null
+}
+
+variable "tags" {
+  type        = map(any)
+  description = "Tags to apply to resources"
+  default = {
+    "IaC"            = "Terraform"
+    "ModuleBy"       = "CGD-Toolkit"
+    "RootModuleName" = "-"
+    "ModuleName"     = "ddc-app"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/modules/ddc-app"
+  }
 }
 
 # COMMENTED OUT FOR EKS AUTO MODE TESTING

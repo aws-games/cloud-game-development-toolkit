@@ -686,28 +686,41 @@ choco install awscli kubernetes-cli kubernetes-helm jq terraform
 
 4. **EKS Auto Mode Subnet Tagging (REQUIRED)**
 
-   **⚠️ CRITICAL**: EKS Auto Mode requires specific subnet tags for load balancer creation:
+   **⚠️ CRITICAL**: EKS Auto Mode requires specific subnet tags for load balancer creation. **The examples already include these tags**, but if you're using existing subnets, verify they have the required tags:
 
-   - **Public subnets**: `kubernetes.io/role/elb = "1"`
-   - **Private subnets**: `kubernetes.io/role/internal-elb = "1"`
+   **Required Tags:**
+   - **Public subnets**: `kubernetes.io/role/elb = "1"` (internet-facing load balancers)
+   - **Private subnets**: `kubernetes.io/role/internal-elb = "1"` (internal load balancers)
+   - **All subnets**: `kubernetes.io/cluster/<cluster-name> = "owned"` (EKS cluster ownership)
 
-   **Tag your subnets before deployment:**
+   **✅ Examples Already Configured**: All examples in this module include the correct subnet tags automatically.
+
+   **If Using Existing Subnets**, verify tags are present:
 
    ```bash
-   # Public subnets (for internet-facing load balancers)
+   # Check existing subnet tags
+   aws ec2 describe-subnets --subnet-ids subnet-12345 --query 'Subnets[0].Tags'
+   
+   # Add missing tags if needed
    aws ec2 create-tags --resources subnet-12345 \
-     --tags Key=kubernetes.io/role/elb,Value=1
-
-   # Private subnets (for internal load balancers)
-   aws ec2 create-tags --resources subnet-67890 \
-     --tags Key=kubernetes.io/role/internal-elb,Value=1
+     --tags Key=kubernetes.io/role/elb,Value=1 \
+            Key=kubernetes.io/cluster/my-cluster-name,Value=owned
    ```
 
-   **Why Required**: EKS Auto Mode uses these tags to determine which subnets to use for different types of load balancers. Without proper tagging, load balancer creation will fail.
+   **Why Required**: EKS Auto Mode uses these tags to determine which subnets are eligible for different types of load balancers. Without proper tagging, load balancer creation will fail with subnet selection errors.
 
-   > **📋 Future Enhancement Tracking**
-   >
-   > We are actively monitoring EKS Auto Mode updates for more streamlined subnet configuration methods (e.g., service annotations like other Kubernetes load balancer implementations). Future versions of this module will be updated to support improved approaches as they become available in the service.
+   **Tag Architecture**:
+   ```
+   Public Subnets (internet-facing LBs):
+   ├── kubernetes.io/role/elb = "1"                    # EKS Auto Mode discovery
+   ├── kubernetes.io/cluster/<cluster-name> = "owned"  # EKS cluster ownership
+   └── Name = "project-public-subnet-1"                # Human identification
+   
+   Private Subnets (internal LBs):
+   ├── kubernetes.io/role/internal-elb = "1"           # EKS Auto Mode discovery  
+   ├── kubernetes.io/cluster/<cluster-name> = "owned"  # EKS cluster ownership
+   └── Name = "project-private-subnet-1"               # Human identification
+   ```
 
 5. **Network Planning**
    - Office/VPN IP ranges for security group access
@@ -911,6 +924,17 @@ Deploy infrastructure:
 ```sh
 terraform apply
 ```
+
+> **⏱️ EKS Cluster Creation Time**
+>
+> **EKS cluster creation typically takes 15-20 minutes.** This is normal AWS behavior, not a module issue.
+>
+> - **EKS Auto Mode**: 15-20 minutes (includes automatic compute/networking setup)
+> - **Standard EKS**: 10-18 minutes (depending on configuration)
+>
+> **What's happening**: Control plane provisioning, networking setup, Auto Mode configuration, add-ons installation, and validation.
+>
+> **When to be concerned**: 25+ minutes may indicate an issue - check EKS Console for error messages.
 
 ### Deployment Validation
 
@@ -1873,6 +1897,148 @@ S3 Bucket Structure:
 6. **URL structure** determines which logical namespace (and keyspace) is used
 7. **No cross-contamination** between logical namespaces at the application level
 8. **All logical namespaces** exist in all datacenters (full replication)
+
+## Tagging Best Practices
+
+### Standardized Tag Structure
+
+The CGD Toolkit follows a standardized tagging approach for consistent resource identification and cost allocation:
+
+```hcl
+# Example locals.tf - Recommended tagging pattern
+locals {
+  # Standardized tags for all resources
+  tags = {
+    # Project identification
+    ProjectPrefix = local.project_prefix  # "cgd", "studio", etc.
+    Environment   = local.environment     # "dev", "staging", "prod"
+    
+    # Infrastructure as Code metadata
+    IaC        = "Terraform"
+    ModuleBy   = "CGD-Toolkit"
+    ModuleName = "unreal-cloud-ddc"
+    
+    # Deployment context
+    DeployedBy = "terraform-example"      # "terraform-example", "argocd", "github-actions"
+    Region     = local.region             # "us-east-1", "us-west-2"
+    
+    # Optional: Cost allocation
+    CostCenter = "game-development"       # For cost tracking
+    Team       = "platform-engineering"   # Responsible team
+  }
+}
+```
+
+### EKS-Specific Tags (Automatic)
+
+The module automatically adds EKS-required tags to subnets and resources:
+
+```hcl
+# Public subnets - automatically tagged by examples
+resource "aws_subnet" "public" {
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-public-subnet-${count.index + 1}"
+    
+    # EKS Auto Mode requirements (added automatically)
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
+    "kubernetes.io/role/elb" = "1"
+  })
+}
+
+# Private subnets - automatically tagged by examples  
+resource "aws_subnet" "private" {
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-private-subnet-${count.index + 1}"
+    
+    # EKS Auto Mode requirements (added automatically)
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
+    "kubernetes.io/role/internal-elb" = "1"
+  })
+}
+```
+
+### Tag Inheritance
+
+Tags flow through the module hierarchy:
+
+```
+Example locals.tf tags
+    ↓
+Module input (var.tags)
+    ↓
+Submodule inheritance
+    ↓
+AWS resources
+```
+
+**All AWS resources** created by the module inherit the base tags plus resource-specific tags for identification.
+
+### Cost Allocation Strategy
+
+**Recommended approach for multi-environment deployments:**
+
+```hcl
+# Development environment
+locals {
+  tags = {
+    ProjectPrefix = "cgd"
+    Environment   = "dev"
+    CostCenter    = "game-development"
+    Team          = "platform-engineering"
+    # ... other tags
+  }
+}
+
+# Production environment  
+locals {
+  tags = {
+    ProjectPrefix = "cgd"
+    Environment   = "prod"
+    CostCenter    = "game-development"
+    Team          = "platform-engineering"
+    # ... other tags
+  }
+}
+```
+
+**AWS Cost Explorer filters:**
+- `Environment = "prod"` - Production costs only
+- `ModuleName = "unreal-cloud-ddc"` - DDC-specific costs
+- `ProjectPrefix = "cgd"` - All CGD Toolkit costs
+
+### Multi-Region Tagging
+
+**For multi-region deployments, include region in tags:**
+
+```hcl
+# Primary region (us-east-1)
+locals {
+  tags = {
+    ProjectPrefix = "cgd"
+    Environment   = "prod"
+    Region        = "us-east-1"
+    RegionRole    = "primary"    # "primary" or "secondary"
+    # ... other tags
+  }
+}
+
+# Secondary region (us-west-2)
+locals {
+  tags = {
+    ProjectPrefix = "cgd"
+    Environment   = "prod"
+    Region        = "us-west-2"
+    RegionRole    = "secondary"  # "primary" or "secondary"
+    # ... other tags
+  }
+}
+```
+
+**Benefits:**
+- **Cost analysis** by region and role
+- **Resource identification** across regions
+- **Disaster recovery** planning and testing
+- **Compliance** and audit trails
 
 ## Configuration Examples
 
