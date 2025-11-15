@@ -76,3 +76,6 @@ id_ed25519.pub
 
 # Kiro context files
 .kiro
+
+# Generated files (DDC module helm values, etc.)
+**/generated/

@@ -1,0 +1,63 @@
+##########################################
+# DDC DNS Strategy Implementation
+##########################################
+
+# Private hosted zone for internal DNS (always created)
+resource "aws_route53_zone" "private" {
+  name = local.service_domain
+
+  vpc {
+    vpc_id     = var.vpc_id
+    vpc_region = local.region
+  }
+
+  tags = merge(local.default_tags, {
+    Name   = "${local.name_prefix}-private-zone"
+    Type   = "Private Hosted Zone"
+    Access = var.load_balancers_config.nlb != null ? (var.load_balancers_config.nlb.internet_facing ? "Internet-facing" : "Internal") : "Internal"
+  })
+}
+
+# Additional VPC associations for cross-region access
+resource "aws_route53_zone_association" "additional_vpcs" {
+  for_each = var.additional_vpc_associations != null ? var.additional_vpc_associations : {}
+
+  zone_id = aws_route53_zone.private.zone_id
+  vpc_id  = each.value.vpc_id
+}
+
+# Private DNS - Regional service endpoint created by External-DNS
+# External-DNS automatically creates ALIAS records for LoadBalancer services
+# No manual Route53 records needed
+
+# ScyllaDB DNS records for internal service discovery
+resource "aws_route53_record" "scylla_cluster" {
+  count   = var.ddc_infra_config != null && local.database_type == "scylla" && length(module.ddc_infra.scylla_ips) > 0 ? 1 : 0
+  zone_id = aws_route53_zone.private.zone_id
+  name    = "scylla.${local.service_domain}"
+  type    = "A"
+  ttl     = 300
+  records = module.ddc_infra.scylla_ips
+}
+
+# Individual ScyllaDB node records for debugging
+resource "aws_route53_record" "scylla_nodes" {
+  count   = var.ddc_infra_config != null && local.database_type == "scylla" ? length(module.ddc_infra.scylla_ips) : 0
+  zone_id = aws_route53_zone.private.zone_id
+  name    = "scylla-${count.index + 1}.${local.service_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.ddc_infra.scylla_ips[count.index]]
+}
+
+##########################################
+# Public DNS Records (Example Level)
+##########################################
+
+# Public DNS records are created at the example level per design standards
+# Examples create:
+# - ACM certificates for HTTPS
+# - Public Route53 records pointing to NLB
+# - Regional endpoint pattern: us-east-1.ddc.company.com
+#
+# See examples/complete/dns.tf for implementation

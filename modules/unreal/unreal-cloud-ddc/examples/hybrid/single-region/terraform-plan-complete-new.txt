@@ -1,0 +1,14 @@
+
+Error: Reference to undeclared local value
+
+  on ../../../modules/ddc-infra/addons.tf line 60, in resource "aws_iam_role" "external_dns":
+  60:           "${local.oidc_provider_url}:sub" = "system:serviceaccount:external-dns:external-dns"
+
+A local value with the name "oidc_provider_url" has not been declared.
+
+Error: Reference to undeclared local value
+
+  on ../../../modules/ddc-infra/addons.tf line 61, in resource "aws_iam_role" "external_dns":
+  61:           "${local.oidc_provider_url}:aud" = "sts.amazonaws.com"
+
+A local value with the name "oidc_provider_url" has not been declared.

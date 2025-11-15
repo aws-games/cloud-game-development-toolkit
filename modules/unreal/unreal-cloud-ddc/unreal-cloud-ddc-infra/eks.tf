@@ -1,29 +1,29 @@
 ################################################################################
-# EKS Cluster
+# EKS Cluster with Auto Mode
 ################################################################################
 
-resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
-  #checkov:skip=CKV_AWS_39:EKS Public Endpoint needs to be open to configure the eks cluster.
-  #checkov:skip=CKV_AWS_58:Secrets encryption will be enabled in a future update
-  #checkov:skip=CKV_AWS_38:IP restriction set in module variables with a conditional
-  #checkov:skip=CKV_AWS_339:Checkov not picking up supported version correctly. Added validation to check for correct version
+resource "awscc_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
   name                      = "${local.name_prefix}-cluster"
   role_arn                  = aws_iam_role.eks_cluster_role.arn
   version                   = var.kubernetes_version
-  enabled_cluster_log_types = var.eks_cluster_logging_types
+  logging                   = {
+    cluster_logging = {
+      enabled_types = var.eks_cluster_logging_types
+    }
+  }
 
-
-
-  access_config {
+  access_config = {
     authentication_mode                         = "API_AND_CONFIG_MAP"
     bootstrap_cluster_creator_admin_permissions = true
   }
 
-  vpc_config {
+  resources_vpc_config = {
     subnet_ids              = var.eks_node_group_subnets
-    endpoint_private_access = var.eks_cluster_private_access
-    endpoint_public_access  = var.eks_cluster_public_access
-    public_access_cidrs     = var.eks_cluster_public_endpoint_access_cidr
+    endpoint_config = {
+      private_access = var.eks_cluster_private_access
+      public_access  = var.eks_cluster_public_access
+      public_access_cidrs = var.eks_cluster_public_endpoint_access_cidr
+    }
     security_group_ids = [
       aws_security_group.system_security_group.id,
       aws_security_group.worker_security_group.id,
@@ -31,6 +31,27 @@ resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
       aws_security_group.cluster_security_group.id
     ]
   }
+
+  # EKS Auto Mode Configuration
+  compute_config = {
+    enabled = true
+  }
+  
+  kubernetes_network_config = {
+    elastic_load_balancing = {
+      enabled = false  # We use external-dns instead
+    }
+  }
+  
+  storage_config = {
+    block_storage = {
+      enabled = true  # EBS CSI driver
+    }
+  }
+  
+  bootstrap_self_managed_addons = true  # Required for external-dns
+
+  tags = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
@@ -40,210 +61,40 @@ resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
 }
 
 ################################################################################
-# Worker Node Group
+# EKS Auto Mode Node Configuration
+# Note: EKS Auto Mode automatically manages nodes - no manual node groups needed
 ################################################################################
-resource "aws_eks_node_group" "worker_node_group" {
-  cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "${local.name_prefix}-worker-ng"
-  version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  node_role_arn   = aws_iam_role.worker_node_group_role.arn
-  subnet_ids      = var.eks_node_group_subnets
 
-  labels = var.worker_node_group_label
-
-  taint {
-    key    = "role"
-    value  = "unreal-cloud-ddc"
-    effect = "NO_SCHEDULE"
-  }
-
-  scaling_config {
-    desired_size = var.worker_managed_node_desired_size
-    max_size     = var.worker_managed_node_max_size
-    min_size     = var.worker_managed_node_min_size
-  }
-  launch_template {
-    id      = aws_launch_template.worker_launch_template.id
-    version = aws_launch_template.worker_launch_template.latest_version
-  }
-  tags = merge(var.tags,
-    {
-      Name = "${local.name_prefix}-worker-instance"
-    }
-  )
-}
-
-#Launch Templates default to intel based amazon linux need to fix
-resource "aws_launch_template" "worker_launch_template" {
-  #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "${local.name_prefix}-worker-launch-template"
-  instance_type = var.worker_managed_node_instance_type
-  vpc_security_group_ids = [
-    aws_security_group.worker_security_group.id,
-    aws_security_group.scylla_security_group.id,
-    aws_security_group.cluster_security_group.id
-  ]
-
-  //In line with best practices for container environments
-  // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
-  metadata_options {
-    http_endpoint               = "enabled"
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 2
-    instance_metadata_tags      = "enabled"
-  }
-
-  monitoring {
-    enabled = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(var.tags,
-      {
-        Name = "${local.name_prefix}-worker-instance"
-      }
-    )
-  }
-}
+# EKS Auto Mode will automatically:
+# - Create and manage nodes based on pod requirements
+# - Handle scaling, patching, and lifecycle management
+# - Support both NVMe (i4i instances) and EBS storage
+# - Apply appropriate taints and labels based on workload requirements
 
 ################################################################################
-# NVME Node Group
+# Subnet Tagging for EKS Auto Mode Load Balancing
 ################################################################################
-resource "aws_eks_node_group" "nvme_node_group" {
-  cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "${local.name_prefix}-nvme-ng"
-  version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  node_role_arn   = aws_iam_role.nvme_node_group_role.arn
-  subnet_ids      = var.eks_node_group_subnets
 
-  labels = var.nvme_node_group_label
-
-  taint {
-    key    = "role"
-    value  = "unreal-cloud-ddc"
-    effect = "NO_SCHEDULE"
-  }
-
-  scaling_config {
-    desired_size = var.nvme_managed_node_desired_size
-    max_size     = var.nvme_managed_node_max_size
-    min_size     = var.nvme_managed_node_min_size
-  }
-
-  launch_template {
-    id      = aws_launch_template.nvme_launch_template.id
-    version = aws_launch_template.nvme_launch_template.latest_version
-  }
-  tags = merge(var.tags,
-    {
-      Name = "${local.name_prefix}-nvme-instance"
-    }
-  )
+# Tag public subnets for internet-facing load balancers
+resource "aws_ec2_tag" "public_subnet_elb_tags" {
+  for_each    = toset(var.public_subnet_ids)
+  resource_id = each.value
+  key         = "kubernetes.io/role/elb"
+  value       = "1"
 }
 
-#Launch Templates default to intel based amazon linux need to fix
-resource "aws_launch_template" "nvme_launch_template" {
-  #checkov:skip=CKV_AWS_341:Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "${local.name_prefix}-nvme-launch-template"
-  instance_type = var.nvme_managed_node_instance_type
-  user_data     = base64encode(local.nvme-pre-bootstrap-userdata)
-  vpc_security_group_ids = [
-    aws_security_group.nvme_security_group.id,
-    aws_security_group.scylla_security_group.id,
-    aws_security_group.cluster_security_group.id
-  ]
-
-  //In line with our recommendation for container environments
-  // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
-  metadata_options {
-    http_endpoint               = "enabled"
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 2
-    instance_metadata_tags      = "enabled"
-  }
-
-  monitoring {
-    enabled = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(var.tags,
-      {
-        Name = "${local.name_prefix}-nvme-instance"
-      }
-    )
-  }
-}
-
-################################################################################
-# System Node Group
-################################################################################
-resource "aws_eks_node_group" "system_node_group" {
-  cluster_name    = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
-  node_group_name = "${local.name_prefix}-system-ng"
-  version         = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  node_role_arn   = aws_iam_role.system_node_group_role.arn
-  subnet_ids      = var.eks_node_group_subnets
-  labels          = var.system_node_group_label
-
-  launch_template {
-    id      = aws_launch_template.system_launch_template.id
-    version = aws_launch_template.system_launch_template.latest_version
-  }
-
-  scaling_config {
-    desired_size = var.system_managed_node_desired_size
-    max_size     = var.system_managed_node_max_size
-    min_size     = var.system_managed_node_min_size
-  }
-
-  tags = merge(var.tags,
-    {
-      Name = "${local.name_prefix}-system-instance"
-    }
-  )
-}
-
-#Launch Templates default to intel based amazon linux need to fix
-resource "aws_launch_template" "system_launch_template" {
-  #checkov:skip=CKV_AWS_341:Hop limit 2 required for the load balancer controller. Hop limit of 2 is a best practice for container environments. See docs in comment.
-  name_prefix   = "${local.name_prefix}-system-launch-template"
-  instance_type = var.system_managed_node_instance_type
-
-  //In line with best practices for container environments
-  //https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
-  metadata_options {
-    http_endpoint               = "enabled"
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 2
-    instance_metadata_tags      = "enabled"
-  }
-
-  vpc_security_group_ids = [
-    aws_security_group.system_security_group.id,
-    aws_security_group.cluster_security_group.id
-  ]
-
-  monitoring {
-    enabled = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(var.tags,
-      {
-        Name = "${local.name_prefix}-system-instance"
-      }
-    )
-  }
+# Tag private subnets for internal load balancers
+resource "aws_ec2_tag" "private_subnet_elb_tags" {
+  for_each    = toset(var.private_subnet_ids)
+  resource_id = each.value
+  key         = "kubernetes.io/role/internal-elb"
+  value       = "1"
 }
 ################################################################################
 # EKS Cluster Open ID Connect Provider
 ################################################################################
 data "tls_certificate" "eks_tls_certificate" {
-  url = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer
+  url = awscc_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer
 }
 
 resource "aws_iam_openid_connect_provider" "unreal_cloud_ddc_oidc_provider" {

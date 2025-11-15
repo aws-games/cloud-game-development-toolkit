@@ -145,6 +145,16 @@ variable "eks_node_group_subnets" {
   description = "A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended."
 }
 
+variable "public_subnet_ids" {
+  type        = list(string)
+  description = "List of public subnet IDs for EKS Auto Mode load balancing (internet-facing load balancers)"
+}
+
+variable "private_subnet_ids" {
+  type        = list(string)
+  description = "List of private subnet IDs for EKS Auto Mode load balancing (internal load balancers)"
+}
+
 variable "nvme_managed_node_instance_type" {
   type        = string
   default     = "i3en.large"
