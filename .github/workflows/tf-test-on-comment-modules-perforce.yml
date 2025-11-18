@@ -30,7 +30,7 @@ jobs:
         if: always()
         with:
           script: |
-            const name = '${{ github.workflow	}}';
+            const name = '${{ github.workflow }}';
             const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
             const body = `Terraform tests have been scheduled 🧪 \n${url}`;
 
@@ -60,7 +60,7 @@ jobs:
         if: always()
         with:
           script: |
-            const name = '${{ github.workflow	}}';
+            const name = '${{ github.workflow }}';
             const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
             const body = `Terraform tests are in progress ⏳ \n${url}`;
 
@@ -116,7 +116,7 @@ jobs:
         if: always()
         with:
           script: |
-            const name = '${{ github.workflow	}}';
+            const name = '${{ github.workflow }}';
             const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
             const success = '${{ job.status }}' === 'success';
             const body = `${name}: ${success ? '✅ The Terraform tests have completed successfully. Time for some Choreography and Merriment! 🪩' : '❌ The Terraform tests have completed with errors. Please review the failed GitHub action to resolve. Lumon expects more from you. 🙁'}\n${url}`;
