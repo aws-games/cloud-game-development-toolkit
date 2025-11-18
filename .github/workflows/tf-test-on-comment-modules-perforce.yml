@@ -71,11 +71,11 @@ jobs:
               body: body
             })
 
-      # Checkout the PR branch
-      - name: Checkout PR branch ${{ steps.comment-branch.outputs.head_ref }}
+      # Checkout the specific commit SHA (immutable reference)
+      - name: Checkout PR commit ${{ steps.comment-branch.outputs.head_sha }}
         uses: actions/checkout@v5
         with:
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          ref: ${{ steps.comment-branch.outputs.head_sha }}
           repository: ${{ steps.comment-branch.outputs.head_repo }}
           fetch-depth: 0
 
