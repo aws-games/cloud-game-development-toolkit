@@ -107,6 +107,16 @@ output "p4_code_review_target_group_arn" {
   description = "The service target group for the P4 Code Review."
 }
 
+output "p4_code_review_default_role_id" {
+  value       = var.p4_code_review_config != null ? module.p4_code_review[0].default_role_id : null
+  description = "The default role for the P4 Code Review service task"
+}
+
+output "p4_code_review_execution_role_id" {
+  value       = var.p4_code_review_config != null ? module.p4_code_review[0].execution_role_id : null
+  description = "The default role for the P4 Code Review service task"
+}
+
 output "p4_server_lambda_link_name" {
   value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
   module.p4_server[0].lambda_link_name : null)
