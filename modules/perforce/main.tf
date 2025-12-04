@@ -164,7 +164,8 @@ module "p4_code_review" {
   p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
   p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
 
-  enable_sso = var.p4_code_review_config.enable_sso
+  enable_sso        = var.p4_code_review_config.enable_sso
+  config_php_source = var.p4_code_review_config.config_php_source
 
   depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
 }
