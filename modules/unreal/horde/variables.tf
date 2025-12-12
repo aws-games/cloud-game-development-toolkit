@@ -478,6 +478,7 @@ variable "agents" {
     ami             = string
     instance_type   = string
     horde_pool_name = optional(string)
+    create_asg      = optional(bool, true)
     block_device_mappings = list(
       object({
         device_name = string
