@@ -8,6 +8,16 @@ output "shared_application_load_balancer_arn" {
   description = "The ARN of the shared application load balancer."
 }
 
+output "shared_application_load_balancer_dns_name" {
+  value       = var.create_shared_application_load_balancer ? aws_lb.perforce_web_services[0].dns_name : null
+  description = "The DNS name of the shared application load balancer."
+}
+
+output "shared_application_load_balancer_zone_id" {
+  value       = var.create_shared_application_load_balancer ? aws_lb.perforce_web_services[0].zone_id : null
+  description = "The zone ID of the shared application load balancer."
+}
+
 # P4 Server
 output "p4_server_eip_public_ip" {
   value       = var.p4_server_config != null ? module.p4_server[0].eip_public_ip : null
