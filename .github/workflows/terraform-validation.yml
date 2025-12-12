@@ -66,7 +66,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v6.0.1
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@v6
       - name: Lint ${{ matrix.terraform_dir }}
         run: |
           cd "${{ matrix.terraform_dir }}"
