@@ -147,4 +147,13 @@ build {
       "Get-Disk | where partitionstyle -eq \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false"
     ]
   }
+
+  # Remove the run-once flag so user scripts run
+  provisioner "powershell" {
+    elevated_user = "Administrator"
+    elevated_password = build.Password
+    inline = [
+      "Remove-Item C:\\ProgramData\\Amazon\\EC2Launch\\state\\.run-once"
+    ]
+  }
 }
