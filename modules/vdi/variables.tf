@@ -4,6 +4,12 @@ variable "project_prefix" {
   default     = "cgd"
 }
 
+variable "debug" {
+  type        = bool
+  description = "Enable debug mode. When true, disables termination protection for CI/CD environments. When false, enables termination protection for production environments."
+  default     = false
+}
+
 variable "region" {
   type        = string
   description = "AWS region for deployment"

@@ -11,7 +11,7 @@
 - **Game Development Ready** - GPU instances, high-performance storage, UE-optimized AMIs
 - **Intelligent Drive Management** - Automatic Windows drive letter assignment and volume lifecycle
 - **Complete VDI Infrastructure** - EC2 workstations, security, IAM, and user management
-- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access
+- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access, termination protection
 - **Flexible Authentication** - EC2 key pairs (emergency) and Secrets Manager (production)
 - **Runtime Software Installation** - Automated package installation via SSM and Chocolatey
 
@@ -610,6 +610,7 @@ No modules.
 | <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br>    client_cidr_block       = optional(string, "192.168.0.0/16")<br>    generate_client_configs = optional(bool, true)<br>    split_tunnel            = optional(bool, true)<br>  })</pre> | `{}` | no |
 | <a name="input_create_client_vpn"></a> [create\_client\_vpn](#input\_create\_client\_vpn) | Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs) | `bool` | `false` | no |
 | <a name="input_create_default_security_groups"></a> [create\_default\_security\_groups](#input\_create\_default\_security\_groups) | Create default security groups for VDI workstations | `bool` | `true` | no |
+| <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode. When true, disables termination protection for CI/CD environments. When false, enables termination protection for production environments. | `bool` | `false` | no |
 | <a name="input_ebs_kms_key_id"></a> [ebs\_kms\_key\_id](#input\_ebs\_kms\_key\_id) | KMS key ID for EBS encryption (if encryption enabled) | `string` | `null` | no |
 | <a name="input_enable_centralized_logging"></a> [enable\_centralized\_logging](#input\_enable\_centralized\_logging) | Enable centralized logging with CloudWatch log groups following CGD Toolkit patterns | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod, etc.) | `string` | `"dev"` | no |
