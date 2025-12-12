@@ -32,5 +32,7 @@ Read-S3Object -BucketName ${p4_trust_bucket} -Key agent/.p4trust -File $hordedir
 # Configure and start the agent
 & "$hordedir\HordeAgent.exe" SetServer -Default -Url="https://${fully_qualified_domain_name}"
 & "$hordedir\HordeAgent.exe" Service Install -Start=false
+
+# Schedule a reboot in 5 minutes
+shutdown /r /d p:4:2 /t $(60*5)
 </powershell>
-<persist>true</persist>
