@@ -1,6 +1,6 @@
 locals {
   unreal_horde_agent_userdata_windows = base64encode(templatefile("${path.module}/config/agent/agent-config.ps1", {
-    p4_trust_bucket             = local.need_p4_trust ? aws_s3_bucket.ansible_playbooks[0].id : null
+    p4_trust_bucket             = local.need_p4_trust && length(var.agents) > 0 ? aws_s3_bucket.ansible_playbooks[0].id : null
     fully_qualified_domain_name = var.fully_qualified_domain_name
     dotnet_runtime_version      = var.agent_dotnet_runtime_version
   }))

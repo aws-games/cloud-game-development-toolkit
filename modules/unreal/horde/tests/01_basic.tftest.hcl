@@ -40,6 +40,21 @@ mock_provider "aws" {
       running_tasks_count = 0
     }
   }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = <<-EOT
+        {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        }
+      EOT
+    }
+  }
 }
 
 # Mock random provider
@@ -60,8 +75,8 @@ run "unit_test_basic" {
     # Basic configuration
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-basic"
-    environment         = "Test"
+    name                = "horde-basic"
+    environment         = "test"
   }
 
   # Assertions for basic deployment
@@ -76,8 +91,18 @@ run "unit_test_basic" {
   }
 
   assert {
+    condition     = aws_ecs_service.unreal_horde.launch_type == "FARGATE"
+    error_message = "ECS service should use FARGATE launch type"
+  }
+
+  assert {
     condition     = length(aws_lb.unreal_horde_internal_alb) == 1
     error_message = "Internal ALB should be created when create_internal_alb is true"
+  }
+
+  assert {
+    condition     = aws_lb.unreal_horde_internal_alb[0].internal == true
+    error_message = "Internal ALB should be marked as internal"
   }
 
   assert {
@@ -86,8 +111,23 @@ run "unit_test_basic" {
   }
 
   assert {
+    condition     = length(aws_lb_target_group.unreal_horde_api_target_group_internal) == 1
+    error_message = "Internal API target group should be created"
+  }
+
+  assert {
+    condition     = length(aws_lb_target_group.unreal_horde_grpc_target_group_internal) == 1
+    error_message = "Internal GRPC target group should be created"
+  }
+
+  assert {
     condition     = length(aws_docdb_cluster.horde) > 0
     error_message = "DocumentDB cluster should be created"
+  }
+
+  assert {
+    condition     = aws_docdb_cluster.horde[0].engine == "docdb"
+    error_message = "DocumentDB cluster should use docdb engine"
   }
 
   assert {
@@ -101,7 +141,22 @@ run "unit_test_basic" {
   }
 
   assert {
+    condition     = aws_security_group.unreal_horde_sg.vpc_id == "vpc-12345678"
+    error_message = "Horde security group should be in the correct VPC"
+  }
+
+  assert {
     condition     = length(aws_iam_role.unreal_horde_default_role) > 0
     error_message = "Horde IAM role should be created"
+  }
+
+  assert {
+    condition     = length(aws_iam_role.unreal_horde_task_execution_role) > 0
+    error_message = "Task execution IAM role should be created"
+  }
+
+  assert {
+    condition     = contains(keys(aws_ecs_cluster.unreal_horde_cluster[0].tags), "environment")
+    error_message = "ECS cluster should have environment tag"
   }
 }

@@ -41,6 +41,21 @@ mock_provider "aws" {
       running_tasks_count = 0
     }
   }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = <<-EOT
+        {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        }
+      EOT
+    }
+  }
 }
 
 # Mock random provider
@@ -63,8 +78,8 @@ run "unit_test_complete" {
     # Complete configuration
     create_external_alb = true
     create_internal_alb = true
-    name                = "horde-test-complete"
-    environment         = "Test"
+    name                = "horde-full"
+    environment         = "test"
 
     # Custom database settings
     docdb_instance_count = 3
@@ -89,6 +104,11 @@ run "unit_test_complete" {
   }
 
   assert {
+    condition     = length(aws_lb.unreal_horde_external_alb) == 1
+    error_message = "External ALB should be created when create_external_alb is true"
+  }
+
+  assert {
     condition     = length(aws_lb.unreal_horde_internal_alb) == 1
     error_message = "Internal ALB should be created when create_internal_alb is true"
   }
@@ -99,8 +119,18 @@ run "unit_test_complete" {
   }
 
   assert {
+    condition     = aws_lb_target_group.unreal_horde_api_target_group_external[0].target_type == "ip"
+    error_message = "External API target group should use IP target type for Fargate"
+  }
+
+  assert {
     condition     = length(aws_lb_target_group.unreal_horde_grpc_target_group_external) == 1
     error_message = "External GRPC target group should be created"
+  }
+
+  assert {
+    condition     = aws_lb_target_group.unreal_horde_grpc_target_group_external[0].protocol_version == "HTTP2"
+    error_message = "External GRPC target group should use HTTP2 protocol version for gRPC"
   }
 
   assert {
@@ -119,6 +149,26 @@ run "unit_test_complete" {
   }
 
   assert {
+    condition     = aws_docdb_cluster_instance.horde[0].instance_class == "db.t4g.medium"
+    error_message = "DocumentDB instances should use configured instance class"
+  }
+
+  assert {
+    condition     = length(aws_elasticache_replication_group.horde) == 1
+    error_message = "ElastiCache replication group should be created for valkey"
+  }
+
+  assert {
+    condition     = aws_elasticache_replication_group.horde[0].engine == "valkey"
+    error_message = "ElastiCache should use valkey engine as configured"
+  }
+
+  assert {
+    condition     = aws_elasticache_replication_group.horde[0].num_cache_clusters == 3
+    error_message = "ElastiCache should have 3 nodes as configured"
+  }
+
+  assert {
     condition     = length(aws_s3_bucket.unreal_horde_alb_access_logs_bucket) > 0
     error_message = "ALB access logs bucket should be created when logging is enabled"
   }
@@ -131,5 +181,10 @@ run "unit_test_complete" {
   assert {
     condition     = length(aws_security_group.unreal_horde_internal_alb_sg) == 1
     error_message = "Internal ALB security group should be created"
+  }
+
+  assert {
+    condition     = length(aws_iam_policy.unreal_horde_secrets_manager_policy) == 1
+    error_message = "Secrets Manager policy should be created when GitHub credentials are configured"
   }
 }

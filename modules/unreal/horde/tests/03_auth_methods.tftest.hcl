@@ -39,6 +39,21 @@ mock_provider "aws" {
       running_tasks_count = 0
     }
   }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = <<-EOT
+        {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        }
+      EOT
+    }
+  }
 }
 
 # Mock random provider
@@ -57,7 +72,7 @@ run "unit_test_anonymous_auth" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-anon"
+    name                = "horde-anon"
 
     # Anonymous authentication
     auth_method = "Anonymous"
@@ -82,7 +97,7 @@ run "unit_test_oidc_auth" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-oidc"
+    name                = "horde-oidc"
 
     # OIDC authentication
     auth_method          = "OpenIdConnect"
@@ -114,7 +129,7 @@ run "unit_test_okta_auth" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-okta"
+    name                = "horde-okta"
 
     # Okta authentication
     auth_method          = "Okta"
@@ -195,7 +210,7 @@ run "unit_test_perforce_integration" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-p4"
+    name                = "horde-p4"
 
     # Perforce configuration
     p4_port                           = "ssl:perforce.example.com:1666"

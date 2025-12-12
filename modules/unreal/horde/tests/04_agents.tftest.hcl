@@ -39,6 +39,21 @@ mock_provider "aws" {
       running_tasks_count = 0
     }
   }
+
+  mock_data "aws_iam_policy_document" {
+    defaults = {
+      json = <<-EOT
+        {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+          }]
+        }
+      EOT
+    }
+  }
 }
 
 # Mock random provider
@@ -57,7 +72,7 @@ run "unit_test_single_agent_pool" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-agents"
+    name                = "horde-ag"
 
     # Single agent pool
     agents = {
@@ -87,13 +102,38 @@ run "unit_test_single_agent_pool" {
   }
 
   assert {
+    condition     = aws_autoscaling_group.unreal_horde_agent_asg["default"].min_size == 1
+    error_message = "ASG should have min_size of 1 as configured"
+  }
+
+  assert {
+    condition     = aws_autoscaling_group.unreal_horde_agent_asg["default"].max_size == 5
+    error_message = "ASG should have max_size of 5 as configured"
+  }
+
+  assert {
     condition     = length(aws_launch_template.unreal_horde_agent_template) == 1
     error_message = "Should create 1 launch template for single agent pool"
   }
 
   assert {
+    condition     = aws_launch_template.unreal_horde_agent_template["default"].instance_type == "c5.2xlarge"
+    error_message = "Launch template should use configured instance type"
+  }
+
+  assert {
     condition     = length(aws_s3_bucket.ansible_playbooks) > 0
     error_message = "Should create S3 bucket for Ansible playbooks when agents are configured"
+  }
+
+  assert {
+    condition     = length(aws_iam_role.unreal_horde_agent_default_role) == 1
+    error_message = "Agent IAM role should be created"
+  }
+
+  assert {
+    condition     = length(aws_iam_instance_profile.unreal_horde_agent_instance_profile) == 1
+    error_message = "Agent instance profile should be created"
   }
 }
 
@@ -110,7 +150,7 @@ run "unit_test_multiple_agent_pools" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-multi-agents"
+    name                = "horde-multi"
 
     # Multiple agent pools
     agents = {
@@ -156,8 +196,28 @@ run "unit_test_multiple_agent_pools" {
   }
 
   assert {
+    condition     = aws_autoscaling_group.unreal_horde_agent_asg["build-pool"].min_size == 2
+    error_message = "Build pool ASG should have min_size of 2 as configured"
+  }
+
+  assert {
+    condition     = aws_autoscaling_group.unreal_horde_agent_asg["test-pool"].min_size == 1
+    error_message = "Test pool ASG should have min_size of 1 as configured"
+  }
+
+  assert {
     condition     = length(aws_launch_template.unreal_horde_agent_template) == 2
     error_message = "Should create 2 launch templates for multiple agent pools"
+  }
+
+  assert {
+    condition     = aws_launch_template.unreal_horde_agent_template["build-pool"].instance_type == "c5.4xlarge"
+    error_message = "Build pool should use c5.4xlarge instance type"
+  }
+
+  assert {
+    condition     = aws_launch_template.unreal_horde_agent_template["test-pool"].instance_type == "c5.2xlarge"
+    error_message = "Test pool should use c5.2xlarge instance type"
   }
 
   assert {
@@ -179,7 +239,7 @@ run "unit_test_no_agents" {
 
     create_external_alb = false
     create_internal_alb = true
-    name                = "horde-test-no-agents"
+    name                = "horde-none"
 
     # No agents
     agents = {}
