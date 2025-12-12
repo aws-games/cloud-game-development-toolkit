@@ -1,0 +1,108 @@
+name: Terraform Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'modules/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    name: Detect Changed Modules
+    runs-on: ubuntu-latest
+    outputs:
+      test_dirs: ${{ steps.set-matrix.outputs.test_dirs }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: json
+          filters: |
+            modules:
+              - 'modules/**'
+
+      - name: Find directories to test
+        id: set-matrix
+        env:
+          CHANGED_FILES: ${{ steps.filter.outputs.modules_files }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger for all modules"
+            dirs=$(find modules -maxdepth 1 -mindepth 1 -type d | sed 's|modules/||' | jq -R -s -c 'split("\n")[:-1]')
+          elif [ "${{ steps.filter.outputs.modules }}" = "true" ]; then
+            echo "PR with module changes detected"
+            echo "Changed files: $CHANGED_FILES"
+            dirs=$(echo "$CHANGED_FILES" | jq -r '.[]' | grep '^modules/' | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          else
+            echo "No module changes detected"
+            dirs="[]"
+          fi
+
+          echo "Modules to test: $dirs"
+          echo "test_dirs=$dirs" >> $GITHUB_OUTPUT
+
+  test:
+    name: Test ${{ matrix.module }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test_dirs != '[]'
+    runs-on: ubuntu-latest
+    environment: aws-ci
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.detect-changes.outputs.test_dirs) }}
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.2"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          role-to-assume: ${{ secrets.AWS_CI_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Check for tests
+        id: check-tests
+        run: |
+          echo "::group::Checking for tests in ${{ matrix.module }}"
+          if [ -d "modules/${{ matrix.module }}/tests" ] && [ -n "$(find modules/${{ matrix.module }}/tests -name '*.tftest.hcl')" ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+            echo "✅ Found tests"
+            find modules/${{ matrix.module }}/tests -name '*.tftest.hcl' | head -5
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No tests found"
+          fi
+          echo "::endgroup::"
+
+      - name: Run tests
+        if: steps.check-tests.outputs.has_tests == 'true'
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "::group::Running Terraform tests"
+          terraform init
+          terraform test -verbose
+          echo "::endgroup::"
+
+      - name: Comment on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ Terraform tests failed for module: **${{ matrix.module }}**\n\nPlease check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.`
+            })
