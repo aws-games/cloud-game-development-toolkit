@@ -18,7 +18,7 @@ jobs:
     outputs:
       test_dirs: ${{ steps.set-matrix.outputs.test_dirs }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -61,7 +61,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.14.2"
