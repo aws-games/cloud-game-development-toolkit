@@ -39,7 +39,7 @@ jobs:
           elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             dirs=$(find modules samples -name "*.tf" -type f | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
           elif [ "${{ steps.filter.outputs.terraform }}" = "true" ]; then
-            dirs=$(echo "$CHANGED_FILES" | jq -r '.[]' | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
+            dirs=$(echo "$CHANGED_FILES" | jq -r '.[]' | xargs -I {} dirname {} | sort -u | while read dir; do [ -d "$dir" ] && echo "$dir"; done | jq -R -s -c 'split("\n")[:-1]')
           else
             dirs="[]"
           fi
