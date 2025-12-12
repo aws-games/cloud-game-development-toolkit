@@ -69,11 +69,11 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
 }
 
 resource "aws_autoscaling_group" "unreal_horde_agent_asg" {
-  for_each    = aws_launch_template.unreal_horde_agent_template
+  for_each    = { for k, v in var.agents : k => v if v.create_asg }
   name_prefix = "unreal_horde_agents-${each.key}-"
 
   launch_template {
-    id      = each.value.id
+    id      = aws_launch_template.unreal_horde_agent_template[each.key].id
     version = "$Latest"
   }
 
@@ -81,8 +81,8 @@ resource "aws_autoscaling_group" "unreal_horde_agent_asg" {
 
   vpc_zone_identifier = var.unreal_horde_service_subnets
 
-  min_size = var.agents[each.key].min_size
-  max_size = var.agents[each.key].max_size
+  min_size = each.value.min_size
+  max_size = each.value.max_size
 
   depends_on = [aws_ecs_service.unreal_horde]
 }
@@ -268,8 +268,12 @@ resource "aws_ssm_association" "configure_unreal_horde_agent" {
   }
 
   targets {
-    key    = "tag:aws:autoscaling:groupName"
-    values = values(aws_autoscaling_group.unreal_horde_agent_asg)[*].name
+    // Only apply to instances created from the launch template on Linux (platform == "")
+    key = "tag:aws:ec2launchtemplate:id"
+    values = [
+      for name, lt in aws_launch_template.unreal_horde_agent_template :
+      lt.id if data.aws_ami.unreal_horde_agent_ami[name].platform == ""
+    ]
   }
 
   # Wait for service to be ready before attempting enrollment
