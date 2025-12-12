@@ -1,0 +1,118 @@
+name: Terraform Validation
+on:
+  pull_request:
+    paths:
+      - 'modules/**'
+      - 'samples/**'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_dirs: ${{ steps.find-dirs.outputs.terraform_dirs }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: json
+          filters: |
+            terraform:
+              - 'modules/**/*.tf'
+              - 'samples/**/*.tf'
+
+      - name: Find changed directories
+        id: find-dirs
+        env:
+          CHANGED_FILES: ${{ steps.filter.outputs.terraform_files }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            dirs=$(find modules samples -name "*.tf" -type f | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          elif [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            dirs=$(find modules samples -name "*.tf" -type f | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          elif [ "${{ steps.filter.outputs.terraform }}" = "true" ]; then
+            dirs=$(echo "$CHANGED_FILES" | jq -r '.[]' | xargs -I {} dirname {} | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          else
+            dirs="[]"
+          fi
+          echo "terraform_dirs=$dirs" >> $GITHUB_OUTPUT
+
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.2"
+      - run: terraform fmt -check -recursive
+
+  lint:
+    name: Lint
+    needs: changes
+    if: needs.changes.outputs.terraform_dirs != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        terraform_dir: ${{ fromJson(needs.changes.outputs.terraform_dirs) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: terraform-linters/setup-tflint@v4
+      - name: Lint ${{ matrix.terraform_dir }}
+        run: |
+          cd "${{ matrix.terraform_dir }}"
+          tflint --init
+          tflint --format=compact
+
+  validate:
+    name: Validate
+    needs: changes
+    if: needs.changes.outputs.terraform_dirs != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        terraform_dir: ${{ fromJson(needs.changes.outputs.terraform_dirs) }}
+      fail-fast: false
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform-plugin-cache
+    steps:
+      - name: Free up disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.2"
+
+      - name: Create plugin cache
+        run: mkdir -p $TF_PLUGIN_CACHE_DIR
+
+      - name: Validate ${{ matrix.terraform_dir }}
+        run: |
+          cd "${{ matrix.terraform_dir }}"
+          [ -d ".terraform" ] && rm -rf .terraform
+          terraform init -backend=false
+          terraform validate
+
+      - name: Comment on PR
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **Terraform validation failed for \`${{ matrix.terraform_dir }}\`**
+
+            **View detailed logs:** [Workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            })
