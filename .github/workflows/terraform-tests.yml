@@ -35,11 +35,29 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "Manual trigger for all modules"
-            dirs=$(find modules -maxdepth 1 -mindepth 1 -type d | sed 's|modules/||' | jq -R -s -c 'split("\n")[:-1]')
+            # Find all directories containing tests
+            dirs=$(find modules -type d -name tests -exec dirname {} \; | sed 's|modules/||' | jq -R -s -c 'split("\n")[:-1]')
           elif [ "${{ steps.filter.outputs.modules }}" = "true" ]; then
             echo "PR with module changes detected"
             echo "Changed files: $CHANGED_FILES"
-            dirs=$(echo "$CHANGED_FILES" | jq -r '.[]' | grep '^modules/' | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n")[:-1]')
+            # Extract unique module paths from changed files, then find which ones have tests
+            changed_modules=$(echo "$CHANGED_FILES" | jq -r '.[]' | grep '^modules/' | sed 's|^modules/||' | cut -d'/' -f1-2 | sort -u)
+            test_dirs=()
+            for module_path in $changed_modules; do
+              # Check if this path or any subdirectories have tests
+              if [ -d "modules/$module_path/tests" ]; then
+                test_dirs+=("$module_path")
+              fi
+              # Also check for nested modules with tests
+              while IFS= read -r test_dir; do
+                relative_path=$(echo "$test_dir" | sed 's|modules/||' | sed 's|/tests$||')
+                if [[ "$relative_path" == "$module_path"* ]]; then
+                  test_dirs+=("$relative_path")
+                fi
+              done < <(find "modules/$module_path" -type d -name tests 2>/dev/null | sed 's|/tests$||')
+            done
+            # Remove duplicates and convert to JSON array
+            dirs=$(printf '%s\n' "${test_dirs[@]}" | sort -u | jq -R -s -c 'split("\n")[:-1]')
           else
             echo "No module changes detected"
             dirs="[]"
