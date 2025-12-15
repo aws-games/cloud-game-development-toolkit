@@ -31,20 +31,27 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
   cpu                      = var.container_cpu
   memory                   = var.container_memory
 
+  runtime_platform {
+    operating_system_family = var.operating_system
+    cpu_architecture        = var.horde_server_architecture
+  }
+
   volume {
     name = "unreal-horde-config"
   }
 
   container_definitions = jsonencode(concat([
-    {
-      name  = var.container_name
-      image = var.image
-      repositoryCredentials = var.github_credentials_secret_arn != null ? {
-        "credentialsParameter" : var.github_credentials_secret_arn
-      } : null
+    merge({
+      name      = var.container_name
+      image     = var.image
       cpu       = var.container_cpu
       memory    = var.container_memory
       essential = true
+      }, var.github_credentials_secret_arn != null && !var.is_source_build ? {
+      repositoryCredentials = {
+        "credentialsParameter" : var.github_credentials_secret_arn
+      }
+      } : {}, {
       portMappings = [
         {
           containerPort = var.container_api_port
@@ -111,10 +118,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           condition     = "SUCCESS"
         }] : []
       )
-    },
+    }),
     {
       name                     = "unreal-horde-docdb-cert",
-      image                    = "public.ecr.aws/docker/library/bash:5.3",
+      image                    = "public.ecr.aws/docker/library/bash:latest",
       essential                = false
       command                  = ["wget", "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem", "-P", "/app/config/"]
       readonly_root_filesystem = false
@@ -135,7 +142,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
     }],
     local.need_p4_trust ? [{
       name      = "unreal-horde-p4-trust",
-      image     = "ubuntu:noble"
+      image     = "public.ecr.aws/ubuntu/ubuntu:noble"
       essential = false
       command = ["bash", "-exc", <<-EOF
         apt-get update
