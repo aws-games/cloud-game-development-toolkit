@@ -19,6 +19,143 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
+# Horde Server Source Build Deployment Guide
+
+This guide documents how to build Horde Server from source and use the build as part of your Horde deployment with the Cloud Game Development Toolkit.
+
+## Prerequisites
+
+- **Docker**: Docker Desktop installed and running
+- **Git**: For cloning repositories
+- **.NET SDK**: .NET 8.0 or later
+
+## Fork and clone the Unreal Engine Github repository
+
+You can follow the steps documented in the [Unreal Engine Source Code](https://github.com/EpicGames/UnrealEngine/tree/release). Be sure to run both Setup and GenerateProjectFiles scripts before proceeding.
+
+## Authenticate to your ECR registry
+In a terminal window, run the following command to authenticate to your ECR registry:
+```bash
+    aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region.>.amazonaws.com
+```
+
+## Create a repsoitory in Amazon ECR for storing your Horde Server container image:
+
+In a terminal window, run the following command:
+```bash
+aws ecr create-repository --repository-name horde-server --image-scanning-configuration scanOnPush=true
+```
+
+## Build Horde Server container image from source and publish to Amazon ECR
+
+### For devices using ARM64 architecture
+
+1. In an IDE, open the Horde Server Dockerfile located at `/Engine/Source/Programs/Horde/HordeServer/Dockerfile`.
+2. Replace the code between `COPY --from=redis /usr/local/bin/redis-server /usr/local/bin/redis-server` and `COPY Source/Programs/Shared/EpicGames.Core/*.csproj ./Source/Programs/Shared/EpicGames.Core/` with the following:
+
+    ```dockerfile
+    # Since the .deb does not install in this image, just download it and extract the static binary
+    RUN ARCH=$(dpkg --print-architecture) && \
+        if [ "$ARCH" = "arm64" ]; then \
+            wget https://repo.mongodb.org/apt/ubuntu/dists/jammy/mongodb-org/7.0/multiverse/binary-arm64/mongodb-org-server_7.0.4_arm64.deb && \
+            dpkg -x mongodb-org-server_7.0.4_arm64.deb /tmp/mongodb; \
+        elif [ "$ARCH" = "i386" ]; then \
+            wget https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/7.0/main/binary-i386/mongodb-org-server_7.0.4_i386.deb && \
+            dpkg -x mongodb-org-server_7.0.4_i386.deb /tmp/mongodb; \
+        else \
+            wget https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/7.0/main/binary-amd64/mongodb-org-server_7.0.4_amd64.deb && \
+            dpkg -x mongodb-org-server_7.0.4_amd64.deb /tmp/mongodb; \
+        fi && \
+        cp /tmp/mongodb/usr/bin/mongod /usr/local/bin/mongod
+    ```
+3. Locate the code block with the comment `# Remove native libs not used on Linux x86_64`. We need to modify this so that the build has the libraries associated with the operating system and CPU architecture we are using. To do this, replace that block with the following:
+```dockerfile
+# Remove native libs not used for current architecture
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+        rm -rf /app/out/runtimes/osx* && \
+        rm -rf /app/out/runtimes/win-x86 && \
+        rm -rf /app/out/runtimes/win-arm* && \
+        rm -rf /app/out/runtimes/linux-arm* && \
+        rm -rf /app/out/runtimes/linux-x86 && \
+        rm -rf /app/out/runtimes/linux/native/libgrpc_csharp_ext.x86.so; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        rm -rf /app/out/runtimes/osx-x64 && \
+        rm -rf /app/out/runtimes/win-x64 && \
+        rm -rf /app/out/runtimes/win-x86 && \
+        rm -rf /app/out/runtimes/linux-x64* && \
+        rm -rf /app/out/runtimes/linux-x86 && \
+        rm -rf /app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so && \
+        rm -rf /app/out/runtimes/linux/native/libgrpc_csharp_ext.x86.so; \
+    elif [ "$ARCH" = "i386" ]; then \
+        rm -rf /app/out/runtimes/osx* && \
+        rm -rf /app/out/runtimes/win-x64 && \
+        rm -rf /app/out/runtimes/win-arm* && \
+        rm -rf /app/out/runtimes/linux-x64* && \
+        rm -rf /app/out/runtimes/linux-arm* && \
+        rm -rf /app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so; \
+    fi
+```
+## Update server.json (Optional)
+
+
+## Update the Horde BuildGraph
+
+1. In an IDE, open the file `Engine/Source/Programs/Horde/BuildHorde.xml `.
+2. Create a new build target to build the Hord Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for `<account-id>` and `<region>` with your own values.
+    ```xml
+    <Node Name="Build and Publish HordeServer to ECR" Requires="Build HordeServer;Build HordeDashboard">
+        <!-- Create a new image by combining server and dashboard image into one -->
+        <Docker-Build BaseDir="Engine/Source/Programs/Horde/HordeServer" Files="Dockerfile*" UseBuildKit="true" Tag="horde-server" DockerFile="Engine/Source/Programs/Horde/HordeServer/Dockerfile.dashboard" />
+
+        <!-- Publish the docker image to Amazon ECR -->
+        <Docker-Push Repository="<account-id>.dkr.ecr.<region>.amazonaws.com" Image="horde-server" TargetImage="horde/horde-server:$(Version)" AwsEcr="True" />
+    </Node>
+    ```
+
+4. In your terminal window, and navigate to `Engine/Build/BatchFiles`.
+    ```bash
+    cd Engine/Build/BatchFiles
+    ```
+
+6. Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.
+    ### Windows
+    ```powershell
+    RunUAT.bat BuildGraph -Script=Engine/Source/Programs/Horde/BuildHorde.xml -Target="Build and Publish HordeServer to ECR"
+    ```
+
+    ### Linux and Mac
+    ```bash
+    ./RunUAT.sh BuildGraph -Script=Engine/Source/Programs/Horde/BuildHorde.xml -Target="Build and Publish HordeServer to ECR"
+    ```
+
+7. Note the URI of the image that was published to Amazon ECR. It should be in the format of `<account-id>.dkr.ecr.<region>.amazonaws.com/horde/horde-server:<version>`
+
+8. You can also locate the URI of the image in the AWS Console under Amazon ECR, or using the AWS CLI command:
+    ```bash
+    aws ecr describe-images --repository-name horde-server
+    ```
+
+## Update your Cloud Game Development Toolkit configuration
+
+In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the `image` variable. For this example we will be using the example deployment located at `modules/unreal/horde/examples/complete`
+1. In your IDE, open the main.tf located at `modules/unreal/horde/examples/complete/main.tf`.
+2. Under the module declaration `"unreal_engine_horde"` add the following line with the value of the image URI you noted earlier. Be sure to also set the value of `is_source_build` to `true` and set the value of `horde_server_architecture` to `ARM64` or `X_86` by passing the value with the `var.horde_server_architecture` variable as shown below:
+    ```python
+    module "unreal_engine_horde" {
+        ...
+        image = "<image-uri>"
+        is_source_build = true
+        horde_server_architecture = "<horde-server-architecture>"
+        ...
+    }
+    ```
+3. In a new terminal window, navigate to the directory `modules/unreal/horde/examples/complete` and run the following commands:
+    ```bash
+    terraform init
+    terraform apply
+    ```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -189,18 +326,21 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. Development, Staging, Production, etc.). This will tag ressources and set ASPNETCORE\_ENVIRONMENT variable. | `string` | `"Development"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the Unreal Horde load balancer. | `list(string)` | `[]` | no |
 | <a name="input_github_credentials_secret_arn"></a> [github\_credentials\_secret\_arn](#input\_github\_credentials\_secret\_arn) | A secret containing the Github username and password with permissions to the EpicGames organization. | `string` | `null` | no |
+| <a name="input_horde_server_architecture"></a> [horde\_server\_architecture](#input\_horde\_server\_architecture) | The CPU architecture for Horde server container. Valid values: x86 or arm64 | `string` | `"X86_64"` | no |
 | <a name="input_image"></a> [image](#input\_image) | The Horde Server image to use in the ECS service. | `string` | `"ghcr.io/epicgames/horde-server:latest-bundled"` | no |
+| <a name="input_is_source_build"></a> [is\_source\_build](#input\_is\_source\_build) | Set this flag to true if you are using a custom built Horde Server image from source. | `bool` | `false` | no |
 | <a name="input_name"></a> [name](#input\_name) | The name attached to Unreal Engine Horde module resources. | `string` | `"unreal-horde"` | no |
 | <a name="input_oidc_audience"></a> [oidc\_audience](#input\_oidc\_audience) | The audience used for validating externally issued tokens. | `string` | `null` | no |
 | <a name="input_oidc_authority"></a> [oidc\_authority](#input\_oidc\_authority) | The authority for the OIDC authentication provider used. | `string` | `null` | no |
 | <a name="input_oidc_client_id"></a> [oidc\_client\_id](#input\_oidc\_client\_id) | The client ID used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_client_secret"></a> [oidc\_client\_secret](#input\_oidc\_client\_secret) | The client secret used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_signin_redirect"></a> [oidc\_signin\_redirect](#input\_oidc\_signin\_redirect) | The sign-in redirect URL for the OIDC provider. | `string` | `null` | no |
+| <a name="input_operating_system"></a> [operating\_system](#input\_operating\_system) | The operating system for the Horde server container. Valid values: linux or windows | `string` | `"WINDOWS_SERVER_2019_CORE"` | no |
 | <a name="input_p4_port"></a> [p4\_port](#input\_p4\_port) | The Perforce server to connect to. | `string` | `null` | no |
 | <a name="input_p4_super_user_password_secret_arn"></a> [p4\_super\_user\_password\_secret\_arn](#input\_p4\_super\_user\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d super user password. | `string` | `null` | no |
 | <a name="input_p4_super_user_username_secret_arn"></a> [p4\_super\_user\_username\_secret\_arn](#input\_p4\_super\_user\_username\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d super user username. | `string` | `null` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "unreal-horde",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "unreal-horde",<br/>  "iac-provider": "Terraform"<br/>}</pre> | no |
 | <a name="input_unreal_horde_alb_access_logs_bucket"></a> [unreal\_horde\_alb\_access\_logs\_bucket](#input\_unreal\_horde\_alb\_access\_logs\_bucket) | ID of the S3 bucket for Unreal Horde ALB access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_unreal_horde_alb_access_logs_prefix"></a> [unreal\_horde\_alb\_access\_logs\_prefix](#input\_unreal\_horde\_alb\_access\_logs\_prefix) | Log prefix for Unreal Horde ALB access logs. If null the project prefix and module name are used. | `string` | `null` | no |
 | <a name="input_unreal_horde_cloudwatch_log_retention_in_days"></a> [unreal\_horde\_cloudwatch\_log\_retention\_in\_days](#input\_unreal\_horde\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for Unreal Horde. | `string` | `365` | no |
