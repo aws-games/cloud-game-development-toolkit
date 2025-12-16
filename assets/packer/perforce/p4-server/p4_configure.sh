@@ -541,10 +541,11 @@ perform_operations() {
 
 
 # Maximum number of attempts (added due to terraform not mounting EBS fast enough at instance boot)
-MAX_ATTEMPTS=3
+MAX_ATTEMPTS=5
 
 # Counter for attempts
 attempt=1
+delay=1
 
 # Flag to track if the condition is met
 condition_met=false
@@ -558,7 +559,8 @@ while [ $attempt -le $MAX_ATTEMPTS ] && [ "$condition_met" = false ]; do
         perform_operations
     else
         log_message "Attempt $attempt: One or more required paths are not valid EBS volumes or FSx mount points."
-        sleep 5  # Wait for 1 second before the next attempt
+        sleep "$delay"  # Wait before the next attempt
+        delay=$((delay * 2))
         ((attempt++))
     fi
 done
