@@ -46,6 +46,7 @@ terraform test -no-init
 ### In CI
 
 Tests run automatically on pull requests that modify the Horde module. The CI workflow:
+
 1. Detects changes to `modules/unreal/horde/**`
 2. Runs `terraform init`
 3. Runs `terraform test -verbose`
@@ -56,6 +57,7 @@ Tests run automatically on pull requests that modify the Horde module. The CI wo
 ## What Gets Tested
 
 ### ✅ Module Logic (What We Test)
+
 - **Variable validation**: Validation rules trigger correctly
 - **Conditional resource creation**: Resources created/skipped based on variables
 - **Resource counts**: Correct number of resources based on configuration
@@ -65,6 +67,7 @@ Tests run automatically on pull requests that modify the Horde module. The CI wo
 - **Dependency chains**: Resources reference each other correctly
 
 ### ❌ AWS Behavior (What We Don't Test)
+
 - Actual resource creation in AWS
 - AWS API functionality
 - Network connectivity
@@ -76,26 +79,32 @@ Tests run automatically on pull requests that modify the Horde module. The CI wo
 ## Test Scenarios
 
 ### 01_basic.tftest.hcl
+
 Tests minimal deployment configuration:
+
 - Internal ALB only
 - Default DocumentDB and ElastiCache settings
 - No authentication
 - No build agents
 
 **Key Assertions**:
+
 - ECS cluster and service created
 - Internal ALB created, external ALB not created
 - DocumentDB and ElastiCache clusters created
 - Security groups and IAM roles created
 
 ### 02_complete.tftest.hcl
+
 Tests full-featured deployment:
+
 - External and internal ALBs
 - Custom database and cache configurations
 - ALB access logging
 - All optional features enabled
 
 **Key Assertions**:
+
 - Both ALBs created with target groups
 - Custom DocumentDB instance count (3)
 - Valkey cache engine
@@ -103,7 +112,9 @@ Tests full-featured deployment:
 - Security groups for both ALBs
 
 ### 03_auth_methods.tftest.hcl
+
 Tests authentication configurations:
+
 - Anonymous authentication
 - OIDC authentication
 - Okta authentication
@@ -111,19 +122,23 @@ Tests authentication configurations:
 - Variable validation for auth methods
 
 **Key Assertions**:
+
 - Valid auth methods work
 - Invalid auth methods fail validation
 - OIDC requires all parameters
 - Perforce integration configures correctly
 
 ### 04_agents.tftest.hcl
+
 Tests build agent configurations:
+
 - Single agent pool
 - Multiple agent pools
 - No agents configured
 - Custom dotnet runtime versions
 
 **Key Assertions**:
+
 - Correct number of ASGs and launch templates
 - S3 bucket created when agents configured
 - No resources when agents map is empty
@@ -185,6 +200,7 @@ mock_provider "random" {}
 ### Benefits
 
 This approach eliminates the need for:
+
 - AWS credentials
 - SSM Parameter Store
 - Actual AWS resources
@@ -199,6 +215,7 @@ This approach eliminates the need for:
 5. Add assertions for critical behavior
 
 Example:
+
 ```hcl
 mock_provider "aws" {
   # Mock data sources
@@ -224,14 +241,17 @@ run "unit_test_feature" {
 ## Troubleshooting
 
 ### Tests fail with "data source not found"
+
 **Cause**: Module uses a data source that isn't mocked
 **Solution**: Add the data source to the `mock_provider` block
 
 ### Variable validation errors
+
 **Cause**: Test values don't meet validation rules
 **Solution**: Check validation rules in `variables.tf` and adjust test values
 
 ### Assertion failures
+
 **Cause**: Module logic doesn't match expected behavior
 **Solution**: Review module code or adjust assertions
 
@@ -246,11 +266,13 @@ run "unit_test_feature" {
 ## Integration Testing
 
 Integration tests (using `terraform apply`) are **not implemented** due to Terraform test framework limitations:
+
 - No automatic cleanup functionality
 - Resource cleanup must be manual
 - Risk of orphaned resources
 
 For integration testing:
+
 - Use dedicated test environments
 - Manual deployment and validation
 - Proper cleanup procedures
@@ -259,5 +281,4 @@ For integration testing:
 
 - [Terraform Test Documentation](https://developer.hashicorp.com/terraform/language/tests)
 - [Mock Providers](https://developer.hashicorp.com/terraform/language/tests/mocking)
-- [Horde Module Testing Strategy](../TESTING_STRATEGY.md)
-- [CGD Toolkit Design Standards](../../DESIGN_STANDARDS.md)
+- [CGD Toolkit Design Standards](../../../DESIGN_STANDARDS.md)
