@@ -25,15 +25,29 @@ repos:
         args:
           # Uses antonbabenko/pre-commit-terraform (supports monorepo with multiple modules)
           # --hook-config: antonbabenko wrapper settings for file handling
-          - --hook-config=--add-to-existing-file=true     # Update existing README.md files (requires BOTH <!-- BEGIN_TF_DOCS --> and <!-- END_TF_DOCS --> markers)
+          - --hook-config=--add-to-existing-file=true # Update existing README.md files (requires BOTH <!-- BEGIN_TF_DOCS --> and <!-- END_TF_DOCS --> markers)
           - --hook-config=--create-file-if-not-exist=false # Don't create new README.md files
           # --args: terraform-docs binary arguments
-          - --args=--config=.config/.terraform-docs.yml   # Use our terraform-docs config file
-          - --args=--lockfile=false                        # Ignore .terraform.lock.hcl, use versions.tf instead (fixes version mismatches)
+          - --args=--config=.config/.terraform-docs.yml # Use our terraform-docs config file
+          - --args=--lockfile=false # Ignore .terraform.lock.hcl, use versions.tf instead (fixes version mismatches)
       - id: terraform_validate
         args:
-          - --tf-init-args=-upgrade                       # Always upgrade to match versions.tf (source of truth)
-          - --hook-config=--retry-once-with-cleanup=true  # If validation fails, delete corrupted .terraform dirs and retry
-          - --args=-no-color                              # Cleaner output
+          - --tf-init-args=-upgrade # Always upgrade to match versions.tf (source of truth)
+          - --hook-config=--retry-once-with-cleanup=true # If validation fails, delete corrupted .terraform dirs and retry
+          - --args=-no-color # Cleaner output
       - id: terraform_fmt
       - id: terraform_tflint
+  - repo: https://github.com/lycheeverse/lychee
+    rev: "v0.15.1"
+    hooks:
+      - id: lychee
+        name: Check links in staged markdown files
+        args: ["--config", ".config/lychee.toml", "--no-progress"]
+        types: [markdown]
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: "v0.14.0"
+    hooks:
+      - id: markdownlint-cli2
+        name: Lint staged markdown files
+        args: ["--config", ".config/.markdownlint-cli2.jsonc"]
+        types: [markdown]

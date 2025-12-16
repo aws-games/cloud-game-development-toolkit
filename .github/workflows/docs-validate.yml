@@ -1,0 +1,223 @@
+name: Validate Documentation (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        description: "Validation scope: 'changed' for only changed files, 'all' for entire project"
+        required: false
+        type: string
+        default: "changed"
+      fail_on_error:
+        description: "Whether to fail the workflow on validation errors"
+        required: false
+        type: boolean
+        default: true
+      create_issue:
+        description: "Whether to create a GitHub issue on validation failure"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed markdown/html files
+        if: inputs.scope == 'changed'
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.md
+            **/*.html
+
+      - name: Check links in changed files
+        if: inputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
+        id: lychee-changed
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config .config/lychee.toml --no-progress ${{ steps.changed-files.outputs.all_changed_files }}
+          fail: ${{ inputs.fail_on_error }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: ${{ !inputs.fail_on_error }}
+
+      - name: Check all links
+        if: inputs.scope == 'all'
+        id: lychee-all
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config .config/lychee.toml --no-progress '**/*.md' '**/*.html'
+          fail: ${{ inputs.fail_on_error }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: ${{ !inputs.fail_on_error }}
+
+      - name: Set link check outcome
+        id: link-outcome
+        run: |
+          if [ "${{ inputs.scope }}" == "changed" ]; then
+            echo "outcome=${{ steps.lychee-changed.outcome }}" >> $GITHUB_OUTPUT
+          else
+            echo "outcome=${{ steps.lychee-all.outcome }}" >> $GITHUB_OUTPUT
+          fi
+
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed markdown files
+        if: inputs.scope == 'changed'
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: "**/*.md"
+          separator: "\n"
+
+      - name: Lint changed markdown files
+        if: inputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
+        id: lint-changed
+        uses: DavidAnson/markdownlint-cli2-action@v18
+        with:
+          config: ".config/.markdownlint-cli2.jsonc"
+          globs: |
+            ${{ steps.changed-files.outputs.all_changed_files }}
+        continue-on-error: ${{ !inputs.fail_on_error }}
+
+      - name: Lint all markdown files
+        if: inputs.scope == 'all'
+        id: lint-all
+        uses: DavidAnson/markdownlint-cli2-action@v18
+        with:
+          config: ".config/.markdownlint-cli2.jsonc"
+          globs: "**/*.md"
+        continue-on-error: ${{ !inputs.fail_on_error }}
+
+      - name: Set lint outcome
+        id: lint-outcome
+        run: |
+          if [ "${{ inputs.scope }}" == "changed" ]; then
+            echo "outcome=${{ steps.lint-changed.outcome }}" >> $GITHUB_OUTPUT
+          else
+            echo "outcome=${{ steps.lint-all.outcome }}" >> $GITHUB_OUTPUT
+          fi
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: inputs.scope == 'all'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "docs/requirements.txt"
+
+      - name: Build documentation
+        id: build
+        run: |
+          pip install -r docs/requirements.txt
+          mkdocs build --strict
+        continue-on-error: ${{ !inputs.fail_on_error }}
+
+  create-issue:
+    name: Create Issue on Failure
+    needs: [check-links, lint-markdown, build-docs]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    if: |
+      always() &&
+      inputs.create_issue == true &&
+      (needs.check-links.result == 'failure' || needs.lint-markdown.result == 'failure' || needs.build-docs.result == 'failure')
+
+    steps:
+      - name: Create or update issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const linkStatus = '${{ needs.check-links.result }}' === 'failure' ? '❌' : '✅';
+            const lintStatus = '${{ needs.lint-markdown.result }}' === 'failure' ? '❌' : '✅';
+            const buildStatus = '${{ needs.build-docs.result }}' === 'failure' ? '❌' : ('${{ needs.build-docs.result }}' === 'skipped' ? '⏭️' : '✅');
+
+            const issueBody = `## 🚨 Documentation Health Check Failed
+
+            The documentation validation has detected issues in the codebase.
+
+            ### Validation Results
+            - ${linkStatus} **Link Checking**: ${{ needs.check-links.result }}
+            - ${lintStatus} **Markdown Linting**: ${{ needs.lint-markdown.result }}
+            - ${buildStatus} **Build**: ${{ needs.build-docs.result }}
+
+            ### Action Required
+            Please review the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the issues.
+
+            ### Possible Causes
+            - External links may have broken
+            - Documentation structure may have issues
+            - Markdown files may have linting errors
+
+            ---
+            *This issue was automatically created by the docs-validate workflow*
+            *Run: ${context.runId}*
+            *Commit: ${context.sha}*
+            *Triggered by: ${{ github.event_name }}*
+            *Last updated: ${new Date().toISOString()}*`;
+
+            // Check if there's already an open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated'
+            });
+
+            const existingIssue = issues.find(issue =>
+              issue.title.includes('Documentation Health Check Failed')
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## New Failure Detected\n\n${issueBody}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const newIssue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Documentation Health Check Failed',
+                body: issueBody,
+                labels: ['documentation', 'automated', 'bug']
+              });
+              console.log(`Created new issue #${newIssue.data.number}`);
+            }
