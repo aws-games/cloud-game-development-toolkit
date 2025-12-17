@@ -179,6 +179,7 @@ terraform output connection_info
 **Why AWS Client VPN is Required:**
 
 For private connectivity, AWS Client VPN is essential because:
+
 - **Custom DNS Resolution**: Private workstation URLs like `https://username.vdi.internal:8443` only resolve when connected to the VPN
 - **Network Access**: Private subnets are not accessible from the internet - VPN provides secure tunnel access
 - **Security**: Eliminates need to expose workstations to public internet
@@ -204,6 +205,7 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/D
 **For detailed setup instructions**: See [AWS Client VPN User Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-user/)
 
 **Connection Flow:**
+
 1. Connect to AWS Client VPN using your `.ovpn` file
 2. Access workstation via private DNS: `https://username.vdi.internal:8443`
 3. Login with credentials from Secrets Manager
@@ -499,6 +501,7 @@ See the [Contributing Guidelines](../../CONTRIBUTING.md) for information on how 
 
 This project is licensed under the MIT-0 License. See the [LICENSE](../../../LICENSE) file for details.
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -634,6 +637,7 @@ No modules.
 | <a name="output_public_ips"></a> [public\_ips](#output\_public\_ips) | Map of workstation public IP addresses |
 | <a name="output_vpn_configs_bucket"></a> [vpn\_configs\_bucket](#output\_vpn\_configs\_bucket) | S3 bucket name for VPN configuration files |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 ## Volume Management
 

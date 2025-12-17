@@ -29,6 +29,7 @@ following error:
 If this occurs, it is because Terraform is attempting to attach the certificate to the ALB listener before it has
 finished validation. Wait a few minutes and retry `terraform apply`.
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -99,3 +100,4 @@ finished validation. Wait a few minutes and retry `terraform apply`.
 | <a name="output_p4_code_review_url"></a> [p4\_code\_review\_url](#output\_p4\_code\_review\_url) | The URL for the P4 Code Review service. |
 | <a name="output_p4_server_connection_string"></a> [p4\_server\_connection\_string](#output\_p4\_server\_connection\_string) | The connection string for the P4 Server. Set your P4PORT environment variable to this value. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

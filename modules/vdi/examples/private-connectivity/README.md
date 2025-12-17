@@ -1,13 +1,16 @@
 # Private Connectivity VDI Example
 
 ## Overview
+
 Demonstrates VDI deployment with **private network access** via AWS Client VPN:
+
 - **Private Network Access**: AWS Client VPN with certificate-based authentication
 - **Internal DNS**: Custom domain names for easy connection
 - **Multi-User VPN**: Each user gets their own .ovpn configuration file
 - **Enterprise Security**: No public internet exposure, VPC-only access
 
 ## Prerequisites
+
 1. AWS credentials configured
 2. VPN client software (AWS VPN Client or OpenVPN)
 3. **Custom AMIs built using Packer templates** (required for this example)
@@ -15,12 +18,14 @@ Demonstrates VDI deployment with **private network access** via AWS Client VPN:
 **Note**: This example requires specific custom AMIs because the data sources reference them by name. You can customize the example to use different AMIs by modifying `data.tf`.
 
 ## Deployment
+
 ```bash
 terraform init
 terraform apply
 ```
 
 ## What Gets Created
+
 - **3 VDI instances** in private subnets (no public IPs)
 - **AWS Client VPN endpoint** with certificate-based authentication
 - **Private DNS zone** (cgd.vdi.internal) for easy connection
@@ -30,6 +35,7 @@ terraform apply
 ## Connection (Private VPN Access)
 
 ### Step 1: Download VPN Configuration
+
 ```bash
 # Get VPN configs bucket
 terraform output vpn_configs_bucket
@@ -46,11 +52,13 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/naruto-uzumaki/naruto-uzumaki.ovpn %
 ```
 
 ### Step 2: Connect to VPN
+
 1. **AWS VPN Client** (recommended): Import .ovpn file
 2. **OpenVPN**: Use .ovpn file with any OpenVPN client
 3. **Wait 2-3 minutes** for VPN connection to establish
 
 ### Step 3: Get User Passwords
+
 ```bash
 # Get connection info
 terraform output connection_info
@@ -60,6 +68,7 @@ aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumak
 ```
 
 ### Step 4: Connect via DCV (Private DNS)
+
 1. **vdi-001 (UE GameDev)**: `https://naruto-uzumaki.cgd.vdi.internal:8443`
 2. **vdi-002 (DevOps)**: `https://sasuke-uchiha.cgd.vdi.internal:8443`
 3. **vdi-003 (Junior Dev)**: `https://boruto-uzumaki.cgd.vdi.internal:8443`
@@ -67,6 +76,7 @@ aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumak
 **Alternative**: Use private IPs directly if DNS doesn't resolve
 
 ## Software Packages
+
 - Chocolatey (package manager)
 - Visual Studio 2022 Community
 - Git
@@ -74,6 +84,7 @@ aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumak
 
 Check installation progress via CloudWatch logs or SSM status commands in outputs.
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -128,3 +139,4 @@ No inputs.
 |------|-------------|
 | <a name="output_connection_info"></a> [connection\_info](#output\_connection\_info) | VDI connection information |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

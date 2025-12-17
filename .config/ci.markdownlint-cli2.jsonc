@@ -42,5 +42,12 @@
     ".kiro/**",
     ".chglog/**",
   ],
-  "outputFormatters": [["markdownlint-cli2-formatter-sarif"]],
+  "outputFormatters": [
+    [
+      "markdownlint-cli2-formatter-template",
+      {
+        "template": "::${errorSeverity:${errorSeverity}}${errorSeverity!error} file=${fileName},line=${lineNumber},${columnNumber:col=${columnNumber},}title=${ruleName}::${ruleDescription}",
+      },
+    ],
+  ],
 }

@@ -7,9 +7,11 @@ Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde 
 [![Watch the video](https://img.youtube.com/vi/kIP4wsVprYY/0.jpg)](https://www.youtube.com/watch?v=kIP4wsVprYY)
 
 ## Deployment Architecture
+
 ![Unreal Engine Horde Module Architecture](./assets/media/diagrams/unreal-engine-horde-architecture.png)
 
 ## Prerequisites
+
 Unreal Engine Horde is only available through the Epic Games Github organization's package registry or the Unreal Engine source code. In order to get access to this software you will need to [join the Epic Games organization](https://github.com/EpicGames/Signup) on Github and accept the Unreal Engine EULA.
 
 ## Examples
@@ -19,6 +21,7 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -220,3 +223,4 @@ No modules.
 | <a name="output_internal_alb_zone_id"></a> [internal\_alb\_zone\_id](#output\_internal\_alb\_zone\_id) | n/a |
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

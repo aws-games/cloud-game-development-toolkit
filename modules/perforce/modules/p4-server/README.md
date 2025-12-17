@@ -5,6 +5,7 @@
 This module provisions P4 Server on an EC2 Instance with three dedicated EBS volumes for depots, metadata, and logs. It can also be configured to automatically install the required plugins to integrate with P4Auth. This is the default option if using the parent module. This allows end users to quickly set up single-sign-on for their Perforce Helix Core server.
 
 ## Deployment Architecture
+
 ![Helix Core Module Architecture](../../assets/media/diagrams/p4-server-architecture.png)
 
 ## Prerequisites
@@ -36,6 +37,7 @@ module "perforce_helix_core" {
 If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere.
 
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -160,3 +162,4 @@ No modules.
 | <a name="output_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#output\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
 | <a name="output_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#output\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

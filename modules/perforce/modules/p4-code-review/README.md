@@ -13,6 +13,7 @@ This module deploys the following resources:
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Architecture
+
 ![P4 Code Review Submodule Architecture](../../assets/media/diagrams/p4-code-review-architecture.png)
 
 ## Prerequisites
@@ -41,6 +42,7 @@ module "p4_code_review" {
 }
 ```
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -158,3 +160,4 @@ No modules.
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service running P4 Code Review |
 | <a name="output_target_group_arn"></a> [target\_group\_arn](#output\_target\_group\_arn) | The service target group for P4 Code Review |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

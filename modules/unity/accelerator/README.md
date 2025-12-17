@@ -1,4 +1,5 @@
 # Unity Accelerator Module
+
 [Unity Accelerator](https://docs.unity3d.com/6000.0/Documentation/Manual/UnityAccelerator.html) is a caching service that speeds up project operations in [Unity](https://unity.com/) by storing and sharing asset cache data among team members, significantly reducing build times and asset imports by allowing team members to reuse previously processed assets instead of having to process the same assets independently.
 
 This Unity Accelerator deployment uses an [Elastic Container Service](https://aws.amazon.com/ecs/) cluster for task deployment, with Amazon [Elastic File System](https://aws.amazon.com/efs/) providing persistent storage for configurations and cache. Access is managed through two load balancers: an [Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/application-load-balancer/) for secure, password-protected web dashboard access via HTTPS, and a [Network Load Balancer](https://aws.amazon.com/elasticloadbalancing/network-load-balancer/) for efficient cache-related protobuf traffic.
@@ -6,11 +7,14 @@ This Unity Accelerator deployment uses an [Elastic Container Service](https://aw
 A [Secrets Manager](https://aws.amazon.com/secrets-manager/) password entry, to be used as the Unity Accelerator's web dashboard password, is required beforehand. Password must be stored as a plaintext secret, not as key/value JSON secret, and the password's ARN must be provided as the value for the `unity_accelerator_dashboard_password_arn` variable.
 
 ## Deployment Architecture
+
 ![Unity Accelerator Module Architecture](./assets/media/diagrams/unity-accelerator-architecture.png)
 
 ## Examples
+
 For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unity/accelerator/examples).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -142,3 +146,4 @@ No modules.
 | <a name="output_unity_accelerator_dashboard_password_arn"></a> [unity\_accelerator\_dashboard\_password\_arn](#output\_unity\_accelerator\_dashboard\_password\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's username. |
 | <a name="output_unity_accelerator_dashboard_username_arn"></a> [unity\_accelerator\_dashboard\_username\_arn](#output\_unity\_accelerator\_dashboard\_username\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's password. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
