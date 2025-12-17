@@ -13,13 +13,16 @@ This module currently utilizes the [Terraform EKS Blueprints Addons](https://git
 - **EBS CSI Driver**: Provides persistent storage capabilities using Amazon Elastic Block Store (EBS), enabling the Unreal Cloud DDC service to store and retrieve cached data.
 
 ## Deployment Architecture
+
 ![Unreal Engine Cloud DDC Infrastructure Module Architecture](./assets/media/diagrams/unreal-cloud-ddc-single-region.png)
 
 ## Prerequisites
+
 !!!note
     This module is designed to be used in conjunction with the [Unreal Cloud DDC Infra Module](../unreal-cloud-ddc-infra/README.md) which deploys the required infrastructure to host the Cloud DDC service.
 
 ### GitHub Secret
+
 Next, for the module to be able to access the Unreal Cloud DDC container image, there are 2 things you must do. First, if you have not done so, you must [connect your GitHub account to your Epic account](https://www.unrealengine.com/en-US/ue-on-github), thereby granting you access to the container images in the Unreal Engine repository. Next, you will need to create a `github_credentials` secret which includes a `username` and `access-token` field.
 
 !!!note
@@ -42,6 +45,7 @@ Once the secret is created, pass the newly uploaded secret's ARN into the `ghcr_
 ## Customizing Your Deployment
 
 ### OIDC Secret
+
 To use client secrets for OIDC authentication, a new secret must be uploaded to AWS Secrets Manager. You can upload the new secret to AWS Secret Manager using the following [AWS CLI](https://aws.amazon.com/cli/) command:
 
 !!!note
@@ -53,9 +57,7 @@ aws secretsmanager create-secret --name "external-idp-oidc-credentials" --secret
 
 The ARN for the newly created secret must then be passed to the `oidc_credentials_secret_manager_arn` variable. The secret is referenced using the following format and should be passed into the variable using the same format:
 
-```
-aws!arn:aws:secretsmanager:<region>:<aws-account-number>:secret:<secret-name>|<json-field>
-```
+`aws!arn:aws:secretsmanager:<region>:<aws-account-number>:secret:<secret-name>|<json-field>`
 
 !!!note
     Note the prefix `aws!` and the postfix `|<json-field>` are added to the ARN of the newly created secret.
@@ -63,20 +65,20 @@ aws!arn:aws:secretsmanager:<region>:<aws-account-number>:secret:<secret-name>|<j
 !!!note
     While we highly encourage the use of OIDC tokens for production environments, users can use a bearer token in its place by providing the token to the `unreal_cloud_ddc_helm_values` variable. See DDC sample for an example implementation.
 
-    ```
-        unreal_cloud_ddc_helm_values = [
-            templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
-                token = <bearer-token>
-                # Other templatefile parameters...
-            })
-        ]
-    ```
+```hcl
+unreal_cloud_ddc_helm_values = [
+    templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
+        token = <bearer-token>
+        # Other templatefile parameters...
+    })
+]
+```
 
 ### Chart Values (Helm Configurations)
 
 The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to configure the Unreal Cloud DDC deployment through the use of YAML files. We generally recommend you to use a template file. An example of a template file configuration can be found in the `unreal-cloud-ddc-single-region` sample located [here](../../../../samples/unreal-cloud-ddc-single-region/assets/unreal_cloud_ddc_single_region.yaml). You can also find additional example templates provided by Epic [here](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Helm/UnrealCloudDDC).
 
-
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -219,3 +221,4 @@ The `unreal_cloud_ddc_helm_values` variable provides an open-ended way to config
 | <a name="output_unreal_cloud_ddc_load_balancer_name"></a> [unreal\_cloud\_ddc\_load\_balancer\_name](#output\_unreal\_cloud\_ddc\_load\_balancer\_name) | n/a |
 | <a name="output_unreal_cloud_ddc_load_balancer_zone_id"></a> [unreal\_cloud\_ddc\_load\_balancer\_zone\_id](#output\_unreal\_cloud\_ddc\_load\_balancer\_zone\_id) | n/a |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

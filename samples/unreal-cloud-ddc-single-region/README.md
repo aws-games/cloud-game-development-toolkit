@@ -4,10 +4,10 @@ The Unreal Cloud DDC Single Region is a comprehensive solution that leverages se
 
 At the heart of the system is an instance of ScyllaDB, a high-performance NoSQL database, running on specially optimized Amazon EC2 instances. The Unreal Cloud Derived Data Cache Container is managed by Helm, a package manager for Kubernetes, and uses Amazon S3 for durable storage.
 
-
-### Predeployment - Set Up Github Content Repository Credentials
+## Predeployment - Set Up Github Content Repository Credentials
 
 The [Unreal Cloud DDC Intra Cluster module](../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/README.md) utilizes a pull through cache to access the [Unreal Cloud DDC image](https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc). This requires a secret in [Secrets Manager](https://aws.amazon.com/secrets-manager/). The secret needs to be prefixed with ````ecr-pullthroughcache/````. Additionally, the secret is required to be in the following format:
+
 ```json
 {
   "username":"GITHUB-USER-NAME-PLACEHOLDER",
@@ -24,20 +24,26 @@ terraform apply
 ```
 
 The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.
+
 ## Postdeployment
+
 The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.
 
 The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager. The ARN of this secret is provided as a Terraform output (`"unreal_cloud_ddc_bearer_token_arn"`) on the console following deployment. To fetch the bearer token you can use the aws CLI:
+
 ```bash
 aws secretsmanager get-secret-value --secret-id <"unreal_cloud_ddc_bearer_token_arn">
 ```
 
 To validate you can put an object you can run:
+
 ```bash
 curl http://<unreal_ddc_url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa -X PUT --data 'test' -H 'content-type: application/octet-stream' -H 'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA' -i -H 'Authorization: ServiceAccount <secret-manager-token>'
 ```
+
 After running this you should get a response that looks as the following:
-```
+
+```http
 HTTP/1.1 200 OK
 Server: nginx
 Date: Wed, 29 Jan 2025 19:15:05 GMT
@@ -50,12 +56,14 @@ Server-Timing: blob.put.FileSystemStore;dur=0.1451;desc="PUT to store: 'FileSyst
 ```
 
 You can then access the same chunk with the following command:
+
 ```bash
 curl http://<unreal_ddc_url>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json -i -H 'Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token>'
 ```
 
 The response should look like the following:
-```
+
+```http
 HTTP/1.1 200 OK
 Server: nginx
 Date: Wed, 29 Jan 2025 19:16:46 GMT
@@ -68,13 +76,16 @@ Server-Timing: ref.get;dur=0.0299;desc="Fetching Ref from DB"
 
 {"RawHash":"4878ca0425c739fa427f7eda20fe845f6b2e46ba","RawSize":4}%
 ```
+
 For a more comprehensive test of your deployment, we recommend using the [bench marking tools](https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks). To do so we used a x2idn.32xlarge as it matched Epic's benchmarking instance to test their configuration.
 
 With the benchmarking tools we ran the following command after compiling the docker image:
+
 ```bash
 docker run --network host jupiter_benchmark --seed --seed-remote --host http://<unreal_ddc_url> --namespace ddc \
 --header="Authorization: ServiceAccount <unreal-cloud-ddc-bearer-token>" all
 ```
+
 Just a note here, you will have to specify the namespace to be DDC as the token only has access to that namespace.
 
 **It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.**
@@ -82,6 +93,7 @@ Just a note here, you will have to specify the namespace to be DDC as the token 
 
 This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the `"monitoring_url"` provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -218,3 +230,4 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
 | <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
