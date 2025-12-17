@@ -49,5 +49,5 @@ repos:
     hooks:
       - id: markdownlint-cli2
         name: Lint staged markdown files
-        args: ["--config", ".config/.markdownlint-cli2.jsonc"]
+        args: ["--config", ".config/.markdownlint-cli2.jsonc", "--fix"]
         types: [markdown]
