@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block outdated %}
+  You're not viewing the latest version.
+  <a href="{{ '../' ~ base_url }}">
+    <strong>Click here to go to latest.</strong>
+  </a>
+{% endblock %}
+
+<!-- Meta tags -->
+{% block extrahead %}
+
+<!-- Determine title -->
+{% set title = config.site_name %}
+<!-- prettier-ignore -->
+{% if page and page.title and not page.is_homepage %}
+{% set title = config.site_name ~ " - " ~ page.title | striptags %}
+{% endif %}
+
+{% endblock %}
