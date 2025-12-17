@@ -86,7 +86,6 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      security-events: write
 
     steps:
       - name: Checkout code
@@ -118,8 +117,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install SARIF formatter
-        run: npm install markdownlint-cli2-formatter-sarif
+      - name: Install GitHub Actions formatter
+        run: npm install markdownlint-cli2-formatter-template
 
       - name: Lint markdown files
         id: lint
@@ -135,13 +134,6 @@ jobs:
               --config .config/ci.markdownlint-cli2.jsonc \
               '**/*.md'
           fi
-
-      - name: Upload SARIF results
-        if: always() && hashFiles('markdownlint-cli2-sarif.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: markdownlint-cli2-sarif.sarif
-          category: markdown-lint
 
   build-docs:
     name: Build Documentation
