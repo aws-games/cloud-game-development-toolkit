@@ -1,0 +1,34 @@
+---
+- name: Run mkrep.sh on a host and do the live backup
+  hosts: localhost
+  vars_prompt:
+    - name: replica_hostname
+      prompt: "Enter the replica hostname"
+      private: no
+
+  tasks:
+    - name: Execute mkrep.sh script with parameters
+      become: yes
+      ansible.builtin.command:
+        cmd: "/hxdepots/p4/common/bin/mkrep.sh -os -i 1 -t fr -s awseuwest1 -r {{ replica_hostname }}"
+
+    - name: Change to perforce user and source vars, then run live_checkpoint.sh
+      become: yes
+      become_user: perforce
+      ansible.builtin.shell: |
+        source /p4/common/bin/p4_vars 1 && /p4/common/bin/live_checkpoint.sh 1
+
+    - name: Add export to /etc/exports
+      become: yes
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: "/hxdepots/p4/1/checkpoints *(ro,no_all_squash)"
+        state: present
+        create: yes
+
+    - name: Restart and enable NFS server
+      become: yes
+      ansible.builtin.systemd:
+        name: nfs-server
+        state: restarted
+        enabled: yes
