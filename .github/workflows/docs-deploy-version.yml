@@ -1,0 +1,54 @@
+#====================================================================================================
+## VERSIONED RELEASE DOCUMENTATION WORKFLOW
+#
+# This workflow automatically creates versioned documentation when a GitHub release is published.
+#
+# For regular documentation updates:
+# - Main branch auto-deploys to "latest" via docs-deploy-latest.yml
+# - PR previews are handled by docs-preview.yml
+# - Full health checks run via docs-health-check.yml
+#
+## Trigger:
+# - Automatically runs when a release is published on GitHub
+#
+## Process:
+# 1. Extracts version from release tag
+# 2. Validates documentation (link checking, markdown linting)
+# 3. Builds and deploys versioned documentation using mike
+#====================================================================================================
+name: Deploy Versioned Documentation
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  validate:
+    name: Validate Documentation
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    uses: ./.github/workflows/docs-validate.yml
+    permissions:
+      contents: read
+      issues: write
+    with:
+      scope: "all"
+      fail_on_error: true
+      create_issue: false
+
+  deploy:
+    name: Deploy Versioned Docs
+    needs: validate
+    if: github.repository == 'aws-games/cloud-game-development-toolkit'
+    uses: ./.github/workflows/docs-build-and-deploy.yml
+    permissions:
+      contents: write
+      pages: write
+    with:
+      mode: "version"
+      version: ${{ github.event.release.tag_name }}
+      alias: ${{ github.event.release.prerelease && 'prerelease' || 'stable' }}
+      git_ref: ${{ github.event.release.tag_name }}

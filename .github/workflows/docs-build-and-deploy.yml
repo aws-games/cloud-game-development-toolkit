@@ -1,0 +1,85 @@
+name: Build and Deploy Documentation (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        description: "Deployment mode: 'preview', 'latest', or 'version'"
+        required: true
+        type: string
+      version:
+        description: "Version string for 'version' mode (e.g., v1.0.0)"
+        required: false
+        type: string
+      alias:
+        description: "Alias for 'version' mode (e.g., stable)"
+        required: false
+        type: string
+      destination_dir:
+        description: "Destination directory for 'preview' mode (e.g., preview/pr-123)"
+        required: false
+        type: string
+      git_ref:
+        description: "Git ref to checkout (branch, tag, or commit)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.git_ref || github.ref }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "docs/requirements.txt"
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build documentation (preview mode)
+        if: inputs.mode == 'preview'
+        run: mkdocs build --strict --site-dir site
+
+      - name: Deploy preview
+        if: inputs.mode == 'preview'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          destination_dir: ${{ inputs.destination_dir }}
+          publish_branch: gh-pages
+          keep_files: true
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy to latest
+        if: inputs.mode == 'latest'
+        run: |
+          mike deploy --push --update-aliases latest
+          mike set-default --push latest
+
+      - name: Deploy versioned docs
+        if: inputs.mode == 'version'
+        run: |
+          mike deploy --push --update-aliases ${{ inputs.version }} ${{ inputs.alias }}

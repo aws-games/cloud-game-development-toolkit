@@ -1,0 +1,90 @@
+# Lychee link checker configuration
+# Documentation: https://github.com/lycheeverse/lychee
+
+# Maximum number of concurrent network requests
+max_concurrency = 10
+
+# Maximum number of retries per link
+max_retries = 3
+
+# Timeout per request in seconds
+timeout = 30
+
+# Check links in markdown, HTML, and text files
+# Note: include patterns are glob patterns, not regex
+include = ['\\.md$', '\\.html$', '\\.txt$']
+
+# Exclude patterns
+exclude = [
+    # Exclude external modules and dependencies
+    ".external_modules/**",
+    "node_modules/**",
+    ".git/**",
+    ".github/**",
+
+    # Exclude build artifacts
+    ".cache/**",
+    "site/**",
+
+    # Exclude specific files
+    "CHANGELOG.md",
+    "THIRD-PARTY-LICENSES",
+]
+
+# Exclude localhost and loopback addresses
+exclude_loopback = true
+
+# Exclude link-local IP addresses
+exclude_link_local = true
+
+# Include mail addresses (set to false to exclude)
+include_mail = false
+
+# Accept status codes (200-299 are success, 429 is rate limit)
+accept = ["200..299", "429"]
+
+# Exclude specific URLs that are known to be problematic
+exclude_path = [
+    # GitHub edit links (these are dynamic and may not exist yet)
+    "https://github.com/aws-games/cloud-game-development-toolkit/edit/**",
+
+    # GitHub project boards (may require authentication)
+    "https://github.com/orgs/aws-games/projects/**",
+
+    # Example URLs in documentation
+    "https://example.com/**",
+    "http://example.com/**",
+
+    # Localhost URLs (glob patterns)
+    "http://localhost**",
+    "https://localhost**",
+    "http://127.0.0.1**",
+    "https://127.0.0.1**",
+
+    # Preview deployment URLs
+    "https://aws-games.github.io/cloud-game-development-toolkit/preview/**",
+]
+
+# Remap URLs (useful for checking local preview URLs)
+remap = []
+
+# User agent string
+user_agent = "Mozilla/5.0 (compatible; lychee/link-checker)"
+
+# Follow redirects
+max_redirects = 5
+
+# Verbosity level: error, warn, info, debug, or trace
+verbose = "error"
+
+# Skip checking of private IP addresses
+include_verbatim = false
+
+# Cache results to speed up subsequent runs
+cache = true
+
+# Require HTTPS where possible
+require_https = false
+
+# Check fragments/anchors in links
+include_fragments = true

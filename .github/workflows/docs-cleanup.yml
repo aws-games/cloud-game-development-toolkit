@@ -1,0 +1,53 @@
+name: Documentation Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "**/README.md"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove preview directory
+        run: |
+          if [ -d "preview/pr-${{ github.event.pull_request.number }}" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git rm -rf "preview/pr-${{ github.event.pull_request.number }}"
+            git commit -m "Remove preview for PR #${{ github.event.pull_request.number }}"
+            git push
+          else
+            echo "Preview directory not found, nothing to clean up"
+          fi
+
+      - name: Post cleanup comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ github.event.pull_request.number }}
+          header: doc-preview
+          message: |
+            ## 🧹 Documentation Preview Cleaned Up
+
+            The preview deployment for this PR has been automatically removed.
+
+            **Preview was located at:** `preview/pr-${{ github.event.pull_request.number }}/`
+
+            ---
+            *This preview was automatically cleaned up when the PR was closed.*
