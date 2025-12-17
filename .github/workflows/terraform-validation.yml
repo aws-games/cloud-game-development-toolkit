@@ -19,7 +19,7 @@ jobs:
     outputs:
       terraform_dirs: ${{ steps.find-dirs.outputs.terraform_dirs }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -50,7 +50,7 @@ jobs:
     name: Format Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.14.2"
@@ -66,7 +66,7 @@ jobs:
         terraform_dir: ${{ fromJson(needs.changes.outputs.terraform_dirs) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6
       - uses: terraform-linters/setup-tflint@v6
       - name: Lint ${{ matrix.terraform_dir }}
         run: |
@@ -89,7 +89,7 @@ jobs:
       - name: Free up disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
 
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.14.2"
