@@ -89,7 +89,7 @@ jobs:
       - name: Lint changed markdown files
         if: inputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
         id: lint-changed
-        uses: DavidAnson/markdownlint-cli2-action@v18
+        uses: DavidAnson/markdownlint-cli2-action@v22
         with:
           config: ".config/.markdownlint-cli2.jsonc"
           globs: |
@@ -98,7 +98,7 @@ jobs:
       - name: Lint all markdown files
         if: inputs.scope == 'all'
         id: lint-all
-        uses: DavidAnson/markdownlint-cli2-action@v18
+        uses: DavidAnson/markdownlint-cli2-action@v22
         with:
           config: ".config/.markdownlint-cli2.jsonc"
           globs: "**/*.md"
