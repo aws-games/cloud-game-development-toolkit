@@ -37,7 +37,6 @@ jobs:
       issues: write
     with:
       scope: "changed"
-      fail_on_error: true
       create_issue: false
 
   deploy:

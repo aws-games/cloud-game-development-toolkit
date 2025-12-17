@@ -8,11 +8,6 @@ on:
         required: false
         type: string
         default: "changed"
-      fail_on_error:
-        description: "Whether to fail the workflow on validation errors"
-        required: false
-        type: boolean
-        default: true
       create_issue:
         description: "Whether to create a GitHub issue on validation failure"
         required: false
@@ -49,10 +44,9 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           args: --config .config/lychee.toml --no-progress ${{ steps.changed-files.outputs.all_changed_files }}
-          fail: ${{ inputs.fail_on_error }}
+          fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: ${{ !inputs.fail_on_error }}
 
       - name: Check all links
         if: inputs.scope == 'all'
@@ -60,10 +54,9 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           args: --config .config/lychee.toml --no-progress '**/*.md' '**/*.html'
-          fail: ${{ inputs.fail_on_error }}
+          fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: ${{ !inputs.fail_on_error }}
 
       - name: Set link check outcome
         id: link-outcome
@@ -101,7 +94,6 @@ jobs:
           config: ".config/.markdownlint-cli2.jsonc"
           globs: |
             ${{ steps.changed-files.outputs.all_changed_files }}
-        continue-on-error: ${{ !inputs.fail_on_error }}
 
       - name: Lint all markdown files
         if: inputs.scope == 'all'
@@ -110,7 +102,6 @@ jobs:
         with:
           config: ".config/.markdownlint-cli2.jsonc"
           globs: "**/*.md"
-        continue-on-error: ${{ !inputs.fail_on_error }}
 
       - name: Set lint outcome
         id: lint-outcome
@@ -143,7 +134,6 @@ jobs:
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
-        continue-on-error: ${{ !inputs.fail_on_error }}
 
   create-issue:
     name: Create Issue on Failure

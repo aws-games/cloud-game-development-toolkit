@@ -36,7 +36,6 @@ jobs:
       issues: write
     with:
       scope: "all"
-      fail_on_error: true
       create_issue: false
 
   deploy:

@@ -1,19 +1,8 @@
 name: Documentation Health Check
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "docs/**"
-      - "mkdocs.yml"
-      - "**/README.md"
-      - "CHANGELOG.md"
-      - "CONTRIBUTING.md"
-      - ".config/lychee.toml"
-      - ".config/.markdownlint-cli2.jsonc"
   schedule:
-    # Run weekly on Mondays at 9am UTC
+    # Run weekly on Mondays at 9am UTC to catch link rot and regressions
     - cron: "0 9 * * 1"
   workflow_dispatch:
 
@@ -30,5 +19,4 @@ jobs:
       issues: write
     with:
       scope: "all"
-      fail_on_error: false
       create_issue: true
