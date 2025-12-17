@@ -158,7 +158,7 @@ jobs:
           mkdocs build --strict
 
   report-failures:
-    name: Report Link and Build Failures
+    name: Report Documentation Failures
     needs: [check-links, lint-markdown, build-docs]
     runs-on: ubuntu-latest
     permissions:
@@ -166,7 +166,7 @@ jobs:
       pull-requests: write
     if: |
       always() &&
-      (needs.check-links.result == 'failure' || needs.build-docs.result == 'failure')
+      (needs.check-links.result == 'failure' || needs.lint-markdown.result == 'failure' || needs.build-docs.result == 'failure')
 
     steps:
       # PR Comments: Post sticky comments for link and build failures
@@ -187,6 +187,35 @@ jobs:
             - External links may have broken or moved
             - Internal links may reference renamed or deleted files
             - URLs may contain typos
+
+            ---
+            *Last checked: ${{ github.event.pull_request.head.sha }}*
+            *This comment will update automatically when you push new commits*
+
+      - name: Comment on PR - Lint Failure
+        if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: doc-lint-failure
+          message: |
+            ## 📝 Markdown Linting Failed
+
+            The markdown linter has found issues in the changed documentation files.
+
+            ### Action Required
+            Please review the inline annotations in the **Files changed** tab and the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to fix the linting errors.
+
+            ### Common Issues
+            - Missing blank lines around headings, lists, or code blocks
+            - Inconsistent list styles
+            - Code blocks without language specifiers
+            - Emphasis used instead of proper headings
+
+            ### Auto-fix Available
+            Many issues can be automatically fixed by running:
+            ```bash
+            npx markdownlint-cli2 --fix "**/*.md"
+            ```
 
             ---
             *Last checked: ${{ github.event.pull_request.head.sha }}*
@@ -266,6 +295,65 @@ jobs:
                 labels: ['documentation', 'automated', 'link-check', 'bug']
               });
               console.log('Created new link check issue');
+            }
+
+      - name: Create or update lint failure issue
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.lint-markdown.result == 'failure'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const issueTitle = '📝 Markdown Linting Failed';
+            const issueBody = `## Markdown Linting Failures Detected
+
+            The markdown linter has found issues in the documentation.
+
+            ### Action Required
+            Please review the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the linting errors.
+
+            ### Common Issues
+            - Missing blank lines around headings, lists, or code blocks
+            - Inconsistent list styles
+            - Code blocks without language specifiers
+            - Emphasis used instead of proper headings
+
+            ### Auto-fix Available
+            Many issues can be automatically fixed by running:
+            \`\`\`bash
+            npx markdownlint-cli2 --fix "**/*.md"
+            \`\`\`
+
+            ---
+            *Last checked: ${new Date().toISOString()}*
+            *Run: ${context.runId}*
+            *Commit: ${context.sha}*`;
+
+            // Find existing lint issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated,lint'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'lint', 'bug']
+              });
+              console.log('Created new lint issue');
             }
 
       - name: Create or update build failure issue
@@ -351,6 +439,26 @@ jobs:
                   body: `✅ Link check now passing. Closing issue.\n\nRun: ${context.runId}`
                 });
                 console.log(`Closed link check issue #${linkIssue.number}`);
+              }
+            }
+
+            // Close lint issue if linting is now passing
+            if ('${{ needs.lint-markdown.result }}' === 'success') {
+              const lintIssue = issues.find(issue => issue.title === '📝 Markdown Linting Failed');
+              if (lintIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: lintIssue.number,
+                  state: 'closed'
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: lintIssue.number,
+                  body: `✅ Markdown linting now passing. Closing issue.\n\nRun: ${context.runId}`
+                });
+                console.log(`Closed lint issue #${lintIssue.number}`);
               }
             }
 
