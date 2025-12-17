@@ -39,6 +39,8 @@
     ".git/**",
     "CHANGELOG.md",
     "THIRD-PARTY-LICENSES",
+    ".kiro/**",
+    ".chglog/**",
   ],
   "outputFormatters": [["markdownlint-cli2-formatter-sarif"]],
 }
