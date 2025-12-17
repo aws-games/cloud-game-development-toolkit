@@ -1,9 +1,10 @@
 #====================================================================================================
 ## Process
 # 1. When docs changes are pushed to main branch, this workflow triggers automatically
-# 2. Validates documentation using reusable workflow (link checking + markdown linting)
-# 3. Builds and deploys documentation to "latest" using mike (depends on validation passing)
-# 4. Updates the default version pointer to "latest"
+# 2. Builds and deploys documentation to "latest" using mike
+# 3. Updates the default version pointer to "latest"
+#
+## Note: Validation runs independently via docs-validate.yml (triggered by push to main)
 #====================================================================================================
 name: Deploy Documentation to Latest
 
@@ -29,19 +30,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate:
-    name: Validate Documentation
-    uses: ./.github/workflows/docs-validate.yml
-    permissions:
-      contents: read
-      issues: write
-    with:
-      scope: "changed"
-      create_issue: false
-
   deploy:
     name: Deploy to Latest
-    needs: validate
     uses: ./.github/workflows/docs-build-and-deploy.yml
     permissions:
       contents: write
