@@ -135,7 +135,6 @@ jobs:
               --config .config/ci.markdownlint-cli2.jsonc \
               '**/*.md'
           fi
-        continue-on-error: true
 
       - name: Upload SARIF results
         if: always() && hashFiles('markdownlint-cli2-sarif.sarif') != ''
