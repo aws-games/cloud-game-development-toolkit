@@ -16,7 +16,7 @@ jobs:
       actions: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6
       - name: Checkov GitHub Action
         uses: bridgecrewio/checkov-action@v12
         with:
