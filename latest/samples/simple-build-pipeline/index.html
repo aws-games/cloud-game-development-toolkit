@@ -3837,8 +3837,8 @@ Pipeline</em> please consult the documentation for <a href="https://docs.aws.ama
 <code>local.tf</code> are typically static and can be modified within the file itself. Variables in <code>variables.tf</code> tend to be more dynamic and are passed in through the
 <code>terraform apply</code> command either directly through a <code>-var</code> flag or as file using the <code>-var-file</code> flag.</p>
 <p>We'll start by walking through the required configurations in <code>local.tf</code>.</p>
-<p>1.
-<code>jenkins_agent_secret_arns</code> is a list of <a href="https://aws.amazon.com/secrets-manager/">AWS Secrets Manager</a> ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the
+<p>1.</p>
+<p><code>jenkins_agent_secret_arns</code> is a list of <a href="https://aws.amazon.com/secrets-manager/">AWS Secrets Manager</a> ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the
 <code>jenkins_agent_secret_arns</code> list so that Jenkins can connect to the provisioned build agents.</p>
 <ol>
 <li>
@@ -3934,6 +3934,7 @@ Pipeline</em> creates a random administrator password and stores it in AWS Secre
 <h3 id="step-10-cleanup">Step 10. Cleanup<a class="headerlink" href="#step-10-cleanup" title="Permanent link">&para;</a></h3>
 <p>Tearing down the resources created by the <em>Simple Build Pipeline</em> is as easy as running <code>terraform destroy</code> in the
 <code>/samples/simple-build-pipeline</code> directory. However, this will not delete the secrets you've uploaded, the AMIs created with Packer, or the the Route53 hosted zone you set up initially. Those resources will need to be explicitly destroyed using the AWS console or relevant CLI commands.</p>
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -4275,6 +4276,7 @@ Pipeline</em> creates a random administrator password and stores it in AWS Secre
 </tbody>
 </table>
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 
 
@@ -4295,7 +4297,7 @@ Pipeline</em> creates a random administrator password and stores it in AWS Secre
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-12
+    2025-12-17
   </span>
 
     

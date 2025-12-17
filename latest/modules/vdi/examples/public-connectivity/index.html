@@ -3677,11 +3677,13 @@
 
 <h1 id="public-connectivity-vdi-example">Public Connectivity VDI Example<a class="headerlink" href="#public-connectivity-vdi-example" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Demonstrates VDI deployment with <strong>public internet access</strong> and <strong>multiple AMI types</strong> for different user roles:
-- <strong>Public Internet Access</strong>: Direct connection via Internet Gateway with IP restrictions
-- <strong>UE GameDev AMI</strong>: Pre-built with Visual Studio 2022 + Epic Games Launcher
-- <strong>Lightweight AMI</strong>: Basic Windows for runtime software installation
-- <strong>Multi-User Support</strong>: Different workstation configurations for different roles</p>
+<p>Demonstrates VDI deployment with <strong>public internet access</strong> and <strong>multiple AMI types</strong> for different user roles:</p>
+<ul>
+<li><strong>Public Internet Access</strong>: Direct connection via Internet Gateway with IP restrictions</li>
+<li><strong>UE GameDev AMI</strong>: Pre-built with Visual Studio 2022 + Epic Games Launcher</li>
+<li><strong>Lightweight AMI</strong>: Basic Windows for runtime software installation</li>
+<li><strong>Multi-User Support</strong>: Different workstation configurations for different roles</li>
+</ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <h3 id="public-connectivity-multi-ami-pattern">Public Connectivity + Multi-AMI Pattern<a class="headerlink" href="#public-connectivity-multi-ami-pattern" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>vdi-001 (naruto-uzumaki)  → UE GameDev AMI    → g4dn.4xlarge (Game Developer)
@@ -3816,7 +3818,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="user-creation-issues">User Creation Issues<a class="headerlink" href="#user-creation-issues" title="Permanent link">&para;</a></h3>
-<p>Check SSM command execution and status:
+<p>Check SSM command execution and status:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check SSM command status</span>
 aws<span class="w"> </span>ssm<span class="w"> </span>list-command-invocations<span class="w"> </span>--instance-id<span class="w"> </span>&lt;instance-id&gt;
 
@@ -3825,11 +3827,13 @@ aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="
 
 <span class="c1"># Force retry user creation</span>
 <span class="c1"># Set force_run_provisioning = &quot;true&quot; in main.tf and apply</span>
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="ami-not-found">AMI Not Found<a class="headerlink" href="#ami-not-found" title="Permanent link">&para;</a></h3>
-<p>If custom AMIs aren't built, Terraform will fail with data source error:
-1. <strong>Required</strong>: Build AMIs using Packer templates (see Prerequisites)
-2. <strong>No fallback</strong>: Data sources require specific AMI names to exist</p>
+<p>If custom AMIs aren't built, Terraform will fail with data source error:</p>
+<ol>
+<li><strong>Required</strong>: Build AMIs using Packer templates (see Prerequisites)</li>
+<li><strong>No fallback</strong>: Data sources require specific AMI names to exist</li>
+</ol>
 <h3 id="dcv-connection-issues">DCV Connection Issues<a class="headerlink" href="#dcv-connection-issues" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Check security group allows port 8443 from your IP</li>
@@ -3840,15 +3844,20 @@ aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="
 <p><strong>BREAKING CHANGE</strong>: Software installation logic removed in favor of custom AMIs.</p>
 <p><strong>Before</strong>: Runtime software installation via SSM
 <strong>After</strong>: Pre-built AMIs with software included</p>
-<p><strong>Benefits</strong>:
-- ✅ Faster boot times (no installation delays)
-- ✅ Reliable deployments (no installation failures)
-- ✅ Consistent environments (known software versions)
-- ✅ Better user experience (workstations ready immediately)</p>
-<p><strong>Migration Path</strong>:
-1. Build custom AMIs with required software
-2. Update templates to reference custom AMI IDs
-3. Remove software_packages variables from configuration</p>
+<p><strong>Benefits</strong>:</p>
+<ul>
+<li>✅ Faster boot times (no installation delays)</li>
+<li>✅ Reliable deployments (no installation failures)</li>
+<li>✅ Consistent environments (known software versions)</li>
+<li>✅ Better user experience (workstations ready immediately)</li>
+</ul>
+<p><strong>Migration Path</strong>:</p>
+<ol>
+<li>Build custom AMIs with required software</li>
+<li>Update templates to reference custom AMI IDs</li>
+<li>Remove software_packages variables from configuration</li>
+</ol>
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -4002,6 +4011,7 @@ aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="
 </tbody>
 </table>
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 
 
@@ -4022,7 +4032,7 @@ aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-12
+    2025-12-17
   </span>
 
     

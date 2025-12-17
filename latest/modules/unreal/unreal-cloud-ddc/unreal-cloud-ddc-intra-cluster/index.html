@@ -3558,8 +3558,7 @@
 <div class="highlight"><pre><span></span><code>aws secretsmanager create-secret --name &quot;external-idp-oidc-credentials&quot; --secret-string &#39;{&quot;client_secret&quot;:&quot;CLIENT-SECRET-PLACEHOLDER&quot;,&quot;client_id&quot;:&quot;CLIENT-ID-PLACEHOLDER&quot;}&#39;
 </code></pre></div>
 <p>The ARN for the newly created secret must then be passed to the <code>oidc_credentials_secret_manager_arn</code> variable. The secret is referenced using the following format and should be passed into the variable using the same format:</p>
-<div class="highlight"><pre><span></span><code>aws!arn:aws:secretsmanager:&lt;region&gt;:&lt;aws-account-number&gt;:secret:&lt;secret-name&gt;|&lt;json-field&gt;
-</code></pre></div>
+<p><code>aws!arn:aws:secretsmanager:&lt;region&gt;:&lt;aws-account-number&gt;:secret:&lt;secret-name&gt;|&lt;json-field&gt;</code></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Note the prefix <code>aws!</code> and the postfix <code>|&lt;json-field&gt;</code> are added to the ARN of the newly created secret.</p>
@@ -3567,16 +3566,17 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>While we highly encourage the use of OIDC tokens for production environments, users can use a bearer token in its place by providing the token to the <code>unreal_cloud_ddc_helm_values</code> variable. See DDC sample for an example implementation.</p>
-<div class="highlight"><pre><span></span><code>    unreal_cloud_ddc_helm_values = [
-        templatefile(&quot;${path.module}/assets/unreal_cloud_ddc_single_region.yaml&quot;, {
-            token = &lt;bearer-token&gt;
-            # Other templatefile parameters...
-        })
-    ]
-</code></pre></div>
 </div>
+<div class="highlight"><pre><span></span><code><span class="na">unreal_cloud_ddc_helm_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="nf">templatefile</span><span class="p">(</span><span class="s2">&quot;${path.module}/assets/unreal_cloud_ddc_single_region.yaml&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">&lt;bearer-token&gt;</span>
+<span class="c1">        # Other templatefile parameters...</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">]</span>
+</code></pre></div>
 <h3 id="chart-values-helm-configurations">Chart Values (Helm Configurations)<a class="headerlink" href="#chart-values-helm-configurations" title="Permanent link">&para;</a></h3>
 <p>The <code>unreal_cloud_ddc_helm_values</code> variable provides an open-ended way to configure the Unreal Cloud DDC deployment through the use of YAML files. We generally recommend you to use a template file. An example of a template file configuration can be found in the <code>unreal-cloud-ddc-single-region</code> sample located <a href="../../../../samples/unreal-cloud-ddc-single-region/assets/unreal_cloud_ddc_single_region.yaml">here</a>. You can also find additional example templates provided by Epic <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Helm/UnrealCloudDDC">here</a>.</p>
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -4127,6 +4127,7 @@
 </tbody>
 </table>
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 
 
@@ -4147,7 +4148,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-11-12
+    2025-12-17
   </span>
 
     
