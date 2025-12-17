@@ -10,6 +10,7 @@ This module creates the following resources:
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Architecture
+
 ![P4Auth Architecture](../../assets/media/diagrams/p4-auth-architecture.png)
 
 ## Prerequisites
@@ -66,6 +67,7 @@ curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
 ```
 
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -183,3 +185,4 @@ No modules.
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service running P4Auth |
 | <a name="output_target_group_arn"></a> [target\_group\_arn](#output\_target\_group\_arn) | The service target group for P4Auth |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

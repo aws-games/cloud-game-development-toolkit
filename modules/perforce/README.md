@@ -22,33 +22,33 @@ For a video walkthrough demonstrating how to use this module, see this YouTube V
 ## Prerequisites
 
 - **Existing DNS Configured**
-    - To use this module, you must have an existing domain and related DNS configuration. The example at
+  - To use this module, you must have an existing domain and related DNS configuration. The example at
       `/examples/create-resources-complete` demonstrates how to provision resources while using Amazon Route53 (
       recommended) as the DNS provider. This will make deployment and management easier.
-    - You may optionally use a 3rd party DNS provider, however you must create records in your DNS provider to route to
+  - You may optionally use a 3rd party DNS provider, however you must create records in your DNS provider to route to
       the endpoints that you will create for each component when using the module (e.g. `perforce.example.com`,
       `review.perforce.example.com`, `auth.perforce.example.com`). The module has variables that you can use to
       customize the subdomains for the services (P4 Server, P4 Code Review, P4Auth), however if not set, the defaults
       mentioned above will be used. Ensure you create these records to allow users to connect to the services once
       provisioned in AWS.
-    - **Note:** When using either of the two options mentioned above, by default the module will create a **Route53
+  - **Note:** When using either of the two options mentioned above, by default the module will create a **Route53
       Private Hosted Zone**. This is used for internal communication and routing of traffic between P4 Server, P4 Code
       Review, and P4Auth.
 - **SSL TLS Certificate**
-    - You must have an existing SSL/TLS certificate, or create one during deployment alongside the other resources the
+  - You must have an existing SSL/TLS certificate, or create one during deployment alongside the other resources the
       module will create. This is used to provide secure connectivity to the Perforce resources that will be running in
       AWS. The certificate will be used by the Application Load Balancer (ALB) that the module will deploy for you. If
       using Amazon Route53, see the example at `/examples/create-resources-complete` to see how to create the related
       certificate in Amazon Certificate Manager (ACM). Using a Route53 as the DNS provider makes this process a bit
       easier, as ACM can automatically create the required CNAME records needed for DNS validation (a process required
       to verify DNS ownership) if you are also using Amazon Route53.
-    - If using an 3rd party DNS provider, you must add these CNAME records manually (in addition to the other records
+  - If using an 3rd party DNS provider, you must add these CNAME records manually (in addition to the other records
       mentioned above for general DNS purposes). If you would prefer to use a 3rd party to create the SSL/TLS
       certificate, the module allows you to import this into ACM to be used for the other components that will be
       deployed (such as the internal ALB). You may also use Email validation to validate DNS ownership.
 
 - **Existing Perforce Amazon Machine Image (AMI)**
-    - As mentioned in the architecture, an Amazon EC2 instance is used for the P4 Server, and this instance must be be
+  - As mentioned in the architecture, an Amazon EC2 instance is used for the P4 Server, and this instance must be be
       provisioned using an AMI that is configured for Perforce. To expedite this process, we have
       sample [HashiCorp Packer](https://www.packer.io/) templates provided in
       the [AWS Cloud Game Development Toolkit repository](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/perforce/p4-server)
@@ -136,6 +136,7 @@ packer build perforce_x86.pkr.hcl
 8. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
    Code Review) and P4Auth (P4Auth).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -260,3 +261,4 @@ packer build perforce_x86.pkr.hcl
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

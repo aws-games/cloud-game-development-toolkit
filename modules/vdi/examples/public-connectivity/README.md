@@ -1,7 +1,9 @@
 # Public Connectivity VDI Example
 
 ## Overview
+
 Demonstrates VDI deployment with **public internet access** and **multiple AMI types** for different user roles:
+
 - **Public Internet Access**: Direct connection via Internet Gateway with IP restrictions
 - **UE GameDev AMI**: Pre-built with Visual Studio 2022 + Epic Games Launcher
 - **Lightweight AMI**: Basic Windows for runtime software installation
@@ -10,6 +12,7 @@ Demonstrates VDI deployment with **public internet access** and **multiple AMI t
 ## Architecture
 
 ### Public Connectivity + Multi-AMI Pattern
+
 ```
 vdi-001 (naruto-uzumaki)  → UE GameDev AMI    → g4dn.4xlarge (Game Developer)
 vdi-002 (sasuke-uchiha)   → Lightweight AMI   → g4dn.xlarge  (DevOps Engineer)
@@ -20,6 +23,7 @@ vdi-003 (boruto-uzumaki)  → Lightweight AMI   → g4dn.xlarge  (Junior Develop
 ```
 
 ### User Management
+
 - **Local Windows users** created via EC2 user data (immediate execution)
 - **Secrets Manager** stores all passwords
 - **Multi-user support**: Admin users on ALL workstations, standard users on assigned workstation
@@ -27,6 +31,7 @@ vdi-003 (boruto-uzumaki)  → Lightweight AMI   → g4dn.xlarge  (Junior Develop
 ## Prerequisites
 
 ### Required AMIs
+
 **Note**: This example requires specific custom AMIs because the data sources reference them by name. You can customize the example to use different AMIs by modifying `data.tf`.
 
 Build custom AMIs using Packer templates:
@@ -42,6 +47,7 @@ packer build windows-server-2025-lightweight.pkr.hcl
 ```
 
 ### AWS Setup
+
 1. AWS credentials configured
 2. Custom AMIs built and available
 3. VPC with public subnet
@@ -56,6 +62,7 @@ terraform apply
 ## What Gets Created
 
 ### Infrastructure
+
 - **3 VDI instances** with different AMIs and configurations
 - **VPC + subnet + security groups** for public internet access
 - **Internet Gateway** for direct public connectivity
@@ -63,6 +70,7 @@ terraform apply
 - **CloudWatch log groups** for centralized logging
 
 ### Users (Created via SSM)
+
 - **vdiadmin**: Fleet administrator account on ALL instances
 - **naruto-uzumaki**: Administrator on vdi-001 (UE GameDev workstation)
 - **sasuke-uchiha**: Administrator on vdi-002 (DevOps workstation)
@@ -71,6 +79,7 @@ terraform apply
 **Status Tracking**: User creation status tracked in SSM Parameter Store at `/{project}/{workstation}/users/{username}/status_*`
 
 ### Authentication
+
 - **Secrets Manager**: All user passwords stored securely
 - **EC2 Key Pairs**: Emergency break-glass access
 - **DCV Sessions**: Created automatically for assigned users
@@ -78,11 +87,13 @@ terraform apply
 ## Connection
 
 ### Get Connection Info
+
 ```bash
 terraform output connection_info
 ```
 
 ### Get Passwords
+
 ```bash
 # Get all password retrieval commands
 terraform output password_retrieval_commands
@@ -92,6 +103,7 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 ```
 
 ### Connect via DCV (Public Internet)
+
 1. **vdi-001 (UE GameDev)**: `https://<vdi-001-ip>:8443`
    - Login: `naruto-uzumaki` + password from Secrets Manager
    - **Pre-installed**: Visual Studio 2022, Epic Games Launcher, Git, Perforce
@@ -105,28 +117,33 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
    - **Basic tools**: VS Code, Git, Notepad++
 
 ### Admin Access
+
 - **vdiadmin** account available on BOTH instances
 - Use for system administration and troubleshooting
 
 ## Key Features
 
 ### ✅ Public Internet Connectivity
+
 - **Direct access** via Internet Gateway (no VPN required)
 - **IP-based security** with automatic detection of your public IP
 - **Cost-effective** for individual developers and small teams
 - **Simple setup** - no certificate management or VPN clients
 
 ### ✅ Multi-AMI Support
+
 - Different AMIs for different roles (GameDev vs General)
 - Automatic AMI discovery via data sources
 - **Requires custom AMIs** - build using Packer templates
 
 ### ✅ Infrastructure-Focused
+
 - **No runtime software installation** (unreliable)
 - **Custom AMIs** provide consistent, fast boot times
 - **Role-based templates** with appropriate instance types
 
 ### ✅ Reliable User Creation
+
 - **SSM associations** create users with proper timing
 - **Status tracking** via SSM Parameter Store
 - **Force retry** capability with `force_run_provisioning = "true"`
@@ -134,6 +151,7 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 - **Simplified passwords** (letters and numbers only)
 
 ### ✅ Enterprise-Ready
+
 - **Multi-user support** with proper Windows groups
 - **Centralized password management** via Secrets Manager
 - **Break-glass access** via EC2 key pairs
@@ -143,7 +161,9 @@ aws secretsmanager get-secret-value --secret-id "arn:aws:secretsmanager:us-east-
 ## Troubleshooting
 
 ### User Creation Issues
+
 Check SSM command execution and status:
+
 ```bash
 # Check SSM command status
 aws ssm list-command-invocations --instance-id <instance-id>
@@ -156,11 +176,14 @@ aws ssm get-parameter --name "/cgd/vdi-001/users/naruto-uzumaki/status_user_crea
 ```
 
 ### AMI Not Found
+
 If custom AMIs aren't built, Terraform will fail with data source error:
+
 1. **Required**: Build AMIs using Packer templates (see Prerequisites)
 2. **No fallback**: Data sources require specific AMI names to exist
 
 ### DCV Connection Issues
+
 1. Check security group allows port 8443 from your IP
 2. Verify DCV service is running on instance
 3. Confirm user was created successfully
@@ -173,16 +196,19 @@ If custom AMIs aren't built, Terraform will fail with data source error:
 **After**: Pre-built AMIs with software included
 
 **Benefits**:
+
 - ✅ Faster boot times (no installation delays)
 - ✅ Reliable deployments (no installation failures)
 - ✅ Consistent environments (known software versions)
 - ✅ Better user experience (workstations ready immediately)
 
 **Migration Path**:
+
 1. Build custom AMIs with required software
 2. Update templates to reference custom AMI IDs
 3. Remove software_packages variables from configuration
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -236,3 +262,4 @@ No inputs.
 |------|-------------|
 | <a name="output_connection_info"></a> [connection\_info](#output\_connection\_info) | VDI connection information |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

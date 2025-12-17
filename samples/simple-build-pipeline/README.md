@@ -174,6 +174,7 @@ Configurations for the _Simple Build Pipeline_ are split between 2 files: [
 We'll start by walking through the required configurations in `local.tf`.
 
 1.
+
 `jenkins_agent_secret_arns` is a list of [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the
 `jenkins_agent_secret_arns` list so that Jenkins can connect to the provisioned build agents.
 
@@ -237,7 +238,7 @@ There are 2 plugins recommended for the solutions: The [EC2 Fleet](https://plugi
 1. Open the Jenkins console.
 2. On the left-hand side, select the `Manage Jenkins` tab.
 3. Then, under the `System Configuration` section, select `Plugins`.
-4. On the left-hand side, select ` Available plugins`.
+4. On the left-hand side, select `Available plugins`.
 5. Using the search bar at the top of the page, search for `EC2 Fleet`.
 6. Select the `EC2 Fleet` plugin.
 7. Using the search bar at the top of the page, search for `AWS Secrets Manager Credentials Provider`.
@@ -293,6 +294,7 @@ Tearing down the resources created by the _Simple Build Pipeline_ is as easy as 
 `/samples/simple-build-pipeline` directory. However, this will not delete the secrets you've uploaded, the AMIs created with Packer, or the the Route53 hosted zone you set up initially. Those resources will need to be explicitly destroyed using the AWS console or relevant CLI commands.
 
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -390,3 +392,4 @@ Tearing down the resources created by the _Simple Build Pipeline_ is as easy as 
 | <a name="output_p4_code_review_url"></a> [p4\_code\_review\_url](#output\_p4\_code\_review\_url) | The URL for the P4 Code Review service. |
 | <a name="output_p4_server_connection_string"></a> [p4\_server\_connection\_string](#output\_p4\_server\_connection\_string) | The connection string for the P4 Server. Set your P4PORT environment variable to this value. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
