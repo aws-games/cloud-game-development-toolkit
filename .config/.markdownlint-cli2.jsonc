@@ -39,5 +39,7 @@
     ".git/**",
     "CHANGELOG.md",
     "THIRD-PARTY-LICENSES",
+    ".kiro/**",
+    ".chglog/**",
   ],
 }
