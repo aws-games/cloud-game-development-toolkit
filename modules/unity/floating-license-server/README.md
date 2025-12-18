@@ -29,7 +29,6 @@ Upon deployment, two created files will be copied to the S3 bucket:
       | Linux   |`/usr/share/unity3d/config/`|
       | Mac     |`/Library/Application Support/Unity/config/`|
 
-
 The `server-registration-request.xml` will need to be uploaded to the [Unity ID portal](https://id.unity.com/) (where the Licensing Server executable was downloaded from) to register the server. Once successful, download the licenses zip file. Without renaming the file, upload it to the S3 bucket. A background process will detect the uploaded licenses file, and import them into the Unity Licensing Server, finishing the process.
 
 ## Deployment Architectures

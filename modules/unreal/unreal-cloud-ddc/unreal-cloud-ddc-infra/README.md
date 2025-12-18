@@ -26,7 +26,6 @@ The Unreal Cloud Derived Data Cache (DDC) infrastructure module implements Epic'
     - Enables cross-region asset availability
     - Serves as a persistent backup layer
 
-
 ## Deployment Architecture
 
 <br/>
@@ -57,7 +56,6 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
-
 #### Configuring Node Groups and ScyllaDB Deployment
 
 The footprint of your Cloud DDC deployment can be configured through 2 variables:
@@ -68,13 +66,11 @@ EKS Node Group Configuration: `eks_node_group_subnets`
 
 The `eks_node_group_subnets` variable defines the subnet distribution for your EKS node groups. Each specified subnet serves as a potential target for node placement, providing granular control over the geographical distribution of your EKS infrastructure. Adding more subnets to this configuration increases deployment flexibility and enables broader availability zone coverage for your workloads at the cost of increased network complexity and potential inter-AZ data transfer charges.
 
-
 <br/>
 
 ScyllaDB Instance Distribution: `scylla_subnets`
 
 The `scylla_subnets` variable determines the deployment topology of your ScyllaDB instances. Each specified subnet receives a dedicated ScyllaDB instance, with multiple subnet configurations automatically establishing a distributed cluster architecture. Configurations of two or more subnets enable high availability and data resilience through native ScyllaDB clustering at the cost of increased infrastructure complexity and proportionally higher operational expenses.
-
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->

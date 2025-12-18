@@ -36,6 +36,12 @@ exclude = [
     # Epic Games documentation (blocks automated requests with 403)
     "https://dev\\.epicgames\\.com/.*",
 
+    # Epic Games private GitHub repositories (require authentication)
+    "https://github\\.com/EpicGames/UnrealEngine/.*",
+
+    # Unity support pages (blocks automated requests with 403)
+    "https://support\\.unity\\.com/.*",
+
     # Localhost URLs
     "http://localhost.*",
     "https://localhost.*",
@@ -54,6 +60,9 @@ exclude = [
     # Example URLs in documentation
     "https://example\\.com/.*",
     "http://example\\.com/.*",
+
+    # AWS URLs with fragments (fragments may change without notice)
+    "https://aws\\.amazon\\.com/ec2/instance-types/#.*",
 ]
 
 # Exclude localhost and loopback addresses

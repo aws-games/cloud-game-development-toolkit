@@ -1,6 +1,6 @@
 # VDI (Virtual Desktop Infrastructure) Module
 
-[![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](LICENSE)
+[![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](../../LICENSE)
 
 > **ℹ️ Prerequisites**: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's [Packer templates](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) (`lightweight/` and `ue-gamedev/`), but any Windows Server 2019/2022/2025 AMI works. See [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/) for complete setup guidance.
 
@@ -66,7 +66,7 @@ module "vdi" {
 
 ## Architecture
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Remote User   │    │   VPN Client     │    │  VDI Workstation│
 │  Web Browser    │───▶│  (Private Mode)  │───▶│   EC2 Instance  │
@@ -384,67 +384,65 @@ presets = {
 }
 ```
 
-
-
 ## Troubleshooting
 
 ### Common Issues
 
-**Instance Launch Failures**
+#### Instance Launch Failures
 
 - Verify AMI exists: `aws ec2 describe-images --owners self --filters "Name=name,Values=*windows-server-2025*"`
 - Check AMI is in correct region
 - Ensure Packer build completed successfully
 
-**Drive Letter Issues**
+#### Drive Letter Issues
 
 - Check drive assignment: `Get-Disk | Format-Table Number, Size, BusType`
 - Volume scripts re-run automatically when volume configuration changes
 
-**Connection Timeouts**
+#### Connection Timeouts
 
 - Check security group allows your IP: `curl https://checkip.amazonaws.com/`
 - Verify instance is running: `aws ec2 describe-instances`
 - Test port connectivity: `telnet <instance-ip> 8443`
 
-**Password Retrieval Issues**
+#### Password Retrieval Issues
 
 - Wait 5-10 minutes after instance launch for password generation
 - Check Secrets Manager if user passwords not available
 - Use S3 backup key if Terraform output fails
 
-**DCV "Connecting" Spinner**
+#### DCV "Connecting" Spinner
 
 - Connect via SSM: `aws ssm start-session --target <instance-id>`
 - Check DCV sessions: `dcv list-sessions`
 - Restart DCV service: `Restart-Service dcvserver`
 
-**VPN Connection Issues**
+#### VPN Connection Issues
 
 - Check VPN endpoint DNS resolves: `nslookup [endpoint].prod.clientvpn.us-east-1.amazonaws.com`
 - Wait 5-15 minutes for AWS to activate endpoint
 - Check for CIDR conflicts with local network
 - Disconnect from other VPNs
 
-**User Accounts Not Created**
+#### User Accounts Not Created
 
 - Check SSM command status: `aws ssm list-command-invocations --instance-id <id>`
 - Check user creation status: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"`
 - Scripts re-run automatically when user configuration changes
 
-**Volume Initialization Issues**
+#### Volume Initialization Issues
 
 - Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
 - Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
 - Scripts re-run automatically when volume configuration changes
 
-**Volume Resize Issues**
+#### Volume Resize Issues
 
 - Check disk sizes vs partition sizes: `Get-Disk | Format-Table Number, Size, BusType`
 - Check partition sizes: `Get-Partition | Format-Table DiskNumber, DriveLetter, Size`
 - Manual partition extension: `Resize-Partition -DriveLetter F -Size (Get-PartitionSupportedSize -DriveLetter F).SizeMax`
 
-**Manual Volume Initialization (if SSM script failed)**
+#### Manual Volume Initialization (if SSM script failed)
 
 ```powershell
 # Initialize any RAW disks
@@ -454,7 +452,7 @@ New-Partition -AssignDriveLetter -UseMaximumSize |
 Format-Volume -FileSystem NTFS -Confirm:$false
 ```
 
-**Software Installation Problems**
+#### Software Installation Problems
 
 - Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`
 - Check failed packages: `aws ssm get-parameter --name "/{project}/{workstation}/software_message"`
@@ -491,15 +489,13 @@ aws ec2 get-password-data --instance-id <id> --priv-launch-key temp_key.pem
 aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumaki"
 ```
 
-
-
 ## Contributing
 
 See the [Contributing Guidelines](../../CONTRIBUTING.md) for information on how to contribute to this project.
 
 ## License
 
-This project is licensed under the MIT-0 License. See the [LICENSE](../../../LICENSE) file for details.
+This project is licensed under the MIT-0 License. See the [LICENSE](../../LICENSE) file for details.
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
@@ -658,7 +654,7 @@ No modules.
 - ✅ **Proper cleanup** - Drive letters managed automatically
 - ✅ **Clean plans** - No continuous Terraform drift
 
-**Alternative: Manual Administration**
+#### Alternative: Manual Administration
 
 For immediate results, you can skip waiting for SSM and manually initialize volumes:
 
@@ -668,9 +664,10 @@ For immediate results, you can skip waiting for SSM and manually initialize volu
 
 ### Volume Limitations
 
-**Volume Size Reduction - NOT SUPPORTED**
+#### Volume Size Reduction - NOT SUPPORTED
 
-**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform limitation, not a module limitation.
+**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform
+limitation, not a module limitation.
 
 **What Happens**: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):
 
