@@ -157,18 +157,38 @@ jobs:
           pip install -r docs/requirements.txt
           mkdocs build --strict
 
-  report-failures:
-    name: Report Documentation Failures
+  report-status:
+    name: Report Documentation Status
     needs: [check-links, lint-markdown, build-docs]
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
-    if: |
-      always() &&
-      (needs.check-links.result == 'failure' || needs.lint-markdown.result == 'failure' || needs.build-docs.result == 'failure')
+    if: always()
 
     steps:
+      # PR Comments: Delete comments for checks that are now passing
+      - name: Delete PR comment - Link Check Success
+        if: github.event_name == 'pull_request' && needs.check-links.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: doc-link-check
+          delete: true
+
+      - name: Delete PR comment - Lint Success
+        if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: doc-lint-failure
+          delete: true
+
+      - name: Delete PR comment - Build Success
+        if: github.event_name == 'pull_request' && needs.build-docs.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: doc-build-failure
+          delete: true
+
       # PR Comments: Post sticky comments for link and build failures
       - name: Comment on PR - Link Check Failure
         if: github.event_name == 'pull_request' && needs.check-links.result == 'failure'

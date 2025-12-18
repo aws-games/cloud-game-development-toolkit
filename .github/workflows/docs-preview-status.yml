@@ -52,16 +52,9 @@ jobs:
 
             🔗 **Preview URL**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/pr-${{ steps.find-pr.outputs.pr_number }}/
 
-            ### Validation Results
-            - ✅ Links: Checked in changed files - no broken links
-            - ✅ Markdown: Linted changed files - no issues found
-            - ✅ Build: Full site built successfully
-            - ✅ Deploy: Preview is live and accessible
-
             ### Build Information
             - **Status**: ✅ Live
             - **Commit**: `${{ steps.find-pr.outputs.pr_head_sha }}`
 
             ---
-            *Note: Only changed files were validated for performance. Full validation runs on merge to main.*
             *This preview will be automatically deleted when the PR is merged or closed.*
