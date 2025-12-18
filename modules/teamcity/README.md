@@ -5,6 +5,7 @@
 The TeamCity server relies on shared file system for persistent storage of configuration, build results, and current operation files as well as a SQL database to store build history, user data, build results, and runtime data. This module provides these services by provisioning an [Amazon Elastic File System](https://aws.amazon.com/efs/) and an [Amazon Amazon Aurora Serverless V2](https://aws.amazon.com/rds/aurora/serverless/) cluster running the PostgreSQL engine.
 
 ## Deployment Architecture
+
 ![TeamCity Module Architecture](./assets/media/diagrams/teamcity-server-architecture.png)
 
 ## Examples
@@ -14,7 +15,7 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
-
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -141,3 +142,4 @@ No modules.
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your Teamcity service. |
 | <a name="output_teamcity_cluster_id"></a> [teamcity\_cluster\_id](#output\_teamcity\_cluster\_id) | The ID of the ECS cluster |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

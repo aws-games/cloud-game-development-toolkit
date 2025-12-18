@@ -18,7 +18,7 @@ Quick reference for what makes an excellent CGD Toolkit module:
 
 ### **Preferred Structure**
 
-```
+```text
 module-name/
 ├── README.md            # Parent module documentation
 ├── data.tf              # Data source definitions
@@ -60,18 +60,21 @@ module-name/
 ### **When to Use Submodules**
 
 **✅ Use Submodules When:**
+
 - **Different providers required** (AWS vs Kubernetes vs Helm)
 - **Dependency conflicts between providers** (EKS cluster must exist before Kubernetes resources)
 - **Clear logical separation** benefits maintenance
 - **Reusable across multiple parent modules**
 
 **❌ Avoid Submodules When:**
+
 - Same provider throughout
 - Tightly coupled resources
 - No clear separation benefit
 - Adds complexity without value
 
 **Example Excellence Pattern:**
+
 ```hcl
 # DDC Module - Different providers justify submodules
 module "ddc_infra" {
@@ -226,10 +229,12 @@ resource "aws_lb" "load_balancer" { }  # Verbose
 **CRITICAL**: Modules should NOT define provider configurations - only version requirements.
 
 **Required Versions (Universal):**
+
 - **Terraform >= 1.11** - Required for enhanced testing framework and stability improvements
 - **AWS Provider >= 6.0.0** - MANDATORY for enhanced region support in multi-region deployments
 
 **Additional Providers (When Needed):**
+
 - **Kubernetes Provider >= 2.33.0** - For modules using Kubernetes resources
 - **Helm Provider >= 3.0.0** - For modules deploying Helm charts
 
@@ -472,6 +477,7 @@ output "ghcr_credentials_secret_arn" {
 ## ✅ Excellence Checklists
 
 ### **For New Modules**
+
 - [ ] Use `existing_` prefix for external resources
 - [ ] Implement standardized logical names (nlb, alb, main, etc.)
 - [ ] Create private DNS zones automatically
@@ -485,6 +491,7 @@ output "ghcr_credentials_secret_arn" {
 - [ ] Use examples for architecture decisions, not module variables
 
 ### **For Existing Modules Enhancement**
+
 - [ ] Plan breaking changes for v2.0.0
 - [ ] Add `moved` blocks for renamed resources
 - [ ] Update variable naming conventions
@@ -495,6 +502,7 @@ output "ghcr_credentials_secret_arn" {
 - [ ] Test upgrade paths with real state files
 
 ### **Security Excellence**
+
 - [ ] No 0.0.0.0/0 ingress rules in module code
 - [ ] Outbound 0.0.0.0/0 egress rules only for AWS APIs
 - [ ] Use dedicated security group rule resources
@@ -503,6 +511,7 @@ output "ghcr_credentials_secret_arn" {
 - [ ] Create internal security groups for service communication
 
 ### **Testing Excellence**
+
 - [ ] All modules have Terraform Test Framework tests
 - [ ] Tests use setup/ directory for SSM parameter retrieval
 - [ ] Both unit tests (plan) and integration tests (apply)
@@ -514,6 +523,7 @@ output "ghcr_credentials_secret_arn" {
 **Note**: These are our **recommended patterns and preferences**, not hard requirements for every module. Networking configurations should be defined at the example level to maintain module flexibility.
 
 ### **Recommended Compute Strategy**
+
 1. **Serverless** (Lambda, Fargate) - Preferred for simplicity and cost
 2. **Managed Containers** (ECS Fargate, EKS Fargate) - For scalable services
 3. **Container Orchestration** (ECS EC2, EKS EC2) - When Fargate limitations apply
@@ -524,17 +534,20 @@ output "ghcr_credentials_secret_arn" {
 **Note**: Networking decisions should be made at the **example level**, not enforced by modules. These are recommended patterns that examples can demonstrate.
 
 **External Access Pattern (Example-Driven):**
-```
+
+```text
 Internet Users → Public NLB → NLB Target (EKS, EC2, etc.)
 ```
 
 **External Access with ALB (When HTTP Routing Needed):**
-```
+
+```text
 Internet Users → Public NLB → ALB → Service Targets (EKS Pods, EC2, etc.)
 ```
 
 **Internal Access Pattern (Example-Driven):**
-```
+
+```text
 VPN/VDI Users → Private NLB → NLB Target (ALB, EKS, EC2, etc.)
 ```
 
@@ -543,6 +556,7 @@ VPN/VDI Users → Private NLB → NLB Target (ALB, EKS, EC2, etc.)
 ### **Excellence Pattern: Multi-Region Architecture**
 
 **Regional Isolation Pattern:**
+
 - **Separate module instances** per region
 - **Regional endpoints** for user control
 - **Manual disaster recovery** (users switch endpoints)
@@ -607,6 +621,7 @@ module "ddc_secondary" {
 ### **Breaking Changes Prevention**
 
 **Excellence Rules:**
+
 - **✅ ALWAYS use major version bumps** for breaking changes
 - **✅ ALWAYS test migration paths** with real state files
 - **✅ ALWAYS document breaking changes** comprehensively
@@ -614,6 +629,7 @@ module "ddc_secondary" {
 - **❌ NEVER change variable names** in minor/patch versions
 
 **Safe Enhancement Patterns:**
+
 ```hcl
 # ✅ SAFE - Adding new resources
 resource "aws_s3_bucket" "new_bucket" {

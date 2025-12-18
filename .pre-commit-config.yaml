@@ -51,3 +51,12 @@ repos:
         name: Lint staged markdown files
         args: ["--config", ".config/.markdownlint-cli2.jsonc", "--fix"]
         types: [markdown]
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.3.2
+    hooks:
+      - id: pylint
+        exclude: ^assets/packer/ # Exclude legacy packer scripts from linting

@@ -37,13 +37,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
           ref: ${{ inputs.git_ref || github.ref }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -57,21 +57,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/requirements.txt
 
-      - name: Build documentation (preview mode)
-        if: inputs.mode == 'preview'
-        run: mkdocs build --strict --site-dir site
-
       - name: Deploy preview
         if: inputs.mode == 'preview'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          destination_dir: ${{ inputs.destination_dir }}
-          publish_branch: gh-pages
-          keep_files: true
-          user_name: "github-actions[bot]"
-          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+        run: |
+          # Extract PR number from destination_dir (preview/pr-123 -> 123)
+          PR_NUM=$(echo "${{ inputs.destination_dir }}" | grep -oP 'pr-\K\d+')
+          # Deploy as a preview "version" with mike (builds from current branch, pushes to gh-pages)
+          mike deploy --push "preview-pr-${PR_NUM}"
 
       - name: Deploy to latest
         if: inputs.mode == 'latest'

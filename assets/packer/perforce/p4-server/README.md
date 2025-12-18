@@ -17,7 +17,6 @@ The `p4_configure.sh` script contains the majority of P4 Server setup. It perfor
 11. **SDP Verification**: Runs a script to verify the SDP installation.
 12. **P4Auth Extension**: Installs the [P4Auth Extension](https://github.com/perforce/helix-authentication-extension) and validates successful communication with P4Auth.
 
-
 ## How to Use
 
 Building this AMI is as easy as running (x86 example):
@@ -25,9 +24,11 @@ Building this AMI is as easy as running (x86 example):
 ``` bash
 packer init ./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 ```
+
 ``` bash
 packer validate ./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 ```
+
 ``` bash
 packer build ./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 ```

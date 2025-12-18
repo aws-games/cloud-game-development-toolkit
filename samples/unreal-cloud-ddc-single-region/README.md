@@ -90,7 +90,6 @@ Just a note here, you will have to specify the namespace to be DDC as the token 
 
 **It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.**
 
-
 This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the `"monitoring_url"` provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the [ScyllaDB Monitoring Stack Documentation](https://monitoring.docs.scylladb.com/branch-4.10/intro.html).
 
 <!-- markdownlint-disable -->

@@ -1,5 +1,6 @@
 # Jenkins
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -144,3 +145,4 @@ No modules.
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service hosting jenkins |
 | <a name="output_service_target_group_arn"></a> [service\_target\_group\_arn](#output\_service\_target\_group\_arn) | The ARN of the Jenkins service target group |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

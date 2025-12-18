@@ -74,7 +74,7 @@ make docs-serve
 This command:
 
 - Builds a container image with all required dependencies
-- Starts a local development server at http://127.0.0.1:8000
+- Starts a local development server at <http://127.0.0.1:8000>
 - Provides live reload - changes appear automatically in your browser
 - Requires no Python installation or VERSION/ALIAS parameters
 - Works with Docker (default) or Finch by setting `CONTAINER_RUNTIME=finch` in your environment.
@@ -139,7 +139,7 @@ Versioned documentation is created only for official releases:
 
 This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
 For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
-opensource-codeofconduct@amazon.com with any additional questions or comments.
+<opensource-codeofconduct@amazon.com> with any additional questions or comments.
 
 ## Security issue notifications
 

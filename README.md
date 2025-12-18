@@ -3,7 +3,6 @@
 [![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](LICENSE)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/aws-games/cloud-game-development-toolkit/badge)](https://api.securityscorecards.dev/projects/github.com/aws-games/cloud-game-development-toolkit)
 
-
 The **Cloud Game Development Toolkit (a.k.a. CGD Toolkit)** is a collection of templates and configurations for deploying game development infrastructure and tools on AWS.
 
 The project is designed for piecemeal usage:
@@ -22,7 +21,7 @@ The **Toolkit** consists of three key components:
 
 ## Getting Started
 
-**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/latest/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/latest/contributing.html)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
+**[📖 Documentation](https://aws-games.github.io/cloud-game-development-toolkit/latest/)**  |  **[💻 Contribute to the Project](https://aws-games.github.io/cloud-game-development-toolkit/latest/contributing/)**  |  **[💬 Ask Questions](https://github.com/aws-games/cloud-game-development-toolkit/discussions/)**  |  **[🚧 Roadmap](https://github.com/orgs/aws-games/projects/1/views/1)**
 
 ## Security
 

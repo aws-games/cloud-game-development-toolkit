@@ -1,4 +1,5 @@
 # Unity Licensing Server Module
+
 The [Unity Licensing Server](https://docs.unity.com/licensing/en-us/manual) is an application that manages a pool of floating licenses for the [Unity Editor](https://unity.com/products/unity-engine) within an organization. It functions as a centralized system, allowing administrators to assign and track Unity Editor licenses to users, providing greater control and flexibility compared to node-locked or named-user licenses. The server uses an HTTP or HTTPS connection to communicate with the Unity Licensing Client on user machines and offers a dashboard for administrators to monitor license usage and server health. The Unity Licensing Client is included with the Unity Editor (2019.4 or later) and the Unity Hub (3.1 or later). Floating licensing is available exclusively for Enterprise plans subscribers.
 
 While the Unity Licensing Server deployment has been simplified and streamlined in this module, it remains a multi-step process requiring manual intervention. A local zip file of the Unity Licensing Server is required when configuring and running the module. It can be downloaded from the `Organizations` section in the [Unity ID portal](https://id.unity.com/). For simplicity and cost optimization, this module requires the Linux version of the executable.
@@ -28,10 +29,10 @@ Upon deployment, two created files will be copied to the S3 bucket:
       | Linux   |`/usr/share/unity3d/config/`|
       | Mac     |`/Library/Application Support/Unity/config/`|
 
-
 The `server-registration-request.xml` will need to be uploaded to the [Unity ID portal](https://id.unity.com/) (where the Licensing Server executable was downloaded from) to register the server. Once successful, download the licenses zip file. Without renaming the file, upload it to the S3 bucket. A background process will detect the uploaded licenses file, and import them into the Unity Licensing Server, finishing the process.
 
 ## Deployment Architectures
+
 ![Simple Unity Licensing Server Architecture](./assets/media/diagrams/unity-licensing-server-architecture1.png)
 Simple architecture where clients connect directly to an EC2 instance in a public (or private) subnet through a primary ENI with static public/private IPs. The EC2 instance hosts the Unity Licensing Server and connects to AWS Secrets Manager and Amazon S3 (mounted via s3fs).
 
@@ -39,8 +40,10 @@ Simple architecture where clients connect directly to an EC2 instance in a publi
 Architecture providing enhanced security through network isolation where client traffic is routed through Amazon Route 53 to an Application Load Balancer before reaching the Unity Licensing Server.
 
 ## Examples
+
 For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unity/floating-license-server/examples).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -156,3 +159,4 @@ No modules.
 | <a name="output_unity_license_server_port"></a> [unity\_license\_server\_port](#output\_unity\_license\_server\_port) | Port the Unity Floating License Server will listen on. |
 | <a name="output_unity_license_server_s3_bucket"></a> [unity\_license\_server\_s3\_bucket](#output\_unity\_license\_server\_s3\_bucket) | S3 bucket name used by the Unity License Server service. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

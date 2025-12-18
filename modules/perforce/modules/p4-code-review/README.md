@@ -13,6 +13,7 @@ This module deploys the following resources:
 - Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.
 
 ## Architecture
+
 ![P4 Code Review Submodule Architecture](../../assets/media/diagrams/p4-code-review-architecture.png)
 
 ## Prerequisites
@@ -41,6 +42,7 @@ module "p4_code_review" {
 }
 ```
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -145,7 +147,7 @@ No modules.
 | <a name="input_p4d_port"></a> [p4d\_port](#input\_p4d\_port) | The P4D\_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666' | `string` | `"ssl:perforce:1666"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_s3_enable_force_destroy"></a> [s3\_enable\_force\_destroy](#input\_s3\_enable\_force\_destroy) | Enables force destroy for the S3 bucket for P4 Code Review access log storage. Defaults to true. | `bool` | `true` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-code-review",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-code-review",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
 
 ## Outputs
 
@@ -158,3 +160,4 @@ No modules.
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service running P4 Code Review |
 | <a name="output_target_group_arn"></a> [target\_group\_arn](#output\_target\_group\_arn) | The service target group for P4 Code Review |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

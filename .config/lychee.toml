@@ -14,8 +14,8 @@ timeout = 30
 # Note: include patterns are glob patterns, not regex
 include = ['\\.md$', '\\.html$', '\\.txt$']
 
-# Exclude patterns
-exclude = [
+# Exclude file paths (glob patterns)
+exclude_path = [
     # Exclude external modules and dependencies
     ".external_modules/**",
     "node_modules/**",
@@ -26,9 +26,53 @@ exclude = [
     ".cache/**",
     "site/**",
 
+    # Exclude internal documentation
+    ".kiro/**",
+    ".chglog/**",
+
+    # Exclude MkDocs template overrides (contain Jinja2 syntax)
+    "docs/overrides/**",
+
     # Exclude specific files
     "CHANGELOG.md",
     "THIRD-PARTY-LICENSES",
+]
+
+# Exclude URLs and mail addresses (regex patterns)
+exclude = [
+    # Epic Games documentation (blocks automated requests with 403)
+    "https://dev\\.epicgames\\.com/.*",
+    "https://www\\.unrealengine\\.com/.*",
+
+    # Epic Games private GitHub repositories and packages (require authentication)
+    "https://github\\.com/EpicGames/UnrealEngine/.*",
+    "https://github\\.com/orgs/EpicGames/packages/.*",
+
+    # Unity support pages (blocks automated requests with 403)
+    "https://support\\.unity\\.com/.*",
+
+    # Localhost URLs
+    "http://localhost.*",
+    "https://localhost.*",
+    "http://127\\.0\\.0\\.1.*",
+    "https://127\\.0\\.0\\.1.*",
+
+    # Preview deployment URLs (may not exist until published)
+    "https://aws-games\\.github\\.io/cloud-game-development-toolkit/preview/.*",
+    "https://aws-games\\.github\\.io/cloud-game-development-toolkit/latest/contributing/",
+
+    # GitHub edit links (these are dynamic and may not exist yet)
+    "https://github\\.com/aws-games/cloud-game-development-toolkit/edit/.*",
+
+    # GitHub project boards (may require authentication)
+    "https://github\\.com/orgs/aws-games/projects/.*",
+
+    # Example URLs in documentation
+    "https://example\\.com/.*",
+    "http://example\\.com/.*",
+
+    # AWS URLs with fragments (fragments may change without notice)
+    "https://aws\\.amazon\\.com/ec2/instance-types/#.*",
 ]
 
 # Exclude localhost and loopback addresses
@@ -43,27 +87,7 @@ include_mail = false
 # Accept status codes (200-299 are success, 429 is rate limit)
 accept = ["200..299", "429"]
 
-# Exclude specific URLs that are known to be problematic
-exclude_path = [
-    # GitHub edit links (these are dynamic and may not exist yet)
-    "https://github.com/aws-games/cloud-game-development-toolkit/edit/**",
 
-    # GitHub project boards (may require authentication)
-    "https://github.com/orgs/aws-games/projects/**",
-
-    # Example URLs in documentation
-    "https://example.com/**",
-    "http://example.com/**",
-
-    # Localhost URLs (glob patterns)
-    "http://localhost**",
-    "https://localhost**",
-    "http://127.0.0.1**",
-    "https://127.0.0.1**",
-
-    # Preview deployment URLs
-    "https://aws-games.github.io/cloud-game-development-toolkit/preview/**",
-]
 
 # Remap URLs (useful for checking local preview URLs)
 remap = []

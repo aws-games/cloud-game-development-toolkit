@@ -19,8 +19,8 @@ jobs:
     outputs:
       terraform_dirs: ${{ steps.find-dirs.outputs.terraform_dirs }}
     steps:
-      - uses: actions/checkout@v6.0.1
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           list-files: json
@@ -50,8 +50,8 @@ jobs:
     name: Format Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.1
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: "1.14.2"
       - run: terraform fmt -check -recursive
@@ -66,8 +66,8 @@ jobs:
         terraform_dir: ${{ fromJson(needs.changes.outputs.terraform_dirs) }}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6.0.1
-      - uses: terraform-linters/setup-tflint@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: terraform-linters/setup-tflint@4cb9feea73331a35b422df102992a03a44a3bb33 # v6.2.1
       - name: Lint ${{ matrix.terraform_dir }}
         run: |
           cd "${{ matrix.terraform_dir }}"
@@ -89,8 +89,8 @@ jobs:
       - name: Free up disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
 
-      - uses: actions/checkout@v6.0.1
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: "1.14.2"
 
@@ -106,7 +106,7 @@ jobs:
 
       - name: Comment on PR
         if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             github.rest.issues.createComment({

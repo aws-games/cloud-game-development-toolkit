@@ -5,6 +5,7 @@
 This module provisions P4 Server on an EC2 Instance with three dedicated EBS volumes for depots, metadata, and logs. It can also be configured to automatically install the required plugins to integrate with P4Auth. This is the default option if using the parent module. This allows end users to quickly set up single-sign-on for their Perforce Helix Core server.
 
 ## Deployment Architecture
+
 ![Helix Core Module Architecture](../../assets/media/diagrams/p4-server-architecture.png)
 
 ## Prerequisites
@@ -35,7 +36,7 @@ module "perforce_helix_core" {
 
 If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere.
 
-
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -144,7 +145,7 @@ No modules.
 | <a name="input_selinux"></a> [selinux](#input\_selinux) | Whether to apply SELinux label updates for P4 Server. Don't enable this if SELinux is disabled on your target operating system. | `bool` | `false` | no |
 | <a name="input_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#input\_super\_user\_password\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here. | `string` | `null` | no |
 | <a name="input_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#input\_super\_user\_username\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used. | `string` | `null` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-server",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-server",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
 | <a name="input_unicode"></a> [unicode](#input\_unicode) | Whether to enable Unicode configuration for P4 Server the -xi flag for p4d. Set to true to enable Unicode support. | `bool` | `false` | no |
 
 ## Outputs
@@ -160,3 +161,4 @@ No modules.
 | <a name="output_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#output\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
 | <a name="output_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#output\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

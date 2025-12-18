@@ -37,7 +37,11 @@
     "node_modules/**",
     ".external_modules/**",
     ".git/**",
+    ".terraform/**",
+    "**/.terraform/**",
     "CHANGELOG.md",
     "THIRD-PARTY-LICENSES",
+    ".kiro/**",
+    ".chglog/**",
   ],
 }

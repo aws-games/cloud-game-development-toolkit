@@ -22,33 +22,33 @@ For a video walkthrough demonstrating how to use this module, see this YouTube V
 ## Prerequisites
 
 - **Existing DNS Configured**
-    - To use this module, you must have an existing domain and related DNS configuration. The example at
+  - To use this module, you must have an existing domain and related DNS configuration. The example at
       `/examples/create-resources-complete` demonstrates how to provision resources while using Amazon Route53 (
       recommended) as the DNS provider. This will make deployment and management easier.
-    - You may optionally use a 3rd party DNS provider, however you must create records in your DNS provider to route to
+  - You may optionally use a 3rd party DNS provider, however you must create records in your DNS provider to route to
       the endpoints that you will create for each component when using the module (e.g. `perforce.example.com`,
       `review.perforce.example.com`, `auth.perforce.example.com`). The module has variables that you can use to
       customize the subdomains for the services (P4 Server, P4 Code Review, P4Auth), however if not set, the defaults
       mentioned above will be used. Ensure you create these records to allow users to connect to the services once
       provisioned in AWS.
-    - **Note:** When using either of the two options mentioned above, by default the module will create a **Route53
+  - **Note:** When using either of the two options mentioned above, by default the module will create a **Route53
       Private Hosted Zone**. This is used for internal communication and routing of traffic between P4 Server, P4 Code
       Review, and P4Auth.
 - **SSL TLS Certificate**
-    - You must have an existing SSL/TLS certificate, or create one during deployment alongside the other resources the
+  - You must have an existing SSL/TLS certificate, or create one during deployment alongside the other resources the
       module will create. This is used to provide secure connectivity to the Perforce resources that will be running in
       AWS. The certificate will be used by the Application Load Balancer (ALB) that the module will deploy for you. If
       using Amazon Route53, see the example at `/examples/create-resources-complete` to see how to create the related
       certificate in Amazon Certificate Manager (ACM). Using a Route53 as the DNS provider makes this process a bit
       easier, as ACM can automatically create the required CNAME records needed for DNS validation (a process required
       to verify DNS ownership) if you are also using Amazon Route53.
-    - If using an 3rd party DNS provider, you must add these CNAME records manually (in addition to the other records
+  - If using an 3rd party DNS provider, you must add these CNAME records manually (in addition to the other records
       mentioned above for general DNS purposes). If you would prefer to use a 3rd party to create the SSL/TLS
       certificate, the module allows you to import this into ACM to be used for the other components that will be
       deployed (such as the internal ALB). You may also use Email validation to validate DNS ownership.
 
 - **Existing Perforce Amazon Machine Image (AMI)**
-    - As mentioned in the architecture, an Amazon EC2 instance is used for the P4 Server, and this instance must be be
+  - As mentioned in the architecture, an Amazon EC2 instance is used for the P4 Server, and this instance must be be
       provisioned using an AMI that is configured for Perforce. To expedite this process, we have
       sample [HashiCorp Packer](https://www.packer.io/) templates provided in
       the [AWS Cloud Game Development Toolkit repository](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/perforce/p4-server)
@@ -91,7 +91,7 @@ packer validate perforce_x86.pkr.hcl
 packer build perforce_x86.pkr.hcl
 ```
 
-2. Reference your existing fully qualified domain name within each related Perforce service you would like to
+1. Reference your existing fully qualified domain name within each related Perforce service you would like to
    provision (e.g. `p4_server_config`, `p4_auth_config`, `p4_code_review_config`) using the
    `fully_qualified_domain_name` variable. We recommend abstracting this t a local value such as
    `local.fully_qualified_domain_name` to ensure this value is consistent across the modules. The module will
@@ -109,16 +109,16 @@ packer build perforce_x86.pkr.hcl
       shows you have to leverage Terraform to automatically create these records in an existing Route53 Public Hosted
       Zone, as well as how to create the certificate in Amazon Certificate Manager (ACM).
 
-3. Make any other modifications as desired (such as referencing existing VPC resources) and run `terraform init` to
+2. Make any other modifications as desired (such as referencing existing VPC resources) and run `terraform init` to
    initialize Terraform in the current working directory, `terraform plan` to create and validate the execution plan of
    the resources that will be created, and finally `terraform apply` to create the resources in your AWS Account.
-4. Once the resources have finished provisioning successfully, you will need to modify your inbound Security Group Rules
+3. Once the resources have finished provisioning successfully, you will need to modify your inbound Security Group Rules
    on the P4 Commit Server Instance to allow TCP traffic from your public IP on port 1666 (the perforce default port).
    This is necessary to allow your local machine(s) to connect to the P4 Commit Server. Optionally, you can pass in an entire security group to also add to the resource. The [complete example](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete) demonstrates how to use the `existing_security_groups` variable to accomplish this.
     - **Note:** You may use other means to allow traffic to reach this EC2 Instance (Customer-managed prefix list, VPN
       to the VPC that the instance is running in, etc.) but regardless, it is essential that you have the security group
       rules set configured correctly to allow access.
-5. Next, modify your inbound Security Group rules for the Perforce Network Load Balancer (NLB) to allow traffic from
+4. Next, modify your inbound Security Group rules for the Perforce Network Load Balancer (NLB) to allow traffic from
    HTTPS (port 443) from your public IP address/ This is to provide access to the P4 Code Review and P4Auth services
    that are running behind the Application Load Balancer (ALB). Optionally, you can pass in an entire security group to also add to the resource. The [complete example](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete) demonstrates how to use the `existing_security_groups` variable to accomplish this.
     - **Note:** You may use other means to allow traffic to reach this the Network Load Balancer (Customer-managed
@@ -128,14 +128,15 @@ packer build perforce_x86.pkr.hcl
       subnets that you reference. This is very important for the internal routing between the P4 resources, as well as
       the related Security Groups. Failure to set these correctly may cause a variety of connectivity issues such as web
       pages not loading, NLB health checks failing, etc.
-6. Use the provided Terraform outputs to quickly find the URL for P4Auth, P4 Code Review. If you haven't modified the
+5. Use the provided Terraform outputs to quickly find the URL for P4Auth, P4 Code Review. If you haven't modified the
    default values, relevant values for the P4 Server default username/password, and the P4 Code Review default
    username/password were created for you and are stored in AWS Secrets Manager.
-7. In P4V, use the url of `ssl:<your-supplied-root-domain>:1666` and the username and password stored in AWS Secrets
+6. In P4V, use the url of `ssl:<your-supplied-root-domain>:1666` and the username and password stored in AWS Secrets
    Manager to gain access to the commit server.
-8. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
+7. At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
    Code Review) and P4Auth (P4Auth).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -231,7 +232,7 @@ packer build perforce_x86.pkr.hcl
 | <a name="input_shared_network_load_balancer_name"></a> [shared\_network\_load\_balancer\_name](#input\_shared\_network\_load\_balancer\_name) | The name of the shared Network Load Balancer for the Perforce resources. | `string` | `"p4nlb"` | no |
 | <a name="input_shared_nlb_access_logs_prefix"></a> [shared\_nlb\_access\_logs\_prefix](#input\_shared\_nlb\_access\_logs\_prefix) | Log prefix for shared NLB access logs. | `string` | `"perforce-nlb-"` | no |
 | <a name="input_shared_nlb_subnets"></a> [shared\_nlb\_subnets](#input\_shared\_nlb\_subnets) | A list of subnets to attach to the shared network load balancer. | `list(string)` | `null` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "terraform-aws-perforce",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "-"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "terraform-aws-perforce",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "-"<br>}</pre> | no |
 
 ## Outputs
 
@@ -260,3 +261,4 @@ packer build perforce_x86.pkr.hcl
 | <a name="output_shared_application_load_balancer_arn"></a> [shared\_application\_load\_balancer\_arn](#output\_shared\_application\_load\_balancer\_arn) | The ARN of the shared application load balancer. |
 | <a name="output_shared_network_load_balancer_arn"></a> [shared\_network\_load\_balancer\_arn](#output\_shared\_network\_load\_balancer\_arn) | The ARN of the shared network load balancer. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
