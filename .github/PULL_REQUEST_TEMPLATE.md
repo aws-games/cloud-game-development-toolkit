@@ -14,9 +14,9 @@
 
 If your change doesn't seem to apply, please leave them unchecked.
 
-* [ ] I have performed a self-review of this change
-* [ ] Changes have been tested
-* [ ] Changes are documented
+- [ ] I have performed a self-review of this change
+- [ ] Changes have been tested
+- [ ] Changes are documented
 
 <details>
 <summary>Is this a breaking change?</summary>
