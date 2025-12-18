@@ -26,6 +26,13 @@ exclude_path = [
     ".cache/**",
     "site/**",
 
+    # Exclude internal documentation
+    ".kiro/**",
+    ".chglog/**",
+
+    # Exclude MkDocs template overrides (contain Jinja2 syntax)
+    "docs/overrides/**",
+
     # Exclude specific files
     "CHANGELOG.md",
     "THIRD-PARTY-LICENSES",
@@ -35,9 +42,11 @@ exclude_path = [
 exclude = [
     # Epic Games documentation (blocks automated requests with 403)
     "https://dev\\.epicgames\\.com/.*",
+    "https://www\\.unrealengine\\.com/.*",
 
-    # Epic Games private GitHub repositories (require authentication)
+    # Epic Games private GitHub repositories and packages (require authentication)
     "https://github\\.com/EpicGames/UnrealEngine/.*",
+    "https://github\\.com/orgs/EpicGames/packages/.*",
 
     # Unity support pages (blocks automated requests with 403)
     "https://support\\.unity\\.com/.*",
@@ -48,8 +57,9 @@ exclude = [
     "http://127\\.0\\.0\\.1.*",
     "https://127\\.0\\.0\\.1.*",
 
-    # Preview deployment URLs
+    # Preview deployment URLs (may not exist until published)
     "https://aws-games\\.github\\.io/cloud-game-development-toolkit/preview/.*",
+    "https://aws-games\\.github\\.io/cloud-game-development-toolkit/latest/contributing/",
 
     # GitHub edit links (these are dynamic and may not exist yet)
     "https://github\\.com/aws-games/cloud-game-development-toolkit/edit/.*",
