@@ -13,6 +13,7 @@ This document captures the design decisions and patterns we've collectively agre
 ## Core Design Philosophy
 
 ### **1. Readability First**
+
 **Why**: Game development teams often include infrastructure newcomers. Clear, understandable code reduces onboarding time and prevents misconfigurations.
 
 - Prefer explicit over implicit configurations
@@ -21,6 +22,7 @@ This document captures the design decisions and patterns we've collectively agre
 - Comment complex logic with business context
 
 ### **2. Flexibility Through Modularity**
+
 **Why**: Game studios have diverse infrastructure needs. Rigid, opinionated modules force workarounds and reduce adoption.
 
 - Modules provide building blocks, not complete solutions
@@ -29,6 +31,7 @@ This document captures the design decisions and patterns we've collectively agre
 - Enable customization without requiring module forking
 
 ### **3. Conservative Variable Exposure**
+
 **Why**: Every exposed variable is a commitment to backward compatibility. We learned this from early modules that exposed too many options.
 
 - Start with minimal variables based on known use cases
@@ -37,6 +40,7 @@ This document captures the design decisions and patterns we've collectively agre
 - Default values should work for 80% of use cases
 
 ### **4. Security by Default**
+
 **Why**: Game development infrastructure often handles sensitive assets and player data. Security mistakes are costly and hard to fix later.
 
 - No 0.0.0.0/0 ingress rules in module code (unless you have a ***really*** good reason - we will ask) - [more details](#security-patterns)
@@ -47,7 +51,8 @@ This document captures the design decisions and patterns we've collectively agre
 ## Module Architecture
 
 ### **Directory Structure**
-```
+
+```text
 modules/service-name/
 ├── main.tf              # Parent module orchestration
 ├── variables.tf         # Input variables with validation
@@ -65,6 +70,7 @@ modules/service-name/
 ```
 
 ### **Parent Module Pattern**
+
 **Why**: When modules have submodules, the parent focuses on user experience while submodules handle implementation details.
 
 **Responsibilities**:
@@ -76,6 +82,7 @@ modules/service-name/
 - Expose essential outputs for downstream usage
 
 ### **When to Use Submodules**
+
 **Why Split**: Provider separation or complexity management.
 
 ```hcl
@@ -98,6 +105,7 @@ module "s3_bucket" {
 ```
 
 ### **Submodule Variable Alignment Pattern**
+
 **When using submodules, align parent variables directly to submodules for clarity:**
 
 ```hcl
@@ -144,6 +152,7 @@ module "infra" {
 ```
 
 **Benefits of Submodule Alignment:**
+
 - **Clear responsibility** - Users understand which settings affect which components
 - **Easy orchestration** - Parent module passes entire objects to submodules
 - **Conditional creation** - `config = null` skips entire submodules
@@ -153,13 +162,17 @@ module "infra" {
 ## Networking Standards
 
 ### **Access Patterns**
+
 **CGD Toolkit modules support three standardized access patterns:**
+
 - **Internet-Accessible** - Public services (DDC, Perforce, Jenkins) with controlled external access
 - **VPC-Only** - Internal services (Databases, Monitoring) accessible only within VPC
 - **Mixed** - Services with both public and private components
 
 ### **Load Balancer Strategy**
+
 **Consistent approach across all modules:**
+
 - **Default to NLB** for most services (connection-level health checks, static IPs, predictable routing)
 - **ALB when needed** for HTTP/HTTPS routing, WAF integration, path-based routing
 - **User controls creation** via boolean flags or configuration objects
@@ -167,14 +180,18 @@ module "infra" {
 - **Cost justified** - ~$16/month NLB vs Route53 health check complexity
 
 ### **DNS Patterns**
+
 **Regional endpoints by default following AWS service patterns:**
+
 - **Regional endpoints** - `us-east-1.service.company.com` (performance, isolation, explicit control)
 - **Private zones** - Always created for internal service discovery (`service.internal`)
 - **Global endpoints** - Optional for advanced routing (latency-based, geolocation, failover)
 - **DNS hierarchy** - `region.cluster.platform.service.domain` for complex services
 
 ### **Variable Structure Philosophy**
+
 **Hybrid approach following popular module patterns:**
+
 - **Flat variables** for simple, common settings (following terraform-aws-modules pattern)
 - **Complex objects** for logical grouping when they provide clear value (following AWS-IA pattern)
 - **Submodule alignment** - Complex objects that map directly to submodules (`infra_config`, `services_config`)
@@ -183,7 +200,9 @@ module "infra" {
 - **Intelligent defaults** - Work for 80% of use cases, reduce cognitive load
 
 ### **Security Group Integration**
+
 **Follow Terraform resource patterns for familiarity:**
+
 - **User-controlled external access** - Users provide security groups with their own rules
 - **Module-created internal groups** - For service-to-service communication
 - **Component-specific grouping** - General + NLB-specific + ALB-specific
@@ -192,6 +211,7 @@ module "infra" {
 ## Variable Design Patterns
 
 ### **General Naming Conventions**
+
 **Why Descriptive Names**: We avoid generic names like `this` because they don't scale and become confusing when you need multiple resources.
 
 ```hcl
@@ -213,12 +233,14 @@ resource "aws_s3_bucket" "main" { }    # Still not descriptive
 ```
 
 **The Problem with Generic Names**:
+
 - **Not descriptive**: `this` tells you nothing about purpose
 - **Doesn't scale**: Need a second resource? Now it's `this2` or you rename everything
 - **Hard to reference**: `aws_lb.this.dns_name` - which load balancer?
 - **Confusing in outputs**: `nlb_dns_name = aws_lb.this.dns_name` - misleading
 
 **Our Standard Logical Names**:
+
 - **`nlb`**: Network Load Balancer
 - **`alb`**: Application Load Balancer
 - **`main`**: Primary resource of its type (EKS cluster, VPC)
@@ -228,6 +250,7 @@ resource "aws_s3_bucket" "main" { }    # Still not descriptive
 - **`private`**: Private DNS zone
 
 ### **3-Tier Architecture**
+
 **Why**: Users consistently need to separate applications, supporting services, and load balancers.
 
 ```hcl
@@ -260,6 +283,7 @@ variable "load_balancer_config" {
 ```
 
 ### **Security Group Strategy**
+
 ```hcl
 variable "security_groups" {
   type        = list(string)
@@ -280,9 +304,11 @@ variable "additional_security_groups" {
 ## Resource Patterns
 
 ### **Remote Module Usage Philosophy**
+
 **CGD Toolkit modules prefer direct resources over remote module dependencies.**
 
 #### **Default Approach: Direct Resources**
+
 **Start with direct AWS resources unless there's a compelling reason for a module:**
 
 ```hcl
@@ -310,6 +336,7 @@ module "eks" {
 ```
 
 #### **When Remote Modules Add Complexity**
+
 **Common issues we've encountered with remote modules:**
 
 - **Version conflicts**: Remote modules pin provider versions that conflict with our requirements
@@ -320,6 +347,7 @@ module "eks" {
 - **Documentation gaps**: Remote module docs may not cover our specific use cases
 
 #### **Acceptable Remote Module Usage**
+
 **Use remote modules only when there's clear benefit:**
 
 ```hcl
@@ -337,6 +365,7 @@ module "eks_addons" {
 ```
 
 **Criteria for acceptable remote module usage:**
+
 - **Stability**: Module has long track record of stability
 - **Maintenance**: Active maintenance and responsive maintainers
 - **Customization**: Exposes all configuration we need
@@ -344,6 +373,7 @@ module "eks_addons" {
 - **Clear benefit**: Pros outweigh cons in terms of complexity it helps resolve
 
 #### **Fork-First Strategy**
+
 **When you need a remote module, fork it first:**
 
 ```hcl
@@ -366,6 +396,7 @@ module "component" {
 ```
 
 **Fork-first benefits:**
+
 - **Immediate fixes**: Fix bugs without waiting for upstream
 - **Custom features**: Add CGD Toolkit-specific functionality
 - **Version control**: No external version dependency conflicts
@@ -375,18 +406,21 @@ module "component" {
 #### **Implementation Guidelines**
 
 ##### **For New Modules**
+
 1. **Start with direct resources**: Always begin with AWS resources directly
 2. **Evaluate complexity**: Only consider modules if direct implementation is extremely complex
 3. **Fork if needed**: If you must use a remote module, fork it first
 4. **Document decision**: Explain why direct resources weren't sufficient
 
 ##### **For Existing Modules**
+
 1. **Audit dependencies**: Review existing remote module usage
 2. **Plan replacement**: Create plan to replace with direct resources
 3. **Gradual migration**: Replace remote modules incrementally
 4. **Test thoroughly**: Ensure functionality remains identical
 
 ##### **Code Review Checklist**
+
 **When reviewing PRs that add remote modules:**
 
 - [ ] **Justification provided**: Clear explanation why direct resources aren't sufficient
@@ -399,6 +433,7 @@ module "component" {
 #### **Examples of Our Approach**
 
 ##### **EKS Cluster Creation**
+
 ```hcl
 # We use direct resources instead of remote EKS modules
 resource "aws_eks_cluster" "main" {
@@ -414,6 +449,7 @@ resource "aws_eks_node_group" "main" {
 ```
 
 ##### **Acceptable Remote Module Usage in Core Modules**
+
 ```hcl
 # Example: EKS add-ons where complexity reduction justifies remote module
 module "eks_addons" {
@@ -433,6 +469,7 @@ resource "aws_eks_cluster" "main" {
 ```
 
 ##### **VPC Usage in Examples**
+
 ```hcl
 # In examples, we may use well-established modules for convenience
 module "vpc" {
@@ -443,6 +480,7 @@ module "vpc" {
 ```
 
 #### **Migration Strategy**
+
 **For modules currently using remote dependencies:**
 
 1. **Identify usage**: Audit current remote module usage
@@ -452,6 +490,7 @@ module "vpc" {
 5. **Document changes**: Update examples and documentation
 
 **This approach ensures:**
+
 - **Full control**: We control all aspects of resource creation
 - **Faster iteration**: No waiting for upstream changes
 - **Reduced complexity**: Fewer dependencies to manage
@@ -459,9 +498,11 @@ module "vpc" {
 - **Customization freedom**: Can modify resources for game development needs
 
 ### **Centralized Logging Design Patterns**
+
 **CGD Toolkit modules standardize on centralized logging for visibility and troubleshooting.**
 
 #### **Logging Philosophy**
+
 **All modules provide optional centralized logging with intelligent categorization:**
 
 - **User controlled**: Users can enable as much logging as desired for maximum visibility
@@ -474,9 +515,11 @@ module "vpc" {
 **Why CloudWatch Logs**: We standardize on CloudWatch Logs as the native AWS logging service. From there, customers can integrate with any monitoring solution they prefer - Grafana, Datadog, Splunk, New Relic, or custom solutions. This approach provides maximum flexibility while ensuring consistent log collection.
 
 #### **Three-Tier Logging Structure**
+
 **Logs are categorized into three distinct tiers:**
 
 ##### **Infrastructure Logs**
+
 **AWS managed services and infrastructure components:**
 
 ```hcl
@@ -490,11 +533,13 @@ infrastructure = {
 ```
 
 **Examples by module:**
+
 - **DDC Module**: NLB access logs, EKS control plane logs
 - **Perforce Module**: NLB/ALB access logs, EKS control plane logs, RDS logs
 - **Jenkins Module**: ALB access logs, EKS control plane logs
 
 ##### **Application Logs**
+
 **Core business logic of the primary application:**
 
 ```hcl
@@ -507,11 +552,13 @@ application = {
 ```
 
 **Examples:**
+
 - **DDC**: Unreal Cloud DDC application pod logs
 - **Perforce**: P4D server logs, Helix Core logs
 - **Jenkins**: Jenkins controller and agent logs
 
 ##### **Service Logs**
+
 **Supporting services that enable the primary application:**
 
 ```hcl
@@ -524,11 +571,13 @@ service = {
 ```
 
 **Examples:**
+
 - **DDC**: ScyllaDB database logs
 - **Perforce**: P4-auth service, P4-code-review service
 - **Jenkins**: Supporting databases, caches, or queues
 
 #### **Standard Logging Variable Pattern**
+
 **All modules implement consistent logging configuration:**
 
 ```hcl
@@ -555,6 +604,7 @@ variable "centralized_logging" {
 ```
 
 #### **Log Group Naming Convention**
+
 **Consistent naming across all modules:**
 
 ```hcl
@@ -574,6 +624,7 @@ variable "centralized_logging" {
 #### **Usage Examples**
 
 ##### **Enable All Logging with Defaults**
+
 ```hcl
 module "ddc" {
   centralized_logging = {
@@ -585,6 +636,7 @@ module "ddc" {
 ```
 
 ##### **Custom Retention and Prefix**
+
 ```hcl
 module "perforce" {
   centralized_logging = {
@@ -606,6 +658,7 @@ module "perforce" {
 ```
 
 ##### **Selective Logging**
+
 ```hcl
 module "jenkins" {
   centralized_logging = {
@@ -620,6 +673,7 @@ module "jenkins" {
 ```
 
 #### **Default Retention Periods**
+
 **Cost-optimized defaults based on log type:**
 
 - **Infrastructure**: 90 days (AWS service troubleshooting)
@@ -627,9 +681,11 @@ module "jenkins" {
 - **Service**: 60 days (database analysis and performance tuning)
 
 #### **Module-Specific Logging Patterns**
+
 **Not all modules fit the standard 3-tier structure. Modules should only create log groups for components they actually have.**
 
 ##### **Single Category Pattern (VDI Module Example)**
+
 **When modules have simple architectures where everything happens in one place:**
 
 ```hcl
@@ -641,12 +697,14 @@ resource "aws_cloudwatch_log_group" "vdi_logs" {
 ```
 
 **Use single category when:**
+
 - All functionality runs on same compute (EC2 instances)
 - SSM-based architecture where everything logs to same destination
 - No separate infrastructure services to log
 - Simpler structure matches module reality
 
 ##### **Standard 3-Tier Pattern (DDC/Perforce Module Example)**
+
 **When modules have distinct infrastructure, application, and service components:**
 
 ```hcl
@@ -659,6 +717,7 @@ service        = { "scylla" = {} }
 **Principle**: Match logging structure to module architecture, not arbitrary standards.
 
 #### **Implementation Requirements**
+
 **All modules must implement:**
 
 - **CloudWatch Log Groups**: Created for each enabled component
@@ -669,6 +728,7 @@ service        = { "scylla" = {} }
 - **Documentation**: Clear explanation of what each component logs
 
 #### **Component Validation**
+
 **Modules validate only supported components:**
 
 ```hcl
@@ -696,6 +756,7 @@ validation {
 ```
 
 #### **Cost Considerations**
+
 **Logging configuration balances visibility with cost:**
 
 - **Shorter retention = lower costs**: Adjust based on compliance needs
@@ -704,6 +765,7 @@ validation {
 - **Log sampling**: Consider sampling for high-volume logs
 
 #### **Security and Compliance**
+
 **All logging implementations include:**
 
 - **Encryption at rest**: CloudWatch logs encrypted with KMS
@@ -713,6 +775,7 @@ validation {
 - **Data retention**: Configurable retention for compliance requirements
 
 #### **Future: CGD Toolkit Monitoring Module**
+
 **We're actively developing a comprehensive monitoring module:**
 
 - **Amazon Managed Grafana**: Dashboard solution consuming CloudWatch Logs
@@ -724,6 +787,7 @@ validation {
 **Design principle**: Since all CGD Toolkit modules send logs to CloudWatch Logs when enabled, any monitoring solution that supports CloudWatch integration can be used - whether it's our future monitoring module, Amazon Managed Grafana, Datadog, Splunk, or custom solutions.
 
 **This standardized approach provides:**
+
 - **Maximum visibility**: Users control how much logging they want enabled
 - **Consistent logging**: Same patterns across all CGD Toolkit modules
 - **Monitoring flexibility**: Works with any CloudWatch-compatible monitoring solution
@@ -733,6 +797,7 @@ validation {
 - **Future-ready**: Foundation for CGD Toolkit monitoring module and other solutions
 
 ### **Naming Strategy**
+
 **Why**: AWS services have different naming patterns when using prefixes. Our approach provides predictable, referenceable names.
 
 ```hcl
@@ -755,12 +820,14 @@ locals {
 ```
 
 ### **Load Balancer Philosophy**
+
 **Why**: Game services often need Layer 4 (NLB) for performance. ALB adds value for HTTP/HTTPS routing scenarios.
 
 - **NLB**: Always available, required for most modules
 - **ALB**: Optional, module-specific validation prevents unsupported usage
 
 ### **DNS Patterns**
+
 **Why Regional**: Like AWS services, we default to regional endpoints for performance, isolation, and explicit control.
 
 ```hcl
@@ -777,6 +844,7 @@ locals {
 ### **The 0.0.0.0/0 Rule**
 
 #### **Ingress (Incoming) - Avoid 0.0.0.0/0**
+
 **Risk**: 🔴 **HIGH** - Direct attack surface
 
 ```hcl
@@ -790,6 +858,7 @@ resource "aws_vpc_security_group_ingress_rule" "bad" {
 ```
 
 #### **Egress (Outgoing) - Often Necessary**
+
 **Risk**: 🟡 **MEDIUM** - Controlled by application
 
 ```hcl
@@ -801,6 +870,7 @@ resource "aws_vpc_security_group_egress_rule" "aws_apis" {
 ```
 
 ### **Implementation Pattern**
+
 ```hcl
 # We create internal security groups
 resource "aws_security_group" "internal" {
@@ -821,11 +891,13 @@ resource "aws_lb" "nlb" {
 ## Provider Patterns
 
 ### **Provider Strategy: Root vs Parent vs Submodules**
+
 **Why This Matters**: Provider configuration depends on where Terraform runs and how modules are consumed.
 
 **Module Consumption**: We assume users will reference CGD modules remotely via Git URLs, but they could also clone/fork the toolkit and deploy from examples directories directly.
 
 #### **Root Module (Where `terraform init` Runs)**
+
 **Scenario**: Users run Terraform commands here - examples, user's own infrastructure
 
 ```hcl
@@ -851,9 +923,11 @@ provider "kubernetes" {
 ```
 
 #### **Parent Module (CGD Toolkit Modules)**
+
 **Scenario**: CGD Toolkit modules that both create resources AND orchestrate submodules when needed
 
 **Single Region (Simple)**:
+
 ```hcl
 # modules/unreal-cloud-ddc/main.tf
 # Parent module creates some resources directly AND orchestrates submodules
@@ -882,6 +956,7 @@ module "services" {
 ```
 
 **Multi-Region (Complex)**:
+
 ```hcl
 # Root module: examples/multi-region/main.tf
 # User must handle multi-region complexity at root level
@@ -924,6 +999,7 @@ provider "kubernetes" {
 ```
 
 #### **Submodules**
+
 **Scenario**: Receive providers from parent, use specific provider family
 
 ```hcl
@@ -937,9 +1013,11 @@ resource "helm_release" "ddc" { }
 ```
 
 ### **Provider Value Sourcing Strategies**
+
 **Why This Matters**: Providers need configuration values, but the source depends on timing and dependencies.
 
 #### **Option 1: Data Sources (Independent Resources)**
+
 **When**: Referencing existing, independent infrastructure
 
 ```hcl
@@ -960,6 +1038,7 @@ provider "kubernetes" {
 ```
 
 #### **Option 2: Module Outputs (Dependent Resources)**
+
 **When**: Module creates the infrastructure that providers need
 
 ```hcl
@@ -976,6 +1055,7 @@ provider "kubernetes" {
 ```
 
 #### **Option 3: Static/Hardcoded Values**
+
 **When**: Known, unchanging values (rare, mostly for testing)
 
 ```hcl
@@ -987,9 +1067,11 @@ provider "kubernetes" {
 ```
 
 ### **Conditional Provider Configuration**
+
 **Why This Matters**: Provider configurations are evaluated during every plan/apply. Understanding when to use `try()` vs explicit null checks is critical.
 
 #### **Use `try()` for Data Sources**
+
 **Why**: Prevents plan failures when resources don't exist yet.
 
 ```hcl
@@ -1010,6 +1092,7 @@ provider "kubernetes" {
 ```
 
 #### **Use Explicit Null Checks for Module Outputs (CGD Toolkit Pattern)**
+
 **Why**: Clearer dependency logic and better debugging.
 
 ```hcl
@@ -1031,11 +1114,14 @@ provider "kubernetes" {
 ### **Multi-Region: Global Replication Architecture**
 
 #### **Standard Terraform Multi-Region Patterns**
+
 **How most Terraform users handle multi-region deployments:**
 
 ##### **Pattern A: Monorepo Regional Structure (Less Recommended)**
+
 **One Git repository per AWS region containing ALL applications:**
-```
+
+```text
 company-infrastructure-us-east-1/
 ├── networking/
 ├── databases/
@@ -1059,8 +1145,10 @@ company-infrastructure-us-west-2/
 **Cons**: Repository proliferation, monolithic state files, team conflicts
 
 ##### **Pattern B: Application-Specific with Regional Folders (Recommended)**
+
 **Application-specific repositories with regional deployment folders:**
-```
+
+```text
 company-ddc-infrastructure/
 ├── deployments/
 │   ├── us-east-1/
@@ -1085,6 +1173,7 @@ company-perforce-infrastructure/
 **Cons**: Requires coordination for cross-region features
 
 **Why Pattern B Works Better**:
+
 - **Application ownership**: Repository aligns with team responsibilities
 - **Separate state files**: Each region has independent, manageable state
 - **Team independence**: Teams can work on different regions simultaneously
@@ -1092,11 +1181,13 @@ company-perforce-infrastructure/
 - **Scalable**: Multiple deployments per region possible
 
 #### **CGD Toolkit Multi-Region Philosophy**
+
 **Multi-region in game development is about PERFORMANCE, not disaster recovery.**
 
 **Why We're Different**: Game development applications (Perforce, DDC) work perfectly in single-region but are **often deployed multi-region** for geographically distributed teams.
 
 **Primary Use Case**: **Global Development Teams**
+
 - **DDC**: Works great single-region, but multi-region provides low-latency cache access for global teams
 - **Perforce**: Perfectly functional single-region, but multi-region enables synchronized repositories across continents
 - **Performance-driven**: Multi-region reduces latency for geographically distributed developers
@@ -1104,18 +1195,21 @@ company-perforce-infrastructure/
 - **Multi-region benefit**: Global teams get better performance with regional data locality
 
 **Primary Purpose: Performance, NOT Disaster Recovery**:
+
 - **Performance-driven**: Multi-region DDC/Perforce is for **active global usage** and low-latency access
 - **DR as side benefit**: Cross-region replication for performance means either region *could* serve as DR
 - **Nuanced DR considerations**: While data replication enables DR capabilities, full DR requires application-specific planning
 - **Separate DR deployments**: For dedicated DR (not performance), use completely separate Terraform deployments
 
 **Why We Break the Anti-Pattern Rule**:
+
 - **Performance benefit**: Global teams get better performance with low-latency regional access
 - **Cross-region coordination**: When deploying multi-region, replication setup requires shared resources
 - **Single system**: Multi-region deployments create one global application, not separate deployments
 - **Optional optimization**: Multi-region is a performance optimization, not a technical requirement
 
 #### **Single Apply Requirement**
+
 **CRITICAL**: All CGD Toolkit modules MUST support single-step multi-region deployment.
 
 ```bash
@@ -1125,13 +1219,15 @@ terraform apply
 ```
 
 **Why Single Apply Matters**:
+
 - **Global replication setup**: Cross-region configuration happens during initial deployment
 - **Dependency coordination**: Primary region creates resources that secondary regions need
 - **User experience**: Multi-region should be as easy as single-region
 - **Production readiness**: No manual coordination steps between regions
 
 #### **Terraform Multi-Region Fundamentals**
-**Each Module Instance = Exactly One Region**
+
+##### **Each Module Instance = Exactly One Region**
 
 ```hcl
 # This is the fundamental pattern - each module does ONE region only
@@ -1151,6 +1247,7 @@ module "ddc_us_west_2" {
 **AWS Provider v6 Revolution**: Enhanced region support eliminates AWS provider aliases.
 
 #### **Before AWS Provider v6 (Traditional)**
+
 **Problem**: Every region needed explicit AWS provider aliases
 
 ```hcl
@@ -1183,6 +1280,7 @@ module "ddc_us_west_2" {
 ```
 
 #### **With AWS Provider v6 (Enhanced Region Support)**
+
 **Magic**: AWS provider automatically inherits region from module configuration
 
 ```hcl
@@ -1224,18 +1322,21 @@ provider "kubernetes" {
 ```
 
 #### **How AWS Provider v6 Works**
+
 1. **Module declares region**: `region = "us-east-1"`
 2. **AWS provider auto-configures**: Uses that region automatically
 3. **No aliases needed**: AWS resources deploy to correct region
 4. **Simple scaling**: Add regions by adding module blocks (max 2 recommended)
 
 #### **What Still Needs Aliases**
+
 - **Kubernetes provider**: Not enhanced, needs manual aliases
 - **Helm provider**: Not enhanced, needs manual aliases
 - **kubectl provider**: Not enhanced, needs manual aliases
 - **Any other provider**: Only AWS has enhanced region support
 
 #### **Inside CGD Toolkit Modules**
+
 **How modules handle the region variable**:
 
 ```hcl
@@ -1261,6 +1362,7 @@ module "infra" {
 ```
 
 **Benefits**:
+
 - **AWS Provider v6**: Simplified region handling, no aliases needed
 - **Other providers**: Still require manual aliases per region
 - **Clean code**: Each module block identical except for region
@@ -1268,6 +1370,7 @@ module "infra" {
 #### **Multi-Region Implementation Pattern**
 
 ##### **Explicit Module Blocks (Only Recommended Pattern)**
+
 **Best for**: Multi-region deployments (max 2 regions)
 
 ```hcl
@@ -1325,6 +1428,7 @@ module "ddc_secondary" {
 ```
 
 **Benefits**:
+
 - ✅ **Clear and explicit** - obvious what's deployed where
 - ✅ **Different configurations** - each region can have unique settings
 - ✅ **Easy debugging** - clear dependency chain
@@ -1333,6 +1437,7 @@ module "ddc_secondary" {
 #### **DNS and Regional Endpoint Patterns**
 
 ##### **Private DNS Zones (Always Created)**
+
 **All CGD Toolkit modules automatically create private DNS zones for internal service discovery:**
 
 ```hcl
@@ -1358,6 +1463,7 @@ resource "aws_route53_record" "service_internal" {
 ```
 
 ##### **Regional Endpoint Strategy**
+
 **Following AWS service patterns, we default to regional endpoints:**
 
 ```hcl
@@ -1377,12 +1483,14 @@ locals {
 ```
 
 **Why Regional Endpoints**:
+
 - **Performance**: Direct routing to nearest region
 - **Isolation**: Regional failures don't affect DNS routing
 - **Explicit control**: Users know exactly which region they're accessing
 - **AWS consistency**: Follows AWS service endpoint patterns
 
 ##### **Global Endpoint Flexibility**
+
 **Users can optionally create global endpoints with routing policies:**
 
 ```hcl
@@ -1421,12 +1529,14 @@ resource "aws_route53_record" "global_latency_secondary" {
 ```
 
 **Global Routing Options**:
+
 - **Latency-based**: Route to lowest latency region
 - **Geolocation**: Route based on user's geographic location
 - **Failover**: Primary/secondary with health checks
 - **Weighted**: Distribute traffic by percentage
 
 ##### **DNS Output Strategy**
+
 **Modules provide both regional and global DNS flexibility:**
 
 ```hcl
@@ -1450,6 +1560,7 @@ output "dns_endpoints" {
 ```
 
 **This approach provides**:
+
 - **Regional by default**: Each region gets its own endpoint
 - **Global flexibility**: Users can create global endpoints if needed
 - **Internal routing**: Private DNS for service-to-service communication
@@ -1458,9 +1569,11 @@ output "dns_endpoints" {
 #### **Networking and Security Boundaries**
 
 ##### **Clear Demarcation: What Modules DON'T Create**
+
 **CGD Toolkit modules have clear boundaries - we don't create foundational infrastructure:**
 
 **🚫 Modules DO NOT Create:**
+
 - **VPCs and Subnets**: Users provide existing VPC and subnet IDs
 - **SSL/TLS Certificates**: Users provide existing ACM certificate ARNs
 - **Public Hosted Zones**: Users provide existing Route53 hosted zone names
@@ -1469,12 +1582,14 @@ output "dns_endpoints" {
 - **Internet/NAT Gateways**: Users provide connectivity infrastructure
 
 **✅ Modules DO Create:**
+
 - **Private DNS zones**: For internal service discovery
 - **Security groups**: For service-specific access control
 - **Load balancers**: NLB/ALB for service access
 - **DNS records**: In both private and public zones (when provided)
 
 ##### **SSL/TLS Certificate Integration**
+
 **Modules integrate with existing certificates, don't create them:**
 
 ```hcl
@@ -1507,12 +1622,14 @@ module "ddc" {
 ```
 
 **Why This Approach**:
+
 - **Certificate lifecycle**: Users control certificate renewal and management
 - **Domain ownership**: Users own and validate their domains
 - **Security control**: Certificate management stays with domain owners
 - **Flexibility**: Users can use existing certificate management processes
 
 ##### **VPC and Subnet Integration**
+
 **Modules work within existing network infrastructure:**
 
 ```hcl
@@ -1539,6 +1656,7 @@ module "ddc" {
 ```
 
 **Network Architecture Assumptions**:
+
 - **Public subnets**: For internet-facing load balancers
 - **Private subnets**: For EKS clusters, databases, internal services
 - **NAT Gateway**: Users provide internet access for private subnets
@@ -1546,6 +1664,7 @@ module "ddc" {
 - **VPC endpoints**: Users create for AWS service access (optional)
 
 ##### **Security Group Strategy**
+
 **Modules create service-specific security groups, users control external access:**
 
 ```hcl
@@ -1578,11 +1697,13 @@ module "ddc" {
 ```
 
 **Security Responsibilities**:
+
 - **Users control**: External access rules, CIDR blocks, source security groups
 - **Modules create**: Internal service communication rules, AWS API access
 - **Principle**: Users define "who can access", modules define "how services communicate"
 
 ##### **Public Hosted Zone Integration**
+
 **Modules use existing public zones, don't create them:**
 
 ```hcl
@@ -1604,11 +1725,13 @@ module "ddc" {
 ```
 
 **DNS Responsibilities**:
+
 - **Users own**: Domain registration, public hosted zone management
 - **Modules create**: Service-specific DNS records in provided zones
 - **Private zones**: Modules always create for internal service discovery
 
 ##### **Multi-Region Network Considerations**
+
 **For multi-region deployments, users handle cross-region connectivity:**
 
 ```hcl
@@ -1632,11 +1755,13 @@ module "ddc_secondary" {
 ```
 
 **Cross-Region Network Responsibilities**:
+
 - **Users handle**: VPC peering, Transit Gateway, cross-region routing
 - **Modules handle**: Application-level cross-region communication (database replication, etc.)
 - **Clear separation**: Network connectivity vs. application connectivity
 
 ##### **Example Integration Pattern**
+
 **Complete example showing user vs. module responsibilities:**
 
 ```hcl
@@ -1673,16 +1798,16 @@ module "ddc" {
 ```
 
 **This pattern ensures**:
+
 - **Clear ownership**: Users own foundational infrastructure
 - **Module focus**: Modules focus on service-specific resources
 - **Flexibility**: Users can integrate with existing infrastructure
 - **Security**: Users control access boundaries, modules handle service communication
 
-
-
 #### **Multi-Region Design Requirements for All Modules**
 
 ##### **MUST Support Single Apply (For Inherently Multi-Region Apps)**
+
 **CGD Toolkit modules that are inherently multi-region MUST enable single-step deployment:**
 
 ```bash
@@ -1695,12 +1820,15 @@ terraform apply  # Deploys PRIMARY + SECONDARY regions (MAX 2)
 **⚠️ IMPORTANT**: This is ONLY for applications that require cross-region replication by design.
 
 ##### **Cross-Region Coordination Patterns**
+
 **Primary/Secondary Pattern** (Recommended):
+
 - **Primary region**: Creates shared resources (bearer tokens, seed nodes)
 - **Secondary regions**: Reference primary's outputs
 - **Dependencies**: `depends_on = [module.primary]` ensures proper ordering
 
 ##### **Module Implementation Standards**
+
 **For inherently multi-region modules (Perforce, DDC):**
 
 - **Single apply**: PRIMARY + SECONDARY regions (MAX 2) deploy with one `terraform apply`
@@ -1715,6 +1843,7 @@ terraform apply  # Deploys PRIMARY + SECONDARY regions (MAX 2)
 ##### **⚠️ CRITICAL: When NOT to Use Multi-Region Single State**
 
 **🚫 ABSOLUTE ANTI-PATTERNS:**
+
 - **General applications**: Most apps should be single-region
 - **Dedicated disaster recovery**: Use completely separate Terraform deployments for DR-only scenarios
 - **Environment separation**: dev/staging/prod should be separate states
@@ -1722,6 +1851,7 @@ terraform apply  # Deploys PRIMARY + SECONDARY regions (MAX 2)
 - **More than 2 regions in one state**: Creates unmanageable complexity
 
 **✅ ONLY Valid Use Cases:**
+
 - **Applications that benefit from multi-region**: Perforce, DDC where cross-region replication improves performance
 - **Active global usage**: All regions actively used by distributed teams for better performance
 - **Performance optimization**: Low-latency access across continents for same application data
@@ -1731,6 +1861,7 @@ terraform apply  # Deploys PRIMARY + SECONDARY regions (MAX 2)
 **🎯 The Rule**: If your application doesn't REQUIRE cross-region data replication for **performance/functionality**, use separate Terraform deployments per region.
 
 **DR Considerations**:
+
 - **Side benefit**: Performance-driven replication means either region could serve as DR
 - **Application-specific**: Each application (DDC, Perforce) has different DR capabilities and requirements
 - **Not primary purpose**: DR should not be the main reason for choosing multi-region single-state pattern
@@ -1739,6 +1870,7 @@ terraform apply  # Deploys PRIMARY + SECONDARY regions (MAX 2)
 #### **Summary: Multi-Region Best Practices**
 
 **Recommended Approach**: Use explicit module blocks - MAX 2 regions
+
 ```hcl
 module "service_primary" { region = "us-east-1" }
 module "service_secondary" { region = "us-west-2" }
@@ -1746,6 +1878,7 @@ module "service_secondary" { region = "us-west-2" }
 ```
 
 **🎯 For Most Applications**: Deploy each region as separate Terraform root modules
+
 ```bash
 # Recommended pattern for most applications (follows Pattern B above)
 cd deployments/us-east-1/
@@ -1756,6 +1889,7 @@ terraform apply  # Separate state file
 ```
 
 **This follows Pattern B (Application-Specific with Regional Folders) and provides:**
+
 - **Independent state files**: Each region manageable separately
 - **Team parallelism**: Multiple teams can work simultaneously
 - **Reduced blast radius**: Regional isolation prevents cascading failures
@@ -1763,6 +1897,7 @@ terraform apply  # Separate state file
 - **Standard tooling**: Works with existing Terraform workflows
 
 **Key Principles**:
+
 - ✅ **Each module instance = exactly one region**
 - ⚠️ **Single apply ONLY for inherently multi-region apps** (Perforce, DDC)
 - ✅ **Multi-region is for performance, not DR**
@@ -1772,12 +1907,14 @@ terraform apply  # Separate state file
 - ✅ **AWS Provider v6 eliminates AWS provider aliases**
 
 **Benefits**:
+
 - **Performance**: Low latency for global teams
 - **Single deployment**: All regions with one `terraform apply`
 - **Global replication**: Cross-region data sharing
 - **AWS Provider v6**: Simplified region handling
 
 **⚠️ CRITICAL Considerations**:
+
 - **🔥 State file explosion**: More regions = exponentially larger, slower state
 - **🔥 Massive blast radius**: One mistake destroys all regions
 - **🔥 Performance degradation**: `terraform plan` becomes painfully slow
@@ -1789,9 +1926,11 @@ terraform apply  # Separate state file
 **🎯 Solution**: Use separate Terraform deployments for most applications
 
 ### **Version Conflicts and Resolution**
+
 **Common Problem**: Different modules require different provider versions
 
 #### **Conflict Scenario**
+
 ```hcl
 # Module A requires
 kubernetes = { version = ">= 2.30.0" }
@@ -1804,12 +1943,14 @@ kubernetes = { version = ">= 2.33.0, < 2.35.0" }  # Intersection
 ```
 
 #### **Resolution Strategy**
+
 1. **Use intersection of all constraints**: Find version range that satisfies all modules
 2. **Update modules**: Align version requirements across CGD Toolkit
 3. **Test compatibility**: Ensure chosen version works with all modules
 4. **Document decisions**: Explain version choices in examples
 
 #### **Multi-Region Version Management**
+
 ```hcl
 # Root module must declare ALL provider versions for ALL regions
 terraform {
@@ -1833,6 +1974,7 @@ provider "kubernetes" {
 ```
 
 ### **Provider Configuration Timing**
+
 **Critical**: Understanding WHEN provider configurations are evaluated
 
 ```bash
@@ -1843,6 +1985,7 @@ provider "kubernetes" {
 ```
 
 **Implications**:
+
 - **First run**: Infrastructure doesn't exist, providers get null values
 - **Second run**: Infrastructure exists, providers get real values
 - **Dependencies**: Provider configs must handle missing dependencies gracefully
@@ -1850,6 +1993,7 @@ provider "kubernetes" {
 ## AWS Provider Best Practices
 
 ### **Security Group Rules**
+
 ```hcl
 # ✅ Use dedicated rule resources (AWS Provider v6 requirement)
 resource "aws_vpc_security_group_ingress_rule" "example" {
@@ -1868,6 +2012,7 @@ resource "aws_security_group" "bad" {
 ```
 
 ### **IAM Policies**
+
 ```hcl
 # ✅ Use policy documents
 data "aws_iam_policy_document" "example" {
@@ -1890,6 +2035,7 @@ resource "aws_iam_policy" "bad" {
 ```
 
 ### **IAM Role Attachments**
+
 ```hcl
 # ✅ Use attachment resources
 resource "aws_iam_role" "example" {
@@ -1912,6 +2058,7 @@ resource "aws_iam_role" "bad" {
 ## Output Strategy
 
 ### **What to Include**
+
 **Philosophy**: Expose what users commonly need, expand based on requests.
 
 ```hcl
@@ -1951,12 +2098,14 @@ output "security_group_ids" {
 ## Breaking Changes Prevention
 
 ### **Critical Rules**
+
 - **NEVER change logical names** without `moved` blocks
 - **NEVER change variable names** in minor/patch versions
 - **ALWAYS use major version bumps** for breaking changes
 - **ALWAYS test migration paths** with real state files
 
 ### **Safe Patterns**
+
 ```hcl
 # ✅ SAFE - Adding resources, optional variables with defaults, new outputs
 resource "aws_s3_bucket" "new_feature" { }
@@ -1974,6 +2123,7 @@ output "new_info" {
 ## Implementation Checklist
 
 ### **For New Modules**
+
 - [ ] Use 3-tier architecture variables
 - [ ] Implement standardized logical names
 - [ ] Use random IDs for predictable naming
@@ -1984,6 +2134,7 @@ output "new_info" {
 - [ ] Document architecture and usage patterns
 
 ### **For Existing Modules**
+
 - [ ] Plan breaking changes for major versions only
 - [ ] Add `moved` blocks for renamed resources
 - [ ] Update variable naming to match standards
