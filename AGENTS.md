@@ -6,7 +6,7 @@ The **Cloud Game Development Toolkit (CGD Toolkit)** is a collection of Terrafor
 
 ### Project Structure
 
-```
+```text
 cloud-game-development-toolkit/
 ├── assets/              # Reusable scripts, Packer templates, Ansible playbooks
 ├── modules/             # Terraform modules for game dev infrastructure
@@ -35,6 +35,7 @@ cloud-game-development-toolkit/
 Modules are designed as building blocks, not complete solutions. Users compose modules to fit their specific needs rather than being forced into opinionated architectures.
 
 **Key Principles:**
+
 - Modules provide infrastructure components, not complete solutions
 - Configuration decisions happen in examples, not module internals
 - Support multiple deployment patterns through simple variables
@@ -45,6 +46,7 @@ Modules are designed as building blocks, not complete solutions. Users compose m
 Every exposed variable is a commitment to backward compatibility. We start with minimal variables based on known use cases and add more when users request them.
 
 **Guidelines:**
+
 - Start with minimal variables
 - Add variables based on user demand (demand-driven)
 - Default values should work for 80% of use cases
@@ -55,6 +57,7 @@ Every exposed variable is a commitment to backward compatibility. We start with 
 Game development infrastructure often handles sensitive assets and player data. Security mistakes are costly and hard to fix later.
 
 **Security Patterns:**
+
 - No `0.0.0.0/0` ingress rules in module code (users explicitly define allowed access)
 - Private-first architecture with controlled external access
 - HTTPS enforcement for internet-facing services
@@ -65,6 +68,7 @@ Game development infrastructure often handles sensitive assets and player data. 
 Game development teams often include infrastructure newcomers. Clear, understandable code reduces onboarding time and prevents misconfigurations.
 
 **Code Standards:**
+
 - Prefer explicit over implicit configurations
 - Use descriptive variable names that explain purpose
 - Self-documenting code over clever abstractions
@@ -90,6 +94,7 @@ resource "aws_lb" "this2" { }
 ### Variable Structure
 
 Use a hybrid approach:
+
 - **Flat variables** for simple, common settings
 - **Complex objects** for logical grouping when they provide clear value
 - **Submodule alignment** - Complex objects that map directly to submodules
@@ -141,6 +146,7 @@ module "eks" {
 All modules use Terraform's native test framework with **mocked providers** to validate module logic without creating actual AWS resources.
 
 **Benefits:**
+
 - Zero AWS costs (no resources created)
 - No cleanup required
 - No AWS credentials needed
@@ -174,6 +180,7 @@ run "unit_test_scenario" {
 ```
 
 **What Gets Tested:**
+
 - ✅ Variable validation logic
 - ✅ Conditional resource creation
 - ✅ Resource count calculations
@@ -204,6 +211,7 @@ Each module must include:
 ### Test Documentation
 
 Test directories should include:
+
 - **README.md** - Test scenarios, what gets tested, how to run
 - **QUICKSTART.md** - 2-minute quick start guide (optional for complex modules)
 
@@ -230,7 +238,7 @@ Test directories should include:
 
 PR titles must follow conventional commit format:
 
-```
+```text
 feat(module): add new feature
 fix(module): resolve issue
 docs(module): update documentation
@@ -240,6 +248,7 @@ test(module): add tests
 ### Pre-commit Checks
 
 The project uses pre-commit hooks for:
+
 - Terraform formatting (`terraform fmt`)
 - Terraform validation
 - Security scanning (Checkov)
@@ -250,16 +259,19 @@ The project uses pre-commit hooks for:
 ### Networking
 
 **3-Tier Architecture:**
+
 - `application_subnets` - Primary business applications
 - `service_subnets` - Supporting services (databases, caches)
 - `load_balancer_config` - Load balancer configuration
 
 **Load Balancer Strategy:**
+
 - Default to NLB for most services
 - ALB when needed for HTTP/HTTPS routing
 - User controls creation via boolean flags
 
 **DNS Patterns:**
+
 - Regional endpoints by default (`us-east-1.service.company.com`)
 - Private zones for internal service discovery
 - Global endpoints optional for advanced routing
@@ -332,15 +344,16 @@ variable "custom_role_arn" {
 
 ## Resources
 
-- **Documentation**: https://aws-games.github.io/cloud-game-development-toolkit/
+- **Documentation**: <https://aws-games.github.io/cloud-game-development-toolkit/>
 - **Design Standards**: `modules/DESIGN_STANDARDS.md`
 - **Contributing**: `CONTRIBUTING.md`
-- **Discussions**: https://github.com/aws-games/cloud-game-development-toolkit/discussions/
-- **Roadmap**: https://github.com/orgs/aws-games/projects/1/views/1
+- **Discussions**: <https://github.com/aws-games/cloud-game-development-toolkit/discussions/>
+- **Roadmap**: <https://github.com/orgs/aws-games/projects/1/views/1>
 
 ## Agent-Specific Context
 
 Different AI agents may have additional context files:
+
 - **Kiro**:
   - `.kiro/steering/*.md` - Automatically loaded steering files (project context)
   - `.kiro/rules/*.md` - Kiro-specific rules and workflows
