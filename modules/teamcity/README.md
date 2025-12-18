@@ -15,7 +15,6 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
-
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements

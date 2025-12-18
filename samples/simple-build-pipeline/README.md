@@ -32,13 +32,10 @@ packer init ./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 packer build ./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 ```
 
-This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). This instance is only used to create the AMI and will be terminated once the AMI is successfully created. The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [
-`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/p4-server/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
+This will use your AWS credentials to provision an [EC2 instance](https://aws.amazon.com/ec2/instance-types/) in your [Default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html). This instance is only used to create the AMI and will be terminated once the AMI is successfully created. The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/p4-server/example.pkrvars.hcl) file and the [Packer documentation on assigning variables](https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables) for more details.
 
 > **Note:**
 > The P4 Server template will default to the user's CLI configured region, if a region is not provided.
-
-> **Note:**
 > The AWS Region where this AMI is created _must_ be the same Region where you intend to deploy the Simple Build Pipeline.
 
 ### Step 3. Create Build Agent Amazon Machine Images
@@ -52,8 +49,7 @@ This section covers the creation of Amazon Machine Images used to provision Jenk
 
 This Amazon Machine Image is provisioned using the [Amazon Linux 2023](https://aws.amazon.com/linux/amazon-linux-2023/) base operating system. It is highly configurable through variables, but there is only one variable that is required: A public SSH key. This public SSH key is used by the Jenkins orchestration service to establish an initial connection to the agent.
 
-This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [
-`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
+This variable can be passed to Packer using the `-var-file` or `-var` command line flag. If you are using a variable file, please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields. You can also pass the SSH key directly at the command line:
 
 #### There are separate ARM and x86 based Packer scripts available for Amazon Linux 2023
 
@@ -86,8 +82,7 @@ Take note of the output of this CLI command. You will need the ARN later.
 
 #### Ubuntu Jammy 22.04 Amazon Machine Images
 
-These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the [
-`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields.
+These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the [`example.pkrvars.hcl`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl) for overridable fields.
 
 #### There are separate AMD64 and ARM based Packer scripts available for Ubuntu Jammy 22.04
 
@@ -97,7 +92,7 @@ These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base op
 packer build -var "public_key=<include public key here>" ubuntu-jammy-22.04-amd64-server.pkr.hcl
 ```
 
-#### ARM Based Image
+#### ARM Based Ubuntu Image
 
 ``` bash
 packer build -var "public_key=<include public key here>" ubuntu-jammy-22.04-arm64-server.pkr.hcl
@@ -165,26 +160,24 @@ Once your hosted zone exists you can proceed to the next step.
 
 ### Step 5. Configure Simple Build Pipeline Variables
 
-Configurations for the _Simple Build Pipeline_ are split between 2 files: [
-`local.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/local.tf) and [
-`variables.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/variables.tf). Variables in
-`local.tf` are typically static and can be modified within the file itself. Variables in `variables.tf` tend to be more dynamic and are passed in through the
+Configurations for the _Simple Build Pipeline_ are split between 2 files: [`locals.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/locals.tf) and [`variables.tf`](https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/variables.tf). Variables in
+`locals.tf` are typically static and can be modified within the file itself. Variables in `variables.tf` tend to be more dynamic and are passed in through the
 `terraform apply` command either directly through a `-var` flag or as file using the `-var-file` flag.
 
-We'll start by walking through the required configurations in `local.tf`.
+We'll start by walking through the required configurations in `locals.tf`.
 
 1.
 
 `jenkins_agent_secret_arns` is a list of [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the
 `jenkins_agent_secret_arns` list so that Jenkins can connect to the provisioned build agents.
 
-2. The
+1. The
    `build_farm_compute` map contains all of the information needed to provision your Jenkins build farms. Each entry in this map corresponds to an [EC2 Auto Scaling group](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html), and requires two fields to be specified:
    `ami` and `instance_type`. The
    `local.tf` file contains an example configuration that has been commented out. Using the AMI IDs from [Step 3](#step-3-create-build-agent-amazon-machine-images), please specify the build farms you would like to provision. Selecting the right instance type for your build farm is highly dependent on your build process. Larger instances are more expensive, but provide improved performance. For example, large Unreal Engine compilation jobs will perform significantly better on [Compute Optimized](https://aws.amazon.com/ec2/instance-types/#Compute_Optimized) instances, while cook jobs tend to benefit from the increased RAM available from [Memory Optimized](https://aws.amazon.com/ec2/instance-types/#Memory_Optimized) instances. It can be a good practice to provision an EC2 instance using your custom AMI, and run your build process locally to determine the right instance size for your build farm. Once you have settled on an instance type, complete the
    `build_farm_compute` map to configure your build farms.
 
-3. Finally, the
+2. Finally, the
    `build_farm_fsx_openzfs_storage` field configures file systems used by your build agents for mounting P4 Server workspaces and shared caches. Again, an example configuration is provided but commented out. Depending on the number of builds you expect to be performing and the size of your project, you may want to adjust the size of the suggested file systems.
 
 The variables in `variables.tf` are as follows:
@@ -253,10 +246,10 @@ We now need to setup our Auto Scaling groups as Jenkins build agents. To do this
 1. From the Jenkins homepage, on the left-hand side, choose `Manage Jenkins`.
 2. Under the `System Configuration` section, choose `Clouds`
 3. Select `New Cloud`
-3. Enter a name for your cloud configuration
-4. Select `Amazon EC2 Fleet`
-5. Click `Create`
-6. On the `New Cloud` configuration page, change the following settings.
+4. Enter a name for your cloud configuration
+5. Select `Amazon EC2 Fleet`
+6. Click `Create`
+7. On the `New Cloud` configuration page, change the following settings.
     1. **Region** - Select the region in which you deployed the _Simple Build Pipeline_
     1. **EC2 Fleet** - Select the autoscaling group you would like to use
     1. **Launcher** - Select `Launch agents via SSH`
@@ -292,7 +285,6 @@ Once you have access to P4 Server you should be able to provision new users. You
 
 Tearing down the resources created by the _Simple Build Pipeline_ is as easy as running `terraform destroy` in the
 `/samples/simple-build-pipeline` directory. However, this will not delete the secrets you've uploaded, the AMIs created with Packer, or the the Route53 hosted zone you set up initially. Those resources will need to be explicitly destroyed using the AWS console or relevant CLI commands.
-
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
