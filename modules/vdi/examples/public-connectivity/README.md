@@ -13,7 +13,7 @@ Demonstrates VDI deployment with **public internet access** and **multiple AMI t
 
 ### Public Connectivity + Multi-AMI Pattern
 
-```
+```text
 vdi-001 (naruto-uzumaki)  → UE GameDev AMI    → g4dn.4xlarge (Game Developer)
 vdi-002 (sasuke-uchiha)   → Lightweight AMI   → g4dn.xlarge  (DevOps Engineer)
 vdi-003 (boruto-uzumaki)  → Lightweight AMI   → g4dn.xlarge  (Junior Developer)
