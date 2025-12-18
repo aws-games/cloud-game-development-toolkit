@@ -26,7 +26,7 @@ permissions:
   pages: write
 
 concurrency:
-  group: docs-deploy
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:

@@ -18,24 +18,35 @@ jobs:
   cleanup:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
     steps:
       - name: Checkout gh-pages
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          ref: gh-pages
           fetch-depth: 0
 
-      - name: Remove preview directory
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "docs/requirements.txt"
+
+      - name: Configure git
         run: |
-          if [ -d "preview/pr-${{ github.event.pull_request.number }}" ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git rm -rf "preview/pr-${{ github.event.pull_request.number }}"
-            git commit -m "Remove preview for PR #${{ github.event.pull_request.number }}"
-            git push
-          else
-            echo "Preview directory not found, nothing to clean up"
-          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Remove preview using mike
+        run: |
+          # Delete preview (mike handles all gh-pages operations internally)
+          # || true to handle case where preview doesn't exist
+          mike delete --push "preview-pr-${{ github.event.pull_request.number }}" || echo "Preview not found, nothing to clean up"
 
       - name: Post cleanup comment
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
@@ -47,7 +58,7 @@ jobs:
 
             The preview deployment for this PR has been automatically removed.
 
-            **Preview was located at:** `preview/pr-${{ github.event.pull_request.number }}/`
+            **Preview was:** `preview-pr-${{ github.event.pull_request.number }}`
 
             ---
             *This preview was automatically cleaned up when the PR was closed.*
