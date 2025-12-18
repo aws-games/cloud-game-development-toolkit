@@ -66,7 +66,6 @@ curl -X POST -H 'Authorization: Bearer <base64-encoded bearer token>' \
   }' \ -v -v -v https://<p4auth domain name>/scim/v2/Users
 ```
 
-
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -172,7 +171,7 @@ No modules.
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_s3_enable_force_destroy"></a> [s3\_enable\_force\_destroy](#input\_s3\_enable\_force\_destroy) | Enables force destroy for the S3 bucket for P4Auth access log storage. Defaults to true. | `bool` | `true` | no |
 | <a name="input_scim_bearer_token_arn"></a> [scim\_bearer\_token\_arn](#input\_scim\_bearer\_token\_arn) | If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token. | `string` | `null` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-auth",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-auth",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
 
 ## Outputs
 
