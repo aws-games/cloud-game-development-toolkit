@@ -5,6 +5,7 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
 ## What's Included
 
 **Base Infrastructure (from shared/base_infrastructure.ps1):**
+
 - Windows Server 2025 base
 - NVIDIA GRID drivers (GPU instances)
 - Amazon DCV remote desktop server
@@ -14,6 +15,7 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
 - System PATH configuration
 
 **Runtime Customization:**
+
 - Software packages installed via VDI Terraform module
 - User accounts created at deployment time
 - DCV sessions configured per user
@@ -22,6 +24,7 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
 ## Build Instructions
 
 1. **Copy variables file:**
+
    ```bash
    cp variables.pkrvars.hcl.example variables.pkrvars.hcl
    ```
@@ -32,6 +35,7 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
    - Adjust instance type if needed
 
 3. **Build AMI:**
+
    ```bash
    packer build -var-file="variables.pkrvars.hcl" windows-server-2025-lightweight.pkr.hcl
    ```
@@ -53,7 +57,7 @@ This Packer template creates a lightweight Windows Server 2025 AMI optimized for
    - Configure security group to allow RDP (port 3389) or DCV (port 8443)
 
 2. **Connect via DCV:**
-   - Install DCV Client: https://download.nice-dcv.com/
+   - Install DCV Client: <https://download.nice-dcv.com/>
    - Connect to: `https://<instance-ip>:8443`
    - Login with Administrator account
 
@@ -99,6 +103,7 @@ module "vdi" {
 ## Alternative AMIs
 
 For faster boot times with pre-installed software, consider:
+
 - **[UE GameDev AMI](../ue-gamedev/README.md)** - Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
 
 ## Troubleshooting

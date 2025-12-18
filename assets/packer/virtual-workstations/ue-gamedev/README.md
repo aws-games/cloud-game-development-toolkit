@@ -5,6 +5,7 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
 ## What's Included
 
 **Base Infrastructure (from shared/base_infrastructure.ps1):**
+
 - Windows Server 2025 base
 - NVIDIA GRID drivers (GPU instances)
 - Amazon DCV remote desktop server
@@ -14,6 +15,7 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
 - Active Directory management tools
 
 **Unreal Engine Development Stack (from unreal_development_stack.ps1):**
+
 - Visual Studio 2022 Community with game development workloads:
   - Managed Desktop (.NET)
   - Native Desktop (C++)
@@ -28,16 +30,19 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
 ## Build Instructions
 
 1. **Navigate to template directory:**
+
    ```bash
    cd assets/packer/virtual-workstations/ue-gamedev/
    ```
 
 2. **Build AMI:**
+
    ```bash
    packer build windows-server-2025-ue-gamedev.pkr.hcl
    ```
 
 3. **Optional - Custom variables:**
+
    ```bash
    # Override instance type or other settings
    packer build -var 'instance_type=g4dn.4xlarge' windows-server-2025-ue-gamedev.pkr.hcl
@@ -53,6 +58,7 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
 ## Post-Build Setup
 
 **Unreal Engine Installation:**
+
 - Epic Games Launcher is pre-installed
 - Unreal Engine must be installed manually after first login:
   1. Launch Epic Games Launcher from desktop
@@ -62,6 +68,7 @@ This Packer template creates a Windows Server 2025 AMI optimized for Unreal Engi
   5. Choose installation location (recommend D:\\ drive)
 
 **Why Manual UE Installation:**
+
 - Requires Epic Games account authentication
 - Requires EULA acceptance
 - No silent installation method available
@@ -96,6 +103,7 @@ module "vdi" {
 ## Development Ready Features
 
 **Immediate Development:**
+
 - Visual Studio 2022 with all UE workloads
 - Git for version control
 - Perforce for enterprise VCS
@@ -103,11 +111,13 @@ module "vdi" {
 - AWS CLI for cloud integration
 
 **GPU Acceleration:**
+
 - NVIDIA GRID drivers pre-installed
 - DCV hardware acceleration enabled
 - Ready for UE rendering and CUDA development
 
 **User Experience:**
+
 - Desktop shortcuts for all tools
 - Optimized PATH configuration
 - Development-friendly PowerShell profile
@@ -115,16 +125,19 @@ module "vdi" {
 ## Troubleshooting
 
 **Build Failures:**
+
 - Ensure GPU instance type (g4dn.* required)
 - Check internet connectivity for downloads
 - Verify AWS credentials and permissions
 
 **Visual Studio Issues:**
+
 - Build may take 45+ minutes (normal)
 - Large download sizes require stable connection
 - Workload installation is comprehensive
 
 **Epic Games Launcher:**
+
 - Pre-installed but requires user login
 - UE installation is user-initiated
 - Account creation may be required

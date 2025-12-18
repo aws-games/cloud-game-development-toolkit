@@ -4,7 +4,7 @@ The following template builds a Windows based AMI capable of Unreal Engine 5.4 c
 
 ## Usage
 
-This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult [the release notes for Unreal Engine 5.4](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.4-release-notes#platformsdkupgrades) for details on what tools are used for compiling this version of the engine.
+This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult [the release notes for Unreal Engine 5.7](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes#platform-sdk-upgrades) for details on what tools are used for compiling this version of the engine.
 
 The only required variable for building this Amazon Machine Image is a public SSH key.
 
@@ -37,14 +37,14 @@ Currently this AMI is designed to work with our Jenkins module. This is why it c
 - Git
 - OpenSSH
 - Python3
-    - Botocore
-    - Boto3
+  - Botocore
+  - Boto3
 - Client for Network File System (NFS)
 - Windows Development Kit and Debugging Tools
 - Visual Studio 2022 Build Tools
-    - VCTools Workload; Include Recommended
-    - ManagedDesktopBuild Tools; Include Recommended
-    - MSVC v143 - VS 2022 C++ x64/x86 build tools
-    - Microsoft.Net.Component.4.6.2TargetingPack
+  - VCTools Workload; Include Recommended
+  - ManagedDesktopBuild Tools; Include Recommended
+  - MSVC v143 - VS 2022 C++ x64/x86 build tools
+  - Microsoft.Net.Component.4.6.2TargetingPack
 
 Consult the [Visual Studio Build Tools component directory](https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022) for details.

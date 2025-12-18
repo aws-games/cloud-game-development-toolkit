@@ -14,8 +14,8 @@ timeout = 30
 # Note: include patterns are glob patterns, not regex
 include = ['\\.md$', '\\.html$', '\\.txt$']
 
-# Exclude patterns
-exclude = [
+# Exclude file paths (glob patterns)
+exclude_path = [
     # Exclude external modules and dependencies
     ".external_modules/**",
     "node_modules/**",
@@ -31,6 +31,31 @@ exclude = [
     "THIRD-PARTY-LICENSES",
 ]
 
+# Exclude URLs and mail addresses (regex patterns)
+exclude = [
+    # Epic Games documentation (blocks automated requests with 403)
+    "https://dev\\.epicgames\\.com/.*",
+
+    # Localhost URLs
+    "http://localhost.*",
+    "https://localhost.*",
+    "http://127\\.0\\.0\\.1.*",
+    "https://127\\.0\\.0\\.1.*",
+
+    # Preview deployment URLs
+    "https://aws-games\\.github\\.io/cloud-game-development-toolkit/preview/.*",
+
+    # GitHub edit links (these are dynamic and may not exist yet)
+    "https://github\\.com/aws-games/cloud-game-development-toolkit/edit/.*",
+
+    # GitHub project boards (may require authentication)
+    "https://github\\.com/orgs/aws-games/projects/.*",
+
+    # Example URLs in documentation
+    "https://example\\.com/.*",
+    "http://example\\.com/.*",
+]
+
 # Exclude localhost and loopback addresses
 exclude_loopback = true
 
@@ -43,27 +68,7 @@ include_mail = false
 # Accept status codes (200-299 are success, 429 is rate limit)
 accept = ["200..299", "429"]
 
-# Exclude specific URLs that are known to be problematic
-exclude_path = [
-    # GitHub edit links (these are dynamic and may not exist yet)
-    "https://github.com/aws-games/cloud-game-development-toolkit/edit/**",
 
-    # GitHub project boards (may require authentication)
-    "https://github.com/orgs/aws-games/projects/**",
-
-    # Example URLs in documentation
-    "https://example.com/**",
-    "http://example.com/**",
-
-    # Localhost URLs (glob patterns)
-    "http://localhost**",
-    "https://localhost**",
-    "http://127.0.0.1**",
-    "https://127.0.0.1**",
-
-    # Preview deployment URLs
-    "https://aws-games.github.io/cloud-game-development-toolkit/preview/**",
-]
 
 # Remap URLs (useful for checking local preview URLs)
 remap = []
