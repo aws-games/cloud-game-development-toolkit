@@ -1,0 +1,15 @@
+[Unit]
+Description=Unity License File Watch Service
+After=network.target unity-license-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=unity-licensing-server
+WorkingDirectory=/opt/UnityLicensingServer
+ExecStart=/bin/bash -l -c '/opt/UnityLicensingServer/daemon_setup_watch.sh'
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
