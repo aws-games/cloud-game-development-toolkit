@@ -39,6 +39,9 @@ exclude = [
     # Epic Games private GitHub repositories (require authentication)
     "https://github\\.com/EpicGames/UnrealEngine/.*",
 
+    # Unity support pages (blocks automated requests with 403)
+    "https://support\\.unity\\.com/.*",
+
     # Localhost URLs
     "http://localhost.*",
     "https://localhost.*",
