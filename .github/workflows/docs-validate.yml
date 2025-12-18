@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
       - name: Get changed markdown/html files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@v47
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
           files: |
             **/*.md
@@ -63,7 +63,7 @@ jobs:
       - name: Check links in changed files
         if: steps.scope.outputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
         id: lychee-changed
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
         with:
           args: --config .config/lychee.toml --no-progress ${{ steps.changed-files.outputs.all_changed_files }}
           fail: true
@@ -73,7 +73,7 @@ jobs:
       - name: Check all links
         if: steps.scope.outputs.scope == 'all'
         id: lychee-all
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
         with:
           args: --config .config/lychee.toml --no-progress '**/*.md' '**/*.html'
           fail: true
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -107,13 +107,13 @@ jobs:
       - name: Get changed markdown files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@v47
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
           files: "**/*.md"
           separator: " "
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
 
@@ -142,10 +142,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -170,21 +170,21 @@ jobs:
       # PR Comments: Delete comments for checks that are now passing
       - name: Delete PR comment - Link Check Success
         if: github.event_name == 'pull_request' && needs.check-links.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-link-check
           delete: true
 
       - name: Delete PR comment - Lint Success
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-lint-failure
           delete: true
 
       - name: Delete PR comment - Build Success
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-build-failure
           delete: true
@@ -192,7 +192,7 @@ jobs:
       # PR Comments: Post sticky comments for link and build failures
       - name: Comment on PR - Link Check Failure
         if: github.event_name == 'pull_request' && needs.check-links.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-link-check
           message: |
@@ -214,7 +214,7 @@ jobs:
 
       - name: Comment on PR - Lint Failure
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-lint-failure
           message: |
@@ -243,7 +243,7 @@ jobs:
 
       - name: Comment on PR - Build Failure
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
           header: doc-build-failure
           message: |
@@ -267,7 +267,7 @@ jobs:
       # Push to Main: Create/update GitHub issues for link and build failures
       - name: Create or update link check issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-links.result == 'failure'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const issueTitle = '🔗 Documentation Link Check Failed';
@@ -319,7 +319,7 @@ jobs:
 
       - name: Create or update lint failure issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.lint-markdown.result == 'failure'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const issueTitle = '📝 Markdown Linting Failed';
@@ -378,7 +378,7 @@ jobs:
 
       - name: Create or update build failure issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-docs.result == 'failure'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const issueTitle = '📚 Documentation Build Failed';
@@ -432,7 +432,7 @@ jobs:
       # Push to Main: Close issues when checks pass
       - name: Close issues when passing
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
