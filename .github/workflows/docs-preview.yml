@@ -130,12 +130,6 @@ jobs:
 
             🔗 **Preview URL**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/pr-${{ github.event.pull_request.number }}/
 
-            ### Validation Results
-            - ✅ Links: Checked in changed files - no broken links
-            - ✅ Markdown: Linted changed files - no issues found
-            - ✅ Build: Full site built successfully
-            - ⏳ Deploy: Pushed to gh-pages, awaiting Pages deployment
-
             ### Next Steps
             The preview has been deployed to the `gh-pages` branch. GitHub Pages will now build and deploy the site.
 
@@ -149,7 +143,6 @@ jobs:
             - **Workflow Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
             ---
-            *Note: Only changed files were validated for performance. Full validation runs on merge to main.*
             *This preview will be automatically deleted when the PR is merged or closed.*
             *This comment will be updated automatically when the preview is live.*
 
@@ -166,12 +159,6 @@ jobs:
 
             🔗 **Preview URL**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/pr-${{ github.event.pull_request.number }}/
 
-            ### Validation Results
-            - ✅ Links: Checked in changed files - no broken links
-            - ✅ Markdown: Linted changed files - no issues found
-            - ✅ Build: Completed successfully
-            - ℹ️ Deploy: No changes detected, preview unchanged
-
             ### Build Information
             - **Status**: ✅ Up-to-date
             - **Commit**: `${{ github.event.pull_request.head.sha }}`
@@ -179,5 +166,4 @@ jobs:
 
             ---
             *Note: The preview content hasn't changed since the last deployment.*
-            *Only changed files were validated for performance. Full validation runs on merge to main.*
             *This preview will be automatically deleted when the PR is merged or closed.*
