@@ -3259,6 +3259,130 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#software-packages-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software packages included
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Software packages included">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        common tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fsx-automounter-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FSx automounter service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mount_ephemeral-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mount_ephemeral service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create_swap-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_swap service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sccache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sccache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#octobuild" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        octobuild
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#processor-architectures-and-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Processor architectures and naming conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -3310,15 +3434,15 @@
 </tr>
 </tbody>
 </table>
-<h5 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h5>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Make a copy of <code>example.pkrvars.hcl</code> and adjust the input variables as needed</li>
 <li>Ensure you have active AWS credentials</li>
 <li>Invoke <code>packer build --var-file=&lt;your .pkrvars.hcl file&gt; &lt;path to .pkr.hcl file&gt;</code>, then wait for the build to complete.</li>
 </ol>
-<h5 id="software-packages-included">Software packages included<a class="headerlink" href="#software-packages-included" title="Permanent link">&para;</a></h5>
+<h2 id="software-packages-included">Software packages included<a class="headerlink" href="#software-packages-included" title="Permanent link">&para;</a></h2>
 <p>The templates install various software packages:</p>
-<p><strong>common tools</strong></p>
+<h3 id="common-tools"><strong>common tools</strong><a class="headerlink" href="#common-tools" title="Permanent link">&para;</a></h3>
 <p>Some common tools are installed to enable installing other software, performing maintenance tasks, and compile some C++ software:</p>
 <ul>
 <li>git</li>
@@ -3338,27 +3462,29 @@
 <li>Development libraries for compiling the <a href="https://aws.amazon.com/gamelift/">Amazon GameLift Server SDK for C++</a></li>
 <li>Development libraries for compiling the Godot 4 game engine (if available in the OS's package manager)</li>
 </ul>
-<p><strong>mold</strong></p>
+<h3 id="mold"><strong>mold</strong><a class="headerlink" href="#mold" title="Permanent link">&para;</a></h3>
 <p>The '<a href="https://github.com/rui314/mold">mold</a>' linker is installed to enable faster linking.</p>
-<p><strong>FSx automounter service</strong></p>
+<h3 id="fsx-automounter-service"><strong>FSx automounter service</strong><a class="headerlink" href="#fsx-automounter-service" title="Permanent link">&para;</a></h3>
 <p>The FSx automounter systemd service is a service written in Python that automatically mounts FSx for OpenZFS volumes on instance bootup. The service uses resource tags on FSx volumes to determine if and where to mount volumes on.</p>
-<p>You can use the following tags on FSx volumes:
-* '<em>automount-fsx-volume-name</em>' tag: specifies the name of the local mount point. The mount point specified will be prefixed with 'fsx_' by the service.
-* '<em>automount-fsx-volume-on</em>' tag: This tag contains a space-delimited list of EC2 instance names on which the volume will be automatically mounted by this service (if it is running on that instance).</p>
+<p>You can use the following tags on FSx volumes:</p>
+<ul>
+<li>'<em>automount-fsx-volume-name</em>' tag: specifies the name of the local mount point. The mount point specified will be prefixed with 'fsx_' by the service.</li>
+<li>'<em>automount-fsx-volume-on</em>' tag: This tag contains a space-delimited list of EC2 instance names on which the volume will be automatically mounted by this service (if it is running on that instance).</li>
+</ul>
 <p>For example, if the FSx automounter service is running on an EC2 instance with Name tag 'ubuntu-builder', and an FSx volume has tag <code>automount-fsx-volume-on</code>=<code>al2023-builder ubuntu-builder</code> and tag <code>automount-fsx-volume-name</code>=<code>workspace</code>, then the automounter will automatically mount that volume on <code>/mnt/fsx_workspace</code>.</p>
 <p>Note that the automounter service makes use of the <a href="https://docs.aws.amazon.com/fsx/latest/APIReference/API_ListTagsForResource.html">ListTagsForResource</a> FSx API call, which is rate-limited. If you intend to scale up hundreds of EC2 instances that are running this service, then we recommend <a href="https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/attach-linux-client.html">automatically mounting FSx volumes using <code>/etc/fstab</code></a>.</p>
-<p><strong>mount_ephemeral service</strong></p>
+<h3 id="mount_ephemeral-service"><strong>mount_ephemeral service</strong><a class="headerlink" href="#mount_ephemeral-service" title="Permanent link">&para;</a></h3>
 <p>The mount_ephemeral service is a systemd service written as a simple bash script that mounts NVMe attached instance storage volume automatically as temporary storage. It does this by formatting <code>/dev/nvme1n1</code> as xfs and then mounting it on <code>/tmp</code>. This service runs on instance bootup.</p>
-<p><strong>create_swap service</strong></p>
+<h3 id="create_swap-service"><strong>create_swap service</strong><a class="headerlink" href="#create_swap-service" title="Permanent link">&para;</a></h3>
 <p>The create_swap service is a systemd service written as a simple bash script that creates a 1GB swap file on <code>/swapfile</code>. This service runs on instance bootup.</p>
-<p><strong>sccache</strong></p>
+<h3 id="sccache"><strong>sccache</strong><a class="headerlink" href="#sccache" title="Permanent link">&para;</a></h3>
 <p>'<a href="https://github.com/mozilla/sccache">sccache</a>' is installed to cache c/c++ compilation artefacts, which can speed up builds by avoiding unneeded work.</p>
 <p>sccache is installed as a <em>systemd service</em>, and configured to use <code>/mnt/fsx_cache/sccache</code> as its cache folder. The service expects this folder to be available or set up by another service.</p>
-<p><strong>octobuild</strong></p>
+<h3 id="octobuild"><strong>octobuild</strong><a class="headerlink" href="#octobuild" title="Permanent link">&para;</a></h3>
 <p>'<a href="https://github.com/octobuild/octobuild">Octobuild</a>' is installed to act as a compilation cache for Unreal Engine.</p>
 <p>Octobuild is configured in <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/octobuild.conf">octobuild.conf</a> to use <code>/mnt/fsx_cache/octobuild_cache</code> as its cache folder, and expects this folder to be available or set up by another service.</p>
 <p>NOTE: Octobuild is not supported on aarch64, and therefore not installed there.</p>
-<h5 id="processor-architectures-and-naming-conventions">Processor architectures and naming conventions<a class="headerlink" href="#processor-architectures-and-naming-conventions" title="Permanent link">&para;</a></h5>
+<h2 id="processor-architectures-and-naming-conventions">Processor architectures and naming conventions<a class="headerlink" href="#processor-architectures-and-naming-conventions" title="Permanent link">&para;</a></h2>
 <p>Within this folder, the processor architecture naming conventions as reported by <code>uname -m</code> are used, hence why there are scripts here with names containing "x86_64" or "aarch64". The packer template <code>.hcl</code> files are named following the naming conventions of the operating system that they are based on. Unfortunately, because some operating systems don't use the same terminology in their naming conventions throughout, this means that you'll see this lack of consistency here has well.</p>
 
 
@@ -3380,7 +3506,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-05-27
+    2025-12-17
   </span>
 
     

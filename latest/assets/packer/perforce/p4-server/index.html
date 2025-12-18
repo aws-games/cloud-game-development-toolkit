@@ -3393,12 +3393,12 @@
 </ol>
 <h2 id="how-to-use">How to Use<a class="headerlink" href="#how-to-use" title="Permanent link">&para;</a></h2>
 <p>Building this AMI is as easy as running (x86 example):</p>
-<p><div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>validate<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
-</code></pre></div></p>
+</code></pre></div>
 <p>Packer will attempt to leverage the default VPC available in the AWS account and Region specified by your CLI credentials. It will provision an instance in a public subnet and communicate with that instance over the public internet. If a default VPC is not available or otherwise provided, the above command will fail. This Packer template can take a number of variables as specified in <code>example.pkrvars.hcl</code>. Variables can be passed individually through the <code>-var</code> command line flag or through a configuration file with the <code>-var-file</code> command line flag.</p>
 <p>An instance that is provisioned with this AMI will not automatically deploy a P4 Server. Instead, the required installation and configuration scripts are loaded onto this AMI by Packer, and then invoked at boot through EC2 user data. The P4 Server module does this through Terraform, but you can also manually provision an instance off of this AMI and specify the user data yourself:</p>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
@@ -3439,7 +3439,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-05-27
+    2025-12-17
   </span>
 
     

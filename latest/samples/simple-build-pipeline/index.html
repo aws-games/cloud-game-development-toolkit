@@ -3737,12 +3737,10 @@
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 packer<span class="w"> </span>build<span class="w"> </span>./assets/packer/perforce/p4-server/perforce_x86.pkr.hcl
 </code></pre></div>
-<p>This will use your AWS credentials to provision an <a href="https://aws.amazon.com/ec2/instance-types/">EC2 instance</a> in your <a href="https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html">Default VPC</a>. This instance is only used to create the AMI and will be terminated once the AMI is successfully created. The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/p4-server/example.pkrvars.hcl">
-<code>example.pkrvars.hcl</code></a> file and the <a href="https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables">Packer documentation on assigning variables</a> for more details.</p>
+<p>This will use your AWS credentials to provision an <a href="https://aws.amazon.com/ec2/instance-types/">EC2 instance</a> in your <a href="https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html">Default VPC</a>. This instance is only used to create the AMI and will be terminated once the AMI is successfully created. The Region, VPC, and Subnet where this instance is provisioned and the AMI is created are configurable - please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/perforce/p4-server/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> file and the <a href="https://developer.hashicorp.com/packer/guides/hcl/variables#assigning-variables">Packer documentation on assigning variables</a> for more details.</p>
 <blockquote>
 <p><strong>Note:</strong>
-The P4 Server template will default to the user's CLI configured region, if a region is not provided.</p>
-<p><strong>Note:</strong>
+The P4 Server template will default to the user's CLI configured region, if a region is not provided.
 The AWS Region where this AMI is created <em>must</em> be the same Region where you intend to deploy the Simple Build Pipeline.</p>
 </blockquote>
 <h3 id="step-3-create-build-agent-amazon-machine-images">Step 3. Create Build Agent Amazon Machine Images<a class="headerlink" href="#step-3-create-build-agent-amazon-machine-images" title="Permanent link">&para;</a></h3>
@@ -3753,8 +3751,7 @@ The Build Agent templates will default to the user's CLI configured region, if a
 </blockquote>
 <h4 id="amazon-linux-2023-amazon-machine-image">Amazon Linux 2023 Amazon Machine Image<a class="headerlink" href="#amazon-linux-2023-amazon-machine-image" title="Permanent link">&para;</a></h4>
 <p>This Amazon Machine Image is provisioned using the <a href="https://aws.amazon.com/linux/amazon-linux-2023/">Amazon Linux 2023</a> base operating system. It is highly configurable through variables, but there is only one variable that is required: A public SSH key. This public SSH key is used by the Jenkins orchestration service to establish an initial connection to the agent.</p>
-<p>This variable can be passed to Packer using the <code>-var-file</code> or <code>-var</code> command line flag. If you are using a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl">
-<code>example.pkrvars.hcl</code></a> for overridable fields. You can also pass the SSH key directly at the command line:</p>
+<p>This variable can be passed to Packer using the <code>-var-file</code> or <code>-var</code> command line flag. If you are using a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> for overridable fields. You can also pass the SSH key directly at the command line:</p>
 <h4 id="there-are-separate-arm-and-x86-based-packer-scripts-available-for-amazon-linux-2023">There are separate ARM and x86 based Packer scripts available for Amazon Linux 2023<a class="headerlink" href="#there-are-separate-arm-and-x86-based-packer-scripts-available-for-amazon-linux-2023" title="Permanent link">&para;</a></h4>
 <h4 id="arm-based-image">ARM Based Image<a class="headerlink" href="#arm-based-image" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>amazon-linux-2023-arm64.pkr.hcl
@@ -3775,13 +3772,12 @@ The above commands assume you are running <code>packer</code> from the <code>/as
 </code></pre></div>
 <p>Take note of the output of this CLI command. You will need the ARN later.</p>
 <h4 id="ubuntu-jammy-2204-amazon-machine-images">Ubuntu Jammy 22.04 Amazon Machine Images<a class="headerlink" href="#ubuntu-jammy-2204-amazon-machine-images" title="Permanent link">&para;</a></h4>
-<p>These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl">
-<code>example.pkrvars.hcl</code></a> for overridable fields.</p>
+<p>These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> for overridable fields.</p>
 <h4 id="there-are-separate-amd64-and-arm-based-packer-scripts-available-for-ubuntu-jammy-2204">There are separate AMD64 and ARM based Packer scripts available for Ubuntu Jammy 22.04<a class="headerlink" href="#there-are-separate-amd64-and-arm-based-packer-scripts-available-for-ubuntu-jammy-2204" title="Permanent link">&para;</a></h4>
 <h4 id="amd64-based-image">AMD64 Based Image<a class="headerlink" href="#amd64-based-image" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>ubuntu-jammy-22.04-amd64-server.pkr.hcl
 </code></pre></div>
-<h4 id="arm-based-image_1">ARM Based Image<a class="headerlink" href="#arm-based-image_1" title="Permanent link">&para;</a></h4>
+<h4 id="arm-based-ubuntu-image">ARM Based Ubuntu Image<a class="headerlink" href="#arm-based-ubuntu-image" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>ubuntu-jammy-22.04-arm64-server.pkr.hcl
 </code></pre></div>
 <blockquote>
@@ -3831,12 +3827,10 @@ Pipeline</em> creates DNS records and SSL certificates for all the applications 
 Pipeline</em> please consult the documentation for <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html">making Amazon Route 53 the DNS service for an existing domain.</a></p>
 <p>Once your hosted zone exists you can proceed to the next step.</p>
 <h3 id="step-5-configure-simple-build-pipeline-variables">Step 5. Configure Simple Build Pipeline Variables<a class="headerlink" href="#step-5-configure-simple-build-pipeline-variables" title="Permanent link">&para;</a></h3>
-<p>Configurations for the <em>Simple Build Pipeline</em> are split between 2 files: <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/local.tf">
-<code>local.tf</code></a> and <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/variables.tf">
-<code>variables.tf</code></a>. Variables in
-<code>local.tf</code> are typically static and can be modified within the file itself. Variables in <code>variables.tf</code> tend to be more dynamic and are passed in through the
+<p>Configurations for the <em>Simple Build Pipeline</em> are split between 2 files: <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/locals.tf"><code>locals.tf</code></a> and <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/samples/simple-build-pipeline/variables.tf"><code>variables.tf</code></a>. Variables in
+<code>locals.tf</code> are typically static and can be modified within the file itself. Variables in <code>variables.tf</code> tend to be more dynamic and are passed in through the
 <code>terraform apply</code> command either directly through a <code>-var</code> flag or as file using the <code>-var-file</code> flag.</p>
-<p>We'll start by walking through the required configurations in <code>local.tf</code>.</p>
+<p>We'll start by walking through the required configurations in <code>locals.tf</code>.</p>
 <p>1.</p>
 <p><code>jenkins_agent_secret_arns</code> is a list of <a href="https://aws.amazon.com/secrets-manager/">AWS Secrets Manager</a> ARNs that the Jenkins orchestration service will be granted access to. This is primarily used for providing private SSH keys to Jenkins so that the orchestration service can connect to your build agents. When you created build agent AMIs earlier you also uploaded private SSH keys to AWS Secrets Manager. The ARNs of those secrets should be added to the
 <code>jenkins_agent_secret_arns</code> list so that Jenkins can connect to the provisioned build agents.</p>

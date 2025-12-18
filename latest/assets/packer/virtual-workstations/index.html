@@ -1028,6 +1028,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#for-packer-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Packer Build:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#directory-structure-required" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3489,6 +3500,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#for-packer-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        For Packer Build:
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#directory-structure-required" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3643,16 +3665,20 @@
 <h1 id="virtual-workstations-packer-templates">Virtual Workstations Packer Templates<a class="headerlink" href="#virtual-workstations-packer-templates" title="Permanent link">&para;</a></h1>
 <h2 id="critical-requirements">🚨 CRITICAL REQUIREMENTS<a class="headerlink" href="#critical-requirements" title="Permanent link">&para;</a></h2>
 <h3 id="gpu-instance-types-required">GPU Instance Types Required<a class="headerlink" href="#gpu-instance-types-required" title="Permanent link">&para;</a></h3>
-<p><strong>⚠️ ALL TEMPLATES BUILD NVIDIA-OPTIMIZED AMIs</strong></p>
-<p><strong>For Packer Build:</strong>
-- ✅ <strong>GPU instances</strong>: <code>g4dn.*</code>, <code>g5.*</code>, <code>p3.*</code>, <code>p4.*</code> (full functionality)
-- ⚠️ <strong>Non-GPU instances</strong>: <code>t3.*</code>, <code>m5.*</code>, <code>c5.*</code>, <code>r5.*</code> (builds succeed, skips NVIDIA drivers)
-- 🔧 <strong>Current defaults</strong>: <code>g4dn.2xlarge</code> (recommended for production)
-- 🎓 <strong>Workshop friendly</strong>: C instances work fine for learning/demos</p>
-<p><strong>For Final VDI Deployment:</strong>
-- ✅ <strong>Recommended</strong>: GPU instances for full functionality
-- ⚠️ <strong>Will boot but degraded</strong>: Non-GPU instances (software rendering only)
-- ❌ <strong>GPU apps will fail</strong>: Unreal Engine, CUDA applications</p>
+<h4 id="all-templates-build-nvidia-optimized-amis"><strong>⚠️ ALL TEMPLATES BUILD NVIDIA-OPTIMIZED AMIs</strong><a class="headerlink" href="#all-templates-build-nvidia-optimized-amis" title="Permanent link">&para;</a></h4>
+<h3 id="for-packer-build"><strong>For Packer Build:</strong><a class="headerlink" href="#for-packer-build" title="Permanent link">&para;</a></h3>
+<ul>
+<li>✅ <strong>GPU instances</strong>: <code>g4dn.*</code>, <code>g5.*</code>, <code>p3.*</code>, <code>p4.*</code> (full functionality)</li>
+<li>⚠️ <strong>Non-GPU instances</strong>: <code>t3.*</code>, <code>m5.*</code>, <code>c5.*</code>, <code>r5.*</code> (builds succeed, skips NVIDIA drivers)</li>
+<li>🔧 <strong>Current defaults</strong>: <code>g4dn.2xlarge</code> (recommended for production)</li>
+<li>🎓 <strong>Workshop friendly</strong>: C instances work fine for learning/demos</li>
+</ul>
+<p><strong>For Final VDI Deployment:</strong></p>
+<ul>
+<li>✅ <strong>Recommended</strong>: GPU instances for full functionality</li>
+<li>⚠️ <strong>Will boot but degraded</strong>: Non-GPU instances (software rendering only)</li>
+<li>❌ <strong>GPU apps will fail</strong>: Unreal Engine, CUDA applications</li>
+</ul>
 <p><strong>Instance Compatibility Matrix:</strong></p>
 <table>
 <thead>
@@ -3765,10 +3791,12 @@ packer<span class="w"> </span>build<span class="w"> </span>windows-server-2025-u
 <li><strong>System PATH</strong> configuration</li>
 </ul>
 <h2 id="template-dependencies">Template Dependencies<a class="headerlink" href="#template-dependencies" title="Permanent link">&para;</a></h2>
-<p><strong>Each template references shared scripts:</strong>
-- <code>../shared/base_infrastructure.ps1</code> - Common infrastructure setup
-- <code>../shared/sysprep.ps1</code> - EC2Launch configuration
-- <code>../shared/userdata.ps1</code> - Packer WinRM connectivity</p>
+<p><strong>Each template references shared scripts:</strong></p>
+<ul>
+<li><code>../shared/base_infrastructure.ps1</code> - Common infrastructure setup</li>
+<li><code>../shared/sysprep.ps1</code> - EC2Launch configuration</li>
+<li><code>../shared/userdata.ps1</code> - Packer WinRM connectivity</li>
+</ul>
 <p><strong>This is why the complete directory structure is required.</strong></p>
 <h2 id="usage-with-vdi-module">Usage with VDI Module<a class="headerlink" href="#usage-with-vdi-module" title="Permanent link">&para;</a></h2>
 <p>After building an AMI, use it with the VDI Terraform module:</p>
@@ -3799,21 +3827,27 @@ packer<span class="w"> </span>build<span class="w"> </span>windows-server-2025-u
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>"Script not found" errors:</strong>
-- Ensure you're running from the correct subdirectory
-- Verify the <code>shared/</code> directory exists at the same level
-- Check that you have the complete repository structure</p>
-<p><strong>Build failures:</strong>
-- Verify AWS credentials are configured
-- Check VPC/subnet configuration in variables
-- Ensure instance type supports GPU drivers (g4dn.* recommended)</p>
+<p><strong>"Script not found" errors:</strong></p>
+<ul>
+<li>Ensure you're running from the correct subdirectory</li>
+<li>Verify the <code>shared/</code> directory exists at the same level</li>
+<li>Check that you have the complete repository structure</li>
+</ul>
+<p><strong>Build failures:</strong></p>
+<ul>
+<li>Verify AWS credentials are configured</li>
+<li>Check VPC/subnet configuration in variables</li>
+<li>Ensure instance type supports GPU drivers (g4dn.* recommended)</li>
+</ul>
 <h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
-<p>When adding new templates:
-1. Create new subdirectory (e.g., <code>audio/</code>)
-2. Reference shared scripts: <code>../shared/base_infrastructure.ps1</code>
-3. Add template-specific scripts in the subdirectory
-4. Update this README with the new template
-5. Add dependency warnings to the template file</p>
+<p>When adding new templates:</p>
+<ol>
+<li>Create new subdirectory (e.g., <code>audio/</code>)</li>
+<li>Reference shared scripts: <code>../shared/base_infrastructure.ps1</code></li>
+<li>Add template-specific scripts in the subdirectory</li>
+<li>Update this README with the new template</li>
+<li>Add dependency warnings to the template file</li>
+</ol>
 
 
 
@@ -3834,7 +3868,7 @@ packer<span class="w"> </span>build<span class="w"> </span>windows-server-2025-u
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-26
+    2025-12-17
   </span>
 
     

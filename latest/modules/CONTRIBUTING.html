@@ -3729,17 +3729,21 @@
     └── integration_02_multi_region_deploy.tftest.hcl   # Integration/E2E test (apply)
 </code></pre></div>
 <h3 id="when-to-use-submodules"><strong>When to Use Submodules</strong><a class="headerlink" href="#when-to-use-submodules" title="Permanent link">&para;</a></h3>
-<p><strong>✅ Use Submodules When:</strong>
-- <strong>Different providers required</strong> (AWS vs Kubernetes vs Helm)
-- <strong>Dependency conflicts between providers</strong> (EKS cluster must exist before Kubernetes resources)
-- <strong>Clear logical separation</strong> benefits maintenance
-- <strong>Reusable across multiple parent modules</strong></p>
-<p><strong>❌ Avoid Submodules When:</strong>
-- Same provider throughout
-- Tightly coupled resources
-- No clear separation benefit
-- Adds complexity without value</p>
-<p><strong>Example Excellence Pattern:</strong>
+<p><strong>✅ Use Submodules When:</strong></p>
+<ul>
+<li><strong>Different providers required</strong> (AWS vs Kubernetes vs Helm)</li>
+<li><strong>Dependency conflicts between providers</strong> (EKS cluster must exist before Kubernetes resources)</li>
+<li><strong>Clear logical separation</strong> benefits maintenance</li>
+<li><strong>Reusable across multiple parent modules</strong></li>
+</ul>
+<p><strong>❌ Avoid Submodules When:</strong></p>
+<ul>
+<li>Same provider throughout</li>
+<li>Tightly coupled resources</li>
+<li>No clear separation benefit</li>
+<li>Adds complexity without value</li>
+</ul>
+<p><strong>Example Excellence Pattern:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># DDC Module - Different providers justify submodules</span>
 <span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_infra&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/ddc-infra&quot;</span>
@@ -3754,7 +3758,7 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">module.ddc_infra</span><span class="p">]</span>
 <span class="p">}</span>
-</code></pre></div></p>
+</code></pre></div>
 <p><strong>Default Excellence</strong>: Most modules should be implemented as single parent modules without submodules.</p>
 <h2 id="variable-naming-standards">🏷️ Variable Naming Standards<a class="headerlink" href="#variable-naming-standards" title="Permanent link">&para;</a></h2>
 <h3 id="excellence-pattern-existing_-prefix-for-external-resources"><strong>Excellence Pattern: <code>existing_</code> Prefix for External Resources</strong><a class="headerlink" href="#excellence-pattern-existing_-prefix-for-external-resources" title="Permanent link">&para;</a></h3>
@@ -3871,12 +3875,16 @@
 </code></pre></div>
 <h3 id="excellence-pattern-provider-configurations"><strong>Excellence Pattern: Provider Configurations</strong><a class="headerlink" href="#excellence-pattern-provider-configurations" title="Permanent link">&para;</a></h3>
 <p><strong>CRITICAL</strong>: Modules should NOT define provider configurations - only version requirements.</p>
-<p><strong>Required Versions (Universal):</strong>
-- <strong>Terraform &gt;= 1.11</strong> - Required for enhanced testing framework and stability improvements
-- <strong>AWS Provider &gt;= 6.0.0</strong> - MANDATORY for enhanced region support in multi-region deployments</p>
-<p><strong>Additional Providers (When Needed):</strong>
-- <strong>Kubernetes Provider &gt;= 2.33.0</strong> - For modules using Kubernetes resources
-- <strong>Helm Provider &gt;= 3.0.0</strong> - For modules deploying Helm charts</p>
+<p><strong>Required Versions (Universal):</strong></p>
+<ul>
+<li><strong>Terraform &gt;= 1.11</strong> - Required for enhanced testing framework and stability improvements</li>
+<li><strong>AWS Provider &gt;= 6.0.0</strong> - MANDATORY for enhanced region support in multi-region deployments</li>
+</ul>
+<p><strong>Additional Providers (When Needed):</strong></p>
+<ul>
+<li><strong>Kubernetes Provider &gt;= 2.33.0</strong> - For modules using Kubernetes resources</li>
+<li><strong>Helm Provider &gt;= 3.0.0</strong> - For modules deploying Helm charts</li>
+</ul>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Universal requirements</span>
 <span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">required_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 1.11&quot;</span>
@@ -4137,22 +4145,24 @@
 </ol>
 <h3 id="recommended-networking-patterns"><strong>Recommended Networking Patterns</strong><a class="headerlink" href="#recommended-networking-patterns" title="Permanent link">&para;</a></h3>
 <p><strong>Note</strong>: Networking decisions should be made at the <strong>example level</strong>, not enforced by modules. These are recommended patterns that examples can demonstrate.</p>
-<p><strong>External Access Pattern (Example-Driven):</strong>
+<p><strong>External Access Pattern (Example-Driven):</strong></p>
 <div class="highlight"><pre><span></span><code>Internet Users → Public NLB → NLB Target (EKS, EC2, etc.)
-</code></pre></div></p>
-<p><strong>External Access with ALB (When HTTP Routing Needed):</strong>
+</code></pre></div>
+<p><strong>External Access with ALB (When HTTP Routing Needed):</strong></p>
 <div class="highlight"><pre><span></span><code>Internet Users → Public NLB → ALB → Service Targets (EKS Pods, EC2, etc.)
-</code></pre></div></p>
-<p><strong>Internal Access Pattern (Example-Driven):</strong>
+</code></pre></div>
+<p><strong>Internal Access Pattern (Example-Driven):</strong></p>
 <div class="highlight"><pre><span></span><code>VPN/VDI Users → Private NLB → NLB Target (ALB, EKS, EC2, etc.)
-</code></pre></div></p>
+</code></pre></div>
 <p><strong>VPC Endpoints</strong>: Currently not supported but under consideration. If you're interested in VPC Endpoints support, please <a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/new?assignees=&amp;labels=enhancement&amp;template=feature_request.md">submit a feature request</a> to the toolkit.</p>
 <h3 id="excellence-pattern-multi-region-architecture"><strong>Excellence Pattern: Multi-Region Architecture</strong><a class="headerlink" href="#excellence-pattern-multi-region-architecture" title="Permanent link">&para;</a></h3>
-<p><strong>Regional Isolation Pattern:</strong>
-- <strong>Separate module instances</strong> per region
-- <strong>Regional endpoints</strong> for user control
-- <strong>Manual disaster recovery</strong> (users switch endpoints)
-- <strong>Cross-region connectivity</strong> via VPC peering or Transit Gateway</p>
+<p><strong>Regional Isolation Pattern:</strong></p>
+<ul>
+<li><strong>Separate module instances</strong> per region</li>
+<li><strong>Regional endpoints</strong> for user control</li>
+<li><strong>Manual disaster recovery</strong> (users switch endpoints)</li>
+<li><strong>Cross-region connectivity</strong> via VPC peering or Transit Gateway</li>
+</ul>
 <p><strong>AWS Provider v6 Enhanced Region Support:</strong>
 We leverage Terraform's enhanced AWS provider region support for multi-region deployments. AWS Provider v6+ automatically handles region inheritance, reducing provider configuration complexity.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Enhanced region support (AWS Provider v6+)</span>
@@ -4206,13 +4216,15 @@ We leverage Terraform's enhanced AWS provider region support for multi-region de
 </code></pre></div>
 <p><strong>Benefits</strong>: AWS Provider v6 automatically handles region inheritance, reducing provider configuration complexity. Other providers (Kubernetes, Helm) still require explicit provider configuration until they adopt enhanced region support.</p>
 <h3 id="breaking-changes-prevention"><strong>Breaking Changes Prevention</strong><a class="headerlink" href="#breaking-changes-prevention" title="Permanent link">&para;</a></h3>
-<p><strong>Excellence Rules:</strong>
-- <strong>✅ ALWAYS use major version bumps</strong> for breaking changes
-- <strong>✅ ALWAYS test migration paths</strong> with real state files
-- <strong>✅ ALWAYS document breaking changes</strong> comprehensively
-- <strong>❌ NEVER change logical names</strong> without <code>moved</code> blocks
-- <strong>❌ NEVER change variable names</strong> in minor/patch versions</p>
-<p><strong>Safe Enhancement Patterns:</strong>
+<p><strong>Excellence Rules:</strong></p>
+<ul>
+<li><strong>✅ ALWAYS use major version bumps</strong> for breaking changes</li>
+<li><strong>✅ ALWAYS test migration paths</strong> with real state files</li>
+<li><strong>✅ ALWAYS document breaking changes</strong> comprehensively</li>
+<li><strong>❌ NEVER change logical names</strong> without <code>moved</code> blocks</li>
+<li><strong>❌ NEVER change variable names</strong> in minor/patch versions</li>
+</ul>
+<p><strong>Safe Enhancement Patterns:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ SAFE - Adding new resources</span>
 <span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;new_bucket&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.name_prefix}-new-bucket&quot;</span>
@@ -4229,7 +4241,7 @@ We leverage Terraform's enhanced AWS provider region support for multi-region de
 <span class="kr">output</span><span class="w"> </span><span class="nv">&quot;new_resource_id&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_s3_bucket.new_bucket.id</span>
 <span class="p">}</span>
-</code></pre></div></p>
+</code></pre></div>
 <h2 id="getting-started">🚀 Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Review Gold Standards</strong> - Understand what excellence looks like</li>
@@ -4262,7 +4274,7 @@ We leverage Terraform's enhanced AWS provider region support for multi-region de
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-17
+    2025-12-17
   </span>
 
     

@@ -3714,32 +3714,40 @@
 <h2 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
 <h3 id="1-modularity-and-flexibility">1. Modularity and Flexibility<a class="headerlink" href="#1-modularity-and-flexibility" title="Permanent link">&para;</a></h3>
 <p>Modules are designed as building blocks, not complete solutions. Users compose modules to fit their specific needs rather than being forced into opinionated architectures.</p>
-<p><strong>Key Principles:</strong>
-- Modules provide infrastructure components, not complete solutions
-- Configuration decisions happen in examples, not module internals
-- Support multiple deployment patterns through simple variables
-- Enable customization without requiring module forking</p>
+<p><strong>Key Principles:</strong></p>
+<ul>
+<li>Modules provide infrastructure components, not complete solutions</li>
+<li>Configuration decisions happen in examples, not module internals</li>
+<li>Support multiple deployment patterns through simple variables</li>
+<li>Enable customization without requiring module forking</li>
+</ul>
 <h3 id="2-conservative-variable-exposure">2. Conservative Variable Exposure<a class="headerlink" href="#2-conservative-variable-exposure" title="Permanent link">&para;</a></h3>
 <p>Every exposed variable is a commitment to backward compatibility. We start with minimal variables based on known use cases and add more when users request them.</p>
-<p><strong>Guidelines:</strong>
-- Start with minimal variables
-- Add variables based on user demand (demand-driven)
-- Default values should work for 80% of use cases
-- Easier to add than remove (breaking changes are painful)</p>
+<p><strong>Guidelines:</strong></p>
+<ul>
+<li>Start with minimal variables</li>
+<li>Add variables based on user demand (demand-driven)</li>
+<li>Default values should work for 80% of use cases</li>
+<li>Easier to add than remove (breaking changes are painful)</li>
+</ul>
 <h3 id="3-security-by-default">3. Security by Default<a class="headerlink" href="#3-security-by-default" title="Permanent link">&para;</a></h3>
 <p>Game development infrastructure often handles sensitive assets and player data. Security mistakes are costly and hard to fix later.</p>
-<p><strong>Security Patterns:</strong>
-- No <code>0.0.0.0/0</code> ingress rules in module code (users explicitly define allowed access)
-- Private-first architecture with controlled external access
-- HTTPS enforcement for internet-facing services
-- User-controlled security groups with their own rules</p>
+<p><strong>Security Patterns:</strong></p>
+<ul>
+<li>No <code>0.0.0.0/0</code> ingress rules in module code (users explicitly define allowed access)</li>
+<li>Private-first architecture with controlled external access</li>
+<li>HTTPS enforcement for internet-facing services</li>
+<li>User-controlled security groups with their own rules</li>
+</ul>
 <h3 id="4-readability-first">4. Readability First<a class="headerlink" href="#4-readability-first" title="Permanent link">&para;</a></h3>
 <p>Game development teams often include infrastructure newcomers. Clear, understandable code reduces onboarding time and prevents misconfigurations.</p>
-<p><strong>Code Standards:</strong>
-- Prefer explicit over implicit configurations
-- Use descriptive variable names that explain purpose
-- Self-documenting code over clever abstractions
-- Comment complex logic with business context</p>
+<p><strong>Code Standards:</strong></p>
+<ul>
+<li>Prefer explicit over implicit configurations</li>
+<li>Use descriptive variable names that explain purpose</li>
+<li>Self-documenting code over clever abstractions</li>
+<li>Comment complex logic with business context</li>
+</ul>
 <h2 id="module-design-standards">Module Design Standards<a class="headerlink" href="#module-design-standards" title="Permanent link">&para;</a></h2>
 <h3 id="naming-conventions">Naming Conventions<a class="headerlink" href="#naming-conventions" title="Permanent link">&para;</a></h3>
 <p>Use descriptive, purpose-driven resource names:</p>
@@ -3753,10 +3761,12 @@
 <span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;this2&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <h3 id="variable-structure">Variable Structure<a class="headerlink" href="#variable-structure" title="Permanent link">&para;</a></h3>
-<p>Use a hybrid approach:
-- <strong>Flat variables</strong> for simple, common settings
-- <strong>Complex objects</strong> for logical grouping when they provide clear value
-- <strong>Submodule alignment</strong> - Complex objects that map directly to submodules</p>
+<p>Use a hybrid approach:</p>
+<ul>
+<li><strong>Flat variables</strong> for simple, common settings</li>
+<li><strong>Complex objects</strong> for logical grouping when they provide clear value</li>
+<li><strong>Submodule alignment</strong> - Complex objects that map directly to submodules</li>
+</ul>
 <div class="highlight"><pre><span></span><code><span class="c1"># Flat for simple settings</span>
 <span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;vpc_id&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
@@ -3793,12 +3803,14 @@
 <h2 id="testing-strategy">Testing Strategy<a class="headerlink" href="#testing-strategy" title="Permanent link">&para;</a></h2>
 <h3 id="unit-tests-with-mocked-providers">Unit Tests with Mocked Providers<a class="headerlink" href="#unit-tests-with-mocked-providers" title="Permanent link">&para;</a></h3>
 <p>All modules use Terraform's native test framework with <strong>mocked providers</strong> to validate module logic without creating actual AWS resources.</p>
-<p><strong>Benefits:</strong>
-- Zero AWS costs (no resources created)
-- No cleanup required
-- No AWS credentials needed
-- Fast execution (seconds)
-- CI-ready without authentication</p>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>Zero AWS costs (no resources created)</li>
+<li>No cleanup required</li>
+<li>No AWS credentials needed</li>
+<li>Fast execution (seconds)</li>
+<li>CI-ready without authentication</li>
+</ul>
 <p><strong>Test Structure:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Mock AWS provider</span>
 <span class="err">mock_</span><span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;aws&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -3822,13 +3834,15 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>What Gets Tested:</strong>
-- ✅ Variable validation logic
-- ✅ Conditional resource creation
-- ✅ Resource count calculations
-- ✅ Dynamic block logic
-- ❌ Actual AWS resource creation
-- ❌ AWS API behavior</p>
+<p><strong>What Gets Tested:</strong></p>
+<ul>
+<li>✅ Variable validation logic</li>
+<li>✅ Conditional resource creation</li>
+<li>✅ Resource count calculations</li>
+<li>✅ Dynamic block logic</li>
+<li>❌ Actual AWS resource creation</li>
+<li>❌ AWS API behavior</li>
+</ul>
 <p><strong>Running Tests:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>modules/<span class="o">{</span>module-name<span class="o">}</span>
 terraform<span class="w"> </span>init
@@ -3844,9 +3858,11 @@ terraform<span class="w"> </span><span class="nb">test</span>
 <li><strong>tests/</strong> - Terraform test files with mocked providers</li>
 </ol>
 <h3 id="test-documentation">Test Documentation<a class="headerlink" href="#test-documentation" title="Permanent link">&para;</a></h3>
-<p>Test directories should include:
-- <strong>README.md</strong> - Test scenarios, what gets tested, how to run
-- <strong>QUICKSTART.md</strong> - 2-minute quick start guide (optional for complex modules)</p>
+<p>Test directories should include:</p>
+<ul>
+<li><strong>README.md</strong> - Test scenarios, what gets tested, how to run</li>
+<li><strong>QUICKSTART.md</strong> - 2-minute quick start guide (optional for complex modules)</li>
+</ul>
 <h3 id="avoid-documentation-proliferation">Avoid Documentation Proliferation<a class="headerlink" href="#avoid-documentation-proliferation" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Don't create multiple README files for the same purpose</li>
@@ -3873,25 +3889,33 @@ docs(module): update documentation
 test(module): add tests
 </code></pre></div>
 <h3 id="pre-commit-checks">Pre-commit Checks<a class="headerlink" href="#pre-commit-checks" title="Permanent link">&para;</a></h3>
-<p>The project uses pre-commit hooks for:
-- Terraform formatting (<code>terraform fmt</code>)
-- Terraform validation
-- Security scanning (Checkov)
-- Documentation generation</p>
+<p>The project uses pre-commit hooks for:</p>
+<ul>
+<li>Terraform formatting (<code>terraform fmt</code>)</li>
+<li>Terraform validation</li>
+<li>Security scanning (Checkov)</li>
+<li>Documentation generation</li>
+</ul>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">&para;</a></h3>
-<p><strong>3-Tier Architecture:</strong>
-- <code>application_subnets</code> - Primary business applications
-- <code>service_subnets</code> - Supporting services (databases, caches)
-- <code>load_balancer_config</code> - Load balancer configuration</p>
-<p><strong>Load Balancer Strategy:</strong>
-- Default to NLB for most services
-- ALB when needed for HTTP/HTTPS routing
-- User controls creation via boolean flags</p>
-<p><strong>DNS Patterns:</strong>
-- Regional endpoints by default (<code>us-east-1.service.company.com</code>)
-- Private zones for internal service discovery
-- Global endpoints optional for advanced routing</p>
+<p><strong>3-Tier Architecture:</strong></p>
+<ul>
+<li><code>application_subnets</code> - Primary business applications</li>
+<li><code>service_subnets</code> - Supporting services (databases, caches)</li>
+<li><code>load_balancer_config</code> - Load balancer configuration</li>
+</ul>
+<p><strong>Load Balancer Strategy:</strong></p>
+<ul>
+<li>Default to NLB for most services</li>
+<li>ALB when needed for HTTP/HTTPS routing</li>
+<li>User controls creation via boolean flags</li>
+</ul>
+<p><strong>DNS Patterns:</strong></p>
+<ul>
+<li>Regional endpoints by default (<code>us-east-1.service.company.com</code>)</li>
+<li>Private zones for internal service discovery</li>
+<li>Global endpoints optional for advanced routing</li>
+</ul>
 <h3 id="security-groups">Security Groups<a class="headerlink" href="#security-groups" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
@@ -3953,17 +3977,19 @@ test(module): add tests
 </ol>
 <h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Documentation</strong>: https://aws-games.github.io/cloud-game-development-toolkit/</li>
+<li><strong>Documentation</strong>: <a href="https://aws-games.github.io/cloud-game-development-toolkit/">https://aws-games.github.io/cloud-game-development-toolkit/</a></li>
 <li><strong>Design Standards</strong>: <code>modules/DESIGN_STANDARDS.md</code></li>
 <li><strong>Contributing</strong>: <code>CONTRIBUTING.md</code></li>
-<li><strong>Discussions</strong>: https://github.com/aws-games/cloud-game-development-toolkit/discussions/</li>
-<li><strong>Roadmap</strong>: https://github.com/orgs/aws-games/projects/1/views/1</li>
+<li><strong>Discussions</strong>: <a href="https://github.com/aws-games/cloud-game-development-toolkit/discussions/">https://github.com/aws-games/cloud-game-development-toolkit/discussions/</a></li>
+<li><strong>Roadmap</strong>: <a href="https://github.com/orgs/aws-games/projects/1/views/1">https://github.com/orgs/aws-games/projects/1/views/1</a></li>
 </ul>
 <h2 id="agent-specific-context">Agent-Specific Context<a class="headerlink" href="#agent-specific-context" title="Permanent link">&para;</a></h2>
-<p>Different AI agents may have additional context files:
-- <strong>Kiro</strong>:
-  - <code>.kiro/steering/*.md</code> - Automatically loaded steering files (project context)
-  - <code>.kiro/rules/*.md</code> - Kiro-specific rules and workflows</p>
+<p>Different AI agents may have additional context files:</p>
+<ul>
+<li><strong>Kiro</strong>:</li>
+<li><code>.kiro/steering/*.md</code> - Automatically loaded steering files (project context)</li>
+<li><code>.kiro/rules/*.md</code> - Kiro-specific rules and workflows</li>
+</ul>
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Questions</strong>: Use GitHub Discussions</li>
@@ -3993,7 +4019,7 @@ test(module): add tests
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-12
+    2025-12-17
   </span>
 
     

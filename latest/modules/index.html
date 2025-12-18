@@ -3858,7 +3858,7 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Important:</strong> While AWS Provider v6 supports <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade#enhanced-region-support">enhanced region support</a>, other providers (Kubernetes, Helm, kubectl) still require <a href="https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations">explicit provider aliases</a> for multi-region deployments.</p>
+<p><strong>Important:</strong> While AWS Provider v6 supports <a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade">enhanced region support</a>, other providers (Kubernetes, Helm, kubectl) still require <a href="https://developer.hashicorp.com/terraform/language/providers/configuration#multiple-provider-configurations">explicit provider aliases</a> for multi-region deployments.</p>
 <h2 id="security-best-practices">Security Best Practices<a class="headerlink" href="#security-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="network-security"><strong>Network Security</strong><a class="headerlink" href="#network-security" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3927,7 +3927,7 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-issues"><strong>Common Issues</strong><a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
-<p><strong>Provider Configuration Errors</strong></p>
+<h4 id="provider-configuration-errors">Provider Configuration Errors<a class="headerlink" href="#provider-configuration-errors" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Error: Invalid provider configuration</span>
 <span class="c1"># Solution: Ensure AWS Provider v6+ for enhanced region support</span>
 terraform<span class="w"> </span><span class="o">{</span>
@@ -3939,7 +3939,7 @@ terraform<span class="w"> </span><span class="o">{</span>
 <span class="w">  </span><span class="o">}</span>
 <span class="o">}</span>
 </code></pre></div>
-<p><strong>Subnet Configuration</strong></p>
+<h4 id="subnet-configuration">Subnet Configuration<a class="headerlink" href="#subnet-configuration" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Error: Load balancer subnets must be provided</span>
 <span class="c1"># Solution: Specify subnets in load_balancer_config</span>
 <span class="nv">load_balancer_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">{</span>
@@ -3948,7 +3948,7 @@ terraform<span class="w"> </span><span class="o">{</span>
 <span class="w">  </span><span class="o">}</span>
 <span class="o">}</span>
 </code></pre></div>
-<p><strong>Security Group Access</strong></p>
+<h4 id="security-group-access">Security Group Access<a class="headerlink" href="#security-group-access" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Error: Cannot access service</span>
 <span class="c1"># Solution: Check security group rules and CIDR blocks</span>
 <span class="nv">security_groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>aws_security_group.office_access.id<span class="o">]</span>
@@ -3987,7 +3987,7 @@ terraform<span class="w"> </span><span class="o">{</span>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-26
+    2025-12-17
   </span>
 
     

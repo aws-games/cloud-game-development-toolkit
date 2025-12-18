@@ -3310,7 +3310,7 @@
 <h1 id="packer-templates-for-unreal-engine-windows-build-agents">Packer Templates for Unreal Engine Windows Build Agents<a class="headerlink" href="#packer-templates-for-unreal-engine-windows-build-agents" title="Permanent link">&para;</a></h1>
 <p>The following template builds a Windows based AMI capable of Unreal Engine 5.4 compilation jobs. Please customize it to your needs.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.4-release-notes#platformsdkupgrades">the release notes for Unreal Engine 5.4</a> for details on what tools are used for compiling this version of the engine.</p>
+<p>This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes#platform-sdk-upgrades">the release notes for Unreal Engine 5.7</a> for details on what tools are used for compiling this version of the engine.</p>
 <p>The only required variable for building this Amazon Machine Image is a public SSH key.</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>windows.pkr.hcl<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public ssh key here&gt;&quot;</span>
@@ -3334,20 +3334,16 @@
 <li>OpenJDK used by Jenkins agents</li>
 <li>Git</li>
 <li>OpenSSH</li>
-<li>Python3<ul>
+<li>Python3</li>
 <li>Botocore</li>
 <li>Boto3</li>
-</ul>
-</li>
 <li>Client for Network File System (NFS)</li>
 <li>Windows Development Kit and Debugging Tools</li>
-<li>Visual Studio 2022 Build Tools<ul>
+<li>Visual Studio 2022 Build Tools</li>
 <li>VCTools Workload; Include Recommended</li>
 <li>ManagedDesktopBuild Tools; Include Recommended</li>
 <li>MSVC v143 - VS 2022 C++ x64/x86 build tools</li>
 <li>Microsoft.Net.Component.4.6.2TargetingPack</li>
-</ul>
-</li>
 </ul>
 <p>Consult the <a href="https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022">Visual Studio Build Tools component directory</a> for details.</p>
 
@@ -3370,7 +3366,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-05-27
+    2025-12-17
   </span>
 
     

@@ -4703,45 +4703,57 @@
 <span class="c1">  # Manual mapping of many variables</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Benefits of Submodule Alignment:</strong>
-- <strong>Clear responsibility</strong> - Users understand which settings affect which components
-- <strong>Easy orchestration</strong> - Parent module passes entire objects to submodules
-- <strong>Conditional creation</strong> - <code>config = null</code> skips entire submodules
-- <strong>Reduced complexity</strong> - No manual variable mapping in parent module
-- <strong>Logical grouping</strong> - Related settings stay together</p>
+<p><strong>Benefits of Submodule Alignment:</strong></p>
+<ul>
+<li><strong>Clear responsibility</strong> - Users understand which settings affect which components</li>
+<li><strong>Easy orchestration</strong> - Parent module passes entire objects to submodules</li>
+<li><strong>Conditional creation</strong> - <code>config = null</code> skips entire submodules</li>
+<li><strong>Reduced complexity</strong> - No manual variable mapping in parent module</li>
+<li><strong>Logical grouping</strong> - Related settings stay together</li>
+</ul>
 <h2 id="networking-standards">Networking Standards<a class="headerlink" href="#networking-standards" title="Permanent link">&para;</a></h2>
 <h3 id="access-patterns"><strong>Access Patterns</strong><a class="headerlink" href="#access-patterns" title="Permanent link">&para;</a></h3>
-<p><strong>CGD Toolkit modules support three standardized access patterns:</strong>
-- <strong>Internet-Accessible</strong> - Public services (DDC, Perforce, Jenkins) with controlled external access
-- <strong>VPC-Only</strong> - Internal services (Databases, Monitoring) accessible only within VPC
-- <strong>Mixed</strong> - Services with both public and private components</p>
+<p><strong>CGD Toolkit modules support three standardized access patterns:</strong></p>
+<ul>
+<li><strong>Internet-Accessible</strong> - Public services (DDC, Perforce, Jenkins) with controlled external access</li>
+<li><strong>VPC-Only</strong> - Internal services (Databases, Monitoring) accessible only within VPC</li>
+<li><strong>Mixed</strong> - Services with both public and private components</li>
+</ul>
 <h3 id="load-balancer-strategy"><strong>Load Balancer Strategy</strong><a class="headerlink" href="#load-balancer-strategy" title="Permanent link">&para;</a></h3>
-<p><strong>Consistent approach across all modules:</strong>
-- <strong>Default to NLB</strong> for most services (connection-level health checks, static IPs, predictable routing)
-- <strong>ALB when needed</strong> for HTTP/HTTPS routing, WAF integration, path-based routing
-- <strong>User controls creation</strong> via boolean flags or configuration objects
-- <strong>Automatic target group management</strong> - modules handle the complexity
-- <strong>Cost justified</strong> - ~$16/month NLB vs Route53 health check complexity</p>
+<p><strong>Consistent approach across all modules:</strong></p>
+<ul>
+<li><strong>Default to NLB</strong> for most services (connection-level health checks, static IPs, predictable routing)</li>
+<li><strong>ALB when needed</strong> for HTTP/HTTPS routing, WAF integration, path-based routing</li>
+<li><strong>User controls creation</strong> via boolean flags or configuration objects</li>
+<li><strong>Automatic target group management</strong> - modules handle the complexity</li>
+<li><strong>Cost justified</strong> - ~$16/month NLB vs Route53 health check complexity</li>
+</ul>
 <h3 id="dns-patterns"><strong>DNS Patterns</strong><a class="headerlink" href="#dns-patterns" title="Permanent link">&para;</a></h3>
-<p><strong>Regional endpoints by default following AWS service patterns:</strong>
-- <strong>Regional endpoints</strong> - <code>us-east-1.service.company.com</code> (performance, isolation, explicit control)
-- <strong>Private zones</strong> - Always created for internal service discovery (<code>service.internal</code>)
-- <strong>Global endpoints</strong> - Optional for advanced routing (latency-based, geolocation, failover)
-- <strong>DNS hierarchy</strong> - <code>region.cluster.platform.service.domain</code> for complex services</p>
+<p><strong>Regional endpoints by default following AWS service patterns:</strong></p>
+<ul>
+<li><strong>Regional endpoints</strong> - <code>us-east-1.service.company.com</code> (performance, isolation, explicit control)</li>
+<li><strong>Private zones</strong> - Always created for internal service discovery (<code>service.internal</code>)</li>
+<li><strong>Global endpoints</strong> - Optional for advanced routing (latency-based, geolocation, failover)</li>
+<li><strong>DNS hierarchy</strong> - <code>region.cluster.platform.service.domain</code> for complex services</li>
+</ul>
 <h3 id="variable-structure-philosophy"><strong>Variable Structure Philosophy</strong><a class="headerlink" href="#variable-structure-philosophy" title="Permanent link">&para;</a></h3>
-<p><strong>Hybrid approach following popular module patterns:</strong>
-- <strong>Flat variables</strong> for simple, common settings (following terraform-aws-modules pattern)
-- <strong>Complex objects</strong> for logical grouping when they provide clear value (following AWS-IA pattern)
-- <strong>Submodule alignment</strong> - Complex objects that map directly to submodules (<code>infra_config</code>, <code>services_config</code>)
-- <strong>Component objects acceptable</strong> - <code>load_balancer_config</code>, <code>security_groups</code> for logical grouping
-- <strong>Conditional creation</strong> - <code>config = null</code> skips entire components
-- <strong>Intelligent defaults</strong> - Work for 80% of use cases, reduce cognitive load</p>
+<p><strong>Hybrid approach following popular module patterns:</strong></p>
+<ul>
+<li><strong>Flat variables</strong> for simple, common settings (following terraform-aws-modules pattern)</li>
+<li><strong>Complex objects</strong> for logical grouping when they provide clear value (following AWS-IA pattern)</li>
+<li><strong>Submodule alignment</strong> - Complex objects that map directly to submodules (<code>infra_config</code>, <code>services_config</code>)</li>
+<li><strong>Component objects acceptable</strong> - <code>load_balancer_config</code>, <code>security_groups</code> for logical grouping</li>
+<li><strong>Conditional creation</strong> - <code>config = null</code> skips entire components</li>
+<li><strong>Intelligent defaults</strong> - Work for 80% of use cases, reduce cognitive load</li>
+</ul>
 <h3 id="security-group-integration"><strong>Security Group Integration</strong><a class="headerlink" href="#security-group-integration" title="Permanent link">&para;</a></h3>
-<p><strong>Follow Terraform resource patterns for familiarity:</strong>
-- <strong>User-controlled external access</strong> - Users provide security groups with their own rules
-- <strong>Module-created internal groups</strong> - For service-to-service communication
-- <strong>Component-specific grouping</strong> - General + NLB-specific + ALB-specific
-- <strong>CIDR validation</strong> - No 0.0.0.0/0 ingress rules in module code</p>
+<p><strong>Follow Terraform resource patterns for familiarity:</strong></p>
+<ul>
+<li><strong>User-controlled external access</strong> - Users provide security groups with their own rules</li>
+<li><strong>Module-created internal groups</strong> - For service-to-service communication</li>
+<li><strong>Component-specific grouping</strong> - General + NLB-specific + ALB-specific</li>
+<li><strong>CIDR validation</strong> - No 0.0.0.0/0 ingress rules in module code</li>
+</ul>
 <h2 id="variable-design-patterns">Variable Design Patterns<a class="headerlink" href="#variable-design-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="general-naming-conventions"><strong>General Naming Conventions</strong><a class="headerlink" href="#general-naming-conventions" title="Permanent link">&para;</a></h3>
 <p><strong>Why Descriptive Names</strong>: We avoid generic names like <code>this</code> because they don't scale and become confusing when you need multiple resources.</p>
@@ -4761,19 +4773,23 @@
 <span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;bucket&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # What&#39;s it for?</span>
 <span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">    # Still not descriptive</span>
 </code></pre></div>
-<p><strong>The Problem with Generic Names</strong>:
-- <strong>Not descriptive</strong>: <code>this</code> tells you nothing about purpose
-- <strong>Doesn't scale</strong>: Need a second resource? Now it's <code>this2</code> or you rename everything
-- <strong>Hard to reference</strong>: <code>aws_lb.this.dns_name</code> - which load balancer?
-- <strong>Confusing in outputs</strong>: <code>nlb_dns_name = aws_lb.this.dns_name</code> - misleading</p>
-<p><strong>Our Standard Logical Names</strong>:
-- <strong><code>nlb</code></strong>: Network Load Balancer
-- <strong><code>alb</code></strong>: Application Load Balancer
-- <strong><code>main</code></strong>: Primary resource of its type (EKS cluster, VPC)
-- <strong><code>internal</code></strong>: Internal communication security group
-- <strong><code>artifacts</code></strong>: Artifact storage bucket
-- <strong><code>logs</code></strong>: Logging storage bucket
-- <strong><code>private</code></strong>: Private DNS zone</p>
+<p><strong>The Problem with Generic Names</strong>:</p>
+<ul>
+<li><strong>Not descriptive</strong>: <code>this</code> tells you nothing about purpose</li>
+<li><strong>Doesn't scale</strong>: Need a second resource? Now it's <code>this2</code> or you rename everything</li>
+<li><strong>Hard to reference</strong>: <code>aws_lb.this.dns_name</code> - which load balancer?</li>
+<li><strong>Confusing in outputs</strong>: <code>nlb_dns_name = aws_lb.this.dns_name</code> - misleading</li>
+</ul>
+<p><strong>Our Standard Logical Names</strong>:</p>
+<ul>
+<li><strong><code>nlb</code></strong>: Network Load Balancer</li>
+<li><strong><code>alb</code></strong>: Application Load Balancer</li>
+<li><strong><code>main</code></strong>: Primary resource of its type (EKS cluster, VPC)</li>
+<li><strong><code>internal</code></strong>: Internal communication security group</li>
+<li><strong><code>artifacts</code></strong>: Artifact storage bucket</li>
+<li><strong><code>logs</code></strong>: Logging storage bucket</li>
+<li><strong><code>private</code></strong>: Private DNS zone</li>
+</ul>
 <h3 id="3-tier-architecture"><strong>3-Tier Architecture</strong><a class="headerlink" href="#3-tier-architecture" title="Permanent link">&para;</a></h3>
 <p><strong>Why</strong>: Users consistently need to separate applications, supporting services, and load balancers.</p>
 <div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;application_subnets&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -4870,12 +4886,14 @@
 <span class="c1">  # 4. Direct implementation would be overly complex</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Criteria for acceptable remote module usage:</strong>
-- <strong>Stability</strong>: Module has long track record of stability
-- <strong>Maintenance</strong>: Active maintenance and responsive maintainers
-- <strong>Customization</strong>: Exposes all configuration we need
-- <strong>Complexity reduction</strong>: Significantly reduces code complexity
-- <strong>Clear benefit</strong>: Pros outweigh cons in terms of complexity it helps resolve</p>
+<p><strong>Criteria for acceptable remote module usage:</strong></p>
+<ul>
+<li><strong>Stability</strong>: Module has long track record of stability</li>
+<li><strong>Maintenance</strong>: Active maintenance and responsive maintainers</li>
+<li><strong>Customization</strong>: Exposes all configuration we need</li>
+<li><strong>Complexity reduction</strong>: Significantly reduces code complexity</li>
+<li><strong>Clear benefit</strong>: Pros outweigh cons in terms of complexity it helps resolve</li>
+</ul>
 <h4 id="fork-first-strategy"><strong>Fork-First Strategy</strong><a class="headerlink" href="#fork-first-strategy" title="Permanent link">&para;</a></h4>
 <p><strong>When you need a remote module, fork it first:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ RECOMMENDED - Fork and customize</span>
@@ -4895,12 +4913,14 @@
 <span class="c1">  # Creates external dependency and limits our control</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Fork-first benefits:</strong>
-- <strong>Immediate fixes</strong>: Fix bugs without waiting for upstream
-- <strong>Custom features</strong>: Add CGD Toolkit-specific functionality
-- <strong>Version control</strong>: No external version dependency conflicts
-- <strong>Stability</strong>: Changes only when we decide to update
-- <strong>Documentation</strong>: We can document our specific usage patterns</p>
+<p><strong>Fork-first benefits:</strong></p>
+<ul>
+<li><strong>Immediate fixes</strong>: Fix bugs without waiting for upstream</li>
+<li><strong>Custom features</strong>: Add CGD Toolkit-specific functionality</li>
+<li><strong>Version control</strong>: No external version dependency conflicts</li>
+<li><strong>Stability</strong>: Changes only when we decide to update</li>
+<li><strong>Documentation</strong>: We can document our specific usage patterns</li>
+</ul>
 <h4 id="implementation-guidelines"><strong>Implementation Guidelines</strong><a class="headerlink" href="#implementation-guidelines" title="Permanent link">&para;</a></h4>
 <h5 id="for-new-modules"><strong>For New Modules</strong><a class="headerlink" href="#for-new-modules" title="Permanent link">&para;</a></h5>
 <ol>
@@ -4974,12 +4994,14 @@
 <li><strong>Maintain compatibility</strong>: Ensure variable interfaces remain stable</li>
 <li><strong>Document changes</strong>: Update examples and documentation</li>
 </ol>
-<p><strong>This approach ensures:</strong>
-- <strong>Full control</strong>: We control all aspects of resource creation
-- <strong>Faster iteration</strong>: No waiting for upstream changes
-- <strong>Reduced complexity</strong>: Fewer dependencies to manage
-- <strong>Better debugging</strong>: All code is within our control
-- <strong>Customization freedom</strong>: Can modify resources for game development needs</p>
+<p><strong>This approach ensures:</strong></p>
+<ul>
+<li><strong>Full control</strong>: We control all aspects of resource creation</li>
+<li><strong>Faster iteration</strong>: No waiting for upstream changes</li>
+<li><strong>Reduced complexity</strong>: Fewer dependencies to manage</li>
+<li><strong>Better debugging</strong>: All code is within our control</li>
+<li><strong>Customization freedom</strong>: Can modify resources for game development needs</li>
+</ul>
 <h3 id="centralized-logging-design-patterns"><strong>Centralized Logging Design Patterns</strong><a class="headerlink" href="#centralized-logging-design-patterns" title="Permanent link">&para;</a></h3>
 <p><strong>CGD Toolkit modules standardize on centralized logging for visibility and troubleshooting.</strong></p>
 <h4 id="logging-philosophy"><strong>Logging Philosophy</strong><a class="headerlink" href="#logging-philosophy" title="Permanent link">&para;</a></h4>
@@ -5005,10 +5027,12 @@
 <span class="w">  </span><span class="s2">&quot;rds&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # RDS database logs (when applicable)</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Examples by module:</strong>
-- <strong>DDC Module</strong>: NLB access logs, EKS control plane logs
-- <strong>Perforce Module</strong>: NLB/ALB access logs, EKS control plane logs, RDS logs
-- <strong>Jenkins Module</strong>: ALB access logs, EKS control plane logs</p>
+<p><strong>Examples by module:</strong></p>
+<ul>
+<li><strong>DDC Module</strong>: NLB access logs, EKS control plane logs</li>
+<li><strong>Perforce Module</strong>: NLB/ALB access logs, EKS control plane logs, RDS logs</li>
+<li><strong>Jenkins Module</strong>: ALB access logs, EKS control plane logs</li>
+</ul>
 <h5 id="application-logs"><strong>Application Logs</strong><a class="headerlink" href="#application-logs" title="Permanent link">&para;</a></h5>
 <p><strong>Core business logic of the primary application:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Application category maps to primary service</span>
@@ -5018,10 +5042,12 @@
 <span class="w">  </span><span class="s2">&quot;jenkins&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">   # Jenkins controller logs (Jenkins module)</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Examples:</strong>
-- <strong>DDC</strong>: Unreal Cloud DDC application pod logs
-- <strong>Perforce</strong>: P4D server logs, Helix Core logs
-- <strong>Jenkins</strong>: Jenkins controller and agent logs</p>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><strong>DDC</strong>: Unreal Cloud DDC application pod logs</li>
+<li><strong>Perforce</strong>: P4D server logs, Helix Core logs</li>
+<li><strong>Jenkins</strong>: Jenkins controller and agent logs</li>
+</ul>
 <h5 id="service-logs"><strong>Service Logs</strong><a class="headerlink" href="#service-logs" title="Permanent link">&para;</a></h5>
 <p><strong>Supporting services that enable the primary application:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Service category maps to supporting components</span>
@@ -5031,10 +5057,12 @@
 <span class="w">  </span><span class="s2">&quot;p4-review&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1"> # Perforce code review service (Perforce module)</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Examples:</strong>
-- <strong>DDC</strong>: ScyllaDB database logs
-- <strong>Perforce</strong>: P4-auth service, P4-code-review service
-- <strong>Jenkins</strong>: Supporting databases, caches, or queues</p>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><strong>DDC</strong>: ScyllaDB database logs</li>
+<li><strong>Perforce</strong>: P4-auth service, P4-code-review service</li>
+<li><strong>Jenkins</strong>: Supporting databases, caches, or queues</li>
+</ul>
 <h4 id="standard-logging-variable-pattern"><strong>Standard Logging Variable Pattern</strong><a class="headerlink" href="#standard-logging-variable-pattern" title="Permanent link">&para;</a></h4>
 <p><strong>All modules implement consistent logging configuration:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;centralized_logging&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -5130,11 +5158,13 @@
 <span class="c1">  # All VDI activity: SSM execution, user creation, DCV sessions, software installation</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Use single category when:</strong>
-- All functionality runs on same compute (EC2 instances)
-- SSM-based architecture where everything logs to same destination
-- No separate infrastructure services to log
-- Simpler structure matches module reality</p>
+<p><strong>Use single category when:</strong></p>
+<ul>
+<li>All functionality runs on same compute (EC2 instances)</li>
+<li>SSM-based architecture where everything logs to same destination</li>
+<li>No separate infrastructure services to log</li>
+<li>Simpler structure matches module reality</li>
+</ul>
 <h5 id="standard-3-tier-pattern-ddcperforce-module-example"><strong>Standard 3-Tier Pattern (DDC/Perforce Module Example)</strong><a class="headerlink" href="#standard-3-tier-pattern-ddcperforce-module-example" title="Permanent link">&para;</a></h5>
 <p><strong>When modules have distinct infrastructure, application, and service components:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Standard pattern for complex modules</span>
@@ -5204,14 +5234,16 @@
 <li><strong>No ETA yet</strong>: Still in development, but will leverage our CloudWatch Logs foundation</li>
 </ul>
 <p><strong>Design principle</strong>: Since all CGD Toolkit modules send logs to CloudWatch Logs when enabled, any monitoring solution that supports CloudWatch integration can be used - whether it's our future monitoring module, Amazon Managed Grafana, Datadog, Splunk, or custom solutions.</p>
-<p><strong>This standardized approach provides:</strong>
-- <strong>Maximum visibility</strong>: Users control how much logging they want enabled
-- <strong>Consistent logging</strong>: Same patterns across all CGD Toolkit modules
-- <strong>Monitoring flexibility</strong>: Works with any CloudWatch-compatible monitoring solution
-- <strong>Operational visibility</strong>: Comprehensive logging for troubleshooting
-- <strong>Cost control</strong>: Configurable retention and selective enablement
-- <strong>Security compliance</strong>: Proper encryption and access controls
-- <strong>Future-ready</strong>: Foundation for CGD Toolkit monitoring module and other solutions</p>
+<p><strong>This standardized approach provides:</strong></p>
+<ul>
+<li><strong>Maximum visibility</strong>: Users control how much logging they want enabled</li>
+<li><strong>Consistent logging</strong>: Same patterns across all CGD Toolkit modules</li>
+<li><strong>Monitoring flexibility</strong>: Works with any CloudWatch-compatible monitoring solution</li>
+<li><strong>Operational visibility</strong>: Comprehensive logging for troubleshooting</li>
+<li><strong>Cost control</strong>: Configurable retention and selective enablement</li>
+<li><strong>Security compliance</strong>: Proper encryption and access controls</li>
+<li><strong>Future-ready</strong>: Foundation for CGD Toolkit monitoring module and other solutions</li>
+</ul>
 <h3 id="naming-strategy"><strong>Naming Strategy</strong><a class="headerlink" href="#naming-strategy" title="Permanent link">&para;</a></h3>
 <p><strong>Why</strong>: AWS services have different naming patterns when using prefixes. Our approach provides predictable, referenceable names.</p>
 <div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;random_id&quot;</span><span class="w"> </span><span class="nv">&quot;suffix&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -5310,7 +5342,7 @@
 </code></pre></div>
 <h4 id="parent-module-cgd-toolkit-modules"><strong>Parent Module (CGD Toolkit Modules)</strong><a class="headerlink" href="#parent-module-cgd-toolkit-modules" title="Permanent link">&para;</a></h4>
 <p><strong>Scenario</strong>: CGD Toolkit modules that both create resources AND orchestrate submodules when needed</p>
-<p><strong>Single Region (Simple)</strong>:
+<p><strong>Single Region (Simple)</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># modules/unreal-cloud-ddc/main.tf</span>
 <span class="c1"># Parent module creates some resources directly AND orchestrates submodules</span>
 <span class="c1"># Parent module receives providers from root module</span>
@@ -5335,8 +5367,8 @@
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">kubernetes</span><span class="p">,</span><span class="w"> </span><span class="na">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">helm</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Pass from root</span>
 <span class="w">  </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">module.infra</span><span class="p">]</span>
 <span class="p">}</span>
-</code></pre></div></p>
-<p><strong>Multi-Region (Complex)</strong>:
+</code></pre></div>
+<p><strong>Multi-Region (Complex)</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module: examples/multi-region/main.tf</span>
 <span class="c1"># User must handle multi-region complexity at root level</span>
 
@@ -5375,7 +5407,7 @@
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_us_west_2.cluster_endpoint</span>
 <span class="c1">  # ... configuration</span>
 <span class="p">}</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="submodules"><strong>Submodules</strong><a class="headerlink" href="#submodules" title="Permanent link">&para;</a></h4>
 <p><strong>Scenario</strong>: Receive providers from parent, use specific provider family</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># modules/unreal-cloud-ddc/modules/infra/main.tf</span>
@@ -5465,7 +5497,7 @@
 <h4 id="standard-terraform-multi-region-patterns"><strong>Standard Terraform Multi-Region Patterns</strong><a class="headerlink" href="#standard-terraform-multi-region-patterns" title="Permanent link">&para;</a></h4>
 <p><strong>How most Terraform users handle multi-region deployments:</strong></p>
 <h5 id="pattern-a-monorepo-regional-structure-less-recommended"><strong>Pattern A: Monorepo Regional Structure (Less Recommended)</strong><a class="headerlink" href="#pattern-a-monorepo-regional-structure-less-recommended" title="Permanent link">&para;</a></h5>
-<p><strong>One Git repository per AWS region containing ALL applications:</strong>
+<p><strong>One Git repository per AWS region containing ALL applications:</strong></p>
 <div class="highlight"><pre><span></span><code>company-infrastructure-us-east-1/
 ├── networking/
 ├── databases/
@@ -5483,11 +5515,11 @@ company-infrastructure-us-west-2/
 │   ├── perforce/
 │   └── jenkins/
 └── terraform.tfstate
-</code></pre></div></p>
+</code></pre></div>
 <p><strong>Pros</strong>: Complete regional isolation
 <strong>Cons</strong>: Repository proliferation, monolithic state files, team conflicts</p>
 <h5 id="pattern-b-application-specific-with-regional-folders-recommended"><strong>Pattern B: Application-Specific with Regional Folders (Recommended)</strong><a class="headerlink" href="#pattern-b-application-specific-with-regional-folders-recommended" title="Permanent link">&para;</a></h5>
-<p><strong>Application-specific repositories with regional deployment folders:</strong>
+<p><strong>Application-specific repositories with regional deployment folders:</strong></p>
 <div class="highlight"><pre><span></span><code>company-ddc-infrastructure/
 ├── deployments/
 │   ├── us-east-1/
@@ -5506,47 +5538,57 @@ company-perforce-infrastructure/
 │   ├── us-east-1/
 │   └── us-west-2/
 └── modules/
-</code></pre></div></p>
+</code></pre></div>
 <p><strong>Pros</strong>: Application-focused ownership, separate state files, team independence
 <strong>Cons</strong>: Requires coordination for cross-region features</p>
-<p><strong>Why Pattern B Works Better</strong>:
-- <strong>Application ownership</strong>: Repository aligns with team responsibilities
-- <strong>Separate state files</strong>: Each region has independent, manageable state
-- <strong>Team independence</strong>: Teams can work on different regions simultaneously
-- <strong>Focused scope</strong>: Smaller, application-specific state files
-- <strong>Scalable</strong>: Multiple deployments per region possible</p>
+<p><strong>Why Pattern B Works Better</strong>:</p>
+<ul>
+<li><strong>Application ownership</strong>: Repository aligns with team responsibilities</li>
+<li><strong>Separate state files</strong>: Each region has independent, manageable state</li>
+<li><strong>Team independence</strong>: Teams can work on different regions simultaneously</li>
+<li><strong>Focused scope</strong>: Smaller, application-specific state files</li>
+<li><strong>Scalable</strong>: Multiple deployments per region possible</li>
+</ul>
 <h4 id="cgd-toolkit-multi-region-philosophy"><strong>CGD Toolkit Multi-Region Philosophy</strong><a class="headerlink" href="#cgd-toolkit-multi-region-philosophy" title="Permanent link">&para;</a></h4>
 <p><strong>Multi-region in game development is about PERFORMANCE, not disaster recovery.</strong></p>
 <p><strong>Why We're Different</strong>: Game development applications (Perforce, DDC) work perfectly in single-region but are <strong>often deployed multi-region</strong> for geographically distributed teams.</p>
-<p><strong>Primary Use Case</strong>: <strong>Global Development Teams</strong>
-- <strong>DDC</strong>: Works great single-region, but multi-region provides low-latency cache access for global teams
-- <strong>Perforce</strong>: Perfectly functional single-region, but multi-region enables synchronized repositories across continents
-- <strong>Performance-driven</strong>: Multi-region reduces latency for geographically distributed developers
-- <strong>Single-region viable</strong>: Both applications work perfectly fine in single-region deployments
-- <strong>Multi-region benefit</strong>: Global teams get better performance with regional data locality</p>
-<p><strong>Primary Purpose: Performance, NOT Disaster Recovery</strong>:
-- <strong>Performance-driven</strong>: Multi-region DDC/Perforce is for <strong>active global usage</strong> and low-latency access
-- <strong>DR as side benefit</strong>: Cross-region replication for performance means either region <em>could</em> serve as DR
-- <strong>Nuanced DR considerations</strong>: While data replication enables DR capabilities, full DR requires application-specific planning
-- <strong>Separate DR deployments</strong>: For dedicated DR (not performance), use completely separate Terraform deployments</p>
-<p><strong>Why We Break the Anti-Pattern Rule</strong>:
-- <strong>Performance benefit</strong>: Global teams get better performance with low-latency regional access
-- <strong>Cross-region coordination</strong>: When deploying multi-region, replication setup requires shared resources
-- <strong>Single system</strong>: Multi-region deployments create one global application, not separate deployments
-- <strong>Optional optimization</strong>: Multi-region is a performance optimization, not a technical requirement</p>
+<p><strong>Primary Use Case</strong>: <strong>Global Development Teams</strong></p>
+<ul>
+<li><strong>DDC</strong>: Works great single-region, but multi-region provides low-latency cache access for global teams</li>
+<li><strong>Perforce</strong>: Perfectly functional single-region, but multi-region enables synchronized repositories across continents</li>
+<li><strong>Performance-driven</strong>: Multi-region reduces latency for geographically distributed developers</li>
+<li><strong>Single-region viable</strong>: Both applications work perfectly fine in single-region deployments</li>
+<li><strong>Multi-region benefit</strong>: Global teams get better performance with regional data locality</li>
+</ul>
+<p><strong>Primary Purpose: Performance, NOT Disaster Recovery</strong>:</p>
+<ul>
+<li><strong>Performance-driven</strong>: Multi-region DDC/Perforce is for <strong>active global usage</strong> and low-latency access</li>
+<li><strong>DR as side benefit</strong>: Cross-region replication for performance means either region <em>could</em> serve as DR</li>
+<li><strong>Nuanced DR considerations</strong>: While data replication enables DR capabilities, full DR requires application-specific planning</li>
+<li><strong>Separate DR deployments</strong>: For dedicated DR (not performance), use completely separate Terraform deployments</li>
+</ul>
+<p><strong>Why We Break the Anti-Pattern Rule</strong>:</p>
+<ul>
+<li><strong>Performance benefit</strong>: Global teams get better performance with low-latency regional access</li>
+<li><strong>Cross-region coordination</strong>: When deploying multi-region, replication setup requires shared resources</li>
+<li><strong>Single system</strong>: Multi-region deployments create one global application, not separate deployments</li>
+<li><strong>Optional optimization</strong>: Multi-region is a performance optimization, not a technical requirement</li>
+</ul>
 <h4 id="single-apply-requirement"><strong>Single Apply Requirement</strong><a class="headerlink" href="#single-apply-requirement" title="Permanent link">&para;</a></h4>
 <p><strong>CRITICAL</strong>: All CGD Toolkit modules MUST support single-step multi-region deployment.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># This MUST work - single command deploys all regions</span>
 terraform<span class="w"> </span>apply
 <span class="c1"># ✅ Deploys us-east-1 DDC + us-west-2 DDC + cross-region replication</span>
 </code></pre></div>
-<p><strong>Why Single Apply Matters</strong>:
-- <strong>Global replication setup</strong>: Cross-region configuration happens during initial deployment
-- <strong>Dependency coordination</strong>: Primary region creates resources that secondary regions need
-- <strong>User experience</strong>: Multi-region should be as easy as single-region
-- <strong>Production readiness</strong>: No manual coordination steps between regions</p>
+<p><strong>Why Single Apply Matters</strong>:</p>
+<ul>
+<li><strong>Global replication setup</strong>: Cross-region configuration happens during initial deployment</li>
+<li><strong>Dependency coordination</strong>: Primary region creates resources that secondary regions need</li>
+<li><strong>User experience</strong>: Multi-region should be as easy as single-region</li>
+<li><strong>Production readiness</strong>: No manual coordination steps between regions</li>
+</ul>
 <h4 id="terraform-multi-region-fundamentals"><strong>Terraform Multi-Region Fundamentals</strong><a class="headerlink" href="#terraform-multi-region-fundamentals" title="Permanent link">&para;</a></h4>
-<p><strong>Each Module Instance = Exactly One Region</strong></p>
+<h5 id="each-module-instance-exactly-one-region"><strong>Each Module Instance = Exactly One Region</strong><a class="headerlink" href="#each-module-instance-exactly-one-region" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># This is the fundamental pattern - each module does ONE region only</span>
 <span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
@@ -5663,10 +5705,12 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">aws</span><span class="w"> </span><span class="p">}</span><span class="c1">  # AWS provider inherits region automatically</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Benefits</strong>:
-- <strong>AWS Provider v6</strong>: Simplified region handling, no aliases needed
-- <strong>Other providers</strong>: Still require manual aliases per region
-- <strong>Clean code</strong>: Each module block identical except for region</p>
+<p><strong>Benefits</strong>:</p>
+<ul>
+<li><strong>AWS Provider v6</strong>: Simplified region handling, no aliases needed</li>
+<li><strong>Other providers</strong>: Still require manual aliases per region</li>
+<li><strong>Clean code</strong>: Each module block identical except for region</li>
+</ul>
 <h4 id="multi-region-implementation-pattern"><strong>Multi-Region Implementation Pattern</strong><a class="headerlink" href="#multi-region-implementation-pattern" title="Permanent link">&para;</a></h4>
 <h5 id="explicit-module-blocks-only-recommended-pattern"><strong>Explicit Module Blocks (Only Recommended Pattern)</strong><a class="headerlink" href="#explicit-module-blocks-only-recommended-pattern" title="Permanent link">&para;</a></h5>
 <p><strong>Best for</strong>: Multi-region deployments (max 2 regions)</p>
@@ -5722,11 +5766,13 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">module.ddc_primary</span><span class="p">]</span><span class="c1">  # Ensures proper ordering</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Benefits</strong>:
-- ✅ <strong>Clear and explicit</strong> - obvious what's deployed where
-- ✅ <strong>Different configurations</strong> - each region can have unique settings
-- ✅ <strong>Easy debugging</strong> - clear dependency chain
-- ✅ <strong>Single apply</strong> - all regions deployed together</p>
+<p><strong>Benefits</strong>:</p>
+<ul>
+<li>✅ <strong>Clear and explicit</strong> - obvious what's deployed where</li>
+<li>✅ <strong>Different configurations</strong> - each region can have unique settings</li>
+<li>✅ <strong>Easy debugging</strong> - clear dependency chain</li>
+<li>✅ <strong>Single apply</strong> - all regions deployed together</li>
+</ul>
 <h4 id="dns-and-regional-endpoint-patterns"><strong>DNS and Regional Endpoint Patterns</strong><a class="headerlink" href="#dns-and-regional-endpoint-patterns" title="Permanent link">&para;</a></h4>
 <h5 id="private-dns-zones-always-created"><strong>Private DNS Zones (Always Created)</strong><a class="headerlink" href="#private-dns-zones-always-created" title="Permanent link">&para;</a></h5>
 <p><strong>All CGD Toolkit modules automatically create private DNS zones for internal service discovery:</strong></p>
@@ -5766,11 +5812,13 @@ terraform<span class="w"> </span>apply
 <span class="c1"># us-west-2.ddc.company.com</span>
 <span class="c1"># eu-west-1.perforce.company.com</span>
 </code></pre></div>
-<p><strong>Why Regional Endpoints</strong>:
-- <strong>Performance</strong>: Direct routing to nearest region
-- <strong>Isolation</strong>: Regional failures don't affect DNS routing
-- <strong>Explicit control</strong>: Users know exactly which region they're accessing
-- <strong>AWS consistency</strong>: Follows AWS service endpoint patterns</p>
+<p><strong>Why Regional Endpoints</strong>:</p>
+<ul>
+<li><strong>Performance</strong>: Direct routing to nearest region</li>
+<li><strong>Isolation</strong>: Regional failures don't affect DNS routing</li>
+<li><strong>Explicit control</strong>: Users know exactly which region they're accessing</li>
+<li><strong>AWS consistency</strong>: Follows AWS service endpoint patterns</li>
+</ul>
 <h5 id="global-endpoint-flexibility"><strong>Global Endpoint Flexibility</strong><a class="headerlink" href="#global-endpoint-flexibility" title="Permanent link">&para;</a></h5>
 <p><strong>Users can optionally create global endpoints with routing policies:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Optional: Global endpoint with latency-based routing</span>
@@ -5806,11 +5854,13 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Global Routing Options</strong>:
-- <strong>Latency-based</strong>: Route to lowest latency region
-- <strong>Geolocation</strong>: Route based on user's geographic location
-- <strong>Failover</strong>: Primary/secondary with health checks
-- <strong>Weighted</strong>: Distribute traffic by percentage</p>
+<p><strong>Global Routing Options</strong>:</p>
+<ul>
+<li><strong>Latency-based</strong>: Route to lowest latency region</li>
+<li><strong>Geolocation</strong>: Route based on user's geographic location</li>
+<li><strong>Failover</strong>: Primary/secondary with health checks</li>
+<li><strong>Weighted</strong>: Distribute traffic by percentage</li>
+</ul>
 <h5 id="dns-output-strategy"><strong>DNS Output Strategy</strong><a class="headerlink" href="#dns-output-strategy" title="Permanent link">&para;</a></h5>
 <p><strong>Modules provide both regional and global DNS flexibility:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Module outputs for DNS flexibility</span>
@@ -5831,26 +5881,32 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>This approach provides</strong>:
-- <strong>Regional by default</strong>: Each region gets its own endpoint
-- <strong>Global flexibility</strong>: Users can create global endpoints if needed
-- <strong>Internal routing</strong>: Private DNS for service-to-service communication
-- <strong>Load balancer access</strong>: Direct NLB access for advanced routing scenarios</p>
+<p><strong>This approach provides</strong>:</p>
+<ul>
+<li><strong>Regional by default</strong>: Each region gets its own endpoint</li>
+<li><strong>Global flexibility</strong>: Users can create global endpoints if needed</li>
+<li><strong>Internal routing</strong>: Private DNS for service-to-service communication</li>
+<li><strong>Load balancer access</strong>: Direct NLB access for advanced routing scenarios</li>
+</ul>
 <h4 id="networking-and-security-boundaries"><strong>Networking and Security Boundaries</strong><a class="headerlink" href="#networking-and-security-boundaries" title="Permanent link">&para;</a></h4>
 <h5 id="clear-demarcation-what-modules-dont-create"><strong>Clear Demarcation: What Modules DON'T Create</strong><a class="headerlink" href="#clear-demarcation-what-modules-dont-create" title="Permanent link">&para;</a></h5>
 <p><strong>CGD Toolkit modules have clear boundaries - we don't create foundational infrastructure:</strong></p>
-<p><strong>🚫 Modules DO NOT Create:</strong>
-- <strong>VPCs and Subnets</strong>: Users provide existing VPC and subnet IDs
-- <strong>SSL/TLS Certificates</strong>: Users provide existing ACM certificate ARNs
-- <strong>Public Hosted Zones</strong>: Users provide existing Route53 hosted zone names
-- <strong>VPC-to-VPC Connectivity</strong>: Peering connections, Transit Gateway, etc.
-- <strong>Network ACLs</strong>: Users manage network-level security
-- <strong>Internet/NAT Gateways</strong>: Users provide connectivity infrastructure</p>
-<p><strong>✅ Modules DO Create:</strong>
-- <strong>Private DNS zones</strong>: For internal service discovery
-- <strong>Security groups</strong>: For service-specific access control
-- <strong>Load balancers</strong>: NLB/ALB for service access
-- <strong>DNS records</strong>: In both private and public zones (when provided)</p>
+<p><strong>🚫 Modules DO NOT Create:</strong></p>
+<ul>
+<li><strong>VPCs and Subnets</strong>: Users provide existing VPC and subnet IDs</li>
+<li><strong>SSL/TLS Certificates</strong>: Users provide existing ACM certificate ARNs</li>
+<li><strong>Public Hosted Zones</strong>: Users provide existing Route53 hosted zone names</li>
+<li><strong>VPC-to-VPC Connectivity</strong>: Peering connections, Transit Gateway, etc.</li>
+<li><strong>Network ACLs</strong>: Users manage network-level security</li>
+<li><strong>Internet/NAT Gateways</strong>: Users provide connectivity infrastructure</li>
+</ul>
+<p><strong>✅ Modules DO Create:</strong></p>
+<ul>
+<li><strong>Private DNS zones</strong>: For internal service discovery</li>
+<li><strong>Security groups</strong>: For service-specific access control</li>
+<li><strong>Load balancers</strong>: NLB/ALB for service access</li>
+<li><strong>DNS records</strong>: In both private and public zones (when provided)</li>
+</ul>
 <h5 id="ssltls-certificate-integration"><strong>SSL/TLS Certificate Integration</strong><a class="headerlink" href="#ssltls-certificate-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules integrate with existing certificates, don't create them:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User creates certificate outside module</span>
@@ -5880,11 +5936,13 @@ terraform<span class="w"> </span>apply
 <span class="c1">  # Module handles certificate attachment to load balancers</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Why This Approach</strong>:
-- <strong>Certificate lifecycle</strong>: Users control certificate renewal and management
-- <strong>Domain ownership</strong>: Users own and validate their domains
-- <strong>Security control</strong>: Certificate management stays with domain owners
-- <strong>Flexibility</strong>: Users can use existing certificate management processes</p>
+<p><strong>Why This Approach</strong>:</p>
+<ul>
+<li><strong>Certificate lifecycle</strong>: Users control certificate renewal and management</li>
+<li><strong>Domain ownership</strong>: Users own and validate their domains</li>
+<li><strong>Security control</strong>: Certificate management stays with domain owners</li>
+<li><strong>Flexibility</strong>: Users can use existing certificate management processes</li>
+</ul>
 <h5 id="vpc-and-subnet-integration"><strong>VPC and Subnet Integration</strong><a class="headerlink" href="#vpc-and-subnet-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules work within existing network infrastructure:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User provides existing network infrastructure</span>
@@ -5908,12 +5966,14 @@ terraform<span class="w"> </span>apply
 <span class="c1">  # Module creates resources within provided network</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Network Architecture Assumptions</strong>:
-- <strong>Public subnets</strong>: For internet-facing load balancers
-- <strong>Private subnets</strong>: For EKS clusters, databases, internal services
-- <strong>NAT Gateway</strong>: Users provide internet access for private subnets
-- <strong>Route tables</strong>: Users configure routing for subnets
-- <strong>VPC endpoints</strong>: Users create for AWS service access (optional)</p>
+<p><strong>Network Architecture Assumptions</strong>:</p>
+<ul>
+<li><strong>Public subnets</strong>: For internet-facing load balancers</li>
+<li><strong>Private subnets</strong>: For EKS clusters, databases, internal services</li>
+<li><strong>NAT Gateway</strong>: Users provide internet access for private subnets</li>
+<li><strong>Route tables</strong>: Users configure routing for subnets</li>
+<li><strong>VPC endpoints</strong>: Users create for AWS service access (optional)</li>
+</ul>
 <h5 id="security-group-strategy_1"><strong>Security Group Strategy</strong><a class="headerlink" href="#security-group-strategy_1" title="Permanent link">&para;</a></h5>
 <p><strong>Modules create service-specific security groups, users control external access:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Users create external access security groups</span>
@@ -5943,10 +6003,12 @@ terraform<span class="w"> </span>apply
 <span class="c1">  # Module creates internal security groups for service communication</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Security Responsibilities</strong>:
-- <strong>Users control</strong>: External access rules, CIDR blocks, source security groups
-- <strong>Modules create</strong>: Internal service communication rules, AWS API access
-- <strong>Principle</strong>: Users define "who can access", modules define "how services communicate"</p>
+<p><strong>Security Responsibilities</strong>:</p>
+<ul>
+<li><strong>Users control</strong>: External access rules, CIDR blocks, source security groups</li>
+<li><strong>Modules create</strong>: Internal service communication rules, AWS API access</li>
+<li><strong>Principle</strong>: Users define "who can access", modules define "how services communicate"</li>
+</ul>
 <h5 id="public-hosted-zone-integration"><strong>Public Hosted Zone Integration</strong><a class="headerlink" href="#public-hosted-zone-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules use existing public zones, don't create them:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User owns and manages public hosted zone</span>
@@ -5965,10 +6027,12 @@ terraform<span class="w"> </span>apply
 <span class="c1">  # Module does NOT create the company.com zone</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>DNS Responsibilities</strong>:
-- <strong>Users own</strong>: Domain registration, public hosted zone management
-- <strong>Modules create</strong>: Service-specific DNS records in provided zones
-- <strong>Private zones</strong>: Modules always create for internal service discovery</p>
+<p><strong>DNS Responsibilities</strong>:</p>
+<ul>
+<li><strong>Users own</strong>: Domain registration, public hosted zone management</li>
+<li><strong>Modules create</strong>: Service-specific DNS records in provided zones</li>
+<li><strong>Private zones</strong>: Modules always create for internal service discovery</li>
+</ul>
 <h5 id="multi-region-network-considerations"><strong>Multi-Region Network Considerations</strong><a class="headerlink" href="#multi-region-network-considerations" title="Permanent link">&para;</a></h5>
 <p><strong>For multi-region deployments, users handle cross-region connectivity:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Users create VPC peering or Transit Gateway (outside modules)</span>
@@ -5989,10 +6053,12 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.secondary_vpc_id</span><span class="c1">  # us-west-2 VPC</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>Cross-Region Network Responsibilities</strong>:
-- <strong>Users handle</strong>: VPC peering, Transit Gateway, cross-region routing
-- <strong>Modules handle</strong>: Application-level cross-region communication (database replication, etc.)
-- <strong>Clear separation</strong>: Network connectivity vs. application connectivity</p>
+<p><strong>Cross-Region Network Responsibilities</strong>:</p>
+<ul>
+<li><strong>Users handle</strong>: VPC peering, Transit Gateway, cross-region routing</li>
+<li><strong>Modules handle</strong>: Application-level cross-region communication (database replication, etc.)</li>
+<li><strong>Clear separation</strong>: Network connectivity vs. application connectivity</li>
+</ul>
 <h5 id="example-integration-pattern"><strong>Example Integration Pattern</strong><a class="headerlink" href="#example-integration-pattern" title="Permanent link">&para;</a></h5>
 <p><strong>Complete example showing user vs. module responsibilities:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># USER RESPONSIBILITIES (outside module)</span>
@@ -6026,11 +6092,13 @@ terraform<span class="w"> </span>apply
 <span class="c1">  # Module creates: EKS, NLB, private DNS, internal security groups</span>
 <span class="p">}</span>
 </code></pre></div>
-<p><strong>This pattern ensures</strong>:
-- <strong>Clear ownership</strong>: Users own foundational infrastructure
-- <strong>Module focus</strong>: Modules focus on service-specific resources
-- <strong>Flexibility</strong>: Users can integrate with existing infrastructure
-- <strong>Security</strong>: Users control access boundaries, modules handle service communication</p>
+<p><strong>This pattern ensures</strong>:</p>
+<ul>
+<li><strong>Clear ownership</strong>: Users own foundational infrastructure</li>
+<li><strong>Module focus</strong>: Modules focus on service-specific resources</li>
+<li><strong>Flexibility</strong>: Users can integrate with existing infrastructure</li>
+<li><strong>Security</strong>: Users control access boundaries, modules handle service communication</li>
+</ul>
 <h4 id="multi-region-design-requirements-for-all-modules"><strong>Multi-Region Design Requirements for All Modules</strong><a class="headerlink" href="#multi-region-design-requirements-for-all-modules" title="Permanent link">&para;</a></h4>
 <h5 id="must-support-single-apply-for-inherently-multi-region-apps"><strong>MUST Support Single Apply (For Inherently Multi-Region Apps)</strong><a class="headerlink" href="#must-support-single-apply-for-inherently-multi-region-apps" title="Permanent link">&para;</a></h5>
 <p><strong>CGD Toolkit modules that are inherently multi-region MUST enable single-step deployment:</strong></p>
@@ -6041,10 +6109,12 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 </code></pre></div>
 <p><strong>⚠️ IMPORTANT</strong>: This is ONLY for applications that require cross-region replication by design.</p>
 <h5 id="cross-region-coordination-patterns"><strong>Cross-Region Coordination Patterns</strong><a class="headerlink" href="#cross-region-coordination-patterns" title="Permanent link">&para;</a></h5>
-<p><strong>Primary/Secondary Pattern</strong> (Recommended):
-- <strong>Primary region</strong>: Creates shared resources (bearer tokens, seed nodes)
-- <strong>Secondary regions</strong>: Reference primary's outputs
-- <strong>Dependencies</strong>: <code>depends_on = [module.primary]</code> ensures proper ordering</p>
+<p><strong>Primary/Secondary Pattern</strong> (Recommended):</p>
+<ul>
+<li><strong>Primary region</strong>: Creates shared resources (bearer tokens, seed nodes)</li>
+<li><strong>Secondary regions</strong>: Reference primary's outputs</li>
+<li><strong>Dependencies</strong>: <code>depends_on = [module.primary]</code> ensures proper ordering</li>
+</ul>
 <h5 id="module-implementation-standards"><strong>Module Implementation Standards</strong><a class="headerlink" href="#module-implementation-standards" title="Permanent link">&para;</a></h5>
 <p><strong>For inherently multi-region modules (Perforce, DDC):</strong></p>
 <ul>
@@ -6058,65 +6128,79 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <li><strong>Documentation</strong>: Clear guidance on when to use separate deployments instead</li>
 </ul>
 <h5 id="critical-when-not-to-use-multi-region-single-state"><strong>⚠️ CRITICAL: When NOT to Use Multi-Region Single State</strong><a class="headerlink" href="#critical-when-not-to-use-multi-region-single-state" title="Permanent link">&para;</a></h5>
-<p><strong>🚫 ABSOLUTE ANTI-PATTERNS:</strong>
-- <strong>General applications</strong>: Most apps should be single-region
-- <strong>Dedicated disaster recovery</strong>: Use completely separate Terraform deployments for DR-only scenarios
-- <strong>Environment separation</strong>: dev/staging/prod should be separate states
-- <strong>"Just in case" deployments</strong>: Don't deploy to regions you don't actively use
-- <strong>More than 2 regions in one state</strong>: Creates unmanageable complexity</p>
-<p><strong>✅ ONLY Valid Use Cases:</strong>
-- <strong>Applications that benefit from multi-region</strong>: Perforce, DDC where cross-region replication improves performance
-- <strong>Active global usage</strong>: All regions actively used by distributed teams for better performance
-- <strong>Performance optimization</strong>: Low-latency access across continents for same application data
-- <strong>Maximum 1-2 regions</strong>: Keep state files manageable
-- <strong>Single-region alternative</strong>: Remember these applications work perfectly fine single-region too</p>
+<p><strong>🚫 ABSOLUTE ANTI-PATTERNS:</strong></p>
+<ul>
+<li><strong>General applications</strong>: Most apps should be single-region</li>
+<li><strong>Dedicated disaster recovery</strong>: Use completely separate Terraform deployments for DR-only scenarios</li>
+<li><strong>Environment separation</strong>: dev/staging/prod should be separate states</li>
+<li><strong>"Just in case" deployments</strong>: Don't deploy to regions you don't actively use</li>
+<li><strong>More than 2 regions in one state</strong>: Creates unmanageable complexity</li>
+</ul>
+<p><strong>✅ ONLY Valid Use Cases:</strong></p>
+<ul>
+<li><strong>Applications that benefit from multi-region</strong>: Perforce, DDC where cross-region replication improves performance</li>
+<li><strong>Active global usage</strong>: All regions actively used by distributed teams for better performance</li>
+<li><strong>Performance optimization</strong>: Low-latency access across continents for same application data</li>
+<li><strong>Maximum 1-2 regions</strong>: Keep state files manageable</li>
+<li><strong>Single-region alternative</strong>: Remember these applications work perfectly fine single-region too</li>
+</ul>
 <p><strong>🎯 The Rule</strong>: If your application doesn't REQUIRE cross-region data replication for <strong>performance/functionality</strong>, use separate Terraform deployments per region.</p>
-<p><strong>DR Considerations</strong>:
-- <strong>Side benefit</strong>: Performance-driven replication means either region could serve as DR
-- <strong>Application-specific</strong>: Each application (DDC, Perforce) has different DR capabilities and requirements
-- <strong>Not primary purpose</strong>: DR should not be the main reason for choosing multi-region single-state pattern
-- <strong>Dedicated DR</strong>: For DR-only scenarios, use separate Terraform deployments in different regions</p>
+<p><strong>DR Considerations</strong>:</p>
+<ul>
+<li><strong>Side benefit</strong>: Performance-driven replication means either region could serve as DR</li>
+<li><strong>Application-specific</strong>: Each application (DDC, Perforce) has different DR capabilities and requirements</li>
+<li><strong>Not primary purpose</strong>: DR should not be the main reason for choosing multi-region single-state pattern</li>
+<li><strong>Dedicated DR</strong>: For DR-only scenarios, use separate Terraform deployments in different regions</li>
+</ul>
 <h4 id="summary-multi-region-best-practices"><strong>Summary: Multi-Region Best Practices</strong><a class="headerlink" href="#summary-multi-region-best-practices" title="Permanent link">&para;</a></h4>
-<p><strong>Recommended Approach</strong>: Use explicit module blocks - MAX 2 regions
+<p><strong>Recommended Approach</strong>: Use explicit module blocks - MAX 2 regions</p>
 <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service_primary&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="w"> </span><span class="p">}</span>
 <span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service_secondary&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="w"> </span><span class="p">}</span>
 <span class="c1"># ❌ DON&#39;T ADD MORE - Use separate Terraform deployments instead</span>
-</code></pre></div></p>
-<p><strong>🎯 For Most Applications</strong>: Deploy each region as separate Terraform root modules
+</code></pre></div>
+<p><strong>🎯 For Most Applications</strong>: Deploy each region as separate Terraform root modules</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Recommended pattern for most applications (follows Pattern B above)</span>
 <span class="nb">cd</span><span class="w"> </span>deployments/us-east-1/
 terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1"># Separate state file</span>
 
 <span class="nb">cd</span><span class="w"> </span>../us-west-2/
 terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1"># Separate state file</span>
-</code></pre></div></p>
-<p><strong>This follows Pattern B (Application-Specific with Regional Folders) and provides:</strong>
-- <strong>Independent state files</strong>: Each region manageable separately
-- <strong>Team parallelism</strong>: Multiple teams can work simultaneously
-- <strong>Reduced blast radius</strong>: Regional isolation prevents cascading failures
-- <strong>Application focus</strong>: Repository ownership aligns with team responsibilities
-- <strong>Standard tooling</strong>: Works with existing Terraform workflows</p>
-<p><strong>Key Principles</strong>:
-- ✅ <strong>Each module instance = exactly one region</strong>
-- ⚠️ <strong>Single apply ONLY for inherently multi-region apps</strong> (Perforce, DDC)
-- ✅ <strong>Multi-region is for performance, not DR</strong>
-- ⚠️ <strong>Maximum 1-2 regions per state file</strong>
-- ✅ <strong>Most applications should use separate Terraform deployments per region</strong>
-- ✅ <strong>Use explicit module blocks, not dynamic generation</strong>
-- ✅ <strong>AWS Provider v6 eliminates AWS provider aliases</strong></p>
-<p><strong>Benefits</strong>:
-- <strong>Performance</strong>: Low latency for global teams
-- <strong>Single deployment</strong>: All regions with one <code>terraform apply</code>
-- <strong>Global replication</strong>: Cross-region data sharing
-- <strong>AWS Provider v6</strong>: Simplified region handling</p>
-<p><strong>⚠️ CRITICAL Considerations</strong>:
-- <strong>🔥 State file explosion</strong>: More regions = exponentially larger, slower state
-- <strong>🔥 Massive blast radius</strong>: One mistake destroys all regions
-- <strong>🔥 Performance degradation</strong>: <code>terraform plan</code> becomes painfully slow
-- <strong>🔥 Team paralysis</strong>: Multiple teams can't work independently
-- <strong>🔥 Debugging nightmare</strong>: Finding issues across regions becomes impossible
-- <strong>Network costs</strong>: Cross-region data transfer charges
-- <strong>Complexity</strong>: Exponentially more moving parts to troubleshoot</p>
+</code></pre></div>
+<p><strong>This follows Pattern B (Application-Specific with Regional Folders) and provides:</strong></p>
+<ul>
+<li><strong>Independent state files</strong>: Each region manageable separately</li>
+<li><strong>Team parallelism</strong>: Multiple teams can work simultaneously</li>
+<li><strong>Reduced blast radius</strong>: Regional isolation prevents cascading failures</li>
+<li><strong>Application focus</strong>: Repository ownership aligns with team responsibilities</li>
+<li><strong>Standard tooling</strong>: Works with existing Terraform workflows</li>
+</ul>
+<p><strong>Key Principles</strong>:</p>
+<ul>
+<li>✅ <strong>Each module instance = exactly one region</strong></li>
+<li>⚠️ <strong>Single apply ONLY for inherently multi-region apps</strong> (Perforce, DDC)</li>
+<li>✅ <strong>Multi-region is for performance, not DR</strong></li>
+<li>⚠️ <strong>Maximum 1-2 regions per state file</strong></li>
+<li>✅ <strong>Most applications should use separate Terraform deployments per region</strong></li>
+<li>✅ <strong>Use explicit module blocks, not dynamic generation</strong></li>
+<li>✅ <strong>AWS Provider v6 eliminates AWS provider aliases</strong></li>
+</ul>
+<p><strong>Benefits</strong>:</p>
+<ul>
+<li><strong>Performance</strong>: Low latency for global teams</li>
+<li><strong>Single deployment</strong>: All regions with one <code>terraform apply</code></li>
+<li><strong>Global replication</strong>: Cross-region data sharing</li>
+<li><strong>AWS Provider v6</strong>: Simplified region handling</li>
+</ul>
+<p><strong>⚠️ CRITICAL Considerations</strong>:</p>
+<ul>
+<li><strong>🔥 State file explosion</strong>: More regions = exponentially larger, slower state</li>
+<li><strong>🔥 Massive blast radius</strong>: One mistake destroys all regions</li>
+<li><strong>🔥 Performance degradation</strong>: <code>terraform plan</code> becomes painfully slow</li>
+<li><strong>🔥 Team paralysis</strong>: Multiple teams can't work independently</li>
+<li><strong>🔥 Debugging nightmare</strong>: Finding issues across regions becomes impossible</li>
+<li><strong>Network costs</strong>: Cross-region data transfer charges</li>
+<li><strong>Complexity</strong>: Exponentially more moving parts to troubleshoot</li>
+</ul>
 <p><strong>🎯 Solution</strong>: Use separate Terraform deployments for most applications</p>
 <h3 id="version-conflicts-and-resolution"><strong>Version Conflicts and Resolution</strong><a class="headerlink" href="#version-conflicts-and-resolution" title="Permanent link">&para;</a></h3>
 <p><strong>Common Problem</strong>: Different modules require different provider versions</p>
@@ -6165,10 +6249,12 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <span class="c1"># 2. terraform plan - Provider configurations evaluated HERE</span>
 <span class="c1"># 3. terraform apply - Configurations re-evaluated if dependencies changed</span>
 </code></pre></div>
-<p><strong>Implications</strong>:
-- <strong>First run</strong>: Infrastructure doesn't exist, providers get null values
-- <strong>Second run</strong>: Infrastructure exists, providers get real values
-- <strong>Dependencies</strong>: Provider configs must handle missing dependencies gracefully</p>
+<p><strong>Implications</strong>:</p>
+<ul>
+<li><strong>First run</strong>: Infrastructure doesn't exist, providers get null values</li>
+<li><strong>Second run</strong>: Infrastructure exists, providers get real values</li>
+<li><strong>Dependencies</strong>: Provider configs must handle missing dependencies gracefully</li>
+</ul>
 <h2 id="aws-provider-best-practices">AWS Provider Best Practices<a class="headerlink" href="#aws-provider-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="security-group-rules"><strong>Security Group Rules</strong><a class="headerlink" href="#security-group-rules" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ Use dedicated rule resources (AWS Provider v6 requirement)</span>
@@ -6330,7 +6416,7 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-09-17
+    2025-12-17
   </span>
 
     

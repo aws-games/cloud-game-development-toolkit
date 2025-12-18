@@ -3883,7 +3883,7 @@
 
 
 <h1 id="vdi-virtual-desktop-infrastructure-module">VDI (Virtual Desktop Infrastructure) Module<a class="headerlink" href="#vdi-virtual-desktop-infrastructure-module" title="Permanent link">&para;</a></h1>
-<p><a href="LICENSE"><img alt="License: MIT-0" src="https://img.shields.io/badge/License-MIT-0" /></a></p>
+<p><a href="../../LICENSE"><img alt="License: MIT-0" src="https://img.shields.io/badge/License-MIT-0" /></a></p>
 <blockquote>
 <p><strong>ℹ️ Prerequisites</strong>: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations">Packer templates</a> (<code>lightweight/</code> and <code>ue-gamedev/</code>), but any Windows Server 2019/2022/2025 AMI works. See <a href="https://docs.aws.amazon.com/dcv/">Amazon DCV Documentation</a> for complete setup guidance.</p>
 </blockquote>
@@ -4270,68 +4270,68 @@ rm<span class="w"> </span>temp_key.pem
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
-<p><strong>Instance Launch Failures</strong></p>
+<h4 id="instance-launch-failures">Instance Launch Failures<a class="headerlink" href="#instance-launch-failures" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Verify AMI exists: <code>aws ec2 describe-images --owners self --filters "Name=name,Values=*windows-server-2025*"</code></li>
 <li>Check AMI is in correct region</li>
 <li>Ensure Packer build completed successfully</li>
 </ul>
-<p><strong>Drive Letter Issues</strong></p>
+<h4 id="drive-letter-issues">Drive Letter Issues<a class="headerlink" href="#drive-letter-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check drive assignment: <code>Get-Disk | Format-Table Number, Size, BusType</code></li>
 <li>Volume scripts re-run automatically when volume configuration changes</li>
 </ul>
-<p><strong>Connection Timeouts</strong></p>
+<h4 id="connection-timeouts">Connection Timeouts<a class="headerlink" href="#connection-timeouts" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check security group allows your IP: <code>curl https://checkip.amazonaws.com/</code></li>
 <li>Verify instance is running: <code>aws ec2 describe-instances</code></li>
 <li>Test port connectivity: <code>telnet &lt;instance-ip&gt; 8443</code></li>
 </ul>
-<p><strong>Password Retrieval Issues</strong></p>
+<h4 id="password-retrieval-issues">Password Retrieval Issues<a class="headerlink" href="#password-retrieval-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Wait 5-10 minutes after instance launch for password generation</li>
 <li>Check Secrets Manager if user passwords not available</li>
 <li>Use S3 backup key if Terraform output fails</li>
 </ul>
-<p><strong>DCV "Connecting" Spinner</strong></p>
+<h4 id="dcv-connecting-spinner">DCV "Connecting" Spinner<a class="headerlink" href="#dcv-connecting-spinner" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Connect via SSM: <code>aws ssm start-session --target &lt;instance-id&gt;</code></li>
 <li>Check DCV sessions: <code>dcv list-sessions</code></li>
 <li>Restart DCV service: <code>Restart-Service dcvserver</code></li>
 </ul>
-<p><strong>VPN Connection Issues</strong></p>
+<h4 id="vpn-connection-issues">VPN Connection Issues<a class="headerlink" href="#vpn-connection-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check VPN endpoint DNS resolves: <code>nslookup [endpoint].prod.clientvpn.us-east-1.amazonaws.com</code></li>
 <li>Wait 5-15 minutes for AWS to activate endpoint</li>
 <li>Check for CIDR conflicts with local network</li>
 <li>Disconnect from other VPNs</li>
 </ul>
-<p><strong>User Accounts Not Created</strong></p>
+<h4 id="user-accounts-not-created">User Accounts Not Created<a class="headerlink" href="#user-accounts-not-created" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check SSM command status: <code>aws ssm list-command-invocations --instance-id &lt;id&gt;</code></li>
 <li>Check user creation status: <code>aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"</code></li>
 <li>Scripts re-run automatically when user configuration changes</li>
 </ul>
-<p><strong>Volume Initialization Issues</strong></p>
+<h4 id="volume-initialization-issues">Volume Initialization Issues<a class="headerlink" href="#volume-initialization-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check volume status: <code>aws ssm get-parameter --name "/{project}/{workstation}/volume_status"</code></li>
 <li>Check volume messages: <code>aws ssm get-parameter --name "/{project}/{workstation}/volume_message"</code></li>
 <li>Scripts re-run automatically when volume configuration changes</li>
 </ul>
-<p><strong>Volume Resize Issues</strong></p>
+<h4 id="volume-resize-issues">Volume Resize Issues<a class="headerlink" href="#volume-resize-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check disk sizes vs partition sizes: <code>Get-Disk | Format-Table Number, Size, BusType</code></li>
 <li>Check partition sizes: <code>Get-Partition | Format-Table DiskNumber, DriveLetter, Size</code></li>
 <li>Manual partition extension: <code>Resize-Partition -DriveLetter F -Size (Get-PartitionSupportedSize -DriveLetter F).SizeMax</code></li>
 </ul>
-<p><strong>Manual Volume Initialization (if SSM script failed)</strong></p>
+<h4 id="manual-volume-initialization-if-ssm-script-failed">Manual Volume Initialization (if SSM script failed)<a class="headerlink" href="#manual-volume-initialization-if-ssm-script-failed" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c"># Initialize any RAW disks</span>
 <span class="nb">Get-Disk</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">PartitionStyle</span> <span class="o">-eq</span> <span class="s1">&#39;RAW&#39;</span> <span class="p">}</span> <span class="p">|</span>
 <span class="nb">Initialize-Disk</span> <span class="n">-PartitionStyle</span> <span class="n">MBR</span> <span class="n">-PassThru</span> <span class="p">|</span>
 <span class="nb">New-Partition</span> <span class="n">-AssignDriveLetter</span> <span class="n">-UseMaximumSize</span> <span class="p">|</span>
 <span class="nb">Format-Volume</span> <span class="n">-FileSystem</span> <span class="n">NTFS</span> <span class="n">-Confirm</span><span class="p">:</span><span class="nv">$false</span>
 </code></pre></div>
-<p><strong>Software Installation Problems</strong></p>
+<h4 id="software-installation-problems">Software Installation Problems<a class="headerlink" href="#software-installation-problems" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check software status: <code>aws ssm get-parameter --name "/{project}/{workstation}/software_status"</code></li>
 <li>Check failed packages: <code>aws ssm get-parameter --name "/{project}/{workstation}/software_message"</code></li>
@@ -4365,7 +4365,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../CONTRIBUTING.html">Contributing Guidelines</a> for information on how to contribute to this project.</p>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>This project is licensed under the MIT-0 License. See the <a href="../../../LICENSE">LICENSE</a> file for details.</p>
+<p>This project is licensed under the MIT-0 License. See the <a href="../../LICENSE">LICENSE</a> file for details.</p>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -4916,7 +4916,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <li>✅ <strong>Proper cleanup</strong> - Drive letters managed automatically</li>
 <li>✅ <strong>Clean plans</strong> - No continuous Terraform drift</li>
 </ul>
-<p><strong>Alternative: Manual Administration</strong></p>
+<h4 id="alternative-manual-administration">Alternative: Manual Administration<a class="headerlink" href="#alternative-manual-administration" title="Permanent link">&para;</a></h4>
 <p>For immediate results, you can skip waiting for SSM and manually initialize volumes:</p>
 <ol>
 <li>RDP to instance as Administrator after <code>terraform apply</code></li>
@@ -4924,8 +4924,9 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <li>Complete in under 2 minutes with full control</li>
 </ol>
 <h3 id="volume-limitations_1">Volume Limitations<a class="headerlink" href="#volume-limitations_1" title="Permanent link">&para;</a></h3>
-<p><strong>Volume Size Reduction - NOT SUPPORTED</strong></p>
-<p><strong>AWS Limitation</strong>: EBS volumes cannot be reduced in size. This is an AWS platform limitation, not a module limitation.</p>
+<h4 id="volume-size-reduction-not-supported">Volume Size Reduction - NOT SUPPORTED<a class="headerlink" href="#volume-size-reduction-not-supported" title="Permanent link">&para;</a></h4>
+<p><strong>AWS Limitation</strong>: EBS volumes cannot be reduced in size. This is an AWS platform
+limitation, not a module limitation.</p>
 <p><strong>What Happens</strong>: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply
 <span class="c1"># ❌ Error: InvalidParameterValue: Cannot decrease volume size from 500 to 200</span>

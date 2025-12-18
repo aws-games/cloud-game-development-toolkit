@@ -553,6 +553,6 @@ variable "tags" {
     "ModuleBy"       = "CGD-Toolkit"
     "RootModuleName" = "-"
     "ModuleName"     = "terraform-aws-perforce"
-    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/terraform-aws-perforce"
+    "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce"
   }
 }
