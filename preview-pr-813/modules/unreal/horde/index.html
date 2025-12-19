@@ -3313,72 +3313,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Providers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Modules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resources
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#outputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3411,7 +3345,127 @@
 <p>For example configurations, please see the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/horde/examples">examples</a>.</p>
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
+<h1 id="horde-server-source-build-deployment-guide">Horde Server Source Build Deployment Guide<a class="headerlink" href="#horde-server-source-build-deployment-guide" title="Permanent link">&para;</a></h1>
+<p>This guide documents how to build Horde Server from source and use the build as part of your Horde deployment with the Cloud Game Development Toolkit.</p>
+<h2 id="prerequisites_1">Prerequisites<a class="headerlink" href="#prerequisites_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Docker</strong>: Docker Desktop installed and running</li>
+<li><strong>Git</strong>: For cloning repositories</li>
+<li><strong>.NET SDK</strong>: .NET 8.0 or later</li>
+</ul>
+<h2 id="fork-and-clone-the-unreal-engine-github-repository">Fork and clone the Unreal Engine Github repository<a class="headerlink" href="#fork-and-clone-the-unreal-engine-github-repository" title="Permanent link">&para;</a></h2>
+<p>You can follow the steps documented in the <a href="https://github.com/EpicGames/UnrealEngine/tree/release">Unreal Engine Source Code</a>. Be sure to run both Setup and GenerateProjectFiles scripts before proceeding.</p>
+<h2 id="authenticate-to-your-ecr-registry">Authenticate to your ECR registry<a class="headerlink" href="#authenticate-to-your-ecr-registry" title="Permanent link">&para;</a></h2>
+<p>In a terminal window, run the following command to authenticate to your ECR registry:
+<div class="highlight"><pre><span></span><code><span class="w">    </span>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span>&lt;account-id&gt;.dkr.ecr.&lt;region.&gt;.amazonaws.com
+</code></pre></div></p>
+<h2 id="create-a-repsoitory-in-amazon-ecr-for-storing-your-horde-server-container-image">Create a repsoitory in Amazon ECR for storing your Horde Server container image:<a class="headerlink" href="#create-a-repsoitory-in-amazon-ecr-for-storing-your-horde-server-container-image" title="Permanent link">&para;</a></h2>
+<p>In a terminal window, run the following command:
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>create-repository<span class="w"> </span>--repository-name<span class="w"> </span>horde-server<span class="w"> </span>--image-scanning-configuration<span class="w"> </span><span class="nv">scanOnPush</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div></p>
+<h2 id="build-horde-server-container-image-from-source-and-publish-to-amazon-ecr">Build Horde Server container image from source and publish to Amazon ECR<a class="headerlink" href="#build-horde-server-container-image-from-source-and-publish-to-amazon-ecr" title="Permanent link">&para;</a></h2>
+<h3 id="for-devices-using-arm64-architecture">For devices using ARM64 architecture<a class="headerlink" href="#for-devices-using-arm64-architecture" title="Permanent link">&para;</a></h3>
+<ol>
+<li>In an IDE, open the Horde Server Dockerfile located at <code>/Engine/Source/Programs/Horde/HordeServer/Dockerfile</code>.</li>
+<li>
+<p>Replace the code between <code>COPY --from=redis /usr/local/bin/redis-server /usr/local/bin/redis-server</code> and <code>COPY Source/Programs/Shared/EpicGames.Core/*.csproj ./Source/Programs/Shared/EpicGames.Core/</code> with the following:</p>
+<p><div class="highlight"><pre><span></span><code><span class="c"># Since the .deb does not install in this image, just download it and extract the static binary</span>
+<span class="k">RUN</span><span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span>dpkg<span class="w"> </span>--print-architecture<span class="k">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arm64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>wget<span class="w"> </span>https://repo.mongodb.org/apt/ubuntu/dists/jammy/mongodb-org/7.0/multiverse/binary-arm64/mongodb-org-server_7.0.4_arm64.deb<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>dpkg<span class="w"> </span>-x<span class="w"> </span>mongodb-org-server_7.0.4_arm64.deb<span class="w"> </span>/tmp/mongodb<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;i386&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>wget<span class="w"> </span>https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/7.0/main/binary-i386/mongodb-org-server_7.0.4_i386.deb<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>dpkg<span class="w"> </span>-x<span class="w"> </span>mongodb-org-server_7.0.4_i386.deb<span class="w"> </span>/tmp/mongodb<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>wget<span class="w"> </span>https://repo.mongodb.org/apt/debian/dists/bookworm/mongodb-org/7.0/main/binary-amd64/mongodb-org-server_7.0.4_amd64.deb<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>dpkg<span class="w"> </span>-x<span class="w"> </span>mongodb-org-server_7.0.4_amd64.deb<span class="w"> </span>/tmp/mongodb<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">fi</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>cp<span class="w"> </span>/tmp/mongodb/usr/bin/mongod<span class="w"> </span>/usr/local/bin/mongod
+</code></pre></div>
+3. Locate the code block with the comment <code># Remove native libs not used on Linux x86_64</code>. We need to modify this so that the build has the libraries associated with the operating system and CPU architecture we are using. To do this, replace that block with the following:
+<div class="highlight"><pre><span></span><code><span class="c"># Remove native libs not used for current architecture</span>
+<span class="k">RUN</span><span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span>dpkg<span class="w"> </span>--print-architecture<span class="k">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;amd64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/osx*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-x86<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-arm*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-arm*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-x86<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux/native/libgrpc_csharp_ext.x86.so<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arm64&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/osx-x64<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-x64<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-x86<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-x64*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-x86<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux/native/libgrpc_csharp_ext.x86.so<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ARCH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;i386&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/osx*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-x64<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/win-arm*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-x64*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux-arm*<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so<span class="p">;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="k">fi</span>
+</code></pre></div></p>
+<h2 id="update-serverjson-optional">Update server.json (Optional)<a class="headerlink" href="#update-serverjson-optional" title="Permanent link">&para;</a></h2>
+</li>
+</ol>
+<h2 id="update-the-horde-buildgraph">Update the Horde BuildGraph<a class="headerlink" href="#update-the-horde-buildgraph" title="Permanent link">&para;</a></h2>
+<ol>
+<li>In an IDE, open the file <code>Engine/Source/Programs/Horde/BuildHorde.xml</code>.</li>
+<li>
+<p>Create a new build target to build the Hord Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for <code>&lt;account-id&gt;</code> and <code>&lt;region&gt;</code> with your own values.
+    <div class="highlight"><pre><span></span><code><span class="nt">&lt;Node</span><span class="w"> </span><span class="na">Name=</span><span class="s">&quot;Build and Publish HordeServer to ECR&quot;</span><span class="w"> </span><span class="na">Requires=</span><span class="s">&quot;Build HordeServer;Build HordeDashboard&quot;</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- Create a new image by combining server and dashboard image into one --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Docker-Build</span><span class="w"> </span><span class="na">BaseDir=</span><span class="s">&quot;Engine/Source/Programs/Horde/HordeServer&quot;</span><span class="w"> </span><span class="na">Files=</span><span class="s">&quot;Dockerfile*&quot;</span><span class="w"> </span><span class="na">UseBuildKit=</span><span class="s">&quot;true&quot;</span><span class="w"> </span><span class="na">Tag=</span><span class="s">&quot;horde-server&quot;</span><span class="w"> </span><span class="na">DockerFile=</span><span class="s">&quot;Engine/Source/Programs/Horde/HordeServer/Dockerfile.dashboard&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
 
+<span class="w">    </span><span class="cm">&lt;!-- Publish the docker image to Amazon ECR --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Docker-Push</span><span class="w"> </span><span class="na">Repository=</span><span class="s">&quot;&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com&quot;</span><span class="w"> </span><span class="na">Image=</span><span class="s">&quot;horde-server&quot;</span><span class="w"> </span><span class="na">TargetImage=</span><span class="s">&quot;horde/horde-server:$(Version)&quot;</span><span class="w"> </span><span class="na">AwsEcr=</span><span class="s">&quot;True&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/Node&gt;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>In your terminal window, and navigate to <code>Engine/Build/BatchFiles</code>.
+    <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>Engine/Build/BatchFiles
+</code></pre></div></p>
+</li>
+<li>
+<p>Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.
+    ### Windows
+    <div class="highlight"><pre><span></span><code><span class="n">RunUAT</span><span class="p">.</span><span class="n">bat</span> <span class="n">BuildGraph</span> <span class="n">-Script</span><span class="p">=</span><span class="n">Engine</span><span class="p">/</span><span class="n">Source</span><span class="p">/</span><span class="n">Programs</span><span class="p">/</span><span class="n">Horde</span><span class="p">/</span><span class="n">BuildHorde</span><span class="p">.</span><span class="n">xml</span> <span class="n">-Target</span><span class="p">=</span><span class="s2">&quot;Build and Publish HordeServer to ECR&quot;</span>
+</code></pre></div></p>
+<h3 id="linux-and-mac">Linux and Mac<a class="headerlink" href="#linux-and-mac" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>./RunUAT.sh<span class="w"> </span>BuildGraph<span class="w"> </span>-Script<span class="o">=</span>Engine/Source/Programs/Horde/BuildHorde.xml<span class="w"> </span>-Target<span class="o">=</span><span class="s2">&quot;Build and Publish HordeServer to ECR&quot;</span>
+</code></pre></div>
+</li>
+<li>
+<p>Note the URI of the image that was published to Amazon ECR. It should be in the format of <code>&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/horde/horde-server:&lt;version&gt;</code></p>
+</li>
+<li>
+<p>You can also locate the URI of the image in the AWS Console under Amazon ECR, or using the AWS CLI command:
+    <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>describe-images<span class="w"> </span>--repository-name<span class="w"> </span>horde-server
+</code></pre></div></p>
+</li>
+</ol>
+<h2 id="update-your-cloud-game-development-toolkit-configuration">Update your Cloud Game Development Toolkit configuration<a class="headerlink" href="#update-your-cloud-game-development-toolkit-configuration" title="Permanent link">&para;</a></h2>
+<p>In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the <code>image</code> variable. For this example we will be using the example deployment located at <code>modules/unreal/horde/examples/complete</code>
+1. In your IDE, open the main.tf located at <code>modules/unreal/horde/examples/complete/main.tf</code>.
+2. Under the module declaration <code>"unreal_engine_horde"</code> add the following line with the value of the image URI you noted earlier. Be sure to also set the value of <code>is_source_build</code> to <code>true</code> and set the value of <code>horde_server_architecture</code> to <code>ARM64</code> or <code>X_86</code> by passing the value with the <code>var.horde_server_architecture</code> variable as shown below:
+    <div class="highlight"><pre><span></span><code><span class="n">module</span> <span class="s2">&quot;unreal_engine_horde&quot;</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="s2">&quot;&lt;image-uri&gt;&quot;</span>
+    <span class="n">is_source_build</span> <span class="o">=</span> <span class="n">true</span>
+    <span class="n">horde_server_architecture</span> <span class="o">=</span> <span class="s2">&quot;&lt;horde-server-architecture&gt;&quot;</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div>
+3. In a new terminal window, navigate to the directory <code>modules/unreal/horde/examples/complete</code> and run the following commands:
+    <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
+terraform<span class="w"> </span>apply
+</code></pre></div></p>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
