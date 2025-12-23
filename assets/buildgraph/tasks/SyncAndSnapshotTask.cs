@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,7 +65,7 @@ namespace AutomationTool.Tasks
 		/// AWS Secrets Manager secret name containing the FSx password.
 		/// </summary>
 		[TaskParameter(Optional = true)]
-		public string AwsSecretName { get; set; }
+		public string OntapPasswordSecretName { get; set; }
 
 		/// <summary>
 		/// AWS region where the secret is stored.
@@ -187,9 +185,9 @@ namespace AutomationTool.Tasks
 					{
 						throw new AutomationException("SnapshotName is specified but OntapUser is missing. All snapshot parameters are required when creating a snapshot.");
 					}
-					if (String.IsNullOrEmpty(_parameters.AwsSecretName))
+					if (String.IsNullOrEmpty(_parameters.OntapPasswordSecretName))
 					{
-						throw new AutomationException("SnapshotName is specified but AwsSecretName is missing. All snapshot parameters are required when creating a snapshot.");
+						throw new AutomationException("SnapshotName is specified but OntapPasswordSecretName is missing. All snapshot parameters are required when creating a snapshot.");
 					}
 					if (String.IsNullOrEmpty(_parameters.AwsRegion))
 					{
@@ -226,7 +224,7 @@ namespace AutomationTool.Tasks
 				OntapUtils ontapUtils = new OntapUtils(
 					_parameters.FsxAdminIp,
 					_parameters.OntapUser,
-					_parameters.AwsSecretName,
+					_parameters.OntapPasswordSecretName,
 					_parameters.AwsRegion,
 					Logger);
 

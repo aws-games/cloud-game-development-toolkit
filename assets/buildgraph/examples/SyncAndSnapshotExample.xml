@@ -14,14 +14,14 @@
 	<Option Name="SnapshotName" Description="Name for the ONTAP snapshot" />
 	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
 	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
-	<Option Name="AwsSecretName" Description="AWS Secrets Manager secret name of ONTAP password" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for ONTAP password" />
 	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
 	<Option Name="VolumeName" Description="ONTAP volume name to take the snapshot from" />
 
-	<Agent Name="SyncAgent" Type="Mac">
+	<Agent Name="SyncAgent" Type="AnyAgent">
 		<Node Name="Sync From Stream">
 			<!-- Sync from Perforce stream and create ONTAP snapshot -->
-			<SyncAndSnapshot Stream="$(Stream)" P4Port="$(P4Port)" P4User="$(P4User)" SyncDir="$(SyncDir)" WorkspaceName="$(WorkspaceName)" SnapshotName="$(SnapshotName)" FsxAdminIp="$(FsxAdminIp)" OntapUser="$(OntapUser)" AwsSecretName="$(AwsSecretName)" AwsRegion="$(AwsRegion)" VolumeName="$(VolumeName)" />
+			<SyncAndSnapshot Stream="$(Stream)" P4Port="$(P4Port)" P4User="$(P4User)" SyncDir="$(SyncDir)" WorkspaceName="$(WorkspaceName)" SnapshotName="$(SnapshotName)" FsxAdminIp="$(FsxAdminIp)" OntapUser="$(OntapUser)" OntapPasswordSecretName="$(OntapPasswordSecretName)" AwsRegion="$(AwsRegion)" VolumeName="$(VolumeName)" />
 		</Node>
 	</Agent>
 </BuildGraph>

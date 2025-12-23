@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,21 +10,21 @@ using UnrealBuildBase;
 namespace AutomationTool.Tasks
 {
 	/// <summary>
-	/// Parameters for the DeleteSnapshot task
+	/// Parameters for the DeleteVolume task
 	/// </summary>
-	public class DeleteSnapshotTaskParameters
+	public class DeleteVolumeTaskParameters
 	{
 		/// <summary>
-		/// Name of the volume containing the snapshot.
+		/// Name of the volume to delete.
 		/// </summary>
 		[TaskParameter]
 		public string VolumeName { get; set; }
 
 		/// <summary>
-		/// Name of the snapshot to delete.
+		/// Storage Virtual Machine (SVM) name in ONTAP.
 		/// </summary>
 		[TaskParameter]
-		public string SnapshotName { get; set; }
+		public string SvmName { get; set; }
 
 		/// <summary>
 		/// FSx ONTAP management IP address.
@@ -44,7 +42,7 @@ namespace AutomationTool.Tasks
 		/// AWS Secrets Manager secret name containing the FSx password.
 		/// </summary>
 		[TaskParameter]
-		public string AwsSecretName { get; set; }
+		public string OntapPasswordSecretName { get; set; }
 
 		/// <summary>
 		/// AWS region where the secret is stored.
@@ -54,21 +52,21 @@ namespace AutomationTool.Tasks
 	}
 
 	/// <summary>
-	/// Deletes an ONTAP snapshot.
+	/// Deletes an ONTAP volume.
 	/// </summary>
-	[TaskElement("DeleteSnapshot", typeof(DeleteSnapshotTaskParameters))]
-	public class DeleteSnapshotTask : CustomTask
+	[TaskElement("DeleteVolume", typeof(DeleteVolumeTaskParameters))]
+	public class DeleteVolumeTask : CustomTask
 	{
 		/// <summary>
 		/// Parameters for the task
 		/// </summary>
-		private readonly DeleteSnapshotTaskParameters _parameters;
+		private readonly DeleteVolumeTaskParameters _parameters;
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="parameters">Parameters for this task</param>
-		public DeleteSnapshotTask(DeleteSnapshotTaskParameters parameters)
+		public DeleteVolumeTask(DeleteVolumeTaskParameters parameters)
 		{
 			_parameters = parameters;
 		}
@@ -81,26 +79,26 @@ namespace AutomationTool.Tasks
 		/// <param name="tagNameToFileSet">Mapping from tag names to the set of files they include</param>
 		public override void Execute(JobContext job, HashSet<FileReference> buildProducts, Dictionary<string, HashSet<FileReference>> tagNameToFileSet)
 		{
-			Logger.LogInformation("Starting ONTAP snapshot deletion");
+			Logger.LogInformation("Starting ONTAP volume deletion");
 			Logger.LogInformation("Volume: {VolumeName}", _parameters.VolumeName);
-			Logger.LogInformation("Snapshot: {SnapshotName}", _parameters.SnapshotName);
+			Logger.LogInformation("SVM: {SvmName}", _parameters.SvmName);
 
 			try
 			{
-				DeleteSnapshotAsync().Wait();
-				Logger.LogInformation("Snapshot deletion completed successfully");
+				DeleteVolumeAsync().Wait();
+				Logger.LogInformation("Volume deletion completed successfully");
 			}
 			catch (Exception ex)
 			{
-				Logger.LogError(ex, "Failed to delete snapshot '{SnapshotName}' from volume '{VolumeName}'", _parameters.SnapshotName, _parameters.VolumeName);
+				Logger.LogError(ex, "Failed to delete volume '{VolumeName}'", _parameters.VolumeName);
 				throw;
 			}
 		}
 
 		/// <summary>
-		/// Deletes an ONTAP snapshot
+		/// Deletes an ONTAP volume
 		/// </summary>
-		private async Task DeleteSnapshotAsync()
+		private async Task DeleteVolumeAsync()
 		{
 			try
 			{
@@ -108,19 +106,19 @@ namespace AutomationTool.Tasks
 				OntapUtils ontapUtils = new OntapUtils(
 					_parameters.FsxAdminIp,
 					_parameters.OntapUser,
-					_parameters.AwsSecretName,
+					_parameters.OntapPasswordSecretName,
 					_parameters.AwsRegion,
 					Logger);
 
-				// Delete the snapshot
-				await ontapUtils.DeleteSnapshotAsync(_parameters.VolumeName, _parameters.SnapshotName);
+				// Delete the volume
+				await ontapUtils.DeleteVolumeAsync(_parameters.VolumeName);
 
-				Logger.LogInformation("Snapshot '{SnapshotName}' deleted successfully from volume '{VolumeName}'", _parameters.SnapshotName, _parameters.VolumeName);
+				Logger.LogInformation("Volume '{VolumeName}' deleted successfully", _parameters.VolumeName);
 			}
 			catch (Exception ex)
 			{
-				Logger.LogError(ex, "Failed to delete ONTAP snapshot");
-				throw new AutomationException(ex, "Failed to delete ONTAP snapshot");
+				Logger.LogError(ex, "Failed to delete ONTAP volume");
+				throw new AutomationException(ex, "Failed to delete ONTAP volume");
 			}
 		}
 

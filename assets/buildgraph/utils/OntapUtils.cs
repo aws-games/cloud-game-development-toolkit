@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -21,7 +19,7 @@ namespace AutomationTool
 	{
 		private readonly string _fsxAdminIp;
 		private readonly string _ontapUser;
-		private readonly string _awsSecretName;
+		private readonly string _ontapPasswordSecretName;
 		private readonly string _awsRegion;
 		private readonly ILogger _logger;
 		private string _password;
@@ -31,14 +29,14 @@ namespace AutomationTool
 		/// </summary>
 		/// <param name="fsxAdminIp">FSx ONTAP management IP address</param>
 		/// <param name="ontapUser">ONTAP username</param>
-		/// <param name="awsSecretName">AWS Secrets Manager secret name containing the FSx password</param>
+		/// <param name="ontapPasswordSecretName">AWS Secrets Manager secret name containing the FSx password</param>
 		/// <param name="awsRegion">AWS region where the secret is stored</param>
 		/// <param name="logger">Logger for output</param>
-		public OntapUtils(string fsxAdminIp, string ontapUser, string awsSecretName, string awsRegion, ILogger logger)
+		public OntapUtils(string fsxAdminIp, string ontapUser, string ontapPasswordSecretName, string awsRegion, ILogger logger)
 		{
 			_fsxAdminIp = fsxAdminIp;
 			_ontapUser = ontapUser;
-			_awsSecretName = awsSecretName;
+			_ontapPasswordSecretName = ontapPasswordSecretName;
 			_awsRegion = awsRegion;
 			_logger = logger;
 		}
@@ -50,7 +48,7 @@ namespace AutomationTool
 		{
 			if (_password == null)
 			{
-				_password = await GetAwsSecretAsync(_awsSecretName, _awsRegion, _logger, cancellationToken);
+				_password = await GetAwsSecretAsync(_ontapPasswordSecretName, _awsRegion, _logger, cancellationToken);
 			}
 		}
 

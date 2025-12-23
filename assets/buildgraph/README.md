@@ -31,7 +31,7 @@ Custom BuildGraph tasks for integrating Perforce syncing with NetApp ONTAP FlexC
 |-----------|-------------|---------|
 | `FsxAdminIp` | FSx ONTAP management IP | - |
 | `OntapUser` | ONTAP username | fsxadmin |
-| `AwsSecretName` | AWS secret name for ONTAP password | - |
+| `OntapPasswordSecretName` | AWS secret name for ONTAP password | - |
 | `AwsRegion` | AWS region | us-east-1 |
 | `SvmName` | Storage Virtual Machine name | fsx |
 

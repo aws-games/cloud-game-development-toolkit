@@ -11,10 +11,10 @@
 	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
 	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
 	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
-	<Option Name="AwsSecretName" Description="AWS Secrets Manager secret name" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for ONTAP password" />
 	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
 
-	<Agent Name="CloneAgent" Type="Mac">
+	<Agent Name="CloneAgent" Type="AnyAgent">
 		<Node Name="Clone Volume">
 			<!-- Create FlexClone volume from existing snapshot -->
 			<CloneVolume 
@@ -24,7 +24,7 @@
 				SvmName="$(SvmName)" 
 				FsxAdminIp="$(FsxAdminIp)" 
 				OntapUser="$(OntapUser)" 
-				AwsSecretName="$(AwsSecretName)" 
+				OntapPasswordSecretName="$(OntapPasswordSecretName)" 
 				AwsRegion="$(AwsRegion)" />
 		</Node>
 	</Agent>
