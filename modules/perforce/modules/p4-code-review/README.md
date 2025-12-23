@@ -42,6 +42,14 @@ module "p4_code_review" {
 }
 ```
 
+## Debugging
+
+If you're running into issues with P4 Code Review, here are some common log files to investigate:
+
+- `/var/log/apache2/swarm.error_log`: any PHP / configuration related errors
+- `/opt/perforce/swarm/data/configure-swarm.log`: errors coming from p4cr configuration
+- `/opt/perforce/swarm/data/log`: errors from the p4cr runtime
+
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -124,6 +132,7 @@ No modules.
 | <a name="input_certificate_arn"></a> [certificate\_arn](#input\_certificate\_arn) | The TLS certificate ARN for the P4 Code Review service load balancer. | `string` | `null` | no |
 | <a name="input_cloudwatch_log_retention_in_days"></a> [cloudwatch\_log\_retention\_in\_days](#input\_cloudwatch\_log\_retention\_in\_days) | The log retention in days of the cloudwatch log group for P4 Code Review. | `string` | `365` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the P4 Code Review service into. Defaults to null and a cluster will be created. | `string` | `null` | no |
+| <a name="input_config_php_source"></a> [config\_php\_source](#input\_config\_php\_source) | Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array\_replace\_recursive. | `string` | `null` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the P4 Code Review container. | `number` | `1024` | no |
 | <a name="input_container_memory"></a> [container\_memory](#input\_container\_memory) | The memory allotment for the P4 Code Review container. | `number` | `2048` | no |
 | <a name="input_container_name"></a> [container\_name](#input\_container\_name) | The name of the P4 Code Review container. | `string` | `"p4-code-review-container"` | no |
@@ -138,7 +147,7 @@ No modules.
 | <a name="input_enable_alb_access_logs"></a> [enable\_alb\_access\_logs](#input\_enable\_alb\_access\_logs) | Enables access logging for the P4 Code Review ALB. Defaults to false. | `bool` | `false` | no |
 | <a name="input_enable_alb_deletion_protection"></a> [enable\_alb\_deletion\_protection](#input\_enable\_alb\_deletion\_protection) | Enables deletion protection for the P4 Code Review ALB. Defaults to true. | `bool` | `false` | no |
 | <a name="input_enable_sso"></a> [enable\_sso](#input\_enable\_sso) | Set this to true if using SSO for P4 Code Review authentication. | `bool` | `false` | no |
-| <a name="input_existing_redis_connection"></a> [existing\_redis\_connection](#input\_existing\_redis\_connection) | The connection specifications to use for an existing Redis deployment. | <pre>object({<br>    host = string<br>    port = number<br>  })</pre> | `null` | no |
+| <a name="input_existing_redis_connection"></a> [existing\_redis\_connection](#input\_existing\_redis\_connection) | The connection specifications to use for an existing Redis deployment. | <pre>object({<br/>    host = string<br/>    port = number<br/>  })</pre> | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | A list of existing security group IDs to attach to the P4 Code Review load balancer. | `list(string)` | `[]` | no |
 | <a name="input_fully_qualified_domain_name"></a> [fully\_qualified\_domain\_name](#input\_fully\_qualified\_domain\_name) | The fully qualified domain name that P4 Code Review should use for internal URLs. | `string` | `null` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | Set this flag to true if you do not want the P4 Code Review service load balancer to have a public IP. | `bool` | `false` | no |
@@ -147,7 +156,7 @@ No modules.
 | <a name="input_p4d_port"></a> [p4d\_port](#input\_p4d\_port) | The P4D\_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666' | `string` | `"ssl:perforce:1666"` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_s3_enable_force_destroy"></a> [s3\_enable\_force\_destroy](#input\_s3\_enable\_force\_destroy) | Enables force destroy for the S3 bucket for P4 Code Review access log storage. Defaults to true. | `bool` | `true` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-code-review",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "p4-code-review",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "terraform-aws-perforce"<br/>}</pre> | no |
 
 ## Outputs
 
@@ -157,6 +166,8 @@ No modules.
 | <a name="output_alb_security_group_id"></a> [alb\_security\_group\_id](#output\_alb\_security\_group\_id) | Security group associated with the P4 Code Review load balancer |
 | <a name="output_alb_zone_id"></a> [alb\_zone\_id](#output\_alb\_zone\_id) | The hosted zone ID of the P4 Code Review ALB |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the ECS cluster hosting P4 Code Review |
+| <a name="output_default_role_id"></a> [default\_role\_id](#output\_default\_role\_id) | The default role for the service task |
+| <a name="output_execution_role_id"></a> [execution\_role\_id](#output\_execution\_role\_id) | The default role for the service task |
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | Security group associated with the ECS service running P4 Code Review |
 | <a name="output_target_group_arn"></a> [target\_group\_arn](#output\_target\_group\_arn) | The service target group for P4 Code Review |
 <!-- END_TF_DOCS -->
