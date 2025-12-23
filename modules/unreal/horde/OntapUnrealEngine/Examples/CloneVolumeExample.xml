@@ -1,0 +1,31 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- Example usage of the CloneVolume custom task -->
+	<!-- This creates a FlexClone volume from an existing snapshot -->
+
+	<!-- Parameters that can be set from Horde -->
+	<Option Name="SourceVolume" Description="Source volume to clone from" />
+	<Option Name="SnapshotName" Description="Snapshot to use for cloning" />
+	<Option Name="CloneVolumeName" Description="Name for the new FlexClone volume" />
+	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="AwsSecretName" Description="AWS Secrets Manager secret name" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+
+	<Agent Name="CloneAgent" Type="Mac">
+		<Node Name="Clone Volume">
+			<!-- Create FlexClone volume from existing snapshot -->
+			<CloneVolume 
+				SourceVolume="$(SourceVolume)" 
+				SnapshotName="$(SnapshotName)" 
+				CloneVolumeName="$(CloneVolumeName)" 
+				SvmName="$(SvmName)" 
+				FsxAdminIp="$(FsxAdminIp)" 
+				OntapUser="$(OntapUser)" 
+				AwsSecretName="$(AwsSecretName)" 
+				AwsRegion="$(AwsRegion)" />
+		</Node>
+	</Agent>
+</BuildGraph>

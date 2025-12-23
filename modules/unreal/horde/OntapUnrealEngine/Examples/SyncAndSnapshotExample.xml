@@ -1,0 +1,27 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- Example usage of the SyncAndSnapshot custom task -->
+
+	<!-- Parameters that can be set from Horde -->
+	<Option Name="Stream" Description="Perforce stream to sync from" />
+	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
+	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
+	<Option Name="SyncDir" Description="Directory to sync files to, need to be the path to the fsx volume (defaults to current working directory)" />
+	<Option Name="WorkspaceName" DefaultValue="checkoutWorkspace" Description="Perforce workspace name" />
+	
+	<!-- ONTAP Snapshot Parameters -->
+	<Option Name="SnapshotName" Description="Name for the ONTAP snapshot" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="AwsSecretName" Description="AWS Secrets Manager secret name of ONTAP password" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+	<Option Name="VolumeName" Description="ONTAP volume name to take the snapshot from" />
+
+	<Agent Name="SyncAgent" Type="Mac">
+		<Node Name="Sync From Stream">
+			<!-- Sync from Perforce stream and create ONTAP snapshot -->
+			<SyncAndSnapshot Stream="$(Stream)" P4Port="$(P4Port)" P4User="$(P4User)" SyncDir="$(SyncDir)" WorkspaceName="$(WorkspaceName)" SnapshotName="$(SnapshotName)" FsxAdminIp="$(FsxAdminIp)" OntapUser="$(OntapUser)" AwsSecretName="$(AwsSecretName)" AwsRegion="$(AwsRegion)" VolumeName="$(VolumeName)" />
+		</Node>
+	</Agent>
+</BuildGraph>
