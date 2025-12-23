@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3305,6 +3305,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3420,6 +3431,13 @@
 <span class="w">    </span><span class="na">p4d_super_user_password_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4CodeReviewSuperUser-a1b2c3:password::&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
+<p>If you're running into issues with P4 Code Review, here are some common log files to investigate:</p>
+<ul>
+<li><code>/var/log/apache2/swarm.error_log</code>: any PHP / configuration related errors</li>
+<li><code>/opt/perforce/swarm/data/configure-swarm.log</code>: errors coming from p4cr configuration</li>
+<li><code>/opt/perforce/swarm/data/log</code>: errors from the p4cr runtime</li>
+</ul>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -3737,6 +3755,13 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_config_php_source"></a> <a href="#input_config_php_source">config_php_source</a></td>
+<td>Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_container_cpu"></a> <a href="#input_container_cpu">container_cpu</a></td>
 <td>The CPU allotment for the P4 Code Review container.</td>
 <td><code>number</code></td>
@@ -3837,7 +3862,7 @@
 <tr>
 <td><a name="input_existing_redis_connection"></a> <a href="#input_existing_redis_connection">existing_redis_connection</a></td>
 <td>The connection specifications to use for an existing Redis deployment.</td>
-<td><pre>object({<br>    host = string<br>    port = number<br>  })</pre></td>
+<td><pre>object({<br/>    host = string<br/>    port = number<br/>  })</pre></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
 </tr>
@@ -3901,7 +3926,7 @@
 <td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
 <td>Tags to apply to resources.</td>
 <td><code>map(any)</code></td>
-<td><pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-code-review",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre></td>
+<td><pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "p4-code-review",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "terraform-aws-perforce"<br/>}</pre></td>
 <td style="text-align: center;">no</td>
 </tr>
 </tbody>
@@ -3930,6 +3955,14 @@
 <tr>
 <td><a name="output_cluster_name"></a> <a href="#output_cluster_name">cluster_name</a></td>
 <td>Name of the ECS cluster hosting P4 Code Review</td>
+</tr>
+<tr>
+<td><a name="output_default_role_id"></a> <a href="#output_default_role_id">default_role_id</a></td>
+<td>The default role for the service task</td>
+</tr>
+<tr>
+<td><a name="output_execution_role_id"></a> <a href="#output_execution_role_id">execution_role_id</a></td>
+<td>The default role for the service task</td>
 </tr>
 <tr>
 <td><a name="output_service_security_group_id"></a> <a href="#output_service_security_group_id">service_security_group_id</a></td>
@@ -3963,7 +3996,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2025-12-23
   </span>
 
     
@@ -4103,10 +4136,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../../../js/open_in_new_tab.js"></script>
       

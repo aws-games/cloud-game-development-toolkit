@@ -27,3 +27,13 @@ output "target_group_arn" {
   value       = aws_lb_target_group.alb_target_group.arn
   description = "The service target group for P4 Code Review"
 }
+
+output "default_role_id" {
+  value       = var.create_default_role ? aws_iam_role.default_role[0].id : null
+  description = "The default role for the service task"
+}
+
+output "execution_role_id" {
+  value       = aws_iam_role.task_execution_role.id
+  description = "The default role for the service task"
+}

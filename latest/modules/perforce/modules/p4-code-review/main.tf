@@ -133,18 +133,46 @@ resource "aws_ecs_task_definition" "task_definition" {
             containerPath = local.data_path
             readOnly      = false
           }
-        ],
+        ]
       },
       {
         name      = "${var.container_name}-config"
-        image     = "bash"
+        image     = "public.ecr.aws/debian/debian:13-slim"
         essential = false
         // Only run this command if enable_sso is set
-        command = concat([], var.enable_sso ? [
-          "sh",
-          "-c",
-          "echo \"/p4/a\\\t'sso' => 'enabled',\" > ${local.data_path}/sso.sed && sed -i -f ${local.data_path}/sso.sed ${local.data_path}/config.php && rm -rf ${local.data_path}/cache",
-        ] : []),
+        command = [
+          "bash",
+          "-ce",
+          <<-EOF
+          cd ${local.data_path}
+
+          # Prepare the config files
+          mv config.php config.gen.php
+          echo $CONFIG_PHP | base64 --decode | tee config.php
+
+          %{if var.config_php_source != null}
+          echo $CONFIG_USER_PHP | base64 --decode | tee config.user.php
+          %{endif}
+
+          # Clear the cache to force a re-configure
+          rm -rf cache
+          EOF
+        ]
+
+        secrets = [
+          {
+            name      = "CONFIG_USER_PHP"
+            valueFrom = var.config_php_source
+          },
+        ]
+        environment = [
+          {
+            name = "CONFIG_PHP"
+            value = base64encode(templatefile("${path.module}/assets/config.php.tftpl", {
+              enable_sso = var.enable_sso,
+            }))
+          }
+        ]
         readonly_root_filesystem = false
         #checkov:skip=CKV_AWS_81: Read-only root filesystem disabled for configuration container requirements
 
@@ -161,7 +189,7 @@ resource "aws_ecs_task_definition" "task_definition" {
             sourceVolume  = local.data_volume_name
             containerPath = local.data_path
           }
-        ],
+        ]
         dependsOn = [
           {
             containerName = var.container_name

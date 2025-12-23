@@ -228,6 +228,12 @@ variable "p4_code_review_user_password_secret_arn" {
   description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password."
 }
 
+variable "config_php_source" {
+  type        = string
+  description = "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."
+  default     = null
+}
+
 variable "enable_sso" {
   type        = bool
   default     = false
