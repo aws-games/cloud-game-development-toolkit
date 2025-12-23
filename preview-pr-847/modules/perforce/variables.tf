@@ -472,6 +472,7 @@ variable "p4_code_review_config" {
     p4_code_review_user_password_secret_arn = optional(string, null)
     p4_code_review_user_username_secret_arn = optional(string, null)
     enable_sso                              = optional(string, true)
+    config_php_source                       = optional(string, null)
 
     # Caching
     elasticache_node_count = optional(number, 1)
@@ -533,6 +534,8 @@ variable "p4_code_review_config" {
     p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
 
     enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."
+
+    config_php_source : "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."
 
 
     # Caching
