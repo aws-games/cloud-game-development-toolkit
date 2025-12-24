@@ -368,11 +368,11 @@ run "full_stack_existing_ecs_cluster" {
   command = plan
 
   variables {
-    vpc_id                     = "vpc-12345678"
-    shared_nlb_subnets         = ["subnet-111", "subnet-222", "subnet-333"]
-    shared_alb_subnets         = ["subnet-111", "subnet-222", "subnet-333"]
-    certificate_arn            = "arn:aws:acm:us-east-1:123456789012:certificate/test-cert"
-    existing_ecs_cluster_name  = "my-existing-cluster"
+    vpc_id                    = "vpc-12345678"
+    shared_nlb_subnets        = ["subnet-111", "subnet-222", "subnet-333"]
+    shared_alb_subnets        = ["subnet-111", "subnet-222", "subnet-333"]
+    certificate_arn           = "arn:aws:acm:us-east-1:123456789012:certificate/test-cert"
+    existing_ecs_cluster_name = "my-existing-cluster"
 
     p4_server_config = {
       fully_qualified_domain_name = "p4.test.internal"

@@ -22,8 +22,8 @@ mock_provider "aws" {
   }
   mock_data "aws_ecs_cluster" {
     defaults = {
-      arn = "arn:aws:ecs:us-east-1:123456789012:cluster/existing-cluster"
-      id  = "existing-cluster"
+      arn  = "arn:aws:ecs:us-east-1:123456789012:cluster/existing-cluster"
+      id   = "existing-cluster"
       name = "existing-cluster"
     }
   }
@@ -103,9 +103,9 @@ run "ecs_cluster_shared" {
   command = plan
 
   variables {
-    vpc_id               = "vpc-12345678"
-    shared_alb_subnets   = ["subnet-111", "subnet-222"]
-    certificate_arn      = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                  = "vpc-12345678"
+    shared_alb_subnets      = ["subnet-111", "subnet-222"]
+    certificate_arn         = "arn:aws:acm:us-east-1:123456789012:certificate/test"
     shared_ecs_cluster_name = "my-shared-cluster"
 
     p4_auth_config = {
@@ -170,10 +170,10 @@ run "load_balancer_access_logs" {
   command = plan
 
   variables {
-    vpc_id                      = "vpc-12345678"
-    shared_nlb_subnets          = ["subnet-111", "subnet-222"]
-    shared_alb_subnets          = ["subnet-111", "subnet-222"]
-    certificate_arn             = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                       = "vpc-12345678"
+    shared_nlb_subnets           = ["subnet-111", "subnet-222"]
+    shared_alb_subnets           = ["subnet-111", "subnet-222"]
+    certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/test"
     enable_shared_lb_access_logs = true
 
     p4_server_config = {
