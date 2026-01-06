@@ -78,18 +78,13 @@ output "p4_auth_target_group_arn" {
 
 # P4 Code Review
 output "p4_code_review_service_security_group_id" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].service_security_group_id : null
-  description = "Security group associated with the ECS service running P4 Code Review."
+  value       = var.p4_code_review_config != null ? module.p4_code_review[0].application_security_group_id : null
+  description = "Security group associated with P4 Code Review application."
 }
 
 output "p4_code_review_alb_security_group_id" {
   value       = var.p4_code_review_config != null ? module.p4_code_review[0].alb_security_group_id : null
   description = "Security group associated with the P4 Code Review load balancer."
-}
-
-output "p4_code_review_perforce_cluster_name" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].cluster_name : null
-  description = "Name of the ECS cluster hosting P4 Code Review."
 }
 
 output "p4_code_review_alb_dns_name" {

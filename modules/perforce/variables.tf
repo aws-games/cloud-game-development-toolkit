@@ -440,14 +440,12 @@ variable "p4_code_review_config" {
     name                        = optional(string, "p4-code-review")
     project_prefix              = optional(string, "cgd")
     environment                 = optional(string, "dev")
-    debug                       = optional(bool, false)
     fully_qualified_domain_name = string
 
     # Compute
-    container_name   = optional(string, "p4-code-review-container")
-    container_port   = optional(number, 80)
-    container_cpu    = optional(number, 1024)
-    container_memory = optional(number, 4096)
+    application_port = optional(number, 80)
+    instance_type    = optional(string, "m5.large")
+    ami_id           = optional(string, null)
     p4d_port         = optional(string, null)
     p4charset        = optional(string, null)
     existing_redis_connection = optional(object({
@@ -457,15 +455,17 @@ variable "p4_code_review_config" {
 
     # Storage & Logging
     cloudwatch_log_retention_in_days = optional(number, 365)
+    ebs_volume_size                  = optional(number, 20)
+    ebs_volume_type                  = optional(string, "gp3")
+    ebs_volume_encrypted             = optional(bool, true)
+    ebs_availability_zone            = optional(string, null)
 
     # Networking & Security
     create_default_sgs       = optional(bool, true)
     existing_security_groups = optional(list(string), [])
     internal                 = optional(bool, false)
     service_subnets          = optional(list(string), null)
-
-    create_default_role = optional(bool, true)
-    custom_role         = optional(string, null)
+    instance_subnet_id       = string
 
     super_user_password_secret_arn          = optional(string, null)
     super_user_username_secret_arn          = optional(string, null)
@@ -488,8 +488,6 @@ variable "p4_code_review_config" {
     project_prefix : "The project prefix for the P4 Code Review service. Default is 'cgd'."
 
     environment : "The environment where the P4 Code Review service will be deployed. Default is 'dev'."
-
-    debug : "Whether to enable debug mode for the P4 Code Review service. Default is 'false'."
 
     fully_qualified_domain_name : "The FQDN for the P4 Code Review Service. This is used for the P4 Code Review's Perforce configuration."
 
@@ -518,10 +516,6 @@ variable "p4_code_review_config" {
     create_default_sgs : "Whether to create default security groups for the P4 Code Review service."
 
     internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."
-
-    create_default_role : "Whether to create the P4 Code Review default IAM Role. Default is set to true."
-
-    custom_role : "ARN of a custom IAM Role you wish to use with P4 Code Review."
 
     super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."
 

@@ -54,6 +54,7 @@ module "terraform-aws-perforce" {
     debug                       = true # optional to use for debugging. Default is false if omitted
     deregistration_delay        = 0
     service_subnets             = aws_subnet.private_subnets[*].id
+    instance_subnet_id          = aws_subnet.private_subnets[0].id
     # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
 
     # Configuration
