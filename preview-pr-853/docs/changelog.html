@@ -1,0 +1,4931 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cloud Game Development Toolkit | Docs">
+      
+      
+        <meta name="author" content="Amazon Web Services">
+      
+      
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-853/docs/changelog.html">
+      
+      
+        <link rel="prev" href="../samples/unreal-cloud-ddc-single-region/index.html">
+      
+      
+        <link rel="next" href="security.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="media/logos/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Changelog - Cloud Game Development Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M0%208a8%208%200%201%201%2016%200A8%208%200%200%201%200%208m8-6.5a6.5%206.5%200%201%200%200%2013%206.5%206.5%200%200%200%200-13M6.5%207.75A.75.75%200%200%201%207.25%207h1a.75.75%200%200%201%20.75.75v2.75h.25a.75.75%200%200%201%200%201.5h-2a.75.75%200%200%201%200-1.5h.25v-2h-.25a.75.75%200%200%201-.75-.75M8%206a1%201%200%201%201%200-2%201%201%200%200%201%200%202%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="stylesheets/themes.css">
+    
+      <link rel="stylesheet" href="stylesheets/hero.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+
+<!-- Determine title -->
+
+<!-- prettier-ignore -->
+
+
+
+
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unreleased" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Cloud Game Development Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2C5.13 2 2 5.13 2 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7M6 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H6zm13-8h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9zm-2.15 5.65L18 15l1.15 3.65z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="index.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="getting-started.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="assets/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Assets
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../modules/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../samples/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Samples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="changelog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="security.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="contributing.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    Cloud Game Development Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="getting-started.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="assets/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Assets
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="assets/packer/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packer Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Packer Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Linux Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Linux Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Build Agent
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Windows Build Agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Virtual Workstations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/jenkins-pipelines/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ansible Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="assets/dockerfiles.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dockerfiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/DESIGN_STANDARDS.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1" id="__nav_4_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/perforce/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1_2" id="__nav_4_3_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submodules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Submodules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4Auth
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4Auth
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Code Review
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_1" id="__nav_4_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/teamcity/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5_1" id="__nav_4_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/jenkins/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_5_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_1" id="__nav_4_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine Horde
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine Horde
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/unreal/horde/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2" id="__nav_4_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Cloud DDC
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Intra-Cluster
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Intra-Cluster
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_1" id="__nav_4_7_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accelerator
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accelerator
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/unity/accelerator/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_2" id="__nav_4_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing Server
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Licensing Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/unity/floating-license-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8_1" id="__nav_4_8_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_8_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../modules/vdi/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_8_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../samples/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Samples
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Samples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../samples/simple-build-pipeline/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simple Build Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../samples/unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Single Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="changelog.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latest-2025-07-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        latest - 2025-07-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v115-2025-07-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.5 - 2025-07-29
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.5 - 2025-07-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v114-2025-06-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.4 - 2025-06-09
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.4 - 2025-06-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v113-alpha-2025-03-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.3-alpha - 2025-03-19
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.3-alpha - 2025-03-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v112-alpha-2024-12-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.2-alpha - 2024-12-20
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.2-alpha - 2024-12-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chore_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v111-alpha-2024-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.1-alpha - 2024-12-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.1-alpha - 2024-12-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v110-alpha-2024-10-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.0-alpha - 2024-10-01
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.0-alpha - 2024-10-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v101-alpha-2024-09-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.0.1-alpha - 2024-09-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.0.1-alpha - 2024-09-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v100-alpha-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.0.0-alpha - 2024-08-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#staging-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        staging - 2024-08-07
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="staging - 2024-08-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-refactoring_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="security.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="contributing.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#latest-2025-07-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        latest - 2025-07-29
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v115-2025-07-29" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.5 - 2025-07-29
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.5 - 2025-07-29">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v114-2025-06-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.4 - 2025-06-09
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.4 - 2025-06-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v113-alpha-2025-03-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.3-alpha - 2025-03-19
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.3-alpha - 2025-03-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v112-alpha-2024-12-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.2-alpha - 2024-12-20
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.2-alpha - 2024-12-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chore_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v111-alpha-2024-12-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.1-alpha - 2024-12-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.1-alpha - 2024-12-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v110-alpha-2024-10-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.1.0-alpha - 2024-10-01
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.1.0-alpha - 2024-10-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v101-alpha-2024-09-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.0.1-alpha - 2024-09-16
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="v1.0.1-alpha - 2024-09-16">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#v100-alpha-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v1.0.0-alpha - 2024-08-07
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#staging-2024-08-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        staging - 2024-08-07
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="staging - 2024-08-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chore_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chore
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-refactoring_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Changelog</h1>
+
+<p><a name="unreleased"></a></p>
+<h2 id="unreleased"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...HEAD">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<p><a name="latest"></a></p>
+<h2 id="latest-2025-07-29"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...latest">latest</a> - 2025-07-29<a class="headerlink" href="#latest-2025-07-29" title="Permanent link">&para;</a></h2>
+<p><a name="v1.1.5"></a></p>
+<h2 id="v115-2025-07-29"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...v1.1.5">v1.1.5</a> - 2025-07-29<a class="headerlink" href="#v115-2025-07-29" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fixes button/link to getting started page in homepage</li>
+<li>update perforce tf test to support branches on forks as well as source repo</li>
+<li>Minor Perforce module copy/paste naming resolution (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/645">#645</a>)</li>
+<li>Fixes typo in code block in samples DDC readme</li>
+<li>hardcode protocol to appease checkov</li>
+<li>Update SG reference in P4 FSxN Example (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/640">#640</a>)</li>
+<li><strong>p4:</strong> Fix typo'ed output.shared_application_load_balancer_arn</li>
+</ul>
+<h3 id="chore">Chore<a class="headerlink" href="#chore" title="Permanent link">&para;</a></h3>
+<ul>
+<li>remove kevon from description :( (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/672">#672</a>)</li>
+<li>update dependabot configuration</li>
+<li><strong>deps:</strong> bump the random-provider group across 9 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/653">#653</a>)</li>
+<li><strong>deps:</strong> bump NetApp/netapp-ontap</li>
+<li><strong>deps:</strong> bump NetApp/netapp-ontap in /samples/simple-build-pipeline</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump the aws-provider group across 8 directories with 1 update</li>
+<li><strong>deps:</strong> bump the aws-provider group across 8 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/662">#662</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/local in /modules/perforce/modules/p4-server</li>
+<li><strong>deps:</strong> bump hashicorp/local in /modules/perforce</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump ossf/scorecard-action from 2.4.1 to 2.4.2</li>
+<li><strong>deps:</strong> bump aquasecurity/trivy-action from 0.30.0 to 0.31.0</li>
+</ul>
+<h3 id="docs">Docs<a class="headerlink" href="#docs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fixed broken links in getting started guide</li>
+<li><strong>horde:</strong> add alb http listeners to README.md</li>
+</ul>
+<h3 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Packer template for Cloud Game Development virtual workstation AMI (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/651">#651</a>)</li>
+<li>Unity Accelerator asset caching proxy</li>
+<li><strong>horde:</strong> allow users to bring their own horde-server images (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/643">#643</a>)</li>
+<li><strong>horde:</strong> add HTTP redirect listeners to ALBs</li>
+<li><strong>p4:</strong> allow users to specify a private ip (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/665">#665</a>)</li>
+<li><strong>p4:</strong> p4_configure.sh attempts to use --fqdn if passed (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/666">#666</a>)</li>
+</ul>
+<p><a name="v1.1.4"></a></p>
+<h2 id="v114-2025-06-09"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...v1.1.4">v1.1.4</a> - 2025-06-09<a class="headerlink" href="#v114-2025-06-09" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Remove commented out NetApp volume resources and cleanup IAM managed policies</li>
+<li>Resolved EC2 DNS self-signed certificate bug in P4 Server packer template</li>
+<li>Adding cloud DDC sample for mkdocs.yml</li>
+<li><strong>helix swarm:</strong> helix swarm does not support horizontal scaling, so helix swarm container count is now set to 1</li>
+</ul>
+<h3 id="chore_1">Chore<a class="headerlink" href="#chore_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add Terraform tests for new Perforce module (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/604">#604</a>)</li>
+<li>regenerate CHANGELOG.md for 2025-03-19</li>
+<li>Minor maintenance to Helix Core module</li>
+<li>Minor Helix Authentication fixes</li>
+<li>regenerate CHANGELOG.md for 2025-06-09</li>
+<li>Addressed IAM policy warnings for Helix Swarm</li>
+<li><strong>deps:</strong> bump actions/github-script from 6 to 7</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.11 to 9.6.12 in /docs</li>
+<li><strong>deps:</strong> bump xt0rted/pull-request-comment-branch from 1 to 3</li>
+<li><strong>deps:</strong> bump actions/checkout from 3 to 4</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.9 to 9.6.11 in /docs</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump aquasecurity/trivy-action from 0.29.0 to 0.30.0</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.8 to 9.6.9 in /docs</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material from 9.6.8 to 9.6.9 in /docs</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.6.1 to 4.6.2</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.12 to 9.6.14 in /docs</li>
+</ul>
+<h3 id="code-refactoring">Code Refactoring<a class="headerlink" href="#code-refactoring" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update Simple Build Pipeline sample to use new Perforce parent module (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/608">#608</a>)</li>
+<li>Perforce modules consolidated to simplify shared resource creation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/585">#585</a>)</li>
+<li>Updated Perforce complete example to remove NLB front for Helix Core</li>
+<li>reorganize unreal cloud ddc module structure</li>
+</ul>
+<h3 id="docs_1">Docs<a class="headerlink" href="#docs_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Adjustments to mkdocs structure, and updates to "getting started" and Perforce documentation. (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/612">#612</a>)</li>
+<li>updates and expands on <code>unreal-cloud-ddc-intra-cluster</code> installation and usage docs</li>
+<li>fixes relative path for <code>unreal-cloud-ddc-infra</code> and <code>unreal-cloud-ddc-intra-cluster</code> Terraform module docs</li>
+<li>add unreal fest video to horde module</li>
+<li><strong>TeamCity:</strong> Adding TeamCity module docs and example architecture</li>
+</ul>
+<h3 id="features_1">Features<a class="headerlink" href="#features_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Adds debug variable and flag</li>
+<li>Simple example deployment of Helix Core backed by FSxN</li>
+<li>FSxN ISCSI provisioning for Helix Core module</li>
+<li>Modified p4_configure.sh to mount ISCSI volumes from FSxN</li>
+</ul>
+<p><a name="v1.1.3-alpha"></a></p>
+<h2 id="v113-alpha-2025-03-19"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...v1.1.3-alpha">v1.1.3-alpha</a> - 2025-03-19<a class="headerlink" href="#v113-alpha-2025-03-19" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_2">Bug Fixes<a class="headerlink" href="#bug-fixes_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>create_external_alb shouldn't block internal SG Ingress rules</li>
+<li>alb_subnet variables should not be required if create boolean is false</li>
+<li>Attaching perforce web service ALB to target group</li>
+<li>use provided admin password secret for Helix Authentication Service ADMIN_PASSWD, instead of the username secret</li>
+<li>AMI version bump for Helix Core, region variable made optional</li>
+</ul>
+<h3 id="chore_2">Chore<a class="headerlink" href="#chore_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>update dependabot configuration to include unreal modules</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.4 to 9.6.7 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material from 9.6.4 to 9.6.7 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.6.0 to 4.6.1</li>
+<li><strong>deps:</strong> bump ossf/scorecard-action from 2.4.0 to 2.4.1</li>
+<li><strong>deps:</strong> bump hashicorp/random</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material from 9.6.7 to 9.6.8 in /docs</li>
+<li><strong>deps:</strong> bump the random-provider group across 4 directories with 1 update</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.3 to 9.6.4 in /docs</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material from 9.6.2 to 9.6.4 in /docs</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.5.0 to 4.6.0</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.7 to 9.6.8 in /docs</li>
+<li><strong>deps:</strong> bump hashicorp/aws</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.6.2 to 9.6.3 in /docs</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material from 9.6.1 to 9.6.2 in /docs</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.50 to 9.6.2 in /docs</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 2 directories with 1 update</li>
+<li><strong>deps:</strong> bump aws-actions/configure-aws-credentials</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump squidfunk/mkdocs-material in /docs</li>
+<li><strong>deps:</strong> bump release-drafter/release-drafter from 6.0.0 to 6.1.0</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.49 to 9.5.50 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump aws-actions/configure-aws-credentials</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+</ul>
+<h3 id="docs_2">Docs<a class="headerlink" href="#docs_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix broken link in readme</li>
+<li><strong>Perforce:</strong> Updating documentation for Perforce Complete example reference architecture</li>
+</ul>
+<h3 id="features_2">Features<a class="headerlink" href="#features_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Helix Authentication Service:</strong> Shifting ALB creation to support external networking configuration</li>
+<li><strong>Helix Core:</strong> Plaintext support for Helix Core, optional EIP creation</li>
+<li><strong>Helix Core:</strong> Adding plaintext variable to p4_configre.sh</li>
+<li><strong>Helix Swarm:</strong> Shifting ALB creation to support external networking configuration</li>
+<li><strong>Perforce Example:</strong> Update complete example for shared networking configuration across services</li>
+<li><strong>TeamCity Example:</strong> example terraform configuration for deploying TeamCity module</li>
+<li><strong>TeamCity Server:</strong> terraform module for deploying TeamCity server on ECS Fargate</li>
+</ul>
+<p><a name="v1.1.2-alpha"></a></p>
+<h2 id="v112-alpha-2024-12-20"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha">v1.1.2-alpha</a> - 2024-12-20<a class="headerlink" href="#v112-alpha-2024-12-20" title="Permanent link">&para;</a></h2>
+<h3 id="chore_3">Chore<a class="headerlink" href="#chore_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>regenerate CHANGELOG.md for 2024-12-20</li>
+<li>ignore tf backend.tf files in .gitignore</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.4.3 to 4.5.0</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+</ul>
+<h3 id="docs_3">Docs<a class="headerlink" href="#docs_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>removed READMEs from source directories and moved them to their own dedicated docs pages in docs/ dir</li>
+<li>update contributor documentation to include table of contents</li>
+<li>updates to doc formatting and fixed broken links</li>
+</ul>
+<p><a name="v1.1.1-alpha"></a></p>
+<h2 id="v111-alpha-2024-12-17"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.0-alpha...v1.1.1-alpha">v1.1.1-alpha</a> - 2024-12-17<a class="headerlink" href="#v111-alpha-2024-12-17" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_3">Bug Fixes<a class="headerlink" href="#bug-fixes_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added service target group ARNs as outputs for HAS and Swarm</li>
+<li>Adds defaults to <code>vpc_id</code> and <code>subnet_id</code> variables</li>
+<li>bash error causing build failure when running p4_configure.sh (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/367">#367</a>)</li>
+<li><strong>horde:</strong> add JwtIssuer to ensure container retains agents on restart</li>
+<li><strong>horde:</strong> allow inbound access to horde agents on ports 7000-7010 from other horde agents</li>
+<li><strong>perforce:</strong> fixed minor issues in p4_configure.sh</li>
+<li><strong>perforce:</strong> add Unicode support and fix main module to handle existing security groups</li>
+</ul>
+<h3 id="chore_4">Chore<a class="headerlink" href="#chore_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>make SELinux label updates configurable</li>
+<li>remove packer assets .ci directory (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/337">#337</a>)</li>
+<li>fix tag names so that they match recommended best practices (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/343">#343</a>)</li>
+<li>define nat gateway routes for private route tables outside of aws_route_table resources in samples and modules (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/354">#354</a>)</li>
+<li>adds triage label to our issue templates</li>
+<li>regenerate CHANGELOG.md for 2024-12-17</li>
+<li>document parameter values for '--unicode' flag</li>
+<li>provide appropriate association name for configuring Helix Core via SSM</li>
+<li>fix naming</li>
+<li><strong>checkov:</strong> Suppresses CKV_AWS_378 rule (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/339">#339</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.42 to 9.5.44 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump aquasecurity/trivy-action from 0.28.0 to 0.29.0</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.45 to 9.5.46 in /docs</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.44 to 9.5.45 in /docs</li>
+<li><strong>deps:</strong> bump mkdocs-open-in-new-tab from 1.0.7 to 1.0.8 in /docs</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump actions/checkout from 3.0.0 to 4.2.2</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump hashicorp/setup-terraform from 1 to 3</li>
+<li><strong>deps:</strong> bump aws-actions/configure-aws-credentials</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.41 to 9.5.42 in /docs</li>
+<li><strong>deps:</strong> bump mkdocs-open-in-new-tab from 1.0.6 to 1.0.7 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump aquasecurity/trivy-action from 0.24.0 to 0.28.0</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.40 to 9.5.41 in /docs</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update</li>
+<li><strong>deps:</strong> bump python from 3.12.7 to 3.13.0 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/349">#349</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.4.0 to 4.4.3 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/356">#356</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.39 to 9.5.40 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/359">#359</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-open-in-new-tab from 1.0.5 to 1.0.6 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/345">#345</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.37 to 9.5.39 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/335">#335</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/344">#344</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.46 to 9.5.48 in /docs</li>
+<li><strong>deps:</strong> bump python from 3.12.6 to 3.12.7 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/340">#340</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.48 to 9.5.49 in /docs</li>
+<li><strong>deps:</strong> bump python from 3.13.0 to 3.13.1 in /docs</li>
+</ul>
+<h3 id="docs_4">Docs<a class="headerlink" href="#docs_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>clarify that modules are intended to be depended on, and samples are reference implementations meant to be copied and modified</li>
+<li>fix formatting of simple build pipeline docs</li>
+<li>fix formatting of local.tf in simple build pipeline docs</li>
+<li>fix formatting of jenkins pipeline assets page</li>
+<li>clarify use case of Ansible playbooks vs Packer templates</li>
+<li>clarify that deploying multiple samples independently is not supported</li>
+<li>point users explicitly to a Classic GitHub Personal Access Token</li>
+<li>fix typo in getting started guide</li>
+<li>Updates the getting started instructions for the simple build pipeline sample</li>
+</ul>
+<h3 id="features_3">Features<a class="headerlink" href="#features_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>perforce:</strong> implement Helix Core setup playbook</li>
+</ul>
+<p><a name="v1.1.0-alpha"></a></p>
+<h2 id="v110-alpha-2024-10-01"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.1-alpha...v1.1.0-alpha">v1.1.0-alpha</a> - 2024-10-01<a class="headerlink" href="#v110-alpha-2024-10-01" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_4">Bug Fixes<a class="headerlink" href="#bug-fixes_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>improve stability of build agent packer scripts, adjust winrm timeout to 15 minutes, remove packer variables that aren't needed (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/318">#318</a>)</li>
+</ul>
+<h3 id="chore_5">Chore<a class="headerlink" href="#chore_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>update changelog (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/305">#305</a>)</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/323">#323</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.35 to 9.5.37 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/314">#314</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/324">#324</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/298">#298</a>)</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/291">#291</a>)</li>
+<li><strong>deps:</strong> bump the random-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/310">#310</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.34 to 9.5.35 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/287">#287</a>)</li>
+</ul>
+<h3 id="docs_5">Docs<a class="headerlink" href="#docs_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add perforce complete example in docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/333">#333</a>)</li>
+<li>updates to documentation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/329">#329</a>)</li>
+</ul>
+<h3 id="features_4">Features<a class="headerlink" href="#features_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>install requirements for (auto)mounting FSx volumes on Jenkins Windows build agents (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/319">#319</a>)</li>
+<li><strong>helix-core:</strong> add ARM64 support (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/239">#239</a>)</li>
+</ul>
+<p><a name="v1.0.1-alpha"></a></p>
+<h2 id="v101-alpha-2024-09-16"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...v1.0.1-alpha">v1.0.1-alpha</a> - 2024-09-16<a class="headerlink" href="#v101-alpha-2024-09-16" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_5">Bug Fixes<a class="headerlink" href="#bug-fixes_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>changelog automation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/261">#261</a>)</li>
+<li>adding branch creation to workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/259">#259</a>)</li>
+<li>dependabot grouping terraform providers (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/228">#228</a>)</li>
+<li>wait for cloud-init to complete prior to installing packages during Perforce Helix Core AMI creation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/193">#193</a>)</li>
+<li><strong>changelog:</strong> GHA bot committer (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/255">#255</a>)</li>
+<li><strong>changelog:</strong> Add automated PR creation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/252">#252</a>)</li>
+<li><strong>fsx_automounter:</strong> when FSx automounter can't list tags for an FSx volume, the AccessDenied exception is now treated as a warning (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/226">#226</a>)</li>
+<li><strong>p4_configure:</strong> resolve script execution errors and repair broken … (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/232">#232</a>)</li>
+</ul>
+<h3 id="chore_6">Chore<a class="headerlink" href="#chore_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>adjusting changelog automation to leverage GH api (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/266">#266</a>)</li>
+<li>update changelog workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/284">#284</a>)</li>
+<li>update changelog (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/285">#285</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.10.0 to 1.11.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/220">#220</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/207">#207</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.33 to 9.5.34 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/236">#236</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.3.6 to 4.4.0 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/235">#235</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/241">#241</a>)</li>
+<li><strong>deps:</strong> bump the awscc-provider group across 3 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/242">#242</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/233">#233</a>)</li>
+<li><strong>deps:</strong> bump the aws-provider group across 5 directories with 1 update (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/231">#231</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.32 to 9.5.33 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/229">#229</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-open-in-new-tab from 1.0.3 to 1.0.5 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/263">#263</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.31 to 9.5.32 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/211">#211</a>)</li>
+<li><strong>deps:</strong> bump python from 3.12 to 3.12.6 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/243">#243</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.9.0 to 1.10.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/205">#205</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.62.0 to 5.63.1 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/216">#216</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/196">#196</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-authentication-service (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/197">#197</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/198">#198</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-core (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/199">#199</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/perforce/helix-swarm (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/200">#200</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/201">#201</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/awscc from 1.6.0 to 1.9.0 in /samples/simple-build-pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/202">#202</a>)</li>
+<li><strong>deps:</strong> bump mike from 2.1.2 to 2.1.3 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/189">#189</a>)</li>
+<li><strong>deps:</strong> bump hashicorp/aws from 5.59.0 to 5.62.0 in /modules/jenkins (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/195">#195</a>)</li>
+</ul>
+<h3 id="docs_6">Docs<a class="headerlink" href="#docs_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add openssf scorecard badge to readme (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/219">#219</a>)</li>
+<li>link to installation instructions for required tools, fix packer command invocation instructions (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/194">#194</a>)</li>
+<li>Windows Build AMI README (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/187">#187</a>)</li>
+</ul>
+<p><a name="v1.0.0-alpha"></a></p>
+<h2 id="v100-alpha-2024-08-07"><a href="https://github.com/aws-games/cloud-game-development-toolkit/compare/staging...v1.0.0-alpha">v1.0.0-alpha</a> - 2024-08-07<a class="headerlink" href="#v100-alpha-2024-08-07" title="Permanent link">&para;</a></h2>
+<p><a name="staging"></a></p>
+<h2 id="staging-2024-08-07">staging - 2024-08-07<a class="headerlink" href="#staging-2024-08-07" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes_6">Bug Fixes<a class="headerlink" href="#bug-fixes_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/150">#150</a>)</li>
+<li>bug fixes for FSxZ storage in build farm (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/152">#152</a>)</li>
+<li>allow Jenkins build agents to discover FSx volumes/snapshots and make outbound Internet connections (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/147">#147</a>)</li>
+</ul>
+<h3 id="chore_7">Chore<a class="headerlink" href="#chore_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add CODEOWNERS file (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/132">#132</a>)</li>
+<li>Updates to docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/63">#63</a>)</li>
+<li>fix makefile (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/65">#65</a>)</li>
+<li>Modify version handling in Docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/66">#66</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.27 to 9.5.28 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/135">#135</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.26 to 9.5.27 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/77">#77</a>)</li>
+<li><strong>deps:</strong> bump aquasecurity/trivy-action from 0.23.0 to 0.24.0 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/137">#137</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.3.3 to 4.3.4 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/136">#136</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.3.5 to 4.3.6 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/178">#178</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.29 to 9.5.30 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/153">#153</a>)</li>
+<li><strong>deps:</strong> bump mike from 2.1.1 to 2.1.2 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/110">#110</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.28 to 9.5.29 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/144">#144</a>)</li>
+<li><strong>deps:</strong> bump github/codeql-action from 3.25.8 to 3.25.10 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/69">#69</a>)</li>
+<li><strong>deps:</strong> bump ossf/scorecard-action from 2.3.3 to 2.4.0 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/167">#167</a>)</li>
+<li><strong>deps:</strong> bump actions/upload-artifact from 4.3.4 to 4.3.5 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/171">#171</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.30 to 9.5.31 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/172">#172</a>)</li>
+<li><strong>deps:</strong> bump github/codeql-action from 3.24.9 to 3.25.8 (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/53">#53</a>)</li>
+<li><strong>deps:</strong> bump mkdocs-material from 9.5.25 to 9.5.26 in /docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/54">#54</a>)</li>
+</ul>
+<h3 id="code-refactoring_1">Code Refactoring<a class="headerlink" href="#code-refactoring_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Perforce Helix Core AMI revamp, simple build pipeline DNS (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/73">#73</a>)</li>
+</ul>
+<h3 id="docs_7">Docs<a class="headerlink" href="#docs_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>update changelog (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/181">#181</a>)</li>
+<li>update main docs page (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/179">#179</a>)</li>
+<li>update layout of documentation main page theme (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/175">#175</a>)</li>
+<li>update documentation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/163">#163</a>)</li>
+<li>update workflow for docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/129">#129</a>)</li>
+<li>update workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/128">#128</a>)</li>
+<li>fix workflow to use gh inputs from workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/127">#127</a>)</li>
+<li>update to docs and flip release workflow to manual (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/126">#126</a>)</li>
+<li>fix commit depth (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/125">#125</a>)</li>
+<li>modify the workflow for docs release and update documentation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/124">#124</a>)</li>
+<li>fix docs ci (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/123">#123</a>)</li>
+<li>modify git fetch-depth for docs ci (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/121">#121</a>)</li>
+<li>update README.md (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/119">#119</a>)</li>
+<li>consolidate Ansible playbooks under assets (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/117">#117</a>)</li>
+<li>fix url to documentation to point to /latest (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/80">#80</a>)</li>
+<li>add GH Pull Request template (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/67">#67</a>)</li>
+<li>updates workflow and adds changelog automation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/61">#61</a>)</li>
+<li>add issue template for RFCs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/57">#57</a>)</li>
+<li>add git-chglog for changelog generation (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/49">#49</a>)</li>
+<li>enable workflow dispatch (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/36">#36</a>)</li>
+<li>fix docs release workflow (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/34">#34</a>)</li>
+<li>convert docs releases to use mike (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/33">#33</a>)</li>
+<li>adds markdown docs for assets, modules, playbooks, and samples (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/32">#32</a>)</li>
+<li>adds issue template for submitting maintenance issues (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/31">#31</a>)</li>
+<li>Adds documentation and GH workflow for build/publish of docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/21">#21</a>)</li>
+<li>Updates to project README (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/20">#20</a>)</li>
+<li>Adds project docs (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/13">#13</a>)</li>
+</ul>
+<h3 id="features_5">Features<a class="headerlink" href="#features_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added getting-started documentation for quickstart with Simple Build Pipeline (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/177">#177</a>)</li>
+<li>Updates to CI configurations for pre-commit and GHA (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/154">#154</a>)</li>
+<li>Helix Authentication Extension (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/82">#82</a>)</li>
+<li>enable web based administration through variables for HAS (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/79">#79</a>)</li>
+<li>complete sample with both Jenkins and Perforce modules (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/60">#60</a>)</li>
+<li>Add packer build agent templates for Linux (Ubuntu Jammy 22.04, Amazon Linux 2023) (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/46">#46</a>)</li>
+<li><strong>devops:</strong> Add new DevOps playbook files (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/76">#76</a>)</li>
+<li><strong>packer:</strong> switch AMI from Rocky Linux to Amazon Linux 2023 and up… (<a href="https://github.com/aws-games/cloud-game-development-toolkit/issues/141">#141</a>)</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    2025-05-27
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../samples/unreal-cloud-ddc-single-region/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Unreal Cloud DDC Single Region">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Unreal Cloud DDC Single Region
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="security.html" class="md-footer__link md-footer__link--next" aria-label="Next: Security">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Security
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Amazon Web Services
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/aws-games/cloud-game-development-toolkit" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://x.com/AWSGameTech" target="_blank" rel="noopener" title="x.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M357.2 48h70.6L273.6 224.2 455 464H313L201.7 318.6 74.5 464H3.8l164.9-188.5L-5.2 48h145.6l100.5 132.9zm-24.8 373.8h39.1L119.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/awsgametech" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+     
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/open_in_new_tab.js"></script>
+      
+    
+<script>
+    // Hide preview versions from version selector
+    document.addEventListener("DOMContentLoaded", function () {
+        // Find all version links in the selector
+        const versionLinks = document.querySelectorAll(".md-version__link");
+
+        versionLinks.forEach(function (link) {
+            const versionText = link.textContent.trim();
+
+            // Hide preview versions (format: preview-pr-123)
+            if (versionText.startsWith("preview-pr-")) {
+                const listItem = link.closest("li");
+                if (listItem) {
+                    listItem.style.display = "none";
+                }
+            }
+        });
+    });
+</script>
+
+  </body>
+</html>
