@@ -97,7 +97,11 @@ resource "aws_ecs_task_definition" "task_definition" {
           {
             name      = "SWARM_PASSWD" # cannot change this until the Perforce Helix Swarm Image is updated to use the new naming for P4 Code Review
             valueFrom = var.p4_code_review_user_password_secret_arn
-          }
+          },
+          {
+            name      = "CONFIG_PHP"
+            valueFrom = var.config_php_source
+          },
         ]
         environment = [
           {
