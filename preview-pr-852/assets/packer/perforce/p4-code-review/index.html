@@ -3601,22 +3601,20 @@
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <p>Before building the AMI, ensure you have:</p>
 <ol>
-<li>
-<p><strong>AWS CLI</strong> configured with valid credentials:
-   <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>configure
+<li><strong>AWS CLI</strong> configured with valid credentials:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>configure
 <span class="c1"># Verify access</span>
 aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Packer</strong> installed (version &gt;= 1.8.0):
-   <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>version
 </code></pre></div>
-   If not installed, download from https://www.packer.io/downloads</p>
-</li>
-<li>
-<p><strong>VPC Access</strong>:</p>
-</li>
+<ol>
+<li><strong>Packer</strong> installed (version &gt;= 1.8.0):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>version
+</code></pre></div>
+<p>If not installed, download from <a href="https://www.packer.io/downloads">https://www.packer.io/downloads</a></p>
+<ol>
+<li><strong>VPC Access</strong>:</li>
 <li>Default VPC in your region (Default behaviour)</li>
 <li>
 <p>OR custom VPC with a public subnet (Can be configured by passing the VPC id through the <code>vpc_id</code> variable)</p>
@@ -3643,9 +3641,9 @@ packer<span class="w"> </span>validate<span class="w"> </span>p4_code_review_x86
 <span class="c1"># 4. Build the AMI (takes ~10-15 minutes)</span>
 packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
 </code></pre></div>
-<p>At the end of the build, Packer will output the AMI ID:
+<p>At the end of the build, Packer will output the AMI ID:</p>
 <div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
-</code></pre></div></p>
+</code></pre></div>
 <p><strong>Save this AMI ID</strong> - you'll need it for Terraform deployment.</p>
 <h2 id="what-gets-installed">What Gets Installed<a class="headerlink" href="#what-gets-installed" title="Permanent link">&para;</a></h2>
 <p>The AMI includes a complete P4 Code Review installation:</p>
@@ -3673,16 +3671,18 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <li><strong>Directories</strong>: <code>/opt/perforce/swarm</code> prepared with correct ownership</li>
 </ul>
 <h3 id="whats-not-configured-yet">What's NOT Configured Yet<a class="headerlink" href="#whats-not-configured-yet" title="Permanent link">&para;</a></h3>
-<p>The following are configured at <strong>runtime</strong> when you launch an instance:
-- P4 Server connection details
-- P4 user credentials (fetched from AWS Secrets Manager)
-- Redis cache connection
-- External hostname/URL
-- SSO settings
-- EBS volume mounting for persistent data
-- Queue worker configuration (cron job and endpoint)
-- File permissions for worker processes
-- P4 Server extension installation (Swarm triggers)</p>
+<p>The following are configured at <strong>runtime</strong> when you launch an instance:</p>
+<ul>
+<li>P4 Server connection details</li>
+<li>P4 user credentials (fetched from AWS Secrets Manager)</li>
+<li>Redis cache connection</li>
+<li>External hostname/URL</li>
+<li>SSO settings</li>
+<li>EBS volume mounting for persistent data</li>
+<li>Queue worker configuration (cron job and endpoint)</li>
+<li>File permissions for worker processes</li>
+<li>P4 Server extension installation (Swarm triggers)</li>
+</ul>
 <h3 id="runtime-configuration-details">Runtime Configuration Details<a class="headerlink" href="#runtime-configuration-details" title="Permanent link">&para;</a></h3>
 <p>When an EC2 instance launches, the user-data script performs the following steps:</p>
 <ol>
@@ -3721,10 +3721,12 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;ssh_interface=public_ip&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>p4_code_review_x86.pkr.hcl
 </code></pre></div>
-<p><strong>Requirements for custom VPC</strong>:
-- Subnet must be in a <strong>public</strong> subnet (has route to Internet Gateway)
-- <code>associate_public_ip_address=true</code> if subnet doesn't auto-assign public IPs
-- Security group allows outbound internet access (for package downloads)</p>
+<p><strong>Requirements for custom VPC</strong>:</p>
+<ul>
+<li>Subnet must be in a <strong>public</strong> subnet (has route to Internet Gateway)</li>
+<li><code>associate_public_ip_address=true</code> if subnet doesn't auto-assign public IPs</li>
+<li>Security group allows outbound internet access (for package downloads)</li>
+</ul>
 <h3 id="option-3-using-variables-file">Option 3: Using Variables File<a class="headerlink" href="#option-3-using-variables-file" title="Permanent link">&para;</a></h3>
 <p>Create a <code>my-vars.pkrvars.hcl</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
@@ -3761,14 +3763,14 @@ us-west-2: ami-0abc123def456789
 <span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[*].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
-<p>Output:
+<p>Output:</p>
 <div class="highlight"><pre><span></span><code>+-----------------------------------------------------------------------+
 |                         DescribeImages                                |
 +----------------------+---------------------------------------+--------+
 |  ami-0abc123def456   | p4_code_review_ubuntu2404-20231209    | 2023...|
 |  ami-0def456abc789   | p4_code_review_ubuntu2404-20231208    | 2023...|
 +----------------------+---------------------------------------+--------+
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="get-the-latest-ami">Get the Latest AMI<a class="headerlink" href="#get-the-latest-ami" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
@@ -3782,19 +3784,17 @@ us-west-2: ami-0abc123def456789
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Now that you have an AMI, proceed to deploy P4 Code Review infrastructure:</p>
 <ol>
-<li>
-<p><strong>Navigate to the Terraform module</strong>:
-   <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../../../../modules/perforce/modules/p4-code-review
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Read the module README</strong>:
-   <div class="highlight"><pre><span></span><code>cat<span class="w"> </span>README.md
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Follow the deployment guide</strong> in the module README, which covers:</p>
-</li>
+<li><strong>Navigate to the Terraform module</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../../../../modules/perforce/modules/p4-code-review
+</code></pre></div>
+<ol>
+<li><strong>Read the module README</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>README.md
+</code></pre></div>
+<ol>
+<li><strong>Follow the deployment guide</strong> in the module README, which covers:</li>
 <li>Creating AWS Secrets Manager secrets for P4 credentials</li>
 <li>Writing Terraform configuration</li>
 <li>Deploying the infrastructure</li>
@@ -3804,62 +3804,72 @@ us-west-2: ami-0abc123def456789
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="no-default-vpc-available">"No default VPC available"<a class="headerlink" href="#no-default-vpc-available" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: Packer fails with "No default VPC for this user"</p>
-<p><strong>Solution</strong>: Use Option 2 or 3 above to specify your VPC and subnet:
+<p><strong>Solution</strong>: Use Option 2 or 3 above to specify your VPC and subnet:</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>p4_code_review_x86.pkr.hcl
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="unable-to-connect-to-instance">"Unable to connect to instance"<a class="headerlink" href="#unable-to-connect-to-instance" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: Packer times out connecting to the instance</p>
-<p><strong>Possible causes</strong>:
-1. Subnet is not public (no route to Internet Gateway)
-2. Security group blocks SSH (port 22)
-3. No public IP assigned to instance</p>
-<p><strong>Solution</strong>: Verify your subnet has:
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>Subnet is not public (no route to Internet Gateway)</li>
+<li>Security group blocks SSH (port 22)</li>
+<li>No public IP assigned to instance</li>
+</ol>
+<p><strong>Solution</strong>: Verify your subnet has:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check if subnet has route to IGW</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=association.subnet-id,Values=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;RouteTables[*].Routes[?GatewayId!=`local`]&#39;</span>
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="package-installation-failed">"Package installation failed"<a class="headerlink" href="#package-installation-failed" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: APT/DEB errors during build</p>
-<p><strong>Possible causes</strong>:
-1. No internet access from instance
-2. Perforce repository temporarily unavailable
-3. Package version conflicts</p>
-<p><strong>Solution</strong>:
-- Check build instance has outbound internet access
-- Try rebuilding (temporary outages resolve themselves)
-- Review <code>/var/log/swarm_setup.log</code> on build instance</p>
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>No internet access from instance</li>
+<li>Perforce repository temporarily unavailable</li>
+<li>Package version conflicts</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ul>
+<li>Check build instance has outbound internet access</li>
+<li>Try rebuilding (temporary outages resolve themselves)</li>
+<li>Review <code>/var/log/swarm_setup.log</code> on build instance</li>
+</ul>
 <h3 id="ami-already-exists-with-that-name">"AMI already exists with that name"<a class="headerlink" href="#ami-already-exists-with-that-name" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: "AMI name 'p4_code_review_ubuntu2404-TIMESTAMP' already exists"</p>
-<p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:
+<p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># List your AMIs</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu2404-*&quot;</span>
 
 <span class="c1"># Deregister old AMI if no longer needed</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span class="w"> </span>--image-id<span class="w"> </span>ami-xxxxx
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="build-is-slow">Build is slow<a class="headerlink" href="#build-is-slow" title="Permanent link">&para;</a></h3>
 <p><strong>Normal build time</strong>: 10-15 minutes</p>
-<p><strong>If taking longer</strong>:
-- Package downloads can be slow depending on region
-- Perforce repository might be experiencing high load
-- This is normal - be patient</p>
+<p><strong>If taking longer</strong>:</p>
+<ul>
+<li>Package downloads can be slow depending on region</li>
+<li>Perforce repository might be experiencing high load</li>
+<li>This is normal - be patient</li>
+</ul>
 <h3 id="need-to-debug-the-build">Need to debug the build?<a class="headerlink" href="#need-to-debug-the-build" title="Permanent link">&para;</a></h3>
-<p><strong>Enable debug mode to step through each provisioner</strong>:
+<p><strong>Enable debug mode to step through each provisioner</strong>:</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-debug<span class="w"> </span>p4_code_review_x86.pkr.hcl
-</code></pre></div></p>
-<p>This will pause before each provisioner step, allowing you to:
-- SSH into the build instance
-- Inspect the current state
-- Verify installation progress
-- Press Enter to continue to the next step</p>
-<p><strong>Enable detailed logging</strong>:
+</code></pre></div>
+<p>This will pause before each provisioner step, allowing you to:</p>
+<ul>
+<li>SSH into the build instance</li>
+<li>Inspect the current state</li>
+<li>Verify installation progress</li>
+<li>Press Enter to continue to the next step</li>
+</ul>
+<p><strong>Enable detailed logging</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">PACKER_LOG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
-</code></pre></div></p>
+</code></pre></div>
 <h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://www.packer.io/docs">Packer Documentation</a></li>
@@ -3867,11 +3877,13 @@ aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span clas
 <li><a href="https://ubuntu.com/server/docs">Ubuntu 24.04 LTS Documentation</a></li>
 </ul>
 <h2 id="questions-or-issues">Questions or Issues?<a class="headerlink" href="#questions-or-issues" title="Permanent link">&para;</a></h2>
-<p>If you encounter problems:
-1. Check the troubleshooting section above
-2. Review Packer logs with <code>PACKER_LOG=1</code>
-3. Use <code>packer build -debug</code> to step through the build process
-4. Verify AWS credentials and permissions</p>
+<p>If you encounter problems:</p>
+<ol>
+<li>Check the troubleshooting section above</li>
+<li>Review Packer logs with <code>PACKER_LOG=1</code></li>
+<li>Use <code>packer build -debug</code> to step through the build process</li>
+<li>Verify AWS credentials and permissions</li>
+</ol>
 
 
 
