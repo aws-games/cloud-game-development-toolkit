@@ -261,3 +261,14 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_agents_inbound_agen
   to_port                      = 7010
   ip_protocol                  = "tcp"
 }
+
+# Horde agents will allow inbound access on Zen server port from other instances in the group
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_agents_inbound_zen" {
+  count                        = length(var.agents) > 0 ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_agent_sg[0].id
+  description                  = "Allow inbound traffic to Zen Server port."
+  referenced_security_group_id = aws_security_group.unreal_horde_agent_sg[0].id
+  from_port                    = 8558
+  to_port                      = 8558
+  ip_protocol                  = "tcp"
+}
