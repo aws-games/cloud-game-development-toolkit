@@ -22,7 +22,6 @@ SWARM_REDIS_PORT="${swarm_redis_port}"
 SWARM_FORCE_EXT="${swarm_force_ext}"
 
 # Secret ARNs for AWS Secrets Manager
-P4D_SUPER_SECRET_ARN="${super_user_username_secret_arn}"
 P4D_SUPER_PASSWD_SECRET_ARN="${super_user_password_secret_arn}"
 SWARM_USER_SECRET_ARN="${p4_code_review_user_username_secret_arn}"
 SWARM_PASSWD_SECRET_ARN="${p4_code_review_user_password_secret_arn}"
@@ -242,7 +241,6 @@ log "No custom config provided"
   --swarm-redis "$SWARM_REDIS" \
   --swarm-redis-port "$SWARM_REDIS_PORT" \
   --swarm-force-ext "$SWARM_FORCE_EXT" \
-  --p4d-super-secret-arn "$P4D_SUPER_SECRET_ARN" \
   --p4d-super-passwd-secret-arn "$P4D_SUPER_PASSWD_SECRET_ARN" \
   --swarm-user-secret-arn "$SWARM_USER_SECRET_ARN" \
   --swarm-passwd-secret-arn "$SWARM_PASSWD_SECRET_ARN" \

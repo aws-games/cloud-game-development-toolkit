@@ -24,14 +24,19 @@ output "p4_server_security_group_id" {
   description = "The default security group of your P4 Server instance."
 }
 
-output "p4_server_super_user_password_secret_arn" {
-  value       = var.p4_server_config != null ? module.p4_server[0].super_user_password_secret_arn : null
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username."
+output "p4_server_super_password_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].super_password_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the service account (super) password."
 }
 
-output "p4_server_super_user_username_secret_arn" {
-  value       = var.p4_server_config != null ? module.p4_server[0].super_user_username_secret_arn : null
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password."
+output "p4_server_admin_username_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].admin_username_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account username."
+}
+
+output "p4_server_admin_password_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].admin_password_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account password."
 }
 
 output "p4_server_instance_id" {
