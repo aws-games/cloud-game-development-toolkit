@@ -238,7 +238,7 @@ prepare_iscsi_volume() {
         sleep $interval
         elapsed=$((elapsed + interval))
         done
-        if [ ! -e $VOLUME]; then
+        if [ ! -e $VOLUME ]; then
         log_message "The device $VOLUME does not exist. Exiting."
         exit 1
         fi
@@ -467,6 +467,17 @@ P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
 P4D_ADMIN_PASS=$(resolve_aws_secret $P4D_ADMIN_PASS_SECRET_ID)
 FSXN_PASSWORD=$(resolve_aws_secret $FSXN_PASS)
 ONTAP_USER="fsxadmin"
+
+# Store original custom username if different from "super"
+CUSTOM_SUPER_USERNAME=""
+CUSTOM_SUPER_PASSWORD=""
+if [ "$P4D_ADMIN_USERNAME" != "super" ]; then
+    CUSTOM_SUPER_USERNAME="$P4D_ADMIN_USERNAME"
+    CUSTOM_SUPER_PASSWORD="$P4D_ADMIN_PASS"
+    # Force initial user to be "super" for compatibility
+    P4D_ADMIN_USERNAME="super"
+    log_message "Custom super user requested: $CUSTOM_SUPER_USERNAME. Will create after initialization."
+fi
 
 # Function to perform operations
 perform_operations() {
@@ -736,6 +747,55 @@ sudo -u "$P4USER" crontab /p4/p4.crontab.1
 # verify sdp installation should warn about missing license only:
 /hxdepots/p4/common/bin/verify_sdp.sh 1
 
+# Create additional custom super user if requested
+if [ -n "$CUSTOM_SUPER_USERNAME" ]; then
+    log_message "Creating additional super user: $CUSTOM_SUPER_USERNAME"
+
+    # Create user spec
+    cat > /tmp/custom_super_user.txt <<EOF
+User: $CUSTOM_SUPER_USERNAME
+Email: $CUSTOM_SUPER_USERNAME@$FQDN
+FullName: Custom Super User
+Type: standard
+EOF
+
+    # Create the user
+    cat /tmp/custom_super_user.txt | sudo -u "$P4USER" p4 -p "$P4PORT" -u super user -i
+
+    # Set password
+    echo "$CUSTOM_SUPER_PASSWORD" | sudo -u "$P4USER" p4 -p "$P4PORT" -u super passwd "$CUSTOM_SUPER_USERNAME"
+
+    # Grant super access
+    sudo -u "$P4USER" p4 -p "$P4PORT" -u super protect -o | sudo -u "$P4USER" tee /tmp/protect.txt > /dev/null
+    echo "    super user $CUSTOM_SUPER_USERNAME * //..." >> /tmp/protect.txt
+    cat /tmp/protect.txt | sudo -u "$P4USER" p4 -p "$P4PORT" -u super protect -i
+
+    # Clean up
+    rm -f /tmp/custom_super_user.txt /tmp/protect.txt
+
+    log_message "Additional super user $CUSTOM_SUPER_USERNAME created successfully"
+fi
+
+# Create a group with unlimited ticket timeout for service integrations (e.g., Swarm)
+# This prevents ticket expiration issues for automated systems
+log_message "Creating unlimited_timeout group for service integrations"
+
+cat > /tmp/unlimited_timeout_group.txt <<EOF
+Group: unlimited_timeout
+Timeout: unlimited
+Users:
+    super
+EOF
+
+# Add custom super user to the group if it exists
+if [ -n "$CUSTOM_SUPER_USERNAME" ]; then
+    echo "    $CUSTOM_SUPER_USERNAME" >> /tmp/unlimited_timeout_group.txt
+fi
+
+cat /tmp/unlimited_timeout_group.txt | sudo -u "$P4USER" p4 -p "$P4PORT" -u super group -i
+rm -f /tmp/unlimited_timeout_group.txt
+
+log_message "unlimited_timeout group created successfully"
 
 # Check if the AWS_REGION variable is empty if not prepare for replication.
 if [ -z "$AWS_REGION" ] && [ "$P4D_TYPE" = "p4d_master" ]; then

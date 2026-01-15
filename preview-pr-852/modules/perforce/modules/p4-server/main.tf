@@ -16,7 +16,7 @@ resource "awscc_secretsmanager_secret" "super_user_username" {
   count         = var.super_user_username_secret_arn == null ? 1 : 0
   name          = "${local.name_prefix}-SuperUserUsername"
   description   = "The username for the created P4 Server super user."
-  secret_string = "perforce"
+  secret_string = "super"
 }
 
 
@@ -127,6 +127,12 @@ resource "aws_instance" "server_instance" {
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-${var.p4_server_type}-${local.p4_server_az}"
   })
+
+  # Force destroy-before-create to ensure EBS volumes are detached
+  # before being re-attached to a new instance (e.g., during AMI updates)
+  lifecycle {
+    create_before_destroy = false
+  }
 
   depends_on = [
     netapp-ontap_san_lun-map.depots_lun_map,

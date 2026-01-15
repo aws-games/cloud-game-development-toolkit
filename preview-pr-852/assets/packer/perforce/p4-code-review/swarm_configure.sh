@@ -140,15 +140,29 @@ log_message "Running configure-swarm.sh with super user credentials"
     exit 1
   }
 
-# Configure permissions required for queue workers and application caching
-# Workers run as swarm-cron user and need write access to queue/workers directory
-# Apache/PHP processes need write access to cache directory
-log_message "Configuring permissions for queue worker functionality"
+# Update Swarm extension configuration
+# The Perforce configure-swarm.sh script sets Swarm-Secure to true by default
+# We need to set it to false when using self-signed certificates
+log_message "Updating Swarm extension configuration for SSL settings"
+
+# Trust the P4 server SSL certificate and authenticate
+log_message "Establishing P4 connection for extension configuration"
+p4 -p "$P4D_PORT" trust -y 2>/dev/null || log_message "P4 trust already established or using non-SSL"
+echo "$P4D_SUPER_PASSWD" | p4 -p "$P4D_PORT" -u "$P4D_SUPER" login 2>/dev/null || {
+  log_message "WARNING: P4 login failed, extension configuration may not work"
+}
+
+p4 -p "$P4D_PORT" -u "$P4D_SUPER" extension --configure Perforce::helix-swarm -o | \
+  sed 's/Swarm-Secure: true/Swarm-Secure: false/' | \
+  p4 -p "$P4D_PORT" -u "$P4D_SUPER" extension --configure Perforce::helix-swarm -i || {
+    log_message "WARNING: Failed to update Swarm extension configuration"
+  }
+
+# Configure initial permissions for Swarm data directory
+# Note: Queue-specific permissions are set after Apache starts (see below)
+log_message "Configuring initial permissions for Swarm data directory"
 chown -R swarm:www-data "$SWARM_DATA_PATH"
 chmod 775 "$SWARM_DATA_PATH"
-chmod 775 "$SWARM_DATA_PATH/cache" 2>/dev/null || true
-chmod 775 "$SWARM_DATA_PATH/queue" 2>/dev/null || true
-chmod 775 "$SWARM_DATA_PATH/queue/workers" 2>/dev/null || true
 
 # Ensure p4trust file is readable by Apache worker processes
 chmod 644 "$SWARM_DATA_PATH/p4trust" 2>/dev/null || true
@@ -247,6 +261,24 @@ if systemctl list-unit-files | grep -q php-fpm; then
   systemctl status php-fpm --no-pager
 fi
 
+# Configure permissions for queue workers and caching
+# This must run AFTER Apache starts because Swarm may create directories with restrictive permissions
+log_message "Configuring permissions for queue worker functionality"
+
+# Create queue directories if they don't exist
+mkdir -p "$SWARM_DATA_PATH/queue/workers"
+mkdir -p "$SWARM_DATA_PATH/queue/tokens"
+mkdir -p "$SWARM_DATA_PATH/cache"
+
+# Set ownership and permissions for queue-related directories
+# Workers run as swarm-cron (in www-data group) and need write access
+chown -R www-data:www-data "$SWARM_DATA_PATH/queue"
+chmod 770 "$SWARM_DATA_PATH/queue"
+chmod 770 "$SWARM_DATA_PATH/queue/workers"
+chmod 770 "$SWARM_DATA_PATH/queue/tokens"
+chown -R www-data:www-data "$SWARM_DATA_PATH/cache"
+chmod 775 "$SWARM_DATA_PATH/cache"
+
 # Configure P4 Code Review background workers for async tasks
 # Workers are spawned by cron job created by configure-swarm.sh at /etc/cron.d/helix-swarm
 # Update the default worker configuration to use localhost for optimal performance
@@ -261,6 +293,38 @@ chown swarm-cron:swarm-cron "$SWARM_CRON_CONFIG"
 chmod 644 "$SWARM_CRON_CONFIG"
 
 log_message "Queue workers configured to use localhost endpoint"
+
+# Ensure worker token is properly initialized
+# The token file may exist but be empty after configure-swarm.sh runs
+log_message "Initializing queue worker authentication token"
+
+TOKEN_DIR="${SWARM_DATA_PATH}/queue/tokens"
+
+# Find existing token file
+TOKEN_FILE=$(find "$TOKEN_DIR" -type f 2>/dev/null | head -1)
+
+if [ -n "$TOKEN_FILE" ] && [ -f "$TOKEN_FILE" ]; then
+  # Check if token file is empty
+  if [ ! -s "$TOKEN_FILE" ]; then
+    log_message "Token file exists but is empty, generating new token"
+    TOKEN_CONTENT=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "$(date +%s)-$(hostname)")
+    echo "$TOKEN_CONTENT" > "$TOKEN_FILE"
+    chown www-data:www-data "$TOKEN_FILE"
+    chmod 644 "$TOKEN_FILE"
+    log_message "Worker token initialized: $(basename "$TOKEN_FILE")"
+  else
+    log_message "Worker token already exists and is valid"
+  fi
+else
+  log_message "No token file found, creating new one"
+  TOKEN_NAME=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "swarm-token-$(date +%s)")
+  TOKEN_FILE="$TOKEN_DIR/$TOKEN_NAME"
+  TOKEN_CONTENT=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "$(date +%s)-$(hostname)")
+  echo "$TOKEN_CONTENT" > "$TOKEN_FILE"
+  chown www-data:www-data "$TOKEN_FILE"
+  chmod 644 "$TOKEN_FILE"
+  log_message "Worker token created: $TOKEN_NAME"
+fi
 
 log_message "========================================="
 log_message "P4 Code Review configuration completed"

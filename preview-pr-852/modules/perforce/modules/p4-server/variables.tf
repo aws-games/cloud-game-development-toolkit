@@ -246,7 +246,7 @@ variable "super_user_password_secret_arn" {
 
 variable "super_user_username_secret_arn" {
   type        = string
-  description = "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."
+  description = "If provided, creates an ADDITIONAL super user with this name alongside the required 'super' user for Swarm compatibility. Both users will have full super privileges."
   default     = null
 }
 

@@ -1,6 +1,9 @@
 module "terraform-aws-perforce" {
   source = "../../"
 
+  # Ensure module is destroyed before IGW to prevent "mapped public address" errors
+  depends_on = [aws_internet_gateway.igw]
+
   # - Shared -
   project_prefix = local.project_prefix
   vpc_id         = aws_vpc.perforce_vpc.id

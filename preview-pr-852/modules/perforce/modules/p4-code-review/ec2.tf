@@ -51,7 +51,7 @@ resource "aws_launch_template" "swarm_instance" {
   ]
 
   # User data script handles EBS volume attachment, mounting, and Swarm configuration
-  user_data = base64encode(templatefile("${path.module}/user-data-native.sh.tpl", {
+  user_data = base64encode(templatefile("${path.module}/user-data.sh.tpl", {
     region                                  = data.aws_region.current.name
     device_name                             = local.ebs_device_name
     mount_path                              = local.host_data_path

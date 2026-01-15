@@ -29,7 +29,7 @@
     
     
       
-        <title>Perforce on AWS Terraform Module - Cloud Game Development Toolkit</title>
+        <title>Index - Cloud Game Development Toolkit</title>
       
     
     
@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#perforce-on-aws-terraform-module" class="md-skip">
+        <a href="#requirements" class="md-skip">
           Skip to content
         </a>
       
@@ -142,7 +142,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Perforce on AWS Terraform Module
+              Index
             
           </span>
         </div>
@@ -3271,86 +3271,12 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#full-example-using-aws-route53-public-hosted-zone" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Full example using AWS Route53 Public Hosted Zone
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment-instructions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment Instructions
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#requirements" class="md-nav__link">
@@ -3438,143 +3364,8 @@
   
 
 
-<h1 id="perforce-on-aws-terraform-module">Perforce on AWS Terraform Module<a class="headerlink" href="#perforce-on-aws-terraform-module" title="Permanent link">&para;</a></h1>
-<p>For a video walkthrough demonstrating how to use this module, see this YouTube Video:</p>
-<p><a href="https://youtu.be/4UEoX-oP918"><img alt="Watch the video" src="https://img.youtube.com/vi/4UEoX-oP918/0.jpg" /></a></p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Dynamic creation and configuration of <a href="https://www.perforce.com/products/helix-core">P4 Server (formerly Helix Core)</a></li>
-<li>Dynamic creation and configuration
-  of <a href="https://www.perforce.com/products/helix-swarm">P4 Code Review (formerly Helix Swarm)</a></li>
-<li>Dynamic creation and configuration
-  of <a href="https://help.perforce.com/helix-core/integrations-plugins/helix-auth-svc/current/Content/HAS/overview-of-has.html">P4Auth (formerly Helix Authentication Service)</a></li>
-</ul>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<h3 id="full-example-using-aws-route53-public-hosted-zone">Full example using AWS Route53 Public Hosted Zone<a class="headerlink" href="#full-example-using-aws-route53-public-hosted-zone" title="Permanent link">&para;</a></h3>
-<!-- ![perforce-complete-arch](https://github.com/aws-games/cloud-game-development-toolkit/raw/main/docs/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png) -->
-<p><img alt="perforce-complete-arch" src="assets/media/diagrams/perforce-arch-cdg-toolkit-terraform-aws-perforce-full-arch-route53-dns.png" /></p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Existing DNS Configured</strong></li>
-<li>To use this module, you must have an existing domain and related DNS configuration. The example at
-      <code>/examples/create-resources-complete</code> demonstrates how to provision resources while using Amazon Route53 (
-      recommended) as the DNS provider. This will make deployment and management easier.</li>
-<li>You may optionally use a 3rd party DNS provider, however you must create records in your DNS provider to route to
-      the endpoints that you will create for each component when using the module (e.g. <code>perforce.example.com</code>,
-      <code>review.perforce.example.com</code>, <code>auth.perforce.example.com</code>). The module has variables that you can use to
-      customize the subdomains for the services (P4 Server, P4 Code Review, P4Auth), however if not set, the defaults
-      mentioned above will be used. Ensure you create these records to allow users to connect to the services once
-      provisioned in AWS.</li>
-<li><strong>Note:</strong> When using either of the two options mentioned above, by default the module will create a <strong>Route53
-      Private Hosted Zone</strong>. This is used for internal communication and routing of traffic between P4 Server, P4 Code
-      Review, and P4Auth.</li>
-<li><strong>SSL TLS Certificate</strong></li>
-<li>You must have an existing SSL/TLS certificate, or create one during deployment alongside the other resources the
-      module will create. This is used to provide secure connectivity to the Perforce resources that will be running in
-      AWS. The certificate will be used by the Application Load Balancer (ALB) that the module will deploy for you. If
-      using Amazon Route53, see the example at <code>/examples/create-resources-complete</code> to see how to create the related
-      certificate in Amazon Certificate Manager (ACM). Using a Route53 as the DNS provider makes this process a bit
-      easier, as ACM can automatically create the required CNAME records needed for DNS validation (a process required
-      to verify DNS ownership) if you are also using Amazon Route53.</li>
-<li>
-<p>If using an 3rd party DNS provider, you must add these CNAME records manually (in addition to the other records
-      mentioned above for general DNS purposes). If you would prefer to use a 3rd party to create the SSL/TLS
-      certificate, the module allows you to import this into ACM to be used for the other components that will be
-      deployed (such as the internal ALB). You may also use Email validation to validate DNS ownership.</p>
-</li>
-<li>
-<p><strong>Existing Perforce Amazon Machine Image (AMI)</strong></p>
-</li>
-<li>As mentioned in the architecture, an Amazon EC2 instance is used for the P4 Server, and this instance must be be
-      provisioned using an AMI that is configured for Perforce. To expedite this process, we have
-      sample <a href="https://www.packer.io/">HashiCorp Packer</a> templates provided in
-      the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/perforce/p4-server">AWS Cloud Game Development Toolkit repository</a>
-      that you can use to create a Perforce AMI in your AWS Account. <strong>Note:</strong> You must also reference the
-      <code>p4_configure.sh</code> and <code>p4_setup.sh</code> files that are in this directory, as these are used to configure the P4 Commit
-      Server. These are already referenced in the <code>perforce_arm64.pkr.hcl</code> and <code>perforce_x86.pkr.hcl</code> packer templates
-      that are available for use.</li>
-</ul>
-<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<p>For example configurations, please see the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples">examples</a>.</p>
-<h2 id="deployment-instructions">Deployment Instructions<a class="headerlink" href="#deployment-instructions" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Create the Perforce AMI in your AWS account using one of the supplied Packer templates. Ensure you use the Packer
-   template that aligns with the architecture type (e.g. arm64) of the EC2 instance you wish to create. On the Terraform
-   side, you may also set this using the <code>instance_architecture</code> variable. Ensure your <code>instance_type</code> is supported for
-   your desired <code>instance_architecture</code>. For a full list of this mapping, see
-   the <a href="https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html">AWS Docs for EC2 Naming Conventions</a>.
-   You can also use the interactive chart on Instances by <a href="https://instances.vantage.sh/">Vantage</a>.</li>
-</ol>
-<p><strong>IMPORTANT:</strong> By default, the module will create compute resources with <code>x86_64</code> architecture. Ensure you use this
-corresponding Packer template unless you set the <code>instance_architecture</code> variable to <code>arm64</code> or the deployment will
-fail. Also, unless explicitly set, the Packer templates are configured to build the AMI in whichever AWS region your
-current credentials are set to (e.g. <code>us-east-1</code>) which will also be the same AWS region your Terraform resources are
-deployed to unless you explicitly set this. Ensure the AMI is available in the AWS Region you will use the module to
-deploy resources into.</p>
-<p>To deploy the template (<code>x86_64</code>) with Packer, do the following (while in the <code>/assets/perforce/p4-server directory</code>)</p>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>perforce_x86.pkr.hcl
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>validate<span class="w"> </span>perforce_x86.pkr.hcl
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>perforce_x86.pkr.hcl
-</code></pre></div>
-<ol>
-<li>
-<p>Reference your existing fully qualified domain name within each related Perforce service you would like to
-   provision (e.g. <code>p4_server_config</code>, <code>p4_auth_config</code>, <code>p4_code_review_config</code>) using the
-   <code>fully_qualified_domain_name</code> variable. We recommend abstracting this t a local value such as
-   <code>local.fully_qualified_domain_name</code> to ensure this value is consistent across the modules. The module will
-   automatically configure Perforce using default subdomains of <code>perforce.&lt;your-domain-name&gt;</code> for P4 Server,
-   <code>auth.perforce.&lt;your-domain-name</code> for P4 Auth, and <code>review.perforce.&lt;your-domain-name</code> for P4 Code Review. You will
-   also need to create DNS records that will route traffic destined for these domains in the following manner:</p>
-<ul>
-<li>Traffic destined for <strong>P4 Server</strong> will need to route to the <strong>Elastic IP (EIP)</strong> that is associated with the P4
-  Server EC2 Instance. By default, this will be using a subdomain named <code>perforce</code>. In your DNS provider, create an
-  A record named <code>perforce.&lt;your-domain-name&gt;</code> and have it route traffic to the EIP. This value is available as a
-  Terraform output for your convenience.</li>
-<li>Traffic destined for <code>*.perforce.&lt;your-domain-name&gt;</code> will need to route to the DNS name of the Network Load
-  Balancer (NLB) that the module creates. In your DNS provider, create a CNAME record that routes traffic to NLB.
-  This value is available as a Terraform output for your convenience.</li>
-<li><strong>Note:</strong> If using Amazon Route53 as your DNS provider, the example at  <code>/examples/create-resources-complete</code>
-  shows you have to leverage Terraform to automatically create these records in an existing Route53 Public Hosted
-  Zone, as well as how to create the certificate in Amazon Certificate Manager (ACM).</li>
-</ul>
-</li>
-<li>
-<p>Make any other modifications as desired (such as referencing existing VPC resources) and run <code>terraform init</code> to
-   initialize Terraform in the current working directory, <code>terraform plan</code> to create and validate the execution plan of
-   the resources that will be created, and finally <code>terraform apply</code> to create the resources in your AWS Account.</p>
-</li>
-<li>Once the resources have finished provisioning successfully, you will need to modify your inbound Security Group Rules
-   on the P4 Commit Server Instance to allow TCP traffic from your public IP on port 1666 (the perforce default port).
-   This is necessary to allow your local machine(s) to connect to the P4 Commit Server. Optionally, you can pass in an entire security group to also add to the resource. The <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete">complete example</a> demonstrates how to use the <code>existing_security_groups</code> variable to accomplish this.<ul>
-<li><strong>Note:</strong> You may use other means to allow traffic to reach this EC2 Instance (Customer-managed prefix list, VPN
-  to the VPC that the instance is running in, etc.) but regardless, it is essential that you have the security group
-  rules set configured correctly to allow access.</li>
-</ul>
-</li>
-<li>Next, modify your inbound Security Group rules for the Perforce Network Load Balancer (NLB) to allow traffic from
-   HTTPS (port 443) from your public IP address/ This is to provide access to the P4 Code Review and P4Auth services
-   that are running behind the Application Load Balancer (ALB). Optionally, you can pass in an entire security group to also add to the resource. The <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce/examples/create-resources-complete">complete example</a> demonstrates how to use the <code>existing_security_groups</code> variable to accomplish this.<ul>
-<li><strong>Note:</strong> You may use other means to allow traffic to reach this the Network Load Balancer (Customer-managed
-  prefix list, VPN to the VPC that the instance is running in, etc.) but regardless, it is essential that you have
-  the security group rules set configured correctly to allow access.</li>
-<li><strong>IMPORTANT:</strong> Ensure your networking configuration is correct, especially in terms of any public or private
-  subnets that you reference. This is very important for the internal routing between the P4 resources, as well as
-  the related Security Groups. Failure to set these correctly may cause a variety of connectivity issues such as web
-  pages not loading, NLB health checks failing, etc.</li>
-</ul>
-</li>
-<li>Use the provided Terraform outputs to quickly find the URL for P4Auth, P4 Code Review. If you haven't modified the
-   default values, relevant values for the P4 Server default username/password, and the P4 Code Review default
-   username/password were created for you and are stored in AWS Secrets Manager.</li>
-<li>In P4V, use the url of <code>ssl:&lt;your-supplied-root-domain&gt;:1666</code> and the username and password stored in AWS Secrets
-   Manager to gain access to the commit server.</li>
-<li>At this point, you should be able to access your P4 Commit Server (P4), and visit the URLs for P4 Code Review (P4
-   Code Review) and P4Auth (P4Auth).</li>
-</ol>
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
+  <h1>Index</h1>
+
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3621,15 +3412,15 @@ deploy resources into.</p>
 <tbody>
 <tr>
 <td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>~&gt; 6.6</td>
+<td>6.6.0</td>
 </tr>
 <tr>
 <td><a name="provider_null"></a> <a href="#provider_null">null</a></td>
-<td>~&gt; 3.2</td>
+<td>3.2.4</td>
 </tr>
 <tr>
 <td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>~&gt; 3.7</td>
+<td>3.7.2</td>
 </tr>
 </tbody>
 </table>
@@ -3758,6 +3549,10 @@ deploy resources into.</p>
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.p4_server_outbound_to_p4_code_review</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.perforce_alb_outbound_to_p4_auth</a></td>
 <td>resource</td>
 </tr>
@@ -3771,6 +3566,10 @@ deploy resources into.</p>
 </tr>
 <tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_auth_inbound_from_perforce_web_services_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_code_review_inbound_from_p4_server</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3819,13 +3618,6 @@ deploy resources into.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
-<td>The VPC ID where the Perforce resources will be deployed.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
 <tr>
 <td><a name="input_certificate_arn"></a> <a href="#input_certificate_arn">certificate_arn</a></td>
 <td>The ARN of the ACM certificate to be used with the HTTPS listener for the NLB.</td>
@@ -3898,8 +3690,8 @@ deploy resources into.</p>
 </tr>
 <tr>
 <td><a name="input_p4_code_review_config"></a> <a href="#input_p4_code_review_config">p4_code_review_config</a></td>
-<td># General<br/>    name: "The string including in the naming of resources related to P4 Code Review. Default is 'p4-code-review'."<br/><br/>    project_prefix : "The project prefix for the P4 Code Review service. Default is 'cgd'."<br/><br/>    environment : "The environment where the P4 Code Review service will be deployed. Default is 'dev'."<br/><br/>    debug : "Whether to enable debug mode for the P4 Code Review service. Default is 'false'."<br/><br/>    fully_qualified_domain_name : "The FQDN for the P4 Code Review Service. This is used for the P4 Code Review's Perforce configuration."<br/><br/><br/>    # Compute<br/>    container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."<br/><br/>    container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."<br/><br/>    container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."<br/><br/>    container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."<br/><br/>    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."<br/><br/>    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."<br/><br/>    existing_redis_connection : "The existing Redis connection for the P4 Code Review service."<br/><br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."<br/><br/><br/>    # Networking &amp; Security<br/>    create_default_sgs : "Whether to create default security groups for the P4 Code Review service."<br/><br/>    internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."<br/><br/>    create_default_role : "Whether to create the P4 Code Review default IAM Role. Default is set to true."<br/><br/>    custom_role : "ARN of a custom IAM Role you wish to use with P4 Code Review."<br/><br/>    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."<br/><br/>    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator password."<br/><br/>    p4d_p4_code_review_user_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."<br/><br/>    p4d_p4_code_review_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."<br/><br/>    config_php_source : "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."<br/><br/><br/>    # Caching<br/>    elasticache_node_count : "The number of Elasticache nodes to create for the P4 Code Review service. Default is '1'."<br/><br/>    elasticache_node_type : "The type of Elasticache node to create for the P4 Code Review service. Default is 'cache.t4g.micro'."</td>
-<td><pre>object({<br/>    # General<br/>    name                        = optional(string, "p4-code-review")<br/>    project_prefix              = optional(string, "cgd")<br/>    environment                 = optional(string, "dev")<br/>    debug                       = optional(bool, false)<br/>    fully_qualified_domain_name = string<br/><br/>    # Compute<br/>    container_name   = optional(string, "p4-code-review-container")<br/>    container_port   = optional(number, 80)<br/>    container_cpu    = optional(number, 1024)<br/>    container_memory = optional(number, 4096)<br/>    p4d_port         = optional(string, null)<br/>    p4charset        = optional(string, null)<br/>    existing_redis_connection = optional(object({<br/>      host = string<br/>      port = number<br/>    }), null)<br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days = optional(number, 365)<br/><br/>    # Networking &amp; Security<br/>    create_default_sgs       = optional(bool, true)<br/>    existing_security_groups = optional(list(string), [])<br/>    internal                 = optional(bool, false)<br/>    service_subnets          = optional(list(string), null)<br/><br/>    create_default_role = optional(bool, true)<br/>    custom_role         = optional(string, null)<br/><br/>    super_user_password_secret_arn          = optional(string, null)<br/>    super_user_username_secret_arn          = optional(string, null)<br/>    p4_code_review_user_password_secret_arn = optional(string, null)<br/>    p4_code_review_user_username_secret_arn = optional(string, null)<br/>    enable_sso                              = optional(string, false)<br/>    config_php_source                       = optional(string, null)<br/><br/>    # Caching<br/>    elasticache_node_count = optional(number, 1)<br/>    elasticache_node_type  = optional(string, "cache.t4g.micro")<br/>  })</pre></td>
+<td># General<br/>    name: "The string including in the naming of resources related to P4 Code Review. Default is 'p4-code-review'."<br/><br/>    project_prefix : "The project prefix for the P4 Code Review service. Default is 'cgd'."<br/><br/>    environment : "The environment where the P4 Code Review service will be deployed. Default is 'dev'."<br/><br/>    fully_qualified_domain_name : "The FQDN for the P4 Code Review Service. This is used for the P4 Code Review's Perforce configuration."<br/><br/><br/>    # Compute<br/>    container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."<br/><br/>    container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."<br/><br/>    container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."<br/><br/>    container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."<br/><br/>    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."<br/><br/>    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."<br/><br/>    existing_redis_connection : "The existing Redis connection for the P4 Code Review service."<br/><br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."<br/><br/><br/>    # Networking &amp; Security<br/>    create_default_sgs : "Whether to create default security groups for the P4 Code Review service."<br/><br/>    internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."<br/><br/>    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."<br/><br/>    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator password."<br/><br/>    p4d_p4_code_review_user_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."<br/><br/>    p4d_p4_code_review_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."<br/><br/>    config_php_source : "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."<br/><br/><br/>    # Caching<br/>    elasticache_node_count : "The number of Elasticache nodes to create for the P4 Code Review service. Default is '1'."<br/><br/>    elasticache_node_type : "The type of Elasticache node to create for the P4 Code Review service. Default is 'cache.t4g.micro'."</td>
+<td><pre>object({<br/>    # General<br/>    name                        = optional(string, "p4-code-review")<br/>    project_prefix              = optional(string, "cgd")<br/>    environment                 = optional(string, "dev")<br/>    fully_qualified_domain_name = string<br/><br/>    # Compute<br/>    application_port = optional(number, 80)<br/>    instance_type    = optional(string, "m5.large")<br/>    ami_id           = optional(string, null)<br/>    p4d_port         = optional(string, null)<br/>    p4charset        = optional(string, null)<br/>    existing_redis_connection = optional(object({<br/>      host = string<br/>      port = number<br/>    }), null)<br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days = optional(number, 365)<br/>    ebs_volume_size                  = optional(number, 20)<br/>    ebs_volume_type                  = optional(string, "gp3")<br/>    ebs_volume_encrypted             = optional(bool, true)<br/>    ebs_availability_zone            = optional(string, null)<br/><br/>    # Networking &amp; Security<br/>    create_default_sgs       = optional(bool, true)<br/>    existing_security_groups = optional(list(string), [])<br/>    internal                 = optional(bool, false)<br/>    service_subnets          = optional(list(string), null)<br/>    instance_subnet_id       = string<br/><br/>    super_user_password_secret_arn          = optional(string, null)<br/>    super_user_username_secret_arn          = optional(string, null)<br/>    p4_code_review_user_password_secret_arn = optional(string, null)<br/>    p4_code_review_user_username_secret_arn = optional(string, null)<br/>    enable_sso                              = optional(string, true)<br/>    config_php_source                       = optional(string, null)<br/><br/>    # Caching<br/>    elasticache_node_count = optional(number, 1)<br/>    elasticache_node_type  = optional(string, "cache.t4g.micro")<br/>  })</pre></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
 </tr>
@@ -3994,6 +3786,13 @@ deploy resources into.</p>
 <td><pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "terraform-aws-perforce",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "-"<br/>}</pre></td>
 <td style="text-align: center;">no</td>
 </tr>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>The VPC ID where the Perforce resources will be deployed.</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
 </tbody>
 </table>
 <h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h2>
@@ -4042,20 +3841,8 @@ deploy resources into.</p>
 <td>The hosted zone ID of the P4 Code Review ALB.</td>
 </tr>
 <tr>
-<td><a name="output_p4_code_review_default_role_id"></a> <a href="#output_p4_code_review_default_role_id">p4_code_review_default_role_id</a></td>
-<td>The default role for the P4 Code Review service task</td>
-</tr>
-<tr>
-<td><a name="output_p4_code_review_execution_role_id"></a> <a href="#output_p4_code_review_execution_role_id">p4_code_review_execution_role_id</a></td>
-<td>The default role for the P4 Code Review service task</td>
-</tr>
-<tr>
-<td><a name="output_p4_code_review_perforce_cluster_name"></a> <a href="#output_p4_code_review_perforce_cluster_name">p4_code_review_perforce_cluster_name</a></td>
-<td>Name of the ECS cluster hosting P4 Code Review.</td>
-</tr>
-<tr>
 <td><a name="output_p4_code_review_service_security_group_id"></a> <a href="#output_p4_code_review_service_security_group_id">p4_code_review_service_security_group_id</a></td>
-<td>Security group associated with the ECS service running P4 Code Review.</td>
+<td>Security group associated with P4 Code Review application.</td>
 </tr>
 <tr>
 <td><a name="output_p4_code_review_target_group_arn"></a> <a href="#output_p4_code_review_target_group_arn">p4_code_review_target_group_arn</a></td>
@@ -4103,8 +3890,6 @@ deploy resources into.</p>
 </tr>
 </tbody>
 </table>
-<!-- END_TF_DOCS -->
-<!-- markdownlint-enable -->
 
 
 
@@ -4125,7 +3910,7 @@ deploy resources into.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-23
+    2026-01-09
   </span>
 
     
@@ -4180,13 +3965,13 @@ deploy resources into.</p>
         
         
           
-          <a href="modules/p4-server/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: P4 Server Submodule">
+          <a href="modules/p4-server/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Index">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                P4 Server Submodule
+                Index
               </div>
             </div>
             <div class="md-footer__button md-icon">
