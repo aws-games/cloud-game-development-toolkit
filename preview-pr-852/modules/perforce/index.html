@@ -3344,6 +3344,72 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#providers_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3890,6 +3956,542 @@
 </tr>
 </tbody>
 </table>
+<!-- markdownlint-disable -->
+<!-- BEGIN_TF_DOCS -->
+<h2 id="requirements_1">Requirements<a class="headerlink" href="#requirements_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
+<td>&gt;= 1.0</td>
+</tr>
+<tr>
+<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
+<td>~&gt; 6.6</td>
+</tr>
+<tr>
+<td><a name="requirement_awscc"></a> <a href="#requirement_awscc">awscc</a></td>
+<td>~&gt; 1.51</td>
+</tr>
+<tr>
+<td><a name="requirement_local"></a> <a href="#requirement_local">local</a></td>
+<td>~&gt; 2.5</td>
+</tr>
+<tr>
+<td><a name="requirement_null"></a> <a href="#requirement_null">null</a></td>
+<td>~&gt; 3.2</td>
+</tr>
+<tr>
+<td><a name="requirement_random"></a> <a href="#requirement_random">random</a></td>
+<td>~&gt; 3.7</td>
+</tr>
+</tbody>
+</table>
+<h2 id="providers_1">Providers<a class="headerlink" href="#providers_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>~&gt; 6.6</td>
+</tr>
+<tr>
+<td><a name="provider_null"></a> <a href="#provider_null">null</a></td>
+<td>~&gt; 3.2</td>
+</tr>
+<tr>
+<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
+<td>~&gt; 3.7</td>
+</tr>
+</tbody>
+</table>
+<h2 id="modules_1">Modules<a class="headerlink" href="#modules_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="module_p4_auth"></a> <a href="#module_p4_auth">p4_auth</a></td>
+<td>./modules/p4-auth</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_p4_code_review"></a> <a href="#module_p4_code_review">p4_code_review</a></td>
+<td>./modules/p4-code-review</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_p4_server"></a> <a href="#module_p4_server">p4_server</a></td>
+<td>./modules/p4-server</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<h2 id="resources_1">Resources<a class="headerlink" href="#resources_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster">aws_ecs_cluster.perforce_web_services_cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers">aws_ecs_cluster_capacity_providers.providers</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb">aws_lb.perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb">aws_lb.perforce_web_services</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener">aws_lb_listener.perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener">aws_lb_listener.perforce_web_services</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener">aws_lb_listener.perforce_web_services_http_listener</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule">aws_lb_listener_rule.p4_code_review</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule">aws_lb_listener_rule.p4_code_review_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule">aws_lb_listener_rule.perforce_p4_auth</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule">aws_lb_listener_rule.perforce_p4_auth_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group">aws_lb_target_group.perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment">aws_lb_target_group_attachment.perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record">aws_route53_record.internal_p4_server</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record">aws_route53_record.internal_perforce_web_services</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone">aws_route53_zone.perforce_private_hosted_zone</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket">aws_s3_bucket.shared_lb_access_logs_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration">aws_s3_bucket_lifecycle_configuration.shared_access_logs_bucket_lifecycle_configuration</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy">aws_s3_bucket_policy.shared_lb_access_logs_bucket_policy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.perforce_network_load_balancer</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.perforce_web_services_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.p4_code_review_outbound_to_p4_server</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.p4_server_outbound_to_p4_code_review</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.p4_server_outbound_to_perforce_web_services_alb_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.perforce_alb_outbound_to_p4_auth</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.perforce_alb_outbound_to_p4_code_review</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.perforce_nlb_outbound_to_perforce_web_services_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_auth_inbound_from_perforce_web_services_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_code_review_inbound_from_p4_server</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_code_review_inbound_from_perforce_web_services_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.p4_server_inbound_from_p4_code_review</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_web_services_inbound_from_p4_server</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_web_services_inbound_from_p4_server_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_web_services_inbound_from_perforce_nlb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource">null_resource.parent_module_certificate</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.shared_lb_access_logs_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account">aws_elb_service_account.main</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.shared_lb_access_logs_bucket_lb_write</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table>
+<h2 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+<th>Default</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>The VPC ID where the Perforce resources will be deployed.</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_certificate_arn"></a> <a href="#input_certificate_arn">certificate_arn</a></td>
+<td>The ARN of the ACM certificate to be used with the HTTPS listener for the NLB.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_create_default_sgs"></a> <a href="#input_create_default_sgs">create_default_sgs</a></td>
+<td>Whether to create default security groups for the Perforce resources.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_create_route53_private_hosted_zone"></a> <a href="#input_create_route53_private_hosted_zone">create_route53_private_hosted_zone</a></td>
+<td>Whether to create a private Route53 Hosted Zone for the Perforce resources. This private hosted zone is used for internal communication between the P4 Server, P4 Auth Service, and P4 Code Review Service.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_create_shared_application_load_balancer"></a> <a href="#input_create_shared_application_load_balancer">create_shared_application_load_balancer</a></td>
+<td>Whether to create a shared Application Load Balancer for the Perforce resources.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_create_shared_network_load_balancer"></a> <a href="#input_create_shared_network_load_balancer">create_shared_network_load_balancer</a></td>
+<td>Whether to create a shared Network Load Balancer for the Perforce resources.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_enable_shared_alb_deletion_protection"></a> <a href="#input_enable_shared_alb_deletion_protection">enable_shared_alb_deletion_protection</a></td>
+<td>Enables deletion protection for the shared Application Load Balancer for the Perforce resources.</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_enable_shared_lb_access_logs"></a> <a href="#input_enable_shared_lb_access_logs">enable_shared_lb_access_logs</a></td>
+<td>Enables access logging for both the shared NLB and shared ALB. Defaults to false.</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_existing_ecs_cluster_name"></a> <a href="#input_existing_ecs_cluster_name">existing_ecs_cluster_name</a></td>
+<td>The name of an existing ECS cluster to use for the Perforce server. If omitted a new cluster will be created.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_existing_security_groups"></a> <a href="#input_existing_security_groups">existing_security_groups</a></td>
+<td>A list of existing security group IDs to attach to the shared network load balancer.</td>
+<td><code>list(string)</code></td>
+<td><code>[]</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_p4_auth_config"></a> <a href="#input_p4_auth_config">p4_auth_config</a></td>
+<td># General<br/>    name: "The string including in the naming of resources related to P4Auth. Default is 'p4-auth'."<br/><br/>    project_prefix : "The project prefix for the P4Auth service. Default is 'cgd'."<br/><br/>    environment : "The environment where the P4Auth service will be deployed. Default is 'dev'."<br/><br/>    enable_web_based_administration: "Whether to de enable web based administration. Default is 'true'."<br/><br/>    debug : "Whether to enable debug mode for the P4Auth service. Default is 'false'."<br/><br/>    fully_qualified_domain_name : "The FQDN for the P4Auth Service. This is used for the P4Auth's Perforce configuration."<br/><br/><br/>    # Compute<br/>    cluster_name : "The name of the ECS cluster where the P4Auth service will be deployed. Cluster is not created if this variable is null."<br/><br/>    container_name : "The name of the P4Auth service container. Default is 'p4-auth-container'."<br/><br/>    container_port : "The port on which the P4Auth service will be listening. Default is '3000'."<br/><br/>    container_cpu : "The number of CPU units to reserve for the P4Auth service container. Default is '1024'."<br/><br/>    container_memory : "The number of CPU units to reserve for the P4Auth service container. Default is '4096'."<br/><br/>    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."<br/><br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days : "The number of days to retain the P4Auth service logs in CloudWatch. Default is 365 days."<br/><br/><br/>    # Networking<br/>    create_defaults_sgs : "Whether to create default security groups for the P4Auth service."<br/><br/>    internal : "Set this flag to true if you do not want the P4Auth service to have a public IP."<br/><br/>    create_default_role : "Whether to create the P4Auth default IAM Role. Default is set to true."<br/><br/>    custom_role : "ARN of a custom IAM Role you wish to use with P4Auth."<br/><br/>    admin_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4Auth Administrator username."<br/><br/>    admin_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4Auth Administrator password."<br/><br/><br/>    # - SCIM -<br/>    p4d_super_user_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user username for p4d."<br/><br/>    p4d_super_user_password_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the super user password for p4d."<br/><br/>    scim_bearer_token_arn : "If you would like to use SCIM to provision users and groups, you need to set this variable to the ARN of an AWS Secrets Manager secret containing the bearer token."<br/><br/>    extra_env : "Extra configuration environment variables to set on the p4 auth svc container."</td>
+<td><pre>object({<br/>    # - General -<br/>    name                            = optional(string, "p4-auth")<br/>    project_prefix                  = optional(string, "cgd")<br/>    environment                     = optional(string, "dev")<br/>    enable_web_based_administration = optional(bool, true)<br/>    debug                           = optional(bool, false)<br/>    fully_qualified_domain_name     = string<br/><br/>    # - Compute -<br/>    container_name   = optional(string, "p4-auth-container")<br/>    container_port   = optional(number, 3000)<br/>    container_cpu    = optional(number, 1024)<br/>    container_memory = optional(number, 4096)<br/>    p4d_port         = optional(string, null)<br/><br/>    # - Storage &amp; Logging -<br/>    cloudwatch_log_retention_in_days = optional(number, 365)<br/><br/>    # - Networking &amp; Security -<br/>    service_subnets          = optional(list(string), null)<br/>    create_default_sgs       = optional(bool, true)<br/>    existing_security_groups = optional(list(string), [])<br/>    internal                 = optional(bool, false)<br/><br/>    certificate_arn           = optional(string, null)<br/>    create_default_role       = optional(bool, true)<br/>    custom_role               = optional(string, null)<br/>    admin_username_secret_arn = optional(string, null)<br/>    admin_password_secret_arn = optional(string, null)<br/><br/>    # SCIM<br/>    p4d_super_user_arn          = optional(string, null)<br/>    p4d_super_user_password_arn = optional(string, null)<br/>    scim_bearer_token_arn       = optional(string, null)<br/>    extra_env                   = optional(map(string), null)<br/>  })</pre></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_p4_code_review_config"></a> <a href="#input_p4_code_review_config">p4_code_review_config</a></td>
+<td># General<br/>    name: "The string including in the naming of resources related to P4 Code Review. Default is 'p4-code-review'."<br/><br/>    project_prefix : "The project prefix for the P4 Code Review service. Default is 'cgd'."<br/><br/>    environment : "The environment where the P4 Code Review service will be deployed. Default is 'dev'."<br/><br/>    fully_qualified_domain_name : "The FQDN for the P4 Code Review Service. This is used for the P4 Code Review's Perforce configuration."<br/><br/><br/>    # Compute<br/>    container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."<br/><br/>    container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."<br/><br/>    container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."<br/><br/>    container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."<br/><br/>    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."<br/><br/>    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."<br/><br/>    existing_redis_connection : "The existing Redis connection for the P4 Code Review service."<br/><br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."<br/><br/><br/>    # Networking &amp; Security<br/>    create_default_sgs : "Whether to create default security groups for the P4 Code Review service."<br/><br/>    internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."<br/><br/>    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."<br/><br/>    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator password."<br/><br/>    p4d_p4_code_review_user_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."<br/><br/>    p4d_p4_code_review_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."<br/><br/>    enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."<br/><br/>    config_php_source : "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."<br/><br/><br/>    # Caching<br/>    elasticache_node_count : "The number of Elasticache nodes to create for the P4 Code Review service. Default is '1'."<br/><br/>    elasticache_node_type : "The type of Elasticache node to create for the P4 Code Review service. Default is 'cache.t4g.micro'."</td>
+<td><pre>object({<br/>    # General<br/>    name                        = optional(string, "p4-code-review")<br/>    project_prefix              = optional(string, "cgd")<br/>    environment                 = optional(string, "dev")<br/>    fully_qualified_domain_name = string<br/><br/>    # Compute<br/>    application_port = optional(number, 80)<br/>    instance_type    = optional(string, "m5.large")<br/>    ami_id           = optional(string, null)<br/>    p4d_port         = optional(string, null)<br/>    p4charset        = optional(string, null)<br/>    existing_redis_connection = optional(object({<br/>      host = string<br/>      port = number<br/>    }), null)<br/><br/>    # Storage &amp; Logging<br/>    cloudwatch_log_retention_in_days = optional(number, 365)<br/>    ebs_volume_size                  = optional(number, 20)<br/>    ebs_volume_type                  = optional(string, "gp3")<br/>    ebs_volume_encrypted             = optional(bool, true)<br/>    ebs_availability_zone            = optional(string, null)<br/><br/>    # Networking &amp; Security<br/>    create_default_sgs       = optional(bool, true)<br/>    existing_security_groups = optional(list(string), [])<br/>    internal                 = optional(bool, false)<br/>    service_subnets          = optional(list(string), null)<br/>    instance_subnet_id       = string<br/><br/>    super_user_password_secret_arn          = optional(string, null)<br/>    super_user_username_secret_arn          = optional(string, null)<br/>    p4_code_review_user_password_secret_arn = optional(string, null)<br/>    p4_code_review_user_username_secret_arn = optional(string, null)<br/>    enable_sso                              = optional(string, true)<br/>    config_php_source                       = optional(string, null)<br/><br/>    # Caching<br/>    elasticache_node_count = optional(number, 1)<br/>    elasticache_node_type  = optional(string, "cache.t4g.micro")<br/>  })</pre></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_p4_server_config"></a> <a href="#input_p4_server_config">p4_server_config</a></td>
+<td># - General -<br/>    name: "The string including in the naming of resources related to P4 Server. Default is 'p4-server'"<br/><br/>    project_prefix: "The project prefix for this workload. This is appended to the beginning of most resource names."<br/><br/>    environment: "The current environment (e.g. dev, prod, etc.)"<br/><br/>    auth_service_url: "The URL for the P4Auth Service."<br/><br/>    fully_qualified_domain_name = "The FQDN for the P4 Server. This is used for the P4 Server's Perforce configuration."<br/><br/><br/>    # - Compute -<br/>    lookup_existing_ami : "Whether to lookup the existing Perforce P4 Server AMI."<br/><br/>    ami_prefix: "The AMI prefix to use for the AMI that will be created for P4 Server."<br/><br/>    instance_type: "The instance type for Perforce P4 Server. Defaults to c6g.large."<br/><br/>    instance_architecture: "The architecture of the P4 Server instance. Allowed values are 'arm64' or 'x86_64'."<br/><br/>    IMPORTANT: "Ensure the instance family of the instance type you select supports the instance_architecture you select. For example, 'c6in' instance family only works for 'x86_64' architecture, not 'arm64'. For a full list of this mapping, see the AWS Docs for EC2 Naming Conventions: https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html"<br/><br/>    p4_server_type: "The Perforce P4 Server server type. Valid values are 'p4d_commit' or 'p4d_replica'."<br/><br/>    unicode: "Whether to enable Unicode configuration for P4 Server the -xi flag for p4d. Set to true to enable Unicode support."<br/><br/>    selinux: "Whether to apply SELinux label updates for P4 Server. Don't enable this if SELinux is disabled on your target operating system."<br/><br/>    case_sensitive: "Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode. Default is set to true."<br/><br/>    plaintext: "Whether to enable plaintext authentication for P4 Server. This is not recommended for production environments unless you are using a load balancer for TLS termination. Default is set to false."<br/><br/><br/>    # - Storage -<br/>    storage_type: "The type of backing store. Valid values are either 'EBS' or 'FSxN'"<br/><br/>    depot_volume_size: "The size of the depot volume in GiB. Defaults to 128 GiB."<br/><br/>    metadata_volume_size: "The size of the metadata volume in GiB. Defaults to 32 GiB."<br/><br/>    logs_volume_size: "The size of the logs volume in GiB. Defaults to 32 GiB."<br/><br/><br/>    # - Networking &amp; Security -<br/>    instance_subnet_id: "The subnet where the P4 Server instance will be deployed."<br/><br/>    instance_private_ip: "The private IP address to assign to the P4 Server."<br/><br/>    create_default_sg : "Whether to create a default security group for the P4 Server instance."<br/><br/>    existing_security_groups: "A list of existing security group IDs to attach to the P4 Server load balancer."<br/><br/>    internal: "Set this flag to true if you do not want the P4 Server instance to have a public IP."<br/><br/>    super_user_password_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."<br/><br/>    super_user_username_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here."<br/><br/>    create_default_role: "Optional creation of P4 Server default IAM Role with SSM managed instance core policy attached. Default is set to true."<br/><br/>    custom_role: "ARN of a custom IAM Role you wish to use with P4 Server."</td>
+<td><pre>object({<br/>    # General<br/>    name                        = optional(string, "p4-server")<br/>    project_prefix              = optional(string, "cgd")<br/>    environment                 = optional(string, "dev")<br/>    auth_service_url            = optional(string, null)<br/>    fully_qualified_domain_name = string<br/><br/>    # Compute<br/>    lookup_existing_ami = optional(bool, true)<br/>    ami_prefix          = optional(string, "p4_al2023")<br/><br/>    instance_type         = optional(string, "c6i.large")<br/>    instance_architecture = optional(string, "x86_64")<br/>    p4_server_type        = optional(string, null)<br/><br/>    unicode        = optional(bool, false)<br/>    selinux        = optional(bool, false)<br/>    case_sensitive = optional(bool, true)<br/>    plaintext      = optional(bool, false)<br/><br/>    # Storage<br/>    storage_type         = optional(string, "EBS")<br/>    depot_volume_size    = optional(number, 128)<br/>    metadata_volume_size = optional(number, 32)<br/>    logs_volume_size     = optional(number, 32)<br/><br/>    # Networking &amp; Security<br/>    instance_subnet_id       = optional(string, null)<br/>    instance_private_ip      = optional(string, null)<br/>    create_default_sg        = optional(bool, true)<br/>    existing_security_groups = optional(list(string), [])<br/>    internal                 = optional(bool, false)<br/><br/>    super_user_password_secret_arn = optional(string, null)<br/>    super_user_username_secret_arn = optional(string, null)<br/><br/>    create_default_role = optional(bool, true)<br/>    custom_role         = optional(string, null)<br/><br/>    # FSxN<br/>    fsxn_password                     = optional(string, null)<br/>    fsxn_filesystem_security_group_id = optional(string, null)<br/>    protocol                          = optional(string, null)<br/>    fsxn_region                       = optional(string, null)<br/>    fsxn_management_ip                = optional(string, null)<br/>    fsxn_svm_name                     = optional(string, null)<br/>    amazon_fsxn_svm_id                = optional(string, null)<br/>    fsxn_aws_profile                  = optional(string, null)<br/>  })</pre></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_project_prefix"></a> <a href="#input_project_prefix">project_prefix</a></td>
+<td>The project prefix for this workload. This is appended to the beginning of most resource names.</td>
+<td><code>string</code></td>
+<td><code>"cgd"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_route53_private_hosted_zone_name"></a> <a href="#input_route53_private_hosted_zone_name">route53_private_hosted_zone_name</a></td>
+<td>The name of the private Route53 Hosted Zone for the Perforce resources.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_s3_enable_force_destroy"></a> <a href="#input_s3_enable_force_destroy">s3_enable_force_destroy</a></td>
+<td>Enables force destroy for the S3 bucket for both the shared NLB and shared ALB access log storage. Defaults to true.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_alb_access_logs_prefix"></a> <a href="#input_shared_alb_access_logs_prefix">shared_alb_access_logs_prefix</a></td>
+<td>Log prefix for shared ALB access logs.</td>
+<td><code>string</code></td>
+<td><code>"perforce-alb-"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_alb_subnets"></a> <a href="#input_shared_alb_subnets">shared_alb_subnets</a></td>
+<td>A list of subnets to attach to the shared application load balancer.</td>
+<td><code>list(string)</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_application_load_balancer_name"></a> <a href="#input_shared_application_load_balancer_name">shared_application_load_balancer_name</a></td>
+<td>The name of the shared Application Load Balancer for the Perforce resources.</td>
+<td><code>string</code></td>
+<td><code>"p4alb"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_ecs_cluster_name"></a> <a href="#input_shared_ecs_cluster_name">shared_ecs_cluster_name</a></td>
+<td>The name of the ECS cluster to use for the shared ECS Cluster.</td>
+<td><code>string</code></td>
+<td><code>"perforce-cluster"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_lb_access_logs_bucket"></a> <a href="#input_shared_lb_access_logs_bucket">shared_lb_access_logs_bucket</a></td>
+<td>ID of the S3 bucket for both the shared NLB and shared ALB access log storage. If access logging is enabled and this is null the module creates a bucket.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_network_load_balancer_name"></a> <a href="#input_shared_network_load_balancer_name">shared_network_load_balancer_name</a></td>
+<td>The name of the shared Network Load Balancer for the Perforce resources.</td>
+<td><code>string</code></td>
+<td><code>"p4nlb"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_nlb_access_logs_prefix"></a> <a href="#input_shared_nlb_access_logs_prefix">shared_nlb_access_logs_prefix</a></td>
+<td>Log prefix for shared NLB access logs.</td>
+<td><code>string</code></td>
+<td><code>"perforce-nlb-"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_shared_nlb_subnets"></a> <a href="#input_shared_nlb_subnets">shared_nlb_subnets</a></td>
+<td>A list of subnets to attach to the shared network load balancer.</td>
+<td><code>list(string)</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
+<td>Tags to apply to resources.</td>
+<td><code>map(any)</code></td>
+<td><pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "terraform-aws-perforce",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "-"<br/>}</pre></td>
+<td style="text-align: center;">no</td>
+</tr>
+</tbody>
+</table>
+<h2 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="output_p4_auth_alb_dns_name"></a> <a href="#output_p4_auth_alb_dns_name">p4_auth_alb_dns_name</a></td>
+<td>The DNS name of the P4Auth ALB.</td>
+</tr>
+<tr>
+<td><a name="output_p4_auth_alb_security_group_id"></a> <a href="#output_p4_auth_alb_security_group_id">p4_auth_alb_security_group_id</a></td>
+<td>Security group associated with the P4Auth load balancer.</td>
+</tr>
+<tr>
+<td><a name="output_p4_auth_alb_zone_id"></a> <a href="#output_p4_auth_alb_zone_id">p4_auth_alb_zone_id</a></td>
+<td>The hosted zone ID of the P4Auth ALB.</td>
+</tr>
+<tr>
+<td><a name="output_p4_auth_perforce_cluster_name"></a> <a href="#output_p4_auth_perforce_cluster_name">p4_auth_perforce_cluster_name</a></td>
+<td>Name of the ECS cluster hosting P4Auth.</td>
+</tr>
+<tr>
+<td><a name="output_p4_auth_service_security_group_id"></a> <a href="#output_p4_auth_service_security_group_id">p4_auth_service_security_group_id</a></td>
+<td>Security group associated with the ECS service running P4Auth.</td>
+</tr>
+<tr>
+<td><a name="output_p4_auth_target_group_arn"></a> <a href="#output_p4_auth_target_group_arn">p4_auth_target_group_arn</a></td>
+<td>The service target group for the P4Auth.</td>
+</tr>
+<tr>
+<td><a name="output_p4_code_review_alb_dns_name"></a> <a href="#output_p4_code_review_alb_dns_name">p4_code_review_alb_dns_name</a></td>
+<td>The DNS name of the P4 Code Review ALB.</td>
+</tr>
+<tr>
+<td><a name="output_p4_code_review_alb_security_group_id"></a> <a href="#output_p4_code_review_alb_security_group_id">p4_code_review_alb_security_group_id</a></td>
+<td>Security group associated with the P4 Code Review load balancer.</td>
+</tr>
+<tr>
+<td><a name="output_p4_code_review_alb_zone_id"></a> <a href="#output_p4_code_review_alb_zone_id">p4_code_review_alb_zone_id</a></td>
+<td>The hosted zone ID of the P4 Code Review ALB.</td>
+</tr>
+<tr>
+<td><a name="output_p4_code_review_service_security_group_id"></a> <a href="#output_p4_code_review_service_security_group_id">p4_code_review_service_security_group_id</a></td>
+<td>Security group associated with P4 Code Review application.</td>
+</tr>
+<tr>
+<td><a name="output_p4_code_review_target_group_arn"></a> <a href="#output_p4_code_review_target_group_arn">p4_code_review_target_group_arn</a></td>
+<td>The service target group for the P4 Code Review.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_eip_id"></a> <a href="#output_p4_server_eip_id">p4_server_eip_id</a></td>
+<td>The ID of the Elastic IP associated with your P4 Server instance.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_eip_public_ip"></a> <a href="#output_p4_server_eip_public_ip">p4_server_eip_public_ip</a></td>
+<td>The public IP of your P4 Server instance.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_instance_id"></a> <a href="#output_p4_server_instance_id">p4_server_instance_id</a></td>
+<td>Instance ID for the P4 Server instance</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_lambda_link_name"></a> <a href="#output_p4_server_lambda_link_name">p4_server_lambda_link_name</a></td>
+<td>The name of the Lambda link for the P4 Server instance to use with FSxN.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_private_ip"></a> <a href="#output_p4_server_private_ip">p4_server_private_ip</a></td>
+<td>Private IP for the P4 Server instance</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_security_group_id"></a> <a href="#output_p4_server_security_group_id">p4_server_security_group_id</a></td>
+<td>The default security group of your P4 Server instance.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_super_user_password_secret_arn"></a> <a href="#output_p4_server_super_user_password_secret_arn">p4_server_super_user_password_secret_arn</a></td>
+<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username.</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_super_user_username_secret_arn"></a> <a href="#output_p4_server_super_user_username_secret_arn">p4_server_super_user_username_secret_arn</a></td>
+<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password.</td>
+</tr>
+<tr>
+<td><a name="output_shared_application_load_balancer_arn"></a> <a href="#output_shared_application_load_balancer_arn">shared_application_load_balancer_arn</a></td>
+<td>The ARN of the shared application load balancer.</td>
+</tr>
+<tr>
+<td><a name="output_shared_network_load_balancer_arn"></a> <a href="#output_shared_network_load_balancer_arn">shared_network_load_balancer_arn</a></td>
+<td>The ARN of the shared network load balancer.</td>
+</tr>
+</tbody>
+</table>
+<!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 
 
@@ -3910,7 +4512,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-09
+    2026-01-14
   </span>
 
     
