@@ -1,10 +1,9 @@
 ##########################################
-# Perforce P4 Server Super User
+# Service Account (super)
 ##########################################
-resource "awscc_secretsmanager_secret" "super_user_password" {
-  count       = var.super_user_password_secret_arn == null ? 1 : 0
-  name        = "${local.name_prefix}-SuperUserPassword"
-  description = "The password for the created P4 Server super user."
+resource "awscc_secretsmanager_secret" "super_password" {
+  name        = "${local.name_prefix}-ServiceAccountPassword"
+  description = "Internal service account password for Perforce tooling (Swarm, etc.)."
   generate_secret_string = {
     exclude_numbers     = false
     exclude_punctuation = true
@@ -12,11 +11,24 @@ resource "awscc_secretsmanager_secret" "super_user_password" {
   }
 }
 
-resource "awscc_secretsmanager_secret" "super_user_username" {
-  count         = var.super_user_username_secret_arn == null ? 1 : 0
-  name          = "${local.name_prefix}-SuperUserUsername"
-  description   = "The username for the created P4 Server super user."
-  secret_string = "perforce"
+##########################################
+# Admin Account
+##########################################
+resource "awscc_secretsmanager_secret" "admin_username" {
+  name          = "${local.name_prefix}-AdminUsername"
+  description   = "Username for the Perforce admin account."
+  secret_string = var.admin_username
+}
+
+resource "awscc_secretsmanager_secret" "admin_password" {
+  count       = var.admin_password_secret_arn == null ? 1 : 0
+  name        = "${local.name_prefix}-AdminPassword"
+  description = "Password for the Perforce admin account."
+  generate_secret_string = {
+    exclude_numbers     = false
+    exclude_punctuation = true
+    include_space       = false
+  }
 }
 
 
@@ -74,8 +86,9 @@ locals {
 }
 
 locals {
-  username_secret = var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_username_secret_arn
-  password_secret = var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_password_secret_arn
+  super_password_secret = awscc_secretsmanager_secret.super_password.secret_id
+  admin_username_secret = awscc_secretsmanager_secret.admin_username.secret_id
+  admin_password_secret = var.admin_password_secret_arn == null ? awscc_secretsmanager_secret.admin_password[0].secret_id : var.admin_password_secret_arn
 }
 resource "aws_instance" "server_instance" {
   ami           = data.aws_ami.existing_server_ami.id
@@ -88,22 +101,23 @@ resource "aws_instance" "server_instance" {
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
 
   user_data = templatefile("${path.module}/templates/user_data.tftpl", {
-    depot_volume_name    = local.depot_volume_name
-    metadata_volume_name = local.metadata_volume_name
-    logs_volume_name     = local.logs_volume_name
-    p4_server_type       = var.p4_server_type
-    username_secret      = local.username_secret
-    password_secret      = local.password_secret
-    fqdn                 = var.fully_qualified_domain_name != null ? var.fully_qualified_domain_name : ""
-    auth_url             = var.auth_service_url != null ? var.auth_service_url : ""
-    is_fsxn              = local.is_fsxn
-    fsxn_password        = var.fsxn_password
-    fsxn_svm_name        = var.fsxn_svm_name
-    fsxn_management_ip   = var.fsxn_management_ip
-    case_sensitive       = var.case_sensitive ? 1 : 0
-    unicode              = var.unicode ? "true" : "false"
-    selinux              = var.selinux ? "true" : "false"
-    plaintext            = var.plaintext ? "true" : "false"
+    depot_volume_name     = local.depot_volume_name
+    metadata_volume_name  = local.metadata_volume_name
+    logs_volume_name      = local.logs_volume_name
+    p4_server_type        = var.p4_server_type
+    super_password_secret = local.super_password_secret
+    admin_username_secret = local.admin_username_secret
+    admin_password_secret = local.admin_password_secret
+    fqdn                  = var.fully_qualified_domain_name != null ? var.fully_qualified_domain_name : ""
+    auth_url              = var.auth_service_url != null ? var.auth_service_url : ""
+    is_fsxn               = local.is_fsxn
+    fsxn_password         = var.fsxn_password
+    fsxn_svm_name         = var.fsxn_svm_name
+    fsxn_management_ip    = var.fsxn_management_ip
+    case_sensitive        = var.case_sensitive ? 1 : 0
+    unicode               = var.unicode ? "true" : "false"
+    selinux               = var.selinux ? "true" : "false"
+    plaintext             = var.plaintext ? "true" : "false"
   })
 
   vpc_security_group_ids = (var.create_default_sg ?
@@ -127,6 +141,12 @@ resource "aws_instance" "server_instance" {
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-${var.p4_server_type}-${local.p4_server_az}"
   })
+
+  # Force destroy-before-create to ensure EBS volumes are detached
+  # before being re-attached to a new instance (e.g., during AMI updates)
+  lifecycle {
+    create_before_destroy = false
+  }
 
   depends_on = [
     netapp-ontap_san_lun-map.depots_lun_map,

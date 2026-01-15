@@ -62,7 +62,6 @@ resource "aws_launch_template" "swarm_instance" {
     swarm_redis                             = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.cluster[0].cache_nodes[0].address
     swarm_redis_port                        = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.cluster[0].cache_nodes[0].port)
     swarm_force_ext                         = "y"
-    super_user_username_secret_arn          = var.super_user_username_secret_arn
     super_user_password_secret_arn          = var.super_user_password_secret_arn
     p4_code_review_user_username_secret_arn = var.p4_code_review_user_username_secret_arn
     p4_code_review_user_password_secret_arn = var.p4_code_review_user_password_secret_arn

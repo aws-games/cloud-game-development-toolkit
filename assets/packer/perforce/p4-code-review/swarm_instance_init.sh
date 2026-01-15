@@ -30,7 +30,6 @@ SWARM_FORCE_EXT="y"
 CUSTOM_CONFIG_FILE=""
 
 # Secret ARNs for fetching credentials from AWS Secrets Manager
-P4D_SUPER_SECRET_ARN=""
 P4D_SUPER_PASSWD_SECRET_ARN=""
 SWARM_USER_SECRET_ARN=""
 SWARM_PASSWD_SECRET_ARN=""
@@ -63,10 +62,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --custom-config-file)
       CUSTOM_CONFIG_FILE="$2"
-      shift 2
-      ;;
-    --p4d-super-secret-arn)
-      P4D_SUPER_SECRET_ARN="$2"
       shift 2
       ;;
     --p4d-super-passwd-secret-arn)
@@ -104,14 +99,16 @@ SWARM_HOSTNAME="${SWARM_HOST#https://}"
 SWARM_HOSTNAME="${SWARM_HOSTNAME#http://}"
 log_message "SWARM_HOSTNAME (for configure-swarm.sh): $SWARM_HOSTNAME"
 
+# Service account username is always "super"
+P4D_SUPER="super"
+
 # Retrieve credentials from AWS Secrets Manager
 log_message "Fetching secrets from AWS Secrets Manager"
-P4D_SUPER=$(aws secretsmanager get-secret-value --secret-id "$P4D_SUPER_SECRET_ARN" --query SecretString --output text)
 P4D_SUPER_PASSWD=$(aws secretsmanager get-secret-value --secret-id "$P4D_SUPER_PASSWD_SECRET_ARN" --query SecretString --output text)
 SWARM_USER=$(aws secretsmanager get-secret-value --secret-id "$SWARM_USER_SECRET_ARN" --query SecretString --output text)
 SWARM_PASSWD=$(aws secretsmanager get-secret-value --secret-id "$SWARM_PASSWD_SECRET_ARN" --query SecretString --output text)
 
-if [ -z "$P4D_SUPER" ] || [ -z "$P4D_SUPER_PASSWD" ] || [ -z "$SWARM_USER" ] || [ -z "$SWARM_PASSWD" ]; then
+if [ -z "$P4D_SUPER_PASSWD" ] || [ -z "$SWARM_USER" ] || [ -z "$SWARM_PASSWD" ]; then
   log_message "ERROR: Failed to fetch secrets from AWS Secrets Manager"
   exit 1
 fi

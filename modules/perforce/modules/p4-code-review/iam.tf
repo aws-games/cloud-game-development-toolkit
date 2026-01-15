@@ -21,7 +21,6 @@ data "aws_iam_policy_document" "secrets_manager_policy" {
       "secretsmanager:DescribeSecret"
     ]
     resources = [
-      var.super_user_username_secret_arn,
       var.super_user_password_secret_arn,
       var.p4_code_review_user_username_secret_arn,
       var.p4_code_review_user_password_secret_arn,

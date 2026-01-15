@@ -214,8 +214,8 @@ variable "p4_server_config" {
     existing_security_groups = optional(list(string), [])
     internal                 = optional(bool, false)
 
-    super_user_password_secret_arn = optional(string, null)
-    super_user_username_secret_arn = optional(string, null)
+    admin_username            = optional(string, "perforce")
+    admin_password_secret_arn = optional(string, null)
 
     create_default_role = optional(bool, true)
     custom_role         = optional(string, null)
@@ -286,9 +286,9 @@ variable "p4_server_config" {
 
     internal: "Set this flag to true if you do not want the P4 Server instance to have a public IP."
 
-    super_user_password_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."
+    admin_username: "Username for the Perforce admin account. The 'super' service account is always created automatically for internal tooling. Default is 'perforce'."
 
-    super_user_username_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here."
+    admin_password_secret_arn: "Optional ARN of existing Secrets Manager secret for admin password. If not provided, a password will be auto-generated."
 
     create_default_role: "Optional creation of P4 Server default IAM Role with SSM managed instance core policy attached. Default is set to true."
 
@@ -468,7 +468,6 @@ variable "p4_code_review_config" {
     instance_subnet_id       = string
 
     super_user_password_secret_arn          = optional(string, null)
-    super_user_username_secret_arn          = optional(string, null)
     p4_code_review_user_password_secret_arn = optional(string, null)
     p4_code_review_user_username_secret_arn = optional(string, null)
     custom_config                           = optional(string, null)
@@ -525,8 +524,6 @@ variable "p4_code_review_config" {
     instance_subnet_id : "The subnet ID where the EC2 instance will be launched. Should be a private subnet for security."
 
     super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user password."
-
-    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user username."
 
     p4_code_review_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
 

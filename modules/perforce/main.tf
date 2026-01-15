@@ -16,8 +16,8 @@ module "p4_server" {
       var.p4_auth_config != null ?
       (
         var.create_route53_private_hosted_zone ?
-        "auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
-        module.p4_auth[0].alb_dns_name
+        "https://auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
+        "https://${module.p4_auth[0].alb_dns_name}"
       ) :
       null
     )
@@ -49,16 +49,16 @@ module "p4_server" {
   fsxn_management_ip                = var.p4_server_config.fsxn_management_ip
 
   # Networking & Security
-  vpc_id                         = var.vpc_id
-  instance_subnet_id             = var.p4_server_config.instance_subnet_id
-  instance_private_ip            = var.p4_server_config.instance_private_ip
-  create_default_sg              = var.p4_server_config.create_default_sg
-  existing_security_groups       = var.p4_server_config.existing_security_groups
-  internal                       = var.p4_server_config.internal
-  super_user_password_secret_arn = var.p4_server_config.super_user_password_secret_arn
-  super_user_username_secret_arn = var.p4_server_config.super_user_username_secret_arn
-  create_default_role            = var.p4_server_config.create_default_role
-  custom_role                    = var.p4_server_config.custom_role
+  vpc_id                    = var.vpc_id
+  instance_subnet_id        = var.p4_server_config.instance_subnet_id
+  instance_private_ip       = var.p4_server_config.instance_private_ip
+  create_default_sg         = var.p4_server_config.create_default_sg
+  existing_security_groups  = var.p4_server_config.existing_security_groups
+  internal                  = var.p4_server_config.internal
+  admin_username            = var.p4_server_config.admin_username
+  admin_password_secret_arn = var.p4_server_config.admin_password_secret_arn
+  create_default_role       = var.p4_server_config.create_default_role
+  custom_role               = var.p4_server_config.custom_role
 }
 
 
@@ -159,10 +159,9 @@ module "p4_code_review" {
   elasticache_node_count = var.p4_code_review_config.elasticache_node_count
   elasticache_node_type  = var.p4_code_review_config.elasticache_node_type
 
-  super_user_password_secret_arn          = module.p4_server[0].super_user_password_secret_arn
-  super_user_username_secret_arn          = module.p4_server[0].super_user_username_secret_arn
-  p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
-  p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
+  super_user_password_secret_arn          = module.p4_server[0].super_password_secret_arn
+  p4_code_review_user_password_secret_arn = module.p4_server[0].admin_password_secret_arn
+  p4_code_review_user_username_secret_arn = module.p4_server[0].admin_username_secret_arn
 
   custom_config = var.p4_code_review_config.custom_config
 
