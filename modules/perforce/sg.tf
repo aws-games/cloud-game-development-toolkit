@@ -85,12 +85,12 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_fr
   )
 }
 
-# Perforce Web Services ALB <-- P4 Server
-# Allows Perforce Web Services ALB to receive inbound traffic from P4 Server (needed for authentication using P4Auth extension)
+# Perforce Web Services ALB <-- P4 Server (HTTPS)
+# Allows Perforce Web Services ALB to receive inbound traffic from P4 Server (needed for P4Auth extension and Swarm triggers)
 resource "aws_vpc_security_group_ingress_rule" "perforce_web_services_inbound_from_p4_server" {
   count                        = (var.create_shared_application_load_balancer && var.create_default_sgs && var.p4_server_config != null ? 1 : 0)
   security_group_id            = aws_security_group.perforce_web_services_alb[0].id
-  description                  = "Allows Perforce Web Services ALB to receive inbound traffic from P4 Server. This is used for authentication using the P4Auth extension."
+  description                  = "Allows Perforce Web Services ALB to receive inbound traffic from P4 Server. This is used for P4Auth extension authentication and Swarm trigger validation."
   ip_protocol                  = "TCP"
   from_port                    = 443
   to_port                      = 443
@@ -128,7 +128,7 @@ resource "aws_vpc_security_group_egress_rule" "perforce_alb_outbound_to_p4_code_
   from_port                    = 80
   to_port                      = 80
   ip_protocol                  = "TCP"
-  referenced_security_group_id = module.p4_code_review[0].service_security_group_id
+  referenced_security_group_id = module.p4_code_review[0].application_security_group_id
 }
 
 #######################################################################################
@@ -143,7 +143,19 @@ resource "aws_vpc_security_group_ingress_rule" "p4_server_inbound_from_p4_code_r
   ip_protocol                  = "TCP"
   from_port                    = 1666
   to_port                      = 1666
-  referenced_security_group_id = module.p4_code_review[0].service_security_group_id
+  referenced_security_group_id = module.p4_code_review[0].application_security_group_id
+}
+
+# P4 Server --> Perforce Web Services ALB (HTTPS)
+# Allows P4 Server to send HTTPS traffic to Perforce Web Services ALB for Swarm trigger validation
+resource "aws_vpc_security_group_egress_rule" "p4_server_outbound_to_perforce_web_services_alb_https" {
+  count                        = var.p4_code_review_config != null && var.p4_server_config != null && var.create_default_sgs && var.create_shared_application_load_balancer ? 1 : 0
+  security_group_id            = module.p4_server[0].security_group_id
+  description                  = "Allows P4 Server to send HTTPS traffic to Perforce Web Services ALB for Swarm trigger validation."
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "TCP"
+  referenced_security_group_id = aws_security_group.perforce_web_services_alb[0].id
 }
 
 
@@ -170,7 +182,7 @@ resource "aws_vpc_security_group_ingress_rule" "p4_auth_inbound_from_perforce_we
 # Allows P4 Code Review to receive inbound traffic from Perforce Web Services ALB
 resource "aws_vpc_security_group_ingress_rule" "p4_code_review_inbound_from_perforce_web_services_alb" {
   count                        = var.p4_code_review_config != null && var.create_default_sgs && var.create_shared_application_load_balancer ? 1 : 0
-  security_group_id            = module.p4_code_review[0].service_security_group_id
+  security_group_id            = module.p4_code_review[0].application_security_group_id
   description                  = "Allows P4 Code Review to receive inbound traffic from Perforce Web Services ALB."
   ip_protocol                  = "TCP"
   from_port                    = 80
@@ -183,7 +195,7 @@ resource "aws_vpc_security_group_ingress_rule" "p4_code_review_inbound_from_perf
 # Allows P4 Code Review to send outbound traffic to P4 Server.
 resource "aws_vpc_security_group_egress_rule" "p4_code_review_outbound_to_p4_server" {
   count                        = var.p4_code_review_config != null && var.p4_server_config != null && var.create_default_sgs ? 1 : 0
-  security_group_id            = module.p4_code_review[0].service_security_group_id
+  security_group_id            = module.p4_code_review[0].application_security_group_id
   description                  = "Allows P4 Code Review to send outbound traffic to P4 Server."
   from_port                    = 1666
   to_port                      = 1666
