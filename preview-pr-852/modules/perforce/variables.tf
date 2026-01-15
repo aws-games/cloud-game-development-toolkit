@@ -493,17 +493,15 @@ variable "p4_code_review_config" {
 
 
     # Compute
-    container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."
+    application_port : "The port on which the P4 Code Review service will be listening. Default is '80'."
 
-    container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."
+    instance_type : "EC2 instance type for running P4 Code Review. Default is 'm5.large'."
 
-    container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."
+    ami_id : "Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI."
 
-    container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."
+    p4d_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
 
-    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
-
-    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."
+    p4charset : "The P4CHARSET environment variable to set for the P4 Code Review instance."
 
     existing_redis_connection : "The existing Redis connection for the P4 Code Review service."
 
@@ -511,21 +509,29 @@ variable "p4_code_review_config" {
     # Storage & Logging
     cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."
 
+    ebs_volume_size : "Size in GB for the EBS volume that stores P4 Code Review data. Default is '20'."
+
+    ebs_volume_type : "EBS volume type for P4 Code Review data storage. Default is 'gp3'."
+
+    ebs_volume_encrypted : "Enable encryption for the EBS volume storing P4 Code Review data. Default is 'true'."
+
+    ebs_availability_zone : "Availability zone for the EBS volume. Must match the EC2 instance AZ."
+
 
     # Networking & Security
     create_default_sgs : "Whether to create default security groups for the P4 Code Review service."
 
     internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."
 
-    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."
+    instance_subnet_id : "The subnet ID where the EC2 instance will be launched. Should be a private subnet for security."
 
-    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator password."
+    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user password."
 
-    p4d_p4_code_review_user_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."
+    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user username."
 
-    p4d_p4_code_review_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
+    p4_code_review_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
 
-    p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
+    p4_code_review_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."
 
     enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."
 

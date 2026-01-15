@@ -3402,15 +3402,15 @@
 
 
 <h1 id="p4-code-review-submodule">P4 Code Review Submodule<a class="headerlink" href="#p4-code-review-submodule" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.perforce.com/products/helix-swarm">P4 Code Review</a> is a free code review tool for projects hosted in <a href="https://www.perforce.com/products/helix-core/aws">P4 Server</a>. This module deploys P4 Code Review as a service on AWS Elastic Container Service using the <a href="https://hub.docker.com/r/perforce/helix-swarm">publicly available image from Dockerhub</a>.</p>
+<p><a href="https://www.perforce.com/products/helix-swarm">P4 Code Review</a> is a free code review tool for projects hosted in <a href="https://www.perforce.com/products/helix-core/aws">P4 Server</a>. This module deploys P4 Code Review on an EC2 Auto Scaling Group using a custom AMI built with <a href="../../../../assets/packer/perforce/p4-code-review/index.html">Packer</a>.</p>
 <p>P4 Code Review also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and configures connectivity for the P4 Code Review service.</p>
 <p>This module deploys the following resources:</p>
 <ul>
-<li>An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in via the <code>cluster_name</code> variable.</li>
-<li>An ECS service running the latest P4 Code Review container (<a href="https://hub.docker.com/r/perforce/helix-swarm">perforce/helix-swarm</a>) available.</li>
+<li>An EC2 Auto Scaling Group running the P4 Code Review AMI (built using the <a href="../../../../assets/packer/perforce/p4-code-review/index.html">Packer template</a>).</li>
+<li>A persistent EBS volume for P4 Code Review data that survives instance replacement.</li>
 <li>An Application Load Balancer for TLS termination of the P4 Code Review service.</li>
 <li>A single node <a href="https://aws.amazon.com/elasticache/redis/">AWS Elasticache Redis OSS</a> cluster.</li>
-<li>Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.</li>
+<li>Supporting resources such as CloudWatch log groups, IAM roles, and security groups.</li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <p><img alt="P4 Code Review Submodule Architecture" src="../../assets/media/diagrams/p4-code-review-architecture.png" /></p>
