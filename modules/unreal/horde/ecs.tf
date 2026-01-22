@@ -76,6 +76,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         {
           name  = "ASPNETCORE_ENVIRONMENT"
           value = var.environment
+        },
+        {
+          name  = "Horde__JwtExpiryTimeHours"
+          value = "72"
         }
       ]
       logConfiguration = {
@@ -197,42 +201,42 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         %{endif}
         %{endif}
         EOF
-      ]
-      secrets = [for config in [
-        {
-          name      = "P4_SUPER_USERNAME"
-          valueFrom = var.p4_super_user_username_secret_arn
-        },
-        {
-          name      = "P4_SUPER_PASSWORD"
-          valueFrom = var.p4_super_user_password_secret_arn
-        },
-        {
-          name      = "DEX_AUTH_JSON"
-          valueFrom = var.dex_auth_secret_arn
-        }
-      ] : config.valueFrom != null ? config : null]
-      readonly_root_filesystem = false
-      mountPoints = [
-        {
-          sourceVolume  = "unreal-horde-config",
-          containerPath = "/app/config"
-        }
-      ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
-          awslogs-region        = data.aws_region.current.id
-          awslogs-stream-prefix = "[P4CONFIG]"
-        }
-      },
-    }],
-    local.need_p4_trust ? [{
-      name      = "unreal-horde-p4-trust",
-      image     = "public.ecr.aws/ubuntu/ubuntu:noble"
-      essential = false
-      command = ["bash", "-exc", <<-EOF
+  ]
+  secrets = [for config in [
+    {
+      name      = "P4_SUPER_USERNAME"
+      valueFrom = var.p4_super_user_username_secret_arn
+    },
+    {
+      name      = "P4_SUPER_PASSWORD"
+      valueFrom = var.p4_super_user_password_secret_arn
+    },
+    {
+      name      = "DEX_AUTH_JSON"
+      valueFrom = var.dex_auth_secret_arn
+    }
+  ] : config.valueFrom != null ? config : null]
+  readonly_root_filesystem = false
+  mountPoints = [
+    {
+      sourceVolume  = "unreal-horde-config",
+      containerPath = "/app/config"
+    }
+  ]
+  logConfiguration = {
+    logDriver = "awslogs"
+    options = {
+      awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
+      awslogs-region        = data.aws_region.current.id
+      awslogs-stream-prefix = "[P4CONFIG]"
+    }
+  },
+}],
+local.need_p4_trust ? [{
+  name      = "unreal-horde-p4-trust",
+  image     = "public.ecr.aws/ubuntu/ubuntu:noble"
+  essential = false
+  command = ["bash", "-exc", <<-EOF
         apt-get update
         apt-get install -y curl gnupg unzip
         curl -fs https://package.perforce.com/perforce.pubkey | gpg --dearmor -o /usr/share/keyrings/perforce.gpg
@@ -251,75 +255,75 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         aws s3 cp $P4TRUST s3://${aws_s3_bucket.ansible_playbooks[0].id}/agent/.p4trust
         %{endif}
       EOF
-      ]
-      readonly_root_filesystem = false
-      mountPoints = [
-        {
-          sourceVolume  = "unreal-horde-config",
-          containerPath = "/app/config"
-        }
-      ]
-      environment = [
-        {
-          name  = "P4TRUST"
-          value = "/app/config/.p4trust"
-        }
-      ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
-          awslogs-region        = data.aws_region.current.id
-          awslogs-stream-prefix = "[P4TRUST]"
-        }
-      },
-    }] : [],
-    var.deploy_dex ? [{
-      name                     = var.dex_container_name,
-      image                    = "public.ecr.aws/bitnami/dex:2"
-      essential                = true
-      readonly_root_filesystem = false
-      command                  = ["serve", "/app/config/dex.yaml"]
-      mountPoints = [
-        {
-          sourceVolume  = "unreal-horde-config",
-          containerPath = "/app/config"
-        }
-      ]
-      portMappings = [
-        {
-          containerPort = var.dex_container_port
-          hostPort      = var.dex_container_port
-        }
-      ]
-      healthCheck = {
-        command = [
-          "CMD-SHELL", "curl http://localhost:${var.dex_container_port} || exit 1",
-        ]
-        interval    = 5
-        retries     = 3
-        startPeriod = 10
-        timeout     = 5
-      }
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
-          awslogs-region        = data.aws_region.current.id
-          awslogs-stream-prefix = "[DEX]"
-        }
-      },
-      dependsOn = [{
-        containerName = "unreal-horde-config"
-        condition     = "SUCCESS"
-      }],
-    }] : []
-  ))
-  tags = {
-    Name = var.name
+  ]
+  readonly_root_filesystem = false
+  mountPoints = [
+    {
+      sourceVolume  = "unreal-horde-config",
+      containerPath = "/app/config"
+    }
+  ]
+  environment = [
+    {
+      name  = "P4TRUST"
+      value = "/app/config/.p4trust"
+    }
+  ]
+  logConfiguration = {
+    logDriver = "awslogs"
+    options = {
+      awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
+      awslogs-region        = data.aws_region.current.id
+      awslogs-stream-prefix = "[P4TRUST]"
+    }
+  },
+}] : [],
+var.deploy_dex ? [{
+  name                     = var.dex_container_name,
+  image                    = "public.ecr.aws/bitnami/dex:2"
+  essential                = true
+  readonly_root_filesystem = false
+  command                  = ["serve", "/app/config/dex.yaml"]
+  mountPoints = [
+    {
+      sourceVolume  = "unreal-horde-config",
+      containerPath = "/app/config"
+    }
+  ]
+  portMappings = [
+    {
+      containerPort = var.dex_container_port
+      hostPort      = var.dex_container_port
+    }
+  ]
+  healthCheck = {
+    command = [
+      "CMD-SHELL", "curl http://localhost:${var.dex_container_port} || exit 1",
+    ]
+    interval    = 5
+    retries     = 3
+    startPeriod = 10
+    timeout     = 5
   }
-  task_role_arn      = var.custom_unreal_horde_role != null ? var.custom_unreal_horde_role : aws_iam_role.unreal_horde_default_role[0].arn
-  execution_role_arn = aws_iam_role.unreal_horde_task_execution_role.arn
+  logConfiguration = {
+    logDriver = "awslogs"
+    options = {
+      awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
+      awslogs-region        = data.aws_region.current.id
+      awslogs-stream-prefix = "[DEX]"
+    }
+  },
+  dependsOn = [{
+    containerName = "unreal-horde-config"
+    condition     = "SUCCESS"
+  }],
+}] : []
+))
+tags = {
+  Name = var.name
+}
+task_role_arn      = var.custom_unreal_horde_role != null ? var.custom_unreal_horde_role : aws_iam_role.unreal_horde_default_role[0].arn
+execution_role_arn = aws_iam_role.unreal_horde_task_execution_role.arn
 }
 
 resource "aws_ecs_service" "unreal_horde" {

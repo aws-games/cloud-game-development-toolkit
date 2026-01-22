@@ -42,6 +42,15 @@ locals {
     web = {
       http = "0.0.0.0:${var.dex_container_port}"
     }
+    expiry = {
+      signingKeys = "6h",
+      idTokens    = "72h",
+      refreshTokens = {
+        validIfNotUsedFor = "2160h",
+        absoluteLifeTime  = "3960h",
+        reuseInterval     = "3s",
+      }
+    }
     connectors = var.dex_connectors
     staticClients = [{
       id     = "horde"
@@ -53,7 +62,7 @@ locals {
         "http://localhost:13340",
         "http://localhost:8749/ugs.client",
         "http://localhost:8749/",
-      ]
+      ],
     }]
   } : null
 }
