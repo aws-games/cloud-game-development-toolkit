@@ -79,7 +79,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         },
         {
           name  = "Horde__JwtExpiryTimeHours"
-          value = "72"
+          value = tostring(var.auth_token_timeout_hours)
         }
       ]
       logConfiguration = {

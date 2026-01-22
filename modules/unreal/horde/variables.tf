@@ -278,6 +278,12 @@ variable "p4_super_user_password_secret_arn" {
   }
 }
 
+variable "auth_token_timeout_hours" {
+  type        = number
+  description = "The number of hours before authentication tokens expire."
+  default     = 72
+}
+
 ######################
 # OIDC CONFIG
 ######################
