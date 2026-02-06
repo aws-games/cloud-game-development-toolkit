@@ -159,12 +159,12 @@ resource "aws_ecs_task_definition" "task_definition" {
           EOF
         ]
 
-        secrets = [
+        secrets = var.config_php_source != null ? [
           {
             name      = "CONFIG_USER_PHP"
             valueFrom = var.config_php_source
           },
-        ]
+        ] : []
         environment = [
           {
             name = "CONFIG_PHP"
