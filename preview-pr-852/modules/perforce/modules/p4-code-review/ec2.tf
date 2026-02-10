@@ -33,7 +33,7 @@ resource "aws_ebs_volume" "swarm_data" {
 ##########################################
 # Launch Template
 ##########################################
-# Defines the EC2 instance configuration for ECS
+# Defines the EC2 instance configuration
 # Includes user data script that automatically attaches and mounts the EBS volume
 
 resource "aws_launch_template" "swarm_instance" {
@@ -58,16 +58,15 @@ resource "aws_launch_template" "swarm_instance" {
     module_identifier                       = local.module_identifier
     p4d_port                                = var.p4d_port
     p4charset                               = var.p4charset
-    swarm_host                              = var.fully_qualified_domain_name
+    swarm_host                              = "https://${var.fully_qualified_domain_name}"
     swarm_redis                             = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.cluster[0].cache_nodes[0].address
     swarm_redis_port                        = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.cluster[0].cache_nodes[0].port)
     swarm_force_ext                         = "y"
-    enable_sso                              = var.enable_sso ? "true" : "false"
     super_user_username_secret_arn          = var.super_user_username_secret_arn
     super_user_password_secret_arn          = var.super_user_password_secret_arn
     p4_code_review_user_username_secret_arn = var.p4_code_review_user_username_secret_arn
     p4_code_review_user_password_secret_arn = var.p4_code_review_user_password_secret_arn
-    config_php_source                       = var.config_php_source
+    custom_config                           = var.custom_config
   }))
 
   metadata_options {

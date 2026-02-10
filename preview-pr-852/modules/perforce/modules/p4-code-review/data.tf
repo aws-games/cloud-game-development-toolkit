@@ -11,7 +11,7 @@ data "aws_ami" "p4_code_review" {
 
   filter {
     name   = "name"
-    values = ["p4_code_review_ubuntu2404-*"]
+    values = ["p4_code_review_ubuntu-*"]
   }
 
   filter {

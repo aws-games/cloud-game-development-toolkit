@@ -29,7 +29,7 @@
     
     
       
-        <title>Index - Cloud Game Development Toolkit</title>
+        <title>P4 Server Submodule - Cloud Game Development Toolkit</title>
       
     
     
@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#requirements" class="md-skip">
+        <a href="#p4-server-submodule" class="md-skip">
           Skip to content
         </a>
       
@@ -142,7 +142,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Index
+              P4 Server Submodule
             
           </span>
         </div>
@@ -3303,12 +3303,53 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#super-user-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Super User Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#requirements" class="md-nav__link">
@@ -3376,72 +3417,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#requirements_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#providers_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Providers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#modules_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Modules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#resources_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resources
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#outputs_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3462,8 +3437,38 @@
   
 
 
-  <h1>Index</h1>
+<h1 id="p4-server-submodule">P4 Server Submodule<a class="headerlink" href="#p4-server-submodule" title="Permanent link">&para;</a></h1>
+<p><a href="https://www.perforce.com/products/helix-core/aws">P4 Server</a> is a scalable version control system that helps teams manage code alongside large, digital assets and collaborate more effectively in one central, secure location. With AWS, teams can quickly deploy Helix Core and accelerate innovation.</p>
+<p>This module provisions P4 Server on an EC2 Instance with three dedicated EBS volumes for depots, metadata, and logs. It can also be configured to automatically install the required plugins to integrate with P4Auth. This is the default option if using the parent module. This allows end users to quickly set up single-sign-on for their Perforce Helix Core server.</p>
+<h2 id="deployment-architecture">Deployment Architecture<a class="headerlink" href="#deployment-architecture" title="Permanent link">&para;</a></h2>
+<p><img alt="Helix Core Module Architecture" src="../../assets/media/diagrams/p4-server-architecture.png" /></p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>This module deploys P4 Server on AWS using an Amazon Machine Image (AMI) that is included in the Cloud Game Development Toolkit. You <strong>must</strong> provision this AMI using <a href="https://www.packer.io/">Hashicorp Packer</a> prior to deploying this module. To get started consult <a href="../../../../assets/packer/perforce/p4-server/index.html">the documentation for the P4 Server AMI</a>.</p>
+<h3 id="super-user-configuration">Super User Configuration<a class="headerlink" href="#super-user-configuration" title="Permanent link">&para;</a></h3>
+<p>This module always creates a user named <code>super</code> with a randomly generated password. This is required for compatibility with P4 Code Review (Helix Swarm), which expects a user named <code>super</code> when running <code>configure-swarm.sh</code>. The credentials are stored in AWS Secrets Manager and available as module outputs.</p>
+<h4 id="optional-additional-super-user">Optional: Additional Super User<a class="headerlink" href="#optional-additional-super-user" title="Permanent link">&para;</a></h4>
+<p>You can optionally create an additional super user with a custom username. This is useful if you want a named administrator account alongside the required <code>super</code> user. Both users will have full super privileges.</p>
+<p>To create an additional super user, first create secrets for the credentials:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>P4ServerAdminUsername<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Admin Username&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;admin&quot;</span>
 
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>P4ServerAdminPassword<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Admin Password&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;EXAMPLE-PASSWORD&quot;</span>
+</code></pre></div>
+<p>Then provide the ARNs as variables:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="na">super_user_username_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:P4ServerAdminUsername-a1b2c3&quot;</span>
+<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:P4ServerAdminPassword-a1b2c3&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<!-- markdownlint-disable -->
+<!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3514,19 +3519,19 @@
 <tbody>
 <tr>
 <td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>6.6.0</td>
+<td>~&gt; 6.6</td>
 </tr>
 <tr>
 <td><a name="provider_awscc"></a> <a href="#provider_awscc">awscc</a></td>
-<td>1.50.0</td>
+<td>~&gt; 1.51</td>
 </tr>
 <tr>
 <td><a name="provider_netapp-ontap"></a> <a href="#provider_netapp-ontap">netapp-ontap</a></td>
-<td>2.3.0</td>
+<td>~&gt; 2.3</td>
 </tr>
 <tr>
 <td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>3.7.2</td>
+<td>~&gt; 3.7</td>
 </tr>
 </tbody>
 </table>
@@ -3716,6 +3721,34 @@
 </thead>
 <tbody>
 <tr>
+<td><a name="input_instance_subnet_id"></a> <a href="#input_instance_subnet_id">instance_subnet_id</a></td>
+<td>The subnet where the P4 Server instance will be deployed.</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_p4_server_type"></a> <a href="#input_p4_server_type">p4_server_type</a></td>
+<td>The Perforce P4 Server type.</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_storage_type"></a> <a href="#input_storage_type">storage_type</a></td>
+<td>The type of backing store [EBS, FSxN]</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>The VPC where P4 Server should be deployed</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_amazon_fsxn_filesystem_id"></a> <a href="#input_amazon_fsxn_filesystem_id">amazon_fsxn_filesystem_id</a></td>
 <td>The ID of the existing FSx ONTAP file system to use if storage type is FSxN.</td>
 <td><code>string</code></td>
@@ -3842,13 +3875,6 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_instance_subnet_id"></a> <a href="#input_instance_subnet_id">instance_subnet_id</a></td>
-<td>The subnet where the P4 Server instance will be deployed.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
 <td><a name="input_instance_type"></a> <a href="#input_instance_type">instance_type</a></td>
 <td>The instance type for Perforce P4 Server. Defaults to c6g.large.</td>
 <td><code>string</code></td>
@@ -3884,13 +3910,6 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_p4_server_type"></a> <a href="#input_p4_server_type">p4_server_type</a></td>
-<td>The Perforce P4 Server type.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
 <td><a name="input_plaintext"></a> <a href="#input_plaintext">plaintext</a></td>
 <td>Whether to enable plaintext authentication for P4 Server. This is not recommended for production environments unless you are using a load balancer for TLS termination.</td>
 <td><code>bool</code></td>
@@ -3919,13 +3938,6 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_storage_type"></a> <a href="#input_storage_type">storage_type</a></td>
-<td>The type of backing store [EBS, FSxN]</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
 <td><a name="input_super_user_password_secret_arn"></a> <a href="#input_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
 <td>If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here.</td>
 <td><code>string</code></td>
@@ -3952,560 +3964,10 @@
 <td><code>bool</code></td>
 <td><code>false</code></td>
 <td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
-<td>The VPC where P4 Server should be deployed</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
 </tr>
 </tbody>
 </table>
 <h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="output_eip_id"></a> <a href="#output_eip_id">eip_id</a></td>
-<td>The ID of the Elastic IP associated with your P4 Server instance.</td>
-</tr>
-<tr>
-<td><a name="output_eip_public_ip"></a> <a href="#output_eip_public_ip">eip_public_ip</a></td>
-<td>The public IP of your P4 Server instance.</td>
-</tr>
-<tr>
-<td><a name="output_instance_id"></a> <a href="#output_instance_id">instance_id</a></td>
-<td>Instance ID for the P4 Server instance</td>
-</tr>
-<tr>
-<td><a name="output_lambda_link_name"></a> <a href="#output_lambda_link_name">lambda_link_name</a></td>
-<td>Lambda function name for the FSxN Link</td>
-</tr>
-<tr>
-<td><a name="output_private_ip"></a> <a href="#output_private_ip">private_ip</a></td>
-<td>Private IP for the P4 Server instance</td>
-</tr>
-<tr>
-<td><a name="output_security_group_id"></a> <a href="#output_security_group_id">security_group_id</a></td>
-<td>The default security group of your P4 Server instance.</td>
-</tr>
-<tr>
-<td><a name="output_super_user_password_secret_arn"></a> <a href="#output_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password.</td>
-</tr>
-<tr>
-<td><a name="output_super_user_username_secret_arn"></a> <a href="#output_super_user_username_secret_arn">super_user_username_secret_arn</a></td>
-<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username.</td>
-</tr>
-</tbody>
-</table>
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
-<h2 id="requirements_1">Requirements<a class="headerlink" href="#requirements_1" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
-<td>&gt;= 1.0</td>
-</tr>
-<tr>
-<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="requirement_awscc"></a> <a href="#requirement_awscc">awscc</a></td>
-<td>~&gt; 1.51</td>
-</tr>
-<tr>
-<td><a name="requirement_local"></a> <a href="#requirement_local">local</a></td>
-<td>~&gt; 2.5</td>
-</tr>
-<tr>
-<td><a name="requirement_netapp-ontap"></a> <a href="#requirement_netapp-ontap">netapp-ontap</a></td>
-<td>~&gt; 2.3</td>
-</tr>
-<tr>
-<td><a name="requirement_null"></a> <a href="#requirement_null">null</a></td>
-<td>~&gt; 3.2</td>
-</tr>
-<tr>
-<td><a name="requirement_random"></a> <a href="#requirement_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="providers_1">Providers<a class="headerlink" href="#providers_1" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="provider_awscc"></a> <a href="#provider_awscc">awscc</a></td>
-<td>~&gt; 1.51</td>
-</tr>
-<tr>
-<td><a name="provider_netapp-ontap"></a> <a href="#provider_netapp-ontap">netapp-ontap</a></td>
-<td>~&gt; 2.3</td>
-</tr>
-<tr>
-<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="modules_1">Modules<a class="headerlink" href="#modules_1" title="Permanent link">&para;</a></h2>
-<p>No modules.</p>
-<h2 id="resources_1">Resources<a class="headerlink" href="#resources_1" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume">aws_ebs_volume.depot</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume">aws_ebs_volume.logs</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume">aws_ebs_volume.metadata</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip">aws_eip.server_eip</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_ontap_volume">aws_fsx_ontap_volume.depot</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_ontap_volume">aws_fsx_ontap_volume.logs</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_ontap_volume">aws_fsx_ontap_volume.metadata</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile">aws_iam_instance_profile.instance_profile</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.lambda_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.default_role_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.default_role_ssm_managed_instance_core</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.lambda_service_basic_execution_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.lambda_service_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.lambda_vpc_access_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance">aws_instance.server_instance</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function">aws_lambda_function.lambda_function</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.default_security_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.fsxn_lambda_link_security_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment">aws_volume_attachment.depot_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment">aws_volume_attachment.logs_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment">aws_volume_attachment.metadata_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.link_outbound_fsxn</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.server_internet</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.fsxn_inbound_link</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.super_user_password</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.super_user_username</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun">netapp-ontap_lun.depots_volume_lun</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun">netapp-ontap_lun.logs_volume_lun</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun">netapp-ontap_lun.metadata_volume_lun</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/san_igroup">netapp-ontap_san_igroup.perforce_igroup</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/san_lun-map">netapp-ontap_san_lun-map.depots_lun_map</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/san_lun-map">netapp-ontap_san_lun-map.logs_lun_map</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/san_lun-map">netapp-ontap_san_lun-map.metadata_lun_map</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.p4_server</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami">aws_ami.existing_server_ami</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.default_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ec2_trust_relationship</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet">aws_subnet.instance_subnet</a></td>
-<td>data source</td>
-</tr>
-</tbody>
-</table>
-<h2 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Type</th>
-<th>Default</th>
-<th style="text-align: center;">Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="input_instance_subnet_id"></a> <a href="#input_instance_subnet_id">instance_subnet_id</a></td>
-<td>The subnet where the P4 Server instance will be deployed.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_p4_server_type"></a> <a href="#input_p4_server_type">p4_server_type</a></td>
-<td>The Perforce P4 Server type.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_storage_type"></a> <a href="#input_storage_type">storage_type</a></td>
-<td>The type of backing store [EBS, FSxN]</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
-<td>The VPC where P4 Server should be deployed</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_amazon_fsxn_filesystem_id"></a> <a href="#input_amazon_fsxn_filesystem_id">amazon_fsxn_filesystem_id</a></td>
-<td>The ID of the existing FSx ONTAP file system to use if storage type is FSxN.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_amazon_fsxn_svm_id"></a> <a href="#input_amazon_fsxn_svm_id">amazon_fsxn_svm_id</a></td>
-<td>The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_auth_service_url"></a> <a href="#input_auth_service_url">auth_service_url</a></td>
-<td>The URL for the P4Auth Service.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_case_sensitive"></a> <a href="#input_case_sensitive">case_sensitive</a></td>
-<td>Whether or not the server should be case insensitive (Server will run '-C1' mode), or if the server will run with case sensitivity default of the underlying platform. False enables '-C1' mode</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_default_role"></a> <a href="#input_create_default_role">create_default_role</a></td>
-<td>Optional creation of P4 Server default IAM Role with SSM managed instance core policy attached. Default is set to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_default_sg"></a> <a href="#input_create_default_sg">create_default_sg</a></td>
-<td>Whether to create a default security group for the P4 Server instance.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_custom_role"></a> <a href="#input_custom_role">custom_role</a></td>
-<td>ARN of the custom IAM Role you wish to use with P4 Server.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_depot_volume_size"></a> <a href="#input_depot_volume_size">depot_volume_size</a></td>
-<td>The size of the depot volume in GiB. Defaults to 128 GiB.</td>
-<td><code>number</code></td>
-<td><code>128</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_environment"></a> <a href="#input_environment">environment</a></td>
-<td>The environment attached to P4 Server module resources.</td>
-<td><code>string</code></td>
-<td><code>"dev"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_existing_security_groups"></a> <a href="#input_existing_security_groups">existing_security_groups</a></td>
-<td>A list of existing security group IDs to attach to the P4 Server load balancer.</td>
-<td><code>list(string)</code></td>
-<td><code>[]</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fsxn_filesystem_security_group_id"></a> <a href="#input_fsxn_filesystem_security_group_id">fsxn_filesystem_security_group_id</a></td>
-<td>The ID of the security group for the FSx ONTAP filesystem.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fsxn_management_ip"></a> <a href="#input_fsxn_management_ip">fsxn_management_ip</a></td>
-<td>FSxN management ip address</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fsxn_password"></a> <a href="#input_fsxn_password">fsxn_password</a></td>
-<td>FSxN admin user password AWS secret manager arn</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fsxn_region"></a> <a href="#input_fsxn_region">fsxn_region</a></td>
-<td>The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fsxn_svm_name"></a> <a href="#input_fsxn_svm_name">fsxn_svm_name</a></td>
-<td>FSxN storage virtual machine name</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_fully_qualified_domain_name"></a> <a href="#input_fully_qualified_domain_name">fully_qualified_domain_name</a></td>
-<td>The fully qualified domain name where P4 Server will be available. This is used to generate self-signed certificates on the P4 Server.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_instance_architecture"></a> <a href="#input_instance_architecture">instance_architecture</a></td>
-<td>The architecture of the P4 Server instance. Allowed values are 'arm64' or 'x86_64'.</td>
-<td><code>string</code></td>
-<td><code>"x86_64"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_instance_private_ip"></a> <a href="#input_instance_private_ip">instance_private_ip</a></td>
-<td>The private IP address to assign to the P4 Server.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_instance_type"></a> <a href="#input_instance_type">instance_type</a></td>
-<td>The instance type for Perforce P4 Server. Defaults to c6g.large.</td>
-<td><code>string</code></td>
-<td><code>"c6i.large"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_internal"></a> <a href="#input_internal">internal</a></td>
-<td>Set this flag to true if you do not want the P4 Server instance to have a public IP.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_logs_volume_size"></a> <a href="#input_logs_volume_size">logs_volume_size</a></td>
-<td>The size of the logs volume in GiB. Defaults to 32 GiB.</td>
-<td><code>number</code></td>
-<td><code>32</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_metadata_volume_size"></a> <a href="#input_metadata_volume_size">metadata_volume_size</a></td>
-<td>The size of the metadata volume in GiB. Defaults to 32 GiB.</td>
-<td><code>number</code></td>
-<td><code>32</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_name"></a> <a href="#input_name">name</a></td>
-<td>The name attached to P4 Server module resources.</td>
-<td><code>string</code></td>
-<td><code>"p4-server"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_plaintext"></a> <a href="#input_plaintext">plaintext</a></td>
-<td>Whether to enable plaintext authentication for P4 Server. This is not recommended for production environments unless you are using a load balancer for TLS termination.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_project_prefix"></a> <a href="#input_project_prefix">project_prefix</a></td>
-<td>The project prefix for this workload. This is appended to the beginning of most resource names.</td>
-<td><code>string</code></td>
-<td><code>"cgd"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_protocol"></a> <a href="#input_protocol">protocol</a></td>
-<td>Specify the protocol (NFS or ISCSI)</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_selinux"></a> <a href="#input_selinux">selinux</a></td>
-<td>Whether to apply SELinux label updates for P4 Server. Don't enable this if SELinux is disabled on your target operating system.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_super_user_password_secret_arn"></a> <a href="#input_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_super_user_username_secret_arn"></a> <a href="#input_super_user_username_secret_arn">super_user_username_secret_arn</a></td>
-<td>If provided, creates an ADDITIONAL super user with this name alongside the required 'super' user for Swarm compatibility. Both users will have full super privileges.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
-<td>Tags to apply to resources.</td>
-<td><code>map(any)</code></td>
-<td><pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "p4-server",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "terraform-aws-perforce"<br/>}</pre></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_unicode"></a> <a href="#input_unicode">unicode</a></td>
-<td>Whether to enable Unicode configuration for P4 Server the -xi flag for p4d. Set to true to enable Unicode support.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-</tbody>
-</table>
-<h2 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -4608,7 +4070,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../../index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Index">
+          <a href="../../index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Perforce on AWS Terraform Module">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -4618,7 +4080,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Index
+                Perforce on AWS Terraform Module
               </div>
             </div>
           </a>

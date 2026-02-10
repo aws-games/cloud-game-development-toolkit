@@ -4,7 +4,7 @@
 # Configures P4 Code Review with P4 Server connection details, Redis cache, and other runtime settings
 # This script is called by user-data at instance launch time
 
-LOG_FILE="/var/log/swarm_configure.log"
+LOG_FILE="/var/log/swarm_instance_init.log"
 
 log_message() {
     echo "$(date) - $1" | tee -a $LOG_FILE
@@ -27,7 +27,7 @@ SWARM_HOST=""
 SWARM_REDIS=""
 SWARM_REDIS_PORT="6379"
 SWARM_FORCE_EXT="y"
-ENABLE_SSO="false"
+CUSTOM_CONFIG_FILE=""
 
 # Secret ARNs for fetching credentials from AWS Secrets Manager
 P4D_SUPER_SECRET_ARN=""
@@ -61,8 +61,8 @@ while [[ $# -gt 0 ]]; do
       SWARM_FORCE_EXT="$2"
       shift 2
       ;;
-    --enable-sso)
-      ENABLE_SSO="$2"
+    --custom-config-file)
+      CUSTOM_CONFIG_FILE="$2"
       shift 2
       ;;
     --p4d-super-secret-arn)
@@ -95,7 +95,14 @@ log_message "SWARM_HOST: $SWARM_HOST"
 log_message "SWARM_REDIS: $SWARM_REDIS"
 log_message "SWARM_REDIS_PORT: $SWARM_REDIS_PORT"
 log_message "SWARM_FORCE_EXT: $SWARM_FORCE_EXT"
-log_message "ENABLE_SSO: $ENABLE_SSO"
+log_message "CUSTOM_CONFIG_FILE: $CUSTOM_CONFIG_FILE"
+
+# Extract hostname from full URL for configure-swarm.sh
+# configure-swarm.sh expects just the hostname (it constructs URLs internally)
+# SWARM_HOST may contain https://hostname or just hostname
+SWARM_HOSTNAME="${SWARM_HOST#https://}"
+SWARM_HOSTNAME="${SWARM_HOSTNAME#http://}"
+log_message "SWARM_HOSTNAME (for configure-swarm.sh): $SWARM_HOSTNAME"
 
 # Retrieve credentials from AWS Secrets Manager
 log_message "Fetching secrets from AWS Secrets Manager"
@@ -130,7 +137,7 @@ log_message "Running configure-swarm.sh with super user credentials"
   -p "$P4D_PORT" \
   -u "$SWARM_USER" \
   -w "$SWARM_PASSWD" \
-  -H "$SWARM_HOST" \
+  -H "$SWARM_HOSTNAME" \
   -e localhost \
   -X \
   -U "$P4D_SUPER" \
@@ -140,23 +147,10 @@ log_message "Running configure-swarm.sh with super user credentials"
     exit 1
   }
 
-# Update Swarm extension configuration
-# The Perforce configure-swarm.sh script sets Swarm-Secure to true by default
-# We need to set it to false when using self-signed certificates
-log_message "Updating Swarm extension configuration for SSL settings"
-
-# Trust the P4 server SSL certificate and authenticate
-log_message "Establishing P4 connection for extension configuration"
-p4 -p "$P4D_PORT" trust -y 2>/dev/null || log_message "P4 trust already established or using non-SSL"
-echo "$P4D_SUPER_PASSWD" | p4 -p "$P4D_PORT" -u "$P4D_SUPER" login 2>/dev/null || {
-  log_message "WARNING: P4 login failed, extension configuration may not work"
-}
-
-p4 -p "$P4D_PORT" -u "$P4D_SUPER" extension --configure Perforce::helix-swarm -o | \
-  sed 's/Swarm-Secure: true/Swarm-Secure: false/' | \
-  p4 -p "$P4D_PORT" -u "$P4D_SUPER" extension --configure Perforce::helix-swarm -i || {
-    log_message "WARNING: Failed to update Swarm extension configuration"
-  }
+# Note: Swarm extension configuration is handled by configure-swarm.sh above
+# The extension is configured with:
+# - Swarm-URL: https://<hostname> (passed via -H parameter)
+# - Swarm-Secure: true (default, enables SSL certificate validation)
 
 # Configure initial permissions for Swarm data directory
 # Note: Queue-specific permissions are set after Apache starts (see below)
@@ -210,7 +204,7 @@ if [ -f "$SWARM_CONFIG" ]; then
     if (!isset(\$config['environment'])) {
       \$config['environment'] = array();
     }
-    \$config['environment']['hostname'] = 'https://$SWARM_HOST';
+    \$config['environment']['hostname'] = '$SWARM_HOST';
 
     // Write back the configuration
     file_put_contents('$SWARM_CONFIG', '<?php' . PHP_EOL . 'return ' . var_export(\$config, true) . ';' . PHP_EOL);
@@ -219,19 +213,30 @@ if [ -f "$SWARM_CONFIG" ]; then
     exit 1
   }
 
-  # Configure SSO (Single Sign-On) if enabled
-  if [ "$ENABLE_SSO" = "true" ]; then
-    log_message "Enabling SSO in configuration"
+  # Merge custom configuration from JSON file if provided
+  if [ -n "$CUSTOM_CONFIG_FILE" ] && [ -f "$CUSTOM_CONFIG_FILE" ] && [ -s "$CUSTOM_CONFIG_FILE" ]; then
+    log_message "Merging custom configuration from $CUSTOM_CONFIG_FILE"
     php -r "
       \$config = include '$SWARM_CONFIG';
-      \$config['saml']['sp']['entityId'] = 'https://$SWARM_HOST';
-      \$config['saml']['sp']['assertionConsumerService']['url'] = 'https://$SWARM_HOST/saml/acs';
-      \$config['saml']['sp']['singleLogoutService']['url'] = 'https://$SWARM_HOST/saml/sls';
+      \$customJson = file_get_contents('$CUSTOM_CONFIG_FILE');
+      \$customConfig = json_decode(\$customJson, true);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        echo 'ERROR: Invalid JSON in custom config file: ' . json_last_error_msg() . PHP_EOL;
+        exit(1);
+      }
+      // Deep merge custom config into existing config
+      \$config = array_replace_recursive(\$config, \$customConfig);
       file_put_contents('$SWARM_CONFIG', '<?php' . PHP_EOL . 'return ' . var_export(\$config, true) . ';' . PHP_EOL);
-    " || log_message "WARNING: Failed to add SSO configuration"
+    " || {
+      log_message "ERROR: Failed to merge custom configuration"
+      exit 1
+    }
+    log_message "Custom configuration merged successfully"
 
-    # Clear cache when SSO settings change to force configuration reload
+    # Clear cache when configuration changes to force reload
     rm -rf "${SWARM_DATA_PATH}/cache"/* 2>/dev/null || true
+  else
+    log_message "No custom configuration file provided or file is empty"
   fi
 
   chown swarm:www-data "$SWARM_CONFIG"
@@ -328,6 +333,6 @@ fi
 
 log_message "========================================="
 log_message "P4 Code Review configuration completed"
-log_message "P4 Code Review should be accessible at: https://$SWARM_HOST"
+log_message "P4 Code Review should be accessible at: $SWARM_HOST"
 log_message "Data path: $SWARM_DATA_PATH"
 log_message "========================================="

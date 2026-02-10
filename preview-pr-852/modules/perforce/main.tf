@@ -16,8 +16,8 @@ module "p4_server" {
       var.p4_auth_config != null ?
       (
         var.create_route53_private_hosted_zone ?
-        "auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
-        module.p4_auth[0].alb_dns_name
+        "https://auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
+        "https://${module.p4_auth[0].alb_dns_name}"
       ) :
       null
     )
@@ -164,8 +164,7 @@ module "p4_code_review" {
   p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
   p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
 
-  enable_sso        = var.p4_code_review_config.enable_sso
-  config_php_source = var.p4_code_review_config.config_php_source
+  custom_config = var.p4_code_review_config.custom_config
 
   depends_on = [module.p4_server]
 }

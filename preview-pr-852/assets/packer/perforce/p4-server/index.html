@@ -987,6 +987,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How to Use">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#script-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Script Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#super-user-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Super User Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3371,6 +3399,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="How to Use">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#script-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Script Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#super-user-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Super User Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3433,16 +3489,94 @@
 <p>An instance that is provisioned with this AMI will not automatically deploy a P4 Server. Instead, the required installation and configuration scripts are loaded onto this AMI by Packer, and then invoked at boot through EC2 user data. The P4 Server module does this through Terraform, but you can also manually provision an instance off of this AMI and specify the user data yourself:</p>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash</span>
 /home/ec2-user/cloud-game-development-toolkit/p4_configure.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;volume<span class="w"> </span>label<span class="w"> </span><span class="k">for</span><span class="w"> </span>hxdepot&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;volume<span class="w"> </span>label<span class="w"> </span><span class="k">for</span><span class="w"> </span>hxmetadata&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;volume<span class="w"> </span>label<span class="w"> </span><span class="k">for</span><span class="w"> </span>hxlogs&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;p4d<span class="w"> </span>server<span class="w"> </span>type&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;super<span class="w"> </span>user<span class="w"> </span>username<span class="w"> </span>ARN<span class="w"> </span>from<span class="w"> </span>AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;super<span class="w"> </span>user<span class="w"> </span>password<span class="w"> </span>ARN<span class="w"> </span>from<span class="w"> </span>AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;fully<span class="w"> </span>qualified<span class="w"> </span>domain<span class="w"> </span>name<span class="w"> </span>of<span class="w"> </span>P4<span class="w"> </span>Server&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>&lt;URL<span class="w"> </span><span class="k">for</span><span class="w"> </span>P4Auth&gt;
+<span class="w">   </span>--p4d_type<span class="w"> </span>p4d_master<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--hx_depots<span class="w"> </span>/dev/sdf<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--hx_metadata<span class="w"> </span>/dev/sdg<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--hx_logs<span class="w"> </span>/dev/sdh<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--username<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>username&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--password<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>password&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--fqdn<span class="w"> </span>perforce.example.com<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--auth<span class="w"> </span>https://auth.perforce.example.com
 </code></pre></div>
-<p>As you can see, there are quite a few parameters that need to be passed to the <code>p4_configure.sh</code> script. We recommend using the <a href="../../../../modules/perforce/index.html">Perforce module</a> for this reason.</p>
+<h3 id="script-options">Script Options<a class="headerlink" href="#script-options" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--p4d_type</code></td>
+<td>P4 Server type: <code>p4d_master</code>, <code>p4d_replica</code>, or <code>p4d_edge</code></td>
+</tr>
+<tr>
+<td><code>--hx_depots</code></td>
+<td>Path/device for P4 Server depots volume</td>
+</tr>
+<tr>
+<td><code>--hx_metadata</code></td>
+<td>Path/device for P4 Server metadata volume</td>
+</tr>
+<tr>
+<td><code>--hx_logs</code></td>
+<td>Path/device for P4 Server logs volume</td>
+</tr>
+<tr>
+<td><code>--username</code></td>
+<td>AWS Secrets Manager secret ID for admin username</td>
+</tr>
+<tr>
+<td><code>--password</code></td>
+<td>AWS Secrets Manager secret ID for admin password</td>
+</tr>
+<tr>
+<td><code>--fqdn</code></td>
+<td>Fully Qualified Domain Name for the P4 Server</td>
+</tr>
+<tr>
+<td><code>--auth</code></td>
+<td>P4Auth URL (optional)</td>
+</tr>
+<tr>
+<td><code>--case_sensitive</code></td>
+<td>Case sensitivity: <code>0</code> (insensitive) or <code>1</code> (sensitive, default)</td>
+</tr>
+<tr>
+<td><code>--unicode</code></td>
+<td>Enable Unicode mode: <code>true</code> or <code>false</code></td>
+</tr>
+<tr>
+<td><code>--selinux</code></td>
+<td>Update SELinux labels: <code>true</code> or <code>false</code></td>
+</tr>
+<tr>
+<td><code>--plaintext</code></td>
+<td>Disable SSL: <code>true</code> or <code>false</code></td>
+</tr>
+<tr>
+<td><code>--fsxn_password</code></td>
+<td>AWS Secrets Manager secret ID for FSxN password</td>
+</tr>
+<tr>
+<td><code>--fsxn_svm_name</code></td>
+<td>FSxN Storage Virtual Machine name</td>
+</tr>
+<tr>
+<td><code>--fsxn_management_ip</code></td>
+<td>FSxN management IP address</td>
+</tr>
+</tbody>
+</table>
+<h3 id="super-user-configuration">Super User Configuration<a class="headerlink" href="#super-user-configuration" title="Permanent link">&para;</a></h3>
+<p>The script always creates a user named <code>super</code> for compatibility with P4 Code Review (Helix Swarm). If you provide a <code>--username</code> value other than "super", the script will:</p>
+<ol>
+<li>Create the required <code>super</code> user with the provided <code>--password</code></li>
+<li>Create an additional super user with your custom username and the same password</li>
+</ol>
+<p>Both users will have full super privileges.</p>
+<p>We recommend using the <a href="../../../../modules/perforce/index.html">Perforce module</a> to manage these configurations through Terraform.</p>
 <h2 id="important-notes">Important Notes<a class="headerlink" href="#important-notes" title="Permanent link">&para;</a></h2>
 <ul>
 <li>This script is designed for a specific use-case and might require modifications for different environments or requirements.</li>
@@ -3469,7 +3603,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-01-14
   </span>
 
     

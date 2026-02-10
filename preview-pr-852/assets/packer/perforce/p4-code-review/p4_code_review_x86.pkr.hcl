@@ -8,8 +8,20 @@ packer {
 }
 
 locals {
-  timestamp = regex_replace(timestamp(), "[- TZ:]", "")
-  ami_prefix = "p4_code_review_ubuntu2404"
+  timestamp  = regex_replace(timestamp(), "[- TZ:]", "")
+  ami_prefix = "p4_code_review_ubuntu"
+}
+
+data "amazon-ami" "ubuntu" {
+  filters = {
+    name                = "ubuntu/images/hvm-ssd-gp3/ubuntu-*-amd64-server-*"
+    architecture        = "x86_64"
+    root-device-type    = "ebs"
+    virtualization-type = "hvm"
+  }
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+  region      = var.region
 }
 
 variable "region" {
@@ -43,7 +55,7 @@ variable "install_swarm_optional" {
   description = "Install helix-swarm-optional package (includes LibreOffice for document previews and ImageMagick for image previews). Adds ~500MB to AMI size."
 }
 
-source "amazon-ebs" "ubuntu2404" {
+source "amazon-ebs" "ubuntu" {
   region = var.region
   ami_name      = "${local.ami_prefix}-${local.timestamp}"
   instance_type = "t3.medium"
@@ -54,16 +66,7 @@ source "amazon-ebs" "ubuntu2404" {
   associate_public_ip_address = var.associate_public_ip_address
   ssh_interface = var.ssh_interface
 
-  source_ami_filter {
-    filters = {
-      name                = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
-      architecture        = "x86_64"
-      root-device-type    = "ebs"
-      virtualization-type = "hvm"
-    }
-    most_recent = true
-    owners      = ["099720109477"]  # Canonical
-  }
+  source_ami = data.amazon-ami.ubuntu.id
 
   ssh_username = "ubuntu"
 }
@@ -71,7 +74,7 @@ source "amazon-ebs" "ubuntu2404" {
 build {
   name = "P4_CODE_REVIEW_AWS"
   sources = [
-    "source.amazon-ebs.ubuntu2404"
+    "source.amazon-ebs.ubuntu"
   ]
 
     provisioner "shell" {
@@ -91,18 +94,18 @@ build {
     }
 
     provisioner "file" {
-      source      = "${path.root}/swarm_configure.sh"
-      destination = "/tmp/swarm_configure.sh"
+      source      = "${path.root}/swarm_instance_init.sh"
+      destination = "/tmp/swarm_instance_init.sh"
     }
 
     provisioner "shell" {
       inline = ["mkdir -p /home/ubuntu/swarm_scripts",
-                "sudo mv /tmp/swarm_configure.sh /home/ubuntu/swarm_scripts"
+                "sudo mv /tmp/swarm_instance_init.sh /home/ubuntu/swarm_scripts"
       ]
     }
 
     provisioner "shell" {
-      inline = ["sudo chmod +x /home/ubuntu/swarm_scripts/swarm_configure.sh"]
+      inline = ["sudo chmod +x /home/ubuntu/swarm_scripts/swarm_instance_init.sh"]
     }
 
 }

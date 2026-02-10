@@ -4079,7 +4079,7 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <li><strong>PHP-FPM</strong>: FastCGI Process Manager for PHP</li>
 <li><strong>helix-swarm-optional</strong> (optional, installed by default): LibreOffice for document preview (.docx, .xlsx, .pptx) and ImageMagick for image preview (.png, .jpg, .tiff, etc.) (~500MB)</li>
 <li><strong>AWS CLI v2</strong>: Required for Secrets Manager access and EBS volume operations at runtime</li>
-<li><strong>Configuration Script</strong>: <code>/home/ubuntu/swarm_scripts/swarm_configure.sh</code> for runtime setup (see Runtime Configuration Details below)</li>
+<li><strong>Configuration Script</strong>: <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> for runtime setup (see Runtime Configuration Details below)</li>
 </ol>
 <h3 id="system-configuration">System Configuration<a class="headerlink" href="#system-configuration" title="Permanent link">&para;</a></h3>
 <ul>
@@ -4089,7 +4089,7 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <li><strong>Directories</strong>: <code>/opt/perforce/swarm</code> prepared with correct ownership</li>
 </ul>
 <h3 id="whats-not-configured-yet">What's NOT Configured Yet<a class="headerlink" href="#whats-not-configured-yet" title="Permanent link">&para;</a></h3>
-<p>The following are configured at <strong>runtime</strong> when you launch an instance:</p>
+<p>The following are configured at <strong>deployment</strong> when you launch an instance:</p>
 <ul>
 <li>P4 Server connection details</li>
 <li>P4 user credentials (fetched from AWS Secrets Manager)</li>
@@ -4106,7 +4106,7 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <ol>
 <li><strong>EBS Volume Attachment</strong>: Finds and attaches the persistent data volume by tags</li>
 <li><strong>Filesystem Setup</strong>: Creates ext4 filesystem (first launch) or mounts existing one</li>
-<li><strong>Swarm Configuration</strong>: Executes <code>/home/ubuntu/swarm_scripts/swarm_configure.sh</code> which:</li>
+<li><strong>Swarm Configuration</strong>: Executes <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> which:</li>
 <li>Retrieves P4 credentials from AWS Secrets Manager</li>
 <li>Runs Perforce's official <code>configure-swarm.sh</code> to:<ul>
 <li>Connect to P4 Server and validate credentials</li>
@@ -4160,7 +4160,7 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <p>Successful build output looks like:</p>
 <div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: Stopping the source instance...
 ==&gt; amazon-ebs.ubuntu2404: Waiting for the instance to stop...
-==&gt; amazon-ebs.ubuntu2404: Creating AMI p4_code_review_ubuntu2404-20231209123456 from instance i-xxxxx
+==&gt; amazon-ebs.ubuntu2404: Creating AMI p4_code_review_ubuntu-20231209123456 from instance i-xxxxx
 ==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
 ==&gt; amazon-ebs.ubuntu2404: Waiting for AMI to become ready...
 ==&gt; amazon-ebs.ubuntu2404: Terminating the source AWS instance...
@@ -4177,7 +4177,7 @@ us-west-2: ami-0abc123def456789
 <h3 id="list-all-p4-code-review-amis">List All P4 Code Review AMIs<a class="headerlink" href="#list-all-p4-code-review-amis" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu2404-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[*].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
@@ -4185,14 +4185,14 @@ us-west-2: ami-0abc123def456789
 <div class="highlight"><pre><span></span><code>+-----------------------------------------------------------------------+
 |                         DescribeImages                                |
 +----------------------+---------------------------------------+--------+
-|  ami-0abc123def456   | p4_code_review_ubuntu2404-20231209    | 2023...|
-|  ami-0def456abc789   | p4_code_review_ubuntu2404-20231208    | 2023...|
+|  ami-0abc123def456   | p4_code_review_ubuntu-20231209    | 2023...|
+|  ami-0def456abc789   | p4_code_review_ubuntu-20231208    | 2023...|
 +----------------------+---------------------------------------+--------+
 </code></pre></div>
 <h3 id="get-the-latest-ami">Get the Latest AMI<a class="headerlink" href="#get-the-latest-ami" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu2404-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images | sort_by(@, &amp;CreationDate) | [-1].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
@@ -4202,23 +4202,17 @@ us-west-2: ami-0abc123def456789
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Now that you have an AMI, proceed to deploy P4 Code Review infrastructure:</p>
 <ol>
-<li><strong>Navigate to the Terraform module</strong>:</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../../../../modules/perforce/modules/p4-code-review
-</code></pre></div>
-<ol>
-<li><strong>Read the module README</strong>:</li>
-</ol>
-<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>README.md
-</code></pre></div>
-<ol>
-<li><strong>Follow the deployment guide</strong> in the module README, which covers:</li>
+<li>
+<p><strong>Read the <a href="../../../../modules/perforce/modules/p4-code-review/index.html">P4 Code Review Module Documentation</a></strong></p>
+</li>
+<li>
+<p><strong>Follow the deployment guide</strong> in the module README, which covers:</p>
+</li>
 <li>Creating AWS Secrets Manager secrets for P4 credentials</li>
 <li>Writing Terraform configuration</li>
 <li>Deploying the infrastructure</li>
-<li>Accessing the Swarm web console</li>
+<li>Accessing the P4 Code Review web console</li>
 </ol>
-<p>Or jump directly to: <a href="../../../../modules/perforce/modules/p4-code-review/index.html">P4 Code Review Module Documentation</a></p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="no-default-vpc-available">"No default VPC available"<a class="headerlink" href="#no-default-vpc-available" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: Packer fails with "No default VPC for this user"</p>
@@ -4257,11 +4251,11 @@ aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span
 <li>Review <code>/var/log/swarm_setup.log</code> on build instance</li>
 </ul>
 <h3 id="ami-already-exists-with-that-name">"AMI already exists with that name"<a class="headerlink" href="#ami-already-exists-with-that-name" title="Permanent link">&para;</a></h3>
-<p><strong>Error</strong>: "AMI name 'p4_code_review_ubuntu2404-TIMESTAMP' already exists"</p>
+<p><strong>Error</strong>: "AMI name 'p4_code_review_ubuntu-TIMESTAMP' already exists"</p>
 <p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># List your AMIs</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu2404-*&quot;</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span>
 
 <span class="c1"># Deregister old AMI if no longer needed</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span class="w"> </span>--image-id<span class="w"> </span>ami-xxxxx

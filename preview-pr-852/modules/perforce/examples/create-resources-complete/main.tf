@@ -57,8 +57,12 @@ module "terraform-aws-perforce" {
     service_subnets             = aws_subnet.private_subnets[*].id
     instance_subnet_id          = aws_subnet.private_subnets[0].id
 
-    # Configuration
-    enable_sso = true
+    # SSO Configuration - uses HAS for authentication
+    custom_config = jsonencode({
+      p4 = {
+        sso = "optional" # "optional" allows both SSO and password login, "enabled" forces SSO
+      }
+    })
   }
 }
 

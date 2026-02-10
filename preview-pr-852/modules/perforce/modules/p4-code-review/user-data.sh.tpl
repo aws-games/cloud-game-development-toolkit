@@ -20,7 +20,6 @@ SWARM_HOST="${swarm_host}"
 SWARM_REDIS="${swarm_redis}"
 SWARM_REDIS_PORT="${swarm_redis_port}"
 SWARM_FORCE_EXT="${swarm_force_ext}"
-ENABLE_SSO="${enable_sso}"
 
 # Secret ARNs for AWS Secrets Manager
 P4D_SUPER_SECRET_ARN="${super_user_username_secret_arn}"
@@ -210,75 +209,29 @@ fi
 # 11. Configure Swarm using the script from the AMI
 log "Configuring P4 Code Review with runtime parameters..."
 
-/home/ubuntu/swarm_scripts/swarm_configure.sh \
+# Write custom config JSON to file if provided (for swarm_instance_init.sh to merge)
+CUSTOM_CONFIG_FILE="/tmp/swarm_custom_config.json"
+%{ if custom_config != null && custom_config != "" ~}
+cat > "$CUSTOM_CONFIG_FILE" << 'CUSTOM_CONFIG_EOF'
+${custom_config}
+CUSTOM_CONFIG_EOF
+log "Custom config written to $CUSTOM_CONFIG_FILE"
+%{ else ~}
+log "No custom config provided"
+%{ endif ~}
+
+/home/ubuntu/swarm_scripts/swarm_instance_init.sh \
   --p4d-port "$P4D_PORT" \
   --p4charset "$P4CHARSET" \
   --swarm-host "$SWARM_HOST" \
   --swarm-redis "$SWARM_REDIS" \
   --swarm-redis-port "$SWARM_REDIS_PORT" \
   --swarm-force-ext "$SWARM_FORCE_EXT" \
-  --enable-sso "$ENABLE_SSO" \
   --p4d-super-secret-arn "$P4D_SUPER_SECRET_ARN" \
   --p4d-super-passwd-secret-arn "$P4D_SUPER_PASSWD_SECRET_ARN" \
   --swarm-user-secret-arn "$SWARM_USER_SECRET_ARN" \
-  --swarm-passwd-secret-arn "$SWARM_PASSWD_SECRET_ARN"
-
-# 12. Handle config injection if provided
-CONFIG_PHP_SOURCE="${config_php_source != null ? config_php_source : ""}"
-if [ -n "$CONFIG_PHP_SOURCE" ] && [ "$CONFIG_PHP_SOURCE" != "null" ]; then
-    log "Applying custom config injection..."
-
-    # Move generated config to config.gen.php
-    cd /opt/perforce/swarm/data
-    if [ -f config.php ]; then
-        mv config.php config.gen.php
-        log "Moved config.php to config.gen.php"
-    fi
-
-    # Fetch custom config from Secrets Manager
-    log "Fetching custom config from Secrets Manager..."
-    CONFIG_USER_PHP=$(aws secretsmanager get-secret-value \
-        --region "$REGION" \
-        --secret-id "$CONFIG_PHP_SOURCE" \
-        --query 'SecretString' \
-        --output text | base64 --decode)
-
-    # Write custom config
-    echo "$CONFIG_USER_PHP" > config.user.php
-    log "Created config.user.php from secret"
-
-    # Create the new merged config.php
-    cat > config.php << 'PHP_EOF'
-<?php
-
-$gen_config = require 'config.gen.php';
-/* Used to retain the old enable_sso setting */
-$settings_php = [
-    'p4' => ['sso' => '${enable_sso == "true" ? "enabled" : "disabled"}'],
-];
-$user_config = include 'config.user.php';
-
-if($user_config == false) {
-    $user_config = [];
-}
-
-return array_replace_recursive($gen_config, $settings_php, $user_config);
-PHP_EOF
-
-    # Set proper permissions
-    chown www-data:www-data config*.php
-    chmod 644 config*.php
-
-    # Clear cache to force reconfiguration
-    rm -rf cache
-    log "Cleared cache after config injection"
-
-    # Restart Apache to pick up new config
-    systemctl restart apache2
-    log "Restarted Apache with new configuration"
-else
-    log "No custom config injection specified"
-fi
+  --swarm-passwd-secret-arn "$SWARM_PASSWD_SECRET_ARN" \
+  --custom-config-file "$CUSTOM_CONFIG_FILE"
 
 log "========================================="
 log "P4 Code Review native EC2 setup completed successfully"

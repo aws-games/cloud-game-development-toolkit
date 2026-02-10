@@ -237,20 +237,36 @@ try {
 
 # Install Chocolatey package manager
 Write-Host "Installing Chocolatey package manager..."
-try {
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+$maxRetries = 3
+$retryCount = 0
+$chocolateyInstalled = $false
 
-    # Chocolatey will be available in PATH after installation
+while (-not $chocolateyInstalled -and $retryCount -lt $maxRetries) {
+    try {
+        $retryCount++
+        Write-Host "Chocolatey installation attempt $retryCount of $maxRetries..."
+        [System.Net.ServicePointManager]::SecurityProtocol = 3072
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-    # Configure Chocolatey for faster installations
-    choco feature enable -n allowGlobalConfirmation
-    choco feature disable -n showDownloadProgress
+        # Chocolatey will be available in PATH after installation
 
-    Write-Host "Chocolatey installed successfully"
-} catch {
-    Write-Host "Chocolatey installation failed: $_" -ForegroundColor Yellow
+        # Configure Chocolatey for faster installations
+        choco feature enable -n allowGlobalConfirmation
+        choco feature disable -n showDownloadProgress
+
+        Write-Host "Chocolatey installed successfully"
+        $chocolateyInstalled = $true
+    } catch {
+        Write-Host "Chocolatey installation attempt $retryCount failed: $_" -ForegroundColor Yellow
+        if ($retryCount -lt $maxRetries) {
+            Write-Host "Waiting 30 seconds before retry..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 30
+        } else {
+            Write-Host "Chocolatey installation failed after $maxRetries attempts" -ForegroundColor Red
+            throw "Chocolatey installation failed: $_"
+        }
+    }
 }
 
 # Install common development tools

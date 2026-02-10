@@ -37,13 +37,13 @@ variable "application_port" {
 
 variable "p4d_port" {
   type        = string
-  description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666'"
+  description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Server. Defaults to 'ssl:perforce:1666'"
   default     = "ssl:perforce:1666"
 }
 
 variable "p4charset" {
   type        = string
-  description = "The P4CHARSET environment variable to set in the P4 Code Review container."
+  description = "The P4CHARSET environment variable to set for the P4 Code Review instance."
   default     = "none"
 }
 
@@ -183,16 +183,10 @@ variable "p4_code_review_user_password_secret_arn" {
   description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password."
 }
 
-variable "config_php_source" {
+variable "custom_config" {
   type        = string
-  description = "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."
+  description = "JSON string with additional Swarm configuration to merge with the generated config.php. Use this for SSO/SAML setup, notifications, Jira integration, etc. See README for examples."
   default     = null
-}
-
-variable "enable_sso" {
-  type        = bool
-  default     = false
-  description = "Set this to true if using SSO for P4 Code Review authentication."
 }
 
 ######################
@@ -220,7 +214,7 @@ variable "elasticache_node_type" {
 ########################################
 variable "ami_id" {
   type        = string
-  description = "Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI with name pattern 'p4_code_review_ubuntu2404-*'."
+  description = "Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI with name pattern 'p4_code_review_ubuntu-*'."
   default     = null
 }
 
@@ -237,7 +231,7 @@ variable "instance_subnet_id" {
 
 variable "ebs_volume_size" {
   type        = number
-  description = "Size in GB for the EBS volume that stores P4 Code Review data (/opt/perforce/swarm/data). This volume persists across container restarts."
+  description = "Size in GB for the EBS volume that stores P4 Code Review data (/opt/perforce/swarm/data). This volume persists across instance replacement."
   default     = 20
 }
 

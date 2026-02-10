@@ -18,7 +18,7 @@ if [ "$UID" -ne "$ROOT_UID" ]; then
   exit 1
 fi
 
-log_message "Starting P4 Code Review (Swarm) installation on Ubuntu 24.04"
+log_message "Starting P4 Code Review (Swarm) installation"
 
 # Update package lists
 log_message "Updating package lists"
@@ -30,36 +30,53 @@ apt-get install -y software-properties-common gnupg2 wget apt-transport-https ca
 
 # Install AWS CLI v2
 log_message "Installing AWS CLI v2"
-cd /tmp
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip -q awscliv2.zip
-./aws/install
-rm -rf aws awscliv2.zip
-cd -
+(
+  cd /tmp || exit 1
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip -q awscliv2.zip
+  ./aws/install
+  rm -rf aws awscliv2.zip
+)
 
 # Add Perforce repository
 log_message "Adding Perforce repository"
 wget -qO - https://package.perforce.com/perforce.pubkey | gpg --dearmor | tee /usr/share/keyrings/perforce-archive-keyring.gpg > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/perforce-archive-keyring.gpg] http://package.perforce.com/apt/ubuntu jammy release" | tee /etc/apt/sources.list.d/perforce.list
-
-# Note: Using jammy (22.04) repo as noble (24.04) may not be available yet
-# Perforce packages are typically forward-compatible
+echo "deb [signed-by=/usr/share/keyrings/perforce-archive-keyring.gpg] http://package.perforce.com/apt/ubuntu noble release" | tee /etc/apt/sources.list.d/perforce.list
 
 # Update package lists with new repository
 log_message "Updating package lists with Perforce repository"
 apt-get update
 
-# Install Apache2 and PHP
-log_message "Installing Apache2 and PHP 8.x with required extensions"
+# Check if PHP 8.x is available natively
+log_message "Checking for PHP 8.x availability"
+if apt-cache show php8.3 &>/dev/null || apt-cache show php8.1 &>/dev/null; then
+  log_message "PHP 8.x available natively, using system packages"
+else
+  log_message "PHP 8.x not available natively, adding ondrej/php PPA"
+  add-apt-repository -y ppa:ondrej/php
+  apt-get update
+fi
+
+# Determine which PHP 8.x version to install
+if apt-cache show php8.3 &>/dev/null; then
+  PHP_VERSION="8.3"
+elif apt-cache show php8.1 &>/dev/null; then
+  PHP_VERSION="8.1"
+else
+  log_message "ERROR: No PHP 8.x version available"
+  exit 1
+fi
+
+log_message "Installing Apache2 and PHP ${PHP_VERSION} with required extensions"
 apt-get install -y apache2 \
-  php php-fpm php-cli php-common \
-  php-curl php-gd php-intl php-ldap php-mbstring \
-  php-mysql php-xml php-zip php-bcmath \
-  libapache2-mod-php
+  php${PHP_VERSION} php${PHP_VERSION}-fpm php${PHP_VERSION}-cli php${PHP_VERSION}-common \
+  php${PHP_VERSION}-curl php${PHP_VERSION}-gd php${PHP_VERSION}-intl php${PHP_VERSION}-ldap php${PHP_VERSION}-mbstring \
+  php${PHP_VERSION}-mysql php${PHP_VERSION}-xml php${PHP_VERSION}-zip php${PHP_VERSION}-bcmath \
+  libapache2-mod-php${PHP_VERSION}
 
 # Install PHP PECL extensions
 log_message "Installing PHP PECL extensions"
-apt-get install -y php-igbinary php-msgpack php-redis
+apt-get install -y php${PHP_VERSION}-igbinary php${PHP_VERSION}-msgpack php${PHP_VERSION}-redis
 
 # Install Helix Swarm
 log_message "Installing Helix Swarm"
@@ -88,9 +105,9 @@ a2enconf php*-fpm
 log_message "Enabling Apache service"
 systemctl enable apache2
 
-# Enable and configure PHP-FPM if needed
+# Enable and configure PHP-FPM
 log_message "Enabling PHP-FPM service"
-systemctl enable php8.3-fpm || systemctl enable php-fpm
+systemctl enable php${PHP_VERSION}-fpm
 
 # Create swarm user if it doesn't exist (package may have already created it)
 if ! id -u swarm > /dev/null 2>&1; then
@@ -112,4 +129,4 @@ else
 fi
 
 log_message "P4 Code Review (Swarm) installation completed successfully"
-log_message "Configuration will be done at runtime via swarm_configure.sh"
+log_message "Configuration will be done at runtime via swarm_instance_init.sh"
