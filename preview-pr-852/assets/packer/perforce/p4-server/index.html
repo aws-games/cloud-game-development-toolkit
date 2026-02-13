@@ -1002,10 +1002,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#super-user-configuration" class="md-nav__link">
+  <a href="#user-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Super User Configuration
+        User Configuration
       
     </span>
   </a>
@@ -3414,10 +3414,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#super-user-configuration" class="md-nav__link">
+  <a href="#user-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Super User Configuration
+        User Configuration
       
     </span>
   </a>
@@ -3493,8 +3493,9 @@
 <span class="w">   </span>--hx_depots<span class="w"> </span>/dev/sdf<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>--hx_metadata<span class="w"> </span>/dev/sdg<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>--hx_logs<span class="w"> </span>/dev/sdh<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>--username<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>username&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">   </span>--password<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>password&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--super_password<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>service<span class="w"> </span>account<span class="w"> </span>password&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--admin_username<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>admin<span class="w"> </span>username&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--admin_password<span class="w"> </span>&lt;AWS<span class="w"> </span>Secrets<span class="w"> </span>Manager<span class="w"> </span>secret<span class="w"> </span>ID<span class="w"> </span><span class="k">for</span><span class="w"> </span>admin<span class="w"> </span>password&gt;<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>--fqdn<span class="w"> </span>perforce.example.com<span class="w"> </span><span class="se">\</span>
 <span class="w">   </span>--auth<span class="w"> </span>https://auth.perforce.example.com
 </code></pre></div>
@@ -3524,12 +3525,16 @@
 <td>Path/device for P4 Server logs volume</td>
 </tr>
 <tr>
-<td><code>--username</code></td>
-<td>AWS Secrets Manager secret ID for admin username</td>
+<td><code>--super_password</code></td>
+<td>AWS Secrets Manager secret ID for service account (super) password</td>
 </tr>
 <tr>
-<td><code>--password</code></td>
-<td>AWS Secrets Manager secret ID for admin password</td>
+<td><code>--admin_username</code></td>
+<td>AWS Secrets Manager secret ID for admin account username</td>
+</tr>
+<tr>
+<td><code>--admin_password</code></td>
+<td>AWS Secrets Manager secret ID for admin account password</td>
 </tr>
 <tr>
 <td><code>--fqdn</code></td>
@@ -3569,13 +3574,17 @@
 </tr>
 </tbody>
 </table>
-<h3 id="super-user-configuration">Super User Configuration<a class="headerlink" href="#super-user-configuration" title="Permanent link">&para;</a></h3>
-<p>The script always creates a user named <code>super</code> for compatibility with P4 Code Review (Helix Swarm). If you provide a <code>--username</code> value other than "super", the script will:</p>
+<h3 id="user-configuration">User Configuration<a class="headerlink" href="#user-configuration" title="Permanent link">&para;</a></h3>
+<p>The script creates two Perforce users:</p>
 <ol>
-<li>Create the required <code>super</code> user with the provided <code>--password</code></li>
-<li>Create an additional super user with your custom username and the same password</li>
+<li>
+<p><strong>Service Account (<code>super</code>)</strong>: Always created with username "super". Used internally by P4 Code Review (Helix Swarm) and other tooling. Password provided via <code>--super_password</code>.</p>
+</li>
+<li>
+<p><strong>Admin Account</strong>: Created with the username provided via <code>--admin_username</code>. This is the account for human administrators. Password provided via <code>--admin_password</code>.</p>
+</li>
 </ol>
-<p>Both users will have full super privileges.</p>
+<p>Both users have full super privileges and are added to the <code>unlimited_timeout</code> group.</p>
 <p>We recommend using the <a href="../../../../modules/perforce/index.html">Perforce module</a> to manage these configurations through Terraform.</p>
 <h2 id="important-notes">Important Notes<a class="headerlink" href="#important-notes" title="Permanent link">&para;</a></h2>
 <ul>

@@ -238,15 +238,15 @@ variable "internal" {
   default     = false
 }
 
-variable "super_user_password_secret_arn" {
+variable "admin_username" {
   type        = string
-  description = "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here."
-  default     = null
+  description = "Username for the Perforce admin account (human user). The 'super' service account is always created automatically for internal tooling."
+  default     = "perforce"
 }
 
-variable "super_user_username_secret_arn" {
+variable "admin_password_secret_arn" {
   type        = string
-  description = "If provided, creates an ADDITIONAL super user with this name alongside the required 'super' user for Swarm compatibility. Both users will have full super privileges."
+  description = "Optional ARN of existing Secrets Manager secret for admin password. If not provided, a password will be auto-generated."
   default     = null
 }
 

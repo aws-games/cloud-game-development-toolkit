@@ -163,11 +163,6 @@ variable "certificate_arn" {
   }
 }
 
-variable "super_user_username_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
-}
-
 variable "super_user_password_secret_arn" {
   type        = string
   description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."

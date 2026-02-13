@@ -3336,10 +3336,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#super-user-configuration" class="md-nav__link">
+  <a href="#user-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Super User Configuration
+        User Management
       
     </span>
   </a>
@@ -3444,27 +3444,38 @@
 <p><img alt="Helix Core Module Architecture" src="../../assets/media/diagrams/p4-server-architecture.png" /></p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <p>This module deploys P4 Server on AWS using an Amazon Machine Image (AMI) that is included in the Cloud Game Development Toolkit. You <strong>must</strong> provision this AMI using <a href="https://www.packer.io/">Hashicorp Packer</a> prior to deploying this module. To get started consult <a href="../../../../assets/packer/perforce/p4-server/index.html">the documentation for the P4 Server AMI</a>.</p>
-<h3 id="super-user-configuration">Super User Configuration<a class="headerlink" href="#super-user-configuration" title="Permanent link">&para;</a></h3>
-<p>This module always creates a user named <code>super</code> with a randomly generated password. This is required for compatibility with P4 Code Review (Helix Swarm), which expects a user named <code>super</code> when running <code>configure-swarm.sh</code>. The credentials are stored in AWS Secrets Manager and available as module outputs.</p>
-<h4 id="optional-additional-super-user">Optional: Additional Super User<a class="headerlink" href="#optional-additional-super-user" title="Permanent link">&para;</a></h4>
-<p>You can optionally create an additional super user with a custom username. This is useful if you want a named administrator account alongside the required <code>super</code> user. Both users will have full super privileges.</p>
-<p>To create an additional super user, first create secrets for the credentials:</p>
-<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>P4ServerAdminUsername<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Admin Username&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;admin&quot;</span>
-
-aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>P4ServerAdminPassword<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Admin Password&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;EXAMPLE-PASSWORD&quot;</span>
-</code></pre></div>
-<p>Then provide the ARNs as variables:</p>
+<h3 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h3>
+<p>This module creates two users with super privileges:</p>
+<ol>
+<li>
+<p><strong>Service Account (<code>super</code>)</strong>: An internal service account used by P4 Code Review (Helix Swarm) and other Perforce tooling. This user is always created automatically with a randomly generated password stored in AWS Secrets Manager. The service account uses password-based authentication (non-SSO).</p>
+</li>
+<li>
+<p><strong>Admin Account</strong>: A human administrator account for managing the Perforce server. The username defaults to <code>perforce</code> but can be customized via the <code>admin_username</code> variable. The password is auto-generated and stored in AWS Secrets Manager, or you can provide your own secret ARN.</p>
+</li>
+</ol>
+<h4 id="configuring-the-admin-account">Configuring the Admin Account<a class="headerlink" href="#configuring-the-admin-account" title="Permanent link">&para;</a></h4>
+<p>By default, an admin user named <code>perforce</code> is created:</p>
 <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">super_user_username_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:P4ServerAdminUsername-a1b2c3&quot;</span>
-<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:P4ServerAdminPassword-a1b2c3&quot;</span>
+<span class="c1">    # Uses default admin_username = &quot;perforce&quot;</span>
+<span class="c1">    # Password auto-generated and stored in Secrets Manager</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>To customize the admin username:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="na">admin_username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;myadmin&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>To use an existing password secret:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="na">admin_username</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;myadmin&quot;</span>
+<span class="w">    </span><span class="na">admin_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:MyAdminPassword-a1b2c3&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 <!-- markdownlint-disable -->
@@ -3651,11 +3662,15 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<s
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.super_user_password</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.admin_password</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.super_user_username</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.admin_username</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret">awscc_secretsmanager_secret.super_password</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3747,6 +3762,20 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<s
 <td><code>string</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_admin_password_secret_arn"></a> <a href="#input_admin_password_secret_arn">admin_password_secret_arn</a></td>
+<td>Optional ARN of existing Secrets Manager secret for admin password. If not provided, a password will be auto-generated.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_admin_username"></a> <a href="#input_admin_username">admin_username</a></td>
+<td>Username for the Perforce admin account (human user). The 'super' service account is always created automatically for internal tooling.</td>
+<td><code>string</code></td>
+<td><code>"perforce"</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
 <td><a name="input_amazon_fsxn_filesystem_id"></a> <a href="#input_amazon_fsxn_filesystem_id">amazon_fsxn_filesystem_id</a></td>
@@ -3938,20 +3967,6 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<s
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_super_user_password_secret_arn"></a> <a href="#input_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_super_user_username_secret_arn"></a> <a href="#input_super_user_username_secret_arn">super_user_username_secret_arn</a></td>
-<td>If provided, creates an ADDITIONAL super user with this name alongside the required 'super' user for Swarm compatibility. Both users will have full super privileges.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
 <td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
 <td>Tags to apply to resources.</td>
 <td><code>map(any)</code></td>
@@ -3977,6 +3992,14 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<s
 </thead>
 <tbody>
 <tr>
+<td><a name="output_admin_password_secret_arn"></a> <a href="#output_admin_password_secret_arn">admin_password_secret_arn</a></td>
+<td>The ARN of the AWS Secrets Manager secret holding the admin account password.</td>
+</tr>
+<tr>
+<td><a name="output_admin_username_secret_arn"></a> <a href="#output_admin_username_secret_arn">admin_username_secret_arn</a></td>
+<td>The ARN of the AWS Secrets Manager secret holding the admin account username.</td>
+</tr>
+<tr>
 <td><a name="output_eip_id"></a> <a href="#output_eip_id">eip_id</a></td>
 <td>The ID of the Elastic IP associated with your P4 Server instance.</td>
 </tr>
@@ -4001,12 +4024,8 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<s
 <td>The default security group of your P4 Server instance.</td>
 </tr>
 <tr>
-<td><a name="output_super_user_password_secret_arn"></a> <a href="#output_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password.</td>
-</tr>
-<tr>
-<td><a name="output_super_user_username_secret_arn"></a> <a href="#output_super_user_username_secret_arn">super_user_username_secret_arn</a></td>
-<td>The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username.</td>
+<td><a name="output_super_password_secret_arn"></a> <a href="#output_super_password_secret_arn">super_password_secret_arn</a></td>
+<td>The ARN of the AWS Secrets Manager secret holding the service account (super) password.</td>
 </tr>
 </tbody>
 </table>

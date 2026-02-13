@@ -13,18 +13,21 @@ output "security_group_id" {
   description = "The default security group of your P4 Server instance."
 }
 
-output "super_user_password_secret_arn" {
-  value = (var.super_user_password_secret_arn == null ?
-    awscc_secretsmanager_secret.super_user_password[0].secret_id :
-  var.super_user_password_secret_arn)
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password."
+output "super_password_secret_arn" {
+  value       = awscc_secretsmanager_secret.super_password.secret_id
+  description = "The ARN of the AWS Secrets Manager secret holding the service account (super) password."
 }
 
-output "super_user_username_secret_arn" {
-  value = (var.super_user_username_secret_arn == null ?
-    awscc_secretsmanager_secret.super_user_username[0].secret_id :
-  var.super_user_username_secret_arn)
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username."
+output "admin_username_secret_arn" {
+  value       = awscc_secretsmanager_secret.admin_username.secret_id
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account username."
+}
+
+output "admin_password_secret_arn" {
+  value = (var.admin_password_secret_arn == null ?
+    awscc_secretsmanager_secret.admin_password[0].secret_id :
+  var.admin_password_secret_arn)
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account password."
 }
 
 output "instance_id" {
