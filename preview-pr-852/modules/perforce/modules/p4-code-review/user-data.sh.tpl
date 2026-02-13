@@ -79,13 +79,28 @@ log "Volume state: $VOLUME_STATE, Attached to: $ATTACHED_INSTANCE, Attach state:
 if [ "$ATTACHED_INSTANCE" == "$INSTANCE_ID" ]; then
     log "Volume $VOLUME_ID is already attached to this instance"
 elif [ "$ATTACHED_INSTANCE" != "none" ] && [ "$ATTACHED_INSTANCE" != "null" ]; then
-    log "Volume is attached to different instance $ATTACHED_INSTANCE - attempting to detach"
+    log "Volume is attached to different instance $ATTACHED_INSTANCE - checking instance state"
 
-    # Force detach from other instance (safe if instance is terminated)
-    aws ec2 detach-volume \
+    # Check if the attached instance is terminated before force detaching
+    INSTANCE_STATE=$(aws ec2 describe-instances \
         --region "$REGION" \
-        --volume-id "$VOLUME_ID" \
-        --force 2>&1 | tee -a /tmp/swarm-setup.log || log "Warning: Force detach may have failed"
+        --instance-ids "$ATTACHED_INSTANCE" \
+        --query 'Reservations[0].Instances[0].State.Name' \
+        --output text 2>/dev/null || echo "unknown")
+
+    log "Previous instance $ATTACHED_INSTANCE state: $INSTANCE_STATE"
+
+    if [ "$INSTANCE_STATE" = "terminated" ] || [ "$INSTANCE_STATE" = "unknown" ]; then
+        log "Previous instance is terminated/unknown, safe to force detach"
+        aws ec2 detach-volume \
+            --region "$REGION" \
+            --volume-id "$VOLUME_ID" \
+            --force 2>&1 | tee -a /tmp/swarm-setup.log || log "Warning: Force detach may have failed"
+    else
+        log "ERROR: Volume attached to running instance $ATTACHED_INSTANCE (state: $INSTANCE_STATE)"
+        log "Cannot safely detach volume - manual intervention required"
+        exit 1
+    fi
 
     # Wait for detachment with timeout
     log "Waiting up to 2 minutes for volume to become available..."
