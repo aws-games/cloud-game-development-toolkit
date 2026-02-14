@@ -29,10 +29,7 @@ mock_provider "aws" {
   }
   mock_data "aws_iam_policy_document" {
     defaults = {
-      json = jsonencode({
-        Version   = "2012-10-17"
-        Statement = [{ Effect = "Allow", Action = "*", Resource = "*" }]
-      })
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"*\",\"Resource\":\"*\"}]}"
     }
   }
   mock_data "aws_ami" {
@@ -51,9 +48,11 @@ run "ecs_cluster_auth_only" {
   command = plan
 
   variables {
-    vpc_id             = "vpc-12345678"
-    shared_alb_subnets = ["subnet-111", "subnet-222"]
-    certificate_arn    = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                                = "vpc-12345678"
+    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
+    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    create_shared_network_load_balancer   = false
+    create_route53_private_hosted_zone    = false
 
     p4_auth_config = {
       fully_qualified_domain_name = "auth.test.internal"
@@ -77,9 +76,11 @@ run "ecs_cluster_code_review_only" {
   command = plan
 
   variables {
-    vpc_id             = "vpc-12345678"
-    shared_alb_subnets = ["subnet-111", "subnet-222"]
-    certificate_arn    = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                                = "vpc-12345678"
+    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
+    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    create_shared_network_load_balancer   = false
+    create_route53_private_hosted_zone    = false
 
     p4_code_review_config = {
       fully_qualified_domain_name = "swarm.test.internal"
@@ -103,10 +104,12 @@ run "ecs_cluster_shared" {
   command = plan
 
   variables {
-    vpc_id                  = "vpc-12345678"
-    shared_alb_subnets      = ["subnet-111", "subnet-222"]
-    certificate_arn         = "arn:aws:acm:us-east-1:123456789012:certificate/test"
-    shared_ecs_cluster_name = "my-shared-cluster"
+    vpc_id                                = "vpc-12345678"
+    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
+    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    shared_ecs_cluster_name               = "my-shared-cluster"
+    create_shared_network_load_balancer   = false
+    create_route53_private_hosted_zone    = false
 
     p4_auth_config = {
       fully_qualified_domain_name = "auth.test.internal"
@@ -143,7 +146,7 @@ run "route53_private_zone" {
     route53_private_hosted_zone_name   = "perforce.internal"
 
     p4_server_config = {
-      fully_qualified_domain_name = "p4.perforce.internal"
+      fully_qualified_domain_name = "perforce.internal"
       instance_subnet_id          = "subnet-111"
       p4_server_type              = "p4d_commit"
     }
@@ -170,11 +173,12 @@ run "load_balancer_access_logs" {
   command = plan
 
   variables {
-    vpc_id                       = "vpc-12345678"
-    shared_nlb_subnets           = ["subnet-111", "subnet-222"]
-    shared_alb_subnets           = ["subnet-111", "subnet-222"]
-    certificate_arn              = "arn:aws:acm:us-east-1:123456789012:certificate/test"
-    enable_shared_lb_access_logs = true
+    vpc_id                             = "vpc-12345678"
+    shared_nlb_subnets                 = ["subnet-111", "subnet-222"]
+    shared_alb_subnets                 = ["subnet-111", "subnet-222"]
+    certificate_arn                    = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    enable_shared_lb_access_logs       = true
+    create_route53_private_hosted_zone = false
 
     p4_server_config = {
       fully_qualified_domain_name = "p4.test.internal"
@@ -189,12 +193,12 @@ run "load_balancer_access_logs" {
   }
 
   assert {
-    condition     = length(aws_s3_bucket.lb_access_logs) == 1
+    condition     = length(aws_s3_bucket.shared_lb_access_logs_bucket) == 1
     error_message = "S3 bucket should be created when load balancer access logging is enabled"
   }
 
   assert {
-    condition     = length(aws_lb.perforce_shared_nlb) > 0 ? aws_lb.perforce_shared_nlb[0].enable_cross_zone_load_balancing == true : true
+    condition     = aws_lb.perforce[0].enable_cross_zone_load_balancing == true
     error_message = "NLB should have cross-zone load balancing enabled"
   }
 }
@@ -204,9 +208,11 @@ run "no_ecs_cluster_server_only" {
   command = plan
 
   variables {
-    vpc_id             = "vpc-12345678"
-    shared_nlb_subnets = ["subnet-111", "subnet-222"]
-    certificate_arn    = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                                 = "vpc-12345678"
+    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
+    certificate_arn                        = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    create_shared_application_load_balancer = false
+    create_route53_private_hosted_zone      = false
 
     p4_server_config = {
       fully_qualified_domain_name = "p4.test.internal"

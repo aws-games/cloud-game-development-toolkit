@@ -44,8 +44,8 @@ variable "shared_lb_access_logs_bucket" {
   default     = null
   # This should not be provided if access logging is disabled
   validation {
-    condition     = var.enable_shared_lb_access_logs ? var.shared_lb_access_logs_bucket != null : true
-    error_message = "If access logging is disabled, the variable 'shared_lb_access_logs_bucket' must not be provided."
+    condition     = var.enable_shared_lb_access_logs || var.shared_lb_access_logs_bucket == null
+    error_message = "If access logging is disabled, the variable 'shared_lb_access_logs_bucket' should not be provided."
   }
 }
 
@@ -169,10 +169,10 @@ variable "route53_private_hosted_zone_name" {
   type        = string
   description = "The name of the private Route53 Hosted Zone for the Perforce resources."
   default     = null
-  # Should only be provided if create_route53_private_hosted_zone is set to true
+  # Must be provided if create_route53_private_hosted_zone is set to true
   validation {
     condition     = var.create_route53_private_hosted_zone ? var.route53_private_hosted_zone_name != null : true
-    error_message = "If create_route53_private_hosted_zone is false, the variable 'route53_private_hosted_zone_name' must not be provided."
+    error_message = "If create_route53_private_hosted_zone is true, the variable 'route53_private_hosted_zone_name' must be provided."
   }
 }
 
@@ -300,27 +300,27 @@ variable "p4_server_config" {
   default = null
 
   validation {
-    condition     = length(var.p4_server_config.name) > 1 && length(var.p4_server_config.name) <= 50
-    error_message = "The defined 'name' has too many characters (${length(var.p4_server_config.name)}). This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
+    condition     = var.p4_server_config == null || (length(var.p4_server_config.name) > 1 && length(var.p4_server_config.name) <= 50)
+    error_message = "The defined 'name' has too many characters. This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
   }
 
   validation {
-    condition     = var.p4_server_config.instance_architecture == "arm64" || var.p4_server_config.instance_architecture == "x86_64"
+    condition     = var.p4_server_config == null || var.p4_server_config.instance_architecture == "arm64" || var.p4_server_config.instance_architecture == "x86_64"
     error_message = "The p4_server_config.instance_architecture variable must be either 'arm64' or 'x86_64'."
   }
 
   validation {
-    condition     = contains(["p4d_commit", "p4d_replica"], var.p4_server_config.p4_server_type)
-    error_message = "${var.p4_server_config.p4_server_type} is not one of p4d_commit or p4d_replica."
+    condition     = var.p4_server_config == null || contains(["p4d_commit", "p4d_replica"], var.p4_server_config.p4_server_type)
+    error_message = "The p4_server_config.p4_server_type must be one of p4d_commit or p4d_replica."
   }
 
   validation {
-    condition     = contains(["EBS", "FSxN"], var.p4_server_config.storage_type)
+    condition     = var.p4_server_config == null || contains(["EBS", "FSxN"], var.p4_server_config.storage_type)
     error_message = "Not a valid storage type. Valid values are either 'EBS' or 'FSxN'."
   }
 
   validation {
-    condition     = !var.create_route53_private_hosted_zone || var.route53_private_hosted_zone_name == var.p4_server_config.fully_qualified_domain_name
+    condition     = var.p4_server_config == null || !var.create_route53_private_hosted_zone || var.route53_private_hosted_zone_name == var.p4_server_config.fully_qualified_domain_name
     error_message = "Route53 zone name and Perforce Server FQDN must match."
   }
 

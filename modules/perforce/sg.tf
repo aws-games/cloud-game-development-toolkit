@@ -26,7 +26,7 @@ resource "aws_security_group" "perforce_network_load_balancer" {
 # Perforce NLB --> Perforce Web Services ALB
 # Allows Perforce NLB to send outbound traffic to Perforce Web Services ALB
 resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_to_perforce_web_services_alb" {
-  count                        = var.create_default_sgs && var.create_shared_network_load_balancer ? 1 : 0
+  count                        = var.create_default_sgs && var.create_shared_network_load_balancer && var.create_shared_application_load_balancer ? 1 : 0
   security_group_id            = aws_security_group.perforce_network_load_balancer[0].id
   description                  = "Allows Perforce NLB to send outbound traffic to Perforce Web Services ALB."
   from_port                    = 443
