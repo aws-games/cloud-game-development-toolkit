@@ -48,11 +48,11 @@ run "ecs_cluster_auth_only" {
   command = plan
 
   variables {
-    vpc_id                                = "vpc-12345678"
-    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
-    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
-    create_shared_network_load_balancer   = false
-    create_route53_private_hosted_zone    = false
+    vpc_id                              = "vpc-12345678"
+    shared_alb_subnets                  = ["subnet-111", "subnet-222"]
+    certificate_arn                     = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    create_shared_network_load_balancer = false
+    create_route53_private_hosted_zone  = false
 
     p4_auth_config = {
       fully_qualified_domain_name = "auth.test.internal"
@@ -76,11 +76,11 @@ run "ecs_cluster_code_review_only" {
   command = plan
 
   variables {
-    vpc_id                                = "vpc-12345678"
-    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
-    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
-    create_shared_network_load_balancer   = false
-    create_route53_private_hosted_zone    = false
+    vpc_id                              = "vpc-12345678"
+    shared_alb_subnets                  = ["subnet-111", "subnet-222"]
+    certificate_arn                     = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    create_shared_network_load_balancer = false
+    create_route53_private_hosted_zone  = false
 
     p4_code_review_config = {
       fully_qualified_domain_name = "swarm.test.internal"
@@ -104,12 +104,12 @@ run "ecs_cluster_shared" {
   command = plan
 
   variables {
-    vpc_id                                = "vpc-12345678"
-    shared_alb_subnets                    = ["subnet-111", "subnet-222"]
-    certificate_arn                       = "arn:aws:acm:us-east-1:123456789012:certificate/test"
-    shared_ecs_cluster_name               = "my-shared-cluster"
-    create_shared_network_load_balancer   = false
-    create_route53_private_hosted_zone    = false
+    vpc_id                              = "vpc-12345678"
+    shared_alb_subnets                  = ["subnet-111", "subnet-222"]
+    certificate_arn                     = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    shared_ecs_cluster_name             = "my-shared-cluster"
+    create_shared_network_load_balancer = false
+    create_route53_private_hosted_zone  = false
 
     p4_auth_config = {
       fully_qualified_domain_name = "auth.test.internal"
@@ -208,9 +208,9 @@ run "no_ecs_cluster_server_only" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
-    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
-    certificate_arn                        = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    vpc_id                                  = "vpc-12345678"
+    shared_nlb_subnets                      = ["subnet-111", "subnet-222"]
+    certificate_arn                         = "arn:aws:acm:us-east-1:123456789012:certificate/test"
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
 
