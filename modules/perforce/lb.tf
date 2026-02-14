@@ -129,6 +129,29 @@ resource "aws_lb_listener" "perforce" {
 }
 
 
+##########################################
+# Perforce NLB | P4 Broker TCP Listener
+##########################################
+# Forward TCP traffic on broker port from NLB to P4 Broker target group
+resource "aws_lb_listener" "perforce_broker" {
+  count             = var.p4_broker_config != null && var.create_shared_network_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.perforce[0].arn
+  port              = var.p4_broker_config.container_port
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = module.p4_broker[0].target_group_arn
+  }
+
+  #checkov:skip=CKV2_AWS_74: TCP listener does not support TLS ciphers
+  tags = merge(var.tags, {
+    TrafficSource      = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb")
+    TrafficDestination = "${var.project_prefix}-${var.p4_broker_config.name}-service"
+  })
+}
+
+
 # 1. Create the Target Group (this is done in p4-auth, and p4-code-review submodules)
 # 2. Create the Target Group Attachment (this is not necessary as ECS handles this automatically. This is handled in the p4-auth, and p4-code-review submodules in the load_balancers block)
 # 3. Create the ALB only if the target group (in submodules) has been created
