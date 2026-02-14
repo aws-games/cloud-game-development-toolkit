@@ -159,10 +159,10 @@ module "p4_code_review" {
   create_default_role = var.p4_code_review_config.create_default_role
   custom_role         = var.p4_code_review_config.custom_role
 
-  super_user_password_secret_arn          = module.p4_server[0].super_user_password_secret_arn
-  super_user_username_secret_arn          = module.p4_server[0].super_user_username_secret_arn
-  p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
-  p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
+  super_user_password_secret_arn          = var.p4_code_review_config.super_user_password_secret_arn != null ? var.p4_code_review_config.super_user_password_secret_arn : try(module.p4_server[0].super_user_password_secret_arn, null)
+  super_user_username_secret_arn          = var.p4_code_review_config.super_user_username_secret_arn != null ? var.p4_code_review_config.super_user_username_secret_arn : try(module.p4_server[0].super_user_username_secret_arn, null)
+  p4_code_review_user_password_secret_arn = var.p4_code_review_config.p4_code_review_user_password_secret_arn != null ? var.p4_code_review_config.p4_code_review_user_password_secret_arn : try(module.p4_server[0].super_user_password_secret_arn, null)
+  p4_code_review_user_username_secret_arn = var.p4_code_review_config.p4_code_review_user_username_secret_arn != null ? var.p4_code_review_config.p4_code_review_user_username_secret_arn : try(module.p4_server[0].super_user_username_secret_arn, null)
 
   enable_sso        = var.p4_code_review_config.enable_sso
   config_php_source = var.p4_code_review_config.config_php_source
