@@ -4,7 +4,7 @@
 ##########################################
 # Send traffic from NLB to ALB
 resource "aws_lb_target_group" "perforce" {
-  count       = var.create_shared_network_load_balancer != false ? 1 : 0
+  count       = var.create_shared_network_load_balancer && var.create_shared_application_load_balancer ? 1 : 0
   name        = "${var.project_prefix}-nlb-to-perforce-web-services"
   target_type = "alb"
   port        = 443
@@ -40,7 +40,7 @@ resource "aws_lb_target_group" "perforce" {
 }
 
 resource "aws_lb_target_group_attachment" "perforce" {
-  count            = var.create_shared_network_load_balancer != false ? 1 : 0
+  count            = var.create_shared_network_load_balancer && var.create_shared_application_load_balancer ? 1 : 0
   target_group_arn = aws_lb_target_group.perforce[0].arn
   target_id        = aws_lb.perforce_web_services[0].arn
   port             = 443
@@ -97,7 +97,7 @@ resource "aws_lb" "perforce" {
 ##########################################
 # forward HTTPS traffic from Public NLB to Internal ALB
 resource "aws_lb_listener" "perforce" {
-  count             = var.create_shared_network_load_balancer != false ? 1 : 0
+  count             = var.create_shared_network_load_balancer && var.create_shared_application_load_balancer ? 1 : 0
   load_balancer_arn = aws_lb.perforce[0].arn
   port              = 443
   protocol          = "TCP"
@@ -126,6 +126,29 @@ resource "aws_lb_listener" "perforce" {
     ]
   }
 
+}
+
+
+##########################################
+# Perforce NLB | P4 Broker TCP Listener
+##########################################
+# Forward TCP traffic on broker port from NLB to P4 Broker target group
+resource "aws_lb_listener" "perforce_broker" {
+  count             = var.p4_broker_config != null && var.create_shared_network_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.perforce[0].arn
+  port              = var.p4_broker_config.container_port
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = module.p4_broker[0].target_group_arn
+  }
+
+  #checkov:skip=CKV2_AWS_74: TCP listener does not support TLS ciphers
+  tags = merge(var.tags, {
+    TrafficSource      = (var.shared_network_load_balancer_name != null ? var.shared_network_load_balancer_name : "${var.project_prefix}-perforce-shared-nlb")
+    TrafficDestination = "${var.project_prefix}-${var.p4_broker_config.name}-service"
+  })
 }
 
 
