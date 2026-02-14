@@ -51,7 +51,7 @@ run "broker_not_created_when_null" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
+    vpc_id                                  = "vpc-12345678"
     create_shared_network_load_balancer     = false
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
@@ -69,8 +69,8 @@ run "broker_created_when_configured" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
-    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
+    vpc_id                                  = "vpc-12345678"
+    shared_nlb_subnets                      = ["subnet-111", "subnet-222"]
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
 
@@ -97,8 +97,8 @@ run "ecs_cluster_broker_only" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
-    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
+    vpc_id                                  = "vpc-12345678"
+    shared_nlb_subnets                      = ["subnet-111", "subnet-222"]
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
 
@@ -125,8 +125,8 @@ run "nlb_listener_created_for_broker" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
-    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
+    vpc_id                                  = "vpc-12345678"
+    shared_nlb_subnets                      = ["subnet-111", "subnet-222"]
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
 
@@ -148,9 +148,9 @@ run "broker_with_existing_cluster" {
   command = plan
 
   variables {
-    vpc_id                                 = "vpc-12345678"
-    shared_nlb_subnets                     = ["subnet-111", "subnet-222"]
-    existing_ecs_cluster_name              = "my-existing-cluster"
+    vpc_id                                  = "vpc-12345678"
+    shared_nlb_subnets                      = ["subnet-111", "subnet-222"]
+    existing_ecs_cluster_name               = "my-existing-cluster"
     create_shared_application_load_balancer = false
     create_route53_private_hosted_zone      = false
 
