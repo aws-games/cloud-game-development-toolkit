@@ -118,7 +118,7 @@ output "p4_code_review_execution_role_id" {
 }
 
 output "p4_server_lambda_link_name" {
-  value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
+  value = (var.p4_server_config != null && var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
   module.p4_server[0].lambda_link_name : null)
   description = "The name of the Lambda link for the P4 Server instance to use with FSxN."
 }
