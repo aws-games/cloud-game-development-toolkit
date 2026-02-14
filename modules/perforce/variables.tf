@@ -548,6 +548,91 @@ variable "p4_code_review_config" {
 }
 
 
+########################################
+# P4 Broker
+########################################
+variable "p4_broker_config" {
+  type = object({
+    # General
+    name           = optional(string, "p4-broker")
+    project_prefix = optional(string, "cgd")
+    debug          = optional(bool, false)
+
+    # Compute
+    container_name   = optional(string, "p4-broker-container")
+    container_port   = optional(number, 1666)
+    container_cpu    = optional(number, 1024)
+    container_memory = optional(number, 2048)
+    container_image  = string
+    desired_count    = optional(number, 1)
+
+    # Broker Configuration
+    p4_target = string
+    broker_command_rules = optional(list(object({
+      command = string
+      action  = string
+      message = optional(string, null)
+    })), [{ command = "*", action = "pass", message = null }])
+    extra_env = optional(map(string), null)
+
+    # Storage & Logging
+    cloudwatch_log_retention_in_days = optional(number, 365)
+
+    # Networking & Security
+    service_subnets     = optional(list(string), null)
+    create_default_role = optional(bool, true)
+    custom_role         = optional(string, null)
+  })
+
+  default = null
+
+  description = <<EOT
+    # General
+    name: "The string included in the naming of resources related to P4 Broker. Default is 'p4-broker'."
+
+    project_prefix : "The project prefix for the P4 Broker service. Default is 'cgd'."
+
+    debug : "Whether to enable debug mode for the P4 Broker service. Default is 'false'."
+
+
+    # Compute
+    container_name : "The name of the P4 Broker service container. Default is 'p4-broker-container'."
+
+    container_port : "The port on which the P4 Broker service will be listening. Default is '1666'."
+
+    container_cpu : "The number of CPU units to reserve for the P4 Broker service container. Default is '1024'."
+
+    container_memory : "The amount of memory in MiB to reserve for the P4 Broker service container. Default is '2048'."
+
+    container_image : "The Docker image URI for the P4 Broker container. Required."
+
+    desired_count : "The desired number of P4 Broker ECS tasks. Default is '1'."
+
+
+    # Broker Configuration
+    p4_target : "The upstream Perforce server target (e.g., ssl:p4server:1666). Required."
+
+    broker_command_rules : "Command filtering rules for the P4 Broker configuration. Default passes all commands."
+
+    extra_env : "Extra environment variables to set on the P4 Broker container."
+
+
+    # Storage & Logging
+    cloudwatch_log_retention_in_days : "The number of days to retain the P4 Broker service logs in CloudWatch. Default is 365 days."
+
+
+    # Networking & Security
+    service_subnets : "A list of subnets to deploy the P4 Broker ECS Service into."
+
+    create_default_role : "Whether to create the P4 Broker default IAM Role. Default is set to true."
+
+    custom_role : "ARN of a custom IAM Role you wish to use with P4 Broker."
+
+  EOT
+
+}
+
+
 variable "tags" {
   type        = map(any)
   description = "Tags to apply to resources."

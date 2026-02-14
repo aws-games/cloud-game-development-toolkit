@@ -8,6 +8,7 @@ Mock-based unit tests for the Perforce wrapper module. All tests use mock provid
 tests/
 ├── 01_conditional_creation.tftest.hcl  # Submodule conditional creation
 ├── 02_shared_resources.tftest.hcl      # Shared resource logic (ECS cluster, Route53, LBs)
+├── 03_p4_broker.tftest.hcl             # P4 Broker creation and integration
 └── README.md
 ```
 
@@ -21,7 +22,7 @@ cd modules/perforce
 terraform test
 
 # Run a specific test file
-terraform test -filter=tests/02_shared_resources.tftest.hcl
+terraform test -filter=tests/03_p4_broker.tftest.hcl
 
 # Verbose output
 terraform test -verbose

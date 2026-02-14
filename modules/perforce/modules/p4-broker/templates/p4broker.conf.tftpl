@@ -1,0 +1,15 @@
+target = ${p4_target};
+listen = ${listen_port};
+directory = /tmp;
+logfile = /tmp/p4broker.log;
+
+%{ for rule in command_rules ~}
+command: ${rule.command}
+{
+    action = ${rule.action};
+%{ if rule.message != null ~}
+    message = "${rule.message}";
+%{ endif ~}
+}
+
+%{ endfor ~}

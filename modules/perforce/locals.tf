@@ -1,7 +1,7 @@
 locals {
   # shared ECS cluster configuration
   create_shared_ecs_cluster = (var.existing_ecs_cluster_name == null &&
-  (var.p4_auth_config != null || var.p4_code_review_config != null))
+  (var.p4_auth_config != null || var.p4_code_review_config != null || var.p4_broker_config != null))
 
   # This serves as a sensible default for p4d_port config options
   p4_port = var.p4_server_config != null ? (
