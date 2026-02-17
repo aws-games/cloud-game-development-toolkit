@@ -8,7 +8,7 @@ Welcome to the **Cloud Game Development Toolkit
 ### Assets
 
 An _asset_ is a singular template, script, or automation document that may prove useful in isolation. Currently, the **Toolkit** contains three types of
-_assets_: [Ansible playbooks](../assets/ansible-playbooks/perforce/p4-server/README.md), [Jenkins pipelines](../assets/jenkins-pipelines/README.md), and [Packer templates](../docs/assets/packer/index.md). Each of these
+_assets_: [Ansible playbooks](../assets/ansible-playbooks/perforce/p4-server/README.md), [Jenkins pipelines](../assets/jenkins-pipelines/README.md), and [Packer templates](../docs/assets/packer/README.md). Each of these
 _assets_ can be used in isolation.
 
 For more information about _assets_, consult the [detailed documentation](../docs/assets/index.md).

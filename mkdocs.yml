@@ -95,7 +95,7 @@ nav:
   - Assets:
       - Overview: docs/assets/index.md
       - Packer Templates:
-          - Overview: docs/assets/packer/index.md
+          - Overview: docs/assets/packer/README.md
           - Build Agents:
               - Linux Build Agents:
                   - assets/packer/build-agents/linux/README.md
@@ -105,7 +105,7 @@ nav:
           - Virtual Workstations: assets/packer/virtual-workstations/README.md
       - Jenkins Pipelines: assets/jenkins-pipelines/README.md
       - Ansible Playbooks: assets/ansible-playbooks/perforce/p4-server/README.md
-      - Dockerfiles: docs/assets/dockerfiles.md
+      - Dockerfiles: docs/assets/docker/README.md
   - Modules:
       - Overview: modules/README.md
       - Design Standards: modules/DESIGN_STANDARDS.md
