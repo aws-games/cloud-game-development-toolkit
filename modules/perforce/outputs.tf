@@ -117,8 +117,30 @@ output "p4_code_review_execution_role_id" {
   description = "The default role for the P4 Code Review service task"
 }
 
+# P4 Broker
+output "p4_broker_service_security_group_id" {
+  value       = var.p4_broker_config != null ? module.p4_broker[0].service_security_group_id : null
+  description = "Security group associated with the ECS service running P4 Broker."
+}
+
+output "p4_broker_cluster_name" {
+  value       = var.p4_broker_config != null ? module.p4_broker[0].cluster_name : null
+  description = "Name of the ECS cluster hosting P4 Broker."
+}
+
+output "p4_broker_target_group_arn" {
+  value       = var.p4_broker_config != null ? module.p4_broker[0].target_group_arn : null
+  description = "The NLB target group ARN for P4 Broker."
+}
+
+output "p4_broker_config_bucket_name" {
+  value       = var.p4_broker_config != null ? module.p4_broker[0].config_bucket_name : null
+  description = "The name of the S3 bucket containing the P4 Broker configuration."
+}
+
+
 output "p4_server_lambda_link_name" {
-  value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
+  value = (var.p4_server_config != null && var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?
   module.p4_server[0].lambda_link_name : null)
   description = "The name of the Lambda link for the P4 Server instance to use with FSxN."
 }

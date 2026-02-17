@@ -26,7 +26,7 @@ resource "aws_security_group" "perforce_network_load_balancer" {
 # Perforce NLB --> Perforce Web Services ALB
 # Allows Perforce NLB to send outbound traffic to Perforce Web Services ALB
 resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_to_perforce_web_services_alb" {
-  count                        = var.create_default_sgs && var.create_shared_network_load_balancer ? 1 : 0
+  count                        = var.create_default_sgs && var.create_shared_network_load_balancer && var.create_shared_application_load_balancer ? 1 : 0
   security_group_id            = aws_security_group.perforce_network_load_balancer[0].id
   description                  = "Allows Perforce NLB to send outbound traffic to Perforce Web Services ALB."
   from_port                    = 443
@@ -189,4 +189,64 @@ resource "aws_vpc_security_group_egress_rule" "p4_code_review_outbound_to_p4_ser
   to_port                      = 1666
   ip_protocol                  = "TCP"
   referenced_security_group_id = module.p4_server[0].security_group_id
+}
+
+
+############################################################################################
+# P4 Broker Security Group | Rules (security group itself is created in the submodule)
+############################################################################################
+# Perforce NLB --> P4 Broker
+# Allows Perforce NLB to send outbound traffic to P4 Broker
+resource "aws_vpc_security_group_egress_rule" "perforce_nlb_outbound_to_p4_broker" {
+  count                        = var.p4_broker_config != null && var.create_default_sgs && var.create_shared_network_load_balancer ? 1 : 0
+  security_group_id            = aws_security_group.perforce_network_load_balancer[0].id
+  description                  = "Allows Perforce NLB to send outbound traffic to P4 Broker."
+  from_port                    = var.p4_broker_config.container_port
+  to_port                      = var.p4_broker_config.container_port
+  ip_protocol                  = "TCP"
+  referenced_security_group_id = module.p4_broker[0].service_security_group_id
+
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-perforce-nlb-to-p4-broker-sg-rule"
+  })
+}
+
+# P4 Broker <-- Perforce NLB
+# Allows P4 Broker to receive inbound traffic from Perforce NLB
+resource "aws_vpc_security_group_ingress_rule" "p4_broker_inbound_from_perforce_nlb" {
+  count                        = var.p4_broker_config != null && var.create_default_sgs && var.create_shared_network_load_balancer ? 1 : 0
+  security_group_id            = module.p4_broker[0].service_security_group_id
+  description                  = "Allows P4 Broker to receive inbound traffic from Perforce NLB."
+  ip_protocol                  = "TCP"
+  from_port                    = var.p4_broker_config.container_port
+  to_port                      = var.p4_broker_config.container_port
+  referenced_security_group_id = aws_security_group.perforce_network_load_balancer[0].id
+
+  tags = merge(var.tags, {
+    Name = "${var.project_prefix}-p4-broker-from-nlb-sg-rule"
+  })
+}
+
+# P4 Broker --> P4 Server
+# Allows P4 Broker to send outbound traffic to P4 Server (upstream)
+resource "aws_vpc_security_group_egress_rule" "p4_broker_outbound_to_p4_server" {
+  count                        = var.p4_broker_config != null && var.p4_server_config != null && var.create_default_sgs ? 1 : 0
+  security_group_id            = module.p4_broker[0].service_security_group_id
+  description                  = "Allows P4 Broker to send outbound traffic to P4 Server."
+  from_port                    = 1666
+  to_port                      = 1666
+  ip_protocol                  = "TCP"
+  referenced_security_group_id = module.p4_server[0].security_group_id
+}
+
+# P4 Server <-- P4 Broker
+# Allows P4 Server to receive inbound traffic from P4 Broker
+resource "aws_vpc_security_group_ingress_rule" "p4_server_inbound_from_p4_broker" {
+  count                        = var.p4_broker_config != null && var.p4_server_config != null && var.create_default_sgs ? 1 : 0
+  security_group_id            = module.p4_server[0].security_group_id
+  description                  = "Allows P4 Server to receive inbound traffic from P4 Broker."
+  ip_protocol                  = "TCP"
+  from_port                    = 1666
+  to_port                      = 1666
+  referenced_security_group_id = module.p4_broker[0].service_security_group_id
 }

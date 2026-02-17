@@ -159,16 +159,60 @@ module "p4_code_review" {
   create_default_role = var.p4_code_review_config.create_default_role
   custom_role         = var.p4_code_review_config.custom_role
 
-  super_user_password_secret_arn          = module.p4_server[0].super_user_password_secret_arn
-  super_user_username_secret_arn          = module.p4_server[0].super_user_username_secret_arn
-  p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
-  p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
+  super_user_password_secret_arn          = var.p4_code_review_config.super_user_password_secret_arn != null ? var.p4_code_review_config.super_user_password_secret_arn : try(module.p4_server[0].super_user_password_secret_arn, null)
+  super_user_username_secret_arn          = var.p4_code_review_config.super_user_username_secret_arn != null ? var.p4_code_review_config.super_user_username_secret_arn : try(module.p4_server[0].super_user_username_secret_arn, null)
+  p4_code_review_user_password_secret_arn = var.p4_code_review_config.p4_code_review_user_password_secret_arn != null ? var.p4_code_review_config.p4_code_review_user_password_secret_arn : try(module.p4_server[0].super_user_password_secret_arn, null)
+  p4_code_review_user_username_secret_arn = var.p4_code_review_config.p4_code_review_user_username_secret_arn != null ? var.p4_code_review_config.p4_code_review_user_username_secret_arn : try(module.p4_server[0].super_user_username_secret_arn, null)
 
   enable_sso        = var.p4_code_review_config.enable_sso
   config_php_source = var.p4_code_review_config.config_php_source
 
   depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
 }
+
+#################################################
+# P4 Broker (Perforce Helix Broker)
+#################################################
+module "p4_broker" {
+  source = "./modules/p4-broker"
+  count  = var.p4_broker_config != null ? 1 : 0
+
+  # General
+  name           = var.p4_broker_config.name
+  project_prefix = var.p4_broker_config.project_prefix
+  debug          = var.p4_broker_config.debug
+
+  # Compute
+  cluster_name = (
+    var.existing_ecs_cluster_name != null ?
+    var.existing_ecs_cluster_name :
+    aws_ecs_cluster.perforce_web_services_cluster[0].name
+  )
+  container_name   = var.p4_broker_config.container_name
+  container_port   = var.p4_broker_config.container_port
+  container_cpu    = var.p4_broker_config.container_cpu
+  container_memory = var.p4_broker_config.container_memory
+  container_image  = var.p4_broker_config.container_image
+  desired_count    = var.p4_broker_config.desired_count
+
+  # Broker Configuration
+  p4_target            = var.p4_broker_config.p4_target
+  broker_command_rules = var.p4_broker_config.broker_command_rules
+  extra_env            = var.p4_broker_config.extra_env
+
+  # Storage & Logging
+  cloudwatch_log_retention_in_days = var.p4_broker_config.cloudwatch_log_retention_in_days
+
+  # Networking & Security
+  vpc_id  = var.vpc_id
+  subnets = var.p4_broker_config.service_subnets
+
+  create_default_role = var.p4_broker_config.create_default_role
+  custom_role         = var.p4_broker_config.custom_role
+
+  depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
+}
+
 
 #################################################
 # Shared ECS Cluster (Perforce Web Services)
