@@ -242,6 +242,34 @@ variable "create_unreal_horde_recycle_policy" {
 }
 
 ######################
+# SLACK CONFIG
+######################
+
+variable "slack_job_notification_channel" {
+  type        = string
+  description = "Slack channel to send job related notifications to"
+  default     = null
+}
+
+variable "slack_token" {
+  type        = string
+  description = "Bot token for interacting with Slack (xoxb-*)."
+  default     = null
+}
+
+variable "slack_socket_token" {
+  type        = string
+  description = "Token for opening a socket to slack (xapp-*)"
+  default     = null
+}
+
+variable "slack_help_channel" {
+  type        = string
+  description = "Help slack channel that users can use for issues"
+  default     = null
+}
+
+######################
 # OIDC CONFIG
 ######################
 

@@ -78,9 +78,21 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           value = var.environment
         },
         {
-          name  = "Horde__JwtExpiryTimeHours"
-          value = tostring(var.auth_token_timeout_hours)
-        }
+          name  = "Horde__helpSlackChannel"
+          value = var.slack_help_channel
+        },
+        {
+          name  = "Horde__slackToken"
+          value = var.slack_token
+        },
+        {
+          name  = "Horde__slackSocketToken"
+          value = var.slack_socket_token
+        },
+        {
+          name  = "Horde__jobNotificationChannel"
+          value = var.slack_job_notification_channel
+        },
       ]
       logConfiguration = {
         logDriver = "awslogs"
