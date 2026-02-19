@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
     
     
       
@@ -3506,20 +3506,19 @@
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <p><img alt="P4 Code Review Architecture" src="../../assets/media/diagrams/p4-code-review-architecture.png" /></p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p>P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically, but P4 Code Review requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the P4 Code Review instance during startup. See the <code>p4d_super_user_arn</code>, <code>p4d_super_user_password_arn</code>, <code>p4d_swarm_user_arn</code>, and <code>p4d_swarm_password_arn</code> variables below for more details.</p>
-<p>The <a href="../p4-server/index.html">P4 Server submodule</a> creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere. The is done by default by the parent Perforce module.</p>
-<p>Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:</p>
+<p>P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically using the P4 Server's <code>super</code> user credentials, which are provided to the module through the <code>super_user_password_secret_arn</code> variable and pulled into the P4 Code Review instance during startup.</p>
+<p>The <a href="../p4-server/index.html">P4 Server submodule</a> creates the <code>super</code> user on initial deployment and stores the password in AWS Secrets Manager. The ARN of the secret is then made available as a Terraform output from the module and can be referenced elsewhere. This is done by default by the parent Perforce module.</p>
+<p>Should you need to manually create the super user password secret, the following AWS CLI command may prove useful:</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>P4CodeReviewSuperUser<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Code Review Super User&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;{\&quot;username\&quot;:\&quot;swarm\&quot;,\&quot;password\&quot;:\&quot;EXAMPLE-PASSWORD\&quot;}&quot;</span>
+<span class="w">    </span>--name<span class="w"> </span>P4SuperUserPassword<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Super User Password&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;EXAMPLE-PASSWORD&quot;</span>
 </code></pre></div>
-<p>You can then provide these credentials as variables when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):</p>
+<p>You can then provide this credential as a variable when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):</p>
 <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">p4d_super_user_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4CodeReviewSuperUser-a1b2c3:username::&quot;</span>
-<span class="w">    </span><span class="na">p4d_super_user_password_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4CodeReviewSuperUser-a1b2c3:password::&quot;</span>
+<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4SuperUserPassword-a1b2c3&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -3887,20 +3886,6 @@
 <td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td><a name="input_p4_code_review_user_password_secret_arn"></a> <a href="#input_p4_code_review_user_password_secret_arn">p4_code_review_user_password_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_p4_code_review_user_username_secret_arn"></a> <a href="#input_p4_code_review_user_username_secret_arn">p4_code_review_user_username_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
 <td><a name="input_subnets"></a> <a href="#input_subnets">subnets</a></td>
 <td>A list of subnets for ElastiCache Redis deployment. Private subnets are recommended.</td>
 <td><code>list(string)</code></td>
@@ -3909,7 +3894,7 @@
 </tr>
 <tr>
 <td><a name="input_super_user_password_secret_arn"></a> <a href="#input_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d super user password.</td>
+<td>ARN of the AWS Secrets Manager secret containing the P4 super user password. The super user is used for both Swarm runtime operations and administrative tasks.</td>
 <td><code>string</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
@@ -4202,7 +4187,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-14
+    2026-02-19
   </span>
 
     

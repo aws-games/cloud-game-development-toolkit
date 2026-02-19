@@ -754,6 +754,14 @@ sudo -u perforce p4 -p "$P4PORT" trust -y
 # Login as super user for admin operations
 echo "$SUPER_PASSWORD" | sudo -u perforce p4 -p "$P4PORT" -u super login
 
+# Ensure super user is a standard user type (not service account)
+# This allows super to pass p4 protects validation required by tools like Swarm
+log_message "Ensuring super user is standard type"
+sudo -u perforce p4 -p "$P4PORT" -u super user -o super | \
+  sed 's/^Type:.*/Type: standard/' > /tmp/super_user.txt
+cat /tmp/super_user.txt | sudo -u perforce p4 -p "$P4PORT" -u super user -i -f
+rm -f /tmp/super_user.txt
+
 # Create admin user for human administrators
 log_message "Creating admin user: $ADMIN_USERNAME"
 

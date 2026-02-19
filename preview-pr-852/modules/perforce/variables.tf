@@ -467,10 +467,8 @@ variable "p4_code_review_config" {
     service_subnets          = optional(list(string), null)
     instance_subnet_id       = string
 
-    super_user_password_secret_arn          = optional(string, null)
-    p4_code_review_user_password_secret_arn = optional(string, null)
-    p4_code_review_user_username_secret_arn = optional(string, null)
-    custom_config                           = optional(string, null)
+    super_user_password_secret_arn = optional(string, null)
+    custom_config                  = optional(string, null)
 
     # Caching
     elasticache_node_count = optional(number, 1)
@@ -523,11 +521,7 @@ variable "p4_code_review_config" {
 
     instance_subnet_id : "The subnet ID where the EC2 instance will be launched. Should be a private subnet for security."
 
-    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user password."
-
-    p4_code_review_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
-
-    p4_code_review_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."
+    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user password. The super user is used for both Swarm runtime operations and administrative tasks."
 
     custom_config : "JSON string with additional Swarm configuration to merge with the generated config.php. Use this for SSO/SAML setup, notifications, Jira integration, etc."
 

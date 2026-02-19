@@ -52,20 +52,18 @@ resource "aws_launch_template" "swarm_instance" {
 
   # User data script handles EBS volume attachment, mounting, and Swarm configuration
   user_data = base64encode(templatefile("${path.module}/user-data.sh.tpl", {
-    region                                  = data.aws_region.current.name
-    device_name                             = local.ebs_device_name
-    mount_path                              = local.host_data_path
-    module_identifier                       = local.module_identifier
-    p4d_port                                = var.p4d_port
-    p4charset                               = var.p4charset
-    swarm_host                              = "https://${var.fully_qualified_domain_name}"
-    swarm_redis                             = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.cluster[0].cache_nodes[0].address
-    swarm_redis_port                        = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.cluster[0].cache_nodes[0].port)
-    swarm_force_ext                         = "y"
-    super_user_password_secret_arn          = var.super_user_password_secret_arn
-    p4_code_review_user_username_secret_arn = var.p4_code_review_user_username_secret_arn
-    p4_code_review_user_password_secret_arn = var.p4_code_review_user_password_secret_arn
-    custom_config                           = var.custom_config
+    region                         = data.aws_region.current.name
+    device_name                    = local.ebs_device_name
+    mount_path                     = local.host_data_path
+    module_identifier              = local.module_identifier
+    p4d_port                       = var.p4d_port
+    p4charset                      = var.p4charset
+    swarm_host                     = "https://${var.fully_qualified_domain_name}"
+    swarm_redis                    = var.existing_redis_connection != null ? var.existing_redis_connection.host : aws_elasticache_cluster.cluster[0].cache_nodes[0].address
+    swarm_redis_port               = var.existing_redis_connection != null ? tostring(var.existing_redis_connection.port) : tostring(aws_elasticache_cluster.cluster[0].cache_nodes[0].port)
+    swarm_force_ext                = "y"
+    super_user_password_secret_arn = var.super_user_password_secret_arn
+    custom_config                  = var.custom_config
   }))
 
   metadata_options {
