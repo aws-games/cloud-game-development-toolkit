@@ -14,7 +14,9 @@ locals {
 
 data "amazon-ami" "ubuntu" {
   filters = {
-    name                = "ubuntu/images/hvm-ssd-gp3/ubuntu-*-amd64-server-*"
+    # Pin to Ubuntu 24.04 LTS (noble) - helix-swarm-optional requires ImageMagick 6
+    # which is not available in Ubuntu 25.x+
+    name                = "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"
     architecture        = "x86_64"
     root-device-type    = "ebs"
     virtualization-type = "hvm"

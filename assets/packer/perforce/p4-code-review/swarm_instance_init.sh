@@ -29,10 +29,9 @@ SWARM_REDIS_PORT="6379"
 SWARM_FORCE_EXT="y"
 CUSTOM_CONFIG_FILE=""
 
-# Secret ARNs for fetching credentials from AWS Secrets Manager
+# Secret ARN for fetching super user password from AWS Secrets Manager
+# The super user is used for both Swarm runtime operations and admin tasks
 P4D_SUPER_PASSWD_SECRET_ARN=""
-SWARM_USER_SECRET_ARN=""
-SWARM_PASSWD_SECRET_ARN=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -68,14 +67,6 @@ while [[ $# -gt 0 ]]; do
       P4D_SUPER_PASSWD_SECRET_ARN="$2"
       shift 2
       ;;
-    --swarm-user-secret-arn)
-      SWARM_USER_SECRET_ARN="$2"
-      shift 2
-      ;;
-    --swarm-passwd-secret-arn)
-      SWARM_PASSWD_SECRET_ARN="$2"
-      shift 2
-      ;;
     *)
       log_message "Unknown parameter: $1"
       shift
@@ -99,21 +90,20 @@ SWARM_HOSTNAME="${SWARM_HOST#https://}"
 SWARM_HOSTNAME="${SWARM_HOSTNAME#http://}"
 log_message "SWARM_HOSTNAME (for configure-swarm.sh): $SWARM_HOSTNAME"
 
-# Service account username is always "super"
+# The super user is used for both Swarm runtime operations (-u) and admin tasks (-U)
+# This simplifies credential management and works with any authentication configuration
 P4D_SUPER="super"
 
-# Retrieve credentials from AWS Secrets Manager
-log_message "Fetching secrets from AWS Secrets Manager"
+# Retrieve super user password from AWS Secrets Manager
+log_message "Fetching super user password from AWS Secrets Manager"
 P4D_SUPER_PASSWD=$(aws secretsmanager get-secret-value --secret-id "$P4D_SUPER_PASSWD_SECRET_ARN" --query SecretString --output text)
-SWARM_USER=$(aws secretsmanager get-secret-value --secret-id "$SWARM_USER_SECRET_ARN" --query SecretString --output text)
-SWARM_PASSWD=$(aws secretsmanager get-secret-value --secret-id "$SWARM_PASSWD_SECRET_ARN" --query SecretString --output text)
 
-if [ -z "$P4D_SUPER_PASSWD" ] || [ -z "$SWARM_USER" ] || [ -z "$SWARM_PASSWD" ]; then
-  log_message "ERROR: Failed to fetch secrets from AWS Secrets Manager"
+if [ -z "$P4D_SUPER_PASSWD" ]; then
+  log_message "ERROR: Failed to fetch super user password from AWS Secrets Manager"
   exit 1
 fi
 
-log_message "Successfully fetched secrets"
+log_message "Successfully fetched credentials"
 
 # P4 Code Review data directory - stores application data and configuration
 SWARM_DATA_PATH="/opt/perforce/swarm/data"
@@ -127,13 +117,15 @@ chmod 775 "$SWARM_DATA_PATH"
 
 # Run the official P4 Code Review configuration script
 # This handles initial setup and P4 Server extension installation
+# Using super user for both -u (Swarm user) and -U (admin user) ensures compatibility
+# with all authentication configurations (SSO, standard password, etc.)
 log_message "Running configure-swarm.sh with super user credentials"
 
 /opt/perforce/swarm/sbin/configure-swarm.sh \
   -n \
   -p "$P4D_PORT" \
-  -u "$SWARM_USER" \
-  -w "$SWARM_PASSWD" \
+  -u "$P4D_SUPER" \
+  -w "$P4D_SUPER_PASSWD" \
   -H "$SWARM_HOSTNAME" \
   -e localhost \
   -X \

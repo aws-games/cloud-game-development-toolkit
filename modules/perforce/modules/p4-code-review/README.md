@@ -18,27 +18,26 @@ This module deploys the following resources:
 
 ## Prerequisites
 
-P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically, but P4 Code Review requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the P4 Code Review instance during startup. See the `p4d_super_user_arn`, `p4d_super_user_password_arn`, `p4d_swarm_user_arn`, and `p4d_swarm_password_arn` variables below for more details.
+P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically using the P4 Server's `super` user credentials, which are provided to the module through the `super_user_password_secret_arn` variable and pulled into the P4 Code Review instance during startup.
 
-The [P4 Server submodule](../p4-server/README.md) creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere. The is done by default by the parent Perforce module.
+The [P4 Server submodule](../p4-server/README.md) creates the `super` user on initial deployment and stores the password in AWS Secrets Manager. The ARN of the secret is then made available as a Terraform output from the module and can be referenced elsewhere. This is done by default by the parent Perforce module.
 
-Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:
+Should you need to manually create the super user password secret, the following AWS CLI command may prove useful:
 
 ```bash
 aws secretsmanager create-secret \
-    --name P4CodeReviewSuperUser \
-    --description "P4 Code Review Super User" \
-    --secret-string "{\"username\":\"swarm\",\"password\":\"EXAMPLE-PASSWORD\"}"
+    --name P4SuperUserPassword \
+    --description "P4 Server Super User Password" \
+    --secret-string "EXAMPLE-PASSWORD"
 ```
 
-You can then provide these credentials as variables when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):
+You can then provide this credential as a variable when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):
 
 ```hcl
 module "p4_code_review" {
     source = "modules/perforce/modules/p4-code-review"
     ...
-    p4d_super_user_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4CodeReviewSuperUser-a1b2c3:username::"
-    p4d_super_user_password_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4CodeReviewSuperUser-a1b2c3:password::"
+    super_user_password_secret_arn = "arn:aws:secretsmanager:<your-aws-region>:<your-aws-account-id>:secret:P4SuperUserPassword-a1b2c3"
 }
 ```
 
@@ -242,10 +241,8 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_instance_subnet_id"></a> [instance\_subnet\_id](#input\_instance\_subnet\_id) | The subnet ID where the EC2 instance will be launched. Should be a private subnet for security. | `string` | n/a | yes |
-| <a name="input_p4_code_review_user_password_secret_arn"></a> [p4\_code\_review\_user\_password\_secret\_arn](#input\_p4\_code\_review\_user\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password. | `string` | n/a | yes |
-| <a name="input_p4_code_review_user_username_secret_arn"></a> [p4\_code\_review\_user\_username\_secret\_arn](#input\_p4\_code\_review\_user\_username\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username. | `string` | n/a | yes |
 | <a name="input_subnets"></a> [subnets](#input\_subnets) | A list of subnets for ElastiCache Redis deployment. Private subnets are recommended. | `list(string)` | n/a | yes |
-| <a name="input_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#input\_super\_user\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d super user password. | `string` | n/a | yes |
+| <a name="input_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#input\_super\_user\_password\_secret\_arn) | ARN of the AWS Secrets Manager secret containing the P4 super user password. The super user is used for both Swarm runtime operations and administrative tasks. | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The ID of the existing VPC you would like to deploy P4 Code Review into. | `string` | n/a | yes |
 | <a name="input_alb_access_logs_bucket"></a> [alb\_access\_logs\_bucket](#input\_alb\_access\_logs\_bucket) | ID of the S3 bucket for P4 Code Review ALB access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |
 | <a name="input_alb_access_logs_prefix"></a> [alb\_access\_logs\_prefix](#input\_alb\_access\_logs\_prefix) | Log prefix for P4 Code Review ALB access logs. If null the project prefix and module name are used. | `string` | `null` | no |

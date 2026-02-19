@@ -159,9 +159,7 @@ module "p4_code_review" {
   elasticache_node_count = var.p4_code_review_config.elasticache_node_count
   elasticache_node_type  = var.p4_code_review_config.elasticache_node_type
 
-  super_user_password_secret_arn          = module.p4_server[0].super_password_secret_arn
-  p4_code_review_user_password_secret_arn = module.p4_server[0].admin_password_secret_arn
-  p4_code_review_user_username_secret_arn = module.p4_server[0].admin_username_secret_arn
+  super_user_password_secret_arn = module.p4_server[0].super_password_secret_arn
 
   custom_config = var.p4_code_review_config.custom_config
 

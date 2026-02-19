@@ -165,17 +165,7 @@ variable "certificate_arn" {
 
 variable "super_user_password_secret_arn" {
   type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
-}
-
-variable "p4_code_review_user_username_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username."
-}
-
-variable "p4_code_review_user_password_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password."
+  description = "ARN of the AWS Secrets Manager secret containing the P4 super user password. The super user is used for both Swarm runtime operations and administrative tasks."
 }
 
 variable "custom_config" {
