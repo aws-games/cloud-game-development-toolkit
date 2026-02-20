@@ -114,7 +114,7 @@ elif [ "$ATTACHED_INSTANCE" != "none" ] && [ "$ATTACHED_INSTANCE" != "null" ]; t
     done
 
     if [ $WAIT_TIME -ge $MAX_WAIT ]; then
-        log "ERROR: Timed out waiting for previous instance to terminate after ${MAX_WAIT}s"
+        log "ERROR: Timed out waiting for previous instance to terminate after $${MAX_WAIT}s"
         log "Cannot safely detach volume - manual intervention required"
         exit 1
     fi
