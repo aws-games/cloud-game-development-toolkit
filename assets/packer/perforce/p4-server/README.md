@@ -40,17 +40,49 @@ An instance that is provisioned with this AMI will not automatically deploy a P4
 ``` bash
 #!/bin/bash
 /home/ec2-user/cloud-game-development-toolkit/p4_configure.sh \
-   <volume label for hxdepot> \
-   <volume label for hxmetadata> \
-   <volume label for hxlogs> \
-   <p4d server type> \
-   <super user username ARN from AWS Secrets Manager> \
-   <super user password ARN from AWS Secrets Manager> \
-   <fully qualified domain name of P4 Server> \
-   <URL for P4Auth>
+   --p4d_type p4d_master \
+   --hx_depots /dev/sdf \
+   --hx_metadata /dev/sdg \
+   --hx_logs /dev/sdh \
+   --super_password <AWS Secrets Manager secret ID for service account password> \
+   --admin_username <AWS Secrets Manager secret ID for admin username> \
+   --admin_password <AWS Secrets Manager secret ID for admin password> \
+   --fqdn perforce.example.com \
+   --auth https://auth.perforce.example.com
 ```
 
-As you can see, there are quite a few parameters that need to be passed to the `p4_configure.sh` script. We recommend using the [Perforce module](../../../../modules/perforce/README.md) for this reason.
+### Script Options
+
+| Option | Description |
+|--------|-------------|
+| `--p4d_type` | P4 Server type: `p4d_master`, `p4d_replica`, or `p4d_edge` |
+| `--hx_depots` | Path/device for P4 Server depots volume |
+| `--hx_metadata` | Path/device for P4 Server metadata volume |
+| `--hx_logs` | Path/device for P4 Server logs volume |
+| `--super_password` | AWS Secrets Manager secret ID for service account (super) password |
+| `--admin_username` | AWS Secrets Manager secret ID for admin account username |
+| `--admin_password` | AWS Secrets Manager secret ID for admin account password |
+| `--fqdn` | Fully Qualified Domain Name for the P4 Server |
+| `--auth` | P4Auth URL (optional) |
+| `--case_sensitive` | Case sensitivity: `0` (insensitive) or `1` (sensitive, default) |
+| `--unicode` | Enable Unicode mode: `true` or `false` |
+| `--selinux` | Update SELinux labels: `true` or `false` |
+| `--plaintext` | Disable SSL: `true` or `false` |
+| `--fsxn_password` | AWS Secrets Manager secret ID for FSxN password |
+| `--fsxn_svm_name` | FSxN Storage Virtual Machine name |
+| `--fsxn_management_ip` | FSxN management IP address |
+
+### User Configuration
+
+The script creates two Perforce users:
+
+1. **Service Account (`super`)**: Always created with username "super". Used internally by P4 Code Review (Helix Swarm) and other tooling. Password provided via `--super_password`.
+
+2. **Admin Account**: Created with the username provided via `--admin_username`. This is the account for human administrators. Password provided via `--admin_password`.
+
+Both users have full super privileges and are added to the `unlimited_timeout` group.
+
+We recommend using the [Perforce module](../../../../modules/perforce/README.md) to manage these configurations through Terraform.
 
 ## Important Notes
 

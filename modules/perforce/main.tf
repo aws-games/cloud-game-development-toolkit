@@ -16,8 +16,8 @@ module "p4_server" {
       var.p4_auth_config != null ?
       (
         var.create_route53_private_hosted_zone ?
-        "auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
-        module.p4_auth[0].alb_dns_name
+        "https://auth.${aws_route53_zone.perforce_private_hosted_zone[0].name}" :
+        "https://${module.p4_auth[0].alb_dns_name}"
       ) :
       null
     )
@@ -49,16 +49,16 @@ module "p4_server" {
   fsxn_management_ip                = var.p4_server_config.fsxn_management_ip
 
   # Networking & Security
-  vpc_id                         = var.vpc_id
-  instance_subnet_id             = var.p4_server_config.instance_subnet_id
-  instance_private_ip            = var.p4_server_config.instance_private_ip
-  create_default_sg              = var.p4_server_config.create_default_sg
-  existing_security_groups       = var.p4_server_config.existing_security_groups
-  internal                       = var.p4_server_config.internal
-  super_user_password_secret_arn = var.p4_server_config.super_user_password_secret_arn
-  super_user_username_secret_arn = var.p4_server_config.super_user_username_secret_arn
-  create_default_role            = var.p4_server_config.create_default_role
-  custom_role                    = var.p4_server_config.custom_role
+  vpc_id                    = var.vpc_id
+  instance_subnet_id        = var.p4_server_config.instance_subnet_id
+  instance_private_ip       = var.p4_server_config.instance_private_ip
+  create_default_sg         = var.p4_server_config.create_default_sg
+  existing_security_groups  = var.p4_server_config.existing_security_groups
+  internal                  = var.p4_server_config.internal
+  admin_username            = var.p4_server_config.admin_username
+  admin_password_secret_arn = var.p4_server_config.admin_password_secret_arn
+  create_default_role       = var.p4_server_config.create_default_role
+  custom_role               = var.p4_server_config.custom_role
 }
 
 
@@ -125,18 +125,12 @@ module "p4_code_review" {
   # General
   name                        = var.p4_code_review_config.name
   project_prefix              = var.p4_code_review_config.project_prefix
-  debug                       = var.p4_code_review_config.debug
   fully_qualified_domain_name = var.p4_code_review_config.fully_qualified_domain_name
 
-  cluster_name = (
-    var.existing_ecs_cluster_name != null ?
-    var.existing_ecs_cluster_name :
-    aws_ecs_cluster.perforce_web_services_cluster[0].name
-  )
-  container_name   = var.p4_code_review_config.container_name
-  container_port   = var.p4_code_review_config.container_port
-  container_cpu    = var.p4_code_review_config.container_cpu
-  container_memory = var.p4_code_review_config.container_memory
+  # Compute
+  application_port = var.p4_code_review_config.application_port
+  instance_type    = var.p4_code_review_config.instance_type
+  ami_id           = var.p4_code_review_config.ami_id
   p4d_port         = var.p4_code_review_config.p4d_port != null ? var.p4_code_review_config.p4d_port : local.p4_port
   p4charset = var.p4_code_review_config.p4charset != null ? var.p4_code_review_config.p4charset : (
     var.p4_server_config != null ? (
@@ -146,28 +140,30 @@ module "p4_code_review" {
   existing_redis_connection = var.p4_code_review_config.existing_redis_connection
 
   # Storage & Logging
+  ebs_volume_size                  = var.p4_code_review_config.ebs_volume_size
+  ebs_volume_type                  = var.p4_code_review_config.ebs_volume_type
+  ebs_volume_encrypted             = var.p4_code_review_config.ebs_volume_encrypted
+  ebs_availability_zone            = var.p4_code_review_config.ebs_availability_zone
   enable_alb_access_logs           = false
   cloudwatch_log_retention_in_days = var.p4_code_review_config.cloudwatch_log_retention_in_days
 
   # Networking & Security
-  vpc_id  = var.vpc_id
-  subnets = var.p4_code_review_config.service_subnets
+  vpc_id             = var.vpc_id
+  subnets            = var.p4_code_review_config.service_subnets
+  instance_subnet_id = var.p4_code_review_config.instance_subnet_id
 
   create_application_load_balancer = false
   internal                         = var.p4_code_review_config.internal
 
-  create_default_role = var.p4_code_review_config.create_default_role
-  custom_role         = var.p4_code_review_config.custom_role
+  # ElastiCache Redis
+  elasticache_node_count = var.p4_code_review_config.elasticache_node_count
+  elasticache_node_type  = var.p4_code_review_config.elasticache_node_type
 
-  super_user_password_secret_arn          = module.p4_server[0].super_user_password_secret_arn
-  super_user_username_secret_arn          = module.p4_server[0].super_user_username_secret_arn
-  p4_code_review_user_password_secret_arn = module.p4_server[0].super_user_password_secret_arn
-  p4_code_review_user_username_secret_arn = module.p4_server[0].super_user_username_secret_arn
+  super_user_password_secret_arn = module.p4_server[0].super_password_secret_arn
 
-  enable_sso        = var.p4_code_review_config.enable_sso
-  config_php_source = var.p4_code_review_config.config_php_source
+  custom_config = var.p4_code_review_config.custom_config
 
-  depends_on = [aws_ecs_cluster.perforce_web_services_cluster[0]]
+  depends_on = [module.p4_server]
 }
 
 #################################################

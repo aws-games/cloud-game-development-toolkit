@@ -102,6 +102,7 @@ nav:
               - Windows Build Agent:
                   - assets/packer/build-agents/windows/README.md
           - P4 Server: assets/packer/perforce/p4-server/README.md
+          - P4 Code Review: assets/packer/perforce/p4-code-review/README.md
           - Virtual Workstations: assets/packer/virtual-workstations/README.md
       - Jenkins Pipelines: assets/jenkins-pipelines/README.md
       - Ansible Playbooks: assets/ansible-playbooks/perforce/p4-server/README.md

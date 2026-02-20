@@ -1,16 +1,11 @@
-output "service_security_group_id" {
-  value       = aws_security_group.ecs_service.id
-  description = "Security group associated with the ECS service running P4 Code Review"
+output "application_security_group_id" {
+  value       = aws_security_group.application.id
+  description = "Security group associated with the P4 Code Review application"
 }
 
 output "alb_security_group_id" {
   value       = var.create_application_load_balancer ? aws_security_group.alb[0].id : null
   description = "Security group associated with the P4 Code Review load balancer"
-}
-
-output "cluster_name" {
-  value       = var.cluster_name != null ? var.cluster_name : aws_ecs_cluster.cluster[0].name
-  description = "Name of the ECS cluster hosting P4 Code Review"
 }
 
 output "alb_dns_name" {
@@ -25,15 +20,25 @@ output "alb_zone_id" {
 
 output "target_group_arn" {
   value       = aws_lb_target_group.alb_target_group.arn
-  description = "The service target group for P4 Code Review"
+  description = "The target group ARN for P4 Code Review"
 }
 
-output "default_role_id" {
-  value       = var.create_default_role ? aws_iam_role.default_role[0].id : null
-  description = "The default role for the service task"
+output "instance_profile_arn" {
+  value       = aws_iam_instance_profile.ec2_instance_profile.arn
+  description = "The ARN of the IAM instance profile for P4 Code Review EC2 instances"
 }
 
-output "execution_role_id" {
-  value       = aws_iam_role.task_execution_role.id
-  description = "The default role for the service task"
+output "launch_template_id" {
+  value       = aws_launch_template.swarm_instance.id
+  description = "The ID of the launch template for P4 Code Review instances"
+}
+
+output "autoscaling_group_name" {
+  value       = aws_autoscaling_group.swarm_asg.name
+  description = "The name of the Auto Scaling Group for P4 Code Review"
+}
+
+output "ebs_volume_id" {
+  value       = aws_ebs_volume.swarm_data.id
+  description = "The ID of the EBS volume storing P4 Code Review persistent data"
 }
