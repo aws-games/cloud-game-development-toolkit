@@ -20,6 +20,24 @@ fi
 
 log_message "Starting P4 Code Review (Swarm) installation"
 
+# Wait for dpkg lock to be released (unattended-upgrades may be running)
+wait_for_apt() {
+  local max_wait=300
+  local wait_time=0
+  while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    if [ $wait_time -ge $max_wait ]; then
+      log_message "ERROR: Timed out waiting for apt lock after ${max_wait}s"
+      exit 1
+    fi
+    log_message "Waiting for apt lock to be released..."
+    sleep 5
+    wait_time=$((wait_time + 5))
+  done
+}
+
+log_message "Waiting for any background package operations to complete"
+wait_for_apt
+
 # Update package lists
 log_message "Updating package lists"
 apt-get update
