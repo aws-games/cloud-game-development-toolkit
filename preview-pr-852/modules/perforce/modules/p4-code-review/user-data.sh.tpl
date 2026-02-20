@@ -80,26 +80,49 @@ if [ "$ATTACHED_INSTANCE" == "$INSTANCE_ID" ]; then
 elif [ "$ATTACHED_INSTANCE" != "none" ] && [ "$ATTACHED_INSTANCE" != "null" ]; then
     log "Volume is attached to different instance $ATTACHED_INSTANCE - checking instance state"
 
-    # Check if the attached instance is terminated before force detaching
-    INSTANCE_STATE=$(aws ec2 describe-instances \
-        --region "$REGION" \
-        --instance-ids "$ATTACHED_INSTANCE" \
-        --query 'Reservations[0].Instances[0].State.Name' \
-        --output text 2>/dev/null || echo "unknown")
-
-    log "Previous instance $ATTACHED_INSTANCE state: $INSTANCE_STATE"
-
-    if [ "$INSTANCE_STATE" = "terminated" ] || [ "$INSTANCE_STATE" = "unknown" ]; then
-        log "Previous instance is terminated/unknown, safe to force detach"
-        aws ec2 detach-volume \
+    # Wait for attached instance to terminate (handles ASG replacement race condition)
+    # ASG launches new instance before terminating old one, so we may need to wait
+    MAX_WAIT=300
+    WAIT_TIME=0
+    while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+        INSTANCE_STATE=$(aws ec2 describe-instances \
             --region "$REGION" \
-            --volume-id "$VOLUME_ID" \
-            --force 2>&1 | tee -a /tmp/swarm-setup.log || log "Warning: Force detach may have failed"
-    else
-        log "ERROR: Volume attached to running instance $ATTACHED_INSTANCE (state: $INSTANCE_STATE)"
+            --instance-ids "$ATTACHED_INSTANCE" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text 2>/dev/null || echo "unknown")
+
+        log "Previous instance $ATTACHED_INSTANCE state: $INSTANCE_STATE"
+
+        if [ "$INSTANCE_STATE" = "terminated" ] || [ "$INSTANCE_STATE" = "unknown" ]; then
+            log "Previous instance is terminated/unknown, safe to force detach"
+            break
+        elif [ "$INSTANCE_STATE" = "shutting-down" ] || [ "$INSTANCE_STATE" = "stopping" ]; then
+            log "Previous instance is $INSTANCE_STATE, waiting for termination..."
+            sleep 10
+            WAIT_TIME=$((WAIT_TIME + 10))
+        elif [ "$INSTANCE_STATE" = "running" ]; then
+            # Instance still running - could be ASG replacement in progress
+            # Wait a bit to see if it starts terminating
+            log "Previous instance still running, waiting to see if ASG terminates it..."
+            sleep 10
+            WAIT_TIME=$((WAIT_TIME + 10))
+        else
+            log "ERROR: Unexpected instance state: $INSTANCE_STATE"
+            log "Cannot safely detach volume - manual intervention required"
+            exit 1
+        fi
+    done
+
+    if [ $WAIT_TIME -ge $MAX_WAIT ]; then
+        log "ERROR: Timed out waiting for previous instance to terminate after ${MAX_WAIT}s"
         log "Cannot safely detach volume - manual intervention required"
         exit 1
     fi
+
+    aws ec2 detach-volume \
+        --region "$REGION" \
+        --volume-id "$VOLUME_ID" \
+        --force 2>&1 | tee -a /tmp/swarm-setup.log || log "Warning: Force detach may have failed"
 
     # Wait for detachment with timeout
     log "Waiting up to 2 minutes for volume to become available..."
