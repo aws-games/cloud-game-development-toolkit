@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
@@ -638,6 +638,8 @@
       
         
       
+        
+      
     
     
     
@@ -913,6 +915,34 @@
     
   
     P4 Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
   
 
     
@@ -3316,6 +3346,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#custom-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-ssosaml-with-auth0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: SSO/SAML with Auth0
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-email-notifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Email Notifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-jira-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example: Jira Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combining-multiple-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combining Multiple Configurations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3402,33 +3493,32 @@
 
 
 <h1 id="p4-code-review-submodule">P4 Code Review Submodule<a class="headerlink" href="#p4-code-review-submodule" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.perforce.com/products/helix-swarm">P4 Code Review</a> is a free code review tool for projects hosted in <a href="https://www.perforce.com/products/helix-core/aws">P4 Server</a>. This module deploys P4 Code Review as a service on AWS Elastic Container Service using the <a href="https://hub.docker.com/r/perforce/helix-swarm">publicly available image from Dockerhub</a>.</p>
+<p><a href="https://www.perforce.com/products/helix-swarm">P4 Code Review</a> is a free code review tool for projects hosted in <a href="https://www.perforce.com/products/helix-core/aws">P4 Server</a>. This module deploys P4 Code Review on an EC2 Auto Scaling Group using a custom AMI built with <a href="../../../../assets/packer/perforce/p4-code-review/index.html">Packer</a>.</p>
 <p>P4 Code Review also relies on a Redis cache. The module provisions a single node AWS Elasticache Redis OSS cluster and configures connectivity for the P4 Code Review service.</p>
 <p>This module deploys the following resources:</p>
 <ul>
-<li>An Elastic Container Service (ECS) cluster backed by AWS Fargate. This can also be created externally and passed in via the <code>cluster_name</code> variable.</li>
-<li>An ECS service running the latest P4 Code Review container (<a href="https://hub.docker.com/r/perforce/helix-swarm">perforce/helix-swarm</a>) available.</li>
+<li>An EC2 Auto Scaling Group running the P4 Code Review AMI (built using the <a href="../../../../assets/packer/perforce/p4-code-review/index.html">Packer template</a>).</li>
+<li>A persistent EBS volume for P4 Code Review data that survives instance replacement.</li>
 <li>An Application Load Balancer for TLS termination of the P4 Code Review service.</li>
 <li>A single node <a href="https://aws.amazon.com/elasticache/redis/">AWS Elasticache Redis OSS</a> cluster.</li>
-<li>Supporting resources such as Cloudwatch log groups, IAM roles, and security groups.</li>
+<li>Supporting resources such as CloudWatch log groups, IAM roles, and security groups.</li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p><img alt="P4 Code Review Submodule Architecture" src="../../assets/media/diagrams/p4-code-review-architecture.png" /></p>
+<p><img alt="P4 Code Review Architecture" src="../../assets/media/diagrams/p4-code-review-architecture.png" /></p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p>P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically, but P4 Code Review requires an administrative user's credentials to be able to initially connect. These credentials are provided to the module through variables specifying AWS Secrets Manager secrets, and then pulled into the P4 Code Review container during startup. See the <code>p4d_super_user_arn</code>, <code>p4d_super_user_password_arn</code>, <code>p4d_swarm_user_arn</code>, and <code>p4d_swarm_password_arn</code> variables below for more details.</p>
-<p>The <a href="../p4-server/index.html">P4 Server submodule</a> creates an administrative user on initial deployment, and stores the credentials in AWS Secrets manager. The ARN of the credentials secret is then made available as a Terraform output from the module, and can be referenced elsewhere. The is done by default by the parent Perforce module.</p>
-<p>Should you need to manually create the administrative user secret the following AWS CLI command may prove useful:</p>
+<p>P4 Code Review needs to be able to connect to a P4 Server. P4 Code Review leverages the same authentication mechanism as P4 Server, and needs to install required plugins on the upstream P4 Server instance during setup. This happens automatically using the P4 Server's <code>super</code> user credentials, which are provided to the module through the <code>super_user_password_secret_arn</code> variable and pulled into the P4 Code Review instance during startup.</p>
+<p>The <a href="../p4-server/index.html">P4 Server submodule</a> creates the <code>super</code> user on initial deployment and stores the password in AWS Secrets Manager. The ARN of the secret is then made available as a Terraform output from the module and can be referenced elsewhere. This is done by default by the parent Perforce module.</p>
+<p>Should you need to manually create the super user password secret, the following AWS CLI command may prove useful:</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>P4CodeReviewSuperUser<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Code Review Super User&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;{\&quot;username\&quot;:\&quot;swarm\&quot;,\&quot;password\&quot;:\&quot;EXAMPLE-PASSWORD\&quot;}&quot;</span>
+<span class="w">    </span>--name<span class="w"> </span>P4SuperUserPassword<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Super User Password&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;EXAMPLE-PASSWORD&quot;</span>
 </code></pre></div>
-<p>You can then provide these credentials as variables when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):</p>
+<p>You can then provide this credential as a variable when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):</p>
 <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">p4d_super_user_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4CodeReviewSuperUser-a1b2c3:username::&quot;</span>
-<span class="w">    </span><span class="na">p4d_super_user_password_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4CodeReviewSuperUser-a1b2c3:password::&quot;</span>
+<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4SuperUserPassword-a1b2c3&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -3438,6 +3528,111 @@
 <li><code>/opt/perforce/swarm/data/configure-swarm.log</code>: errors coming from p4cr configuration</li>
 <li><code>/opt/perforce/swarm/data/log</code>: errors from the p4cr runtime</li>
 </ul>
+<h2 id="custom-configuration">Custom Configuration<a class="headerlink" href="#custom-configuration" title="Permanent link">&para;</a></h2>
+<p>The <code>custom_config</code> variable allows you to pass additional configuration to P4 Code Review as a JSON string. This configuration is merged with the generated <code>config.php</code> using PHP's <code>array_replace_recursive</code> function at instance startup.</p>
+<p>This can be used to configure:</p>
+<ul>
+<li>SSO/SAML authentication</li>
+<li>Email notifications</li>
+<li>Jira integration</li>
+<li>Project settings</li>
+<li>And any other <a href="https://www.perforce.com/manuals/swarm/Content/Swarm/admin.configuration.html">Swarm configuration option</a></li>
+</ul>
+<h3 id="example-ssosaml-with-auth0">Example: SSO/SAML with Auth0<a class="headerlink" href="#example-ssosaml-with-auth0" title="Permanent link">&para;</a></h3>
+<p>SSO/SAML configuration requires two parts:</p>
+<ol>
+<li><strong><code>p4.sso</code></strong> - Enables the SSO login option. Values:</li>
+<li><code>"disabled"</code> - No SSO, only password login (default)</li>
+<li><code>"optional"</code> - Both SSO and password login available</li>
+<li>
+<p><code>"enabled"</code> - SSO only, no password login</p>
+</li>
+<li>
+<p><strong><code>saml</code></strong> - The SAML technical configuration (IdP/SP settings, certificates)</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<span class="c1">  # ... other required variables ...</span>
+
+<span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
+<span class="c1">    # Enable SSO login option</span>
+<span class="w">    </span><span class="nb">p4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">sso</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;optional&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="c1">    # SAML configuration</span>
+<span class="w">    </span><span class="nb">saml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Log in with SSO&quot;</span>
+<span class="w">      </span><span class="nb">sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">entityId</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com&quot;</span>
+<span class="w">        </span><span class="nb">assertionConsumerService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com/saml/acs&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nb">singleLogoutService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com/saml/sls&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="na">NameIDFormat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="nb">idp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">entityId</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;urn:your-auth0-domain&quot;</span>
+<span class="w">        </span><span class="nb">singleSignOnService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-auth0-domain/samlp/YOUR_CLIENT_ID&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nb">singleLogoutService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-auth0-domain/samlp/YOUR_CLIENT_ID/logout&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="na">x509cert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;YOUR_IDP_CERTIFICATE_HERE&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="example-email-notifications">Example: Email Notifications<a class="headerlink" href="#example-email-notifications" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<span class="c1">  # ... other required variables ...</span>
+
+<span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
+<span class="w">    </span><span class="nb">mail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nb">transport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;smtp.example.com&quot;</span>
+<span class="w">        </span><span class="na">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">587</span>
+<span class="w">        </span><span class="na">security</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tls&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="na">sender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;swarm@example.com&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="example-jira-integration">Example: Jira Integration<a class="headerlink" href="#example-jira-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<span class="c1">  # ... other required variables ...</span>
+
+<span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
+<span class="w">    </span><span class="nb">jira</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">host</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-company.atlassian.net&quot;</span>
+<span class="w">      </span><span class="na">user</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;jira-user@example.com&quot;</span>
+<span class="w">      </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your-api-token&quot;</span>
+<span class="w">      </span><span class="na">job_field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;customfield_10001&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="combining-multiple-configurations">Combining Multiple Configurations<a class="headerlink" href="#combining-multiple-configurations" title="Permanent link">&para;</a></h3>
+<p>You can combine multiple configuration sections in a single <code>custom_config</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
+<span class="w">  </span><span class="nb">saml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">    # SSO configuration...</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nb">mail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">    # Email configuration...</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nb">jira</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">    # Jira configuration...</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">})</span>
+</code></pre></div>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -3494,7 +3689,11 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.log_group</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group">aws_autoscaling_group.swarm_asg</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.application_log_group</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3502,19 +3701,7 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster">aws_ecs_cluster.cluster</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers">aws_ecs_cluster_capacity_providers.cluster_fargate_providers</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service">aws_ecs_service.service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition">aws_ecs_task_definition.task_definition</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_volume">aws_ebs_volume.swarm_data</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3526,7 +3713,11 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.default_policy</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile">aws_iam_instance_profile.ec2_instance_profile</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.ebs_attachment_policy</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3534,23 +3725,23 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.default_role</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.ec2_instance_role</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.task_execution_role</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.ec2_instance_role_ebs</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.default_role</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.ec2_instance_role_secrets_manager</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.p4_auth_task_execution_role_ecs</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.ec2_instance_role_ssm</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.p4_auth_task_execution_role_secrets_manager</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template">aws_launch_template.swarm_instance</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3586,7 +3777,11 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.ecs_service</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.application</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.ec2_instance</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3594,23 +3789,35 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.alb_outbound_to_ecs_service</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.alb_outbound_to_application</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.ecs_service_outbound_to_internet_ipv4</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.application_outbound_to_internet_ipv4</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.ecs_service_outbound_to_internet_ipv6</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.application_outbound_to_internet_ipv6</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.ecs_service_inbound_alb</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.ec2_instance_outbound_to_internet_ipv4</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.elasticache_inbound_from_ecs_service</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.ec2_instance_outbound_to_internet_ipv6</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.alb_inbound_from_application</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.application_inbound_alb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.elasticache_inbound_from_application</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3622,7 +3829,11 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster">aws_ecs_cluster.cluster</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami">aws_ami.p4_code_review</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity">aws_caller_identity.current</a></td>
 <td>data source</td>
 </tr>
 <tr>
@@ -3634,11 +3845,11 @@
 <td>data source</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.default_policy</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ebs_attachment_policy</a></td>
 <td>data source</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ecs_tasks_trust_relationship</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ec2_instance_trust_relationship</a></td>
 <td>data source</td>
 </tr>
 <tr>
@@ -3647,6 +3858,10 @@
 </tr>
 <tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region">aws_region.current</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet">aws_subnet.instance_subnet</a></td>
 <td>data source</td>
 </tr>
 </tbody>
@@ -3664,36 +3879,22 @@
 </thead>
 <tbody>
 <tr>
-<td><a name="input_p4_code_review_user_password_secret_arn"></a> <a href="#input_p4_code_review_user_password_secret_arn">p4_code_review_user_password_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_p4_code_review_user_username_secret_arn"></a> <a href="#input_p4_code_review_user_username_secret_arn">p4_code_review_user_username_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username.</td>
+<td><a name="input_instance_subnet_id"></a> <a href="#input_instance_subnet_id">instance_subnet_id</a></td>
+<td>The subnet ID where the EC2 instance will be launched. Should be a private subnet for security.</td>
 <td><code>string</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
 </tr>
 <tr>
 <td><a name="input_subnets"></a> <a href="#input_subnets">subnets</a></td>
-<td>A list of subnets to deploy the P4 Code Review ECS Service into. Private subnets are recommended.</td>
+<td>A list of subnets for ElastiCache Redis deployment. Private subnets are recommended.</td>
 <td><code>list(string)</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
 </tr>
 <tr>
 <td><a name="input_super_user_password_secret_arn"></a> <a href="#input_super_user_password_secret_arn">super_user_password_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d super user password.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_super_user_username_secret_arn"></a> <a href="#input_super_user_username_secret_arn">super_user_username_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d super user username.</td>
+<td>ARN of the AWS Secrets Manager secret containing the P4 super user password. The super user is used for both Swarm runtime operations and administrative tasks.</td>
 <td><code>string</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
@@ -3727,10 +3928,24 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_ami_id"></a> <a href="#input_ami_id">ami_id</a></td>
+<td>Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI with name pattern 'p4_code_review_ubuntu-*'.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_application_load_balancer_name"></a> <a href="#input_application_load_balancer_name">application_load_balancer_name</a></td>
 <td>The name of the P4 Code Review ALB. Defaults to the project prefix and module name.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_application_port"></a> <a href="#input_application_port">application_port</a></td>
+<td>The port that P4 Code Review listens on. Used for ALB target group configuration.</td>
+<td><code>number</code></td>
+<td><code>80</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
@@ -3748,48 +3963,6 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
-<td>The name of the cluster to deploy the P4 Code Review service into. Defaults to null and a cluster will be created.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_config_php_source"></a> <a href="#input_config_php_source">config_php_source</a></td>
-<td>Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_cpu"></a> <a href="#input_container_cpu">container_cpu</a></td>
-<td>The CPU allotment for the P4 Code Review container.</td>
-<td><code>number</code></td>
-<td><code>1024</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_memory"></a> <a href="#input_container_memory">container_memory</a></td>
-<td>The memory allotment for the P4 Code Review container.</td>
-<td><code>number</code></td>
-<td><code>2048</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_name"></a> <a href="#input_container_name">container_name</a></td>
-<td>The name of the P4 Code Review container.</td>
-<td><code>string</code></td>
-<td><code>"p4-code-review-container"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_port"></a> <a href="#input_container_port">container_port</a></td>
-<td>The container port that P4 Code Review runs on.</td>
-<td><code>number</code></td>
-<td><code>80</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
 <td><a name="input_create_application_load_balancer"></a> <a href="#input_create_application_load_balancer">create_application_load_balancer</a></td>
 <td>This flag controls the creation of an application load balancer as part of the module.</td>
 <td><code>bool</code></td>
@@ -3797,24 +3970,10 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_create_default_role"></a> <a href="#input_create_default_role">create_default_role</a></td>
-<td>Optional creation of P4 Code Review Default IAM Role. Default is set to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_custom_role"></a> <a href="#input_custom_role">custom_role</a></td>
-<td>ARN of the custom IAM Role you wish to use with P4 Code Review.</td>
+<td><a name="input_custom_config"></a> <a href="#input_custom_config">custom_config</a></td>
+<td>JSON string with additional Swarm configuration to merge with the generated config.php. Use this for SSO/SAML setup, notifications, Jira integration, etc. See README for examples.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_debug"></a> <a href="#input_debug">debug</a></td>
-<td>Debug flag to enable execute command on service for container access.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
@@ -3822,6 +3981,34 @@
 <td>The amount of time to wait for in-flight requests to complete while deregistering a target. The range is 0-3600 seconds.</td>
 <td><code>number</code></td>
 <td><code>30</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_ebs_availability_zone"></a> <a href="#input_ebs_availability_zone">ebs_availability_zone</a></td>
+<td>Availability zone for the EBS volume. Must match the EC2 instance AZ. If not provided, will use the AZ of the instance_subnet_id.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_ebs_volume_encrypted"></a> <a href="#input_ebs_volume_encrypted">ebs_volume_encrypted</a></td>
+<td>Enable encryption for the EBS volume storing P4 Code Review data.</td>
+<td><code>bool</code></td>
+<td><code>true</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_ebs_volume_size"></a> <a href="#input_ebs_volume_size">ebs_volume_size</a></td>
+<td>Size in GB for the EBS volume that stores P4 Code Review data (/opt/perforce/swarm/data). This volume persists across instance replacement.</td>
+<td><code>number</code></td>
+<td><code>20</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_ebs_volume_type"></a> <a href="#input_ebs_volume_type">ebs_volume_type</a></td>
+<td>EBS volume type for P4 Code Review data storage.</td>
+<td><code>string</code></td>
+<td><code>"gp3"</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
@@ -3853,13 +4040,6 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_enable_sso"></a> <a href="#input_enable_sso">enable_sso</a></td>
-<td>Set this to true if using SSO for P4 Code Review authentication.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
 <td><a name="input_existing_redis_connection"></a> <a href="#input_existing_redis_connection">existing_redis_connection</a></td>
 <td>The connection specifications to use for an existing Redis deployment.</td>
 <td><pre>object({<br/>    host = string<br/>    port = number<br/>  })</pre></td>
@@ -3881,6 +4061,13 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_instance_type"></a> <a href="#input_instance_type">instance_type</a></td>
+<td>EC2 instance type for running P4 Code Review. Swarm requires persistent storage and runs natively on EC2.</td>
+<td><code>string</code></td>
+<td><code>"m5.large"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_internal"></a> <a href="#input_internal">internal</a></td>
 <td>Set this flag to true if you do not want the P4 Code Review service load balancer to have a public IP.</td>
 <td><code>bool</code></td>
@@ -3896,14 +4083,14 @@
 </tr>
 <tr>
 <td><a name="input_p4charset"></a> <a href="#input_p4charset">p4charset</a></td>
-<td>The P4CHARSET environment variable to set in the P4 Code Review container.</td>
+<td>The P4CHARSET environment variable to set for the P4 Code Review instance.</td>
 <td><code>string</code></td>
 <td><code>"none"</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
 <td><a name="input_p4d_port"></a> <a href="#input_p4d_port">p4d_port</a></td>
-<td>The P4D_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666'</td>
+<td>The P4D_PORT environment variable where P4 Code Review should look for P4 Server. Defaults to 'ssl:perforce:1666'</td>
 <td><code>string</code></td>
 <td><code>"ssl:perforce:1666"</code></td>
 <td style="text-align: center;">no</td>
@@ -3953,24 +4140,28 @@
 <td>The hosted zone ID of the P4 Code Review ALB</td>
 </tr>
 <tr>
-<td><a name="output_cluster_name"></a> <a href="#output_cluster_name">cluster_name</a></td>
-<td>Name of the ECS cluster hosting P4 Code Review</td>
+<td><a name="output_application_security_group_id"></a> <a href="#output_application_security_group_id">application_security_group_id</a></td>
+<td>Security group associated with the P4 Code Review application</td>
 </tr>
 <tr>
-<td><a name="output_default_role_id"></a> <a href="#output_default_role_id">default_role_id</a></td>
-<td>The default role for the service task</td>
+<td><a name="output_autoscaling_group_name"></a> <a href="#output_autoscaling_group_name">autoscaling_group_name</a></td>
+<td>The name of the Auto Scaling Group for P4 Code Review</td>
 </tr>
 <tr>
-<td><a name="output_execution_role_id"></a> <a href="#output_execution_role_id">execution_role_id</a></td>
-<td>The default role for the service task</td>
+<td><a name="output_ebs_volume_id"></a> <a href="#output_ebs_volume_id">ebs_volume_id</a></td>
+<td>The ID of the EBS volume storing P4 Code Review persistent data</td>
 </tr>
 <tr>
-<td><a name="output_service_security_group_id"></a> <a href="#output_service_security_group_id">service_security_group_id</a></td>
-<td>Security group associated with the ECS service running P4 Code Review</td>
+<td><a name="output_instance_profile_arn"></a> <a href="#output_instance_profile_arn">instance_profile_arn</a></td>
+<td>The ARN of the IAM instance profile for P4 Code Review EC2 instances</td>
+</tr>
+<tr>
+<td><a name="output_launch_template_id"></a> <a href="#output_launch_template_id">launch_template_id</a></td>
+<td>The ID of the launch template for P4 Code Review instances</td>
 </tr>
 <tr>
 <td><a name="output_target_group_arn"></a> <a href="#output_target_group_arn">target_group_arn</a></td>
-<td>The service target group for P4 Code Review</td>
+<td>The target group ARN for P4 Code Review</td>
 </tr>
 </tbody>
 </table>
@@ -3996,7 +4187,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-23
+    2026-02-25
   </span>
 
     

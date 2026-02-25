@@ -24,14 +24,19 @@ output "p4_server_security_group_id" {
   description = "The default security group of your P4 Server instance."
 }
 
-output "p4_server_super_user_password_secret_arn" {
-  value       = var.p4_server_config != null ? module.p4_server[0].super_user_password_secret_arn : null
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username."
+output "p4_server_super_password_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].super_password_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the service account (super) password."
 }
 
-output "p4_server_super_user_username_secret_arn" {
-  value       = var.p4_server_config != null ? module.p4_server[0].super_user_username_secret_arn : null
-  description = "The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password."
+output "p4_server_admin_username_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].admin_username_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account username."
+}
+
+output "p4_server_admin_password_secret_arn" {
+  value       = var.p4_server_config != null ? module.p4_server[0].admin_password_secret_arn : null
+  description = "The ARN of the AWS Secrets Manager secret holding the admin account password."
 }
 
 output "p4_server_instance_id" {
@@ -78,18 +83,13 @@ output "p4_auth_target_group_arn" {
 
 # P4 Code Review
 output "p4_code_review_service_security_group_id" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].service_security_group_id : null
-  description = "Security group associated with the ECS service running P4 Code Review."
+  value       = var.p4_code_review_config != null ? module.p4_code_review[0].application_security_group_id : null
+  description = "Security group associated with P4 Code Review application."
 }
 
 output "p4_code_review_alb_security_group_id" {
   value       = var.p4_code_review_config != null ? module.p4_code_review[0].alb_security_group_id : null
   description = "Security group associated with the P4 Code Review load balancer."
-}
-
-output "p4_code_review_perforce_cluster_name" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].cluster_name : null
-  description = "Name of the ECS cluster hosting P4 Code Review."
 }
 
 output "p4_code_review_alb_dns_name" {
@@ -107,15 +107,6 @@ output "p4_code_review_target_group_arn" {
   description = "The service target group for the P4 Code Review."
 }
 
-output "p4_code_review_default_role_id" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].default_role_id : null
-  description = "The default role for the P4 Code Review service task"
-}
-
-output "p4_code_review_execution_role_id" {
-  value       = var.p4_code_review_config != null ? module.p4_code_review[0].execution_role_id : null
-  description = "The default role for the P4 Code Review service task"
-}
 
 output "p4_server_lambda_link_name" {
   value = (var.p4_server_config.storage_type == "FSxN" && var.p4_server_config.protocol == "ISCSI" ?

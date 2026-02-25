@@ -12,13 +12,13 @@
         <meta name="author" content="Amazon Web Services">
       
       
-        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/assets/packer/build-agents/windows/index.html">
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/assets/packer/perforce/p4-code-review/index.html">
       
       
-        <link rel="prev" href="../linux/index.html">
+        <link rel="prev" href="../p4-server/index.html">
       
       
-        <link rel="next" href="../../perforce/p4-server/index.html">
+        <link rel="next" href="../../virtual-workstations/index.html">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Packer Templates for Unreal Engine Windows Build Agents - Cloud Game Development Toolkit</title>
+        <title>P4 Code Review - Cloud Game Development Toolkit</title>
       
     
     
@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#packer-templates-for-unreal-engine-windows-build-agents" class="md-skip">
+        <a href="#p4-code-review-packer-template" class="md-skip">
           Skip to content
         </a>
       
@@ -142,7 +142,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Packer Templates for Unreal Engine Windows Build Agents
+              P4 Code Review
             
           </span>
         </div>
@@ -708,10 +708,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -728,11 +726,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
@@ -753,7 +751,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -794,7 +792,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../linux/index.html" class="md-nav__link ">
+            <a href="../../build-agents/linux/index.html" class="md-nav__link ">
               
   
   
@@ -838,8 +836,6 @@
                 
   
   
-    
-  
   
   
     
@@ -858,15 +854,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="../../build-agents/windows/index.html" class="md-nav__link ">
               
   
   
@@ -885,7 +881,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2_2_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -921,7 +917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../p4-server/index.html" class="md-nav__link">
         
   
   
@@ -946,10 +942,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../perforce/p4-code-review/index.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="index.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -965,6 +988,349 @@
   
 
       </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Gets Installed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Gets Installed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#software-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-not-configured-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's NOT Configured Yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-configuration-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building the AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building the AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-using-default-vpc-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Using Default VPC (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-using-custom-vpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Custom VPC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-using-variables-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Using Variables File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-your-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Your AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Your AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-all-p4-code-review-amis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List All P4 Code Review AMIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-the-latest-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get the Latest AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-details-about-a-specific-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Details About a Specific AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-default-vpc-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "No default VPC available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-connect-to-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Unable to connect to instance"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package-installation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Package installation failed"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ami-already-exists-with-that-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "AMI already exists with that name"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#need-to-debug-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Need to debug the build?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions-or-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions or Issues?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3296,10 +3662,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#table-of-contents" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Table of Contents
       
     </span>
   </a>
@@ -3307,10 +3673,309 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installed-tooling" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installed Tooling
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Gets Installed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Gets Installed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#software-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-not-configured-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's NOT Configured Yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-configuration-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building the AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building the AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-using-default-vpc-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Using Default VPC (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-using-custom-vpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Custom VPC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-using-variables-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Using Variables File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-your-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Your AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Your AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-all-p4-code-review-amis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List All P4 Code Review AMIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-the-latest-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get the Latest AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-details-about-a-specific-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Details About a Specific AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-default-vpc-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "No default VPC available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-connect-to-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Unable to connect to instance"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package-installation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Package installation failed"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ami-already-exists-with-that-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "AMI already exists with that name"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#need-to-debug-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Need to debug the build?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions-or-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions or Issues?
       
     </span>
   </a>
@@ -3337,45 +4002,300 @@
   
 
 
-<h1 id="packer-templates-for-unreal-engine-windows-build-agents">Packer Templates for Unreal Engine Windows Build Agents<a class="headerlink" href="#packer-templates-for-unreal-engine-windows-build-agents" title="Permanent link">&para;</a></h1>
-<p>The following template builds a Windows based AMI capable of Unreal Engine 5.4 compilation jobs. Please customize it to your needs.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes#platform-sdk-upgrades">the release notes for Unreal Engine 5.7</a> for details on what tools are used for compiling this version of the engine.</p>
-<p>The only required variable for building this Amazon Machine Image is a public SSH key.</p>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>windows.pkr.hcl<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public ssh key here&gt;&quot;</span>
-</code></pre></div>
-<details class="note" open="open">
-<summary>Note</summary>
-<p>The above command assumes you are running <code>packer</code> from the <code>/assets/packer/build-agents/windows</code> directory.</p>
-</details>
-<p>You will then want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.</p>
-<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span>JenkinsPrivateSSHKey<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;Private SSH key for Jenkins build agent access.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;&lt;insert private SSH key here&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tags<span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:type,Value=sshUserPrivateKey&#39;</span><span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:username,Value=jenkins&#39;</span>
-</code></pre></div>
-<p>Take note of the output of this CLI command. You will need the ARN later.</p>
-<p>Currently this AMI is designed to work with our Jenkins module. This is why it creates a <code>jenkins</code> user and the associated SSH username for the key you upload is that same <code>jenkins</code> user. <a href="https://github.com/orgs/aws-games/projects/1/views/1?pane=issue&amp;itemId=74515666">Expanded customization of this AMI is currently on the Cloud Game Development Toolkit roadmap.</a></p>
-<h2 id="installed-tooling">Installed Tooling<a class="headerlink" href="#installed-tooling" title="Permanent link">&para;</a></h2>
+<h1 id="p4-code-review-packer-template">P4 Code Review Packer Template<a class="headerlink" href="#p4-code-review-packer-template" title="Permanent link">&para;</a></h1>
+<p>This Packer template creates an Amazon Machine Image (AMI) for P4 Code Review (Helix Swarm) on Ubuntu 24.04 LTS. The AMI includes all necessary software pre-installed, with runtime configuration handled automatically during instance launch.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Chocolatey package manager</li>
-<li>OpenJDK used by Jenkins agents</li>
-<li>Git</li>
-<li>OpenSSH</li>
-<li>Python3</li>
-<li>Botocore</li>
-<li>Boto3</li>
-<li>Client for Network File System (NFS)</li>
-<li>Windows Development Kit and Debugging Tools</li>
-<li>Visual Studio 2022 Build Tools</li>
-<li>VCTools Workload; Include Recommended</li>
-<li>ManagedDesktopBuild Tools; Include Recommended</li>
-<li>MSVC v143 - VS 2022 C++ x64/x86 build tools</li>
-<li>Microsoft.Net.Component.4.6.2TargetingPack</li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#what-gets-installed">What Gets Installed</a></li>
+<li><a href="#building-the-ami">Building the AMI</a></li>
+<li><a href="#finding-your-ami">Finding Your AMI</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
 </ul>
-<p>Consult the <a href="https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022">Visual Studio Build Tools component directory</a> for details.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before building the AMI, ensure you have:</p>
+<ol>
+<li><strong>AWS CLI</strong> configured with valid credentials:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>configure
+<span class="c1"># Verify access</span>
+aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity
+</code></pre></div>
+<ol>
+<li><strong>Packer</strong> installed (version &gt;= 1.8.0):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>version
+</code></pre></div>
+<p>If not installed, download from <a href="https://www.packer.io/downloads">https://www.packer.io/downloads</a></p>
+<ol>
+<li><strong>VPC Access</strong>:</li>
+<li>Default VPC in your region (Default behaviour)</li>
+<li>
+<p>OR custom VPC with a public subnet (Can be configured by passing the VPC id through the <code>vpc_id</code> variable)</p>
+</li>
+<li>
+<p><strong>IAM Permissions</strong>: Your AWS credentials need permissions to:</p>
+</li>
+<li>Launch EC2 instances</li>
+<li>Create AMIs</li>
+<li>Create/delete security groups</li>
+<li>Create/delete key pairs</li>
+</ol>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<p>From the <strong>repository root</strong>, run:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Navigate to Packer template directory</span>
+<span class="nb">cd</span><span class="w"> </span>assets/packer/perforce/p4-code-review
+
+<span class="c1"># 2. Initialize Packer (downloads required plugins)</span>
+packer<span class="w"> </span>init<span class="w"> </span>p4_code_review_x86.pkr.hcl
+
+<span class="c1"># 3. Validate the template</span>
+packer<span class="w"> </span>validate<span class="w"> </span>p4_code_review_x86.pkr.hcl
+
+<span class="c1"># 4. Build the AMI (takes ~10-15 minutes)</span>
+packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p>At the end of the build, Packer will output the AMI ID:</p>
+<div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
+</code></pre></div>
+<p><strong>Save this AMI ID</strong> - you'll need it for Terraform deployment.</p>
+<h2 id="what-gets-installed">What Gets Installed<a class="headerlink" href="#what-gets-installed" title="Permanent link">&para;</a></h2>
+<p>The AMI includes a complete P4 Code Review installation:</p>
+<h3 id="software-components">Software Components<a class="headerlink" href="#software-components" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Perforce Repository</strong>: Official Perforce package repository (Ubuntu jammy/22.04 compatible)</li>
+<li><strong>PHP 8.x</strong>: PHP runtime with all required extensions:<ol>
+<li>Core: curl, mbstring, xml, intl, ldap, bcmath</li>
+<li>Database: mysql</li>
+<li>Graphics: gd</li>
+<li>Archive: zip</li>
+<li>PECL: igbinary, msgpack, redis</li>
+</ol>
+</li>
+<li><strong>Helix Swarm</strong>: Native DEB installation via <code>helix-swarm</code> package</li>
+<li><strong>Apache2</strong>: Web server with mod_php and required modules (rewrite, proxy, proxy_fcgi)</li>
+<li><strong>PHP-FPM</strong>: FastCGI Process Manager for PHP</li>
+<li><strong>helix-swarm-optional</strong> (optional, installed by default): LibreOffice for document preview (.docx, .xlsx, .pptx) and ImageMagick for image preview (.png, .jpg, .tiff, etc.) (~500MB)</li>
+<li><strong>AWS CLI v2</strong>: Required for Secrets Manager access and EBS volume operations at runtime</li>
+<li><strong>Configuration Script</strong>: <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> for runtime setup (see Runtime Configuration Details below)</li>
+</ol>
+<h3 id="system-configuration">System Configuration<a class="headerlink" href="#system-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>AppArmor</strong>: Ubuntu's security module (less restrictive by default for <code>/opt</code>)</li>
+<li><strong>Services</strong>: Apache2 and PHP-FPM enabled for automatic startup</li>
+<li><strong>User</strong>: <code>swarm</code> system user created with proper permissions</li>
+<li><strong>Directories</strong>: <code>/opt/perforce/swarm</code> prepared with correct ownership</li>
+</ul>
+<h3 id="whats-not-configured-yet">What's NOT Configured Yet<a class="headerlink" href="#whats-not-configured-yet" title="Permanent link">&para;</a></h3>
+<p>The following are configured at <strong>deployment</strong> when you launch an instance:</p>
+<ul>
+<li>P4 Server connection details</li>
+<li>P4 user credentials (fetched from AWS Secrets Manager)</li>
+<li>Redis cache connection</li>
+<li>External hostname/URL</li>
+<li>SSO settings</li>
+<li>EBS volume mounting for persistent data</li>
+<li>Queue worker configuration (cron job and endpoint)</li>
+<li>File permissions for worker processes</li>
+<li>P4 Server extension installation (Swarm triggers)</li>
+</ul>
+<h3 id="runtime-configuration-details">Runtime Configuration Details<a class="headerlink" href="#runtime-configuration-details" title="Permanent link">&para;</a></h3>
+<p>When an EC2 instance launches, the user-data script performs the following steps:</p>
+<ol>
+<li><strong>EBS Volume Attachment</strong>: Finds and attaches the persistent data volume by tags</li>
+<li><strong>Filesystem Setup</strong>: Creates ext4 filesystem (first launch) or mounts existing one</li>
+<li><strong>Swarm Configuration</strong>: Executes <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> which:</li>
+<li>Retrieves P4 credentials from AWS Secrets Manager</li>
+<li>Runs Perforce's official <code>configure-swarm.sh</code> to:<ul>
+<li>Connect to P4 Server and validate credentials</li>
+<li>Install Swarm extension on P4 Server (enables event triggers)</li>
+<li>Create initial configuration file</li>
+<li>Set up Apache VirtualHost</li>
+<li>Create cron job for queue workers</li>
+</ul>
+</li>
+<li>Configures file permissions for queue worker functionality</li>
+<li>Updates configuration with Redis connection details</li>
+<li>Configures queue workers to use localhost endpoint</li>
+<li>Starts Apache and PHP-FPM services</li>
+</ol>
+<p><strong>Queue Workers</strong>: P4 Code Review requires background workers to process events, send notifications, and index files. These are spawned by a cron job (created by <code>configure-swarm.sh</code>) that runs every minute. The runtime configuration ensures workers have proper permissions and connect to the correct endpoint.</p>
+<h2 id="building-the-ami">Building the AMI<a class="headerlink" href="#building-the-ami" title="Permanent link">&para;</a></h2>
+<h3 id="option-1-using-default-vpc-recommended">Option 1: Using Default VPC (Recommended)<a class="headerlink" href="#option-1-using-default-vpc-recommended" title="Permanent link">&para;</a></h3>
+<p>If your AWS region has a default VPC:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/packer/perforce/p4-code-review
+packer<span class="w"> </span>init<span class="w"> </span>p4_code_review_x86.pkr.hcl
+packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="option-2-using-custom-vpc">Option 2: Using Custom VPC<a class="headerlink" href="#option-2-using-custom-vpc" title="Permanent link">&para;</a></h3>
+<p>If you don't have a default VPC, specify your own:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;region=us-west-2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;associate_public_ip_address=true&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;ssh_interface=public_ip&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p><strong>Requirements for custom VPC</strong>:</p>
+<ul>
+<li>Subnet must be in a <strong>public</strong> subnet (has route to Internet Gateway)</li>
+<li><code>associate_public_ip_address=true</code> if subnet doesn't auto-assign public IPs</li>
+<li>Security group allows outbound internet access (for package downloads)</li>
+</ul>
+<h3 id="option-3-using-variables-file">Option 3: Using Variables File<a class="headerlink" href="#option-3-using-variables-file" title="Permanent link">&para;</a></h3>
+<p>Create a <code>my-vars.pkrvars.hcl</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="na">vpc_id</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vpc-xxxxx&quot;</span>
+<span class="na">subnet_id</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-xxxxx&quot;</span>
+<span class="na">associate_public_ip_address</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="na">ssh_interface</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;public_ip&quot;</span>
+</code></pre></div>
+<p>Then build:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">&quot;my-vars.pkrvars.hcl&quot;</span><span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="build-output">Build Output<a class="headerlink" href="#build-output" title="Permanent link">&para;</a></h3>
+<p>Successful build output looks like:</p>
+<div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: Stopping the source instance...
+==&gt; amazon-ebs.ubuntu2404: Waiting for the instance to stop...
+==&gt; amazon-ebs.ubuntu2404: Creating AMI p4_code_review_ubuntu-20231209123456 from instance i-xxxxx
+==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
+==&gt; amazon-ebs.ubuntu2404: Waiting for AMI to become ready...
+==&gt; amazon-ebs.ubuntu2404: Terminating the source AWS instance...
+Build &#39;amazon-ebs.ubuntu2404&#39; finished after 12 minutes 34 seconds.
+
+==&gt; Wait completed after 12 minutes 34 seconds
+
+==&gt; Builds finished. The artifacts of successful builds are:
+--&gt; amazon-ebs.ubuntu2404: AMIs were created:
+us-west-2: ami-0abc123def456789
+</code></pre></div>
+<p><strong>Copy the AMI ID</strong> (e.g., <code>ami-0abc123def456789</code>) - you'll need this for Terraform.</p>
+<h2 id="finding-your-ami">Finding Your AMI<a class="headerlink" href="#finding-your-ami" title="Permanent link">&para;</a></h2>
+<h3 id="list-all-p4-code-review-amis">List All P4 Code Review AMIs<a class="headerlink" href="#list-all-p4-code-review-amis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[*].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code>+-----------------------------------------------------------------------+
+|                         DescribeImages                                |
++----------------------+---------------------------------------+--------+
+|  ami-0abc123def456   | p4_code_review_ubuntu-20231209    | 2023...|
+|  ami-0def456abc789   | p4_code_review_ubuntu-20231208    | 2023...|
++----------------------+---------------------------------------+--------+
+</code></pre></div>
+<h3 id="get-the-latest-ami">Get the Latest AMI<a class="headerlink" href="#get-the-latest-ami" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images | sort_by(@, &amp;CreationDate) | [-1].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+</code></pre></div>
+<h3 id="get-details-about-a-specific-ami">Get Details About a Specific AMI<a class="headerlink" href="#get-details-about-a-specific-ami" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--image-ids<span class="w"> </span>ami-0abc123def456789
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Now that you have an AMI, proceed to deploy P4 Code Review infrastructure:</p>
+<ol>
+<li>
+<p><strong>Read the <a href="../../../../modules/perforce/modules/p4-code-review/index.html">P4 Code Review Module Documentation</a></strong></p>
+</li>
+<li>
+<p><strong>Follow the deployment guide</strong> in the module README, which covers:</p>
+</li>
+<li>Creating AWS Secrets Manager secrets for P4 credentials</li>
+<li>Writing Terraform configuration</li>
+<li>Deploying the infrastructure</li>
+<li>Accessing the P4 Code Review web console</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="no-default-vpc-available">"No default VPC available"<a class="headerlink" href="#no-default-vpc-available" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: Packer fails with "No default VPC for this user"</p>
+<p><strong>Solution</strong>: Use Option 2 or 3 above to specify your VPC and subnet:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="unable-to-connect-to-instance">"Unable to connect to instance"<a class="headerlink" href="#unable-to-connect-to-instance" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: Packer times out connecting to the instance</p>
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>Subnet is not public (no route to Internet Gateway)</li>
+<li>Security group blocks SSH (port 22)</li>
+<li>No public IP assigned to instance</li>
+</ol>
+<p><strong>Solution</strong>: Verify your subnet has:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check if subnet has route to IGW</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=association.subnet-id,Values=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;RouteTables[*].Routes[?GatewayId!=`local`]&#39;</span>
+</code></pre></div>
+<h3 id="package-installation-failed">"Package installation failed"<a class="headerlink" href="#package-installation-failed" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: APT/DEB errors during build</p>
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>No internet access from instance</li>
+<li>Perforce repository temporarily unavailable</li>
+<li>Package version conflicts</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ul>
+<li>Check build instance has outbound internet access</li>
+<li>Try rebuilding (temporary outages resolve themselves)</li>
+<li>Review <code>/var/log/swarm_setup.log</code> on build instance</li>
+</ul>
+<h3 id="ami-already-exists-with-that-name">"AMI already exists with that name"<a class="headerlink" href="#ami-already-exists-with-that-name" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: "AMI name 'p4_code_review_ubuntu-TIMESTAMP' already exists"</p>
+<p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List your AMIs</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span>
+
+<span class="c1"># Deregister old AMI if no longer needed</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span class="w"> </span>--image-id<span class="w"> </span>ami-xxxxx
+</code></pre></div>
+<h3 id="build-is-slow">Build is slow<a class="headerlink" href="#build-is-slow" title="Permanent link">&para;</a></h3>
+<p><strong>Normal build time</strong>: 10-15 minutes</p>
+<p><strong>If taking longer</strong>:</p>
+<ul>
+<li>Package downloads can be slow depending on region</li>
+<li>Perforce repository might be experiencing high load</li>
+<li>This is normal - be patient</li>
+</ul>
+<h3 id="need-to-debug-the-build">Need to debug the build?<a class="headerlink" href="#need-to-debug-the-build" title="Permanent link">&para;</a></h3>
+<p><strong>Enable debug mode to step through each provisioner</strong>:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-debug<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p>This will pause before each provisioner step, allowing you to:</p>
+<ul>
+<li>SSH into the build instance</li>
+<li>Inspect the current state</li>
+<li>Verify installation progress</li>
+<li>Press Enter to continue to the next step</li>
+</ul>
+<p><strong>Enable detailed logging</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">PACKER_LOG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.packer.io/docs">Packer Documentation</a></li>
+<li><a href="https://www.perforce.com/manuals/swarm/Content/Swarm/Home-swarm.html">Perforce Helix Swarm Admin Guide</a></li>
+<li><a href="https://ubuntu.com/server/docs">Ubuntu 24.04 LTS Documentation</a></li>
+</ul>
+<h2 id="questions-or-issues">Questions or Issues?<a class="headerlink" href="#questions-or-issues" title="Permanent link">&para;</a></h2>
+<p>If you encounter problems:</p>
+<ol>
+<li>Check the troubleshooting section above</li>
+<li>Review Packer logs with <code>PACKER_LOG=1</code></li>
+<li>Use <code>packer build -debug</code> to step through the build process</li>
+<li>Verify AWS credentials and permissions</li>
+</ol>
 
 
 
@@ -3396,7 +4316,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-02-25
   </span>
 
     
@@ -3434,7 +4354,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../linux/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Packer templates for Unreal Engine Linux build agents">
+          <a href="../p4-server/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: P4 Server">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3444,20 +4364,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Packer templates for Unreal Engine Linux build agents
+                P4 Server
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../perforce/p4-server/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: P4 Server">
+          <a href="../../virtual-workstations/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Virtual Workstations">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                P4 Server
+                Virtual Workstations
               </div>
             </div>
             <div class="md-footer__button md-icon">

@@ -238,7 +238,7 @@ prepare_iscsi_volume() {
         sleep $interval
         elapsed=$((elapsed + interval))
         done
-        if [ ! -e $VOLUME]; then
+        if [ ! -e $VOLUME ]; then
         log_message "The device $VOLUME does not exist. Exiting."
         exit 1
         fi
@@ -315,10 +315,11 @@ log_message "Starting the p4 configure script."
 print_help() {
     echo "Usage: $0 [OPTIONS]"
     echo "Options:"
-    echo "  --p4d_type <type>        Specify the type of P4 Server (p4d_master, p4d_replica, p4d_edge)"
-    echo "  --username <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin username"
-    echo "  --password <secret_id>   AWS Secrets Manager secret ID for the P4 Server admin password"
-    echo "  --auth <url>             P4Auth URL"
+    echo "  --p4d_type <type>           Specify the type of P4 Server (p4d_master, p4d_replica, p4d_edge)"
+    echo "  --super_password <secret_id>  AWS Secrets Manager secret ID for the service account (super) password"
+    echo "  --admin_username <secret_id>  AWS Secrets Manager secret ID for the admin account username"
+    echo "  --admin_password <secret_id>  AWS Secrets Manager secret ID for the admin account password"
+    echo "  --auth <url>                P4Auth URL"
     echo "  --fqdn <hostname>        Fully Qualified Domain Name for the P4 Server"
     echo "  --hx_logs <path>         Path for P4 Server logs"
     echo "  --hx_metadata <path>     Path for P4 Server metadata"
@@ -334,7 +335,7 @@ print_help() {
 }
 
 # Parse command-line options
-OPTS=$(getopt -o '' --long p4d_type:,username:,password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o '' --long p4d_type:,super_password:,admin_username:,admin_password:,auth:,fqdn:,hx_logs:,hx_metadata:,hx_depots:,case_sensitive:,unicode:,selinux:,plaintext:,fsxn_password:,fsxn_svm_name:,fsxn_management_ip:,help -n 'parse-options' -- "$@")
 
 if [ $? != 0 ]; then
     log_message "Failed to parse options"
@@ -360,12 +361,16 @@ while true; do
                     ;;
             esac
             ;;
-        --username)
-            P4D_ADMIN_USERNAME_SECRET_ID="$2"
+        --super_password)
+            SUPER_PASSWORD_SECRET_ID="$2"
             shift 2
             ;;
-        --password)
-            P4D_ADMIN_PASS_SECRET_ID="$2"
+        --admin_username)
+            ADMIN_USERNAME_SECRET_ID="$2"
+            shift 2
+            ;;
+        --admin_password)
+            ADMIN_PASSWORD_SECRET_ID="$2"
             shift 2
             ;;
         --auth)
@@ -462,11 +467,18 @@ if [[ "$P4D_TYPE" != "p4d_master" && "$P4D_TYPE" != "p4d_replica" && "$P4D_TYPE"
     exit 1
 fi
 
-# Fetch credentials for admin user from secrets manager
-P4D_ADMIN_USERNAME=$(resolve_aws_secret $P4D_ADMIN_USERNAME_SECRET_ID)
-P4D_ADMIN_PASS=$(resolve_aws_secret $P4D_ADMIN_PASS_SECRET_ID)
+# Fetch credentials from secrets manager
+# Service account (super) - used for internal tooling and Swarm extension
+SUPER_PASSWORD=$(resolve_aws_secret $SUPER_PASSWORD_SECRET_ID)
+# Admin account - for human administrators
+ADMIN_USERNAME=$(resolve_aws_secret $ADMIN_USERNAME_SECRET_ID)
+ADMIN_PASSWORD=$(resolve_aws_secret $ADMIN_PASSWORD_SECRET_ID)
+# FSxN credentials (if applicable)
 FSXN_PASSWORD=$(resolve_aws_secret $FSXN_PASS)
 ONTAP_USER="fsxadmin"
+
+log_message "Service account: super"
+log_message "Admin account: $ADMIN_USERNAME"
 
 # Function to perform operations
 perform_operations() {
@@ -606,15 +618,15 @@ if [ ! -f "$SDP_Setup_Script_Config" ]; then
     exit 1
 fi
 
-# Update Perforce super user password in configuration
-sed -i "s/^P4ADMINPASS=.*/P4ADMINPASS=$P4D_ADMIN_PASS/" "$SDP_Setup_Script_Config"
+# Update Perforce service account (super) password in configuration
+sed -i "s/^P4ADMINPASS=.*/P4ADMINPASS=$SUPER_PASSWORD/" "$SDP_Setup_Script_Config"
 
 log_message "Updated P4ADMINPASS in $SDP_Setup_Script_Config."
 
-# Update Perforce super user password in configuration
-sed -i "s/^ADMINUSER=.*/ADMINUSER=$P4D_ADMIN_USERNAME/" "$SDP_Setup_Script_Config"
+# Update Perforce admin user to "super" for initial setup
+sed -i "s/^ADMINUSER=.*/ADMINUSER=super/" "$SDP_Setup_Script_Config"
 
-log_message "Updated ADMINUSER in $SDP_Setup_Script_Config."
+log_message "Updated ADMINUSER to 'super' in $SDP_Setup_Script_Config."
 
 # Check if p4d_master server and update sitetags
 
@@ -691,7 +703,7 @@ else
   P4PORT=ssl:1666
 fi
 
-P4USER=$P4D_ADMIN_USERNAME
+P4USER=super
 
 #probably need to copy p4 binary to the /usr/bin or add to the path variable to avoid running with a full path adding:
 #permissions for lal users:
@@ -716,14 +728,14 @@ fi
 
 if [ -f "$SDP_Live_Checkpoint" ]; then
   chmod +x "$SDP_Live_Checkpoint"
-  sudo -u "$P4USER" "$SDP_Live_Checkpoint" 1
+  sudo -u perforce "$SDP_Live_Checkpoint" 1
 else
   echo "Setup script (SDP_Live_Checkpoint) not found."
 fi
 
 if [ -f "$SDP_Offline_Recreate" ]; then
   chmod +x "$SDP_Offline_Recreate"
-  sudo -u "$P4USER" "$SDP_Offline_Recreate" 1
+  sudo -u perforce "$SDP_Offline_Recreate" 1
 else
   echo "Setup script (SDP_Offline_Recreate) not found."
 fi
@@ -731,11 +743,68 @@ fi
 # initialize crontab for user perforce
 # fixing broken crontab on SDP, cron runs on minute schedule */60 is incorrect
 sed -i 's#\*/60#0#g' /p4/p4.crontab.1
-sudo -u "$P4USER" crontab /p4/p4.crontab.1
+sudo -u perforce crontab /p4/p4.crontab.1
 
 # verify sdp installation should warn about missing license only:
 /hxdepots/p4/common/bin/verify_sdp.sh 1
 
+# Establish SSL trust for perforce user before running p4 commands
+sudo -u perforce p4 -p "$P4PORT" trust -y
+
+# Login as super user for admin operations
+echo "$SUPER_PASSWORD" | sudo -u perforce p4 -p "$P4PORT" -u super login
+
+# Ensure super user is a standard user type (not service account)
+# This allows super to pass p4 protects validation required by tools like Swarm
+log_message "Ensuring super user is standard type"
+sudo -u perforce p4 -p "$P4PORT" -u super user -o super | \
+  sed 's/^Type:.*/Type: standard/' > /tmp/super_user.txt
+cat /tmp/super_user.txt | sudo -u perforce p4 -p "$P4PORT" -u super user -i -f
+rm -f /tmp/super_user.txt
+
+# Create admin user for human administrators
+log_message "Creating admin user: $ADMIN_USERNAME"
+
+# Create user spec
+cat > /tmp/admin_user.txt <<EOF
+User: $ADMIN_USERNAME
+Email: $ADMIN_USERNAME@$FQDN
+FullName: Perforce Administrator
+Type: standard
+EOF
+
+# Create the user
+cat /tmp/admin_user.txt | sudo -u perforce p4 -p "$P4PORT" -u super user -i -f
+
+# Set password
+echo "$ADMIN_PASSWORD" | sudo -u perforce p4 -p "$P4PORT" -u super passwd "$ADMIN_USERNAME"
+
+# Grant super access
+sudo -u perforce p4 -p "$P4PORT" -u super protect -o | sudo -u perforce tee /tmp/protect.txt > /dev/null
+echo "    super user $ADMIN_USERNAME * //..." >> /tmp/protect.txt
+cat /tmp/protect.txt | sudo -u perforce p4 -p "$P4PORT" -u super protect -i
+
+# Clean up
+rm -f /tmp/admin_user.txt /tmp/protect.txt
+
+log_message "Admin user $ADMIN_USERNAME created successfully"
+
+# Create a group with unlimited ticket timeout for service integrations (e.g., Swarm)
+# This prevents ticket expiration issues for automated systems
+log_message "Creating unlimited_timeout group for service integrations"
+
+cat > /tmp/unlimited_timeout_group.txt <<EOF
+Group: unlimited_timeout
+Timeout: unlimited
+Users:
+    super
+    $ADMIN_USERNAME
+EOF
+
+cat /tmp/unlimited_timeout_group.txt | sudo -u perforce p4 -p "$P4PORT" -u super group -i
+rm -f /tmp/unlimited_timeout_group.txt
+
+log_message "unlimited_timeout group created successfully"
 
 # Check if the AWS_REGION variable is empty if not prepare for replication.
 if [ -z "$AWS_REGION" ] && [ "$P4D_TYPE" = "p4d_master" ]; then
@@ -751,7 +820,7 @@ if [ -z $P4_AUTH_URL ]; then
   log_message "P4 Auth URL was not provided. Skipping configuration."
 else
   log_message "Configuring P4 Auth Extension against $P4_AUTH_URL"
-  setup_helix_auth "$P4PORT" "$P4D_ADMIN_USERNAME" "$P4D_ADMIN_PASS" "$P4_AUTH_URL" "oidc" "email" "email"
+  setup_helix_auth "$P4PORT" "super" "$SUPER_PASSWORD" "$P4_AUTH_URL" "oidc" "email" "email"
 fi
 
 if [ "${UNICODE,,}" = "true" ]; then
