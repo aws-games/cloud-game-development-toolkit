@@ -6,34 +6,14 @@ This sample demonstrates how to deploy a complete Unity build pipeline on AWS us
 
 This Unity build pipeline consists of the following components:
 
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Unity Build Pipeline                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │   Perforce   │  │   TeamCity   │  │    Unity     │              │
-│  │              │  │              │  │              │              │
-│  │  • P4 Server │  │  • Server    │  │  • Accelera- │              │
-│  │  • P4 Swarm  │  │  • Agents    │  │    tor       │              │
-│  │              │  │              │  │  • License   │              │
-│  │              │  │              │  │    Server    │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-│                                                                       │
-│                    ┌──────────────────────┐                         │
-│                    │   S3 Artifacts       │                         │
-│                    │   Bucket             │                         │
-│                    └──────────────────────┘                         │
-│                                                                       │
-└─────────────────────────────────────────────────────────────────────┘
-```
+![Unity Build Pipeline Architecture](assets/media/diagrams/architecture.png)
 
 ### Components
 
 1. **Perforce (Version Control)**
    - P4 Server (Helix Core) for source code management
    - P4 Swarm (Code Review) for peer code reviews
-   - Deployed on EC2 (P4 Server) and ECS (Swarm) with persistent EBS storage
+   - Deployed on EC2 with Auto Scaling Group (P4 Swarm) and persistent EBS storage
 
 2. **TeamCity (CI/CD)**
    - TeamCity Server for build orchestration
@@ -48,7 +28,7 @@ This Unity build pipeline consists of the following components:
 4. **Unity Floating License Server**
    - Manages Unity Pro/Enterprise licenses
    - Supports concurrent license checkout
-   - Deployed on ECS with high availability
+   - Deployed on EC2 with stable network identity (ENI)
 
 5. **S3 Artifacts Bucket**
    - Stores build outputs (executables, asset bundles)
@@ -883,7 +863,7 @@ Key metrics to monitor:
 **Perforce connection refused**:
 
 - Check security group rules allow port 1666
-- Verify P4 Server service is running in ECS
+- Verify P4 Server EC2 instance is running
 - Check DNS resolution
 
 **TeamCity agents not connecting**:
@@ -900,7 +880,7 @@ Key metrics to monitor:
 
 **License server not responding**:
 
-- Verify service is running in ECS
+- Verify EC2 instance is running
 - Check license file validity
 - Review license server logs
 
@@ -936,22 +916,6 @@ terraform destroy
 - EBS snapshots (if retention configured)
 
 Delete these manually if needed.
-
-## Cost Estimate
-
-Approximate monthly costs (us-east-1, assuming 8x5 usage):
-
-| Component | Configuration | Monthly Cost |
-|-----------|--------------|--------------|
-| Perforce (ECS + RDS) | db.t3.medium + EBS | ~$150 |
-| TeamCity (ECS + RDS) | 2x agents, db.t3.medium | ~$200 |
-| Unity Accelerator | ECS + 500GB EBS | ~$80 |
-| Unity License Server | ECS | ~$50 |
-| S3 Artifacts | 1TB storage | ~$25 |
-| VPC & Networking | NAT Gateway, data transfer | ~$45 |
-| **Total** | | **~$550/month** |
-
-*Costs vary based on usage, region, and configuration. Enable auto-scaling and stop non-critical services outside work hours to reduce costs.*
 
 ## Security Considerations
 
