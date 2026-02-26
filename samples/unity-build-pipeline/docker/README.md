@@ -35,6 +35,7 @@ Unity Editor installation requires both a **version** and **changeset**. To find
 3. Look at the URL or release notes page - it contains the changeset
 
 **Example:** For Unity 6000.0.23f1
+
 - URL: `https://unity.com/releases/editor/whats-new/6000.0.23f1#bd20d88e54b8`
 - Version: `6000.0.23f1`
 - Changeset: `bd20d88e54b8` (found in the URL after the `#`)
@@ -45,21 +46,21 @@ Unity Editor installation requires both a **version** and **changeset**. To find
 
 Follow these steps to build and push the Docker image to ECR using Unity 6 LTS (default). Adjust version numbers as needed for different Unity versions.
 
-**Step 1: Create ECR repository (if it doesn't exist)**
+#### Step 1: Create ECR repository (if it doesn't exist)
 
 ```bash
 aws ecr describe-repositories --repository-names unity-teamcity-agent --region us-east-1 2>/dev/null || \
   aws ecr create-repository --repository-name unity-teamcity-agent --region us-east-1
 ```
 
-**Step 2: Log in to ECR**
+#### Step 2: Log in to ECR
 
 ```bash
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin $(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com
 ```
 
-**Step 3: Build the Docker image**
+#### Step 3: Build the Docker image
 
 ```bash
 cd teamcity-unity-build-agent/
@@ -79,7 +80,7 @@ docker build \
 
 This will take 15-30 minutes if installing Unity Editor, or ~5 minutes for Hub-only build, depending on your internet connection and system performance.
 
-**Step 4: Tag and push to ECR**
+#### Step 4: Tag and push to ECR
 
 ```bash
 docker tag unity-teamcity-agent:latest \
@@ -88,7 +89,7 @@ docker tag unity-teamcity-agent:latest \
 docker push $(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
 ```
 
-**Step 5: Get your image URI for Terraform**
+#### Step 5: Get your image URI for Terraform
 
 ```bash
 echo "$(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest"
@@ -143,6 +144,7 @@ UNITY_CHANGESET="" \
 ```
 
 **Available environment variables:**
+
 - `UNITY_VERSION` - Unity Editor version (e.g., `6000.0.23f1`) or empty for Hub-only
 - `UNITY_CHANGESET` - Unity changeset hash (e.g., `bd20d88e54b8`) or empty for Hub-only
 - `IMAGE_TAG` - Docker image tag (default: `latest`)
@@ -183,6 +185,7 @@ terraform apply
 ## TeamCity Agent Behavior
 
 The agents automatically:
+
 1. Download TeamCity agent binaries from your TeamCity server on first startup
 2. Register with the TeamCity server
 3. Start accepting build jobs
@@ -232,6 +235,7 @@ Available modules: `linux-il2cpp`, `windows-mono`, `mac-mono`, `android`, `ios`,
 **Issue:** Unity Hub installation fails or Unity Editor download times out
 
 **Solution:**
+
 - Check your internet connection
 - Verify the Unity version and changeset are correct
 - Try a different Unity version (some versions may have download issues)
@@ -242,6 +246,7 @@ Available modules: `linux-il2cpp`, `windows-mono`, `mac-mono`, `android`, `ios`,
 **Issue:** Cannot push image to ECR
 
 **Solution:**
+
 - Verify AWS credentials: `aws sts get-caller-identity`
 - Check ECR permissions in your IAM policy
 - Ensure you're logged into ECR: `aws ecr get-login-password | docker login ...`
@@ -251,6 +256,7 @@ Available modules: `linux-il2cpp`, `windows-mono`, `mac-mono`, `android`, `ios`,
 **Issue:** Unity requires activation in container
 
 **Solution:**
+
 - Unity builds use the Unity License Server for license management
 - Ensure `UNITY_LICENSE_SERVER_URL` environment variable is set in TeamCity agent config
 - Verify the license server is accessible from agent containers
