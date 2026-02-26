@@ -1,0 +1,74 @@
+---
+- name: Set up NFS client and handle checkpoints
+  hosts: localhost
+  vars_prompt:
+    - name: ec2_private_dns
+      prompt: "Enter the server private DNS name"
+      private: no
+    - name: checkpoint_file_name
+      prompt: "Enter the checkpoint file name"
+      private: no
+
+  tasks:
+    - name: Mount NFS share to /mnt
+      become: yes
+      ansible.builtin.mount:
+        path: /mnt
+        src: '{{ ec2_private_dns }}:/hxdepots/p4/1/checkpoints'
+        fstype: nfs
+        opts: ro
+        state: mounted
+
+    - name: Find the newest file in /mnt
+      become: yes
+      become_user: perforce
+      ansible.builtin.shell: |
+        cd /mnt
+        newest_file=$(ls -Art | tail -n 1)
+        if [ -z "$newest_file" ]; then
+          echo "No files found in /mnt."
+          exit 1
+        else
+          echo "The newest file in /mnt is: $newest_file"
+          # Proceed with copying the file to /hxdepots/p4/1/checkpoints
+          cp -a "/mnt/$newest_file" /hxdepots/p4/1/checkpoints/
+        fi
+      register: find_newest_file
+
+    - name: Copy checkpoint files from /mnt to /hxdepots/p4/1/checkpoints
+      become: yes
+      ansible.builtin.command:
+        cmd: "cp -a /mnt/* /hxdepots/p4/1/checkpoints/"
+      become_user: perforce
+
+    - name: Create server.id file
+      become: yes
+      ansible.builtin.shell:
+        cmd: "echo p4d_fr_awseuwest1 > /p4/1/root/server.id"
+      become_user: perforce
+
+    - name: Trust the remote server
+      become: yes
+      ansible.builtin.shell:
+        cmd: "p4 ssl:{{ ec2_private_dns }}:1666 trust"
+      become_user: perforce
+
+    - name: Login to remote server with admin account
+      become: yes
+      ansible.builtin.shell:
+        cmd: "p4 -p ssl:{{ ec2_private_dns }}:1666 login -a < /p4/common/config/.p4passwd.p4_1.admin"
+      become_user: perforce
+
+    - name: Login to remote server with service account
+      become: yes
+      ansible.builtin.shell:
+        cmd: "p4 -p ssl:{{ ec2_private_dns }}:1666 login svc_p4d_fr_awseuwest1"
+      become_user: perforce
+
+    - name: Load the checkpoint using the newest file from /mnt
+      become: yes
+      ansible.builtin.shell: |
+        newest_file=$(ls -Art /mnt | tail -n 1)
+        nohup load_checkpoint.sh "/p4/1/checkpoints/$newest_file" -i 1 -y < /dev/null > /dev/null 2>&1 &
+      become_user: perforce
+      when: find_newest_file.stdout is defined and find_newest_file.stdout != ''
