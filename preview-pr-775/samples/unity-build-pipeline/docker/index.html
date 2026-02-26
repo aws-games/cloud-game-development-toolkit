@@ -3553,22 +3553,24 @@
 <li>Click on the version you want (e.g., "6000.0.23f1")</li>
 <li>Look at the URL or release notes page - it contains the changeset</li>
 </ol>
-<p><strong>Example:</strong> For Unity 6000.0.23f1
-- URL: <code>https://unity.com/releases/editor/whats-new/6000.0.23f1#bd20d88e54b8</code>
-- Version: <code>6000.0.23f1</code>
-- Changeset: <code>bd20d88e54b8</code> (found in the URL after the <code>#</code>)</p>
+<p><strong>Example:</strong> For Unity 6000.0.23f1</p>
+<ul>
+<li>URL: <code>https://unity.com/releases/editor/whats-new/6000.0.23f1#bd20d88e54b8</code></li>
+<li>Version: <code>6000.0.23f1</code></li>
+<li>Changeset: <code>bd20d88e54b8</code> (found in the URL after the <code>#</code>)</li>
+</ul>
 <p><strong>Tip:</strong> You can also leave version and changeset empty to build an image with only Unity Hub, then install specific editor versions at runtime.</p>
 <h3 id="manual-build-and-push">Manual Build and Push<a class="headerlink" href="#manual-build-and-push" title="Permanent link">&para;</a></h3>
 <p>Follow these steps to build and push the Docker image to ECR using Unity 6 LTS (default). Adjust version numbers as needed for different Unity versions.</p>
-<p><strong>Step 1: Create ECR repository (if it doesn't exist)</strong></p>
+<h4 id="step-1-create-ecr-repository-if-it-doesnt-exist">Step 1: Create ECR repository (if it doesn't exist)<a class="headerlink" href="#step-1-create-ecr-repository-if-it-doesnt-exist" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>describe-repositories<span class="w"> </span>--repository-names<span class="w"> </span>unity-teamcity-agent<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>aws<span class="w"> </span>ecr<span class="w"> </span>create-repository<span class="w"> </span>--repository-name<span class="w"> </span>unity-teamcity-agent<span class="w"> </span>--region<span class="w"> </span>us-east-1
 </code></pre></div>
-<p><strong>Step 2: Log in to ECR</strong></p>
+<h4 id="step-2-log-in-to-ecr">Step 2: Log in to ECR<a class="headerlink" href="#step-2-log-in-to-ecr" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com
 </code></pre></div>
-<p><strong>Step 3: Build the Docker image</strong></p>
+<h4 id="step-3-build-the-docker-image">Step 3: Build the Docker image<a class="headerlink" href="#step-3-build-the-docker-image" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>teamcity-unity-build-agent/
 
 <span class="c1"># With Unity Editor (example: Unity 6 LTS)</span>
@@ -3584,13 +3586,13 @@ docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</s
 <span class="w">  </span>.
 </code></pre></div>
 <p>This will take 15-30 minutes if installing Unity Editor, or ~5 minutes for Hub-only build, depending on your internet connection and system performance.</p>
-<p><strong>Step 4: Tag and push to ECR</strong></p>
+<h4 id="step-4-tag-and-push-to-ecr">Step 4: Tag and push to ECR<a class="headerlink" href="#step-4-tag-and-push-to-ecr" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>tag<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
 
 docker<span class="w"> </span>push<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
 </code></pre></div>
-<p><strong>Step 5: Get your image URI for Terraform</strong></p>
+<h4 id="step-5-get-your-image-uri-for-terraform">Step 5: Get your image URI for Terraform<a class="headerlink" href="#step-5-get-your-image-uri-for-terraform" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
 </code></pre></div>
 <p>Copy this URI to use in your <code>terraform.tfvars</code> file.</p>
@@ -3628,12 +3630,14 @@ docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</s
 <span class="nv">UNITY_CHANGESET</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="se">\</span>
 ./build-and-push.sh
 </code></pre></div>
-<p><strong>Available environment variables:</strong>
-- <code>UNITY_VERSION</code> - Unity Editor version (e.g., <code>6000.0.23f1</code>) or empty for Hub-only
-- <code>UNITY_CHANGESET</code> - Unity changeset hash (e.g., <code>bd20d88e54b8</code>) or empty for Hub-only
-- <code>IMAGE_TAG</code> - Docker image tag (default: <code>latest</code>)
-- <code>ECR_REPOSITORY_NAME</code> - ECR repository name (default: <code>unity-teamcity-agent</code>)
-- <code>AWS_REGION</code> - AWS region (default: <code>us-east-1</code>)</p>
+<p><strong>Available environment variables:</strong></p>
+<ul>
+<li><code>UNITY_VERSION</code> - Unity Editor version (e.g., <code>6000.0.23f1</code>) or empty for Hub-only</li>
+<li><code>UNITY_CHANGESET</code> - Unity changeset hash (e.g., <code>bd20d88e54b8</code>) or empty for Hub-only</li>
+<li><code>IMAGE_TAG</code> - Docker image tag (default: <code>latest</code>)</li>
+<li><code>ECR_REPOSITORY_NAME</code> - ECR repository name (default: <code>unity-teamcity-agent</code>)</li>
+<li><code>AWS_REGION</code> - AWS region (default: <code>us-east-1</code>)</li>
+</ul>
 <h2 id="using-the-image-in-terraform">Using the Image in Terraform<a class="headerlink" href="#using-the-image-in-terraform" title="Permanent link">&para;</a></h2>
 <p>After building and pushing your image, update <code>../../main.tf</code> with your ECR image URI:</p>
 <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;teamcity&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -3659,10 +3663,12 @@ docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</s
 terraform<span class="w"> </span>apply
 </code></pre></div>
 <h2 id="teamcity-agent-behavior">TeamCity Agent Behavior<a class="headerlink" href="#teamcity-agent-behavior" title="Permanent link">&para;</a></h2>
-<p>The agents automatically:
-1. Download TeamCity agent binaries from your TeamCity server on first startup
-2. Register with the TeamCity server
-3. Start accepting build jobs</p>
+<p>The agents automatically:</p>
+<ol>
+<li>Download TeamCity agent binaries from your TeamCity server on first startup</li>
+<li>Register with the TeamCity server</li>
+<li>Start accepting build jobs</li>
+</ol>
 <p>Configuration is handled via environment variables in the ECS task definition.</p>
 <h2 id="testing-locally">Testing Locally<a class="headerlink" href="#testing-locally" title="Permanent link">&para;</a></h2>
 <p>To test the image locally before deploying:</p>
@@ -3693,24 +3699,30 @@ docker<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </sp
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="build-fails-during-unity-installation">Build fails during Unity installation<a class="headerlink" href="#build-fails-during-unity-installation" title="Permanent link">&para;</a></h3>
 <p><strong>Issue:</strong> Unity Hub installation fails or Unity Editor download times out</p>
-<p><strong>Solution:</strong>
-- Check your internet connection
-- Verify the Unity version and changeset are correct
-- Try a different Unity version (some versions may have download issues)
-- Check Unity Download Archive for version availability</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Check your internet connection</li>
+<li>Verify the Unity version and changeset are correct</li>
+<li>Try a different Unity version (some versions may have download issues)</li>
+<li>Check Unity Download Archive for version availability</li>
+</ul>
 <h3 id="ecr-push-fails">ECR push fails<a class="headerlink" href="#ecr-push-fails" title="Permanent link">&para;</a></h3>
 <p><strong>Issue:</strong> Cannot push image to ECR</p>
-<p><strong>Solution:</strong>
-- Verify AWS credentials: <code>aws sts get-caller-identity</code>
-- Check ECR permissions in your IAM policy
-- Ensure you're logged into ECR: <code>aws ecr get-login-password | docker login ...</code></p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Verify AWS credentials: <code>aws sts get-caller-identity</code></li>
+<li>Check ECR permissions in your IAM policy</li>
+<li>Ensure you're logged into ECR: <code>aws ecr get-login-password | docker login ...</code></li>
+</ul>
 <h3 id="unity-license-activation-issues">Unity license activation issues<a class="headerlink" href="#unity-license-activation-issues" title="Permanent link">&para;</a></h3>
 <p><strong>Issue:</strong> Unity requires activation in container</p>
-<p><strong>Solution:</strong>
-- Unity builds use the Unity License Server for license management
-- Ensure <code>UNITY_LICENSE_SERVER_URL</code> environment variable is set in TeamCity agent config
-- Verify the license server is accessible from agent containers
-- Check license server logs for connection issues</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Unity builds use the Unity License Server for license management</li>
+<li>Ensure <code>UNITY_LICENSE_SERVER_URL</code> environment variable is set in TeamCity agent config</li>
+<li>Verify the license server is accessible from agent containers</li>
+<li>Check license server logs for connection issues</li>
+</ul>
 <h3 id="image-size-concerns">Image size concerns<a class="headerlink" href="#image-size-concerns" title="Permanent link">&para;</a></h3>
 <p><strong>Note:</strong> The image is large (~10-15GB) due to Unity Editor installation. This is expected and normal for Unity containerized builds.</p>
 <h2 id="alternative-approaches">Alternative Approaches<a class="headerlink" href="#alternative-approaches" title="Permanent link">&para;</a></h2>
@@ -3741,7 +3753,7 @@ docker<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </sp
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-31
+    2026-02-26
   </span>
 
     
