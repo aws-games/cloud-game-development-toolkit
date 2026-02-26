@@ -6,7 +6,7 @@ This sample demonstrates how to deploy a complete Unity build pipeline on AWS us
 
 This Unity build pipeline consists of the following components:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Unity Build Pipeline                         │
 ├─────────────────────────────────────────────────────────────────────┤
@@ -131,15 +131,18 @@ The Terraform configuration will automatically discover this AMI by searching fo
 
 This pipeline requires a Route53 hosted zone for DNS records and SSL certificate validation.
 
-**Option A: Register a new domain with Route53**
+##### Option A: Register a new domain with Route53
+
 - Follow the [Route53 domain registration guide](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html)
 - A hosted zone is automatically created
 
-**Option B: Use an existing domain**
+##### Option B: Use an existing domain
+
 - Follow the guide to [make Route53 the DNS service](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html)
 - Create a hosted zone for your domain
 
 Your services will be accessible at subdomains:
+
 - `perforce.yourdomain.com` - Perforce server
 - `swarm.yourdomain.com` - P4 Swarm (Code Review)
 - `teamcity.yourdomain.com` - TeamCity server
@@ -155,11 +158,7 @@ Download the Unity Floating License Server installer:
 3. Download the **Linux version** of the Unity Floating License Server (e.g., `Unity.Licensing.Server.linux-x64-v2.1.0.zip`)
 4. Save the file to a known location on your machine - you'll reference this path in `terraform.tfvars`
 
-> **Important - License Server Binding**: The Unity License Server binds itself to the machine's identity on first startup, including:
-> - MAC address
-> - Operating system
-> - Number of processor cores
-> - Server name
+> **Important - License Server Binding**: The Unity License Server binds itself to the machine's identity on first startup, including: MAC address, operating system, number of processor cores, and server name.
 >
 > This module uses an **Elastic Network Interface (ENI)** to provide a stable MAC address, and enables **EC2 termination protection** by default. However, if the EC2 instance is destroyed and recreated (not just stopped/started), you will need to contact Unity Support to revoke the old registration before deploying a new one. This process can take several days.
 >
@@ -230,9 +229,11 @@ unity_teamcity_agent_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/unity
 ```
 
 #### Step 2: Review and Customize locals.tf (optional)
+
 Note that the values in `locals.tf` are sensible defaults and will work without changes. The option to change them is there for those who want to further customize the deployment.
 
 Edit `locals.tf` to customize:
+
 - **Project prefix**: `project_prefix = "ubp"` - used as a prefix for resource names
 - **Subdomain names**: Change service subdomains (e.g., `perforce_subdomain = "p4"`)
 - **VPC CIDR blocks**: Adjust network ranges if needed to avoid conflicts with existing networks
@@ -257,6 +258,7 @@ terraform apply
 ```
 
 The deployment takes approximately 15-20 minutes. Terraform will:
+
 1. Create VPC and networking infrastructure
 2. Deploy Perforce with P4 Server and P4 Swarm (Code Review)
 3. Deploy TeamCity server and agents
@@ -298,7 +300,7 @@ All services should show `ACTIVE` status with `runningCount` matching `desiredCo
 
 This section walks you through the initial Perforce setup, creating your first depot, stream, and workspace.
 
-**Step 1.1: Retrieve Administrator Credentials**
+##### Step 1.1: Retrieve Administrator Credentials
 
 ```bash
 # Get the Perforce super user username
@@ -314,7 +316,7 @@ aws secretsmanager get-secret-value \
   --output text
 ```
 
-**Step 1.2: Initial Connection and Login**
+##### Step 1.2: Initial Connection and Login
 
 ```bash
 # Set your P4PORT environment variable
@@ -330,7 +332,7 @@ p4 login
 p4 info
 ```
 
-**Step 1.3: Create a Stream Depot**
+##### Step 1.3: Create a Stream Depot
 
 Stream depots are recommended for modern Perforce workflows and work well with Unity projects.
 
@@ -342,7 +344,7 @@ p4 depot -t stream -o game | p4 depot -i
 p4 depots
 ```
 
-**Step 1.4: Create a Mainline Stream**
+##### Step 1.4: Create a Mainline Stream
 
 ```bash
 # Create the mainline stream
@@ -352,7 +354,7 @@ p4 stream -t mainline -o //game/main | p4 stream -i
 p4 streams //game/...
 ```
 
-**Step 1.5: Create a Workspace and Submit Initial Files**
+##### Step 1.5: Create a Workspace and Submit Initial Files
 
 ```bash
 # Create a workspace mapped to the mainline stream
@@ -380,7 +382,7 @@ p4 submit -d "Initial commit: Add README"
 p4 files //game/main/...
 ```
 
-**Step 1.6: Create Additional Users**
+##### Step 1.6: Create Additional Users
 
 ```bash
 # Create a new user (replace 'developer1')
@@ -399,14 +401,15 @@ Your Perforce server is now ready for your team to use. Users can connect using 
 
 P4 Swarm provides web-based code review for your Perforce projects. It automatically connects to your P4 Server and configures itself on first access.
 
-**Step 2.1: Initial Access**
+##### Step 2.1: Initial Access
 
 Visit `https://swarm.yourdomain.com` in your browser. On first access, Swarm will:
+
 1. Automatically connect to the P4 Server
 2. Install required triggers on the P4 Server
 3. Complete initial setup
 
-**Step 2.2: Log In**
+##### Step 2.2: Log In
 
 Log in with your Perforce credentials (the same username/password you use for P4V or P4 CLI). The super user credentials can be retrieved with:
 
@@ -421,9 +424,10 @@ aws secretsmanager get-secret-value \
   --query SecretString --output text
 ```
 
-**Step 2.3: Verify Setup**
+##### Step 2.3: Verify Setup
 
 Once logged in:
+
 1. Navigate to the Projects page - you should see your Perforce depot(s)
 2. Create a test review to verify functionality:
    - Make a shelved changelist in Perforce
@@ -436,7 +440,7 @@ Your team can now use Swarm for code reviews before submitting changes to mainli
 
 TeamCity is deployed with an Aurora Serverless PostgreSQL database that is automatically configured via environment variables.
 
-**Step 3.1: Complete Initial Setup Wizard**
+##### Step 3.1: Complete Initial Setup Wizard
 
 1. Visit `https://teamcity.yourdomain.com`
 
@@ -448,7 +452,7 @@ TeamCity is deployed with an Aurora Serverless PostgreSQL database that is autom
 
 3. TeamCity will initialize the database and complete setup (takes 2-3 minutes)
 
-**Step 3.2: Authorize Build Agents**
+##### Step 3.2: Authorize Build Agents
 
 The Unity build agents you deployed will automatically register with the TeamCity server but require authorization.
 
@@ -459,7 +463,7 @@ The Unity build agents you deployed will automatically register with the TeamCit
 
 The agents are now ready to accept build jobs.
 
-**Step 3.3: Configure Perforce VCS Root**
+##### Step 3.3: Configure Perforce VCS Root
 
 To connect TeamCity to your Perforce server:
 
@@ -481,6 +485,7 @@ Your TeamCity server is now connected to Perforce and ready to run builds.
 **Access Unity Accelerator Dashboard**:
 
 1. **Get the dashboard credentials**:
+
    ```bash
    # Get username
    aws secretsmanager get-secret-value \
@@ -501,6 +506,7 @@ Your TeamCity server is now connected to Perforce and ready to run builds.
 **Configure Unity Editor to Use Accelerator**:
 
 In Unity Editor preferences:
+
 1. Go to Preferences → Asset Pipeline → Cache Server
 2. Set mode to "Remote"
 3. Enter IP: `unity-accelerator.yourdomain.com`
@@ -513,7 +519,7 @@ The Accelerator will cache Unity Library folder artifacts and dramatically reduc
 
 The Unity Floating License Server requires a multi-step registration process with Unity to activate your floating licenses.
 
-**Step 5.1: Download Server Registration Request**
+##### Step 5.1: Download Server Registration Request
 
 After deployment, the license server creates a registration request file containing the server's machine binding information.
 
@@ -525,16 +531,16 @@ wget $(terraform output -raw unity_license_server_registration_request_url) \
 
 > **Note**: This presigned URL is valid for 1 hour. If expired, regenerate with `terraform refresh`.
 
-**Step 5.2: Register Server with Unity**
+##### Step 5.2: Register Server with Unity
 
-1. Log in to https://id.unity.com/
+1. Log in to <https://id.unity.com/>
 2. Navigate to "Organizations" → Select your organization → "Subscriptions"
 3. Upload the `server-registration-request.xml` file
 4. Download the licenses zip file Unity provides (e.g., `Unity_v2024.x_Linux.zip`)
 
 > **Important**: Do not rename the licenses zip file - Unity expects the original filename.
 
-**Step 5.3: Upload Licenses to S3**
+##### Step 5.3: Upload Licenses to S3
 
 ```bash
 # Upload licenses zip (replace with your actual filename)
@@ -544,7 +550,7 @@ aws s3 cp Unity_v2024.x_Linux.zip \
 
 The license server monitors this bucket and will automatically import licenses within 60 seconds.
 
-**Step 5.4: Verify License Import**
+##### Step 5.4: Verify License Import
 
 ```bash
 # Get dashboard URL and password
@@ -557,7 +563,7 @@ aws secretsmanager get-secret-value \
 
 Visit the dashboard URL and log in with username `admin` and the password from above. Verify your licenses appear with status "Available".
 
-**Step 5.5: Configure Client Access to License Server**
+##### Step 5.5: Configure Client Access to License Server
 
 Unity clients require a `services-config.json` file to connect to the license server.
 
@@ -574,6 +580,7 @@ The agents in this sample run as Docker containers in ECS. To add the services-c
 1. **Option A: Add to Docker image** (recommended)
 
    Edit `docker/teamcity-unity-build-agent/Dockerfile` to copy the file during build:
+
    ```dockerfile
    COPY services-config.json /usr/share/unity3d/config/services-config.json
    ```
@@ -587,13 +594,14 @@ The agents in this sample run as Docker containers in ECS. To add the services-c
 **For developer workstations:**
 
 Deploy `services-config.json` to:
+
 - **Windows**: `%PROGRAMDATA%\Unity\config\services-config.json`
 - **Linux**: `/usr/share/unity3d/config/services-config.json`
 - **macOS**: `/Library/Application Support/Unity/config/services-config.json`
 
 Without this file in the correct location, Unity will not be able to connect to the license server.
 
-**Step 5.6: Protect License Server from Accidental Deletion (CRITICAL)**
+##### Step 5.6: Protect License Server from Accidental Deletion (CRITICAL)
 
 > **Critical**: The Unity License Server binds to its machine's MAC address. If the EC2 instance is destroyed, you must contact Unity Support to revoke the registration before deploying a new server. **Unity Support response can take up to 48 hours**, during which your team will not have access to Unity licenses.
 
@@ -626,7 +634,7 @@ With this protection in place, `terraform destroy` will fail if it tries to dest
 
 This section walks through creating a Unity build configuration in TeamCity.
 
-**Step 6.1: Create a TeamCity Project**
+##### Step 6.1: Create a TeamCity Project
 
 1. In TeamCity, click **Administration** → **Projects**
 2. Click **Create project**
@@ -636,7 +644,7 @@ This section walks through creating a Unity build configuration in TeamCity.
    - **Project ID**: `UnityGameProject` (auto-generated)
 5. Click **Create**
 
-**Step 6.2: Create a Build Configuration**
+##### Step 6.2: Create a Build Configuration
 
 1. Inside your new project, click **Create build configuration**
 2. Enter:
@@ -644,14 +652,14 @@ This section walks through creating a Unity build configuration in TeamCity.
    - **Build configuration ID**: `BuildAndroid` (auto-generated)
 3. Click **Create**
 
-**Step 6.3: Attach VCS Root**
+##### Step 6.3: Attach VCS Root
 
 1. Click **VCS Roots** in the left sidebar
 2. Click **Attach VCS root**
 3. Select the Perforce VCS root you created in Step 3.3
 4. Click **Attach**
 
-**Step 6.4: Add Build Steps**
+##### Step 6.4: Add Build Steps
 
 1. Click **Build Steps** in the left sidebar
 2. Click **Add build step**
@@ -660,6 +668,7 @@ This section walks through creating a Unity build configuration in TeamCity.
    - **Step name**: `Unity Build`
    - **Run**: `Custom script`
    - **Custom script**:
+
      ```bash
      # Unity build command
      /opt/unity/Editor/Unity \
@@ -671,24 +680,28 @@ This section walks through creating a Unity build configuration in TeamCity.
        -logFile - \
        -executeMethod BuildScript.Build
      ```
+
 5. Click **Save**
 
 > **Note**: The `-executeMethod BuildScript.Build` assumes you have a static method in your Unity project at `Assets/Editor/BuildScript.cs`. You'll need to create this script in your Unity project to define the build logic.
 
-**Step 6.5: (Optional) Add Artifact Upload to S3**
+##### Step 6.5: (Optional) Add Artifact Upload to S3
 
 1. Click **Add build step**
 2. Select **Command Line**
 3. Configure:
    - **Step name**: `Upload to S3`
    - **Custom script**:
+
      ```bash
      aws s3 cp build/ s3://YOUR_BUCKET_NAME/builds/%build.number%/ --recursive
      ```
+
    - Replace `YOUR_BUCKET_NAME` with your artifacts bucket (or use a TeamCity parameter)
+
 4. Click **Save**
 
-**Step 6.6: Configure Build Triggers (Optional)**
+##### Step 6.6: Configure Build Triggers (Optional)
 
 1. Click **Triggers** in the left sidebar
 2. Click **Add new trigger**
@@ -716,7 +729,7 @@ If the build completes successfully, your Unity build pipeline is fully operatio
 
 ### Networking
 
-```
+```text
 VPC (10.0.0.0/16)
 ├── Public Subnets (10.0.1.0/24, 10.0.2.0/24)
 │   └── NAT Gateways, Load Balancers
@@ -770,6 +783,7 @@ TeamCity build agents need access to source code and Unity assets. This sample u
 **Storage pattern:** With 5 agents, you'll have 5 separate directories on EFS, each containing a full P4 workspace + Unity cache. Total storage = (project size + Unity cache) × number of agents.
 
 **Setup:**
+
 1. Create EFS file system in your VPC
 2. Mount EFS to `/opt/buildAgent/work` in agent task definition
 3. TeamCity automatically isolates each agent to its own subdirectory
@@ -786,6 +800,7 @@ TeamCity build agents need access to source code and Unity assets. This sample u
 **Storage pattern:** One golden volume (repository + Unity cache) + thin clones for active builds. 100GB repo with 10 parallel builds = 100GB parent + ~10GB deltas (not 1TB).
 
 **Setup:**
+
 1. Deploy FSx for NetApp ONTAP in your VPC
 2. Create golden volume update automation (nightly or on-demand)
 3. Integrate TeamCity with NetApp API to create/destroy clones per build
@@ -836,6 +851,7 @@ Extend EBS volume size through AWS Console or CLI, then resize filesystem.
 ### Monitoring
 
 Key metrics to monitor:
+
 - TeamCity build queue depth and agent utilization
 - Unity Accelerator cache hit rate
 - Perforce disk usage and connection count
@@ -845,15 +861,18 @@ Key metrics to monitor:
 ### Backup and Disaster Recovery
 
 **Perforce**:
+
 - Daily automated snapshots of EBS volumes
 - RDS automated backups (7-day retention)
 - Export metadata with `p4 admin checkpoint`
 
 **TeamCity**:
+
 - RDS automated backups
 - Configuration exported to S3 (manual)
 
 **S3 Artifacts**:
+
 - Versioning enabled
 - Cross-region replication (optional)
 
@@ -862,21 +881,25 @@ Key metrics to monitor:
 ### Common Issues
 
 **Perforce connection refused**:
+
 - Check security group rules allow port 1666
 - Verify P4 Server service is running in ECS
 - Check DNS resolution
 
 **TeamCity agents not connecting**:
+
 - Verify server URL in agent configuration
 - Check security groups allow agent-to-server communication
 - Review agent logs in CloudWatch
 
 **Unity Accelerator not caching**:
+
 - Verify Unity Editor configuration
 - Check accelerator logs for errors
 - Ensure port 10080 is accessible
 
 **License server not responding**:
+
 - Verify service is running in ECS
 - Check license file validity
 - Review license server logs
@@ -906,6 +929,7 @@ terraform destroy
 ```
 
 **Note**: This will NOT delete:
+
 - AMIs created with Packer
 - Route53 hosted zone
 - Manual secrets in Secrets Manager
@@ -932,24 +956,28 @@ Approximate monthly costs (us-east-1, assuming 8x5 usage):
 ## Security Considerations
 
 ### Secrets Management
+
 - Never commit credentials to Git
 - Rotate secrets regularly
 - Use AWS Secrets Manager for all credentials
 - Enable audit logging for secret access
 
 ### Network Security
+
 - Deploy in private subnets
 - Use security groups for least privilege access
 - Enable VPC Flow Logs for traffic analysis
 - Consider AWS PrivateLink for service endpoints
 
 ### Access Control
+
 - Use IAM roles instead of access keys
 - Enable MFA for administrative access
 - Implement least privilege principle
 - Configure Perforce user permissions with protections table
 
 ### Compliance
+
 - Enable CloudTrail for audit logging
 - Use AWS Config for compliance monitoring
 - Encrypt all data at rest
