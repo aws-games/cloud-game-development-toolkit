@@ -776,8 +776,10 @@ EOF
 # Create the user
 cat /tmp/admin_user.txt | sudo -u perforce p4 -p "$P4PORT" -u super user -i -f
 
-# Set password
-echo "$ADMIN_PASSWORD" | sudo -u perforce p4 -p "$P4PORT" -u super passwd "$ADMIN_USERNAME"
+# Set admin user password
+# At security level 4, p4 passwd requires the password to be entered twice (new + confirm)
+# so we echo the password twice separated by newline
+echo -e "$ADMIN_PASSWORD\n$ADMIN_PASSWORD" | sudo -u perforce p4 -p "$P4PORT" -u super passwd "$ADMIN_USERNAME"
 
 # Grant super access
 sudo -u perforce p4 -p "$P4PORT" -u super protect -o | sudo -u perforce tee /tmp/protect.txt > /dev/null
