@@ -3990,18 +3990,24 @@ aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class
 </blockquote>
 <h4 id="step-2-create-route53-hosted-zone">Step 2: Create Route53 Hosted Zone<a class="headerlink" href="#step-2-create-route53-hosted-zone" title="Permanent link">&para;</a></h4>
 <p>This pipeline requires a Route53 hosted zone for DNS records and SSL certificate validation.</p>
-<p><strong>Option A: Register a new domain with Route53</strong>
-- Follow the <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html">Route53 domain registration guide</a>
-- A hosted zone is automatically created</p>
-<p><strong>Option B: Use an existing domain</strong>
-- Follow the guide to <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html">make Route53 the DNS service</a>
-- Create a hosted zone for your domain</p>
-<p>Your services will be accessible at subdomains:
-- <code>perforce.yourdomain.com</code> - Perforce server
-- <code>swarm.yourdomain.com</code> - P4 Swarm (Code Review)
-- <code>teamcity.yourdomain.com</code> - TeamCity server
-- <code>unity-accelerator.yourdomain.com</code> - Unity Accelerator
-- <code>unity-license.yourdomain.com</code> - Unity License Server</p>
+<h5 id="option-a-register-a-new-domain-with-route53">Option A: Register a new domain with Route53<a class="headerlink" href="#option-a-register-a-new-domain-with-route53" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Follow the <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html">Route53 domain registration guide</a></li>
+<li>A hosted zone is automatically created</li>
+</ul>
+<h5 id="option-b-use-an-existing-domain">Option B: Use an existing domain<a class="headerlink" href="#option-b-use-an-existing-domain" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Follow the guide to <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html">make Route53 the DNS service</a></li>
+<li>Create a hosted zone for your domain</li>
+</ul>
+<p>Your services will be accessible at subdomains:</p>
+<ul>
+<li><code>perforce.yourdomain.com</code> - Perforce server</li>
+<li><code>swarm.yourdomain.com</code> - P4 Swarm (Code Review)</li>
+<li><code>teamcity.yourdomain.com</code> - TeamCity server</li>
+<li><code>unity-accelerator.yourdomain.com</code> - Unity Accelerator</li>
+<li><code>unity-license.yourdomain.com</code> - Unity License Server</li>
+</ul>
 <h4 id="step-3-download-unity-license-server-binaries">Step 3: Download Unity License Server Binaries<a class="headerlink" href="#step-3-download-unity-license-server-binaries" title="Permanent link">&para;</a></h4>
 <p>Download the Unity Floating License Server installer:</p>
 <ol>
@@ -4011,11 +4017,7 @@ aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class
 <li>Save the file to a known location on your machine - you'll reference this path in <code>terraform.tfvars</code></li>
 </ol>
 <blockquote>
-<p><strong>Important - License Server Binding</strong>: The Unity License Server binds itself to the machine's identity on first startup, including:
-- MAC address
-- Operating system
-- Number of processor cores
-- Server name</p>
+<p><strong>Important - License Server Binding</strong>: The Unity License Server binds itself to the machine's identity on first startup, including: MAC address, operating system, number of processor cores, and server name.</p>
 <p>This module uses an <strong>Elastic Network Interface (ENI)</strong> to provide a stable MAC address, and enables <strong>EC2 termination protection</strong> by default. However, if the EC2 instance is destroyed and recreated (not just stopped/started), you will need to contact Unity Support to revoke the old registration before deploying a new one. This process can take several days.</p>
 <p>To protect against accidental deletion, consider adding <code>prevent_destroy</code> lifecycle rules after initial deployment (see Phase 3, Step 5).</p>
 </blockquote>
@@ -4073,11 +4075,13 @@ cp<span class="w"> </span>terraform.tfvars.example<span class="w"> </span>terraf
 </code></pre></div>
 <h4 id="step-2-review-and-customize-localstf-optional">Step 2: Review and Customize locals.tf (optional)<a class="headerlink" href="#step-2-review-and-customize-localstf-optional" title="Permanent link">&para;</a></h4>
 <p>Note that the values in <code>locals.tf</code> are sensible defaults and will work without changes. The option to change them is there for those who want to further customize the deployment.</p>
-<p>Edit <code>locals.tf</code> to customize:
-- <strong>Project prefix</strong>: <code>project_prefix = "ubp"</code> - used as a prefix for resource names
-- <strong>Subdomain names</strong>: Change service subdomains (e.g., <code>perforce_subdomain = "p4"</code>)
-- <strong>VPC CIDR blocks</strong>: Adjust network ranges if needed to avoid conflicts with existing networks
-- <strong>Tags</strong>: Add or modify resource tags for cost tracking or organization</p>
+<p>Edit <code>locals.tf</code> to customize:</p>
+<ul>
+<li><strong>Project prefix</strong>: <code>project_prefix = "ubp"</code> - used as a prefix for resource names</li>
+<li><strong>Subdomain names</strong>: Change service subdomains (e.g., <code>perforce_subdomain = "p4"</code>)</li>
+<li><strong>VPC CIDR blocks</strong>: Adjust network ranges if needed to avoid conflicts with existing networks</li>
+<li><strong>Tags</strong>: Add or modify resource tags for cost tracking or organization</li>
+</ul>
 <h4 id="step-3-initialize-terraform">Step 3: Initialize Terraform<a class="headerlink" href="#step-3-initialize-terraform" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 </code></pre></div>
@@ -4089,13 +4093,15 @@ terraform<span class="w"> </span>plan
 <span class="c1"># Apply the configuration</span>
 terraform<span class="w"> </span>apply
 </code></pre></div>
-<p>The deployment takes approximately 15-20 minutes. Terraform will:
-1. Create VPC and networking infrastructure
-2. Deploy Perforce with P4 Server and P4 Swarm (Code Review)
-3. Deploy TeamCity server and agents
-4. Deploy Unity Accelerator and License Server
-5. Create S3 bucket for artifacts
-6. Configure DNS records and SSL certificates</p>
+<p>The deployment takes approximately 15-20 minutes. Terraform will:</p>
+<ol>
+<li>Create VPC and networking infrastructure</li>
+<li>Deploy Perforce with P4 Server and P4 Swarm (Code Review)</li>
+<li>Deploy TeamCity server and agents</li>
+<li>Deploy Unity Accelerator and License Server</li>
+<li>Create S3 bucket for artifacts</li>
+<li>Configure DNS records and SSL certificates</li>
+</ol>
 <h4 id="step-5-verify-deployment">Step 5: Verify Deployment<a class="headerlink" href="#step-5-verify-deployment" title="Permanent link">&para;</a></h4>
 <p>After <code>terraform apply</code> completes, verify all services deployed successfully:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># View all Terraform outputs</span>
@@ -4122,7 +4128,7 @@ nslookup<span class="w"> </span>unity-license.yourdomain.com
 <h3 id="phase-3-postdeployment">Phase 3: Postdeployment<a class="headerlink" href="#phase-3-postdeployment" title="Permanent link">&para;</a></h3>
 <h4 id="step-1-configure-perforce-p4-server">Step 1: Configure Perforce (P4 Server)<a class="headerlink" href="#step-1-configure-perforce-p4-server" title="Permanent link">&para;</a></h4>
 <p>This section walks you through the initial Perforce setup, creating your first depot, stream, and workspace.</p>
-<p><strong>Step 1.1: Retrieve Administrator Credentials</strong></p>
+<h5 id="step-11-retrieve-administrator-credentials">Step 1.1: Retrieve Administrator Credentials<a class="headerlink" href="#step-11-retrieve-administrator-credentials" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get the Perforce super user username</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_username_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
@@ -4135,7 +4141,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>text
 </code></pre></div>
-<p><strong>Step 1.2: Initial Connection and Login</strong></p>
+<h5 id="step-12-initial-connection-and-login">Step 1.2: Initial Connection and Login<a class="headerlink" href="#step-12-initial-connection-and-login" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Set your P4PORT environment variable</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">P4PORT</span><span class="o">=</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>p4_server_connection_string<span class="k">)</span>
 
@@ -4148,7 +4154,7 @@ p4<span class="w"> </span>login
 <span class="c1"># Verify connection</span>
 p4<span class="w"> </span>info
 </code></pre></div>
-<p><strong>Step 1.3: Create a Stream Depot</strong></p>
+<h5 id="step-13-create-a-stream-depot">Step 1.3: Create a Stream Depot<a class="headerlink" href="#step-13-create-a-stream-depot" title="Permanent link">&para;</a></h5>
 <p>Stream depots are recommended for modern Perforce workflows and work well with Unity projects.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create a new stream depot named &quot;game&quot;</span>
 p4<span class="w"> </span>depot<span class="w"> </span>-t<span class="w"> </span>stream<span class="w"> </span>-o<span class="w"> </span>game<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>depot<span class="w"> </span>-i
@@ -4156,14 +4162,14 @@ p4<span class="w"> </span>depot<span class="w"> </span>-t<span class="w"> </span
 <span class="c1"># Verify the depot was created</span>
 p4<span class="w"> </span>depots
 </code></pre></div>
-<p><strong>Step 1.4: Create a Mainline Stream</strong></p>
+<h5 id="step-14-create-a-mainline-stream">Step 1.4: Create a Mainline Stream<a class="headerlink" href="#step-14-create-a-mainline-stream" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create the mainline stream</span>
 p4<span class="w"> </span>stream<span class="w"> </span>-t<span class="w"> </span>mainline<span class="w"> </span>-o<span class="w"> </span>//game/main<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>stream<span class="w"> </span>-i
 
 <span class="c1"># Verify the stream was created</span>
 p4<span class="w"> </span>streams<span class="w"> </span>//game/...
 </code></pre></div>
-<p><strong>Step 1.5: Create a Workspace and Submit Initial Files</strong></p>
+<h5 id="step-15-create-a-workspace-and-submit-initial-files">Step 1.5: Create a Workspace and Submit Initial Files<a class="headerlink" href="#step-15-create-a-workspace-and-submit-initial-files" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create a workspace mapped to the mainline stream</span>
 p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span>-S<span class="w"> </span>//game/main<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>client<span class="w"> </span>-i
 
@@ -4188,7 +4194,7 @@ p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </spa
 <span class="c1"># Verify the file was submitted</span>
 p4<span class="w"> </span>files<span class="w"> </span>//game/main/...
 </code></pre></div>
-<p><strong>Step 1.6: Create Additional Users</strong></p>
+<h5 id="step-16-create-additional-users">Step 1.6: Create Additional Users<a class="headerlink" href="#step-16-create-additional-users" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create a new user (replace &#39;developer1&#39;)</span>
 p4<span class="w"> </span>user<span class="w"> </span>-o<span class="w"> </span>developer1<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>user<span class="w"> </span>-i<span class="w"> </span>-f
 
@@ -4201,12 +4207,14 @@ p4<span class="w"> </span>protect
 <p>Your Perforce server is now ready for your team to use. Users can connect using P4V or P4 CLI with the connection string from <code>terraform output p4_server_connection_string</code>.</p>
 <h4 id="step-2-configure-p4-swarm-code-review">Step 2: Configure P4 Swarm (Code Review)<a class="headerlink" href="#step-2-configure-p4-swarm-code-review" title="Permanent link">&para;</a></h4>
 <p>P4 Swarm provides web-based code review for your Perforce projects. It automatically connects to your P4 Server and configures itself on first access.</p>
-<p><strong>Step 2.1: Initial Access</strong></p>
-<p>Visit <code>https://swarm.yourdomain.com</code> in your browser. On first access, Swarm will:
-1. Automatically connect to the P4 Server
-2. Install required triggers on the P4 Server
-3. Complete initial setup</p>
-<p><strong>Step 2.2: Log In</strong></p>
+<h5 id="step-21-initial-access">Step 2.1: Initial Access<a class="headerlink" href="#step-21-initial-access" title="Permanent link">&para;</a></h5>
+<p>Visit <code>https://swarm.yourdomain.com</code> in your browser. On first access, Swarm will:</p>
+<ol>
+<li>Automatically connect to the P4 Server</li>
+<li>Install required triggers on the P4 Server</li>
+<li>Complete initial setup</li>
+</ol>
+<h5 id="step-22-log-in">Step 2.2: Log In<a class="headerlink" href="#step-22-log-in" title="Permanent link">&para;</a></h5>
 <p>Log in with your Perforce credentials (the same username/password you use for P4V or P4 CLI). The super user credentials can be retrieved with:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get Perforce super user credentials</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
@@ -4217,17 +4225,19 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
 </code></pre></div>
-<p><strong>Step 2.3: Verify Setup</strong></p>
-<p>Once logged in:
-1. Navigate to the Projects page - you should see your Perforce depot(s)
-2. Create a test review to verify functionality:
-   - Make a shelved changelist in Perforce
-   - In Swarm, create a review from the shelved changelist
-   - Add reviewers and verify email notifications work</p>
+<h5 id="step-23-verify-setup">Step 2.3: Verify Setup<a class="headerlink" href="#step-23-verify-setup" title="Permanent link">&para;</a></h5>
+<p>Once logged in:</p>
+<ol>
+<li>Navigate to the Projects page - you should see your Perforce depot(s)</li>
+<li>Create a test review to verify functionality:</li>
+<li>Make a shelved changelist in Perforce</li>
+<li>In Swarm, create a review from the shelved changelist</li>
+<li>Add reviewers and verify email notifications work</li>
+</ol>
 <p>Your team can now use Swarm for code reviews before submitting changes to mainline!</p>
 <h4 id="step-3-configure-teamcity">Step 3: Configure TeamCity<a class="headerlink" href="#step-3-configure-teamcity" title="Permanent link">&para;</a></h4>
 <p>TeamCity is deployed with an Aurora Serverless PostgreSQL database that is automatically configured via environment variables.</p>
-<p><strong>Step 3.1: Complete Initial Setup Wizard</strong></p>
+<h5 id="step-31-complete-initial-setup-wizard">Step 3.1: Complete Initial Setup Wizard<a class="headerlink" href="#step-31-complete-initial-setup-wizard" title="Permanent link">&para;</a></h5>
 <ol>
 <li>
 <p>Visit <code>https://teamcity.yourdomain.com</code></p>
@@ -4245,7 +4255,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <p>TeamCity will initialize the database and complete setup (takes 2-3 minutes)</p>
 </li>
 </ol>
-<p><strong>Step 3.2: Authorize Build Agents</strong></p>
+<h5 id="step-32-authorize-build-agents">Step 3.2: Authorize Build Agents<a class="headerlink" href="#step-32-authorize-build-agents" title="Permanent link">&para;</a></h5>
 <p>The Unity build agents you deployed will automatically register with the TeamCity server but require authorization.</p>
 <ol>
 <li>Navigate to <strong>Agents</strong> → <strong>Unauthorized</strong></li>
@@ -4254,7 +4264,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <li>(Optional) Assign agents to specific agent pools based on your build requirements</li>
 </ol>
 <p>The agents are now ready to accept build jobs.</p>
-<p><strong>Step 3.3: Configure Perforce VCS Root</strong></p>
+<h5 id="step-33-configure-perforce-vcs-root">Step 3.3: Configure Perforce VCS Root<a class="headerlink" href="#step-33-configure-perforce-vcs-root" title="Permanent link">&para;</a></h5>
 <p>To connect TeamCity to your Perforce server:</p>
 <ol>
 <li>Navigate to <strong>Administration</strong> → <strong>VCS Roots</strong></li>
@@ -4272,9 +4282,9 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <h4 id="step-4-configure-unity-accelerator">Step 4: Configure Unity Accelerator<a class="headerlink" href="#step-4-configure-unity-accelerator" title="Permanent link">&para;</a></h4>
 <p><strong>Access Unity Accelerator Dashboard</strong>:</p>
 <ol>
-<li>
-<p><strong>Get the dashboard credentials</strong>:
-   <div class="highlight"><pre><span></span><code><span class="c1"># Get username</span>
+<li><strong>Get the dashboard credentials</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get username</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_accelerator_dashboard_username_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
@@ -4283,26 +4293,26 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_accelerator_dashboard_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Log in to the dashboard</strong>:</p>
-</li>
+</code></pre></div>
+<ol>
+<li><strong>Log in to the dashboard</strong>:</li>
 <li>Visit <code>https://unity-accelerator.yourdomain.com</code></li>
 <li>Enter the username and password from above</li>
 <li>Review cache statistics and configuration</li>
 </ol>
 <p><strong>Configure Unity Editor to Use Accelerator</strong>:</p>
-<p>In Unity Editor preferences:
-1. Go to Preferences → Asset Pipeline → Cache Server
-2. Set mode to "Remote"
-3. Enter IP: <code>unity-accelerator.yourdomain.com</code>
-4. Port: <code>10080</code>
-5. Enable "Download" and "Upload"</p>
+<p>In Unity Editor preferences:</p>
+<ol>
+<li>Go to Preferences → Asset Pipeline → Cache Server</li>
+<li>Set mode to "Remote"</li>
+<li>Enter IP: <code>unity-accelerator.yourdomain.com</code></li>
+<li>Port: <code>10080</code></li>
+<li>Enable "Download" and "Upload"</li>
+</ol>
 <p>The Accelerator will cache Unity Library folder artifacts and dramatically reduce import times for your team.</p>
 <h4 id="step-5-configure-unity-license-server">Step 5: Configure Unity License Server<a class="headerlink" href="#step-5-configure-unity-license-server" title="Permanent link">&para;</a></h4>
 <p>The Unity Floating License Server requires a multi-step registration process with Unity to activate your floating licenses.</p>
-<p><strong>Step 5.1: Download Server Registration Request</strong></p>
+<h5 id="step-51-download-server-registration-request">Step 5.1: Download Server Registration Request<a class="headerlink" href="#step-51-download-server-registration-request" title="Permanent link">&para;</a></h5>
 <p>After deployment, the license server creates a registration request file containing the server's machine binding information.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Download the server registration request file</span>
 wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_registration_request_url<span class="k">)</span><span class="w"> </span><span class="se">\</span>
@@ -4311,9 +4321,9 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <blockquote>
 <p><strong>Note</strong>: This presigned URL is valid for 1 hour. If expired, regenerate with <code>terraform refresh</code>.</p>
 </blockquote>
-<p><strong>Step 5.2: Register Server with Unity</strong></p>
+<h5 id="step-52-register-server-with-unity">Step 5.2: Register Server with Unity<a class="headerlink" href="#step-52-register-server-with-unity" title="Permanent link">&para;</a></h5>
 <ol>
-<li>Log in to https://id.unity.com/</li>
+<li>Log in to <a href="https://id.unity.com/">https://id.unity.com/</a></li>
 <li>Navigate to "Organizations" → Select your organization → "Subscriptions"</li>
 <li>Upload the <code>server-registration-request.xml</code> file</li>
 <li>Download the licenses zip file Unity provides (e.g., <code>Unity_v2024.x_Linux.zip</code>)</li>
@@ -4321,13 +4331,13 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <blockquote>
 <p><strong>Important</strong>: Do not rename the licenses zip file - Unity expects the original filename.</p>
 </blockquote>
-<p><strong>Step 5.3: Upload Licenses to S3</strong></p>
+<h5 id="step-53-upload-licenses-to-s3">Step 5.3: Upload Licenses to S3<a class="headerlink" href="#step-53-upload-licenses-to-s3" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Upload licenses zip (replace with your actual filename)</span>
 aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>Unity_v2024.x_Linux.zip<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>s3://<span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_s3_bucket<span class="k">)</span>/
 </code></pre></div>
 <p>The license server monitors this bucket and will automatically import licenses within 60 seconds.</p>
-<p><strong>Step 5.4: Verify License Import</strong></p>
+<h5 id="step-54-verify-license-import">Step 5.4: Verify License Import<a class="headerlink" href="#step-54-verify-license-import" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get dashboard URL and password</span>
 <span class="nb">echo</span><span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_url<span class="k">)</span>
 
@@ -4336,7 +4346,7 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
 </code></pre></div>
 <p>Visit the dashboard URL and log in with username <code>admin</code> and the password from above. Verify your licenses appear with status "Available".</p>
-<p><strong>Step 5.5: Configure Client Access to License Server</strong></p>
+<h5 id="step-55-configure-client-access-to-license-server">Step 5.5: Configure Client Access to License Server<a class="headerlink" href="#step-55-configure-client-access-to-license-server" title="Permanent link">&para;</a></h5>
 <p>Unity clients require a <code>services-config.json</code> file to connect to the license server.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Download services-config.json</span>
 wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_services_config_url<span class="k">)</span><span class="w"> </span><span class="se">\</span>
@@ -4347,21 +4357,23 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <ol>
 <li><strong>Option A: Add to Docker image</strong> (recommended)</li>
 </ol>
-<p>Edit <code>docker/teamcity-unity-build-agent/Dockerfile</code> to copy the file during build:
-   <div class="highlight"><pre><span></span><code><span class="k">COPY</span><span class="w"> </span>services-config.json<span class="w"> </span>/usr/share/unity3d/config/services-config.json
-</code></pre></div></p>
+<p>Edit <code>docker/teamcity-unity-build-agent/Dockerfile</code> to copy the file during build:</p>
+<div class="highlight"><pre><span></span><code><span class="k">COPY</span><span class="w"> </span>services-config.json<span class="w"> </span>/usr/share/unity3d/config/services-config.json
+</code></pre></div>
 <p>Then rebuild and push your Docker image.</p>
 <ol>
 <li><strong>Option B: Download at runtime</strong></li>
 </ol>
 <p>Modify your container's entrypoint script to download from S3 on startup.</p>
 <p><strong>For developer workstations:</strong></p>
-<p>Deploy <code>services-config.json</code> to:
-- <strong>Windows</strong>: <code>%PROGRAMDATA%\Unity\config\services-config.json</code>
-- <strong>Linux</strong>: <code>/usr/share/unity3d/config/services-config.json</code>
-- <strong>macOS</strong>: <code>/Library/Application Support/Unity/config/services-config.json</code></p>
+<p>Deploy <code>services-config.json</code> to:</p>
+<ul>
+<li><strong>Windows</strong>: <code>%PROGRAMDATA%\Unity\config\services-config.json</code></li>
+<li><strong>Linux</strong>: <code>/usr/share/unity3d/config/services-config.json</code></li>
+<li><strong>macOS</strong>: <code>/Library/Application Support/Unity/config/services-config.json</code></li>
+</ul>
 <p>Without this file in the correct location, Unity will not be able to connect to the license server.</p>
-<p><strong>Step 5.6: Protect License Server from Accidental Deletion (CRITICAL)</strong></p>
+<h5 id="step-56-protect-license-server-from-accidental-deletion-critical">Step 5.6: Protect License Server from Accidental Deletion (CRITICAL)<a class="headerlink" href="#step-56-protect-license-server-from-accidental-deletion-critical" title="Permanent link">&para;</a></h5>
 <blockquote>
 <p><strong>Critical</strong>: The Unity License Server binds to its machine's MAC address. If the EC2 instance is destroyed, you must contact Unity Support to revoke the registration before deploying a new server. <strong>Unity Support response can take up to 48 hours</strong>, during which your team will not have access to Unity licenses.</p>
 </blockquote>
@@ -4384,7 +4396,7 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <p>With this protection in place, <code>terraform destroy</code> will fail if it tries to destroy the license server, preventing accidental deletion. To intentionally destroy the license server later, you must first remove this lifecycle block.</p>
 <h4 id="step-6-create-your-first-build-configuration">Step 6: Create Your First Build Configuration<a class="headerlink" href="#step-6-create-your-first-build-configuration" title="Permanent link">&para;</a></h4>
 <p>This section walks through creating a Unity build configuration in TeamCity.</p>
-<p><strong>Step 6.1: Create a TeamCity Project</strong></p>
+<h5 id="step-61-create-a-teamcity-project">Step 6.1: Create a TeamCity Project<a class="headerlink" href="#step-61-create-a-teamcity-project" title="Permanent link">&para;</a></h5>
 <ol>
 <li>In TeamCity, click <strong>Administration</strong> → <strong>Projects</strong></li>
 <li>Click <strong>Create project</strong></li>
@@ -4394,7 +4406,7 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <li><strong>Project ID</strong>: <code>UnityGameProject</code> (auto-generated)</li>
 <li>Click <strong>Create</strong></li>
 </ol>
-<p><strong>Step 6.2: Create a Build Configuration</strong></p>
+<h5 id="step-62-create-a-build-configuration">Step 6.2: Create a Build Configuration<a class="headerlink" href="#step-62-create-a-build-configuration" title="Permanent link">&para;</a></h5>
 <ol>
 <li>Inside your new project, click <strong>Create build configuration</strong></li>
 <li>Enter:</li>
@@ -4402,14 +4414,14 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <li><strong>Build configuration ID</strong>: <code>BuildAndroid</code> (auto-generated)</li>
 <li>Click <strong>Create</strong></li>
 </ol>
-<p><strong>Step 6.3: Attach VCS Root</strong></p>
+<h5 id="step-63-attach-vcs-root">Step 6.3: Attach VCS Root<a class="headerlink" href="#step-63-attach-vcs-root" title="Permanent link">&para;</a></h5>
 <ol>
 <li>Click <strong>VCS Roots</strong> in the left sidebar</li>
 <li>Click <strong>Attach VCS root</strong></li>
 <li>Select the Perforce VCS root you created in Step 3.3</li>
 <li>Click <strong>Attach</strong></li>
 </ol>
-<p><strong>Step 6.4: Add Build Steps</strong></p>
+<h5 id="step-64-add-build-steps">Step 6.4: Add Build Steps<a class="headerlink" href="#step-64-add-build-steps" title="Permanent link">&para;</a></h5>
 <ol>
 <li>Click <strong>Build Steps</strong> in the left sidebar</li>
 <li>Click <strong>Add build step</strong></li>
@@ -4417,8 +4429,9 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <li>Configure:</li>
 <li><strong>Step name</strong>: <code>Unity Build</code></li>
 <li><strong>Run</strong>: <code>Custom script</code></li>
-<li><strong>Custom script</strong>:
-     <div class="highlight"><pre><span></span><code><span class="c1"># Unity build command</span>
+<li>
+<p><strong>Custom script</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Unity build command</span>
 /opt/unity/Editor/Unity<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-quit<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-batchmode<span class="w"> </span><span class="se">\</span>
@@ -4427,25 +4440,34 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <span class="w">  </span>-buildTarget<span class="w"> </span>Android<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-logFile<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-executeMethod<span class="w"> </span>BuildScript.Build
-</code></pre></div></li>
-<li>Click <strong>Save</strong></li>
+</code></pre></div>
+</li>
+<li>
+<p>Click <strong>Save</strong></p>
+</li>
 </ol>
 <blockquote>
 <p><strong>Note</strong>: The <code>-executeMethod BuildScript.Build</code> assumes you have a static method in your Unity project at <code>Assets/Editor/BuildScript.cs</code>. You'll need to create this script in your Unity project to define the build logic.</p>
 </blockquote>
-<p><strong>Step 6.5: (Optional) Add Artifact Upload to S3</strong></p>
+<h5 id="step-65-optional-add-artifact-upload-to-s3">Step 6.5: (Optional) Add Artifact Upload to S3<a class="headerlink" href="#step-65-optional-add-artifact-upload-to-s3" title="Permanent link">&para;</a></h5>
 <ol>
 <li>Click <strong>Add build step</strong></li>
 <li>Select <strong>Command Line</strong></li>
 <li>Configure:</li>
 <li><strong>Step name</strong>: <code>Upload to S3</code></li>
-<li><strong>Custom script</strong>:
-     <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>build/<span class="w"> </span>s3://YOUR_BUCKET_NAME/builds/%build.number%/<span class="w"> </span>--recursive
-</code></pre></div></li>
-<li>Replace <code>YOUR_BUCKET_NAME</code> with your artifacts bucket (or use a TeamCity parameter)</li>
-<li>Click <strong>Save</strong></li>
+<li>
+<p><strong>Custom script</strong>:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>build/<span class="w"> </span>s3://YOUR_BUCKET_NAME/builds/%build.number%/<span class="w"> </span>--recursive
+</code></pre></div>
+</li>
+<li>
+<p>Replace <code>YOUR_BUCKET_NAME</code> with your artifacts bucket (or use a TeamCity parameter)</p>
+</li>
+<li>
+<p>Click <strong>Save</strong></p>
+</li>
 </ol>
-<p><strong>Step 6.6: Configure Build Triggers (Optional)</strong></p>
+<h5 id="step-66-configure-build-triggers-optional">Step 6.6: Configure Build Triggers (Optional)<a class="headerlink" href="#step-66-configure-build-triggers-optional" title="Permanent link">&para;</a></h5>
 <ol>
 <li>Click <strong>Triggers</strong> in the left sidebar</li>
 <li>Click <strong>Add new trigger</strong></li>
@@ -4511,22 +4533,26 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 <h3 id="efs-persistent-storage">EFS Persistent Storage<a class="headerlink" href="#efs-persistent-storage" title="Permanent link">&para;</a></h3>
 <p><strong>How it works:</strong> Mount a shared EFS volume to <code>/opt/buildAgent/work</code>. TeamCity creates a unique working directory per agent (hash-based naming like <code>a54a2cadb9b4d269</code>). Each agent maintains its own Perforce workspace and Unity Library cache on EFS, persisting across container restarts.</p>
 <p><strong>Storage pattern:</strong> With 5 agents, you'll have 5 separate directories on EFS, each containing a full P4 workspace + Unity cache. Total storage = (project size + Unity cache) × number of agents.</p>
-<p><strong>Setup:</strong>
-1. Create EFS file system in your VPC
-2. Mount EFS to <code>/opt/buildAgent/work</code> in agent task definition
-3. TeamCity automatically isolates each agent to its own subdirectory
-4. First build per agent syncs fully; subsequent builds sync incrementally</p>
+<p><strong>Setup:</strong></p>
+<ol>
+<li>Create EFS file system in your VPC</li>
+<li>Mount EFS to <code>/opt/buildAgent/work</code> in agent task definition</li>
+<li>TeamCity automatically isolates each agent to its own subdirectory</li>
+<li>First build per agent syncs fully; subsequent builds sync incrementally</li>
+</ol>
 <p><strong>Best for:</strong> Medium teams (10-50 devs), frequent builds
 <strong>Cost:</strong> ~$5-30/month (15-100GB per agent × agent count)
 <strong>Build overhead:</strong> 30 seconds - 2 minutes (incremental sync + Unity cache reuse)</p>
 <h3 id="netapp-ontap-flexclone">NetApp ONTAP FlexClone<a class="headerlink" href="#netapp-ontap-flexclone" title="Permanent link">&para;</a></h3>
 <p><strong>How it works:</strong> Run a scheduled job (Lambda/ECS task) that maintains a "golden" FlexVol on FSx for NetApp ONTAP—fully synced to latest Perforce changelist with Unity Library pre-imported. When a build starts, create an instant FlexClone (writable snapshot) and attach it to the agent. Agent works on the clone in isolation. After the build, delete the clone.</p>
 <p><strong>Storage pattern:</strong> One golden volume (repository + Unity cache) + thin clones for active builds. 100GB repo with 10 parallel builds = 100GB parent + ~10GB deltas (not 1TB).</p>
-<p><strong>Setup:</strong>
-1. Deploy FSx for NetApp ONTAP in your VPC
-2. Create golden volume update automation (nightly or on-demand)
-3. Integrate TeamCity with NetApp API to create/destroy clones per build
-4. Mount clone as <code>/opt/buildAgent/work</code> when agent starts</p>
+<p><strong>Setup:</strong></p>
+<ol>
+<li>Deploy FSx for NetApp ONTAP in your VPC</li>
+<li>Create golden volume update automation (nightly or on-demand)</li>
+<li>Integrate TeamCity with NetApp API to create/destroy clones per build</li>
+<li>Mount clone as <code>/opt/buildAgent/work</code> when agent starts</li>
+</ol>
 <p><strong>Update strategy:</strong> Golden volume updates on schedule (e.g., nightly) or triggered by significant P4 changes. Builds use snapshot from last update, plus incremental P4 sync for any new changes.</p>
 <p><strong>Best for:</strong> Large teams (50+ devs), high build frequency, large repos (100GB+), snapshot-based testing
 <strong>Cost:</strong> ~$230+/month (1TB minimum)
@@ -4582,41 +4608,57 @@ Increase cache size by modifying <code>unity_accelerator_cache_size_gb</code> in
 <p><strong>Perforce Storage</strong>:
 Extend EBS volume size through AWS Console or CLI, then resize filesystem.</p>
 <h3 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">&para;</a></h3>
-<p>Key metrics to monitor:
-- TeamCity build queue depth and agent utilization
-- Unity Accelerator cache hit rate
-- Perforce disk usage and connection count
-- S3 bucket size and request rates
-- RDS CPU, memory, and connection count</p>
+<p>Key metrics to monitor:</p>
+<ul>
+<li>TeamCity build queue depth and agent utilization</li>
+<li>Unity Accelerator cache hit rate</li>
+<li>Perforce disk usage and connection count</li>
+<li>S3 bucket size and request rates</li>
+<li>RDS CPU, memory, and connection count</li>
+</ul>
 <h3 id="backup-and-disaster-recovery">Backup and Disaster Recovery<a class="headerlink" href="#backup-and-disaster-recovery" title="Permanent link">&para;</a></h3>
-<p><strong>Perforce</strong>:
-- Daily automated snapshots of EBS volumes
-- RDS automated backups (7-day retention)
-- Export metadata with <code>p4 admin checkpoint</code></p>
-<p><strong>TeamCity</strong>:
-- RDS automated backups
-- Configuration exported to S3 (manual)</p>
-<p><strong>S3 Artifacts</strong>:
-- Versioning enabled
-- Cross-region replication (optional)</p>
+<p><strong>Perforce</strong>:</p>
+<ul>
+<li>Daily automated snapshots of EBS volumes</li>
+<li>RDS automated backups (7-day retention)</li>
+<li>Export metadata with <code>p4 admin checkpoint</code></li>
+</ul>
+<p><strong>TeamCity</strong>:</p>
+<ul>
+<li>RDS automated backups</li>
+<li>Configuration exported to S3 (manual)</li>
+</ul>
+<p><strong>S3 Artifacts</strong>:</p>
+<ul>
+<li>Versioning enabled</li>
+<li>Cross-region replication (optional)</li>
+</ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
-<p><strong>Perforce connection refused</strong>:
-- Check security group rules allow port 1666
-- Verify P4 Server service is running in ECS
-- Check DNS resolution</p>
-<p><strong>TeamCity agents not connecting</strong>:
-- Verify server URL in agent configuration
-- Check security groups allow agent-to-server communication
-- Review agent logs in CloudWatch</p>
-<p><strong>Unity Accelerator not caching</strong>:
-- Verify Unity Editor configuration
-- Check accelerator logs for errors
-- Ensure port 10080 is accessible</p>
-<p><strong>License server not responding</strong>:
-- Verify service is running in ECS
-- Check license file validity
-- Review license server logs</p>
+<p><strong>Perforce connection refused</strong>:</p>
+<ul>
+<li>Check security group rules allow port 1666</li>
+<li>Verify P4 Server service is running in ECS</li>
+<li>Check DNS resolution</li>
+</ul>
+<p><strong>TeamCity agents not connecting</strong>:</p>
+<ul>
+<li>Verify server URL in agent configuration</li>
+<li>Check security groups allow agent-to-server communication</li>
+<li>Review agent logs in CloudWatch</li>
+</ul>
+<p><strong>Unity Accelerator not caching</strong>:</p>
+<ul>
+<li>Verify Unity Editor configuration</li>
+<li>Check accelerator logs for errors</li>
+<li>Ensure port 10080 is accessible</li>
+</ul>
+<p><strong>License server not responding</strong>:</p>
+<ul>
+<li>Verify service is running in ECS</li>
+<li>Check license file validity</li>
+<li>Review license server logs</li>
+</ul>
 <h3 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h3>
 <p>All services log to CloudWatch Logs:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># View Perforce logs</span>
@@ -4633,11 +4675,13 @@ aws<span class="w"> </span>logs<span class="w"> </span>tail<span class="w"> </sp
 <div class="highlight"><pre><span></span><code><span class="c1"># Destroy all Terraform-managed resources</span>
 terraform<span class="w"> </span>destroy
 </code></pre></div>
-<p><strong>Note</strong>: This will NOT delete:
-- AMIs created with Packer
-- Route53 hosted zone
-- Manual secrets in Secrets Manager
-- EBS snapshots (if retention configured)</p>
+<p><strong>Note</strong>: This will NOT delete:</p>
+<ul>
+<li>AMIs created with Packer</li>
+<li>Route53 hosted zone</li>
+<li>Manual secrets in Secrets Manager</li>
+<li>EBS snapshots (if retention configured)</li>
+</ul>
 <p>Delete these manually if needed.</p>
 <h2 id="cost-estimate">Cost Estimate<a class="headerlink" href="#cost-estimate" title="Permanent link">&para;</a></h2>
 <p>Approximate monthly costs (us-east-1, assuming 8x5 usage):</p>
@@ -5399,7 +5443,7 @@ terraform<span class="w"> </span>destroy
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-10-31
+    2026-02-26
   </span>
 
     
