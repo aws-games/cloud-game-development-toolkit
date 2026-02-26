@@ -3609,17 +3609,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cost-estimate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Estimate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#security-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3858,33 +3847,14 @@
 <p>This sample demonstrates how to deploy a complete Unity build pipeline on AWS using the Cloud Game Development Toolkit. This configuration is designed for production Unity game development workflows and includes version control, CI/CD, asset acceleration, license management, and artifact storage.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
 <p>This Unity build pipeline consists of the following components:</p>
-<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────────┐
-│                         Unity Build Pipeline                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │   Perforce   │  │   TeamCity   │  │    Unity     │              │
-│  │              │  │              │  │              │              │
-│  │  • P4 Server │  │  • Server    │  │  • Accelera- │              │
-│  │  • P4 Swarm  │  │  • Agents    │  │    tor       │              │
-│  │              │  │              │  │  • License   │              │
-│  │              │  │              │  │    Server    │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-│                                                                       │
-│                    ┌──────────────────────┐                         │
-│                    │   S3 Artifacts       │                         │
-│                    │   Bucket             │                         │
-│                    └──────────────────────┘                         │
-│                                                                       │
-└─────────────────────────────────────────────────────────────────────┘
-</code></pre></div>
+<p><img alt="Unity Build Pipeline Architecture" src="assets/media/diagrams/architecture.png" /></p>
 <h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
 <ol>
 <li><strong>Perforce (Version Control)</strong></li>
 <li>P4 Server (Helix Core) for source code management</li>
 <li>P4 Swarm (Code Review) for peer code reviews</li>
 <li>
-<p>Deployed on EC2 (P4 Server) and ECS (Swarm) with persistent EBS storage</p>
+<p>Deployed on EC2 with Auto Scaling Group (P4 Swarm) and persistent EBS storage</p>
 </li>
 <li>
 <p><strong>TeamCity (CI/CD)</strong></p>
@@ -3908,7 +3878,7 @@
 <li>Manages Unity Pro/Enterprise licenses</li>
 <li>Supports concurrent license checkout</li>
 <li>
-<p>Deployed on ECS with high availability</p>
+<p>Deployed on EC2 with stable network identity (ENI)</p>
 </li>
 <li>
 <p><strong>S3 Artifacts Bucket</strong></p>
@@ -4638,7 +4608,7 @@ Extend EBS volume size through AWS Console or CLI, then resize filesystem.</p>
 <p><strong>Perforce connection refused</strong>:</p>
 <ul>
 <li>Check security group rules allow port 1666</li>
-<li>Verify P4 Server service is running in ECS</li>
+<li>Verify P4 Server EC2 instance is running</li>
 <li>Check DNS resolution</li>
 </ul>
 <p><strong>TeamCity agents not connecting</strong>:</p>
@@ -4655,7 +4625,7 @@ Extend EBS volume size through AWS Console or CLI, then resize filesystem.</p>
 </ul>
 <p><strong>License server not responding</strong>:</p>
 <ul>
-<li>Verify service is running in ECS</li>
+<li>Verify EC2 instance is running</li>
 <li>Check license file validity</li>
 <li>Review license server logs</li>
 </ul>
@@ -4683,55 +4653,6 @@ terraform<span class="w"> </span>destroy
 <li>EBS snapshots (if retention configured)</li>
 </ul>
 <p>Delete these manually if needed.</p>
-<h2 id="cost-estimate">Cost Estimate<a class="headerlink" href="#cost-estimate" title="Permanent link">&para;</a></h2>
-<p>Approximate monthly costs (us-east-1, assuming 8x5 usage):</p>
-<table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Configuration</th>
-<th>Monthly Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Perforce (ECS + RDS)</td>
-<td>db.t3.medium + EBS</td>
-<td>~$150</td>
-</tr>
-<tr>
-<td>TeamCity (ECS + RDS)</td>
-<td>2x agents, db.t3.medium</td>
-<td>~$200</td>
-</tr>
-<tr>
-<td>Unity Accelerator</td>
-<td>ECS + 500GB EBS</td>
-<td>~$80</td>
-</tr>
-<tr>
-<td>Unity License Server</td>
-<td>ECS</td>
-<td>~$50</td>
-</tr>
-<tr>
-<td>S3 Artifacts</td>
-<td>1TB storage</td>
-<td>~$25</td>
-</tr>
-<tr>
-<td>VPC &amp; Networking</td>
-<td>NAT Gateway, data transfer</td>
-<td>~$45</td>
-</tr>
-<tr>
-<td><strong>Total</strong></td>
-<td></td>
-<td><strong>~$550/month</strong></td>
-</tr>
-</tbody>
-</table>
-<p><em>Costs vary based on usage, region, and configuration. Enable auto-scaling and stop non-critical services outside work hours to reduce costs.</em></p>
 <h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
 <h3 id="secrets-management">Secrets Management<a class="headerlink" href="#secrets-management" title="Permanent link">&para;</a></h3>
 <ul>
