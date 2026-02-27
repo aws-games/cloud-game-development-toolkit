@@ -25,58 +25,25 @@ variable "fully_qualified_domain_name" {
   default     = null
 }
 
-variable "debug" {
-  type        = bool
-  default     = false
-  description = "Debug flag to enable execute command on service for container access."
-}
-
-
 ########################################
 # Compute
 ########################################
-variable "cluster_name" {
-  type        = string
-  description = "The name of the cluster to deploy the P4 Code Review service into. Defaults to null and a cluster will be created."
-  default     = null
-}
-
-variable "container_name" {
-  type        = string
-  description = "The name of the P4 Code Review container."
-  default     = "p4-code-review-container"
-  nullable    = false
-}
-
-variable "container_port" {
+variable "application_port" {
   type        = number
-  description = "The container port that P4 Code Review runs on."
+  description = "The port that P4 Code Review listens on. Used for ALB target group configuration."
   default     = 80
   nullable    = false
 }
 
-variable "container_cpu" {
-  type        = number
-  description = "The CPU allotment for the P4 Code Review container."
-  default     = 1024
-  nullable    = false
-}
-
-variable "container_memory" {
-  type        = number
-  description = "The memory allotment for the P4 Code Review container."
-  default     = 2048
-}
-
 variable "p4d_port" {
   type        = string
-  description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Code Review. Defaults to 'ssl:perforce:1666'"
+  description = "The P4D_PORT environment variable where P4 Code Review should look for P4 Server. Defaults to 'ssl:perforce:1666'"
   default     = "ssl:perforce:1666"
 }
 
 variable "p4charset" {
   type        = string
-  description = "The P4CHARSET environment variable to set in the P4 Code Review container."
+  description = "The P4CHARSET environment variable to set for the P4 Code Review instance."
   default     = "none"
 }
 
@@ -143,7 +110,7 @@ variable "alb_subnets" {
 
 variable "subnets" {
   type        = list(string)
-  description = "A list of subnets to deploy the P4 Code Review ECS Service into. Private subnets are recommended."
+  description = "A list of subnets for ElastiCache Redis deployment. Private subnets are recommended."
 }
 
 variable "create_application_load_balancer" {
@@ -196,48 +163,15 @@ variable "certificate_arn" {
   }
 }
 
-variable "create_default_role" {
-  type        = bool
-  description = "Optional creation of P4 Code Review Default IAM Role. Default is set to true."
-  default     = true
-}
-
-variable "custom_role" {
-  type        = string
-  description = "ARN of the custom IAM Role you wish to use with P4 Code Review."
-  default     = null
-}
-
-variable "super_user_username_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
-}
-
 variable "super_user_password_secret_arn" {
   type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
+  description = "ARN of the AWS Secrets Manager secret containing the P4 super user password. The super user is used for both Swarm runtime operations and administrative tasks."
 }
 
-variable "p4_code_review_user_username_secret_arn" {
+variable "custom_config" {
   type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review username."
-}
-
-variable "p4_code_review_user_password_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d P4 Code Review password."
-}
-
-variable "config_php_source" {
-  type        = string
-  description = "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."
+  description = "JSON string with additional Swarm configuration to merge with the generated config.php. Use this for SSO/SAML setup, notifications, Jira integration, etc. See README for examples."
   default     = null
-}
-
-variable "enable_sso" {
-  type        = bool
-  default     = false
-  description = "Set this to true if using SSO for P4 Code Review authentication."
 }
 
 ######################
@@ -258,6 +192,50 @@ variable "elasticache_node_type" {
   type        = string
   description = "The type of nodes provisioned in the Elasticache cluster."
   default     = "cache.t4g.micro"
+}
+
+########################################
+# EC2 Instance Configuration
+########################################
+variable "ami_id" {
+  type        = string
+  description = "Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI with name pattern 'p4_code_review_ubuntu-*'."
+  default     = null
+}
+
+variable "instance_type" {
+  type        = string
+  description = "EC2 instance type for running P4 Code Review. Swarm requires persistent storage and runs natively on EC2."
+  default     = "m5.large"
+}
+
+variable "instance_subnet_id" {
+  type        = string
+  description = "The subnet ID where the EC2 instance will be launched. Should be a private subnet for security."
+}
+
+variable "ebs_volume_size" {
+  type        = number
+  description = "Size in GB for the EBS volume that stores P4 Code Review data (/opt/perforce/swarm/data). This volume persists across instance replacement."
+  default     = 20
+}
+
+variable "ebs_volume_type" {
+  type        = string
+  description = "EBS volume type for P4 Code Review data storage."
+  default     = "gp3"
+}
+
+variable "ebs_volume_encrypted" {
+  type        = bool
+  description = "Enable encryption for the EBS volume storing P4 Code Review data."
+  default     = true
+}
+
+variable "ebs_availability_zone" {
+  type        = string
+  description = "Availability zone for the EBS volume. Must match the EC2 instance AZ. If not provided, will use the AZ of the instance_subnet_id."
+  default     = null
 }
 
 

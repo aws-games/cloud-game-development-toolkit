@@ -10,101 +10,26 @@ resource "random_string" "p4_code_review" {
 
 
 ##########################################
-# Trust Relationships
-##########################################
-#  ECS - Tasks
-data "aws_iam_policy_document" "ecs_tasks_trust_relationship" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-
-##########################################
 # Policies
 ##########################################
-# Default Policy Document
-data "aws_iam_policy_document" "default_policy" {
-  count = var.create_default_role ? 1 : 0
-  # ECS
-  statement {
-    sid    = "ECSExec"
-    effect = "Allow"
-    actions = [
-      "ssmmessages:OpenDataChannel",
-      "ssmmessages:OpenControlChannel",
-      "ssmmessages:CreateDataChannel",
-      "ssmmessages:CreateControlChannel"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-  statement {
-    effect = "Allow"
-    actions = [
-      "secretsmanager:ListSecrets",
-      "secretsmanager:ListSecretVersionIds",
-      "secretsmanager:GetRandomPassword",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:BatchGetSecretValue"
-    ]
-    resources = [
-      var.super_user_username_secret_arn,
-      var.super_user_password_secret_arn,
-      var.p4_code_review_user_username_secret_arn,
-      var.p4_code_review_user_password_secret_arn,
-    ]
-  }
-}
-
-# Secrets Manager Policy Document
+# Secrets Manager Policy Document for EC2 instances
 data "aws_iam_policy_document" "secrets_manager_policy" {
-  # ssm
   statement {
     effect = "Allow"
     actions = [
-      "secretsmanager:ListSecrets",
-      "secretsmanager:ListSecretVersionIds",
-      "secretsmanager:GetRandomPassword",
       "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:BatchGetSecretValue"
+      "secretsmanager:DescribeSecret"
     ]
     resources = [
-      var.super_user_username_secret_arn,
       var.super_user_password_secret_arn,
-      var.p4_code_review_user_username_secret_arn,
-      var.p4_code_review_user_password_secret_arn,
     ]
   }
-}
-
-# Default Policy
-resource "aws_iam_policy" "default_policy" {
-  count = var.create_default_role ? 1 : 0
-
-  name        = "${local.name_prefix}-default-policy"
-  description = "Policy granting permissions for ${local.name_prefix}."
-  policy      = data.aws_iam_policy_document.default_policy[0].json
-
-  tags = merge(var.tags,
-    {
-      Name = "${local.name_prefix}-default-policy"
-    }
-  )
 }
 
 # Secrets Manager Policy
 resource "aws_iam_policy" "secrets_manager_policy" {
   name        = "${local.name_prefix}-secrets-manager-policy"
-  description = "Policy granting permissions for ${local.name_prefix} task execution role to access Secrets Manager."
+  description = "Policy granting permissions for ${local.name_prefix} EC2 instance to access Secrets Manager."
   policy      = data.aws_iam_policy_document.secrets_manager_policy.json
 
   tags = merge(var.tags,
@@ -116,45 +41,98 @@ resource "aws_iam_policy" "secrets_manager_policy" {
 
 
 ##########################################
-# Roles
+# EC2 Instance Role
 ##########################################
-resource "aws_iam_role" "default_role" {
-  # Default Role
-  count              = var.create_default_role ? 1 : 0
-  name               = "${local.name_prefix}-default-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+# EC2 - Instance Trust Relationship
+data "aws_iam_policy_document" "ec2_instance_trust_relationship" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+# EBS Volume Attachment Policy
+data "aws_iam_policy_document" "ebs_attachment_policy" {
+  # Describe operations require wildcard - AWS doesn't support resource-level permissions for these
+  statement {
+    sid    = "EBSDescribeOperations"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeVolumes",
+      "ec2:DescribeInstances"
+    ]
+    resources = ["*"]
+  }
+
+  # Attach/detach operations scoped to the specific Swarm data volume
+  statement {
+    sid    = "EBSVolumeAttachDetach"
+    effect = "Allow"
+    actions = [
+      "ec2:AttachVolume",
+      "ec2:DetachVolume"
+    ]
+    resources = [
+      aws_ebs_volume.swarm_data.arn,
+      "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ebs_attachment_policy" {
+  name        = "${local.name_prefix}-ebs-attachment-policy"
+  description = "Policy granting permissions for EC2 instance to attach EBS volumes."
+  policy      = data.aws_iam_policy_document.ebs_attachment_policy.json
 
   tags = merge(var.tags,
     {
-      Name = "${local.name_prefix}-default-role"
+      Name = "${local.name_prefix}-ebs-attachment-policy"
     }
   )
 }
 
-resource "aws_iam_role_policy_attachment" "default_role" {
-  count      = var.create_default_role ? 1 : 0
-  role       = aws_iam_role.default_role[0].name
-  policy_arn = aws_iam_policy.default_policy[0].arn
-}
-
-# Task Execution Role
-resource "aws_iam_role" "task_execution_role" {
-  name               = "${local.name_prefix}-task-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks_trust_relationship.json
+# EC2 Instance Role
+resource "aws_iam_role" "ec2_instance_role" {
+  name               = "${local.name_prefix}-ec2-instance-role"
+  assume_role_policy = data.aws_iam_policy_document.ec2_instance_trust_relationship.json
 
   tags = merge(var.tags,
     {
-      Name = "${local.name_prefix}-task-execution-role"
+      Name = "${local.name_prefix}-ec2-instance-role"
     }
   )
 }
 
-resource "aws_iam_role_policy_attachment" "p4_auth_task_execution_role_ecs" {
-  role       = aws_iam_role.task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# Attach SSM Managed Instance Core (for SSM Session Manager access)
+resource "aws_iam_role_policy_attachment" "ec2_instance_role_ssm" {
+  role       = aws_iam_role.ec2_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-resource "aws_iam_role_policy_attachment" "p4_auth_task_execution_role_secrets_manager" {
-  role       = aws_iam_role.task_execution_role.name
+# Attach EBS Attachment Policy (for attaching persistent data volume)
+resource "aws_iam_role_policy_attachment" "ec2_instance_role_ebs" {
+  role       = aws_iam_role.ec2_instance_role.name
+  policy_arn = aws_iam_policy.ebs_attachment_policy.arn
+}
+
+# Attach Secrets Manager Policy (for retrieving P4 credentials)
+resource "aws_iam_role_policy_attachment" "ec2_instance_role_secrets_manager" {
+  role       = aws_iam_role.ec2_instance_role.name
   policy_arn = aws_iam_policy.secrets_manager_policy.arn
+}
+
+# Instance Profile
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "${local.name_prefix}-ec2-instance-profile"
+  role = aws_iam_role.ec2_instance_role.name
+
+  tags = merge(var.tags,
+    {
+      Name = "${local.name_prefix}-ec2-instance-profile"
+    }
+  )
 }
