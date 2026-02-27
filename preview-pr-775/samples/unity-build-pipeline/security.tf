@@ -44,6 +44,34 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_from_vpc" {
 }
 
 ##########################################
+# TeamCity Security Rules
+##########################################
+
+# Allow HTTPS traffic from user's IP to TeamCity ALB
+resource "aws_vpc_security_group_ingress_rule" "teamcity_https" {
+  security_group_id = module.teamcity.alb_security_group_id
+  description       = "Allow HTTPS traffic from personal IP"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${local.my_ip}/32"
+}
+
+##########################################
+# Unity Accelerator Security Rules
+##########################################
+
+# Allow HTTPS traffic from user's IP to Unity Accelerator ALB (dashboard)
+resource "aws_vpc_security_group_ingress_rule" "unity_accelerator_https" {
+  security_group_id = module.unity_accelerator.alb_security_group_id
+  description       = "Allow HTTPS traffic from personal IP for dashboard access"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${local.my_ip}/32"
+}
+
+##########################################
 # Unity License Server Security Rules
 ##########################################
 

@@ -4096,6 +4096,23 @@ nslookup<span class="w"> </span>unity-license.yourdomain.com
 </code></pre></div>
 <p>All services should show <code>ACTIVE</code> status with <code>runningCount</code> matching <code>desiredCount</code>.</p>
 <h3 id="phase-3-postdeployment">Phase 3: Postdeployment<a class="headerlink" href="#phase-3-postdeployment" title="Permanent link">&para;</a></h3>
+<h4 id="understanding-security-group-access">Understanding Security Group Access<a class="headerlink" href="#understanding-security-group-access" title="Permanent link">&para;</a></h4>
+<p>This sample automatically configures security group rules to allow access from your current IP address (detected at deployment time) to all web services. The rules are defined in <code>security.tf</code> and grant access to:</p>
+<ul>
+<li><strong>Perforce (P4 Server)</strong>: Ports 1666 (P4 protocol) and 443 (HTTPS)</li>
+<li><strong>TeamCity</strong>: Port 443 (HTTPS)</li>
+<li><strong>Unity Accelerator</strong>: Port 443 (HTTPS)</li>
+<li><strong>Unity License Server</strong>: Ports 443 (HTTPS) and 8080 (HTTP)</li>
+</ul>
+<p>If your IP address changes or you need to grant access to additional users/IP ranges, update the security group rules in <code>security.tf</code> or add rules directly in the AWS Console.</p>
+<p>To add access for additional IP addresses, you can either:</p>
+<ol>
+<li><strong>Modify <code>security.tf</code></strong> and run <code>terraform apply</code></li>
+<li><strong>Use AWS Console</strong> to add ingress rules to the relevant security groups (find them using <code>terraform output</code>)</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong>: Each module exposes its ALB security group ID as an output (e.g., <code>module.teamcity.alb_security_group_id</code>), allowing you to attach custom ingress rules.</p>
+</blockquote>
 <h4 id="step-1-configure-perforce-p4-server">Step 1: Configure Perforce (P4 Server)<a class="headerlink" href="#step-1-configure-perforce-p4-server" title="Permanent link">&para;</a></h4>
 <p>This section walks you through the initial Perforce setup, creating your first depot, stream, and workspace.</p>
 <h5 id="step-11-retrieve-administrator-credentials">Step 1.1: Retrieve Administrator Credentials<a class="headerlink" href="#step-11-retrieve-administrator-credentials" title="Permanent link">&para;</a></h5>
@@ -5215,6 +5232,14 @@ terraform<span class="w"> </span>destroy
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.teamcity_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_accelerator_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_from_vpc</a></td>
 <td>resource</td>
 </tr>
@@ -5364,7 +5389,7 @@ terraform<span class="w"> </span>destroy
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-02-26
+    2026-02-27
   </span>
 
     
