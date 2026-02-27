@@ -276,6 +276,24 @@ All services should show `ACTIVE` status with `runningCount` matching `desiredCo
 
 ### Phase 3: Postdeployment
 
+#### Understanding Security Group Access
+
+This sample automatically configures security group rules to allow access from your current IP address (detected at deployment time) to all web services. The rules are defined in `security.tf` and grant access to:
+
+- **Perforce (P4 Server)**: Ports 1666 (P4 protocol) and 443 (HTTPS)
+- **TeamCity**: Port 443 (HTTPS)
+- **Unity Accelerator**: Port 443 (HTTPS)
+- **Unity License Server**: Ports 443 (HTTPS) and 8080 (HTTP)
+
+If your IP address changes or you need to grant access to additional users/IP ranges, update the security group rules in `security.tf` or add rules directly in the AWS Console.
+
+To add access for additional IP addresses, you can either:
+
+1. **Modify `security.tf`** and run `terraform apply`
+2. **Use AWS Console** to add ingress rules to the relevant security groups (find them using `terraform output`)
+
+> **Note**: Each module exposes its ALB security group ID as an output (e.g., `module.teamcity.alb_security_group_id`), allowing you to attach custom ingress rules.
+
 #### Step 1: Configure Perforce (P4 Server)
 
 This section walks you through the initial Perforce setup, creating your first depot, stream, and workspace.
@@ -1113,6 +1131,8 @@ This sample is part of the Cloud Game Development Toolkit and is licensed under 
 | [aws_vpc_security_group_ingress_rule.allow_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_perforce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.perforce_from_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.teamcity_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_license_server_from_vpc](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_license_server_http](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.unity_license_server_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
