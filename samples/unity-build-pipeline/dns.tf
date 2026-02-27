@@ -45,14 +45,15 @@ resource "aws_route53_record" "unity_accelerator_public" {
 }
 
 # Public P4 Swarm (Code Review) Record
+# Points to NLB which forwards HTTPS traffic to the internal ALB
 resource "aws_route53_record" "p4_swarm_public" {
   zone_id = data.aws_route53_zone.root.zone_id
   name    = local.p4_swarm_fqdn
   type    = "A"
 
   alias {
-    name                   = module.perforce.shared_application_load_balancer_dns_name
-    zone_id                = module.perforce.shared_application_load_balancer_zone_id
+    name                   = module.perforce.shared_network_load_balancer_dns_name
+    zone_id                = module.perforce.shared_network_load_balancer_zone_id
     evaluate_target_health = true
   }
 }
