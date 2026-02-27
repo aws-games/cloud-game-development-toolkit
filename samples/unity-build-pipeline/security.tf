@@ -44,6 +44,20 @@ resource "aws_vpc_security_group_ingress_rule" "perforce_from_vpc" {
 }
 
 ##########################################
+# P4 Swarm (Code Review) Security Rules
+##########################################
+
+# Allow HTTPS traffic from user's IP to Perforce NLB (for Swarm access)
+resource "aws_vpc_security_group_ingress_rule" "perforce_nlb_https" {
+  security_group_id = module.perforce.shared_network_load_balancer_security_group_id
+  description       = "Allow HTTPS traffic from personal IP for Swarm access"
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "${local.my_ip}/32"
+}
+
+##########################################
 # TeamCity Security Rules
 ##########################################
 
