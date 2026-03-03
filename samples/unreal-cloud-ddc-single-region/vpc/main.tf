@@ -60,6 +60,7 @@ resource "aws_subnet" "private_subnets" {
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.unreal_cloud_ddc_vpc.id
+  
   tags = merge(var.additional_tags,
     {
       Name = "unreal-cloud-ddc-igw"
@@ -129,6 +130,7 @@ resource "aws_route_table_association" "private_rt_asso" {
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.nat_gateway_eip.id
   subnet_id     = aws_subnet.public_subnets[0].id
+  
   tags = merge(var.additional_tags,
     {
       Name = "unreal-cloud-ddc-nat"

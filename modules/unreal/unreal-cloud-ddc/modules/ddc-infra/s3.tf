@@ -1,26 +1,75 @@
 ################################################################################
-# S3
+# S3 Bucket (Kubernetes Manifests)
 ################################################################################
-resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
-  #checkov:skip=CKV_AWS_21:Ensure all data stored in the S3 bucket have versioning enabled
-  #checkov:skip=CKV2_AWS_61:Ensure that an S3 bucket has a lifecycle configuration
-  #checkov:skip=CKV2_AWS_62:This bucket doesnt have any triggers needed as its only an object store
-  #checkov:skip=CKV_AWS_144:This bucket hosts ephemeral recreatable assets
-  #checkov:skip=CKV_AWS_18:Logging bucket cna be configured by customer
-  #checkov:skip=CKV_AWS_145:Causes issue with helm chart interacting with objects
-  region        = var.region
-  bucket_prefix = "${local.name_prefix}-s3-bucket"
-  force_destroy = true
+
+resource "random_string" "manifests_suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
-resource "aws_s3_bucket_public_access_block" "unreal_ddc_s3_acls" {
-  region = var.region
+resource "aws_s3_bucket" "manifests" {
+  bucket        = "${local.name_prefix}-ddc-infra-assets-${random_string.manifests_suffix.result}"
+  force_destroy = true
+  tags          = var.tags
+}
+
+resource "aws_s3_bucket_versioning" "manifests" {
+  bucket = aws_s3_bucket.manifests.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "manifests" {
+  bucket = aws_s3_bucket.manifests.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+################################################################################
+# S3 Bucket (DDC Storage)
+################################################################################
+
+resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
+  bucket        = local.s3_bucket_name
+  force_destroy = true
+  tags          = var.tags
+}
+
+resource "aws_s3_bucket_versioning" "unreal_ddc_s3_bucket_versioning" {
+  bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "unreal_ddc_s3_bucket_encryption" {
   bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "unreal_ddc_s3_bucket_lifecycle" {
+  bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
 
+  rule {
+    id     = "delete-old-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}

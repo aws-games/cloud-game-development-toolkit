@@ -1,19 +1,4 @@
 ################################################################################
-# Dynamic VPC CIDR Detection
-################################################################################
-
-# Use dynamic VPC CIDR instead of hardcoded ranges
-data "aws_vpc" "main" {
-  region = local.region
-  id     = var.vpc_id
-}
-
-# Dynamic IP detection (optional)
-data "http" "my_ip" {
-  url = "https://checkip.amazonaws.com/"
-}
-
-################################################################################
 # NLB Security Group (Standardized)
 ################################################################################
 

@@ -1,50 +1,58 @@
 ################################################################################
-# Naming Output (for example consistency)
+# PRIMARY USER OUTPUTS - Connection Information
 ################################################################################
 
-output "name_prefix" {
-  description = "Standardized name prefix for consistent resource naming"
-  value       = local.name_prefix
-}
-
-################################################################################
-# Direct Load Balancer Outputs (for DNS records)
-################################################################################
-
-# NLB outputs removed - LoadBalancer service creates NLB dynamically
-# Use External-DNS for automatic Route53 record creation instead
-
-
-
-################################################################################
-# DDC Infrastructure Outputs
-################################################################################
-
-output "ddc_infra" {
-  description = "DDC infrastructure outputs"
+output "ddc_connection" {
+  description = "DDC connection information for this region"
   value = var.ddc_infra_config != null ? {
-    region                             = module.ddc_infra.region
-    cluster_name                       = module.ddc_infra.cluster_name
-    cluster_endpoint                   = module.ddc_infra.cluster_endpoint
-    cluster_arn                        = module.ddc_infra.cluster_arn
-    cluster_certificate_authority_data = module.ddc_infra.cluster_certificate_authority_data
-    s3_bucket_id                       = module.ddc_infra.s3_bucket_id
-    scylla_ips                         = module.ddc_infra.scylla_ips
-    scylla_instance_ids                = module.ddc_infra.scylla_instance_ids
-    scylla_seed                        = module.ddc_infra.scylla_seed
-    scylla_datacenter_name             = module.ddc_infra.scylla_datacenter_name
-    scylla_keyspace_suffix             = module.ddc_infra.scylla_keyspace_suffix
-    nlb_arn                            = null  # Created by LoadBalancer service
-    nlb_dns_name                       = null  # Created by LoadBalancer service
-    nlb_zone_id                        = null  # Created by LoadBalancer service
-    nlb_target_group_arn               = null  # Created by LoadBalancer service
+    region          = module.ddc_infra.region
+    bucket          = module.ddc_infra.s3_bucket_id
+    internet_facing = var.load_balancers_config.nlb.internet_facing
+
+    # NEW: Protocol-aware primary endpoint
+    endpoint = local.ddc_endpoint
+    protocol = local.ddc_protocol
+    dns_name = local.ddc_hostname
+
+    # Legacy endpoints (backward compatibility)
+    endpoint_private_dns = local.ddc_endpoint
+    endpoint_public_dns = var.route53_hosted_zone_name != null ? local.ddc_endpoint : null
+    endpoint_nlb = null  # NLB created by LoadBalancer service, DNS available after deployment
+
+    # Infrastructure details
+    bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : var.ddc_application_config.bearer_token_secret_arn
+    kubectl_command         = "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}"
+    cluster_name            = module.ddc_infra.cluster_name
+    namespace               = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_namespace : null
+    scylla_ips              = module.ddc_infra.scylla_ips
+    scylla_instance_ids     = module.ddc_infra.scylla_instance_ids
+    scylla_seed             = module.ddc_infra.scylla_seed
+    scylla_datacenter_name  = module.ddc_infra.scylla_datacenter_name
+    scylla_keyspace_suffix  = module.ddc_infra.scylla_keyspace_suffix
+
+    # DNS zone information
+    private_zone_id   = aws_route53_zone.private.zone_id
+    private_zone_name = local.service_domain
   } : null
 }
 
+output "bearer_token_secret_arn" {
+  description = "ARN of the DDC bearer token secret"
+  value       = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : (var.ddc_application_config != null ? var.ddc_application_config.bearer_token_secret_arn : null)
+}
 
+output "default_ddc_namespace" {
+  description = "Default DDC logical namespace for API URLs and test scripts"
+  value       = var.ddc_application_config.default_ddc_namespace
+}
+
+output "kubectl_command" {
+  description = "kubectl command to connect to EKS cluster"
+  value       = var.ddc_infra_config != null ? "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}" : null
+}
 
 ################################################################################
-# DNS Outputs
+# DNS Endpoints
 ################################################################################
 
 output "dns_endpoints" {
@@ -77,12 +85,28 @@ output "private_zone_name" {
 }
 
 ################################################################################
-# Connection Information
+# Infrastructure Details
 ################################################################################
 
-output "kubectl_command" {
-  description = "kubectl command to connect to EKS cluster"
-  value       = var.ddc_infra_config != null ? "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}" : null
+output "ddc_infra" {
+  description = "DDC infrastructure outputs"
+  value = var.ddc_infra_config != null ? {
+    region                             = module.ddc_infra.region
+    cluster_name                       = module.ddc_infra.cluster_name
+    cluster_endpoint                   = module.ddc_infra.cluster_endpoint
+    cluster_arn                        = module.ddc_infra.cluster_arn
+    cluster_certificate_authority_data = module.ddc_infra.cluster_certificate_authority_data
+    s3_bucket_id                       = module.ddc_infra.s3_bucket_id
+    scylla_ips                         = module.ddc_infra.scylla_ips
+    scylla_instance_ids                = module.ddc_infra.scylla_instance_ids
+    scylla_seed                        = module.ddc_infra.scylla_seed
+    scylla_datacenter_name             = module.ddc_infra.scylla_datacenter_name
+    scylla_keyspace_suffix             = module.ddc_infra.scylla_keyspace_suffix
+    nlb_arn                            = null  # Created by LoadBalancer service
+    nlb_dns_name                       = null  # Created by LoadBalancer service
+    nlb_zone_id                        = null  # Created by LoadBalancer service
+    nlb_target_group_arn               = null  # Created by LoadBalancer service
+  } : null
 }
 
 output "scylla_connection_info" {
@@ -91,60 +115,6 @@ output "scylla_connection_info" {
     region = module.ddc_infra.region
     ips    = module.ddc_infra.scylla_ips
     seed   = module.ddc_infra.scylla_seed
-  } : null
-}
-
-################################################################################
-# Bearer Token Secret ARN
-################################################################################
-
-output "bearer_token_secret_arn" {
-  description = "ARN of the DDC bearer token secret"
-  value       = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : (var.ddc_application_config != null ? var.ddc_application_config.bearer_token_secret_arn : null)
-}
-
-output "default_ddc_namespace" {
-  description = "Default DDC logical namespace for API URLs and test scripts"
-  value       = var.ddc_application_config.default_ddc_namespace
-}
-
-################################################################################
-# DDC Connection Information
-################################################################################
-
-output "ddc_connection" {
-  description = "DDC connection information for this region"
-  value = var.ddc_infra_config != null ? {
-    region          = module.ddc_infra.region
-    bucket          = module.ddc_infra.s3_bucket_id
-    internet_facing = var.load_balancers_config.nlb.internet_facing
-
-    # NEW: Protocol-aware primary endpoint
-    endpoint = local.ddc_endpoint
-    protocol = local.ddc_protocol
-    dns_name = local.ddc_hostname
-
-    # Legacy endpoints (backward compatibility)
-    endpoint_private_dns = local.ddc_endpoint
-    endpoint_public_dns = var.route53_hosted_zone_name != null ? local.ddc_endpoint : null
-    endpoint_nlb = null  # NLB created by LoadBalancer service, DNS available after deployment
-
-
-
-    # Infrastructure details
-    bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : var.ddc_application_config.bearer_token_secret_arn
-    kubectl_command         = "aws eks update-kubeconfig --region ${module.ddc_infra.region} --name ${module.ddc_infra.cluster_name}"
-    cluster_name            = module.ddc_infra.cluster_name
-    namespace               = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_namespace : null
-    scylla_ips              = module.ddc_infra.scylla_ips
-    scylla_instance_ids     = module.ddc_infra.scylla_instance_ids
-    scylla_seed             = module.ddc_infra.scylla_seed
-    scylla_datacenter_name  = module.ddc_infra.scylla_datacenter_name
-    scylla_keyspace_suffix  = module.ddc_infra.scylla_keyspace_suffix
-
-    # DNS zone information
-    private_zone_id   = aws_route53_zone.private.zone_id
-    private_zone_name = local.service_domain
   } : null
 }
 
@@ -199,7 +169,6 @@ output "module_info" {
     }
     networking = {
       load_balancer_subnets   = var.load_balancers_config.nlb != null ? var.load_balancers_config.nlb.subnets : []
-
       allowed_external_cidrs  = var.allowed_external_cidrs
       external_prefix_list_id = var.external_prefix_list_id
     }
@@ -211,18 +180,21 @@ output "module_info" {
 }
 
 ################################################################################
-# Version Information for Multi-Region Consistency
+# Multi-Region IAM Role Sharing
 ################################################################################
 
-output "version_info" {
-  description = "Version information for multi-region consistency checks"
-  value = {
-    kubernetes_version = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_version : null
-    ddc_version        = "1.2.0"
-  }
+output "iam_roles" {
+  description = "IAM role ARNs for sharing across regions"
+  value = var.is_primary_region ? {
+    eks_cluster_role_arn = module.ddc_infra.eks_cluster_role_arn
+    # eks_node_group_role_arns removed - EKS Auto Mode manages node roles automatically
+    oidc_provider_arn = module.ddc_infra.oidc_provider_arn
+  } : null
 }
 
-
+################################################################################
+# Debug and Troubleshooting Outputs
+################################################################################
 
 output "scylla_configuration" {
   description = "ScyllaDB configuration details for debugging and validation"
@@ -253,18 +225,27 @@ output "ddc_namespaces" {
   value       = var.ddc_application_config.ddc_namespaces
 }
 
-
-
+output "version_info" {
+  description = "Version information for multi-region consistency checks"
+  value = {
+    kubernetes_version = var.ddc_infra_config != null ? var.ddc_infra_config.kubernetes_version : null
+    ddc_version        = "1.2.0"
+  }
+}
 
 ################################################################################
-# Multi-Region IAM Role Sharing
+# Module Metadata
 ################################################################################
 
-output "iam_roles" {
-  description = "IAM role ARNs for sharing across regions"
-  value = var.is_primary_region ? {
-    eks_cluster_role_arn = module.ddc_infra.eks_cluster_role_arn
-    # eks_node_group_role_arns removed - EKS Auto Mode manages node roles automatically
-    oidc_provider_arn = module.ddc_infra.oidc_provider_arn
-  } : null
+output "name_prefix" {
+  description = "Standardized name prefix for consistent resource naming"
+  value       = local.name_prefix
+}
+################################################################################
+# Cleanup Gatekeeper Output
+################################################################################
+
+output "cleanup_complete_id" {
+  description = "ID of the DDC cleanup resource for infrastructure dependency management. Only available when ddc_application_config is provided. Add 'depends_on = [module.unreal_cloud_ddc.cleanup_complete_id]' to VPC resources (IGW, NAT Gateway, etc.) that you create to ensure they wait for DDC cleanup before deletion. This prevents destroy failures caused by EKS LoadBalancer services creating EIPs outside Terraform state."
+  value       = var.ddc_application_config != null ? module.ddc_app[0].helm_ddc_app_id : null
 }

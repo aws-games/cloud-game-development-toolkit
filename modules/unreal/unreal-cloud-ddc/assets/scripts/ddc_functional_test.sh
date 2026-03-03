@@ -215,13 +215,17 @@ echo "========================="
 DEFAULT_DDC_NAMESPACE=$(terraform output -raw default_ddc_namespace 2>/dev/null || echo "default")
 echo "🎯 Using DDC namespace: $DEFAULT_DDC_NAMESPACE"
 TEST_HASH="00000000000000000000000000000000000000aa"
-TEST_DATA="test"
-# Use the hash that DDC calculated for this data
-TEST_IOHASH="4878CA0425C739FA427F7EDA20FE845F6B2E46BA"
+# Use test data for cache verification
+MESSAGE="🎮 DDC is working! No more waiting for shader compilation! 🚀 Epic Games would be proud! 💯 "
+TEST_DATA=$(printf "%.0s$MESSAGE" {1..1000})
+echo "📋 Generated ${#TEST_DATA} bytes of test data for cache verification"
+# Use the correct hash for the new message
+TEST_IOHASH="D11A5A03616CB925EF18A9B587645CE53F0717D6"
 
 echo "📤 Testing PUT operation..."
 echo "=========================="
-PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
+    -D /tmp/put_headers.txt \
     "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
     -X PUT \
     --data "$TEST_DATA" \
@@ -230,10 +234,21 @@ PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
     -H "Authorization: ServiceAccount $BEARER_TOKEN")
 
 PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-echo "PUT Status: $PUT_STATUS"
-if [ "$DEBUG_MODE" = "enabled" ]; then
-    echo "Test Data: $TEST_DATA"
-    echo "Expected Hash: $TEST_IOHASH"
+PUT_TIME=$(echo "$PUT_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
+PUT_SIZE=$(echo "$PUT_RESPONSE" | grep "SIZE_UPLOAD:" | cut -d: -f2)
+
+echo "📊 PUT Results:"
+echo "   Status: $PUT_STATUS"
+echo "   Upload time: ${PUT_TIME}s"
+echo "   Data uploaded: $PUT_SIZE bytes"
+echo "   Data size: ${#TEST_DATA} bytes"
+echo "   Hash provided: $TEST_IOHASH"
+
+# Show response headers for debugging
+if [ -f /tmp/put_headers.txt ]; then
+    echo "📋 Response headers:"
+    grep -E "(server|x-|content-)" /tmp/put_headers.txt | sed 's/^/   /' || echo "   (no relevant headers)"
+    rm -f /tmp/put_headers.txt
 fi
 
 if [ "$PUT_STATUS" = "200" ] || [ "$PUT_STATUS" = "201" ]; then
@@ -247,21 +262,56 @@ fi
 echo ""
 echo "📥 Testing GET operation..."
 echo "=========================="
-GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_DOWNLOAD:%{size_download}" \
+    -D /tmp/get_headers.txt \
     "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
     -H "Authorization: ServiceAccount $BEARER_TOKEN")
 
 GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-echo "GET Status: $GET_STATUS"
+GET_TIME=$(echo "$GET_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
+GET_SIZE=$(echo "$GET_RESPONSE" | grep "SIZE_DOWNLOAD:" | cut -d: -f2)
+GET_DATA=$(echo "$GET_RESPONSE" | grep -v -E "(HTTP_STATUS:|TIME_TOTAL:|SIZE_DOWNLOAD:)")
+
+echo "📊 GET Results:"
+echo "   Status: $GET_STATUS"
+echo "   Download time: ${GET_TIME}s"
+echo "   Data downloaded: $GET_SIZE bytes"
+echo "   Expected size: ${#TEST_DATA} bytes"
+
+# Show response headers for debugging
+if [ -f /tmp/get_headers.txt ]; then
+    echo "📋 Response headers:"
+    grep -E "(server|x-|content-)" /tmp/get_headers.txt | sed 's/^/   /' || echo "   (no relevant headers)"
+    rm -f /tmp/get_headers.txt
+fi
 
 if [ "$GET_STATUS" = "200" ]; then
     echo "✅ GET operation successful"
-    echo "📄 Response data:"
-    echo "$GET_RESPONSE" | grep -v "HTTP_STATUS:"
+    echo "📄 Response data preview:"
+    echo "$GET_DATA" | head -c 200 | sed 's/^/   /'
+    if [ ${#GET_DATA} -gt 200 ]; then
+        echo "   ... (truncated, total ${#GET_DATA} characters)"
+    fi
 else
     echo "❌ GET operation failed"
     echo "$GET_RESPONSE"
     exit 1
+fi
+
+echo ""
+echo "🔍 Cache Storage Summary"
+echo "========================"
+echo "   ✅ DDC cache is working correctly!"
+echo "   📊 Data size: ${#TEST_DATA} bytes"
+echo ""
+echo "   🔧 Manual verification commands (if needed):"
+SCYLLA_INSTANCE=$(terraform output -json scylla_instance_ids 2>/dev/null | jq -r '.[0]' || echo "")
+S3_BUCKET=$(terraform output -raw s3_bucket_name 2>/dev/null || echo "")
+if [ -n "$SCYLLA_INSTANCE" ]; then
+    echo "   🔗 ScyllaDB: aws ssm start-session --target $SCYLLA_INSTANCE --region $REGION"
+fi
+if [ -n "$S3_BUCKET" ]; then
+    echo "   📦 S3 bucket: aws s3 ls s3://$S3_BUCKET/ --recursive"
 fi
 
 echo ""
@@ -278,6 +328,8 @@ echo "🚀 Your DDC deployment is ready for Unreal Engine!"
 echo "   🌐 DNS Endpoint: $DDC_DNS_ENDPOINT"
 echo "   🔑 Use bearer token for UE configuration"
 echo ""
+
+# Test completed
 echo "💡 MANUAL NLB TESTING (if needed):"
 if [ -n "$CLUSTER_NAME" ] && [ -n "$REGION" ] && [ -n "$NLB_HOSTNAME" ]; then
     echo "   Configure kubectl: aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME"

@@ -358,6 +358,12 @@ variable "additional_eks_security_groups" {
   default     = []
 }
 
+variable "ddc_app_resource" {
+  description = "DDC app module resource to ensure EKS cluster waits for cleanup"
+  type        = any
+  default     = null
+}
+
 variable "tags" {
   type        = map(any)
   description = "Tags to apply to resources."
@@ -368,4 +374,10 @@ variable "tags" {
     "ModuleName"     = "infrastructure"
     "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc"
   }
+}
+
+variable "force_destroy_s3_bucket" {
+  type        = bool
+  description = "Force destroy S3 bucket even if it contains objects"
+  default     = false
 }

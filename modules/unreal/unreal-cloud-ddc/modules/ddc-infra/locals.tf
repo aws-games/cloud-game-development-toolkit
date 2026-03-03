@@ -12,6 +12,7 @@ locals {
   })
   name_prefix = "${var.project_prefix}-${var.name}-${var.environment}"
   namespace = var.unreal_cloud_ddc_namespace != null ? var.unreal_cloud_ddc_namespace : local.name_prefix
+  s3_bucket_name = "${var.project_prefix}-${var.name}-${var.environment}-ddc-${var.region}"
 
   ################################################################################
   # EKS Configuration
@@ -28,7 +29,8 @@ locals {
   ################################################################################
   log_group_prefix = var.log_group_prefix
   ddc_logging_enabled = var.enable_centralized_logging
-  scylla_logging_enabled = var.enable_centralized_logging
+  
+  scylla_logging_enabled = false  # Disabled due to CloudWatch agent dependency issues (see scylla.tf)
 
   ################################################################################
   # Database Configuration

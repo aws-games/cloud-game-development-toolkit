@@ -1,279 +1,84 @@
 # DDC Infrastructure Submodule
 
-This submodule creates the core AWS infrastructure for [Unreal Cloud DDC](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine) deployment, implementing Epic's recommended architecture with ScyllaDB and Amazon EKS Auto Mode.
+This submodule creates the core infrastructure for Unreal Cloud DDC including EKS cluster, ScyllaDB database, S3 storage, and networking components.
 
-**What this submodule creates**: Complete DDC infrastructure including ScyllaDB cluster for metadata storage, EKS Auto Mode cluster with custom NodePools for NVMe instances, S3 bucket for asset storage, and IAM roles for multi-region sharing.
+> **📖 For complete DDC setup and user guidance, see the [parent module documentation](../../README.md).**
 
+**What this submodule creates**: EKS Auto Mode cluster with custom NodePools, ScyllaDB cluster for metadata storage, S3 bucket for asset storage, IAM roles with IRSA, security groups, and CloudWatch logging infrastructure.
 
 ## Architecture
 
 ![DDC Infrastructure Architecture](./assets/media/diagrams/unreal-cloud-ddc-infra.png)
 
-**Core Components:**
-- **ScyllaDB Cluster**: High-performance database for DDC metadata (EC2 instances)
-- **EKS Auto Mode Cluster**: Kubernetes platform with automatic compute provisioning
-- **Custom NodePools**: NVMe instance families for DDC performance requirements
-- **S3 Bucket**: Durable storage for cached game assets
-- **IAM Roles**: Cross-region sharing for multi-region deployments
+**Core Infrastructure Components:**
+- **EKS Auto Mode Cluster**: Kubernetes cluster with automatic node provisioning
+- **Custom NodePools**: NVMe-optimized compute for DDC performance requirements
+- **ScyllaDB Cluster**: High-performance database for DDC metadata
+- **S3 Bucket**: Object storage for cached game assets
+- **IAM Roles**: Service accounts with least-privilege permissions
+- **Security Groups**: Network access control for cluster and database
+- **CloudWatch Logs**: Centralized logging for all components
 
 ## Prerequisites
 
-### Network Infrastructure Requirements
+### Required Infrastructure (from parent module)
+- **VPC**: Custom VPC with proper subnet tagging
+- **Subnets**: Public and private subnets with EKS Auto Mode tags
+- **Route53**: Hosted zone for DNS management
+- **Secrets Manager**: GitHub credentials for container access
 
-The Cloud DDC Module requires a properly configured Virtual Private Cloud (VPC) with specific networking components:
-
-**Required VPC Configuration:**
-- **2 public subnets** - For load balancers and NAT gateways
-- **2 private subnets** - For EKS nodes and ScyllaDB instances
-- **Coverage across 2 Availability Zones** - For high availability
-- **S3 VPC endpoint** - For efficient S3 access without internet routing
-- **Internet Gateway** - For outbound internet access
-- **NAT Gateways** - For private subnet internet access
-
-**Security Considerations:**
-- Private subnets are **strongly recommended** for all compute resources
-- Public subnets should only contain load balancers and NAT gateways
-- VPC endpoints reduce data transfer costs and improve security
-
-**Single vs Multi-Region Networking:**
-- **Single Region**: Standard VPC with local subnets
-- **Multi-Region**: Requires inter-region connectivity for ScyllaDB cluster communication
-  - **Options**: VPC Peering, Transit Gateway, AWS Direct Connect, or Site-to-Site VPN
-  - **Considerations**: Latency, bandwidth, and cost vary by connectivity method
-
-### Authentication & Security
-
-**Bearer Token Authentication:**
-The module automatically generates a secure bearer token stored in AWS Secrets Manager. This token:
-- Authenticates all API requests to the DDC service
-- Prevents unauthorized access to cached game assets
-- Is replicated across regions in multi-region deployments
-- Should be rotated regularly in production environments
-
-**GitHub Container Registry Access:**
-Access to Epic's Unreal Cloud DDC container images requires:
-1. **GitHub account linked to Epic account** - [Instructions here](https://www.unrealengine.com/en-US/ue-on-github)
-2. **GitHub Personal Access Token** with specific permissions:
-   - `read:packages` - Required to pull container images from GitHub Container Registry
-   - `repo` - Required to access the private Unreal Engine repository
-3. **Manual secret creation** - Required due to ECR pull-through cache naming requirements
-
-⚠️ **Permission Requirements**: Both `read:packages` and `repo` permissions are mandatory for accessing Unreal Engine container images.
-
-**Security Best Practices:**
-- Use OIDC authentication instead of bearer tokens in production
-- Enable VPC Flow Logs for network monitoring
-- Implement least-privilege IAM policies
-- Enable CloudTrail for API auditing
-
-<br/>
-
-<!-- ## Examples
-
-For example configurations, please see the [examples](../../examples/). -->
-
-<!-- TODO -->
-<!-- ## Deployment Instructions -->
+### Required Subnet Tags for EKS Auto Mode
+- **Public subnets**: `kubernetes.io/role/elb = "1"` (for external load balancers)
+- **Private subnets**: `kubernetes.io/role/internal-elb = "1"` (for internal load balancers)
+- **All subnets**: `kubernetes.io/cluster/<cluster-name> = "owned"` (for cluster association)
 
 
-## Configuration
 
-### Key Variables
+## EKS Auto Mode Architecture
 
-**EKS Auto Mode Configuration (`eks_node_group_subnets`)**:
-- Controls subnet distribution for EKS Auto Mode compute
-- Each subnet enables automatic node placement in that AZ
-- More subnets = higher availability for automatic scaling
+**Application-Driven Infrastructure:**
+With EKS Auto Mode, the DDC application requests infrastructure (not Terraform):
 
-**ScyllaDB Instance Distribution (`scylla_config.subnets`)**:
-- Each subnet gets a dedicated ScyllaDB instance
-- Multiple subnets = distributed cluster with high availability
-- Single subnet = standalone instance (development only)
+- **No manual node groups**: EKS Auto Mode handles everything automatically
+- **Pod requirements drive nodes**: Application specifies needs via nodeSelector and resource requests
+- **Karpenter provisions nodes**: Reads pod requirements, creates matching EC2 instances on-demand
+- **NVMe instance enforcement**: Custom NodePool restricts to NVMe families only
 
-**Replication Factor (`scylla_config.current_region.replication_factor`)**:
-- Must be ≤ number of ScyllaDB nodes
-- RF=3 recommended for production (survives 1 node failure)
-- RF=1 for development (no fault tolerance)
+**NodePool Architecture:**
+```
+EKS Auto Mode
+├── Default NodePools (c, m, r families)
+│   └── ❌ No NVMe storage → DDC pods fail to schedule
+└── Custom NodePool (i family only)
+    └── ✅ NVMe storage → DDC pods schedule successfully
+```
 
-### Optional Configuration
-
-**Monitoring Stack**: Not implemented in current version
-
-**EKS Auto Mode Cluster**:
-- `kubernetes_version` for specific K8s version
-- Automatic compute provisioning based on pod requirements
-- Custom NodePools for NVMe instance families
-
-**ScyllaDB**:
-- `scylla_instance_type` for performance tuning
-- `scylla_ami_name` for specific ScyllaDB version
-- Storage configuration via `scylla_db_storage` and `scylla_db_throughput`
+**Why Custom NodePool is Required:**
+- **Default EKS Auto Mode**: Only supports `[c, m, r]` instance families (no NVMe)
+- **DDC Requirements**: Needs NVMe storage for cache performance
+- **Our Solution**: Custom NodePool that allows `[i]` family (NVMe instances)
+- **Automatic Provisioning**: When DDC pods request `i4i.xlarge`, EKS Auto Mode creates them
 
 ## Security Architecture
 
 ### Security Group Design
 
-This module creates a comprehensive security group architecture that provides both isolation and controlled access:
+**EKS Cluster Security Group (`cluster_security_group`)**:
+- **Purpose**: Controls access to EKS cluster nodes and pod communication
+- **Ingress**: Self-referencing (all traffic between cluster nodes), kubelet API (port 10250 from VPC CIDR), HTTPS (port 443 from VPC CIDR), DNS (port 53 from VPC CIDR)
+- **Egress**: All traffic to 0.0.0.0/0 (internet access for pods)
 
-#### ScyllaDB Security Group (`scylla_security_group`)
-
-**Purpose**: Isolates ScyllaDB cluster communication and allows monitoring access
-
-**Ingress Rules**:
-- **Port 7000** (TCP): Inter-node RPC communication (from self)
-- **Port 7001** (TCP): SSL inter-node RPC communication (from self)
-- **Port 7199** (TCP): JMX management interface (from self)
-- **Port 9042** (TCP): CQL client connections (from self)
-- **Port 9100** (TCP): Node exporter metrics (from self + monitoring SG)
-- **Port 9142** (TCP): SSL CQL client connections (from self)
-- **Port 9160** (TCP): Thrift client port (from self)
-- **Port 9180** (TCP): Prometheus API metrics (from self + monitoring SG)
-- **Port 10000** (TCP): REST API (from self)
-- **Port 19042** (TCP): Shard-aware transport (from self)
-- **Port 19142** (TCP): SSL shard-aware transport (from self)
-
-**Egress Rules**:
-- **All traffic** to 0.0.0.0/0 (internet access for updates, SSM)
-- **All TCP** to self (inter-node communication)
-
-**Key Security Features**:
-- **Complete isolation**: No direct external access
-- **Self-referencing rules**: Only cluster nodes can communicate
-- **Monitoring access**: Only Grafana can scrape metrics (ports 9180, 9100)
-- **SSM access**: AWS Systems Manager works regardless of security group rules
-
-#### EKS Cluster Security Group (`cluster_security_group`)
-
-**Purpose**: Controls access to DDC application pods running in EKS
-
-**Ingress Rules**:
-- **All traffic** from self (inter-node communication)
-- **TCP 80-8091** from `existing_security_groups` (user access)
-- **TCP 80-8091** from `additional_eks_security_groups` (DevOps access)
-- **TCP 80-8091** from NLB security group (load balancer access)
-
-**Egress Rules**:
-- **All traffic** to 0.0.0.0/0 (internet access for pods)
-
-#### EKS Auto Mode Security Groups
-
-**EKS Auto Mode Nodes**:
-- **Purpose**: Automatically provisioned nodes based on pod requirements
-- **Ingress**: Managed by EKS Auto Mode
-- **Egress**: All traffic to 0.0.0.0/0
-- **Custom NodePools**: Restrict to NVMe instance families for DDC performance
+**ScyllaDB Security Group (`scylla_security_group`)**:
+- **Purpose**: Isolates ScyllaDB cluster communication
+- **Ingress**: ScyllaDB ports (7000, 7001, 9042, etc.) from self-referencing rules, CQL port (9042) from VPC CIDR for EKS access
+- **Egress**: All traffic to 0.0.0.0/0 (updates, SSM), self-referencing for inter-node communication
 
 ### Administrative Access
 
 **AWS Systems Manager Session Manager**:
-- **All EC2 instances** support SSM Session Manager
-- **No security group rules required** (uses AWS internal network)
-- **Access method**: `aws ssm start-session --target i-xxxxx`
-- **Supported instances**: ScyllaDB nodes, EKS nodes, monitoring instance
-
-**Benefits of SSM**:
-- No SSH keys or bastion hosts required
-- Audit trail of all sessions
-- Works regardless of security group restrictions
-- Integrated with AWS IAM for access control
-
-### Security Best Practices Implemented
-
-1. **Principle of Least Privilege**: Each security group only allows necessary traffic
-2. **Defense in Depth**: Multiple layers of security (network, application, IAM)
-3. **Zero Trust Network**: No implicit trust between components
-4. **Monitoring Integration**: Dedicated rules for metrics collection
-5. **Administrative Access**: Secure shell access via SSM without SSH exposure
-
-## Infrastructure Change Behavior
-
-### ⚠️ CRITICAL: ScyllaDB IP Changes Trigger DDC Redeployment
-
-**When ScyllaDB instances are recreated** (due to instance failure, Terraform changes, etc.):
-
-1. **ScyllaDB gets new private IPs** → `scylla_ips` output changes
-2. **ddc-services module detects change** → Helm template re-renders with new IPs
-3. **DDC pods automatically restart** → Pick up new ScyllaDB connection string
-4. **Brief service interruption** → ~30-60 seconds during pod restart
-
-**This is intentional behavior** - ensures DDC always connects to healthy ScyllaDB nodes.
-
-### Impact Assessment
-
-**✅ Automatic Recovery:**
-- DDC automatically discovers new ScyllaDB IPs
-- No manual intervention required
-- Service resumes once pods restart
-
-**⚠️ Temporary Disruption:**
-- Brief downtime during Helm redeployment
-- Active DDC operations may be interrupted
-- Client reconnection required
-
-**🔧 Mitigation Strategies:**
-- Plan ScyllaDB maintenance during low-usage periods
-- Use multiple ScyllaDB nodes for redundancy
-- Monitor DDC service health during infrastructure changes
-
-### Change Detection Flow
-
-```
-ScyllaDB Instance Recreated
-         ↓
-New Private IP Assigned
-         ↓
-Terraform Detects Output Change
-         ↓
-ddc-services Module Triggered
-         ↓
-Helm Values Updated
-         ↓
-DDC Pods Restart
-         ↓
-Service Restored
-```
-
-### Bring-Your-Own Load Balancer Support
-
-**⚠️ CRITICAL**: This submodule supports bring-your-own NLB integration via `nlb_target_group_arn` parameter, which requires specific Unix socket configuration overrides.
-
-#### Default Pattern: Auto NLB Creation
-```yaml
-service:
-  type: LoadBalancer
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-```
-- **NGINX**: Enabled (`nginx.enabled=true`, `nginx.useDomainSockets=true`)
-- **Communication**: NLB → NGINX Proxy → Unix Socket → DDC Application
-- **Health Check**: `/health` (NGINX translates to DDC's `/health/live`)
-- **Containers**: 2 per pod (DDC + NGINX sidecar)
-
-#### Bring-Your-Own NLB Pattern
-```yaml
-service:
-  type: ClusterIP
-```
-- **NGINX**: Disabled (`nginx.enabled=false`)
-- **Communication**: NLB → TargetGroupBinding → DDC Application (port 80)
-- **Health Check**: `/health/live` (direct to DDC application)
-- **Containers**: 1 per pod (DDC only)
-
-#### Critical Configuration Override
-
-When using bring-your-own NLB, the parent module automatically applies **4 required configuration overrides** to disable Unix sockets:
-
-```hcl
-# Automatically configured when nlb_target_group_arn is provided
-nginx.enabled = false
-nginx.useDomainSockets = false
-ASPNETCORE_URLS = "http://0.0.0.0:80"
-Kestrel__Endpoints__Http__Url = "http://0.0.0.0:80"  # Critical override
-```
-
-**Why all 4 are required**: DDC has multiple configuration layers, and only `Kestrel__Endpoints__Http__Url` has sufficient precedence to override persistent file-based Unix socket configuration.
-
-**Without this fix**: Pod crashes with `Invalid url: 'unix:///nginx/jupiter-http.sock'`
+- **ScyllaDB instances** support SSM Session Manager for secure shell access
+- **No SSH keys required** - uses AWS IAM for authentication
+- **Access method**: `aws ssm start-session --target <instance-id>`
 
 ## Troubleshooting
 
@@ -281,24 +86,17 @@ Kestrel__Endpoints__Http__Url = "http://0.0.0.0:80"  # Critical override
 
 **ScyllaDB Cluster Formation:**
 - **Symptom**: Nodes not joining cluster
-- **Solution**: Verify security group ports 7000, 7001, 9042 between ScyllaDB instances
+- **Solution**: Verify security group allows ScyllaDB ports (7000, 7001, 9042) between instances via self-referencing rules
 
 **EKS Auto Mode Failures:**
 - **Symptom**: Pods stuck in Pending state
 - **Solution**: Check Custom NodePool configuration and NVMe instance availability
 
-**Monitoring Access Issues:**
-- **Symptom**: Cannot access Grafana
-- **Solution**: Verify ALB security group allows HTTPS and certificate is valid
+**EKS Addon Issues:**
+- **Symptom**: External-DNS not creating Route53 records
+- **Solution**: Verify Route53 hosted zone exists and IAM permissions are correct
 
 ### Validation Commands
-
-**ScyllaDB Cluster Status:**
-```bash
-# Access via Session Manager (no SSH required)
-aws ssm start-session --target i-xxxxx
-nodetool status
-```
 
 **EKS Cluster Health:**
 ```bash
@@ -307,10 +105,11 @@ aws eks update-kubeconfig --region <region> --name <cluster-name>
 kubectl get nodes
 ```
 
-**Monitoring Stack:**
+**ScyllaDB Cluster Status:**
 ```bash
-# Check ScyllaDB metrics
-curl http://<scylla-ip>:9180/metrics
+# Access ScyllaDB node via Session Manager
+aws ssm start-session --target <instance-id>
+nodetool status
 ```
 
 <!-- BEGIN_TF_DOCS -->
@@ -318,18 +117,18 @@ curl http://<scylla-ip>:9180/metrics
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
-| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.6 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.1 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | >= 3.1 |
+| <a name="provider_random"></a> [random](#provider\_random) | >= 3.1 |
 
 ## Modules
 
@@ -338,318 +137,63 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+|------|---------|
 | [aws_cloudwatch_log_group.unreal_cluster_cloudwatch](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_eks_access_entry.additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry) | resource |
+| [aws_eks_access_policy_association.additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association) | resource |
 | [aws_eks_cluster.unreal_cloud_ddc_eks_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster) | resource |
-| [aws_eks_node_group.nvme_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.system_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.worker_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_iam_instance_profile.scylla_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_instance_profile.scylla_monitoring_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider) | resource |
-| [aws_iam_role.eks_cluster_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.nvme_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_monitoring_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.system_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.worker_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.scylla_monitoring_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [aws_iam_role_policy_attachments_exclusive.eks_cluster_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.nvme_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.scylla_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.system_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.worker_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_instance.scylla_ec2_instance_other_nodes](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_instance.scylla_ec2_instance_seed](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_instance.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_launch_template.nvme_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_launch_template.system_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_lb.scylla_monitoring_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
-| [aws_lb_listener.scylla_monitoring_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.scylla_monitoring_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group_attachment.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment) | resource |
-| [aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_security_group.cluster_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.nvme_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_lb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.system_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.worker_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.cluster_egress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.nvme_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_lb_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.self_scylla_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.ssm_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.system_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.worker_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.cluster_lb_ingress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_node_exporter](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_prometheus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_lb_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
-| [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [tls_certificate.eks_tls_certificate](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate) | data source |
+| [null_resource.aws_load_balancer_controller](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.aws_load_balancer_controller_crds](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.cert_manager](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.ddc_nodepool](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
-| <a name="input_create_application_load_balancer"></a> [create\_application\_load\_balancer](#input\_create\_application\_load\_balancer) | Whether to create an application load balancer for the Scylla monitoring dashboard. | `bool` | `true` | no |
-| <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
-| <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
-| <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
-| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
-| <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
-| <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
-| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
-| <a name="input_eks_node_group_subnets"></a> [eks\_node\_group\_subnets](#input\_eks\_node\_group\_subnets) | A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
-| <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
-| <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
-| <a name="input_existing_scylla_ips"></a> [existing\_scylla\_ips](#input\_existing\_scylla\_ips) | List of existing ScyllaDB IPs to be used for the ScyllaDB instance | `list(string)` | `[]` | no |
-| <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | The IP address of the seed instance of the ScyllaDB cluster | `string` | `null` | no |
-| <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
-| <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
 | <a name="input_create_seed_node"></a> [create\_seed\_node](#input\_create\_seed\_node) | Whether this region creates the ScyllaDB seed node (bootstrap node for cluster formation) | `bool` | `true` | no |
-| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
-| <a name="input_monitoring_application_load_balancer_subnets"></a> [monitoring\_application\_load\_balancer\_subnets](#input\_monitoring\_application\_load\_balancer\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
-| <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
-| <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
-| <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
-| <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
-| <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
-| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
-| <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The AWS region to deploy to | `string` | `"us-west-2"` | no |
-| <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
-| <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | The chip architecture to use when finding the scylla image. Valid | `string` | `"x86_64"` | no |
-| <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
-| <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
-| <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
-| <a name="input_scylla_monitoring_instance_storage"></a> [scylla\_monitoring\_instance\_storage](#input\_scylla\_monitoring\_instance\_storage) | Size of gp3 ebs volumes in GB attached to Scylla monitoring instance | `number` | `20` | no |
-| <a name="input_scylla_monitoring_instance_type"></a> [scylla\_monitoring\_instance\_type](#input\_scylla\_monitoring\_instance\_type) | The type and size of the Scylla monitoring instance. | `string` | `"t3.xlarge"` | no |
-| <a name="input_scylla_monitoring_lb_access_logs_bucket"></a> [scylla\_monitoring\_lb\_access\_logs\_bucket](#input\_scylla\_monitoring\_lb\_access\_logs\_bucket) | Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
-| <a name="input_scylla_monitoring_lb_access_logs_prefix"></a> [scylla\_monitoring\_lb\_access\_logs\_prefix](#input\_scylla\_monitoring\_lb\_access\_logs\_prefix) | Prefix to use for the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
-| <a name="input_scylla_replication_factor"></a> [scylla\_replication\_factor](#input\_scylla\_replication\_factor) | How many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created. | `number` | n/a | yes |
-| <a name="input_scylla_subnets"></a> [scylla\_subnets](#input\_scylla\_subnets) | A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
-| <a name="input_system_managed_node_desired_size"></a> [system\_managed\_node\_desired\_size](#input\_system\_managed\_node\_desired\_size) | Desired number of system managed node group instances. | `number` | `1` | no |
-| <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
-| <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
-| <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
-| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
-| <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
-| <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
-| <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
-| <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
-| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "worker"<br/>}</pre> | no |
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | ARN of the EKS Cluster |
-| <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
-| <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
-| <a name="output_cluster_version"></a> [cluster\_version](#output\_cluster\_version) | EKS Cluster Version |
-| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
-| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
-| <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
-| <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | OIDC provider for the EKS Cluster |
-| <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
-| <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
-| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
-| <a name="output_scylla_security_group"></a> [scylla\_security\_group](#output\_scylla\_security\_group) | ScyllaDB security group id |
-| <a name="output_scylla_seed"></a> [scylla\_seed](#output\_scylla\_seed) | IP of the Scylla Seed |
-| <a name="output_scylla_seed_instance_id"></a> [scylla\_seed\_instance\_id](#output\_scylla\_seed\_instance\_id) | Instance ID of scylla seed node |
-| <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
-| <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
-<!-- END_TF_DOCS -->
-<!-- BEGIN_TF_DOCS -->
-## Requirements
-
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.2.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
-| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.6 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
-
-## Modules
-
-No modules.
-
-## Resources
-
-| Name | Type |
-|------|------|
-| [aws_cloudwatch_log_group.unreal_cluster_cloudwatch](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_eks_cluster.unreal_cloud_ddc_eks_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster) | resource |
-| [aws_eks_node_group.nvme_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.system_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_eks_node_group.worker_node_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group) | resource |
-| [aws_iam_instance_profile.scylla_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_instance_profile.scylla_monitoring_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_openid_connect_provider.unreal_cloud_ddc_oidc_provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider) | resource |
-| [aws_iam_role.eks_cluster_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.nvme_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_monitoring_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.scylla_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.system_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.worker_node_group_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.scylla_monitoring_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
-| [aws_iam_role_policy_attachments_exclusive.eks_cluster_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.nvme_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.scylla_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.system_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_iam_role_policy_attachments_exclusive.worker_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
-| [aws_instance.scylla_ec2_instance_other_nodes](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_instance.scylla_ec2_instance_seed](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_instance.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
-| [aws_launch_template.nvme_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_launch_template.system_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_launch_template.worker_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
-| [aws_lb.scylla_monitoring_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
-| [aws_lb_listener.scylla_monitoring_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.scylla_monitoring_alb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group_attachment.scylla_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment) | resource |
-| [aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket.unreal_ddc_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.alb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_public_access_block.unreal_ddc_s3_acls](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_security_group.cluster_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.nvme_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_lb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_monitoring_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.scylla_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.system_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_security_group.worker_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.cluster_egress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.nvme_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_lb_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.scylla_monitoring_sg_egress_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.self_scylla_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.ssm_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.system_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.worker_egress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.cluster_lb_ingress_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_node_exporter](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_ingress_prometheus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.scylla_monitoring_lb_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_cluster_sg_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.self_ingress_sg_rules](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
-| [random_string.scylla_monitoring_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
-| [aws_ami.amazon_linux](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_ami.scylla_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_alb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.scylla_monitoring_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [tls_certificate.eks_tls_certificate](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/data-sources/certificate) | data source |
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
-| <a name="input_create_application_load_balancer"></a> [create\_application\_load\_balancer](#input\_create\_application\_load\_balancer) | Whether to create an application load balancer for the Scylla monitoring dashboard. | `bool` | `true` | no |
-| <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
-| <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
-| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
-| <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
-| <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
-| <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
-| <a name="input_eks_node_group_subnets"></a> [eks\_node\_group\_subnets](#input\_eks\_node\_group\_subnets) | A list of subnets ids you want the EKS nodes to be installed into. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
-| <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
-| <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
-| <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
-| <a name="input_existing_scylla_ips"></a> [existing\_scylla\_ips](#input\_existing\_scylla\_ips) | List of existing ScyllaDB IPs to be used for the ScyllaDB instance | `list(string)` | `[]` | no |
-| <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | The IP address of the seed instance of the ScyllaDB cluster | `string` | `null` | no |
-| <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
-| <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
-| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
-| <a name="input_monitoring_application_load_balancer_subnets"></a> [monitoring\_application\_load\_balancer\_subnets](#input\_monitoring\_application\_load\_balancer\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
-| <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
-| <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
-| <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
-| <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
-| <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
-| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
-| <a name="input_primary_region"></a> [primary\_region](#input\_primary\_region) | The AWS region that will be the primary region for your Unreal DDC deployment | `bool` | `true` | no |
-| <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
-| <a name="input_region"></a> [region](#input\_region) | The AWS region to deploy to | `string` | `"us-west-2"` | no |
-| <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 6.0.1"` | no |
-| <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | The chip architecture to use when finding the scylla image. Valid | `string` | `"x86_64"` | no |
-| <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
-| <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
-| <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
-| <a name="input_scylla_monitoring_instance_storage"></a> [scylla\_monitoring\_instance\_storage](#input\_scylla\_monitoring\_instance\_storage) | Size of gp3 ebs volumes in GB attached to Scylla monitoring instance | `number` | `20` | no |
-| <a name="input_scylla_monitoring_instance_type"></a> [scylla\_monitoring\_instance\_type](#input\_scylla\_monitoring\_instance\_type) | The type and size of the Scylla monitoring instance. | `string` | `"t3.xlarge"` | no |
-| <a name="input_scylla_monitoring_lb_access_logs_bucket"></a> [scylla\_monitoring\_lb\_access\_logs\_bucket](#input\_scylla\_monitoring\_lb\_access\_logs\_bucket) | Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
-| <a name="input_scylla_monitoring_lb_access_logs_prefix"></a> [scylla\_monitoring\_lb\_access\_logs\_prefix](#input\_scylla\_monitoring\_lb\_access\_logs\_prefix) | Prefix to use for the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
-| <a name="input_scylla_replication_factor"></a> [scylla\_replication\_factor](#input\_scylla\_replication\_factor) | How many copies many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created. | `number` | n/a | yes |
-| <a name="input_scylla_subnets"></a> [scylla\_subnets](#input\_scylla\_subnets) | A list of subnet IDs where Scylla will be deployed. Private subnets are strongly recommended. | `list(string)` | `[]` | no |
-| <a name="input_system_managed_node_desired_size"></a> [system\_managed\_node\_desired\_size](#input\_system\_managed\_node\_desired\_size) | Desired number of system managed node group instances. | `number` | `1` | no |
-| <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
-| <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
-| <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
-| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
-| <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
-| <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
-| <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
-| <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
-| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "worker"<br/>}</pre> | no |
+| <a name="input_eks_access_entries"></a> [eks\_access\_entries](#input\_eks\_access\_entries) | EKS access entries for additional users/services | `map(object({...}))` | `{}` | no |
+| <a name="input_eks_node_group_subnets"></a> [eks\_node\_group\_subnets](#input\_eks\_node\_group\_subnets) | Subnets for EKS Auto Mode compute | `list(string)` | `[]` | no |
+| <a name="input_enable_certificate_manager"></a> [enable\_certificate\_manager](#input\_enable\_certificate\_manager) | Install cert-manager addon | `bool` | `false` | no |
+| <a name="input_enable_centralized_logging"></a> [enable\_centralized\_logging](#input\_enable\_centralized\_logging) | Create CloudWatch log groups | `bool` | `false` | no |
+| <a name="input_endpoint_private_access"></a> [endpoint\_private\_access](#input\_endpoint\_private\_access) | Enable VPC API access | `bool` | `true` | no |
+| <a name="input_endpoint_public_access"></a> [endpoint\_public\_access](#input\_endpoint\_public\_access) | Enable public API access | `bool` | `true` | no |
+| <a name="input_environment"></a> [environment](#input\_environment) | Environment name | `string` | `"dev"` | no |
+| <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | IP of existing ScyllaDB seed node | `string` | `null` | no |
+| <a name="input_is_primary_region"></a> [is\_primary\_region](#input\_is\_primary\_region) | Whether this is the primary region | `bool` | `true` | no |
+| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | EKS cluster version | `string` | `"1.33"` | no |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | CloudWatch log retention period | `number` | `30` | no |
+| <a name="input_name"></a> [name](#input\_name) | Workload name | `string` | `"unreal-cloud-ddc"` | no |
+| <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Project prefix for resource names | `string` | `"cgd"` | no |
+| <a name="input_public_access_cidrs"></a> [public\_access\_cidrs](#input\_public\_access\_cidrs) | IP allowlist for public API access | `list(string)` | `null` | no |
+| <a name="input_region"></a> [region](#input\_region) | AWS region | `string` | n/a | yes |
+| <a name="input_route53_hosted_zone_name"></a> [route53\_hosted\_zone\_name](#input\_route53\_hosted\_zone\_name) | Route53 hosted zone name | `string` | `null` | no |
+| <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | ScyllaDB AMI name | `string` | `"ScyllaDB 6.0.1"` | no |
+| <a name="input_scylla_architecture"></a> [scylla\_architecture](#input\_scylla\_architecture) | ScyllaDB architecture | `string` | `"x86_64"` | no |
+| <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | ScyllaDB EBS volume size (GB) | `number` | `100` | no |
+| <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | ScyllaDB EBS volume throughput | `number` | `200` | no |
+| <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | ScyllaDB instance type | `string` | `"i4i.2xlarge"` | no |
+| <a name="input_scylla_replication_factor"></a> [scylla\_replication\_factor](#input\_scylla\_replication\_factor) | ScyllaDB replication factor | `number` | `3` | no |
+| <a name="input_scylla_source_region"></a> [scylla\_source\_region](#input\_scylla\_source\_region) | Source region for ScyllaDB cluster | `string` | `null` | no |
+| <a name="input_scylla_subnets"></a> [scylla\_subnets](#input\_scylla\_subnets) | Subnets for ScyllaDB instances | `list(string)` | `[]` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Resource tags | `map(any)` | `{}` | no |
+| <a name="input_unreal_cloud_ddc_namespace"></a> [unreal\_cloud\_ddc\_namespace](#input\_unreal\_cloud\_ddc\_namespace) | Kubernetes namespace | `string` | `"unreal-cloud-ddc"` | no |
+| <a name="input_unreal_cloud_ddc_service_account_name"></a> [unreal\_cloud\_ddc\_service\_account\_name](#input\_unreal\_cloud\_ddc\_service\_account\_name) | Kubernetes service account name | `string` | `"unreal-cloud-ddc-sa"` | no |
+| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC ID | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | ARN of the EKS Cluster |
-| <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
-| <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
-| <a name="output_cluster_version"></a> [cluster\_version](#output\_cluster\_version) | EKS Cluster Version |
-| <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
-| <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
-| <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
-| <a name="output_oidc_provider_arn"></a> [oidc\_provider\_arn](#output\_oidc\_provider\_arn) | OIDC provider for the EKS Cluster |
-| <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
-| <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
-| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
-| <a name="output_scylla_security_group"></a> [scylla\_security\_group](#output\_scylla\_security\_group) | ScyllaDB security group id |
-| <a name="output_scylla_seed"></a> [scylla\_seed](#output\_scylla\_seed) | IP of the Scylla Seed |
-| <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
-| <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
+| <a name="output_cluster_arn"></a> [cluster\_arn](#output\_cluster\_arn) | EKS cluster ARN |
+| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | EKS cluster name |
+| <a name="output_database_connection"></a> [database\_connection](#output\_database\_connection) | Database connection information |
+| <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | S3 bucket ID for DDC assets |
+| <a name="output_scylla_datacenter_name"></a> [scylla\_datacenter\_name](#output\_scylla\_datacenter\_name) | ScyllaDB datacenter name |
+| <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | ScyllaDB instance IPs |
+| <a name="output_scylla_keyspace_suffix"></a> [scylla\_keyspace\_suffix](#output\_scylla\_keyspace\_suffix) | ScyllaDB keyspace suffix |
+| <a name="output_scylla_seed_instance_id"></a> [scylla\_seed\_instance\_id](#output\_scylla\_seed\_instance\_id) | ScyllaDB seed instance ID |
+| <a name="output_service_account_arn"></a> [service\_account\_arn](#output\_service\_account\_arn) | DDC service account ARN |
+| <a name="output_ssm_document_name"></a> [ssm\_document\_name](#output\_ssm\_document\_name) | SSM document name for keyspace management |
 <!-- END_TF_DOCS -->

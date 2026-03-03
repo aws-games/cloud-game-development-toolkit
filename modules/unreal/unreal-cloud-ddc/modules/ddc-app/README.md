@@ -9,6 +9,7 @@ This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/document
 ## Prerequisites
 
 ### Required Infrastructure (from ddc-infra submodule)
+
 - **EKS cluster** with AWS Load Balancer Controller
 - **external-dns addon** for Route53 record management
 - **ScyllaDB cluster** with accessible IPs
@@ -17,6 +18,7 @@ This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/document
 - **Route53 hosted zone** for DNS management
 
 ### GitHub Container Registry Access
+
 - **Epic Games organization membership** - [Join here](https://dev.epicgames.com/documentation/en-us/unreal-engine/quick-start-guide-for-using-container-images-in-unreal-engine)
 - **GitHub Personal Access Token** with `packages:read` permission
 - **AWS Secrets Manager secret** with GitHub credentials
@@ -26,12 +28,14 @@ This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/document
 ### Key Variables
 
 **Application Configuration**:
+
 - `ddc_application_config`: Complete DDC configuration object with container image, resources, namespaces
 - `namespace`: Kubernetes namespace for DDC services
 - `ddc_bearer_token`: Authentication token for DDC API
 - `ddc_endpoint_pattern`: DDC hostname pattern (e.g., "us-east-1.dev.ddc.example.com")
 
 **Infrastructure Integration**:
+
 - `service_account_arn`: IAM role ARN for DDC service account
 - `database_connection`: Database connection object (type, host, port, auth)
 - `s3_bucket_id`: S3 bucket for asset storage
@@ -43,6 +47,7 @@ This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/document
 **Deployment Process**: This module pulls Epic's official Helm chart from GitHub Container Registry (GHCR) and deploys the Unreal Cloud DDC application using Terraform-generated values files created with `yamlencode()`.
 
 ### Key Benefits
+
 - **Type Safety**: Terraform validates HCL structure at plan time
 - **Maintainability**: All configuration in clean HCL syntax
 - **Official Chart**: Uses Epic's unmodified Helm chart from GHCR
@@ -51,6 +56,7 @@ This submodule deploys the [Unreal Cloud DDC](https://dev.epicgames.com/document
 - **Predictable Endpoints**: external-dns creates consistent Route53 records (e.g., `us-east-1.ddc.example.com`)
 
 ### Configuration Overrides
+
 The module automatically configures:
 
 ```hcl
@@ -66,6 +72,7 @@ persistence.volume.hostPath.path = "/mnt/.ephemeral"  # EKS Auto Mode NVMe
 ### ⚠️ Automatic Redeployment on Database Changes
 
 **When database connection changes** (from ddc-infra module):
+
 1. **Terraform detects change** → Module input updated
 2. **Helm template re-renders** → New connection configuration
 3. **DDC pods restart** → ~30-60 seconds downtime
@@ -80,6 +87,7 @@ persistence.volume.hostPath.path = "/mnt/.ephemeral"  # EKS Auto Mode NVMe
 **Problem**: NLB not created or pods not healthy
 
 **Solution**: Verify AWS Load Balancer Controller is running:
+
 ```bash
 kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
 ```
@@ -87,12 +95,14 @@ kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-cont
 ### Generated Values Inspection
 
 **Debug Mode**: Enable `debug = true` to generate user-visible values file:
+
 ```bash
 # File created at: examples/single-region/generated/helm-values/debug-unreal-cloud-ddc-values.yaml
 cat generated/helm-values/debug-unreal-cloud-ddc-values.yaml
 ```
 
 ### Pod Health Checks
+
 ```bash
 # Configure kubectl access
 aws eks update-kubeconfig --region <region> --name <cluster-name>
@@ -103,3 +113,4 @@ kubectl get pods -n unreal-cloud-ddc
 ```
 
 <!-- BEGIN_TF_DOCS -->
+<!-- END_TF_DOCS -->

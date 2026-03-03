@@ -20,4 +20,15 @@ data "aws_caller_identity" "current" {}
 # Current AWS region
 data "aws_region" "current" {}
 
+# VPC information for security group CIDR rules
+data "aws_vpc" "main" {
+  region = local.region
+  id     = var.vpc_id
+}
+
+# Dynamic IP detection (optional)
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com/"
+}
+
 

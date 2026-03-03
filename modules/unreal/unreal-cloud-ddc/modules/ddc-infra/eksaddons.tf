@@ -1,106 +1,23 @@
 ################################################################################
-# DNS Cleanup for External-DNS Orphaned Records
+# Addon Version Data Sources (Foundation)
 ################################################################################
 
-# Clean up orphaned External-DNS records before deployment and on destroy
-resource "null_resource" "cleanup_orphaned_dns_records" {
-  triggers = {
-    cluster_id = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.id
-  }
+# Dynamic addon version fetching - no count needed, always fetch versions
+data "aws_eks_addon_version" "external_dns" {
+  addon_name         = "external-dns"
+  kubernetes_version = var.kubernetes_version
+  most_recent        = true
+}
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Determine which zone External-DNS uses (matches locals.tf service_domain logic)
-      if [ "${var.route53_hosted_zone_name}" != "null" ]; then
-        # User provided zone (public or private)
-        ZONE_NAME="${var.route53_hosted_zone_name}."
-        SERVICE_DOMAIN="${var.environment}.ddc.${var.route53_hosted_zone_name}"
-      else
-        # Our private zone
-        ZONE_NAME="${var.environment}.ddc.${var.project_prefix}.internal."
-        SERVICE_DOMAIN="${var.environment}.ddc.${var.project_prefix}.internal"
-      fi
-      
-      # Find the zone External-DNS is using
-      ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='$ZONE_NAME'].Id" --output text | sed 's|/hostedzone/||')
-      
-      if [ -z "$ZONE_ID" ] || [ "$ZONE_ID" = "None" ]; then
-        echo "Zone $ZONE_NAME not found, skipping cleanup"
-        exit 0
-      fi
-      
-      # DDC pattern to clean up (includes TXT ownership records with prefixes)
-      DDC_PATTERN="${var.region}.$SERVICE_DOMAIN"
-      
-      # Clean up External-DNS records in the target zone (A, AAAA, TXT ownership records)
-      aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
-        --query "ResourceRecordSets[?contains(Name, '$DDC_PATTERN') || contains(Name, 'aaaa-${var.region}.$SERVICE_DOMAIN') || contains(Name, 'cname-${var.region}.$SERVICE_DOMAIN')]" --output json | jq -c '.[]' | while read record; do
-        RECORD_NAME=$(echo "$record" | jq -r '.Name')
-        RECORD_TYPE=$(echo "$record" | jq -r '.Type')
-        echo "Deleting External-DNS record: $RECORD_TYPE $RECORD_NAME in zone $ZONE_NAME"
-        echo '{"Changes":[{"Action":"DELETE","ResourceRecordSet":'$record'}]}' | \
-          aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch file:///dev/stdin
-      done
-    EOT
-  }
-
-
+data "aws_eks_addon_version" "fluent_bit" {
+  addon_name         = "fluent-bit"
+  kubernetes_version = var.kubernetes_version
+  most_recent        = true
 }
 
 ################################################################################
-# External DNS EKS Addon
+# External DNS EKS Addon (Critical for Service Discovery)
 ################################################################################
-
-# IAM Role for External DNS
-resource "aws_iam_role" "external_dns" {
-  name  = "${local.name_prefix}-external-dns-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Federated = aws_iam_openid_connect_provider.eks_oidc[0].arn
-      }
-      Action = "sts:AssumeRoleWithWebIdentity"
-      Condition = {
-        StringEquals = {
-          "${local.oidc_provider_url}:sub" = "system:serviceaccount:external-dns:external-dns"
-          "${local.oidc_provider_url}:aud" = "sts.amazonaws.com"
-        }
-      }
-    }]
-  })
-  
-  tags = var.tags
-}
-
-# IAM Policy for External DNS
-resource "aws_iam_role_policy" "external_dns" {
-  name  = "external-dns-policy"
-  role  = aws_iam_role.external_dns.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "route53:ChangeResourceRecordSets"
-        ]
-        Resource = var.route53_hosted_zone_name != null ? [data.aws_route53_zone.user_provided[0].arn] : ["arn:aws:route53:::hostedzone/*"]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "route53:ListHostedZones",
-          "route53:ListResourceRecordSets"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
 
 # External DNS EKS Addon
 resource "aws_eks_addon" "external_dns" {
@@ -134,32 +51,12 @@ resource "aws_eks_addon" "external_dns" {
   depends_on = [
     aws_eks_cluster.unreal_cloud_ddc_eks_cluster,
     aws_iam_role.external_dns,
-    null_resource.aws_load_balancer_controller,
-    null_resource.cleanup_orphaned_dns_records
+    terraform_data.cluster_setup_trigger
   ]
 }
 
-# Data source for user-provided Route53 hosted zone
-data "aws_route53_zone" "user_provided" {
-  count = var.route53_hosted_zone_name != null ? 1 : 0
-  name  = var.route53_hosted_zone_name
-}
-
-# Dynamic addon version fetching - no count needed, always fetch versions
-data "aws_eks_addon_version" "external_dns" {
-  addon_name         = "external-dns"
-  kubernetes_version = var.kubernetes_version
-  most_recent        = true
-}
-
-data "aws_eks_addon_version" "fluent_bit" {
-  addon_name         = "fluent-bit"
-  kubernetes_version = var.kubernetes_version
-  most_recent        = true
-}
-
 ################################################################################
-# FluentBit EKS Addon
+# FluentBit EKS Addon (Logging Infrastructure)
 ################################################################################
 # 
 # Cluster-wide log collection and forwarding to CloudWatch
@@ -225,7 +122,57 @@ resource "aws_eks_addon" "fluent_bit" {
   depends_on = [
     aws_eks_cluster.unreal_cloud_ddc_eks_cluster,
     aws_iam_role.fluent_bit_role,
-    null_resource.aws_load_balancer_controller
+    terraform_data.cluster_setup_trigger
   ]
 }
+
+################################################################################
+# DNS Cleanup (Operational Automation)
+################################################################################
+
+# LEGACY: DNS Cleanup (replaced by removing dependency)
+# Clean up orphaned External-DNS records before deployment and on destroy
+# resource "null_resource" "cleanup_orphaned_dns_records" {
+#   triggers = {
+#     cluster_id = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.id
+#   }
+# 
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       # Determine which zone External-DNS uses (matches locals.tf service_domain logic)
+#       if [ "${var.route53_hosted_zone_name}" != "null" ]; then
+#         # User provided zone (public or private)
+#         ZONE_NAME="${var.route53_hosted_zone_name}."
+#         SERVICE_DOMAIN="${var.environment}.ddc.${var.route53_hosted_zone_name}"
+#       else
+#         # Our private zone
+#         ZONE_NAME="${var.environment}.ddc.${var.project_prefix}.internal."
+#         SERVICE_DOMAIN="${var.environment}.ddc.${var.project_prefix}.internal"
+#       fi
+#       
+#       # Find the zone External-DNS is using
+#       ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='$ZONE_NAME'].Id" --output text | sed 's|/hostedzone/||')
+#       
+#       if [ -z "$ZONE_ID" ] || [ "$ZONE_ID" = "None" ]; then
+#         echo "Zone $ZONE_NAME not found, skipping cleanup"
+#         exit 0
+#       fi
+#       
+#       # DDC pattern to clean up (includes TXT ownership records with prefixes)
+#       DDC_PATTERN="${var.region}.$SERVICE_DOMAIN"
+#       
+#       # Clean up External-DNS records in the target zone (A, AAAA, TXT ownership records)
+#       aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
+#         --query "ResourceRecordSets[?contains(Name, '$DDC_PATTERN') || contains(Name, 'aaaa-${var.region}.$SERVICE_DOMAIN') || contains(Name, 'cname-${var.region}.$SERVICE_DOMAIN')]" --output json | jq -c '.[]' | while read record; do
+#         RECORD_NAME=$(echo "$record" | jq -r '.Name')
+#         RECORD_TYPE=$(echo "$record" | jq -r '.Type')
+#         echo "Deleting External-DNS record: $RECORD_TYPE $RECORD_NAME in zone $ZONE_NAME"
+#         echo '{"Changes":[{"Action":"DELETE","ResourceRecordSet":'$record'}]}' | \
+#           aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch file:///dev/stdin
+#       done
+#     EOT
+#   }
+# 
+# 
+# }
 

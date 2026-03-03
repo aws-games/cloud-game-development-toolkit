@@ -47,4 +47,10 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+# Data source for user-provided Route53 hosted zone
+data "aws_route53_zone" "user_provided" {
+  count = var.route53_hosted_zone_name != null ? 1 : 0
+  name  = var.route53_hosted_zone_name
+}
+
 

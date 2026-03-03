@@ -22,6 +22,8 @@ module "ddc_infra" {
   region         = local.region
   debug          = var.debug_mode == "enabled"
   vpc_id         = var.vpc_id
+  
+
   # Security groups now embedded in load_balancers_config and direct EKS variables
 
   # ScyllaDB Configuration (when scylla_config provided)
@@ -170,5 +172,7 @@ module "ddc_app" {
   tags       = local.default_tags
   depends_on = [module.ddc_infra]
 }
+
+
 
 

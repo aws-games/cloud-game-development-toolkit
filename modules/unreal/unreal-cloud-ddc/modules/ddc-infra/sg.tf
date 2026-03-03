@@ -1,5 +1,99 @@
 ################################################################################
-# Scylla SG
+# EKS Cluster Security Group (Terraform-managed)
+################################################################################
+
+# Create our own EKS cluster security group with controlled rules
+# EKS Auto Mode will use this security group for nodes via NodeClass securityGroupSelectorTerms
+resource "aws_security_group" "cluster_security_group" {
+  region      = var.region
+  name_prefix = "${local.name_prefix}-cluster-sg-"
+  description = "Security group for EKS cluster nodes (Terraform-managed)"
+  vpc_id      = var.vpc_id
+
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-cluster-sg"
+    # NOTE: Do NOT add "aws:eks:cluster-name" tag here!
+    # AWS EKS automatically manages this tag and will strip it if manually added,
+    # causing infinite Terraform drift. Let EKS manage its own system tags.
+  })
+
+  lifecycle {
+    ignore_changes = [
+      # AWS EKS automatically manages these tags - ignore to prevent drift
+      tags["aws:eks:cluster-name"],
+      tags_all["aws:eks:cluster-name"]
+    ]
+  }
+}
+
+# Allow all traffic within the security group (node-to-node communication)
+resource "aws_vpc_security_group_ingress_rule" "cluster_self" {
+  security_group_id            = aws_security_group.cluster_security_group.id
+  description                  = "Allow all traffic from cluster nodes"
+  ip_protocol                  = "-1"
+  referenced_security_group_id = aws_security_group.cluster_security_group.id
+
+  tags = {
+    Name = "${local.name_prefix}-cluster-self"
+  }
+}
+
+# Allow EKS control plane to communicate with kubelet (CRITICAL for node registration)
+resource "aws_vpc_security_group_ingress_rule" "cluster_kubelet" {
+  security_group_id = aws_security_group.cluster_security_group.id
+  description       = "EKS control plane to kubelet API"
+  ip_protocol       = "tcp"
+  from_port         = 10250
+  to_port           = 10250
+  cidr_ipv4         = data.aws_vpc.main.cidr_block
+
+  tags = {
+    Name = "${local.name_prefix}-cluster-kubelet"
+  }
+}
+
+# Allow HTTPS communication for EKS API
+resource "aws_vpc_security_group_ingress_rule" "cluster_https" {
+  security_group_id = aws_security_group.cluster_security_group.id
+  description       = "HTTPS for EKS API communication"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = data.aws_vpc.main.cidr_block
+
+  tags = {
+    Name = "${local.name_prefix}-cluster-https"
+  }
+}
+
+# Allow DNS resolution
+resource "aws_vpc_security_group_ingress_rule" "cluster_dns" {
+  security_group_id = aws_security_group.cluster_security_group.id
+  description       = "DNS resolution"
+  ip_protocol       = "udp"
+  from_port         = 53
+  to_port           = 53
+  cidr_ipv4         = data.aws_vpc.main.cidr_block
+
+  tags = {
+    Name = "${local.name_prefix}-cluster-dns"
+  }
+}
+
+# Allow all outbound traffic
+resource "aws_vpc_security_group_egress_rule" "cluster_egress" {
+  security_group_id = aws_security_group.cluster_security_group.id
+  description       = "All outbound traffic"
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
+
+  tags = {
+    Name = "${local.name_prefix}-cluster-egress"
+  }
+}
+
+################################################################################
+# ScyllaDB Security Group (Secondary Infrastructure)
 ################################################################################
 resource "aws_security_group" "scylla_security_group" {
   region      = var.region
@@ -20,19 +114,11 @@ resource "aws_security_group" "scylla_security_group" {
   )
 }
 
-
-
 ################################################################################
-# Scylla Monitoring SG
+# ScyllaDB Security Group Rules (Grouped Together)
 ################################################################################
 
-
-
-
-
-################################################################################
-# SSM Egress Rules for Scylla SG
-################################################################################
+# SSM Egress Rules for ScyllaDB
 resource "aws_vpc_security_group_egress_rule" "ssm_egress_sg_rules" {
   region            = var.region
   security_group_id = aws_security_group.scylla_security_group.id
@@ -41,9 +127,7 @@ resource "aws_vpc_security_group_egress_rule" "ssm_egress_sg_rules" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
-################################################################################
-# Scylla Security Group to Self Rules
-################################################################################
+# ScyllaDB Security Group to Self Rules
 resource "aws_vpc_security_group_ingress_rule" "self_ingress_sg_rules" {
   for_each                     = { for sg_rule in local.sg_rules_all : sg_rule.port => sg_rule }
   region                       = var.region
@@ -55,9 +139,17 @@ resource "aws_vpc_security_group_ingress_rule" "self_ingress_sg_rules" {
   to_port                      = each.value.port
 }
 
-################################################################################
-# Scylla EKS Cluster Access Rules
-################################################################################
+resource "aws_vpc_security_group_egress_rule" "self_scylla_egress_sg_rules" {
+  region                       = var.region
+  security_group_id            = aws_security_group.scylla_security_group.id
+  from_port                    = 0
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.scylla_security_group.id
+  to_port                      = 0
+  description                  = "Self SG Egress"
+}
+
+# ScyllaDB EKS Cluster Access Rules
 # Allow VPC CIDR access to ScyllaDB CQL port for EKS Auto Mode
 # EKS Auto Mode manages security groups automatically with timing dependencies
 # VPC CIDR is the recommended pattern per AWS documentation for this scenario
@@ -73,24 +165,12 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_from_vpc_cql" {
 
 
 
-resource "aws_vpc_security_group_egress_rule" "self_scylla_egress_sg_rules" {
-  region                       = var.region
-  security_group_id            = aws_security_group.scylla_security_group.id
-  from_port                    = 0
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.scylla_security_group.id
-  to_port                      = 0
-  description                  = "Self SG Egress"
-}
-
-
-
 ################################################################################
-# Additional EKS Security Group Rules
+# Cross-Service Rules (EKS ↔ Additional Security Groups)
 ################################################################################
 
 # ingress rule allowing ports 80 to 8091 from additional EKS security groups
-# Note: cluster_security_group is defined in eks.tf
+# Note: cluster_security_group is now defined in this file (sg.tf)
 resource "aws_vpc_security_group_ingress_rule" "cluster_additional_eks_sg_ingress_rule" {
   count                        = length(var.additional_eks_security_groups)
   region                       = var.region

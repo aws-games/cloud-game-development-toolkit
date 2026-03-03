@@ -48,7 +48,9 @@ module "unreal_cloud_ddc" {
     # EKS API Access Configuration (hybrid)
     endpoint_public_access  = true
     endpoint_private_access = true
-    public_access_cidrs     = [local.my_ip_cidr]
+    # TEMPORARY: Add 0.0.0.0/0 for CodeBuild access during testing
+    # TODO: Implement VPC configuration for CodeBuild
+    public_access_cidrs     = [local.my_ip_cidr, "0.0.0.0/0"]
 
     # ScyllaDB Configuration
     scylla_config = {
