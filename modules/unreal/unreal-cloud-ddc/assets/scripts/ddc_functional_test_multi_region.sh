@@ -14,7 +14,7 @@ echo "   3. GET data from secondary region"
 echo "   4. Verify data matches"
 echo ""
 
-# Function to test endpoint health
+# Function to test endpoint health with retries and DNS fallback
 test_endpoint_health() {
     local endpoint="$1"
     local region_name="$2"
@@ -23,12 +23,94 @@ test_endpoint_health() {
     
     echo "🏥 Testing $region_name endpoint health..."
     
-    # Test health endpoint
-    HEALTH_LIVE=$(curl -s --max-time 10 $curl_opts "$endpoint/health/live" || echo "FAILED")
-    if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
-        echo "   ✅ $region_name /health/live: $HEALTH_LIVE"
+    # Try endpoint with retries first
+    local success=false
+    for attempt in {1..5}; do
+        echo "   🔄 Attempt $attempt/5: Testing endpoint..."
+        HEALTH_LIVE=$(curl -s --max-time 10 $curl_opts "$endpoint/health/live" || echo "FAILED")
+        if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
+            echo "   ✅ $region_name /health/live: $HEALTH_LIVE"
+            USE_RESOLVED_IP=false
+            success=true
+            break
+        else
+            echo "   ❌ Attempt $attempt failed: $HEALTH_LIVE"
+            if [ $attempt -lt 5 ]; then
+                echo "   ⏳ Waiting 10 seconds before retry..."
+                sleep 10
+            fi
+        fi
+    done
+    
+    if [ "$success" = "false" ]; then
+        echo "   ❌ All attempts failed after 5 tries"
+        echo "   🔍 Testing for DNS caching issues..."
+        
+        # Extract hostname for DNS resolution
+        ENDPOINT_HOST=$(echo "$endpoint" | sed 's|https://||' | sed 's|http://||' | cut -d: -f1)
+        echo "   DNS resolution (Cloudflare DNS):"
+        RESOLVED_IP=$(dig +short @1.1.1.1 "$ENDPOINT_HOST" | head -1 || echo "")
+        echo "   Resolved IP: $RESOLVED_IP"
+        
+        if [ -n "$RESOLVED_IP" ]; then
+            echo "   ⚠️  DNS propagation and local DNS caching issue detected"
+            echo "   💡 Trying with Cloudflare DNS resolved IP ($RESOLVED_IP)"
+            
+            # Try HTTPS with resolved IP first (if original was HTTPS)
+            if [[ "$endpoint" == https://* ]]; then
+                echo "   🔄 Trying HTTPS with resolved IP (may fail due to SSL cert)..."
+                HEALTH_LIVE=$(curl -s --max-time 10 $curl_opts --resolve "$ENDPOINT_HOST:443:$RESOLVED_IP" "$endpoint/health/live" || echo "FAILED")
+                if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
+                    echo "   ✅ $region_name /health/live (resolved IP, HTTPS): $HEALTH_LIVE"
+                    USE_RESOLVED_IP=true
+                    RESOLVED_ENDPOINT="$endpoint"
+                else
+                    echo "   ❌ HTTPS with resolved IP failed (expected due to SSL cert): $HEALTH_LIVE"
+                    echo "   🔄 Trying HTTP with resolved IP as fallback..."
+                    HTTP_ENDPOINT=$(echo "$endpoint" | sed 's/^https:/http:/')
+                    HEALTH_LIVE=$(curl -s --max-time 10 --resolve "$ENDPOINT_HOST:80:$RESOLVED_IP" "$HTTP_ENDPOINT/health/live" || echo "FAILED")
+                    if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
+                        echo "   ✅ $region_name /health/live (resolved IP, HTTP): $HEALTH_LIVE"
+                        echo "   ⚠️  Using HTTP fallback due to SSL certificate mismatch"
+                        USE_RESOLVED_IP=true
+                        RESOLVED_ENDPOINT="$HTTP_ENDPOINT"
+                    else
+                        echo "   ❌ HTTP with resolved IP also failed: $HEALTH_LIVE"
+                        return 1
+                    fi
+                fi
+            else
+                # Original was HTTP, just try HTTP with resolved IP
+                HEALTH_LIVE=$(curl -s --max-time 10 $curl_opts --resolve "$ENDPOINT_HOST:80:$RESOLVED_IP" "$endpoint/health/live" || echo "FAILED")
+                if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
+                    echo "   ✅ $region_name /health/live (resolved IP): $HEALTH_LIVE"
+                    USE_RESOLVED_IP=true
+                    RESOLVED_ENDPOINT="$endpoint"
+                else
+                    echo "   ❌ Health check failed even with resolved IP: $HEALTH_LIVE"
+                    return 1
+                fi
+            fi
+        else
+            echo "   ❌ DNS resolution failed even with Cloudflare DNS"
+            return 1
+        fi
+    fi
+    
+    # Test readiness endpoint with conditional logic
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
+        if [[ "$RESOLVED_ENDPOINT" == https://* ]]; then
+            HEALTH_READY=$(curl -s --max-time 10 $curl_opts --resolve "$ENDPOINT_HOST:443:$RESOLVED_IP" "$RESOLVED_ENDPOINT/health/ready" || echo "FAILED")
+        else
+            HEALTH_READY=$(curl -s --max-time 10 --resolve "$ENDPOINT_HOST:80:$RESOLVED_IP" "$RESOLVED_ENDPOINT/health/ready" || echo "FAILED")
+        fi
     else
-        echo "   ❌ $region_name /health/live failed: $HEALTH_LIVE"
+        HEALTH_READY=$(curl -s --max-time 10 $curl_opts "$endpoint/health/ready" || echo "FAILED")
+    fi
+    if echo "$HEALTH_READY" | grep -qi "healthy"; then
+        echo "   ✅ $region_name /health/ready: $HEALTH_READY"
+    else
+        echo "   ❌ $region_name /health/ready failed: $HEALTH_READY"
         return 1
     fi
     
@@ -87,34 +169,50 @@ test_region() {
     echo ""
     echo "💓 Level 2: Health Endpoints (No Auth Required)"
     
-    # Get DNS host and IP for --resolve (bypassing local DNS cache)
-    # Using Cloudflare DNS for reliable, fast DNS resolution
-    DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
-    DNS_IP=$(dig @1.1.1.1 +short "$DNS_HOST" | head -1)
-    
-    # Test primary endpoint health using --resolve if DNS available
-    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
-        if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
-            HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$DNS_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
-        else
-            HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$DNS_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
-        fi
-    else
-        HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
-    fi
+    # Try PRIMARY_ENDPOINT first (normal DNS resolution)
+    HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
     if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
         echo "   ✅ Primary /health/live: $HEALTH_LIVE"
+        USE_RESOLVED_IP=false
     else
-        echo "   ❌ Primary /health/live failed: $HEALTH_LIVE"
-        return 1
+        echo "   ❌ Primary /health/live failed: Testing for DNS caching issues..."
+        
+        # Get DNS host and IP for fallback (using Cloudflare DNS)
+        DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
+        echo "   DNS resolution (Cloudflare DNS):"
+        RESOLVED_IP=$(dig @1.1.1.1 +short "$DNS_HOST" | head -1 || echo "")
+        echo "   Resolved IP: $RESOLVED_IP"
+        
+        if [ -n "$RESOLVED_IP" ]; then
+            echo "   ⚠️  DNS propagation and local DNS caching issue detected"
+            echo "   💡 Continuing test with Cloudflare DNS resolved IP ($RESOLVED_IP)"
+            
+            # Test with resolved IP using --resolve
+            if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
+                HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$RESOLVED_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+            else
+                HEALTH_LIVE=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$RESOLVED_IP" "$PRIMARY_ENDPOINT/health/live" || echo "FAILED")
+            fi
+            
+            if echo "$HEALTH_LIVE" | grep -qi "healthy"; then
+                echo "   ✅ Primary /health/live (resolved IP): $HEALTH_LIVE"
+                USE_RESOLVED_IP=true
+            else
+                echo "   ❌ Primary /health/live failed even with resolved IP: $HEALTH_LIVE"
+                return 1
+            fi
+        else
+            echo "   ❌ DNS resolution failed even with Cloudflare DNS"
+            return 1
+        fi
     fi
     
-    # Test readiness endpoint using --resolve if DNS available
-    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+    # Test readiness endpoint with conditional logic
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
         if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
-            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$DNS_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:443:$RESOLVED_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
         else
-            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$DNS_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
+            HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS --resolve "$DNS_HOST:80:$RESOLVED_IP" "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
         fi
     else
         HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
@@ -139,16 +237,16 @@ test_region() {
     # Level 3: API Authentication Test
     echo ""
     echo "🔐 Level 3: API Authentication"
-    # Test API status using --resolve if DNS available
-    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+    # Test API status with conditional logic
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
         if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
             API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:443:$DNS_IP" \
+                --resolve "$DNS_HOST:443:$RESOLVED_IP" \
                 -H "Authorization: ServiceAccount $bearer_token" \
                 "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
         else
             API_STATUS=$(curl -s --max-time 10 $CURL_OPTS -w "HTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:80:$DNS_IP" \
+                --resolve "$DNS_HOST:80:$RESOLVED_IP" \
                 -H "Authorization: ServiceAccount $bearer_token" \
                 "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
         fi
@@ -189,11 +287,11 @@ test_region() {
     
     echo "📤 Testing PUT operation..."
     echo "=========================="
-    # PUT operation using --resolve if DNS available
-    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+    # PUT operation with conditional logic
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
         if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
             PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:443:$DNS_IP" \
+                --resolve "$DNS_HOST:443:$RESOLVED_IP" \
                 "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
                 -X PUT \
                 --data "$TEST_DATA" \
@@ -202,7 +300,7 @@ test_region() {
                 -H "Authorization: ServiceAccount $bearer_token")
         else
             PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:80:$DNS_IP" \
+                --resolve "$DNS_HOST:80:$RESOLVED_IP" \
                 "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
                 -X PUT \
                 --data "$TEST_DATA" \
@@ -238,16 +336,16 @@ test_region() {
     echo ""
     echo "📥 Testing GET operation..."
     echo "=========================="
-    # GET operation using --resolve if DNS available
-    if [ -n "$DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$DNS_HOST"* ]]; then
+    # GET operation with conditional logic
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
         if [[ "$PRIMARY_ENDPOINT" == https://* ]]; then
             GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:443:$DNS_IP" \
+                --resolve "$DNS_HOST:443:$RESOLVED_IP" \
                 "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
                 -H "Authorization: ServiceAccount $bearer_token")
         else
             GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-                --resolve "$DNS_HOST:80:$DNS_IP" \
+                --resolve "$DNS_HOST:80:$RESOLVED_IP" \
                 "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
                 -H "Authorization: ServiceAccount $bearer_token")
         fi

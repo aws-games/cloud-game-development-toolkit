@@ -1,12 +1,12 @@
 # DDC Developer Reference Refactor Plan
 
-**Objective**: Restructure DEVELOPER_REFERENCE.md to improve readability and navigation while preserving ALL critical technical information, troubleshooting solutions, and architectural decisions.
+**Objective**: Restructure DEVELOPER_GUIDE.md to improve readability and navigation while preserving ALL critical technical information, troubleshooting solutions, and architectural decisions.
 
 **Critical Requirement**: ⚠️ **ZERO INFORMATION LOSS** - Every technical detail, solution, and context must be preserved.
 
 ## Current State Analysis
 
-**File**: `/modules/unreal/unreal-cloud-ddc/DEVELOPER_REFERENCE.md`
+**File**: `/modules/unreal/unreal-cloud-ddc/DEVELOPER_GUIDE.md`
 **Issues**: 
 - Information overload upfront
 - Poor navigation flow

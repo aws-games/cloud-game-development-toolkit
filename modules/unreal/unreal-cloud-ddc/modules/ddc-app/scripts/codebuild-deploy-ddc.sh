@@ -1,4 +1,9 @@
 #!/bin/bash
+# ⚠️  INTERNAL CODEBUILD SCRIPT - DO NOT RUN MANUALLY ⚠️
+# This script is designed for CodeBuild environments only.
+# For manual deployment, use kubectl commands directly.
+# This script expects kubectl access and specific environment variables.
+
 set -e
 
 echo "[DDC-DEPLOY] Starting DDC Helm deployment..."

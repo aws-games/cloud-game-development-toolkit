@@ -133,6 +133,11 @@ module "ddc_app" {
     var.ddc_application_config != null && var.ddc_application_config.bearer_token_secret_arn != null ? data.aws_secretsmanager_secret_version.existing_token[0].secret_string : "generated-token"
   )
 
+  # Bearer token secret ARN for CodeBuild testing
+  bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : (
+    var.ddc_application_config != null ? var.ddc_application_config.bearer_token_secret_arn : null
+  )
+
   # Credentials
   ghcr_credentials_secret_arn = var.ghcr_credentials_secret_arn
 
@@ -159,6 +164,10 @@ module "ddc_app" {
 
   # VPC configuration
   vpc_id = var.vpc_id
+  subnets = var.ddc_infra_config.eks_node_group_subnets
+
+  # DNS endpoint for testing
+  ddc_dns_endpoint = local.ddc_endpoint
 
   # Certificate configuration
   certificate_arn = var.certificate_arn

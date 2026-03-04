@@ -18,19 +18,6 @@ data "archive_file" "assets" {
       filename = "scripts/${source.value}"
     }
   }
-  
-  source {
-    content  = ""
-    filename = "assets/scripts/"
-  }
-  
-  dynamic "source" {
-    for_each = fileset("${path.module}/../../assets/scripts", "**/*")
-    content {
-      content  = file("${path.module}/../../assets/scripts/${source.value}")
-      filename = "assets/scripts/${source.value}"
-    }
-  }
 }
 
 resource "aws_s3_object" "assets" {

@@ -28,7 +28,7 @@ variable "region" {
 
 variable "debug" {
   type        = bool
-  description = "Enable debug mode for detailed troubleshooting output, YAML file generation, and chart preservation in path.root/generated/debug-charts/"
+  description = "Enable debug mode for development and testing. When true, forces CodeBuild deployment and testing actions to run on every terraform apply (regardless of configuration changes). When false, actions only run when there are actual changes to configuration, buildspecs, or assets. Passed from parent module."
   default     = false
 }
 
@@ -188,6 +188,18 @@ variable "ddc_endpoint_pattern" {
   description = "DDC hostname for this region (e.g., 'us-east-1.dev.ddc.example.com')"
 }
 
+variable "ddc_dns_endpoint" {
+  type        = string
+  description = "DDC DNS endpoint for testing (optional)"
+  default     = null
+}
+
+variable "bearer_token_secret_arn" {
+  type        = string
+  description = "Bearer token secret ARN for testing (optional)"
+  default     = null
+}
+
 variable "nlb_dns_name" {
   description = "DDC NLB DNS name"
   type        = string
@@ -208,6 +220,11 @@ variable "load_balancers_config" {
   })
   description = "Load balancer configuration from parent module"
   default     = null
+}
+
+variable "subnets" {
+  type        = list(string)
+  description = "Subnets for CodeBuild VPC configuration"
 }
 
 variable "nlb_security_group_id" {

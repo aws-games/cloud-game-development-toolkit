@@ -16,6 +16,7 @@
 #
 # The annotations are set in the Helm chart values (ddc-app submodule) which
 # configure both the Load Balancer Controller and External-DNS behavior.
+# Terraform actions (optionally, module default) uses CodeBuild to apply these changes against the cluster.
 
 ##########################################
 # Fetch Existing Route53 Public Hosted Zone

@@ -1,0 +1,37 @@
+version: 0.2
+# WORKAROUND FOR TERRAFORM ACTIONS BUG
+#
+# Issue: Terraform Actions ignore depends_on between action-triggered resources
+# GitHub: https://github.com/hashicorp/terraform/issues/xxxxx
+#
+# Problem: Deploy and test actions run in parallel instead of sequentially
+# Solution: Test buildspec includes workaround script that waits for deploy completion
+#
+# Future: Remove workaround when Terraform fixes the bug, or migrate to:
+# - CodePipeline for proper sequential orchestration
+# - Step Functions for complex workflow management
+phases:
+  install:
+    commands:
+      - echo "Installing kubectl"
+      - curl -LO https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl
+      - chmod +x kubectl && mv kubectl /usr/local/bin/
+  pre_build:
+    commands:
+      # WORKAROUND: Wait for deploy CodeBuild to complete due to Terraform Actions bug (https://github.com/hashicorp/terraform/issues/38230)
+      # This script monitors the deploy project status and waits for completion
+      # before proceeding with tests to ensure resources are deployed
+      - echo "WORKAROUND - Checking for deploy completion (Terraform Actions bug)"
+      - chmod +x scripts/workaround-wait-for-deploy.sh
+      - ./scripts/workaround-wait-for-deploy.sh
+      - echo "Configuring kubectl access"
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+      - kubectl cluster-info --request-timeout=30s
+  build:
+    commands:
+      - echo "Running functional tests"
+      - chmod +x scripts/codebuild-test-ddc-single-region.sh
+      - ./scripts/codebuild-test-ddc-single-region.sh
+  post_build:
+    commands:
+      - echo "Testing completed"

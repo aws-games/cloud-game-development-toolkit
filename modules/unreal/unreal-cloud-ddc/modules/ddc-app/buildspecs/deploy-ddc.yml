@@ -16,12 +16,9 @@ phases:
   build:
     commands:
       - echo "Starting DDC deployment"
-      - chmod +x scripts/deploy-ddc.sh
-      - ./scripts/deploy-ddc.sh
-      - echo "Running functional tests"
-      - chmod +x scripts/test-ddc.sh
-      - ./scripts/test-ddc.sh
-      - echo "Deployment and testing completed"
+      - chmod +x scripts/codebuild-deploy-ddc.sh
+      - ./scripts/codebuild-deploy-ddc.sh
+      - echo "Deployment completed"
   post_build:
     commands:
       - echo "Build completed successfully"

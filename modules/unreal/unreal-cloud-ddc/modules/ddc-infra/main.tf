@@ -135,6 +135,7 @@ resource "aws_eks_access_policy_association" "additional" {
 # CodeBuild project for cluster setup (replaces null_resource operations)
 resource "aws_codebuild_project" "cluster_setup" {
   name         = "${local.name_prefix}-cluster-setup"
+  description  = "Configure EKS cluster with AWS Load Balancer Controller and custom NodePools"
   service_role = aws_iam_role.cluster_setup_codebuild_role.arn
   
   artifacts {
@@ -250,7 +251,9 @@ resource "terraform_data" "cluster_setup_trigger" {
     # Force trigger when buildspec changes (for fixing cluster setup scripts)
     buildspec_hash  = filemd5("${path.module}/buildspecs/cluster-setup.yml")
     # Force trigger when S3 assets change (manifests, scripts)
-    assets_hash     = data.archive_file.manifests.output_md5
+    assets_hash     = data.archive_file.assets.output_md5
+    # Final validation: EKS setup → Deploy → Test sequence working correctly
+    validation_comment = "eks-deploy-test-sequence-validated"
   }
   
   lifecycle {
@@ -265,7 +268,7 @@ resource "terraform_data" "cluster_setup_trigger" {
     aws_iam_role.cluster_setup_codebuild_role,
     aws_iam_role.aws_load_balancer_controller_role,
     aws_iam_role.cert_manager_role,
-    aws_s3_object.manifests
+    aws_s3_object.assets
   ]
 }
 

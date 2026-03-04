@@ -8,7 +8,7 @@ module "unreal_cloud_ddc" {
 
 
   # Development & Debugging
-  debug = true # Enable verbose logging and debugging output for troubleshooting
+  debug = false
 
   vpc_id         = aws_vpc.main.id
   certificate_arn = aws_acm_certificate.ddc.arn
@@ -59,15 +59,6 @@ module "unreal_cloud_ddc" {
       }
       subnets = aws_subnet.private[*].id
     }
-
-    # NO custom_nodepool_config specified = uses defaults:
-    # custom_nodepool_config = {
-    #   enabled = true                    # Always creates custom nodepool
-    #   instance_categories = ["i"]       # Always targets i-family instances
-    #   capacity_type = "on-demand"       # Always uses on-demand instances
-    #   architecture = "amd64"            # Always uses x86_64
-    #   os = "linux"                      # Always uses Linux
-    # }
   }
 
   # GHCR Credentials

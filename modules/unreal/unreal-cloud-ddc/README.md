@@ -138,6 +138,35 @@ aws secretsmanager create-secret \
 - **Network Load Balancer**: External access with regional DNS endpoints
 - **Route53 Private Hosted Zone**: DNS for internal routing between services
 - **Private Subnets**: All compute resources deployed privately for security
+- **CodeBuild Projects**: Automated infrastructure setup and application deployment
+
+### Terraform Actions Architecture
+
+**The module uses [Terraform Actions](https://www.hashicorp.com/en/blog/day-2-infrastructure-management-with-terraform-actions) for reliable Kubernetes operations:**
+
+```
+Terraform Orchestration (Synchronous)
+├── 1. AWS Resources
+│   ├── EKS Cluster ✅
+│   ├── ScyllaDB ✅
+│   ├── IAM Roles ✅
+│   └── CodeBuild Projects ✅
+├── 2. Terraform Actions (Synchronous CodeBuild Execution)
+│   ├── AWS Load Balancer Controller ✅
+│   ├── Custom NodePools ✅
+│   ├── Cert Manager (optional) ✅
+│   ├── DDC Helm Deployment ✅
+│   └── Functional Testing ✅
+└── 3. Complete ✅
+```
+
+**Key Benefits:**
+- **Synchronous execution**: Terraform waits for each CodeBuild operation to complete
+- **No race conditions**: EKS cluster setup completes before application deployment
+- **No permission chicken-and-egg problems**: CodeBuild has proper IAM roles from the start
+- **Single terraform apply**: Everything happens in one coordinated workflow
+- **Reliable**: Consistent CodeBuild environment vs. local machine dependencies
+- **CI/CD friendly**: Works in pipelines without kubectl/helm installation
 
 ### Custom Helm Chart Architecture
 
@@ -1321,9 +1350,34 @@ This configuration provides automatic failover and optimal routing for global de
 
 ## Verification & Testing
 
-### Testing Options
+## Testing Options
 
 The DDC module provides both automated and manual testing approaches:
+
+#### **Automated Testing (During deployment)**
+
+The module includes automated application testing using [Terraform Actions](https://www.hashicorp.com/en/blog/day-2-infrastructure-management-with-terraform-actions) that runs synchronously during `terraform apply` to validate that the DDC endpoint service is reachable and data can be written to and retrieved from the cache:
+
+- **Infrastructure validation**: CodeBuild automatically validates EKS cluster setup, AWS Load Balancer Controller installation, and custom NodePool creation
+- **Application validation**: CodeBuild tests DDC deployment, health endpoints, and functional cache operations (PUT/GET/HEAD)
+- **Multi-region validation**: Optional cross-region replication testing
+- **Synchronous execution**: Terraform waits for validation to complete before finishing
+
+**Configuration:**
+
+```hcl
+ddc_application_config = {
+  # Default: validates DDC works after deployment
+  enable_single_region_validation = true
+
+  # For faster CI/CD, disable validation:
+  # enable_single_region_validation = false
+
+  # Multi-region: only enable on secondary regions
+  # enable_multi_region_validation = true
+  # peer_region_ddc_endpoint = "https://us-east-1.ddc.example.com"
+}
+```
 
 #### **Manual Testing (After deployment)**
 
@@ -1465,6 +1519,154 @@ Server-Timing: blob.put.FileSystemStore;dur=0.1451;desc="PUT to store: 'FileSyst
 
 ```sh
 # Test GET operation (read from cache)
+curl "<DDC_ENDPOINT>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json" \
+  -H "Authorization: ServiceAccount <BEARER_TOKEN>"
+```
+
+**[Response]**
+
+After running this you should get a response that looks as the following:
+
+```sh
+HTTP/1.1 200 OK
+Server: http
+Date: Wed, 29 Jan 2025 19:16:46 GMT
+Content-Type: application/json
+Content-Length: 66
+Connection: keep-alive
+X-Jupiter-IoHash: 7D873DCC262F62FBAA871FE61B2B52D715A1171E
+X-Jupiter-LastAccess: 01/29/2025 19:16:46
+Server-Timing: ref.get;dur=0.0299;desc="Fetching Ref from DB"
+
+{"RawHash":"4878ca0425c739fa427f7eda20fe845f6b2e46ba","RawSize":4}%
+```
+
+#### ⚠️ Troubleshooting ⚠️
+
+If the above commands do not work, try to test access to the Network Load Balancer directly
+
+**Example:**
+
+```sh
+# Test DDC health endpoint
+curl <Network Load Balancer Endpoint>/health/live
+
+# Expected response: "HEALTHY"
+```
+
+### Application
+
+**1. Verify the Unreal Cloud DDC EKS Cluster Status**
+
+**[Request]**
+
+```sh
+# Configure kubectl access
+aws eks update-kubeconfig --region <your-region> --name <cluster-name>
+
+# Check pod status
+kubectl get pods -n unreal-cloud-ddc
+```
+
+**[Response]**
+
+<!-- Expected: All pods should be "Running" -->
+
+```sh
+NAME                                                     READY   STATUS    RESTARTS   AGE
+cgd-unreal-cloud-ddc-initialize-546ff4bbfd-7dh62         1/1     Running   0          101m
+cgd-unreal-cloud-ddc-initialize-546ff4bbfd-97zd2         1/1     Running   0          101m
+cgd-unreal-cloud-ddc-initialize-worker-7c6dfbc66-8lw8v   1/1     Running   0          101m
+```
+
+### Database
+
+**1. Check the status of the database nodes**
+
+Connect to any of the Scylla Nodes and run the following command (SSM with Session Manager recommended):
+
+**[Request]**
+
+```sh
+nodetool status
+```
+
+**[Response]**
+
+```sh
+$ nodetool status
+Datacenter: us-east
+===================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+-- Address    Load      Tokens Owns Host ID                              Rack
+UN 10.0.4.73  925.51 KB 256    ?    15e58613-891d-44a4-a445-50678edb07cb 1a
+UN 10.0.5.107 913.77 KB 256    ?    329cfa9f-71b3-4e5e-a5c6-c1ee91a550ba 1b
+UN 10.0.6.158 948.95 KB 256    ?    1e5ac8b8-50b5-4e47-aa91-5b4fa917afd2 1c
+
+Note: Non-system keyspaces don't have the same replication settings, effective ownership information is meaningless
+```
+
+**2. Check the keyspaces are present**
+
+On the instance, start cqlsh session:
+
+```sh
+cqlsh
+```
+
+**[Request]**
+
+Check if all keyspaces are there
+
+```sh
+describe keyspaces
+```
+
+**[Response]**
+
+Should include at least the following keyspaces (names will vary depending on your region):
+
+- **Global Keyspace (`jupiter`)**
+
+  - Stores shared/cross-region data that all regions can access
+  - Contains metadata, configuration, and shared cache entries
+  - Used for multi-region coordination and global cache lookups
+
+- **Local Keyspace (`jupiter_local_ddc_us_east_1`)**
+  - Stores region-specific cache data for performance
+  - Contains local cache entries that don't need cross-region replication
+  - Reduces latency by keeping frequently accessed data local
+
+```sh
+system_auth                  system
+system_schema                jupiter_local_ddc_us_east_1
+jupiter                      system_traces
+system_distributed           system_distributed_everywhere
+```
+
+**3. Check the keyspace configuration**
+
+On the instance, start cqlsh session:
+
+```sh
+cqlsh
+```
+
+**[Request]**
+
+Check if all keyspaces are there
+
+```sh
+describe keyspaces
+```
+
+**[Response]**
+
+Should include at least the following keyspaces:
+
+- jupiter
+- jupiter_ddc_localperation (read from cache)
 curl "<DDC_ENDPOINT>/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json" \
   -H "Authorization: ServiceAccount <BEARER_TOKEN>"
 ```
@@ -2497,6 +2699,35 @@ helm get values cgd-unreal-cloud-ddc-initialize -n unreal-cloud-ddc | grep -A5 n
 3. **Confirm secret format**:
    ```bash
    aws secretsmanager describe-secret --secret-id "github-ddc-credentials"
+   ```
+
+### Troubleshooting Terraform Actions
+
+**If Terraform Actions fail during `terraform apply`:**
+
+1. **Check CodeBuild logs**:
+   ```bash
+   # Get CodeBuild project name from Terraform output
+   terraform output
+   
+   # View logs in AWS Console:
+   # CodeBuild > Build projects > <project-name> > Build history > View logs
+   ```
+
+2. **Common Terraform Actions issues**:
+   - **EKS access denied**: Check `public_access_cidrs` includes CodeBuild IP ranges
+   - **Helm timeout**: LoadBalancer provisioning can take 3-5 minutes
+   - **kubectl connection**: EKS cluster may still be initializing
+   - **Race conditions**: Terraform Actions prevent these, but check dependencies
+
+3. **Manual verification** (if Terraform Actions succeed but you want to double-check):
+   ```bash
+   # Update kubeconfig
+   aws eks update-kubeconfig --region <region> --name <cluster-name>
+   
+   # Check cluster status
+   kubectl get nodes
+   kubectl get pods -n unreal-cloud-ddc
    ```
 
 ### Destroy Troubleshooting

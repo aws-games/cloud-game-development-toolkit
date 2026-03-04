@@ -1,8 +1,8 @@
 ################################################################################
-# Archive and Upload BuildSpecs
+# Archive and Upload Assets
 ################################################################################
 
-data "archive_file" "manifests" {
+data "archive_file" "assets" {
   type        = "zip"
   output_path = "${path.module}/.terraform/tmp/assets.zip"
   
@@ -28,9 +28,9 @@ data "archive_file" "manifests" {
   }
 }
 
-resource "aws_s3_object" "manifests" {
+resource "aws_s3_object" "assets" {
   bucket = aws_s3_bucket.manifests.id
   key    = "assets.zip"
-  source = data.archive_file.manifests.output_path
-  etag   = data.archive_file.manifests.output_md5
+  source = data.archive_file.assets.output_path
+  etag   = data.archive_file.assets.output_md5
 }

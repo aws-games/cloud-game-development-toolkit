@@ -58,7 +58,7 @@ variable "debug_mode" {
 
 variable "debug" {
   type        = bool
-  description = "Enable debug mode for detailed troubleshooting output. Currently enables Helm debug mode showing real-time installation progress, Kubernetes API calls, resource creation status, and template rendering."
+  description = "Enable debug mode for development and testing. When true, forces CodeBuild deployment and testing actions to run on every terraform apply (regardless of configuration changes). When false, actions only run when there are actual changes to configuration, buildspecs, or assets. Use true for development/troubleshooting, false for production."
   default     = false
 }
 
