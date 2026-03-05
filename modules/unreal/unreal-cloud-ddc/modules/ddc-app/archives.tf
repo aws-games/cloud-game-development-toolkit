@@ -1,16 +1,16 @@
 ################################################################################
-# Archive and Upload Buildspecs
+# Archive and Upload Assets for CodeBuild
 ################################################################################
 
 data "archive_file" "assets" {
   type        = "zip"
   output_path = "${path.module}/.terraform/tmp/assets.zip"
-  
+
   source {
     content  = ""
     filename = "scripts/"
   }
-  
+
   dynamic "source" {
     for_each = fileset("${path.module}/scripts", "**/*")
     content {

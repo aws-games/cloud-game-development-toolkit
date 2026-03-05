@@ -213,13 +213,12 @@ resource "aws_codebuild_project" "cluster_setup" {
     }
   }
   
-  # TEMPORARILY REMOVED: VPC configuration causing CodeBuild to fail completely
-  # TODO: Fix networking - CodeBuild needs internet access for tools + EKS API access
-  # vpc_config {
-  #   vpc_id = var.vpc_id
-  #   subnets = var.eks_node_group_subnets
-  #   security_group_ids = [aws_security_group.cluster_security_group.id]
-  # }
+  # VPC configuration for secure EKS access
+  vpc_config {
+    vpc_id = var.vpc_id
+    subnets = var.eks_node_group_subnets
+    security_group_ids = [aws_security_group.cluster_security_group.id]
+  }
   
   source {
     type = "S3"

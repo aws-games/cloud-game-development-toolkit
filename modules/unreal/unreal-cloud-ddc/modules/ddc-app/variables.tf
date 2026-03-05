@@ -227,9 +227,34 @@ variable "subnets" {
   description = "Subnets for CodeBuild VPC configuration"
 }
 
+variable "eks_node_group_subnets" {
+  type        = list(string)
+  description = "EKS node group subnets for CodeBuild VPC configuration"
+}
+
+variable "cluster_security_group_id" {
+  type        = string
+  description = "EKS cluster security group ID for CodeBuild VPC configuration"
+}
+
 variable "nlb_security_group_id" {
   type        = string
   description = "Terraform-managed NLB security group ID to prevent EKS Auto Mode orphaned resources"
+}
+
+# DNS zone IDs for External-DNS split-horizon configuration
+# Split-horizon DNS enables same hostname to resolve from both VPC and Internet:
+# - VPC clients (CodeBuild, EKS pods, VPN users) → Query private zone → Internal routing to NLB
+# - Internet clients (developers, CI/CD) → Query public zone → External routing to NLB
+variable "private_zone_id" {
+  type        = string
+  description = "Private Route53 hosted zone ID for VPC-based DNS resolution"
+}
+
+variable "public_zone_id" {
+  type        = string
+  description = "Public Route53 hosted zone ID for Internet-based DNS resolution (optional)"
+  default     = null
 }
 
 ########################################

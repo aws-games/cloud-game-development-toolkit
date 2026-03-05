@@ -31,4 +31,10 @@ data "http" "my_ip" {
   url = "https://checkip.amazonaws.com/"
 }
 
+# Public hosted zone (when provided)
+data "aws_route53_zone" "public" {
+  count = var.route53_hosted_zone_name != null ? 1 : 0
+  name  = var.route53_hosted_zone_name
+}
+
 

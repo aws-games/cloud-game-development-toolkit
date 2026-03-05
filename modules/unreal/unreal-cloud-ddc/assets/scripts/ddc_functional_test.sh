@@ -95,13 +95,9 @@ echo ""
 echo "🏥 Progressive Health Checks"
 echo "============================"
 
-# Level 1: Basic connectivity test
-echo "📡 Level 1: $PROTOCOL Connectivity Test (Debug: $DEBUG_MODE)"
-echo "   ℹ️  Testing $PROTOCOL connectivity directly..."
-
-# Level 2: NLB Direct Test (for RCA)
-echo ""
-echo "🎯 Level 2: NLB Direct Test (for troubleshooting)"
+# Level 0: Infrastructure Readiness Checks
+echo "🏗️ Level 0: Infrastructure Readiness"
+echo "===================================="
 
 # Get cluster info from Terraform outputs (try multiple paths)
 DDC_CONNECTION=$(terraform output -json ddc_connection 2>/dev/null || terraform show -json 2>/dev/null | jq -r '.values.outputs.ddc_connection.value // null' || echo "null")
@@ -124,30 +120,44 @@ if [ -n "$CLUSTER_NAME" ] && [ -n "$REGION" ]; then
     EKS_UPDATE_RESULT=$(aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$REGION" 2>&1 || echo "FAILED")
     if echo "$EKS_UPDATE_RESULT" | grep -q "FAILED\|Error\|ResourceNotFoundException"; then
         echo "   ❌ EKS cluster access failed: $EKS_UPDATE_RESULT"
-        echo "   💡 Cluster name in Terraform state may be wrong"
-        echo "   💡 Run 'terraform refresh' to sync state with AWS"
-        echo "   💡 Or check: aws eks list-clusters --region $REGION"
-        NLB_WORKS=false
+        echo "   ❌ Cannot validate infrastructure readiness without EKS access"
+        echo "   💡 Fix authentication (mwinit, aws sso login) and try again"
+        echo "   💡 Infrastructure validation is REQUIRED before functional testing"
+        exit 1
     else
-    
-    echo "   🔍 Getting NLB hostname from service..."
-    NLB_HOSTNAME=$(kubectl get service -n "$NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
-    
-    if [ -n "$NLB_HOSTNAME" ]; then
-        echo "   🎯 Testing NLB directly: $NLB_HOSTNAME"
-        NLB_HEALTH=$(curl -s --max-time 10 "http://$NLB_HOSTNAME/health/live" || echo "FAILED")
-        if echo "$NLB_HEALTH" | grep -qi "healthy"; then
-            echo "   ✅ NLB direct /health/live: $NLB_HEALTH"
-            NLB_WORKS=true
+        echo "   🔍 Getting NLB hostname from service..."
+        NLB_HOSTNAME=$(kubectl get service -n "$NAMESPACE" -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+        
+        if [ -n "$NLB_HOSTNAME" ]; then
+            echo "   🎯 Testing NLB directly with retries: $NLB_HOSTNAME"
+            NLB_WORKS=false
+            NLB_ATTEMPTS=10
+            nlb_attempt=1
+            while [ $nlb_attempt -le $NLB_ATTEMPTS ]; do
+                echo "   🔄 NLB attempt $nlb_attempt/$NLB_ATTEMPTS: Testing NLB health..."
+                NLB_HEALTH=$(curl -s --max-time 10 "http://$NLB_HOSTNAME/health/live" || echo "FAILED")
+                if echo "$NLB_HEALTH" | grep -qi "healthy"; then
+                    echo "   ✅ NLB direct /health/live: $NLB_HEALTH"
+                    NLB_WORKS=true
+                    break
+                else
+                    echo "   ❌ NLB attempt $nlb_attempt failed: $NLB_HEALTH"
+                    if [ $nlb_attempt -lt $NLB_ATTEMPTS ]; then
+                        echo "   ⏳ Waiting 30 seconds for NLB targets to become healthy..."
+                        sleep 30
+                    fi
+                fi
+                nlb_attempt=$((nlb_attempt + 1))
+            done
+            
+            if [ "$NLB_WORKS" = "false" ]; then
+                echo "   ❌ NLB health check failed after $NLB_ATTEMPTS attempts (~$((NLB_ATTEMPTS * 30 / 60)) minutes)"
+                echo "   💡 This indicates NLB target health issues or pods still starting"
+            fi
         else
-            echo "   ❌ NLB direct /health/live failed: $NLB_HEALTH"
-            echo "   💡 This indicates NLB target health issues"
+            echo "   ⚠️  Could not get NLB hostname from service"
             NLB_WORKS=false
         fi
-    else
-        echo "   ⚠️  Could not get NLB hostname from service"
-        NLB_WORKS=false
-    fi
     fi
 else
     echo "   ⚠️  Could not get cluster info from Terraform outputs"
@@ -157,15 +167,15 @@ else
     NLB_WORKS=false
 fi
 
-# Level 3: DNS Health Check (primary test)
+# Level 1: DNS Health Check (primary test)
 echo ""
-echo "🌐 Level 3: DNS Health Check (primary test)"
+echo "🌐 Level 1: DNS Health Check (primary test)"
 
 # Check DNS resolution first
 DNS_HOST=$(echo "$DDC_DNS_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
 
-# Configurable DNS test timeout (default: 30 attempts = 5 minutes)
-DNS_TEST_ATTEMPTS="${DNS_TEST_ATTEMPTS:-30}"
+# Configurable DNS test timeout (default: 15 attempts = 2.5 minutes)
+DNS_TEST_ATTEMPTS="${DNS_TEST_ATTEMPTS:-15}"  # Reduced from 30 - split-horizon DNS should resolve faster
 DNS_TEST_INTERVAL="${DNS_TEST_INTERVAL:-10}"
 TOTAL_DNS_TIMEOUT=$((DNS_TEST_ATTEMPTS * DNS_TEST_INTERVAL))
 
@@ -257,9 +267,9 @@ if [ "$READY_SUCCESS" = "false" ]; then
     # Don't exit - continue with PUT/GET tests since liveness works
 fi
 
-# Level 3: API Authentication Test
+# Level 2: API Authentication Test
 echo ""
-echo "🔐 Level 3: API Authentication"
+echo "🔐 Level 2: API Authentication"
 if [ "$USE_RESOLVED_IP" = "true" ]; then
     API_STATUS=$(curl -s --max-time 10 -w "\nHTTP_STATUS:%{http_code}" \
         -H "Authorization: ServiceAccount $BEARER_TOKEN" \
@@ -288,7 +298,7 @@ else
 fi
 
 echo ""
-echo "🧪 Functional Cache Tests"
+echo "🧪 Level 3: Functional Cache Tests"
 echo "========================="
 
 # Test data - use default DDC logical namespace from Terraform output

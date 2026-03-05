@@ -28,22 +28,19 @@ resource "aws_eks_addon" "external_dns" {
   resolve_conflicts_on_update = "OVERWRITE"
   
   timeouts {
-    create = "10m"
-    update = "10m"
-    delete = "5m"
+    create = "15m"
+    update = "15m"
+    delete = "10m"
   }
   
   configuration_values = jsonencode({
-    domainFilters = var.route53_hosted_zone_name != null ? [var.route53_hosted_zone_name] : ["${var.environment}.ddc.${var.project_prefix}.internal"]
+    # Remove domainFilters to allow discovery of all zones for split-horizon DNS
     registry      = "txt"
     txtOwnerId    = local.name_prefix
     sources       = ["service", "ingress"]
     policy        = "sync"
-    extraArgs = var.route53_hosted_zone_name != null ? [
-      "--aws-zone-type=${contains(["internal"], split(".", var.route53_hosted_zone_name)) ? "private" : "public"}"
-    ] : [
-      "--aws-zone-type=private"
-    ]
+    # Remove aws-zone-type restriction to allow both public and private zone discovery
+    # Service annotations will handle zone targeting
   })
   
   tags = var.tags

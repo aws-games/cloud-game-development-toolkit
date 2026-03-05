@@ -84,6 +84,7 @@ module "ddc_infra" {
 
   # Route53 configuration for External-DNS
   route53_hosted_zone_name = var.route53_hosted_zone_name
+  private_zone_id          = aws_route53_zone.private.zone_id
 
   # EKS VPC endpoint configuration
   eks_uses_vpc_endpoint = false  # Not using VPC endpoints
@@ -165,6 +166,8 @@ module "ddc_app" {
   # VPC configuration
   vpc_id = var.vpc_id
   subnets = var.ddc_infra_config.eks_node_group_subnets
+  eks_node_group_subnets = var.ddc_infra_config.eks_node_group_subnets
+  cluster_security_group_id = module.ddc_infra.cluster_security_group_id
 
   # DNS endpoint for testing
   ddc_dns_endpoint = local.ddc_endpoint
@@ -177,6 +180,10 @@ module "ddc_app" {
   
   # Security group for explicit lifecycle management
   nlb_security_group_id = var.ddc_infra_config != null ? aws_security_group.nlb[0].id : null
+
+  # DNS zone IDs for External-DNS configuration
+  private_zone_id = aws_route53_zone.private.zone_id
+  public_zone_id  = var.route53_hosted_zone_name != null ? data.aws_route53_zone.public[0].zone_id : null
 
   tags       = local.default_tags
   depends_on = [module.ddc_infra]

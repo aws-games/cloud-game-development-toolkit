@@ -11,6 +11,13 @@ resource "aws_codebuild_project" "ddc_deployer" {
     type = "NO_ARTIFACTS"
   }
 
+  # VPC configuration for secure EKS access
+  vpc_config {
+    vpc_id = var.vpc_id
+    subnets = var.eks_node_group_subnets
+    security_group_ids = [var.cluster_security_group_id]
+  }
+
   environment {
     compute_type = "BUILD_GENERAL1_SMALL"
     image        = "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
@@ -93,6 +100,13 @@ resource "aws_codebuild_project" "ddc_tester" {
 
   artifacts {
     type = "NO_ARTIFACTS"
+  }
+
+  # VPC configuration for secure EKS access
+  vpc_config {
+    vpc_id = var.vpc_id
+    subnets = var.eks_node_group_subnets
+    security_group_ids = [var.cluster_security_group_id]
   }
 
   environment {
@@ -242,12 +256,14 @@ resource "terraform_data" "test_trigger" {
 action "aws_codebuild_start_build" "deploy_ddc" {
   config {
     project_name = aws_codebuild_project.ddc_deployer.name
+    timeout      = 1800  # 30 minutes
   }
 }
 
 action "aws_codebuild_start_build" "test_ddc" {
   config {
     project_name = aws_codebuild_project.ddc_tester.name
+    timeout      = 3600  # 60 minutes (testing takes longer)
   }
 }
 
@@ -364,6 +380,22 @@ data "aws_iam_policy_document" "codebuild_policy" {
     ]
     resources = ["*"]
   }
+  
+  # VPC permissions for CodeBuild VPC configuration
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeDhcpOptions",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeVpcs",
+      "ec2:CreateNetworkInterfacePermission"
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role" "codebuild_role" {
@@ -377,3 +409,5 @@ resource "aws_iam_role_policy" "codebuild_policy" {
   role   = aws_iam_role.codebuild_role.id
   policy = data.aws_iam_policy_document.codebuild_policy.json
 }
+
+

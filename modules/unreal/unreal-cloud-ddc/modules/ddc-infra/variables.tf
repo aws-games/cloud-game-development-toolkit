@@ -217,6 +217,12 @@ variable "route53_hosted_zone_name" {
   default     = null
 }
 
+variable "private_zone_id" {
+  type        = string
+  description = "Private Route53 hosted zone ID for External-DNS split-horizon DNS"
+  default     = null
+}
+
 variable "eks_uses_vpc_endpoint" {
   type        = bool
   description = "Whether EKS uses VPC endpoint for API access"

@@ -92,30 +92,17 @@ resource "aws_vpc_security_group_egress_rule" "cluster_egress" {
   }
 }
 
-# Allow CodeBuild access to DDC services (HTTP/HTTPS)
-resource "aws_vpc_security_group_ingress_rule" "cluster_codebuild_http" {
-  security_group_id = aws_security_group.cluster_security_group.id
-  description       = "CodeBuild access to DDC HTTP services"
-  ip_protocol       = "tcp"
-  from_port         = 80
-  to_port           = 80
-  cidr_ipv4         = "0.0.0.0/0"  # CodeBuild uses AWS-managed public IPs
+# Allow CodeBuild access to EKS API (private endpoint)
+resource "aws_vpc_security_group_ingress_rule" "cluster_codebuild_eks_api" {
+  security_group_id            = aws_security_group.cluster_security_group.id
+  description                  = "CodeBuild access to EKS API server (private endpoint)"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = aws_security_group.cluster_security_group.id
 
   tags = {
-    Name = "${local.name_prefix}-cluster-codebuild-http"
-  }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "cluster_codebuild_https" {
-  security_group_id = aws_security_group.cluster_security_group.id
-  description       = "CodeBuild access to DDC HTTPS services"
-  ip_protocol       = "tcp"
-  from_port         = 443
-  to_port           = 443
-  cidr_ipv4         = "0.0.0.0/0"  # CodeBuild uses AWS-managed public IPs
-
-  tags = {
-    Name = "${local.name_prefix}-cluster-codebuild-https"
+    Name = "${local.name_prefix}-cluster-codebuild-eks-api"
   }
 }
 

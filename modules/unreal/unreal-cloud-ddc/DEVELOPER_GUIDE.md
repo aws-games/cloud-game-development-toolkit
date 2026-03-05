@@ -37,6 +37,27 @@ This developer reference serves multiple audiences:
 - User-facing configuration examples (see main README)
 - General CGD Toolkit concepts (see root documentation)
 
+## VPC Configuration Pattern
+
+**IMPORTANT**: CodeBuild projects automatically use the same subnets as EKS node groups for simplicity and security.
+
+**Pattern**: `ddc_infra_config.eks_node_group_subnets` → CodeBuild VPC configuration
+
+**Why This Design**:
+- **Simplicity**: No separate subnet configuration needed for CodeBuild
+- **Security**: CodeBuild runs in private subnets with NAT Gateway access
+- **Consistency**: Same network context as EKS workloads
+- **No Complexity**: Avoids additional VPC configuration variables
+
+**User Configuration**:
+```hcl
+ddc_infra_config = {
+  eks_node_group_subnets = aws_subnet.private[*].id  # CodeBuild uses these same subnets
+}
+```
+
+**Result**: All CodeBuild projects (cluster setup, app deployment, testing) run in the same private subnets as EKS nodes, ensuring consistent network access patterns and security posture.
+
 **Key Technology Note**: This module uses **Helm extensively** for both infrastructure and application deployment. Helm charts configure NodePools, install infrastructure components (AWS Load Balancer Controller, Cert Manager), and optionally deploy DDC applications (depending on your module configuration). Understanding Helm's role is critical for working with this module.
 
 **Helm TLDR**: Think of Helm like `package.json` (Node.js) or `pyproject.toml` (Python) but for Kubernetes - it bundles multiple Kubernetes resources into reusable "charts" with templating and dependency management. [Learn more about Helm](https://helm.sh/docs/intro/using_helm/).
@@ -104,26 +125,30 @@ Unreal Cloud DDC Module
 
 ### Terraform + Kubernetes Coordination
 
-**Current Implementation: Local-Exec Provisioners**
+**Current Implementation: CodeBuild + Terraform Actions** ✅ **MIGRATED FROM LOCAL-EXEC**
 
-The module uses Terraform `local-exec` provisioners to coordinate between AWS infrastructure and Kubernetes resources. This approach handles the timing dependencies where Kubernetes resources must be created after EKS cluster is ready:
+The module uses CodeBuild projects triggered by Terraform Actions to coordinate between AWS infrastructure and Kubernetes resources. This approach handles timing dependencies where Kubernetes resources must be created after EKS cluster is ready:
 
 ```hcl
-# Example: Installing AWS Load Balancer Controller after EKS cluster
-resource "null_resource" "aws_load_balancer_controller" {
-  provisioner "local-exec" {
-    command = "helm install aws-load-balancer-controller..."
+# Example: CodeBuild project for cluster setup
+resource "terraform_data" "cluster_setup_trigger" {
+  lifecycle {
+    action_trigger {
+      events  = [before_create, before_update]
+      actions = [action.aws_codebuild_start_build.cluster_setup]
+    }
   }
   depends_on = [aws_eks_cluster.unreal_cloud_ddc_eks_cluster]
 }
 ```
 
-**Why Local-Exec?**
-- **Timing Control**: Ensures commands run after dependencies are ready via `depends_on`
-- **Single Apply**: No complex multi-step workflows - everything in one `terraform apply`
-- **Familiar Commands**: Uses same CLI commands as manual deployment and CI/CD
-- **Transparent Debugging**: Can run the exact same commands manually for troubleshooting
-- **Dependency Tracking**: Clear dependency chain from AWS resources to Kubernetes workloads
+**Why CodeBuild + Terraform Actions?**
+- **Reliable Execution**: CodeBuild provides consistent runtime environment
+- **VPC Integration**: Runs in same private subnets as EKS nodes
+- **Synchronous Control**: Terraform Actions wait for CodeBuild completion
+- **Audit Trail**: All operations logged in CloudWatch
+- **No Local Dependencies**: No kubectl/helm required on Terraform runner
+- **Scalable**: Can handle complex multi-step operations
 
 **What Terraform Actually Tracks**:
 - **Execution Status**: Did the command run successfully? (exit code 0)
@@ -167,7 +192,19 @@ terraform apply -replace="null_resource.cert_manager"
 terraform apply -replace="null_resource.aws_load_balancer_controller" -replace="null_resource.target_group_binding"
 ```
 
-**Option 2: Terraform Taint (Legacy)**:
+## Pre-PR Checklist
+
+**Required Before Submission**:
+- [ ] **Upgrade Kubernetes version to 1.35** in EKS cluster configuration
+- [ ] Validate all examples work with K8s 1.35
+- [ ] Update any version-specific documentation
+- [ ] Run integration tests with new K8s version
+
+**Documentation Updates**:
+- [x] DDC_TF_ACTIONS_REFACTOR.md updated to reflect completion
+- [x] DEVELOPER_GUIDE.md updated with CodeBuild patterns
+- [x] VPC configuration pattern documented
+- [ ] Main README review for accuracyy)**:
 ```bash
 # Mark resource for recreation
 terraform taint null_resource.aws_load_balancer_controller

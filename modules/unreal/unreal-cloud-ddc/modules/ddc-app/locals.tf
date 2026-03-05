@@ -201,9 +201,14 @@ locals {
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold"   = "2"
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold" = "2"
           },
-          # External-DNS annotation for Route53 record creation
+          # External-DNS annotation for split-horizon DNS record creation
+          # Creates identical records in both public and private zones for universal access:
+          # - VPC clients resolve via private zone (CodeBuild, EKS pods, VPN users)
+          # - Internet clients resolve via public zone (developers, external CI/CD)
           var.ddc_endpoint_pattern != null ? {
             "external-dns.alpha.kubernetes.io/hostname" = var.ddc_endpoint_pattern
+            # Specify both zone IDs to create records in both zones (split-horizon DNS)
+            "external-dns.alpha.kubernetes.io/zone-id" = var.public_zone_id != null ? "${var.private_zone_id},${var.public_zone_id}" : var.private_zone_id
           } : {},
           # Subnet placement handled by EKS cluster subnet configuration
           # HTTPS listener (when certificate provided)

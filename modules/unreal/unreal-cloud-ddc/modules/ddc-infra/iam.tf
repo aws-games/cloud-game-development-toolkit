@@ -551,7 +551,11 @@ data "aws_iam_policy_document" "external_dns_policy" {
     actions = [
       "route53:ChangeResourceRecordSets"
     ]
-    resources = var.route53_hosted_zone_name != null ? [data.aws_route53_zone.user_provided[0].arn] : ["arn:aws:route53:::hostedzone/*"]
+    # For split-horizon DNS, External-DNS needs access to both public and private zones
+    resources = var.route53_hosted_zone_name != null ? [
+      data.aws_route53_zone.user_provided[0].arn,
+      "arn:aws:route53:::hostedzone/${var.private_zone_id}"
+    ] : ["arn:aws:route53:::hostedzone/${var.private_zone_id}"]
   }
   
   statement {
@@ -853,6 +857,22 @@ data "aws_iam_policy_document" "cluster_setup_codebuild_policy" {
     actions = [
       "eks:DescribeCluster",
       "sts:GetCallerIdentity"
+    ]
+    resources = ["*"]
+  }
+  
+  # VPC permissions for CodeBuild VPC configuration
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeDhcpOptions",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeVpcs",
+      "ec2:CreateNetworkInterfacePermission"
     ]
     resources = ["*"]
   }
