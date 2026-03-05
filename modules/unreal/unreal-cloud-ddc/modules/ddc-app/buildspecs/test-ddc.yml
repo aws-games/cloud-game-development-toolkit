@@ -30,8 +30,16 @@ phases:
   build:
     commands:
       - echo "Running functional tests"
-      - chmod +x scripts/codebuild-test-ddc-single-region.sh
-      - ./scripts/codebuild-test-ddc-single-region.sh
+      - |
+        if [ -n "$PEER_REGION_DDC_ENDPOINT" ]; then
+          echo "Multi-region deployment detected - running multi-region tests"
+          chmod +x scripts/codebuild-test-ddc-multi-region.sh
+          ./scripts/codebuild-test-ddc-multi-region.sh
+        else
+          echo "Single-region deployment detected - running single-region tests"
+          chmod +x scripts/codebuild-test-ddc-single-region.sh
+          ./scripts/codebuild-test-ddc-single-region.sh
+        fi
   post_build:
     commands:
       - echo "Testing completed"

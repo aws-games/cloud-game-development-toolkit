@@ -1348,6 +1348,52 @@ Hierarchical=(Type=Hierarchical, Inner=Primary, Inner=Secondary, Inner=Local)
 
 This configuration provides automatic failover and optimal routing for global development teams.
 
+## Deployment Control
+
+The module provides flexible deployment and testing control through configuration flags:
+
+| Scenario | Configuration | Deploy | Single-Region Test | Multi-Region Test | Use Case |
+|----------|---------------|--------|-------------------|-------------------|----------|
+| **Default** | `{}` (all defaults) | ✅ | ✅ | ❌ | Most common (80% of users) |
+| **No Testing** | `enable_single_region_validation = false` | ✅ | ❌ | ❌ | CI/CD environments |
+| **Multi-Region Primary** | `enable_multi_region_validation = true`<br/>`peer_region_ddc_endpoint = null` | ✅ | ✅ | ✅ | Primary region |
+| **Multi-Region Secondary** | `peer_region_ddc_endpoint = "us-east-1.ddc.example.com"` | ✅ | ✅ | ❌ | Secondary region |
+| **Debug Mode** | `debug = true` | ✅ (forced) | ✅ (forced) | Normal | Development/troubleshooting |
+
+### Key Points
+
+- **Single-region testing** is enabled by default (valuable for all deployments)
+- **Multi-region testing** should only be enabled in the primary region to avoid duplication
+- **Debug mode** forces deployments and single-region tests to run (useful for development)
+- **Multi-region killswitch** prevents duplicate cross-region testing
+
+### Example Configurations
+
+**Single-Region (Default)**:
+```hcl
+ddc_application_config = {
+  # All defaults - gets single-region testing automatically
+}
+```
+
+**Multi-Region Primary**:
+```hcl
+ddc_application_config = {
+  enable_multi_region_validation = true
+  peer_region_ddc_endpoint = null  # Identifies as primary
+}
+```
+
+**Multi-Region Secondary**:
+```hcl
+ddc_application_config = {
+  peer_region_ddc_endpoint = "us-east-1.ddc.example.com"
+  # enable_multi_region_validation defaults to false
+}
+```
+
+For detailed deployment control scenarios, see the [DEVELOPER_GUIDE](DEVELOPER_GUIDE.md#deployment-control-scenarios).
+
 ## Verification & Testing
 
 ## Testing Options

@@ -28,6 +28,7 @@ module "unreal_cloud_ddc" {
   # DDC Application Configuration
   ddc_application_config = {
     enable_single_region_validation = true # Validate single-region deployment constraints (disable for production)
+    single_region_validation_timeout_minutes = 20  # Allow enough time for 15 attempts × 60s + buffer
     ddc_namespaces = {
       "project1" = {
         description = "Main project"
@@ -43,6 +44,7 @@ module "unreal_cloud_ddc" {
   # DDC Infrastructure Configuration
   ddc_infra_config = {
     region                 = local.region
+    kubernetes_version     = "1.34"  # Remove later - testing override (defaults to 1.35)
     eks_node_group_subnets = aws_subnet.private[*].id
 
     # EKS API Access Configuration (hybrid)

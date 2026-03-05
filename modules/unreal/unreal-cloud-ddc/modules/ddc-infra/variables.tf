@@ -253,11 +253,11 @@ variable "public_access_cidrs" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.31"
+  default     = "1.35"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
   validation {
-    condition     = contains(["1.31", "1.32", "1.33"], var.kubernetes_version)
+    condition     = contains(["1.31", "1.32", "1.33", "1.34", "1.35"], var.kubernetes_version)
     error_message = "Version number must be supported version in AWS Kubernetes"
   }
 }
@@ -317,10 +317,10 @@ variable "eks_access_entries" {
   }))
   description = <<EOT
     Map of EKS access entries for granting cluster access to additional IAM principals.
-    
+
     Key = unique identifier for the access entry
     Value = access entry configuration
-    
+
     Example:
     eks_access_entries = {
       "argocd" = {

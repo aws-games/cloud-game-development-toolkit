@@ -799,6 +799,161 @@ This architecture enables teams to choose the deployment pattern that best fits 
 
 ## APPLICATION CONFIG
 
+### Deployment Control Scenarios
+
+**TLDR**: The module provides flexible deployment control through testing flags and debug mode. Most users deploy single-region with default testing, while multi-region deployments should enable multi-region testing only in the primary region to avoid duplication.
+
+#### Deployment Control Overview
+
+| Scenario | Configuration | Deploy Runs | Single-Region Test | Multi-Region Test | Use Case |
+|----------|---------------|-------------|-------------------|-------------------|----------|
+| **Single-Region (Default)** | `{}` (all defaults) | ✅ | ✅ (default: true) | ❌ (default: false) | 80% of users |
+| **Single-Region (No Testing)** | `enable_single_region_validation = false` | ✅ | ❌ | ❌ | CI/CD environments |
+| **Multi-Region (Primary)** | `enable_multi_region_validation = true`<br/>`peer_region_ddc_endpoint = null` | ✅ | ✅ | ✅ | Primary region |
+| **Multi-Region (Secondary)** | `enable_multi_region_validation = false`<br/>`peer_region_ddc_endpoint = "us-east-1.ddc.example.com"` | ✅ | ✅ | ❌ | Secondary region |
+| **Debug Mode** | `debug = true` | ✅ (forced) | ✅ (forced) | Normal behavior | Development/troubleshooting |
+
+#### Scenario 1: Single-Region Deployment (Default)
+
+**Configuration**:
+```hcl
+ddc_app_config = {
+  # All defaults - no explicit testing config needed
+}
+```
+
+**What happens**:
+- ✅ Deploy CodeBuild runs (deploys DDC app)
+- ✅ Single-region test runs (default: `enable_single_region_validation = true`)
+- ❌ Multi-region test doesn't run (default: `enable_multi_region_validation = false`)
+
+**Use case**: Most common scenario for development and single-region production deployments.
+
+#### Scenario 2: Single-Region Deployment (No Testing)
+
+**Configuration**:
+```hcl
+ddc_app_config = {
+  enable_single_region_validation = false
+}
+```
+
+**What happens**:
+- ✅ Deploy CodeBuild runs
+- ❌ No testing runs
+
+**Use case**: CI/CD environments where testing is handled separately, or when you want fastest possible deployment.
+
+#### Scenario 3: Multi-Region Deployment (Recommended)
+
+**Primary region (us-east-1)**:
+```hcl
+ddc_app_config = {
+  enable_multi_region_validation = true
+  peer_region_ddc_endpoint = null  # Identifies as primary
+}
+```
+
+**Secondary region (us-west-2)**:
+```hcl
+ddc_app_config = {
+  enable_multi_region_validation = false  # No multi-region tests needed
+  peer_region_ddc_endpoint = "us-east-1.ddc.example.com"
+}
+```
+
+**What happens**:
+- **Primary region**: Deploy + Single-region test + Multi-region test
+- **Secondary region**: Deploy + Single-region test (multi-region blocked by killswitch)
+
+**Use case**: Multi-region deployments where you want comprehensive testing in primary region only.
+
+#### Scenario 4: Debug Mode (Development)
+
+**Configuration** (only enable in ONE region for multi-region):
+```hcl
+debug = true
+ddc_app_config = {
+  enable_multi_region_validation = true
+}
+```
+
+**What happens**:
+- ✅ Deploy CodeBuild runs (forced by debug timestamp)
+- ✅ Single-region test runs (forced by debug timestamp)
+- ❌ Multi-region test runs normally (NOT forced by debug to prevent duplication)
+
+**Use case**: Development and troubleshooting when you need to force deployments and tests to run.
+
+#### Scenario 5: Multi-Region with Custom Testing
+
+**Primary region - full testing**:
+```hcl
+ddc_app_config = {
+  enable_single_region_validation = true   # Default
+  enable_multi_region_validation = true
+  peer_region_ddc_endpoint = null
+}
+```
+
+**Secondary region - single-region testing only**:
+```hcl
+ddc_app_config = {
+  enable_single_region_validation = true   # Default
+  enable_multi_region_validation = false   # Explicitly disabled
+  peer_region_ddc_endpoint = "us-east-1.ddc.example.com"
+}
+```
+
+**Use case**: Advanced users who want explicit control over testing behavior in each region.
+
+#### Key Design Principles
+
+**Sensible Defaults**:
+- Single-region testing enabled (valuable for everyone)
+- Multi-region testing disabled (only enable in primary region)
+- Users get testing by default without having to think about it
+
+**Multi-Region Killswitch**:
+- Multi-region tests only run when `peer_region_ddc_endpoint = null` (primary region)
+- Prevents duplicate cross-region testing from both regions
+- Secondary regions focus on local functionality testing
+
+**Debug Override Behavior**:
+- `debug = true` forces single-region tests to run via timestamp
+- `debug = true` does NOT force multi-region tests (prevents duplication)
+- Only enable debug in ONE region for multi-region deployments
+
+#### Testing Control Variables
+
+**`enable_single_region_validation`** (default: `true`):
+- Controls whether single-region functionality tests run
+- Tests DDC service health, basic API functionality
+- Valuable for both single and multi-region deployments
+- Safe to run from any region
+
+**`enable_multi_region_validation`** (default: `false`):
+- Controls whether cross-region replication tests run
+- Tests data synchronization between regions
+- Should only be enabled in primary region
+- Blocked by killswitch when `peer_region_ddc_endpoint` is set
+
+**`peer_region_ddc_endpoint`**:
+- `null`: Identifies this region as primary (multi-region tests allowed)
+- Set to URL: Identifies this region as secondary (multi-region tests blocked)
+- Used by multi-region tests to know which other region to test against
+
+#### Common Usage Patterns
+
+**Most Common (80% of users)**:
+- Scenario 1: Single-region with defaults → Deploy + Single-region test
+- Scenario 3: Multi-region with recommended config → Primary gets all tests, secondary gets single-region only
+
+**Edge Cases**:
+- Scenario 2: No testing (CI/CD environments)
+- Scenario 4: Debug mode (development/troubleshooting)
+- Scenario 5: Custom testing control (advanced users)
+
 ### Helm Architecture
 
 #### Package Management for Kubernetes
@@ -4600,6 +4755,165 @@ curl -f -s "https://us-east-1.ddc.example.com/health" > /dev/null 2>&1
 ```
 
 **Expected Response**: `HEALTHY`
+
+## Terraform ↔ Kubernetes/Helm Mapping
+
+**CRITICAL UNDERSTANDING**: For developers coming from Terraform, understanding how Terraform concepts map to Kubernetes/Helm is essential for working with this module.
+
+### Complete Technology Mapping
+
+| Terraform Concept | Kubernetes/Helm Equivalent | What It Does |
+|-------------------|----------------------------|---------------|
+| **HCL File (.tf)** | **Kubernetes Manifest (.yaml)** | Declares desired infrastructure state |
+| **Resource Block** | **Kubernetes Object** (Service, Pod, etc.) | Defines a single piece of infrastructure |
+| **Variables** | **Annotations** | Parameters that control behavior |
+| **Terraform Module** | **Helm Chart** | Reusable template with configurable values |
+| **terraform apply** | **helm install/upgrade** | Applies the configuration |
+| **Terraform Provider** | **Kubernetes Controller** | The thing that actually makes API calls |
+| **terraform plan** | **helm template** or **kubectl diff** | Shows what will change |
+| **terraform.tfstate** | **etcd** (Kubernetes database) | Stores current state |
+
+### Detailed Examples
+
+#### 1. Resource Declaration
+
+**Terraform**:
+```hcl
+resource "aws_instance" "web" {
+  instance_type = "t3.micro"
+  ami          = "ami-12345"
+  
+  tags = {
+    Name = "web-server"
+  }
+}
+```
+
+**Kubernetes Manifest**:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+spec:
+  type: LoadBalancer
+  loadBalancerClass: eks.amazonaws.com/nlb
+```
+
+#### 2. Variables/Parameters
+
+**Terraform**:
+```hcl
+variable "instance_type" {
+  default = "t3.micro"
+}
+
+resource "aws_instance" "web" {
+  instance_type = var.instance_type  # Variable controls API parameter
+}
+```
+
+**Kubernetes Annotations**:
+```yaml
+metadata:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"  # Annotation controls API parameter
+```
+
+#### 3. The "Apply" Process
+
+**Terraform**:
+```bash
+terraform plan   # Shows: will create aws_instance.web
+terraform apply  # Calls: ec2.RunInstances(InstanceType="t3.micro")
+```
+
+**Helm/Kubernetes**:
+```bash
+helm template    # Shows: will create Service object
+helm upgrade     # Calls: kubectl apply (stores in etcd)
+                 # Controller sees change, calls: elbv2.CreateLoadBalancer(Scheme="internet-facing")
+```
+
+### Our Specific Flow
+
+**What our code does**:
+
+**HCL (locals.tf)** = Terraform configuration
+```hcl
+service = {
+  loadBalancerClass = "eks.amazonaws.com/nlb"
+  annotations = {
+    "service.beta.kubernetes.io/aws-load-balancer-scheme" = "internet-facing"
+  }
+}
+```
+
+**yamlencode()** = Converts to Helm values (like terraform plan)
+```yaml
+service:
+  loadBalancerClass: eks.amazonaws.com/nlb
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+```
+
+**Helm Chart** = Template that uses these values
+```yaml
+# Inside Epic's Helm chart template
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    {{- range $key, $value := .Values.service.annotations }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  loadBalancerClass: {{ .Values.service.loadBalancerClass }}
+```
+
+**helm upgrade** = Like terraform apply
+```bash
+helm upgrade ddc-app ./chart --values values.yaml
+# This runs kubectl apply on the rendered manifest
+```
+
+**EKS Controller** = Like AWS Provider
+```
+Controller sees: "New Service with loadBalancerClass=eks.amazonaws.com/nlb"
+Controller calls: aws elbv2 create-load-balancer --scheme internet-facing
+```
+
+### Key Insight
+
+**Annotations are exactly like Terraform variables** - they're parameters that get passed to the "provider" (controller) which then makes the actual AWS API calls!
+
+The only difference is when the apply happens:
+- **Terraform**: You manually run `terraform apply`
+- **Kubernetes**: Controller automatically "applies" when it sees changes
+
+### Deployment Tool Hierarchy
+
+| Tool | What It Deploys | When To Use |
+|------|-----------------|-------------|
+| **kubectl** | Raw Kubernetes manifests (.yaml files) | Simple deployments, debugging, one-off resources |
+| **helm** | Helm charts (templated manifests + values) | Complex applications, reusable deployments, parameterized configs |
+
+**In our case**: We use Helm because Epic provides a Helm chart, and we need parameterization.
+
+**What Actually Happens**:
+```bash
+# Both of these ultimately do the same thing:
+kubectl apply -f service.yaml        # Direct manifest deployment
+helm upgrade ddc-app ./chart         # Template + values → manifest → kubectl apply
+```
+
+**Helm is basically a wrapper around kubectl** that:
+1. Renders templates with your values
+2. Calls `kubectl apply` on the rendered manifests
+3. Tracks deployment history
 
 ## Helm Architecture
 

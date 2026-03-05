@@ -71,7 +71,7 @@ variable "ddc_application_config" {
 
     # Deployment Orchestration
     cluster_ready_timeout_minutes = optional(number, 10)
-    enable_single_region_validation = optional(bool, false)
+    enable_single_region_validation = optional(bool, true)
     single_region_validation_timeout_minutes = optional(number, 5)
     enable_multi_region_validation = optional(bool, false)
     peer_region_ddc_endpoint = optional(string, null)
@@ -121,8 +121,18 @@ DDC application configuration passed from parent module.
 
 ## Deployment Orchestration
 - cluster_ready_timeout_minutes: Wait time for EKS cluster readiness
-- enable_single_region_validation: Run DDC functional tests after deployment
-- single_region_validation_timeout_minutes: Timeout for validation tests
+- enable_single_region_validation: Run single-region DDC tests (default: true)
+  * Tests this specific region's DDC functionality
+  * Valuable for both single-region and multi-region deployments
+  * debug=true forces this to run regardless of changes
+- enable_multi_region_validation: Run multi-region connectivity tests (default: false)
+  * Tests cross-region DDC replication and connectivity
+  * Should only be enabled in PRIMARY region (peer_region_ddc_endpoint=null)
+  * Automatically blocked in secondary regions to prevent duplication
+  * debug=true does NOT force this to run (avoids multi-region test duplication)
+- peer_region_ddc_endpoint: DDC endpoint of peer region (null = primary region)
+- single_region_validation_timeout_minutes: Timeout for single-region tests
+- multi_region_validation_timeout_minutes: Timeout for multi-region tests
 
 ## Custom Helm Values
 - custom_helm_values: Override all generated values with custom chart values (for non-Epic charts)

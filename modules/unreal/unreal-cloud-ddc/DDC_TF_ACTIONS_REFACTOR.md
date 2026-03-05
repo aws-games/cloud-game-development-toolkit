@@ -130,8 +130,10 @@ Parent Module (main.tf)
 - [ ] Update architecture diagrams to show DNS → LoadBalancer → Pods flow
 
 **Multi-Region Enhancement**:
-- [ ] Add conditional logic to buildspec to detect `PEER_REGION_DDC_ENDPOINT`
-- [ ] Switch between single-region and multi-region test scripts automatically
+- [x] Add conditional logic to buildspec to detect `PEER_REGION_DDC_ENDPOINT`
+- [x] Switch between single-region and multi-region test scripts automatically
+- [ ] **KNOWN ISSUE**: Multi-region test script missing environment variables and DNS fallback logic
+- [ ] **TODO**: Fix multi-region test script parity with single-region (missing PRIMARY_DDC_ENDPOINT, SECONDARY_DDC_ENDPOINT, bearer token retrieval, DNS fallback)
 - [ ] Test multi-region deployment and validation
 
 ## Multi-Region Implementation Status
@@ -153,14 +155,29 @@ phases:
   build:
     commands:
       - echo "Running functional tests"
-      - chmod +x scripts/codebuild-test-ddc-single-region.sh
-      - ./scripts/codebuild-test-ddc-single-region.sh
-      # Note: Multi-region logic handled within the script based on environment variables
+      - |
+        if [ -n "$PEER_REGION_DDC_ENDPOINT" ]; then
+          echo "Multi-region deployment detected - running multi-region tests"
+          chmod +x scripts/codebuild-test-ddc-multi-region.sh
+          ./scripts/codebuild-test-ddc-multi-region.sh
+        else
+          echo "Single-region deployment detected - running single-region tests"
+          chmod +x scripts/codebuild-test-ddc-single-region.sh
+          ./scripts/codebuild-test-ddc-single-region.sh
+        fi
 ```
 
+**⚠️ KNOWN ISSUE**: Multi-region test script is incomplete:
+- Missing required environment variables: `PRIMARY_DDC_ENDPOINT`, `SECONDARY_DDC_ENDPOINT`
+- Missing DNS fallback logic (Google DNS resolution)
+- Missing bearer token retrieval from Secrets Manager
+- Missing progressive health checks and kubectl discovery
+- **Current behavior**: Multi-region tests would fail if they ran, but killswitch prevents execution
+- **Workaround**: Single-region tests run in both regions (works correctly)
+
 **Script-Level Multi-Region Detection**:
-- `codebuild-test-ddc-single-region.sh` - Default single-region testing
-- `codebuild-test-ddc-multi-region.sh` - Dedicated multi-region testing
+- `codebuild-test-ddc-single-region.sh` - Default single-region testing (✅ WORKING)
+- `codebuild-test-ddc-multi-region.sh` - Dedicated multi-region testing (❌ BROKEN)
 - Environment variable `PEER_REGION_DDC_ENDPOINT` determines which script to use
 
 ## EKS Auto Mode Destroy Issue Analysis

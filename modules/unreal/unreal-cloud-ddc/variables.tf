@@ -163,7 +163,7 @@ variable "ddc_infra_config" {
     region         = optional(string, null)
 
     # EKS Cluster Configuration
-    kubernetes_version     = optional(string, "1.33")
+    kubernetes_version     = optional(string, "1.35")
     eks_node_group_subnets = optional(list(string), [])
 
     # EKS API Access Configuration (matches AWS provider exactly)

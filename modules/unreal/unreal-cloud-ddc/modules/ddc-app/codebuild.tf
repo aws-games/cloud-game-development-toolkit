@@ -159,7 +159,7 @@ resource "aws_codebuild_project" "ddc_tester" {
     # Test configuration
     environment_variable {
       name  = "MAX_TEST_ATTEMPTS"
-      value = "30"
+      value = "15"
     }
 
     environment_variable {
@@ -180,25 +180,41 @@ resource "aws_codebuild_project" "ddc_tester" {
 ################################################################################
 # Terraform Actions for DDC Deployment
 #
-# WORKAROUND: Due to a Terraform Actions bug, depends_on is ignored between
-# action-triggered resources, causing parallel execution instead of sequential.
+# CONTROL LAYERS:
+# Layer 1: Module existence - ddc_app_config present → submodule deployed
+# Layer 2: Testing control - enable_*_validation controls test CodeBuild
+# Layer 3: Debug override - debug=true forces single-region tests only (prevents duplication)
 #
-# GitHub Issue: https://github.com/hashicorp/terraform/issues/38230
+# DEPLOYMENT: Always runs when ddc_app_config is present (no killswitch needed)
+# TESTING DEFAULTS:
+# - enable_single_region_validation = true (valuable for both single + multi-region)
+# - enable_multi_region_validation = false (only enable in primary region)
 #
-# Current Solution:
-# - Deploy and test actions run in parallel (Terraform bug)
-# - Test buildspec includes workaround script that waits for deploy completion
-# - Script uses AWS CLI to monitor deploy CodeBuild status before proceeding
+# MULTI-REGION DEPLOYMENT PATTERN:
+# - Two simultaneous single-region deployments
+# - Each region: deploy CodeBuild + single-region tests (default)
+# - Primary region: multi-region tests (peer_region_ddc_endpoint=null)
+# - Secondary region: multi-region tests blocked (peer_region_ddc_endpoint=set)
 #
-# Future Solutions (when bug is fixed):
-# - Remove workaround script from test buildspec
-# - Rely on native Terraform depends_on functionality
-# - Alternative: Migrate to CodePipeline or Step Functions for orchestration
+# RECOMMENDED MULTI-REGION CONFIGURATION:
+# Primary region (us-east-1):
+#   enable_single_region_validation = true   # Default
+#   enable_multi_region_validation = true    # Enable cross-region tests
+#   peer_region_ddc_endpoint = null          # Identifies as primary
+#
+# Secondary region (us-west-2):
+#   enable_single_region_validation = true   # Default  
+#   enable_multi_region_validation = false   # No multi-region tests needed
+#   peer_region_ddc_endpoint = "us-east-1.ddc.example.com"
+#
+# DEBUG BEHAVIOR:
+# - debug=true forces single-region tests to run via timestamp
+# - debug=true does NOT force multi-region tests (prevents duplication)
+# - Only enable debug=true in ONE region for multi-region deployments
 ################################################################################
 
-# Deploy action
-# NOTE: This action runs in parallel with test action due to Terraform Actions bug
-# The test action includes a workaround script to wait for this deploy to complete
+# Deploy action - always runs when ddc_app_config present
+# Runs on first apply + when changes detected (normal Terraform behavior)
 resource "terraform_data" "deploy_trigger" {
   input = merge(
     {
@@ -224,23 +240,38 @@ resource "terraform_data" "deploy_trigger" {
   ]
 }
 
-# Test action - includes workaround for Terraform Actions dependency bug
-# WORKAROUND: depends_on is ignored between action resources, so test runs in parallel
-# with deploy. The test buildspec includes a script that waits for deploy completion.
+# Test action - controlled by validation flags + multi-region logic
+# SINGLE-REGION: enable_single_region_validation=true (default) + debug override
+# MULTI-REGION: enable_multi_region_validation=true (primary region only, no debug override)
 resource "terraform_data" "test_trigger" {
-  count = var.ddc_application_config.enable_single_region_validation || var.ddc_application_config.enable_multi_region_validation ? 1 : 0
+  # Multi-region killswitch: multi-region tests only in primary region (peer_region_ddc_endpoint=null)
+  count = (
+    (var.ddc_application_config.enable_single_region_validation) ||
+    (var.ddc_application_config.enable_multi_region_validation && var.ddc_application_config.peer_region_ddc_endpoint == null)
+  ) ? 1 : 0
 
   input = merge(
     {
+      # Test-specific changes (only trigger test)
       test_config_hash = sha256(jsonencode({
         dns_endpoint = var.ddc_dns_endpoint
         bearer_token_secret = var.bearer_token_secret_arn
         peer_endpoint = var.ddc_application_config.peer_region_ddc_endpoint
+        single_region_validation = var.ddc_application_config.enable_single_region_validation
+        multi_region_validation = var.ddc_application_config.enable_multi_region_validation
       }))
       test_buildspec_hash = filemd5("${path.module}/buildspecs/test-ddc.yml")
+      
+      # Deploy changes that should trigger tests (deploy changes → test runs)
+      deploy_config_hash = sha256(jsonencode(var.ddc_application_config))
+      deploy_values_hash = local_file.ddc_helm_values.content_md5
+      deploy_buildspec_hash = filemd5("${path.module}/buildspecs/deploy-ddc.yml")
+      
+      # Shared changes (trigger both deploy and test)
       assets_hash = data.archive_file.assets.output_md5
     },
-    var.debug ? { debug_timestamp = timestamp() } : {}
+    # Debug override: Only forces single-region tests (prevents multi-region duplication)
+    (var.debug && var.ddc_application_config.enable_single_region_validation) ? { debug_timestamp = timestamp() } : {}
   )
 
   lifecycle {

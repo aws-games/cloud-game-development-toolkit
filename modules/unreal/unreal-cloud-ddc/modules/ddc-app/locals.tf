@@ -179,11 +179,13 @@ locals {
         port     = 80
         targetPort = "http"
         
+        # EKS Auto Mode Load Balancer Class (REQUIRED)
+        loadBalancerClass = "eks.amazonaws.com/nlb"
+        
         # EKS Auto Mode Load Balancer annotations
         annotations = merge(
           {
             # EKS Auto Mode NLB configuration
-            "service.beta.kubernetes.io/aws-load-balancer-type"   = "external"
             "service.beta.kubernetes.io/aws-load-balancer-scheme" = var.load_balancers_config != null && var.load_balancers_config.nlb != null ? (var.load_balancers_config.nlb.internet_facing ? "internet-facing" : "internal") : "internet-facing"
             
             # EKS Auto Mode uses IP targeting by default
