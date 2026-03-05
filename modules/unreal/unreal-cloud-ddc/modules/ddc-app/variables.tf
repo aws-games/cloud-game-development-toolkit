@@ -44,30 +44,30 @@ variable "ddc_application_config" {
       description = optional(string, null)
       regions = optional(list(string), null)
     })), null)
-    
+
     # Pod Resources (Main DDC Service)
     instance_type    = optional(string, "i4i.xlarge")
     cpu_requests     = optional(string, "2000m")
     memory_requests  = optional(string, "8Gi")
     replica_count    = optional(number, 2)
-    
+
     # Pod Resources (Worker Pods)
     worker_cpu_requests = optional(string, "1000m")
     worker_memory_requests = optional(string, "4Gi")
-    
+
     # Application Configuration
     ddc_access_group = optional(string, "app-cloud-ddc-project")
     ddc_admin_group  = optional(string, "cloud-ddc-admin")
     container_image = optional(string, "ghcr.io/epicgames/unreal-cloud-ddc:1.2.0")
     helm_chart = optional(string, "oci://ghcr.io/epicgames/unreal-cloud-ddc:1.2.0+helm")
-    
+
     # Multi-Region Replication
     enable_multi_region_replication = optional(bool, false)
     replication_mode = optional(string, "speculative")
-    
+
     # Authentication
     bearer_token_secret_arn = optional(string, null)
-    
+
 
     # Deployment Orchestration
     cluster_ready_timeout_minutes = optional(number, 10)
@@ -76,7 +76,7 @@ variable "ddc_application_config" {
     enable_multi_region_validation = optional(bool, false)
     peer_region_ddc_endpoint = optional(string, null)
     multi_region_validation_timeout_minutes = optional(number, 3)
-    
+
     # Custom Helm Values Override
     custom_helm_values = optional(map(any), null)
   })
@@ -275,6 +275,12 @@ variable "cluster_name" {
   description = "EKS cluster name"
   type        = string
   default     = null
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the EKS cluster"
+  type        = string
+  default     = "1.35"
 }
 
 variable "namespace" {

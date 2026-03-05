@@ -12,9 +12,20 @@ echo "[DDC-DEPLOY] Chart reference: $DDC_CHART"
 # Check for existing Helm releases and clean up if needed
 echo "[DDC-DEPLOY] Checking for existing Helm releases..."
 if helm list -n $NAMESPACE | grep -q $NAME_PREFIX-app; then
-    echo "[DDC-DEPLOY] Found existing Helm release, cleaning up first..."
-    helm uninstall $NAME_PREFIX-app -n $NAMESPACE || true
-    sleep 10
+    echo "[DDC-DEPLOY] Found existing Helm release, checking service health..."
+    
+    # Check if service exists and is healthy after potential K8s upgrade
+    if ! kubectl get service $NAME_PREFIX -n $NAMESPACE >/dev/null 2>&1; then
+        echo "[DDC-DEPLOY] Service missing after K8s upgrade, cleaning Helm state..."
+        helm uninstall $NAME_PREFIX-app -n $NAMESPACE || true
+        sleep 10
+    elif ! kubectl get pods -l app.kubernetes.io/name=unreal-cloud-ddc -n $NAMESPACE >/dev/null 2>&1; then
+        echo "[DDC-DEPLOY] Pods missing, cleaning Helm state..."
+        helm uninstall $NAME_PREFIX-app -n $NAMESPACE || true
+        sleep 10
+    else
+        echo "[DDC-DEPLOY] Existing release appears healthy, proceeding with upgrade..."
+    fi
 fi
 
 # Deploy DDC via Helm

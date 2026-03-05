@@ -73,24 +73,24 @@ echo "🐳 Checking DDC pod status..."
 DDC_PODS=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | wc -l || echo "0")
 if [ "$DDC_PODS" -gt 0 ]; then
     echo "   📊 Found $DDC_PODS pod(s) in namespace $NAMESPACE"
-    
+
     # Check pod readiness
     READY_PODS=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | grep -c "Running" 2>/dev/null || echo "0")
     PENDING_PODS=$(kubectl get pods -n "$NAMESPACE" --no-headers 2>/dev/null | grep -c "Pending" 2>/dev/null || echo "0")
-    
+
     # Clean up any newlines that might break arithmetic
     READY_PODS=$(echo "$READY_PODS" | tr -d '\n')
     PENDING_PODS=$(echo "$PENDING_PODS" | tr -d '\n')
-    
+
     echo "   ✅ Running pods: $READY_PODS"
     if [ "$PENDING_PODS" -gt 0 ]; then
         echo "   ⏳ Pending pods: $PENDING_PODS"
     fi
-    
+
     # Show pod details
     echo "   📋 Pod status:"
     kubectl get pods -n "$NAMESPACE" --no-headers | sed 's/^/   📦 /' || echo "   (unable to get pod details)"
-    
+
     # Wait for pods to be ready if any are pending
     if [ "$PENDING_PODS" -gt 0 ]; then
         echo "   ⏳ Waiting up to 5 minutes for pods to be ready..."
@@ -212,16 +212,16 @@ done
 if [ "$DNS_SUCCESS" = "false" ]; then
     echo "   ❌ All DNS attempts failed after $MAX_TEST_ATTEMPTS tries"
     echo "   🔍 Testing for local DNS caching issues..."
-    
+
     # Check with external DNS servers (same logic as local script)
     echo "   DNS resolution (Google DNS):"
     RESOLVED_IP=$(dig +short @8.8.8.8 "$(echo "$PRIMARY_ENDPOINT" | sed 's|https\?://||' | cut -d/ -f1)" | head -1 || echo "")
     echo "   Resolved IP: $RESOLVED_IP"
-    
+
     if [ -n "$RESOLVED_IP" ]; then
         echo "   ⚠️  DNS propagation and local DNS caching issue detected"
         echo "   💡 Continuing test with Google DNS resolved IP ($RESOLVED_IP)"
-        
+
         # Test with resolved IP and Host header
         DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https\?://||' | cut -d/ -f1)
         RESOLVED_ENDPOINT="$(echo "$PRIMARY_ENDPOINT" | sed "s|$DNS_HOST|$RESOLVED_IP|")"
@@ -237,7 +237,7 @@ if [ "$DNS_SUCCESS" = "false" ]; then
     else
         echo "   ❌ Could not resolve IP with Google DNS"
     fi
-    
+
     if [ "$DNS_SUCCESS" = "false" ]; then
         if [ "$NLB_WORKS" = "true" ]; then
             echo "   ✅ DEPLOYMENT TEST PASSED: NLB health check successful"
@@ -263,7 +263,7 @@ while [ $attempt -le $READY_ATTEMPTS ]; do
     else
         HEALTH_READY=$(curl -s --max-time 10 $CURL_OPTS "$PRIMARY_ENDPOINT/health/ready" || echo "FAILED")
     fi
-    
+
     if echo "$HEALTH_READY" | grep -qi "healthy"; then
         echo "   ✅ /health/ready: $HEALTH_READY"
         READY_SUCCESS=true
@@ -296,7 +296,7 @@ if [ -n "$BEARER_TOKEN" ]; then
             -H "Authorization: ServiceAccount $BEARER_TOKEN" \
             "$PRIMARY_ENDPOINT/api/v1/status" || echo "FAILED")
     fi
-    
+
     STATUS_CODE=$(echo "$API_STATUS" | grep "^HTTP_STATUS:" | cut -d: -f2)
     if [ "$STATUS_CODE" = "200" ]; then
         echo "   ✅ API authentication successful"
@@ -321,34 +321,60 @@ TEST_IOHASH="D11A5A03616CB925EF18A9B587645CE53F0717D6"
 
 echo "📤 Testing PUT operation..."
 echo "=========================="
-echo "   🔄 Attempting PUT request (timeout: 30s)..."
-if [ "$USE_RESOLVED_IP" = "true" ]; then
-    PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
-        -H "Host: $DNS_HOST" \
-        "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-else
-    PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-fi
+PUT_SUCCESS=false
+PUT_ATTEMPTS=5
+put_attempt=1
+while [ $put_attempt -le $PUT_ATTEMPTS ]; do
+    echo "   🔄 PUT attempt $put_attempt/$PUT_ATTEMPTS: Attempting PUT request (timeout: 30s)..."
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
+        PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
+            -H "Host: $DNS_HOST" \
+            "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    else
+        PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    fi
 
-if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
-    echo "❌ PUT request failed - curl command timed out or failed"
+    if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
+        echo "   ❌ PUT attempt $put_attempt failed: curl command timed out or failed"
+        if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+            echo "   ⏳ Waiting 30 seconds before retry (ScyllaDB schema agreement may still be in progress)..."
+            sleep 30
+        fi
+    else
+        PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        if [ "$PUT_STATUS" = "200" ] || [ "$PUT_STATUS" = "201" ]; then
+            PUT_TIME=$(echo "$PUT_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
+            PUT_SIZE=$(echo "$PUT_RESPONSE" | grep "SIZE_UPLOAD:" | cut -d: -f2)
+            echo "   ✅ PUT attempt $put_attempt successful!"
+            PUT_SUCCESS=true
+            break
+        else
+            echo "   ❌ PUT attempt $put_attempt failed: HTTP $PUT_STATUS"
+            if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+                echo "   ⏳ Waiting 30 seconds before retry..."
+                sleep 30
+            fi
+        fi
+    fi
+    put_attempt=$((put_attempt + 1))
+done
+
+if [ "$PUT_SUCCESS" = "false" ]; then
+    echo "❌ PUT request failed after $PUT_ATTEMPTS attempts"
+    echo "💡 This indicates ScyllaDB schema agreement issues or network connectivity problems"
     exit 1
 fi
-
-PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-PUT_TIME=$(echo "$PUT_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
-PUT_SIZE=$(echo "$PUT_RESPONSE" | grep "SIZE_UPLOAD:" | cut -d: -f2)
 
 echo "📊 PUT Results:"
 echo "   Status: $PUT_STATUS"

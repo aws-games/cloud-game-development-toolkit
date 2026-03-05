@@ -82,7 +82,7 @@ resource "aws_codebuild_project" "ddc_deployer" {
 
   source {
     type = "S3"
-    location = "${aws_s3_bucket.assets.bucket}/assets.zip"
+    location = "${aws_s3_bucket.assets.bucket}/deploy/assets.zip"
     buildspec = file("${path.module}/buildspecs/deploy-ddc.yml")
   }
 
@@ -170,7 +170,7 @@ resource "aws_codebuild_project" "ddc_tester" {
 
   source {
     type = "S3"
-    location = "${aws_s3_bucket.assets.bucket}/assets.zip"
+    location = "${aws_s3_bucket.assets.bucket}/test/assets.zip"
     buildspec = file("${path.module}/buildspecs/test-ddc.yml")
   }
 
@@ -219,11 +219,12 @@ resource "terraform_data" "deploy_trigger" {
   input = merge(
     {
       cluster_name = var.cluster_name
+      cluster_version = var.kubernetes_version  # Trigger redeployment on K8s upgrades
       ddc_version  = var.ddc_application_config.helm_chart
       config_hash  = sha256(jsonencode(var.ddc_application_config))
       values_hash  = local_file.ddc_helm_values.content_md5
       buildspec_hash = filemd5("${path.module}/buildspecs/deploy-ddc.yml")
-      assets_hash    = data.archive_file.assets.output_md5
+      deploy_assets_hash = data.archive_file.deploy_assets.output_md5  # Only deploy assets
     },
     var.debug ? { debug_timestamp = timestamp() } : {}
   )
@@ -236,7 +237,7 @@ resource "terraform_data" "deploy_trigger" {
   }
 
   depends_on = [
-    aws_s3_object.assets
+    aws_s3_object.deploy_assets  # Only depend on deploy assets
   ]
 }
 
@@ -261,14 +262,13 @@ resource "terraform_data" "test_trigger" {
         multi_region_validation = var.ddc_application_config.enable_multi_region_validation
       }))
       test_buildspec_hash = filemd5("${path.module}/buildspecs/test-ddc.yml")
+      test_assets_hash = data.archive_file.test_assets.output_md5  # Only test assets
       
       # Deploy changes that should trigger tests (deploy changes → test runs)
       deploy_config_hash = sha256(jsonencode(var.ddc_application_config))
       deploy_values_hash = local_file.ddc_helm_values.content_md5
       deploy_buildspec_hash = filemd5("${path.module}/buildspecs/deploy-ddc.yml")
-      
-      # Shared changes (trigger both deploy and test)
-      assets_hash = data.archive_file.assets.output_md5
+      deploy_assets_hash = data.archive_file.deploy_assets.output_md5  # Deploy script changes should trigger tests
     },
     # Debug override: Only forces single-region tests (prevents multi-region duplication)
     (var.debug && var.ddc_application_config.enable_single_region_validation) ? { debug_timestamp = timestamp() } : {}
@@ -319,8 +319,8 @@ resource "aws_eks_access_policy_association" "codebuild_app_deployment" {
   }
 
   depends_on = [
-    aws_eks_access_entry.codebuild_app_deployment,
-    aws_s3_object.assets
+    aws_s3_object.deploy_assets,
+    aws_s3_object.test_assets
   ]
 }
 
@@ -389,7 +389,10 @@ data "aws_iam_policy_document" "codebuild_policy" {
     actions = [
       "s3:GetObject"
     ]
-    resources = ["${aws_s3_bucket.assets.arn}/*"]
+    resources = [
+      "${aws_s3_bucket.assets.arn}/deploy/assets.zip",
+      "${aws_s3_bucket.assets.arn}/test/assets.zip"
+    ]
   }
 
   # Additional permissions for Kubernetes API access

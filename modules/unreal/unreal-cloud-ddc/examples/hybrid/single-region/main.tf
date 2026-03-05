@@ -44,7 +44,6 @@ module "unreal_cloud_ddc" {
   # DDC Infrastructure Configuration
   ddc_infra_config = {
     region                 = local.region
-    kubernetes_version     = "1.34"  # Remove later - testing override (defaults to 1.35)
     eks_node_group_subnets = aws_subnet.private[*].id
 
     # EKS API Access Configuration (hybrid)

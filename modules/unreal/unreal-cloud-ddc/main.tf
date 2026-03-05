@@ -110,6 +110,7 @@ module "ddc_app" {
 
   # Use outputs from ddc_infra
   cluster_name        = module.ddc_infra.cluster_name
+  kubernetes_version  = var.ddc_infra_config.kubernetes_version
   nlb_dns_name        = local.nlb_dns_name
   namespace           = var.ddc_infra_config.kubernetes_namespace
   service_account_arn = module.ddc_infra.service_account_arn

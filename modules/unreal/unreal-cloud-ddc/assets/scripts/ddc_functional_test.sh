@@ -314,31 +314,60 @@ TEST_IOHASH="D11A5A03616CB925EF18A9B587645CE53F0717D6"
 
 echo "📤 Testing PUT operation..."
 echo "=========================="
-echo "   🔄 Attempting PUT request (timeout: 30s)..."
-if [ "$USE_RESOLVED_IP" = "true" ]; then
-    PUT_RESPONSE=$(curl -s --max-time 30 -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
-        -D /tmp/put_headers.txt \
-        -H "Host: $DNS_HOST" \
-        "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-else
-    PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
-        -D /tmp/put_headers.txt \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-fi
+PUT_SUCCESS=false
+PUT_ATTEMPTS=5
+put_attempt=1
+while [ $put_attempt -le $PUT_ATTEMPTS ]; do
+    echo "   🔄 PUT attempt $put_attempt/$PUT_ATTEMPTS: Attempting PUT request (timeout: 30s)..."
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
+        PUT_RESPONSE=$(curl -s --max-time 30 -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
+            -D /tmp/put_headers.txt \
+            -H "Host: $DNS_HOST" \
+            "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    else
+        PUT_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_UPLOAD:%{size_upload}" \
+            -D /tmp/put_headers.txt \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    fi
 
-if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
-    echo "❌ PUT request failed - curl command timed out or failed"
-    echo "💡 This indicates network connectivity or authentication issues"
+    if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
+        echo "   ❌ PUT attempt $put_attempt failed: curl command timed out or failed"
+        if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+            echo "   ⏳ Waiting 30 seconds before retry (ScyllaDB schema agreement may still be in progress)..."
+            sleep 30
+        fi
+    else
+        PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        if [ "$PUT_STATUS" = "200" ] || [ "$PUT_STATUS" = "201" ]; then
+            PUT_TIME=$(echo "$PUT_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
+            PUT_SIZE=$(echo "$PUT_RESPONSE" | grep "SIZE_UPLOAD:" | cut -d: -f2)
+            echo "   ✅ PUT attempt $put_attempt successful!"
+            PUT_SUCCESS=true
+            break
+        else
+            echo "   ❌ PUT attempt $put_attempt failed: HTTP $PUT_STATUS"
+            if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+                echo "   ⏳ Waiting 30 seconds before retry..."
+                sleep 30
+            fi
+        fi
+    fi
+    put_attempt=$((put_attempt + 1))
+done
+
+if [ "$PUT_SUCCESS" = "false" ]; then
+    echo "❌ PUT request failed after $PUT_ATTEMPTS attempts"
+    echo "💡 This indicates ScyllaDB schema agreement issues or network connectivity problems"
     echo "🔧 Debug info:"
     if [ "$USE_RESOLVED_IP" = "true" ]; then
         echo "   URL: $RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH"
@@ -349,10 +378,6 @@ if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
     echo "   Bearer token: ${BEARER_TOKEN:0:10}..."
     exit 1
 fi
-
-PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-PUT_TIME=$(echo "$PUT_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
-PUT_SIZE=$(echo "$PUT_RESPONSE" | grep "SIZE_UPLOAD:" | cut -d: -f2)
 
 echo "📊 PUT Results:"
 echo "   Status: $PUT_STATUS"
@@ -368,13 +393,7 @@ if [ -f /tmp/put_headers.txt ]; then
     rm -f /tmp/put_headers.txt
 fi
 
-if [ "$PUT_STATUS" = "200" ] || [ "$PUT_STATUS" = "201" ]; then
-    echo "✅ PUT operation successful"
-else
-    echo "❌ PUT operation failed"
-    echo "$PUT_RESPONSE"
-    exit 1
-fi
+echo "✅ PUT operation successful"
 
 echo ""
 echo "📥 Testing GET operation..."

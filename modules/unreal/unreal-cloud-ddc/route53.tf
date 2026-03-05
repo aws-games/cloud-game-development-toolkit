@@ -5,6 +5,10 @@
 # Private hosted zone for internal DNS (always created)
 resource "aws_route53_zone" "private" {
   name = local.service_domain
+  # CRITICAL: External-DNS EKS Addon creates records (A, AAAA, TXT) that can't be cleaned up when EKS cluster is destroyed
+  # because the External-DNS addon terminates with the cluster. force_destroy automatically deletes all
+  # records before zone deletion, preventing "HostedZoneNotEmpty" errors during terraform destroy.
+  force_destroy = true
 
   vpc {
     vpc_id     = var.vpc_id
