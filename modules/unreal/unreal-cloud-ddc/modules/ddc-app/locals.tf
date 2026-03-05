@@ -174,28 +174,25 @@ locals {
       ########################################
       
       service = {
-        type     = "LoadBalancer"  # AWS Load Balancer Controller creates NLB
+        type     = "LoadBalancer"  # EKS Auto Mode creates NLB automatically
         portName = "http"
         port     = 80
         targetPort = "http"
         
-        # AWS Load Balancer Controller annotations
+        # EKS Auto Mode Load Balancer annotations
         annotations = merge(
           {
-            # NLB configuration (from parent module load_balancers_config)
-            "service.beta.kubernetes.io/aws-load-balancer-type"   = "nlb"
+            # EKS Auto Mode NLB configuration
+            "service.beta.kubernetes.io/aws-load-balancer-type"   = "external"
             "service.beta.kubernetes.io/aws-load-balancer-scheme" = var.load_balancers_config != null && var.load_balancers_config.nlb != null ? (var.load_balancers_config.nlb.internet_facing ? "internet-facing" : "internal") : "internet-facing"
             
-            # EKS Auto Mode requires IP targeting (not Instance targeting)
+            # EKS Auto Mode uses IP targeting by default
             "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
-            
-            # Use Terraform-managed security groups (no circular dependency with VPC CIDR rules)
-            "service.beta.kubernetes.io/aws-load-balancer-security-groups" = var.nlb_security_group_id
             
             # Health check configuration for DDC endpoints
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-path"                = "/health/live"
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol"            = "HTTP"
-            "service.beta.kubernetes.io/aws-load-balancer-healthcheck-port"                = "80"
+            "service.beta.kubernetes.io/aws-load-balancer-healthcheck-port"                = "traffic-port"
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval"            = "30"
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout"             = "5"
             "service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold"   = "2"

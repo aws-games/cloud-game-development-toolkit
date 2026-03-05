@@ -1,5 +1,31 @@
 # Future Improvements - Unreal Cloud DDC Module
 
+## EKS Auto Mode Built-in Load Balancing (✅ IMPLEMENTED)
+
+### Previous Implementation
+Used manual Helm chart installation via CodeBuild + complex IAM setup.
+
+### Current Implementation (v2.0)
+Relies on EKS Auto Mode's built-in load balancer management:
+
+```hcl
+kubernetes_network_config {
+  elastic_load_balancing {
+    enabled = true  # Built-in load balancer support
+  }
+}
+```
+
+### Benefits Achieved
+- **Zero configuration**: No AWS Load Balancer Controller needed
+- **Automatic cleanup**: EKS handles LoadBalancer service lifecycle
+- **Simplified architecture**: Removes entire LBC addon and IAM complexity
+- **Better integration**: Native EKS Auto Mode capability
+
+**Result**: LoadBalancer services (like DDC NLB) are managed entirely by EKS Auto Mode without additional controllers or addons.
+
+---
+
 ## Split-Horizon DNS for VPC Clients
 
 ### Current Implementation

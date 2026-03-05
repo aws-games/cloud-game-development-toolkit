@@ -135,7 +135,7 @@ resource "aws_eks_access_policy_association" "additional" {
 # CodeBuild project for cluster setup (replaces null_resource operations)
 resource "aws_codebuild_project" "cluster_setup" {
   name         = "${local.name_prefix}-cluster-setup"
-  description  = "Configure EKS cluster with AWS Load Balancer Controller and custom NodePools"
+  description  = "Configure EKS cluster with custom NodePools for DDC workloads"
   service_role = aws_iam_role.cluster_setup_codebuild_role.arn
   
   artifacts {
@@ -163,11 +163,6 @@ resource "aws_codebuild_project" "cluster_setup" {
     }
     
     environment_variable {
-      name  = "LBC_ROLE_ARN"
-      value = var.is_primary_region ? aws_iam_role.aws_load_balancer_controller_role[0].arn : ""
-    }
-    
-    environment_variable {
       name  = "NODE_ROLE_NAME"
       value = aws_iam_role.eks_node_role.name
     }
@@ -178,16 +173,6 @@ resource "aws_codebuild_project" "cluster_setup" {
     }
     
     environment_variable {
-      name  = "HELM_LBC_ARGS"
-      value = "--set clusterName=${aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name} --set serviceAccount.create=true --set serviceAccount.name=aws-load-balancer-controller --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=${var.is_primary_region ? aws_iam_role.aws_load_balancer_controller_role[0].arn : ""} --set region=${var.region} --set vpcId=${var.vpc_id}"
-    }
-    
-    environment_variable {
-      name  = "HELM_CERT_ARGS"
-      value = "--version v1.16.2 --namespace cert-manager --create-namespace --set crds.enabled=true --set serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=${var.is_primary_region && var.enable_certificate_manager ? aws_iam_role.cert_manager_role[0].arn : ""}"
-    }
-    
-    environment_variable {
       name  = "CLUSTER_SG_ID"
       value = aws_security_group.cluster_security_group.id
     }
@@ -195,21 +180,6 @@ resource "aws_codebuild_project" "cluster_setup" {
     environment_variable {
       name  = "NAME_PREFIX"
       value = local.name_prefix
-    }
-    
-    environment_variable {
-      name  = "IS_PRIMARY_REGION"
-      value = var.is_primary_region ? "true" : "false"
-    }
-    
-    environment_variable {
-      name  = "ENABLE_CERT_MANAGER"
-      value = var.enable_certificate_manager ? "true" : "false"
-    }
-    
-    environment_variable {
-      name  = "CERT_MANAGER_ROLE_ARN"
-      value = var.is_primary_region && var.enable_certificate_manager ? aws_iam_role.cert_manager_role[0].arn : ""
     }
   }
   
@@ -265,8 +235,6 @@ resource "terraform_data" "cluster_setup_trigger" {
   depends_on = [
     aws_eks_cluster.unreal_cloud_ddc_eks_cluster,
     aws_iam_role.cluster_setup_codebuild_role,
-    aws_iam_role.aws_load_balancer_controller_role,
-    aws_iam_role.cert_manager_role,
     aws_s3_object.assets
   ]
 }
