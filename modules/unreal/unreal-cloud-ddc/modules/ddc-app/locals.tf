@@ -207,8 +207,8 @@ locals {
           # - Internet clients resolve via public zone (developers, external CI/CD)
           var.ddc_endpoint_pattern != null ? {
             "external-dns.alpha.kubernetes.io/hostname" = var.ddc_endpoint_pattern
-            # Specify both zone IDs to create records in both zones (split-horizon DNS)
-            "external-dns.alpha.kubernetes.io/zone-id" = var.public_zone_id != null ? "${var.private_zone_id},${var.public_zone_id}" : var.private_zone_id
+            # Only use public zone for now - CodeBuild will fall back to Google DNS
+            "external-dns.alpha.kubernetes.io/zone-id" = var.public_zone_id
           } : {},
           # Subnet placement handled by EKS cluster subnet configuration
           # HTTPS listener (when certificate provided)
