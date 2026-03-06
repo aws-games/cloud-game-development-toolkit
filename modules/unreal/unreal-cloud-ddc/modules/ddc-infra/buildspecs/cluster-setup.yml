@@ -1,0 +1,22 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - "echo 'Installing kubectl and helm'"
+      - "echo 'Resolving latest kubectl version...'"
+      - "K8S_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)"
+      - "curl -LO https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl"
+      - "chmod +x kubectl && mv kubectl /usr/local/bin/"
+      - "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+  pre_build:
+    commands:
+      - "echo 'Configuring kubectl access'"
+      - "aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION"
+      - "kubectl cluster-info --request-timeout 30s"
+  build:
+    commands:
+      - "echo 'Starting cluster setup'"
+      - "echo 'NODE_SUBNETS value:' $NODE_SUBNETS"
+      - "chmod +x scripts/create-nodepools.sh"
+      - "./scripts/create-nodepools.sh"
+      - "echo 'Setup completed'"

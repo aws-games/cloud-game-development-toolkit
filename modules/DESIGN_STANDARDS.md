@@ -301,6 +301,122 @@ variable "additional_security_groups" {
 }
 ```
 
+## YAML Generation Patterns
+
+### `yamlencode()` Over `templatefile()`
+This module uses `yamlencode()` for generating YAML configurations instead of `templatefile()` with manual templates.
+
+HashiCorp recommends using encoding functions over manual templating: "Don't use 'heredoc' strings to generate JSON or YAML. Instead, use the `jsonencode` function or the `yamlencode` function so that Terraform can be responsible for guaranteeing valid JSON or YAML syntax."
+
+Benefits:
+- Guaranteed valid YAML syntax
+- Type safety with HCL structure validation
+- All logic in native HCL, no mixed templating
+- IDE support with autocomplete
+- Easier onboarding - only need to understand HCL
+- Automatic YAML formatting and indentation
+
+### HCL to YAML Mapping
+
+```hcl
+# Simple strings
+name = "my-app"
+# → name: "my-app"
+
+# Objects
+image = {
+  repository = "nginx"
+  tag = "1.20"
+}
+# → image:
+#     repository: "nginx"
+#     tag: "1.20"
+
+# Lists
+env = [
+  { name = "PORT", value = "80" },
+  { name = "HOST", value = "0.0.0.0" }
+]
+# → env:
+#     - name: "PORT"
+#       value: "80"
+#     - name: "HOST"
+#       value: "0.0.0.0"
+```
+
+### Complex Logic in HCL
+Handle complex templating logic in HCL locals, not YAML templates:
+
+```hcl
+locals {
+  # Build lists with for expressions
+  remote_servers = flatten([
+    for namespace_name, namespace_config in var.ddc_namespaces : [
+      for region in namespace_config.regions : 
+        "https://${replace(var.endpoint_pattern, var.region, region)}"
+      if region != var.region
+    ]
+  ])
+  
+  # Build objects with for expressions
+  namespace_policies = {
+    for ns_name, ns_config in var.ddc_namespaces : ns_name => {
+      acls = [{
+        actions = ["ReadObject", "WriteObject"]
+        claims = ["groups=${var.access_group}"]
+      }]
+    }
+  }
+  
+  # Final YAML structure
+  helm_values_yaml = yamlencode({
+    config = {
+      DDC = length(local.remote_servers) > 0 ? {
+        RemoteDDCServers = local.remote_servers
+      } : {}
+    }
+    global = {
+      namespaces = {
+        Policies = local.namespace_policies
+      }
+    }
+  })
+}
+```
+
+### Debug Output
+Standard pattern for YAML validation:
+
+```hcl
+resource "local_file" "debug_helm_values" {
+  count = var.debug ? 1 : 0
+  content = local.helm_values_yaml
+  filename = "${path.module}/debug-helm-values.yaml"
+}
+```
+
+Order is guaranteed - HCL maps maintain insertion order and `yamlencode()` preserves it in YAML output.s/lists
+3. **Move logic to locals**: Extract complex loops and conditionals
+4. **Test output equivalence**: Ensure identical YAML generation
+5. **Add debug output**: Enable YAML validation during development
+
+#### **Implementation Requirements**
+**All new CGD Toolkit modules should:**
+
+- **Use yamlencode()** for all YAML generation
+- **Avoid templatefile()** unless absolutely necessary
+- **Structure complex logic** in HCL locals, not YAML templates
+- **Provide debug output** when debug variable is enabled
+- **Document YAML structure** in code comments
+- **Test YAML validity** as part of module testing
+
+**This approach ensures:**
+- **Cleaner source code**: All logic in native HCL
+- **Guaranteed valid YAML**: No syntax errors possible
+- **Better maintainability**: Easier to modify and extend
+- **Improved onboarding**: Single language (HCL) to learn
+- **Consistent patterns**: Same approach across all modules
+
 ## Resource Patterns
 
 ### **Remote Module Usage Philosophy**
