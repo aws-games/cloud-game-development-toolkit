@@ -3,6 +3,7 @@
 ################################################################################
 
 resource "aws_eks_cluster" "unreal_cloud_ddc_eks_cluster" {
+  region   = var.region
   name     = local.name_prefix
   role_arn = aws_iam_role.eks_cluster_role.arn
   version  = var.kubernetes_version
@@ -70,6 +71,7 @@ resource "aws_cloudwatch_log_group" "unreal_cluster_cloudwatch" {
 resource "aws_eks_access_entry" "additional" {
   for_each = var.eks_access_entries
 
+  region        = var.region
   cluster_name  = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   principal_arn = each.value.principal_arn
   type          = each.value.type
@@ -79,6 +81,7 @@ resource "aws_eks_access_entry" "additional" {
 
 # EKS Access Entry for CodeBuild (cluster setup)
 resource "aws_eks_access_entry" "codebuild_cluster_setup" {
+  region        = var.region
   cluster_name  = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   principal_arn = aws_iam_role.cluster_setup_codebuild_role.arn
   type          = "STANDARD"
@@ -87,6 +90,7 @@ resource "aws_eks_access_entry" "codebuild_cluster_setup" {
 }
 
 resource "aws_eks_access_policy_association" "codebuild_cluster_setup" {
+  region        = var.region
   cluster_name  = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   principal_arn = aws_iam_role.cluster_setup_codebuild_role.arn
@@ -112,6 +116,7 @@ resource "aws_eks_access_policy_association" "additional" {
     ]) : combo.key => combo
   }
 
+  region        = var.region
   cluster_name  = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   policy_arn    = each.value.policy_arn
   principal_arn = each.value.principal_arn
@@ -134,6 +139,7 @@ resource "aws_eks_access_policy_association" "additional" {
 
 # CodeBuild project for cluster setup (replaces null_resource operations)
 resource "aws_codebuild_project" "cluster_setup" {
+  region       = var.region
   name         = "${local.name_prefix}-cluster-setup"
   description  = "Configure EKS cluster with custom NodePools for DDC workloads"
   service_role = aws_iam_role.cluster_setup_codebuild_role.arn
@@ -206,6 +212,7 @@ resource "aws_codebuild_project" "cluster_setup" {
 # Terraform Action to start cluster setup
 action "aws_codebuild_start_build" "cluster_setup" {
   config {
+    region       = var.region
     project_name = aws_codebuild_project.cluster_setup.name
     timeout      = 1800  # 30 minutes
   }

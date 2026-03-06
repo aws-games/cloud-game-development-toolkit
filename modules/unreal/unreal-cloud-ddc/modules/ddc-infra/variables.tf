@@ -1,4 +1,32 @@
 ########################################
+# SHARED IAM ROLE CONFIGURATION (Cross-Region)
+########################################
+
+variable "shared_external_dns_role_arn" {
+  description = "ARN of the External DNS IAM role from primary region (null if this is primary region)"
+  type        = string
+  default     = null
+}
+
+variable "shared_aws_load_balancer_controller_role_arn" {
+  description = "ARN of the AWS Load Balancer Controller IAM role from primary region (null if this is primary region)"
+  type        = string
+  default     = null
+}
+
+variable "shared_cert_manager_role_arn" {
+  description = "ARN of the Cert Manager IAM role from primary region (null if this is primary region)"
+  type        = string
+  default     = null
+}
+
+variable "shared_oidc_provider_arn" {
+  description = "ARN of the EKS OIDC Provider from primary region (null if this is primary region)"
+  type        = string
+  default     = null
+}
+
+########################################
 # GENERAL CONFIGURATION
 ########################################
 
@@ -260,6 +288,18 @@ variable "kubernetes_version" {
     condition     = contains(["1.31", "1.32", "1.33", "1.34", "1.35"], var.kubernetes_version)
     error_message = "Version number must be supported version in AWS Kubernetes"
   }
+}
+
+variable "external_dns_addon_version" {
+  type        = string
+  default     = "v0.20.0-eksbuild.3"
+  description = "Version of the External DNS EKS addon."
+}
+
+variable "fluent_bit_addon_version" {
+  type        = string
+  default     = "v4.2.2-eksbuild.1"
+  description = "Version of the FluentBit EKS addon."
 }
 
 # CRITICAL: This namespace name MUST match exactly in:

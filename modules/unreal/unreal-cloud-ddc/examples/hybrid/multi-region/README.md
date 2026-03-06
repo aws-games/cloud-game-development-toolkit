@@ -12,6 +12,43 @@ This example creates:
 
 ## Architecture
 
+### Multi-Region Resource Distribution
+
+```
+SHARED RESOURCES (Global - Created in Primary Region Only):
+├── IAM Roles
+│   ├── external-dns-role
+│   ├── aws-load-balancer-controller-role  
+│   ├── cert-manager-role
+│   ├── fluent-bit-role
+│   └── ddc-service-account-role
+├── IAM Policies (attached to shared roles)
+├── Bearer Token Secret (primary + cross-region replica)
+└── DNS Domain Names (shared zones)
+
+REGIONAL RESOURCES (Duplicated Per Region):
+Region 1 (us-east-1):                Region 2 (us-west-2):
+├── EKS Cluster                      ├── EKS Cluster
+├── EKS Addons (use shared IAM)      ├── EKS Addons (use shared IAM)
+├── Security Groups                   ├── Security Groups  
+├── S3 Buckets                       ├── S3 Buckets
+│   ├── CodeBuild assets             │   ├── CodeBuild assets
+│   └── DDC storage                  │   └── DDC storage
+├── CodeBuild Projects               ├── CodeBuild Projects
+│   ├── cluster-setup                │   ├── cluster-setup
+│   ├── ddc-deployer                 │   ├── ddc-deployer
+│   └── ddc-tester                   │   └── ddc-tester
+├── Terraform Actions               ├── Terraform Actions
+├── ScyllaDB Cluster                 ├── ScyllaDB Cluster
+├── Route53 Records                  ├── Route53 Records
+└── CloudWatch Logs                  └── CloudWatch Logs
+                ↑                                    ↑
+                └─── Cross-region replication ──────┘
+                     (ScyllaDB + Secrets)
+```
+
+### Service Flow Diagram
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   US East       │───▶│us-east-1.ddc... │───▶│ EKS us-east-1   │

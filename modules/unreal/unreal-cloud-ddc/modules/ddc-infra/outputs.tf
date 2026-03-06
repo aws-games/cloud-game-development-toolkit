@@ -27,9 +27,28 @@ output "cluster_security_group_id" {
   description = "ID of the EKS cluster security group"
 }
 
+################################################################################
+# Shared IAM Role Outputs (For Cross-Region Reference)
+################################################################################
+
+output "external_dns_role_arn" {
+  value       = var.is_primary_region && length(aws_iam_role.external_dns) > 0 ? aws_iam_role.external_dns[0].arn : null
+  description = "ARN of the External DNS IAM role (created in primary region only)"
+}
+
+output "aws_load_balancer_controller_role_arn" {
+  value       = var.is_primary_region && length(aws_iam_role.aws_load_balancer_controller_role) > 0 ? aws_iam_role.aws_load_balancer_controller_role[0].arn : null
+  description = "ARN of the AWS Load Balancer Controller IAM role (created in primary region only)"
+}
+
+output "cert_manager_role_arn" {
+  value       = var.is_primary_region && length(aws_iam_role.cert_manager_role) > 0 ? aws_iam_role.cert_manager_role[0].arn : null
+  description = "ARN of the Cert Manager IAM role (created in primary region only)"
+}
+
 output "oidc_provider_arn" {
-  value       = var.is_primary_region ? aws_iam_openid_connect_provider.eks_oidc[0].arn : null
-  description = "ARN of the EKS OIDC Provider"
+  value       = var.is_primary_region && length(aws_iam_openid_connect_provider.eks_oidc) > 0 ? aws_iam_openid_connect_provider.eks_oidc[0].arn : null
+  description = "ARN of the EKS OIDC Provider (created in primary region only)"
 }
 
 ################################################################################

@@ -8,11 +8,14 @@ set -e
 
 echo "🌍 DDC Multi-Region Functional Test Starting (CodeBuild Version)..."
 echo "=================================================================="
-echo "📋 This test validates DDC cross-region replication:"
-echo "   1. PUT data to primary region"
-echo "   2. Wait for DDC replication (via ScyllaDB)"
-echo "   3. GET data from secondary region"
-echo "   4. Verify data matches"
+echo "📋 This test validates DDC deployment and cross-region replication:"
+echo "   Phase 1: Validate local region (secondary) health"
+echo "   Phase 2: Validate remote region (primary) health"
+echo "   Phase 3: Test cross-region replication"
+echo "     3a. PUT data to primary region"
+echo "     3b. Wait for DDC replication (via ScyllaDB)"
+echo "     3c. GET data from secondary region"
+echo "     3d. Verify data matches"
 echo ""
 
 # Get configuration from environment variables
@@ -131,24 +134,29 @@ test_endpoint_health() {
 }
 
 # Test endpoint health first
-echo "🏥 Health Check Phase"
-echo "===================="
-if ! test_endpoint_health "$PRIMARY_ENDPOINT" "$PRIMARY_REGION"; then
-    echo "❌ Primary region health check failed"
+echo "🏥 Phase 1: Local Region (Secondary) Health Check"
+echo "==============================================="
+echo "📍 Testing local region: $SECONDARY_REGION ($SECONDARY_ENDPOINT)"
+if ! test_endpoint_health "$SECONDARY_ENDPOINT" "$SECONDARY_REGION (LOCAL)"; then
+    echo "❌ Local region health check failed - cannot proceed with multi-region test"
     exit 1
 fi
+echo "✅ Local region is healthy"
+echo ""
 
-if ! test_endpoint_health "$SECONDARY_ENDPOINT" "$SECONDARY_REGION"; then
-    echo "❌ Secondary region health check failed"
+echo "🏥 Phase 2: Remote Region (Primary) Health Check"
+echo "==============================================="
+echo "📍 Testing remote region: $PRIMARY_REGION ($PRIMARY_ENDPOINT)"
+if ! test_endpoint_health "$PRIMARY_ENDPOINT" "$PRIMARY_REGION (REMOTE)"; then
+    echo "❌ Remote region health check failed - cannot proceed with multi-region test"
     exit 1
 fi
-
-echo "✅ Both regions are healthy"
+echo "✅ Remote region is healthy"
 echo ""
 
 # Cross-region replication test
-echo "🔄 Cross-Region Replication Test"
-echo "==============================="
+echo "🔄 Phase 3: Cross-Region Replication Test"
+echo "========================================="
 
 # Generate test data
 TEST_HASH="00000000000000000000000000000000000000aa"

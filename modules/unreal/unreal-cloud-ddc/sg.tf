@@ -4,6 +4,7 @@
 
 resource "aws_security_group" "nlb" {
   count  = var.ddc_infra_config != null ? 1 : 0
+  region = local.region
   name   = "${local.name_prefix}-nlb-${local.name_suffix}"
   vpc_id = var.vpc_id
 
@@ -21,6 +22,7 @@ resource "aws_security_group" "nlb" {
 # HTTP access from allowed CIDRs
 resource "aws_vpc_security_group_ingress_rule" "nlb_http_cidrs" {
   count             = var.ddc_infra_config != null && var.allowed_external_cidrs != null ? length(var.allowed_external_cidrs) : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTP access from allowed CIDR ${var.allowed_external_cidrs[count.index]}"
   ip_protocol       = "tcp"
@@ -36,6 +38,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_http_cidrs" {
 # HTTPS access from allowed CIDRs
 resource "aws_vpc_security_group_ingress_rule" "nlb_https_cidrs" {
   count             = var.ddc_infra_config != null && var.allowed_external_cidrs != null ? length(var.allowed_external_cidrs) : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTPS access from allowed CIDR ${var.allowed_external_cidrs[count.index]}"
   ip_protocol       = "tcp"
@@ -51,6 +54,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_https_cidrs" {
 # HTTP access from prefix list
 resource "aws_vpc_security_group_ingress_rule" "nlb_http_prefix" {
   count             = var.ddc_infra_config != null && var.external_prefix_list_id != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTP access from managed prefix list"
   ip_protocol       = "tcp"
@@ -66,6 +70,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_http_prefix" {
 # HTTPS access from prefix list
 resource "aws_vpc_security_group_ingress_rule" "nlb_https_prefix" {
   count             = var.ddc_infra_config != null && var.external_prefix_list_id != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTPS access from managed prefix list"
   ip_protocol       = "tcp"
@@ -81,6 +86,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_https_prefix" {
 # VPC CIDR access for internal load balancers
 resource "aws_vpc_security_group_ingress_rule" "nlb_http_vpc" {
   count             = var.ddc_infra_config != null && !var.load_balancers_config.nlb.internet_facing ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTP access from VPC CIDR (internal load balancer)"
   ip_protocol       = "tcp"
@@ -95,6 +101,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_http_vpc" {
 
 resource "aws_vpc_security_group_ingress_rule" "nlb_https_vpc" {
   count             = var.ddc_infra_config != null && !var.load_balancers_config.nlb.internet_facing ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "HTTPS access from VPC CIDR (internal load balancer)"
   ip_protocol       = "tcp"
@@ -110,6 +117,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_https_vpc" {
 # NLB egress (acceptable 0.0.0.0/0 for AWS APIs)
 resource "aws_vpc_security_group_egress_rule" "nlb_egress" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "All outbound traffic (AWS APIs, updates, container registry)"
   ip_protocol       = "-1"
@@ -123,6 +131,7 @@ resource "aws_vpc_security_group_egress_rule" "nlb_egress" {
 # CodeBuild access for functional testing
 resource "aws_vpc_security_group_ingress_rule" "nlb_codebuild_http" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "CodeBuild access for DDC functional testing (HTTP)"
   ip_protocol       = "tcp"
@@ -137,6 +146,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_codebuild_http" {
 
 resource "aws_vpc_security_group_ingress_rule" "nlb_codebuild_https" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "CodeBuild access for DDC functional testing (HTTPS)"
   ip_protocol       = "tcp"
@@ -155,6 +165,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_codebuild_https" {
 
 resource "aws_security_group" "internal" {
   count  = var.ddc_infra_config != null ? 1 : 0
+  region = local.region
   name   = "${local.name_prefix}-internal-${local.name_suffix}"
   vpc_id = var.vpc_id
 
@@ -172,6 +183,7 @@ resource "aws_security_group" "internal" {
 # ScyllaDB CQL port (internal communication only)
 resource "aws_vpc_security_group_ingress_rule" "internal_scylla_cql" {
   count                        = var.ddc_infra_config != null ? 1 : 0
+  region                       = local.region
   security_group_id            = aws_security_group.internal[0].id
   description                  = "ScyllaDB CQL port for internal communication"
   ip_protocol                  = "tcp"
@@ -187,6 +199,7 @@ resource "aws_vpc_security_group_ingress_rule" "internal_scylla_cql" {
 # Internal service egress (acceptable 0.0.0.0/0 for AWS APIs)
 resource "aws_vpc_security_group_egress_rule" "internal_egress" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.internal[0].id
   description       = "All outbound traffic (AWS APIs, updates, container registry)"
   ip_protocol       = "-1"
@@ -204,6 +217,7 @@ resource "aws_vpc_security_group_egress_rule" "internal_egress" {
 # Access from existing security groups (user-controlled)
 resource "aws_vpc_security_group_ingress_rule" "nlb_from_users" {
   count                        = var.ddc_infra_config != null && var.load_balancers_config.nlb != null ? length(var.load_balancers_config.nlb.security_groups) : 0
+  region                       = local.region
   security_group_id            = aws_security_group.nlb[0].id
   description                  = "DDC traffic from user security group ${var.load_balancers_config.nlb.security_groups[count.index]}"
   ip_protocol                  = "tcp"
@@ -222,6 +236,7 @@ resource "aws_vpc_security_group_ingress_rule" "nlb_from_users" {
 # NLB to VPC communication (replaces SG reference)
 resource "aws_vpc_security_group_egress_rule" "nlb_to_vpc" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = aws_security_group.nlb[0].id
   description       = "To VPC for DDC services (ports 80-8091)"
   ip_protocol       = "tcp"
@@ -254,6 +269,7 @@ resource "aws_vpc_security_group_egress_rule" "nlb_to_vpc" {
 # MITIGATION: VPC is private network, pods still have application-level security
 resource "aws_vpc_security_group_ingress_rule" "cluster_from_nlb" {
   count             = var.ddc_infra_config != null ? 1 : 0
+  region            = local.region
   security_group_id = module.ddc_infra.cluster_security_group_id
   description       = "Allow NLB health checks from VPC CIDR (EKS Auto Mode limitation)"
   ip_protocol       = "tcp"

@@ -2,12 +2,19 @@
 # CodeBuild Project for DDC Deployment (Deploy Only)
 ################################################################################
 
+# Extract base secret name (without random suffix) for cross-region access
+locals {
+  # Extract full name from ARN: "arn:aws:secretsmanager:region:account:secret:name-ABC123" → "name-ABC123"
+  ghcr_secret_full_name = var.ghcr_credentials_secret_arn != null ? reverse(split(":", var.ghcr_credentials_secret_arn))[0] : ""
+  # Remove random 6-character suffix: "name-ABC123" → "name"
+  ghcr_secret_base_name = var.ghcr_credentials_secret_arn != null ? join("-", slice(split("-", local.ghcr_secret_full_name), 0, length(split("-", local.ghcr_secret_full_name)) - 1)) : ""
+}
+
 resource "aws_codebuild_project" "ddc_deployer" {
+  region       = var.region
   name         = "${local.name_prefix}-ddc-deployer"
   description  = "Deploy Unreal Cloud DDC via Helm to EKS cluster"
-  service_role = aws_iam_role.codebuild_role.arn
-
-  depends_on = [time_sleep.iam_propagation]
+  service_role = local.codebuild_role_arn
 
   artifacts {
     type = "NO_ARTIFACTS"
@@ -46,8 +53,8 @@ resource "aws_codebuild_project" "ddc_deployer" {
     }
 
     environment_variable {
-      name  = "GHCR_SECRET_ARN"
-      value = var.ghcr_credentials_secret_arn
+      name  = "GHCR_SECRET_NAME"
+      value = local.ghcr_secret_base_name
     }
 
     environment_variable {
@@ -96,11 +103,10 @@ resource "aws_codebuild_project" "ddc_deployer" {
 ################################################################################
 
 resource "aws_codebuild_project" "ddc_tester" {
+  region       = var.region
   name         = "${local.name_prefix}-ddc-tester"
   description  = "Test Unreal Cloud DDC functionality after deployment"
-  service_role = aws_iam_role.codebuild_role.arn
-
-  depends_on = [time_sleep.iam_propagation]
+  service_role = local.codebuild_role_arn
 
   artifacts {
     type = "NO_ARTIFACTS"
@@ -158,6 +164,41 @@ resource "aws_codebuild_project" "ddc_tester" {
     environment_variable {
       name  = "PEER_REGION_DDC_ENDPOINT"
       value = var.ddc_application_config.peer_region_ddc_endpoint != null ? var.ddc_application_config.peer_region_ddc_endpoint : ""
+    }
+
+    # Multi-region test configuration
+    # Multi-region test configuration
+    environment_variable {
+      name  = "ENABLE_MULTI_REGION_VALIDATION"
+      value = var.ddc_application_config.enable_multi_region_validation ? "true" : "false"
+    }
+
+    # Multi-region endpoints - NEW LOGIC: Secondary region runs multi-region tests
+    # SECONDARY region (when enable_multi_region_validation=true): Tests both endpoints
+    # PRIMARY region (when enable_multi_region_validation=false): Only single-region tests
+    environment_variable {
+      name  = "PRIMARY_DDC_ENDPOINT"
+      value = var.ddc_application_config.enable_multi_region_validation && var.ddc_application_config.peer_region_ddc_endpoint != null ? var.ddc_application_config.peer_region_ddc_endpoint : ""
+    }
+
+    environment_variable {
+      name  = "SECONDARY_DDC_ENDPOINT"
+      value = var.ddc_application_config.enable_multi_region_validation ? var.ddc_dns_endpoint : ""
+    }
+
+    environment_variable {
+      name  = "PRIMARY_REGION"
+      value = var.ddc_application_config.enable_multi_region_validation && var.ddc_application_config.peer_region_ddc_endpoint != null ? regex("https://([^.]+)\\.", var.ddc_application_config.peer_region_ddc_endpoint)[0] : ""
+    }
+
+    environment_variable {
+      name  = "SECONDARY_REGION"
+      value = var.ddc_application_config.enable_multi_region_validation ? var.region : ""
+    }
+
+    environment_variable {
+      name  = "BEARER_TOKEN"
+      value = var.ddc_bearer_token
     }
 
     # Test configuration
@@ -241,19 +282,19 @@ resource "terraform_data" "deploy_trigger" {
   }
 
   depends_on = [
-    aws_s3_object.deploy_assets,  # Only depend on deploy assets
-    time_sleep.iam_propagation    # Wait for IAM permissions to propagate
+    aws_s3_object.deploy_assets  # Only depend on deploy assets
   ]
 }
 
 # Test action - controlled by validation flags + multi-region logic
-# SINGLE-REGION: enable_single_region_validation=true (default) + debug override
-# MULTI-REGION: enable_multi_region_validation=true (primary region only, no debug override)
+# NEW LOGIC: Both regions run single-region tests, secondary also runs multi-region tests
+# SINGLE-REGION: enable_single_region_validation=true (both regions)
+# MULTI-REGION: enable_multi_region_validation=true (secondary region only, after single-region)
 resource "terraform_data" "test_trigger" {
-  # Multi-region killswitch: multi-region tests only in primary region (peer_region_ddc_endpoint=null)
+  # Always run if single-region validation enabled OR multi-region validation enabled
   count = (
-    (var.ddc_application_config.enable_single_region_validation) ||
-    (var.ddc_application_config.enable_multi_region_validation && var.ddc_application_config.peer_region_ddc_endpoint == null)
+    var.ddc_application_config.enable_single_region_validation ||
+    var.ddc_application_config.enable_multi_region_validation
   ) ? 1 : 0
 
   input = merge(
@@ -286,11 +327,12 @@ resource "terraform_data" "test_trigger" {
     }
   }
 
-  depends_on = [terraform_data.deploy_trigger, time_sleep.iam_propagation]  # NOTE: deploy_trigger dependency is ignored due to Terraform Actions bug
+  depends_on = [terraform_data.deploy_trigger]  # NOTE: deploy_trigger dependency is ignored due to Terraform Actions bug
 }
 
 action "aws_codebuild_start_build" "deploy_ddc" {
   config {
+    region       = var.region
     project_name = aws_codebuild_project.ddc_deployer.name
     timeout      = 1800  # 30 minutes
   }
@@ -298,6 +340,7 @@ action "aws_codebuild_start_build" "deploy_ddc" {
 
 action "aws_codebuild_start_build" "test_ddc" {
   config {
+    region       = var.region
     project_name = aws_codebuild_project.ddc_tester.name
     timeout      = 3600  # 60 minutes (testing takes longer)
   }
@@ -309,15 +352,17 @@ action "aws_codebuild_start_build" "test_ddc" {
 
 # EKS Access Entry for CodeBuild (app deployment)
 resource "aws_eks_access_entry" "codebuild_app_deployment" {
+  region        = var.region
   cluster_name  = var.cluster_name
-  principal_arn = aws_iam_role.codebuild_role.arn
+  principal_arn = local.codebuild_role_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "codebuild_app_deployment" {
+  region        = var.region
   cluster_name  = var.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = aws_iam_role.codebuild_role.arn
+  principal_arn = local.codebuild_role_arn
 
   access_scope {
     type = "cluster"
@@ -362,7 +407,7 @@ data "aws_iam_policy_document" "codebuild_policy" {
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
-    resources = ["arn:aws:logs:${var.region}:*:*"]
+    resources = ["arn:aws:logs:*:*:*"]
   }
 
   statement {
@@ -383,10 +428,16 @@ data "aws_iam_policy_document" "codebuild_policy" {
     actions = [
       "secretsmanager:GetSecretValue"
     ]
-    resources = [
-      var.ghcr_credentials_secret_arn,
-      var.bearer_token_secret_arn != null ? var.bearer_token_secret_arn : "arn:aws:secretsmanager:${var.region}:*:secret:dummy-*"
-    ]
+    resources = concat(
+      [
+        # Allow access to GHCR secret by base name pattern across all regions (with account ID for security)
+        "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:${local.ghcr_secret_base_name}-*",
+        # CGD toolkit secrets pattern
+        "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:cgd-unreal-cloud-ddc-dev-*"
+      ],
+      # Bearer token secret (only if provided)
+      var.bearer_token_secret_arn != null ? [var.bearer_token_secret_arn] : []
+    )
   }
 
   statement {
@@ -396,7 +447,9 @@ data "aws_iam_policy_document" "codebuild_policy" {
     ]
     resources = [
       "${aws_s3_bucket.assets.arn}/deploy/assets.zip",
-      "${aws_s3_bucket.assets.arn}/test/assets.zip"
+      "${aws_s3_bucket.assets.arn}/test/assets.zip",
+      "arn:aws:s3:::cgd-unreal-cloud-ddc-dev-ddc-app-assets-*/deploy/assets.zip",
+      "arn:aws:s3:::cgd-unreal-cloud-ddc-dev-ddc-app-assets-*/test/assets.zip"
     ]
   }
 
@@ -438,19 +491,36 @@ data "aws_iam_policy_document" "codebuild_policy" {
 }
 
 resource "aws_iam_role" "codebuild_role" {
+  count = var.is_primary_region ? 1 : 0
+  
   name               = "${local.name_prefix}-codebuild-role"
   assume_role_policy = data.aws_iam_policy_document.codebuild_assume_role.json
   tags               = var.tags
 }
 
+data "aws_iam_role" "shared_codebuild_role" {
+  count = !var.is_primary_region && var.existing_iam_role_arns != null && var.existing_iam_role_arns.codebuild_role_arn != null ? 1 : 0
+  name  = split("/", var.existing_iam_role_arns.codebuild_role_arn)[1]
+}
+
+locals {
+  codebuild_role_arn = var.is_primary_region ? aws_iam_role.codebuild_role[0].arn : (
+    var.existing_iam_role_arns != null && var.existing_iam_role_arns.codebuild_role_arn != null ? var.existing_iam_role_arns.codebuild_role_arn : aws_iam_role.codebuild_role[0].arn
+  )
+}
+
 resource "aws_iam_role_policy" "codebuild_policy" {
+  count = var.is_primary_region ? 1 : 0
+  
   name   = "${local.name_prefix}-codebuild-policy"
-  role   = aws_iam_role.codebuild_role.id
+  role   = aws_iam_role.codebuild_role[0].id
   policy = data.aws_iam_policy_document.codebuild_policy.json
 }
 
 # IAM permission propagation delay
 resource "time_sleep" "iam_propagation" {
+  count = var.is_primary_region ? 1 : 0
+  
   depends_on = [
     aws_iam_role.codebuild_role,
     aws_iam_role_policy.codebuild_policy

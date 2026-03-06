@@ -32,6 +32,20 @@ variable "force_codebuild_run" {
   default     = false
 }
 
+variable "is_primary_region" {
+  type        = bool
+  description = "Whether this is the primary region (passed from parent module)"
+  default     = true
+}
+
+variable "existing_iam_role_arns" {
+  type = object({
+    codebuild_role_arn = optional(string, null)
+  })
+  description = "Existing IAM role ARNs from primary region"
+  default     = null
+}
+
 ########################################
 # COMPUTE CONFIGURATION
 ########################################

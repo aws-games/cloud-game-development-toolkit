@@ -6,6 +6,7 @@
 resource "aws_ssm_document" "scylla_keyspace_replication_fix" {
   count = var.ddc_infra_config != null && var.ddc_infra_config.scylla_config != null ? 1 : 0
 
+  region          = local.region
   name            = "${local.name_prefix}-scylla-keyspace-fix-${local.region}"
   document_type   = "Command"
   document_format = "YAML"
@@ -102,6 +103,7 @@ DOC
 resource "aws_ssm_association" "scylla_keyspace_replication_fix" {
   count = var.ddc_infra_config != null && var.ddc_infra_config.scylla_config != null && try(var.ddc_infra_config.scylla_config.create_seed_node, true) == true ? 1 : 0
 
+  region = local.region
   name = aws_ssm_document.scylla_keyspace_replication_fix[0].name
 
   # Force recreation when keyspace name changes

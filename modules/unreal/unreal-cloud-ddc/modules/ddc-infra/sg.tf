@@ -28,6 +28,7 @@ resource "aws_security_group" "cluster_security_group" {
 
 # Allow all traffic within the security group (node-to-node communication)
 resource "aws_vpc_security_group_ingress_rule" "cluster_self" {
+  region                       = var.region
   security_group_id            = aws_security_group.cluster_security_group.id
   description                  = "Allow all traffic from cluster nodes"
   ip_protocol                  = "-1"
@@ -40,6 +41,7 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_self" {
 
 # Allow EKS control plane to communicate with kubelet (CRITICAL for node registration)
 resource "aws_vpc_security_group_ingress_rule" "cluster_kubelet" {
+  region            = var.region
   security_group_id = aws_security_group.cluster_security_group.id
   description       = "EKS control plane to kubelet API"
   ip_protocol       = "tcp"
@@ -54,6 +56,7 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_kubelet" {
 
 # Allow HTTPS communication for EKS API
 resource "aws_vpc_security_group_ingress_rule" "cluster_https" {
+  region            = var.region
   security_group_id = aws_security_group.cluster_security_group.id
   description       = "HTTPS for EKS API communication"
   ip_protocol       = "tcp"
@@ -68,6 +71,7 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_https" {
 
 # Allow DNS resolution
 resource "aws_vpc_security_group_ingress_rule" "cluster_dns" {
+  region            = var.region
   security_group_id = aws_security_group.cluster_security_group.id
   description       = "DNS resolution"
   ip_protocol       = "udp"
@@ -82,6 +86,7 @@ resource "aws_vpc_security_group_ingress_rule" "cluster_dns" {
 
 # Allow all outbound traffic
 resource "aws_vpc_security_group_egress_rule" "cluster_egress" {
+  region            = var.region
   security_group_id = aws_security_group.cluster_security_group.id
   description       = "All outbound traffic"
   ip_protocol       = "-1"
@@ -94,6 +99,7 @@ resource "aws_vpc_security_group_egress_rule" "cluster_egress" {
 
 # Allow CodeBuild access to EKS API (private endpoint)
 resource "aws_vpc_security_group_ingress_rule" "cluster_codebuild_eks_api" {
+  region                       = var.region
   security_group_id            = aws_security_group.cluster_security_group.id
   description                  = "CodeBuild access to EKS API server (private endpoint)"
   ip_protocol                  = "tcp"

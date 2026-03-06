@@ -55,6 +55,11 @@ module "unreal_cloud_ddc_primary" {
     cpu_requests     = local.shared_compute_config.cpu_requests
     memory_requests  = local.shared_compute_config.memory_requests
     replica_count    = local.shared_compute_config.replica_count
+    
+    # Multi-region testing configuration (PRIMARY REGION)
+    enable_single_region_validation = true   # Test this region
+    enable_multi_region_validation = false   # Skip multi-region tests (secondary region not ready yet)
+    peer_region_ddc_endpoint = "https://${local.secondary_ddc_fully_qualified_domain_name}"  # Secondary endpoint for testing
   }
 
   # DDC Infrastructure Configuration
@@ -70,12 +75,12 @@ module "unreal_cloud_ddc_primary" {
     # ScyllaDB Configuration
     scylla_config = {
       current_region = {
-        datacenter_name    = "us-east-1"
+        datacenter_name    = local.primary_region
         replication_factor = 3
       }
       peer_regions = {
-        "us-west-1" = {
-          datacenter_name    = "us-west-1"
+        (local.secondary_region) = {
+          datacenter_name    = local.secondary_region
           replication_factor = 2
         }
       }
@@ -120,9 +125,18 @@ module "unreal_cloud_ddc_secondary" {
   allowed_external_cidrs = [local.my_ip_cidr]
 
   # Multi-region Configuration
-  is_primary_region = false
+  is_primary_region = false  # Secondary region - use shared IAM roles from primary
   create_private_dns_records = false
-  create_bearer_token = false
+  create_bearer_token = false  # Use replicated token from primary
+  
+  # Existing IAM Role ARNs from Primary Region
+  existing_iam_role_arns = {
+    external_dns_role_arn                    = module.unreal_cloud_ddc_primary.iam_roles.external_dns_role_arn
+    aws_load_balancer_controller_role_arn    = module.unreal_cloud_ddc_primary.iam_roles.aws_load_balancer_controller_role_arn
+    cert_manager_role_arn                    = module.unreal_cloud_ddc_primary.iam_roles.cert_manager_role_arn
+    oidc_provider_arn                        = module.unreal_cloud_ddc_primary.iam_roles.oidc_provider_arn
+    codebuild_role_arn                       = module.unreal_cloud_ddc_primary.iam_roles.codebuild_role_arn
+  }
 
   # DDC Application Configuration (using shared locals)
   ddc_application_config = {
@@ -134,8 +148,13 @@ module "unreal_cloud_ddc_secondary" {
     memory_requests  = local.shared_compute_config.memory_requests
     replica_count    = local.shared_compute_config.replica_count
     
-    # Use shared bearer token from primary
-    bearer_token_secret_arn = module.unreal_cloud_ddc_primary.bearer_token_secret_arn
+    # Use shared bearer token from primary (replicated to this region)
+    bearer_token_secret_name = module.unreal_cloud_ddc_primary.bearer_token_secret_name
+    
+    # Multi-region testing configuration (SECONDARY REGION)
+    enable_single_region_validation = false  # Skip single-region tests (comprehensive multi-region test includes local validation)
+    enable_multi_region_validation = true    # Test cross-region replication (both regions available now)
+    peer_region_ddc_endpoint = "https://${local.primary_ddc_fully_qualified_domain_name}"  # Primary region endpoint
   }
 
   # DDC Infrastructure Configuration
@@ -148,20 +167,15 @@ module "unreal_cloud_ddc_secondary" {
     endpoint_private_access = true
     public_access_cidrs     = [local.my_ip_cidr]
 
-    # Use IAM roles from primary region
-    eks_cluster_role_arn = module.unreal_cloud_ddc_primary.iam_roles.eks_cluster_role_arn
-    eks_node_group_role_arns = module.unreal_cloud_ddc_primary.iam_roles.eks_node_group_role_arns
-    oidc_provider_arn = module.unreal_cloud_ddc_primary.iam_roles.oidc_provider_arn
-
     # ScyllaDB Configuration
     scylla_config = {
       current_region = {
-        datacenter_name    = "us-west-1"
+        datacenter_name    = local.secondary_region
         replication_factor = 2
       }
       peer_regions = {
-        "us-east-1" = {
-          datacenter_name    = "us-east-1"
+        (local.primary_region) = {
+          datacenter_name    = local.primary_region
           replication_factor = 3
         }
       }

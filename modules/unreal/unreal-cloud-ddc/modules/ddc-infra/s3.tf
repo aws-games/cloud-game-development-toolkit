@@ -9,12 +9,14 @@ resource "random_string" "manifests_suffix" {
 }
 
 resource "aws_s3_bucket" "manifests" {
+  region        = var.region
   bucket        = "${local.name_prefix}-ddc-infra-assets-${random_string.manifests_suffix.result}"
   force_destroy = true
   tags          = var.tags
 }
 
 resource "aws_s3_bucket_versioning" "manifests" {
+  region = var.region
   bucket = aws_s3_bucket.manifests.id
   versioning_configuration {
     status = "Enabled"
@@ -22,6 +24,7 @@ resource "aws_s3_bucket_versioning" "manifests" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "manifests" {
+  region = var.region
   bucket = aws_s3_bucket.manifests.id
   rule {
     apply_server_side_encryption_by_default {
@@ -35,12 +38,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "manifests" {
 ################################################################################
 
 resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
+  region        = var.region
   bucket        = local.s3_bucket_name
   force_destroy = true
   tags          = var.tags
 }
 
 resource "aws_s3_bucket_versioning" "unreal_ddc_s3_bucket_versioning" {
+  region = var.region
   bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
   versioning_configuration {
     status = "Enabled"
@@ -48,6 +53,7 @@ resource "aws_s3_bucket_versioning" "unreal_ddc_s3_bucket_versioning" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "unreal_ddc_s3_bucket_encryption" {
+  region = var.region
   bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
 
   rule {
@@ -58,6 +64,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "unreal_ddc_s3_buc
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "unreal_ddc_s3_bucket_lifecycle" {
+  region = var.region
   bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
 
   rule {

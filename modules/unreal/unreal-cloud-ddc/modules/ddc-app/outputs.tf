@@ -15,3 +15,8 @@ output "codebuild_projects" {
     }
   }
 }
+
+output "codebuild_role_arn" {
+  description = "CodeBuild IAM role ARN for cross-region sharing"
+  value       = var.is_primary_region ? aws_iam_role.codebuild_role[0].arn : null
+}

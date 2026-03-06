@@ -12,6 +12,223 @@
 
 ## Module Architecture
 
+### Multi-Region Resource Distribution
+
+```
+SHARED RESOURCES (Global - Created in Primary Region Only):
+├── IAM Roles
+│   ├── external-dns-role
+│   ├── aws-load-balancer-controller-role  
+│   ├── cert-manager-role
+│   ├── fluent-bit-role
+│   └── ddc-service-account-role
+├── IAM Policies (attached to shared roles)
+├── Bearer Token Secret (primary + cross-region replica)
+└── DNS Domain Names (shared zones)
+
+REGIONAL RESOURCES (Duplicated Per Region):
+Region 1 (us-east-1):                Region 2 (us-west-2):
+├── EKS Cluster                      ├── EKS Cluster
+├── EKS Addons (use shared IAM)      ├── EKS Addons (use shared IAM)
+├── Security Groups                   ├── Security Groups  
+├── S3 Buckets                       ├── S3 Buckets
+│   ├── CodeBuild assets             │   ├── CodeBuild assets
+│   └── DDC storage                  │   └── DDC storage
+├── CodeBuild Projects               ├── CodeBuild Projects
+│   ├── cluster-setup                │   ├── cluster-setup
+│   ├── ddc-deployer                 │   ├── ddc-deployer
+│   └── ddc-tester                   │   └── ddc-tester
+├── Terraform Actions               ├── Terraform Actions
+├── ScyllaDB Cluster                 ├── ScyllaDB Cluster
+├── Route53 Records                  ├── Route53 Records
+└── CloudWatch Logs                  └── CloudWatch Logs
+                ↑                                    ↑
+                └─── Cross-region replication ──────┘
+                     (ScyllaDB + Secrets)
+```
+
+### Multi-Region Secret Management (CRITICAL)
+
+**The Challenge**: AWS Secrets Manager is a regional service, but CodeBuild IAM roles are shared across regions.
+
+**User Requirements**:
+1. Create GHCR secret in primary region
+2. **MANUALLY replicate secret to all target regions**
+3. Terraform extracts base name and creates cross-region IAM permissions
+
+#### Step-by-Step Secret Flow
+
+**1. User Creates GHCR Secret (Primary Region)**
+```bash
+# User creates secret in us-east-1
+aws secretsmanager create-secret \
+  --name "my-github-creds" \
+  --secret-string '{"username":"user","accessToken":"ghp_xxxx"}' \
+  --region us-east-1
+
+# AWS assigns random suffix: my-github-creds-ABC123
+# Full ARN: arn:aws:secretsmanager:us-east-1:644937705968:secret:my-github-creds-ABC123
+```
+
+**2. User Replicates Secret (MANUAL STEP)**
+```bash
+# AWS Console → Secrets Manager → "my-github-creds" → "Replicate secret"
+# Choose us-west-1 as target region
+# AWS creates replica with SAME BASE NAME but different suffix:
+# us-west-1 replica: my-github-creds-XYZ789
+# Full ARN: arn:aws:secretsmanager:us-west-1:644937705968:secret:my-github-creds-XYZ789
+```
+
+**3. Terraform Extracts Base Name**
+```hcl
+# Input ARN: arn:aws:secretsmanager:us-east-1:644937705968:secret:my-github-creds-ABC123
+locals {
+  ghcr_secret_full_name = "my-github-creds-ABC123"  # Extract from ARN
+  ghcr_secret_base_name = "my-github-creds"         # Remove -ABC123 suffix
+}
+```
+
+**4. IAM Policy (Primary Region - Shared Across Regions)**
+```hcl
+# This IAM role is created in us-east-1 but used by CodeBuild in both regions
+resources = [
+  "arn:aws:secretsmanager:*:644937705968:secret:my-github-creds-*"
+]
+```
+
+**This allows access to:**
+- `arn:aws:secretsmanager:us-east-1:644937705968:secret:my-github-creds-ABC123` ✅
+- `arn:aws:secretsmanager:us-west-1:644937705968:secret:my-github-creds-XYZ789` ✅
+
+**5. CodeBuild Script Execution**
+
+**Primary Region (us-east-1):**
+```bash
+# CodeBuild runs in us-east-1
+GHCR_SECRET_NAME="my-github-creds"  # Base name from Terraform
+AWS_REGION="us-east-1"
+
+aws secretsmanager get-secret-value \
+  --secret-id "$GHCR_SECRET_NAME" \
+  --region "$AWS_REGION"
+
+# AWS resolves "my-github-creds" to "my-github-creds-ABC123" (original)
+# Returns: {"username":"user","accessToken":"ghp_xxxx"}
+```
+
+**Secondary Region (us-west-1):**
+```bash
+# CodeBuild runs in us-west-1 using SAME IAM role from us-east-1
+GHCR_SECRET_NAME="my-github-creds"  # Same base name
+AWS_REGION="us-west-1"
+
+aws secretsmanager get-secret-value \
+  --secret-id "$GHCR_SECRET_NAME" \
+  --region "$AWS_REGION"
+
+# AWS resolves "my-github-creds" to "my-github-creds-XYZ789" (replica)
+# Returns: {"username":"user","accessToken":"ghp_xxxx"} (same content)
+```
+
+#### IAM Access Flow Diagram
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│   us-east-1     │    │   us-west-1     │
+│                 │    │                 │
+│ CodeBuild Job   │    │ CodeBuild Job   │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │ IAM Role:   │ │    │ │ IAM Role:   │ │
+│ │ (shared)    │◄┼────┼─┤ (shared)    │ │
+│ │ us-east-1   │ │    │ │ us-east-1   │ │
+│ └─────────────┘ │    │ └─────────────┘ │
+│        │        │    │        │        │
+│        ▼        │    │        ▼        │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │Secret:      │ │    │ │Secret:      │ │
+│ │my-github-   │ │    │ │my-github-   │ │
+│ │creds-ABC123 │ │    │ │creds-XYZ789 │ │
+│ └─────────────┘ │    │ └─────────────┘ │
+└─────────────────┘    └─────────────────┘
+```
+
+#### Critical Success Factors
+
+**✅ What Makes It Work:**
+1. **Same IAM Role**: Both regions use CodeBuild role created in us-east-1
+2. **Wildcard Permission**: IAM policy allows `my-github-creds-*` in any region
+3. **Base Name Resolution**: AWS CLI resolves base name to local replica automatically
+4. **No Cross-Region Calls**: Each region accesses its local replica
+5. **Same Content**: Replicated secrets have identical content
+
+**❌ What Could Go Wrong:**
+
+**If user doesn't replicate secret:**
+```bash
+# us-west-1 CodeBuild tries:
+aws secretsmanager get-secret-value --secret-id "my-github-creds" --region us-west-1
+# Error: ResourceNotFoundException (no secret with that name in us-west-1)
+```
+
+**If IAM policy was wrong:**
+```bash
+# If policy only had exact ARN: arn:aws:secretsmanager:us-east-1:...:secret:my-github-creds-ABC123
+# us-west-1 CodeBuild tries to access: my-github-creds-XYZ789
+# Error: AccessDenied (policy doesn't allow XYZ789 suffix)
+```
+
+#### Implementation Details
+
+**Secret Name Extraction** (from `ddc-app/main.tf`):
+```hcl
+locals {
+  # Extract full name from ARN: "arn:aws:secretsmanager:region:account:secret:name-ABC123" → "name-ABC123"
+  ghcr_secret_full_name = reverse(split(":", var.ghcr_credentials_secret_arn))[0]
+  # Remove random 6-character suffix: "name-ABC123" → "name"
+  ghcr_secret_base_name = join("-", slice(split("-", local.ghcr_secret_full_name), 0, length(split("-", local.ghcr_secret_full_name)) - 1))
+}
+```
+
+**IAM Policy Generation**:
+```hcl
+resources = [
+  # Allow access to GHCR secret by base name pattern across all regions (with account ID for security)
+  "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:${local.ghcr_secret_base_name}-*"
+]
+```
+
+**CodeBuild Environment Variable**:
+```hcl
+environment_variable {
+  name  = "GHCR_SECRET_NAME"
+  value = local.ghcr_secret_base_name  # "my-github-creds" (no suffix)
+}
+```
+
+**CodeBuild Script Usage** (from `codebuild-deploy-ddc.sh`):
+```bash
+echo "[DDC-DEPLOY] Retrieving GHCR credentials from secret: $GHCR_SECRET_NAME"
+SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$GHCR_SECRET_NAME" --region $AWS_REGION --query SecretString --output text)
+```
+
+#### Why This Approach Works
+
+**AWS Best Practice**: Using secret names instead of ARNs for cross-region access:
+- **Identity Consistency**: Replicated secrets maintain exact same name across regions
+- **Automatic Resolution**: AWS resolves name to local replica when using `--region $AWS_REGION`
+- **Simplified IAM**: Single policy pattern works across all regions
+- **No Cross-Region API Calls**: Each region talks to its local Secrets Manager endpoint
+
+**Security Benefits**:
+- **Account Isolation**: IAM policy specifies exact account ID (not `*:*`)
+- **Name-Based Access**: Only allows access to specific secret name pattern
+- **Regional Containment**: No cross-region secret access required
+
+**Operational Benefits**:
+- **User-Friendly**: Works with any secret name user chooses
+- **Robust**: Handles secret recreation (new random suffix)
+- **Maintainable**: No complex regex or string manipulation in scripts
+
 **Two-Submodule Design** with conditional deployment:
 
 ```

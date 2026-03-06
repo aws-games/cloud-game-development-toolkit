@@ -1,8 +1,11 @@
 locals {
+  # Match single-region naming pattern exactly
   project_prefix = "cgd"
-  environment    = "dev"
+  environment = "dev"
+  name = "unreal-cloud-ddc"
+  name_prefix = "${local.project_prefix}-${local.name}-${local.environment}"  # Same as single-region
   
-  # Define regions first to avoid circular dependency
+  # Define regions
   primary_region = "us-east-1"
   secondary_region = "us-west-1"
 }

@@ -39,8 +39,10 @@ module "ddc_infra" {
   scylla_db_throughput      = var.ddc_infra_config.scylla_config != null ? var.ddc_infra_config.scylla_config.scylla_db_throughput : 200
 
   # EKS Configuration
-  kubernetes_version     = var.ddc_infra_config.kubernetes_version
-  eks_node_group_subnets = var.ddc_infra_config.eks_node_group_subnets
+  kubernetes_version         = var.ddc_infra_config.kubernetes_version
+  external_dns_addon_version = var.ddc_infra_config.external_dns_addon_version
+  fluent_bit_addon_version   = var.ddc_infra_config.fluent_bit_addon_version
+  eks_node_group_subnets     = var.ddc_infra_config.eks_node_group_subnets
 
 
 
@@ -76,6 +78,12 @@ module "ddc_infra" {
 
   # Multi-region configuration
   is_primary_region = var.is_primary_region
+  
+  # Existing IAM Role ARNs (for secondary regions or external IAM management)
+  shared_external_dns_role_arn                    = var.existing_iam_role_arns != null ? var.existing_iam_role_arns.external_dns_role_arn : null
+  shared_aws_load_balancer_controller_role_arn    = var.existing_iam_role_arns != null ? var.existing_iam_role_arns.aws_load_balancer_controller_role_arn : null
+  shared_cert_manager_role_arn                    = var.existing_iam_role_arns != null ? var.existing_iam_role_arns.cert_manager_role_arn : null
+  shared_oidc_provider_arn                        = var.existing_iam_role_arns != null ? var.existing_iam_role_arns.oidc_provider_arn : null
 
   # EKS access entries
   eks_access_entries = var.eks_access_entries
@@ -129,12 +137,12 @@ module "ddc_app" {
 
   # Bearer token (always read from Secrets Manager - either created or existing)
   ddc_bearer_token = var.create_bearer_token == true ? aws_secretsmanager_secret_version.unreal_cloud_ddc_token[0].secret_string : (
-    var.ddc_application_config != null && var.ddc_application_config.bearer_token_secret_arn != null ? data.aws_secretsmanager_secret_version.existing_token[0].secret_string : "generated-token"
+    length(data.aws_secretsmanager_secret_version.existing_token) > 0 ? data.aws_secretsmanager_secret_version.existing_token[0].secret_string : "generated-token"
   )
 
   # Bearer token secret ARN for CodeBuild testing
   bearer_token_secret_arn = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : (
-    var.ddc_application_config != null ? var.ddc_application_config.bearer_token_secret_arn : null
+    var.ddc_application_config != null && var.ddc_application_config.bearer_token_secret_arn != null ? var.ddc_application_config.bearer_token_secret_arn : null
   )
 
   # Credentials
@@ -159,6 +167,12 @@ module "ddc_app" {
 
   # Debug configuration
   force_codebuild_run = var.force_codebuild_run
+  is_primary_region = var.is_primary_region
+
+  # Existing IAM Role ARNs (for secondary regions)
+  existing_iam_role_arns = var.existing_iam_role_arns != null ? {
+    codebuild_role_arn = var.existing_iam_role_arns.codebuild_role_arn
+  } : null
 
   # VPC configuration
   vpc_id = var.vpc_id

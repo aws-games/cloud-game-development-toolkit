@@ -41,6 +41,11 @@ output "bearer_token_secret_arn" {
   value       = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].arn : (var.ddc_application_config != null ? var.ddc_application_config.bearer_token_secret_arn : null)
 }
 
+output "bearer_token_secret_name" {
+  description = "Name of the DDC bearer token secret for cross-region access"
+  value       = var.create_bearer_token == true ? aws_secretsmanager_secret.unreal_cloud_ddc_token[0].name : null
+}
+
 output "default_ddc_namespace" {
   description = "Default DDC logical namespace for API URLs and test scripts"
   value       = var.ddc_application_config.default_ddc_namespace
@@ -186,9 +191,12 @@ output "module_info" {
 output "iam_roles" {
   description = "IAM role ARNs for sharing across regions"
   value = var.is_primary_region ? {
-    eks_cluster_role_arn = module.ddc_infra.eks_cluster_role_arn
-    # eks_node_group_role_arns removed - EKS Auto Mode manages node roles automatically
-    oidc_provider_arn = module.ddc_infra.oidc_provider_arn
+    eks_cluster_role_arn                  = module.ddc_infra.eks_cluster_role_arn
+    external_dns_role_arn                 = module.ddc_infra.external_dns_role_arn
+    aws_load_balancer_controller_role_arn = module.ddc_infra.aws_load_balancer_controller_role_arn
+    cert_manager_role_arn                 = module.ddc_infra.cert_manager_role_arn
+    oidc_provider_arn                     = module.ddc_infra.oidc_provider_arn
+    codebuild_role_arn                    = var.ddc_application_config != null ? module.ddc_app[0].codebuild_role_arn : null
   } : null
 }
 

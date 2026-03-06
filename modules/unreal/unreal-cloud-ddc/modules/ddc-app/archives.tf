@@ -16,7 +16,7 @@ data "archive_file" "deploy_assets" {
     for_each = fileset("${path.module}/scripts/deploy", "**/*")
     content {
       content  = file("${path.module}/scripts/deploy/${source.value}")
-      filename = "scripts/${source.value}"
+      filename = "scripts/deploy/${source.value}"
     }
   }
 
@@ -45,7 +45,7 @@ data "archive_file" "test_assets" {
     for_each = fileset("${path.module}/scripts/test", "**/*")
     content {
       content  = file("${path.module}/scripts/test/${source.value}")
-      filename = "scripts/${source.value}"
+      filename = "scripts/test/${source.value}"
     }
   }
 
@@ -61,6 +61,7 @@ data "archive_file" "test_assets" {
 ################################################################################
 
 resource "aws_s3_object" "deploy_assets" {
+  region = var.region
   bucket = aws_s3_bucket.assets.id
   key    = "deploy/assets.zip"
   source = data.archive_file.deploy_assets.output_path
@@ -68,6 +69,7 @@ resource "aws_s3_object" "deploy_assets" {
 }
 
 resource "aws_s3_object" "test_assets" {
+  region = var.region
   bucket = aws_s3_bucket.assets.id
   key    = "test/assets.zip"
   source = data.archive_file.test_assets.output_path

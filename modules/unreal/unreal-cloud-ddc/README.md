@@ -62,6 +62,8 @@ aws secretsmanager create-secret \
   --secret-string '{"username":"your-github-username","accessToken":"your-personal-access-token"}'
 ```
 
+⚠️ **Multi-Region Note**: If deploying to multiple regions, you must replicate this secret to all target regions using AWS Console → Secrets Manager → [Secret] → "Replicate secret". See [Multi-Region Deployment](#multi-region-deployment) section for detailed steps.
+
 ### 3. Deploy Example
 
 ```bash
@@ -439,6 +441,28 @@ Multi-region DDC deployments require careful coordination between regions to sha
 ### Critical Requirements
 
 ⚠️ **DDC Namespace Consistency**: DDC namespaces MUST be identical across ALL regions (case-sensitive) or cross-region functionality will break.
+
+⚠️ **GHCR Secret Replication for Multi-Region**: For multi-region deployments, you MUST manually replicate the GHCR credentials secret to all target regions.
+
+**GHCR Secret Replication Steps:**
+1. Create GHCR secret in primary region (us-east-1)
+2. Go to AWS Console → Secrets Manager → Select your GHCR secret
+3. Click "Replicate secret" button
+4. Choose secondary region (us-west-1) 
+5. Click "Replicate"
+6. Verify replica exists in secondary region
+
+**Why This Is Required:**
+AWS Secrets Manager is a regional service. CodeBuild jobs in secondary regions cannot access secrets from other regions without replication. The deployment will fail with "AccessDenied" errors if the GHCR secret is not replicated.
+
+**Example:**
+```bash
+# Primary region secret (created manually)
+arn:aws:secretsmanager:us-east-1:123456789012:secret:github-ddc-credentials-ABC123
+
+# Replica in secondary region (created via console)
+arn:aws:secretsmanager:us-west-1:123456789012:secret:github-ddc-credentials-ABC123
+```
 
 **Best Practice - Shared Configuration:**
 ```hcl

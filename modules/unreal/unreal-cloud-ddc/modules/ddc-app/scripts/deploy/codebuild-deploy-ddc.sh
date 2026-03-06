@@ -33,8 +33,8 @@ if [[ "$DDC_CHART" == *"+helm" ]]; then
     echo "[DDC-DEPLOY] Deploying Epic chart with GHCR authentication"
     
     # Get GHCR credentials
-    echo "[DDC-DEPLOY] Retrieving GHCR credentials from $GHCR_SECRET_ARN"
-    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $GHCR_SECRET_ARN --region $AWS_REGION --query SecretString --output text)
+    echo "[DDC-DEPLOY] Retrieving GHCR credentials from secret: $GHCR_SECRET_NAME"
+    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$GHCR_SECRET_NAME" --region $AWS_REGION --query SecretString --output text)
     GHCR_USERNAME=$(echo "$SECRET_JSON" | jq -r .username)
     GHCR_TOKEN=$(echo "$SECRET_JSON" | jq -r .accessToken)
     
@@ -58,7 +58,8 @@ if [[ "$DDC_CHART" == *"+helm" ]]; then
         --namespace $NAMESPACE \
         --create-namespace \
         --values /tmp/ddc-helm-values.yaml \
-        --wait --timeout=600s
+        --debug \
+        --wait --timeout=1200s
     
     rm -f "$CHART_FILE"
 else
@@ -67,7 +68,8 @@ else
         --namespace $NAMESPACE \
         --create-namespace \
         --values /tmp/ddc-helm-values.yaml \
-        --wait --timeout=600s
+        --debug \
+        --wait --timeout=1200s
 fi
 
 echo "[DDC-DEPLOY] Waiting for DDC pods to be ready..."

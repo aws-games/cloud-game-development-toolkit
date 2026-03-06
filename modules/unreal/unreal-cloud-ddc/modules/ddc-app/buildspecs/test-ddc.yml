@@ -22,23 +22,23 @@ phases:
       # This script monitors the deploy project status and waits for completion
       # before proceeding with tests to ensure resources are deployed
       - echo "WORKAROUND - Checking for deploy completion (Terraform Actions bug)"
-      - chmod +x scripts/workaround-wait-for-deploy.sh
-      - ./scripts/workaround-wait-for-deploy.sh
+      - chmod +x scripts/test/workaround-wait-for-deploy.sh
+      - ./scripts/test/workaround-wait-for-deploy.sh
       - echo "Configuring kubectl access"
       - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
       - kubectl cluster-info --request-timeout=30s
   build:
     commands:
       - echo "Running functional tests"
-      - |
-        if [ -n "$PEER_REGION_DDC_ENDPOINT" ]; then
-          echo "Multi-region deployment detected - running multi-region tests"
-          chmod +x scripts/codebuild-test-ddc-multi-region.sh
-          ./scripts/codebuild-test-ddc-multi-region.sh
+      - |  
+        if [ "$ENABLE_MULTI_REGION_VALIDATION" = "true" ]; then
+          echo "Multi-region validation enabled - running comprehensive multi-region tests"
+          chmod +x scripts/test/codebuild-test-ddc-multi-region.sh
+          ./scripts/test/codebuild-test-ddc-multi-region.sh
         else
-          echo "Single-region deployment detected - running single-region tests"
-          chmod +x scripts/codebuild-test-ddc-single-region.sh
-          ./scripts/codebuild-test-ddc-single-region.sh
+          echo "Single-region validation - running single-region tests"
+          chmod +x scripts/test/codebuild-test-ddc-single-region.sh
+          ./scripts/test/codebuild-test-ddc-single-region.sh
         fi
   post_build:
     commands:

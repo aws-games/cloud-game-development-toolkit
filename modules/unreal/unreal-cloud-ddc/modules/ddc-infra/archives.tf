@@ -29,6 +29,7 @@ data "archive_file" "assets" {
 }
 
 resource "aws_s3_object" "assets" {
+  region = var.region
   bucket = aws_s3_bucket.manifests.id
   key    = "assets.zip"
   source = data.archive_file.assets.output_path

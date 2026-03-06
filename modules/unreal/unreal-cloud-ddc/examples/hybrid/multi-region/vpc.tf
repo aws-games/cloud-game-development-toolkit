@@ -35,7 +35,7 @@ resource "aws_subnet" "primary_public" {
     
     # EKS Cluster Ownership (REQUIRED for all EKS clusters since 2017)
     # Used by: AWS Load Balancer Controller, EBS CSI driver, all EKS add-ons
-    "kubernetes.io/cluster/${local.primary_cluster_name}" = "owned"
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
     
     # EKS Auto Mode Load Balancer Discovery (REQUIRED for EKS Auto Mode only)
     # Used by: EKS Auto Mode to identify eligible subnets for internet-facing load balancers
@@ -56,7 +56,7 @@ resource "aws_subnet" "primary_private" {
     
     # EKS Cluster Ownership (REQUIRED for all EKS clusters since 2017)
     # Used by: AWS Load Balancer Controller, EBS CSI driver, all EKS add-ons
-    "kubernetes.io/cluster/${local.primary_cluster_name}" = "owned"
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
     
     # EKS Auto Mode Load Balancer Discovery (REQUIRED for EKS Auto Mode only)
     # Used by: EKS Auto Mode to identify eligible subnets for internal load balancers
@@ -172,7 +172,7 @@ resource "aws_subnet" "secondary_public" {
     
     # EKS Cluster Ownership (REQUIRED for all EKS clusters since 2017)
     # Used by: AWS Load Balancer Controller, EBS CSI driver, all EKS add-ons
-    "kubernetes.io/cluster/${local.secondary_cluster_name}" = "owned"
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
     
     # EKS Auto Mode Load Balancer Discovery (REQUIRED for EKS Auto Mode only)
     # Used by: EKS Auto Mode to identify eligible subnets for internet-facing load balancers
@@ -194,7 +194,7 @@ resource "aws_subnet" "secondary_private" {
     
     # EKS Cluster Ownership (REQUIRED for all EKS clusters since 2017)
     # Used by: AWS Load Balancer Controller, EBS CSI driver, all EKS add-ons
-    "kubernetes.io/cluster/${local.secondary_cluster_name}" = "owned"
+    "kubernetes.io/cluster/${local.name_prefix}" = "owned"
     
     # EKS Auto Mode Load Balancer Discovery (REQUIRED for EKS Auto Mode only)
     # Used by: EKS Auto Mode to identify eligible subnets for internal load balancers

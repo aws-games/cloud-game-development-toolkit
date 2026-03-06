@@ -22,6 +22,7 @@ resource "random_string" "bearer_token_suffix" {
 # Bearer token secret - create if no existing ARN provided
 resource "aws_secretsmanager_secret" "unreal_cloud_ddc_token" {
   count                   = var.create_bearer_token == true ? 1 : 0
+  region                  = local.region
   name                    = "${local.name_prefix}-bearer-token-${random_string.bearer_token_suffix[0].result}"
   description             = "The bearer token to access Unreal Cloud DDC service"
   force_overwrite_replica_secret = true  # Overwrite replicas instead of failing on conflicts
@@ -52,6 +53,7 @@ resource "random_password" "ddc_token" {
 
 resource "aws_secretsmanager_secret_version" "unreal_cloud_ddc_token" {
   count         = var.create_bearer_token == true ? 1 : 0
+  region        = local.region
   secret_id     = aws_secretsmanager_secret.unreal_cloud_ddc_token[0].id
   secret_string = random_password.ddc_token[0].result
 }

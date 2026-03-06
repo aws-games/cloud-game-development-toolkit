@@ -1,30 +1,14 @@
 ################################################################################
-# Addon Version Data Sources (Foundation)
-################################################################################
-
-# Dynamic addon version fetching - no count needed, always fetch versions
-data "aws_eks_addon_version" "external_dns" {
-  addon_name         = "external-dns"
-  kubernetes_version = var.kubernetes_version
-  most_recent        = true
-}
-
-data "aws_eks_addon_version" "fluent_bit" {
-  addon_name         = "fluent-bit"
-  kubernetes_version = var.kubernetes_version
-  most_recent        = true
-}
-
-################################################################################
 # External DNS EKS Addon (Critical for Service Discovery)
 ################################################################################
 
 # External DNS EKS Addon
 resource "aws_eks_addon" "external_dns" {
+  region                   = var.region
   cluster_name             = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   addon_name               = "external-dns"
-  addon_version            = data.aws_eks_addon_version.external_dns.version
-  service_account_role_arn = aws_iam_role.external_dns.arn
+  addon_version            = var.external_dns_addon_version
+  service_account_role_arn = local.external_dns_role_arn
   resolve_conflicts_on_update = "OVERWRITE"
 
   timeouts {
@@ -47,7 +31,6 @@ resource "aws_eks_addon" "external_dns" {
 
   depends_on = [
     aws_eks_cluster.unreal_cloud_ddc_eks_cluster,
-    aws_iam_role.external_dns,
     terraform_data.cluster_setup_trigger
   ]
 }
@@ -64,16 +47,17 @@ resource "aws_eks_addon" "external_dns" {
 resource "aws_eks_addon" "fluent_bit" {
   count = var.enable_centralized_logging ? 1 : 0
 
+  region                   = var.region
   cluster_name             = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.name
   addon_name               = "fluent-bit"
-  addon_version            = data.aws_eks_addon_version.fluent_bit.version
+  addon_version            = var.fluent_bit_addon_version
   service_account_role_arn = aws_iam_role.fluent_bit_role[0].arn
   resolve_conflicts_on_update = "OVERWRITE"
 
   timeouts {
-    create = "5m"
-    update = "5m"
-    delete = "5m"
+    create = "10m"
+    update = "10m"
+    delete = "10m"
   }
 
   configuration_values = jsonencode({
@@ -118,7 +102,6 @@ resource "aws_eks_addon" "fluent_bit" {
 
   depends_on = [
     aws_eks_cluster.unreal_cloud_ddc_eks_cluster,
-    aws_iam_role.fluent_bit_role,
     terraform_data.cluster_setup_trigger
   ]
 }

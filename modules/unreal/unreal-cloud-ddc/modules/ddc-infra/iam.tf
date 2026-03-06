@@ -18,6 +18,12 @@ resource "aws_iam_openid_connect_provider" "eks_oidc" {
   })
 }
 
+# Data source to reference shared OIDC provider in secondary regions
+data "aws_iam_openid_connect_provider" "eks_oidc" {
+  count = !var.is_primary_region && var.shared_oidc_provider_arn != null ? 1 : 0
+  arn   = var.shared_oidc_provider_arn
+}
+
 ################################################################################
 # EKS Cluster IAM Role (Primary Infrastructure)
 ################################################################################
@@ -524,7 +530,7 @@ data "aws_iam_policy_document" "external_dns_assume_role" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.eks_oidc[0].arn]
+      identifiers = [local.oidc_provider_arn]
     }
     condition {
       test     = "StringEquals"
@@ -540,9 +546,35 @@ data "aws_iam_policy_document" "external_dns_assume_role" {
 }
 
 resource "aws_iam_role" "external_dns" {
+  count              = var.is_primary_region ? 1 : 0
   name               = "${local.name_prefix}-external-dns-role"
   assume_role_policy = data.aws_iam_policy_document.external_dns_assume_role.json
   tags               = var.tags
+}
+
+# Data source to reference shared role in secondary regions
+data "aws_iam_role" "external_dns" {
+  count = !var.is_primary_region ? 1 : 0
+  name  = "${local.name_prefix}-external-dns-role"
+}
+
+# Local to get the correct role ARNs - use existing ARNs if provided, otherwise create/reference locally
+locals {
+  external_dns_role_arn = var.shared_external_dns_role_arn != null ? var.shared_external_dns_role_arn : (
+    var.is_primary_region ? aws_iam_role.external_dns[0].arn : data.aws_iam_role.external_dns[0].arn
+  )
+  
+  aws_load_balancer_controller_role_arn = var.shared_aws_load_balancer_controller_role_arn != null ? var.shared_aws_load_balancer_controller_role_arn : (
+    var.is_primary_region && length(aws_iam_role.aws_load_balancer_controller_role) > 0 ? aws_iam_role.aws_load_balancer_controller_role[0].arn : null
+  )
+  
+  cert_manager_role_arn = var.shared_cert_manager_role_arn != null ? var.shared_cert_manager_role_arn : (
+    var.is_primary_region && var.enable_certificate_manager && length(aws_iam_role.cert_manager_role) > 0 ? aws_iam_role.cert_manager_role[0].arn : null
+  )
+  
+  oidc_provider_arn = var.shared_oidc_provider_arn != null ? var.shared_oidc_provider_arn : (
+    var.is_primary_region ? aws_iam_openid_connect_provider.eks_oidc[0].arn : data.aws_iam_openid_connect_provider.eks_oidc[0].arn
+  )
 }
 
 data "aws_iam_policy_document" "external_dns_policy" {
@@ -569,8 +601,9 @@ data "aws_iam_policy_document" "external_dns_policy" {
 }
 
 resource "aws_iam_role_policy" "external_dns" {
+  count  = var.is_primary_region ? 1 : 0
   name   = "external-dns-policy"
-  role   = aws_iam_role.external_dns.id
+  role   = aws_iam_role.external_dns[0].id
   policy = data.aws_iam_policy_document.external_dns_policy.json
 }
 
@@ -646,17 +679,17 @@ resource "aws_iam_role_policy_attachment" "cert_manager_policy_attachment" {
 }
 
 ################################################################################
-# FluentBit IAM Role (Infrastructure Service)
+# FluentBit IAM Role (Infrastructure Service) - Regional
 ################################################################################
 data "aws_iam_policy_document" "fluent_bit_assume_role" {
-  count = var.is_primary_region ? 1 : 0
+  count = var.enable_centralized_logging ? 1 : 0
   
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.eks_oidc[0].arn]
+      identifiers = [var.is_primary_region ? aws_iam_openid_connect_provider.eks_oidc[0].arn : data.aws_iam_openid_connect_provider.eks_oidc[0].arn]
     }
     condition {
       test     = "StringEquals"
@@ -672,8 +705,8 @@ data "aws_iam_policy_document" "fluent_bit_assume_role" {
 }
 
 resource "aws_iam_role" "fluent_bit_role" {
-  count              = var.is_primary_region ? 1 : 0
-  name_prefix        = "${local.name_prefix}-fluentbit-"
+  count              = var.enable_centralized_logging ? 1 : 0
+  name               = "${local.name_prefix}-fluentbit-role-${var.region}"
   assume_role_policy = data.aws_iam_policy_document.fluent_bit_assume_role[0].json
   
   tags = merge(var.tags, {
@@ -682,7 +715,7 @@ resource "aws_iam_role" "fluent_bit_role" {
 }
 
 data "aws_iam_policy_document" "fluent_bit_policy" {
-  count = var.is_primary_region ? 1 : 0
+  count = var.enable_centralized_logging ? 1 : 0
   
   statement {
     effect = "Allow"
@@ -698,13 +731,13 @@ data "aws_iam_policy_document" "fluent_bit_policy" {
 }
 
 resource "aws_iam_policy" "fluent_bit_policy" {
-  count       = var.is_primary_region ? 1 : 0
-  name_prefix = "${local.name_prefix}-fluentbit-policy-"
+  count       = var.enable_centralized_logging ? 1 : 0
+  name        = "${local.name_prefix}-fluentbit-policy-${var.region}"
   policy      = data.aws_iam_policy_document.fluent_bit_policy[0].json
 }
 
 resource "aws_iam_role_policy_attachment" "fluent_bit_policy_attachment" {
-  count      = var.is_primary_region ? 1 : 0
+  count      = var.enable_centralized_logging ? 1 : 0
   role       = aws_iam_role.fluent_bit_role[0].name
   policy_arn = aws_iam_policy.fluent_bit_policy[0].arn
 }

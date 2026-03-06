@@ -16,8 +16,8 @@ phases:
   build:
     commands:
       - echo "Starting DDC deployment"
-      - chmod +x scripts/codebuild-deploy-ddc.sh
-      - ./scripts/codebuild-deploy-ddc.sh
+      - chmod +x scripts/deploy/codebuild-deploy-ddc.sh
+      - ./scripts/deploy/codebuild-deploy-ddc.sh
       - echo "Deployment completed"
   post_build:
     commands:

@@ -5,6 +5,7 @@
 # Single logging bucket for entire DDC module
 resource "aws_s3_bucket" "logs" {
   count         = var.enable_centralized_logging ? 1 : 0
+  region        = local.region
   bucket        = local.logs_bucket_name
   force_destroy = true
 
@@ -17,6 +18,7 @@ resource "aws_s3_bucket" "logs" {
 # S3 bucket policy for load balancer access logs
 resource "aws_s3_bucket_policy" "logs_policy" {
   count  = var.enable_centralized_logging ? 1 : 0
+  region = local.region
   bucket = aws_s3_bucket.logs[0].id
   policy = data.aws_iam_policy_document.logs_policy[0].json
 }
@@ -59,7 +61,9 @@ data "aws_iam_policy_document" "logs_policy" {
 # ELB service account for access logs - REQUIRED even with EKS Auto Mode
 # EKS Auto Mode creates LoadBalancer services that still need to write access logs
 # to S3 buckets, so we need the regional ELB service account ARN for bucket policy
-data "aws_elb_service_account" "main" {}
+data "aws_elb_service_account" "main" {
+  region = local.region
+}
 
 ################################################################################
 # CloudWatch Log Groups - Single Log Group for All Logs
@@ -68,6 +72,7 @@ data "aws_elb_service_account" "main" {}
 # Single log group for all DDC logs (Kubernetes, ScyllaDB, NLB, etc.)
 resource "aws_cloudwatch_log_group" "logs" {
   count             = var.enable_centralized_logging ? 1 : 0
+  region            = local.region
   name              = "${local.log_prefix}-${local.region}"
   retention_in_days = var.log_retention_days
 

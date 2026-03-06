@@ -158,6 +158,8 @@ variable "ddc_infra_config" {
 
     # EKS Cluster Configuration
     kubernetes_version     = optional(string, "1.35")
+    external_dns_addon_version = optional(string, "v0.20.0-eksbuild.3")
+    fluent_bit_addon_version = optional(string, "v4.2.2-eksbuild.1")
     eks_node_group_subnets = optional(list(string), [])
 
     # EKS API Access Configuration (matches AWS provider exactly)
@@ -389,6 +391,7 @@ variable "ddc_application_config" {
 
     # Authentication (→ Terraform only)
     bearer_token_secret_arn = optional(string, null)
+    bearer_token_secret_name = optional(string, null)
 
     # Multi-Region Replication (→ Terraform + Helm template)
     enable_multi_region_replication = optional(bool, false)
@@ -508,13 +511,8 @@ EOT
 
   default = null
 
-  validation {
-    condition = (
-      !var.ddc_application_config.enable_multi_region_validation ||
-      var.ddc_application_config.peer_region_ddc_endpoint != null
-    )
-    error_message = "peer_region_ddc_endpoint is required when enable_multi_region_validation = true."
-  }
+  # Note: Validation removed - primary region can have enable_multi_region_validation=true with peer_region_ddc_endpoint=null
+  # This identifies the primary region that runs cross-region tests
 
   validation {
     condition = can(regex("^[a-z0-9]+\\.[a-z0-9]+$", var.ddc_application_config.instance_type))
@@ -536,10 +534,25 @@ variable "bearer_token_replica_regions" {
 
 variable "ghcr_credentials_secret_arn" {
   type        = string
-  description = "ARN of AWS Secrets Manager secret containing GitHub credentials for Epic Games container registry access. Secret must contain 'username' and 'accessToken' fields for GHCR authentication."
+  description = "ARN of AWS Secrets Manager secret containing GitHub credentials for Epic Games container registry access. Secret must contain 'username' and 'accessToken' fields for GHCR authentication. For multi-region deployments, replicate this secret to all target regions using AWS Console > Secrets Manager > [Secret] > Replicate secret."
   default     = null
 }
 
+
+########################################
+# Multi-Region IAM Role Sharing
+########################################
+variable "existing_iam_role_arns" {
+  type = object({
+    external_dns_role_arn                    = optional(string, null)
+    aws_load_balancer_controller_role_arn    = optional(string, null)
+    cert_manager_role_arn                    = optional(string, null)
+    oidc_provider_arn                        = optional(string, null)
+    codebuild_role_arn                       = optional(string, null)
+  })
+  description = "Existing IAM role ARNs to use instead of creating new ones. Can be from primary region, security team, or separate IAM module."
+  default     = null
+}
 
 ########################################
 # Advanced Configuration
