@@ -288,7 +288,7 @@ provider "helm" {
 }
 ```
 
-**Important:** While AWS Provider v6 supports [enhanced region support](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade#enhanced-region-support), other providers (Kubernetes, Helm, kubectl) still require [explicit provider aliases](https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations) for multi-region deployments.
+**Important:** While AWS Provider v6 supports [enhanced region support](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-6-upgrade), other providers (Kubernetes, Helm, kubectl) still require [explicit provider aliases](https://developer.hashicorp.com/terraform/language/providers/configuration#multiple-provider-configurations) for multi-region deployments.
 
 ## Security Best Practices
 
@@ -340,7 +340,7 @@ For detailed information on contributing new modules or enhancing existing ones:
 
 CGD Toolkit modules follow a standardized structure:
 
-```
+```text
 modules/service-name/
 ├── main.tf              # Parent module orchestration
 ├── variables.tf         # Input variables with validation
@@ -369,7 +369,7 @@ modules/service-name/
 
 ### **Common Issues**
 
-**Provider Configuration Errors**
+#### Provider Configuration Errors
 
 ```bash
 # Error: Invalid provider configuration
@@ -384,7 +384,7 @@ terraform {
 }
 ```
 
-**Subnet Configuration**
+#### Subnet Configuration
 
 ```bash
 # Error: Load balancer subnets must be provided
@@ -396,7 +396,7 @@ load_balancer_config = {
 }
 ```
 
-**Security Group Access**
+#### Security Group Access
 
 ```bash
 # Error: Cannot access service

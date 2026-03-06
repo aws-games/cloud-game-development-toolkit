@@ -22,7 +22,6 @@ A module is an automated deployment of a game development workload (i.e. Jenkins
 | [:simple-teamcity: __TeamCity__](../../modules/teamcity/README.md) | This module allows for deployment of TeamCity resources on AWS. |
 [:simple-jenkins: __Jenkins__](../../modules/jenkins/README.md)              | This module allows for deployment of Jenkins on AWS.
 
-
 ## How to include these modules
 
 We've found that including the **CGD Toolkit** repository as a git submodule in your own infrastructure repository is a good way of depending on the modules within an (existing) Terraform root module. Forking the **CGD Toolkit** and submoduling your fork may be a good approach if you intend to make changes to any modules. We recommend starting with the [Terraform module documentation](https://developer.hashicorp.com/terraform/language/modules) for a crash course in the way the **CGD Toolkit** is designed. Note how you can use the [module source argument](https://developer.hashicorp.com/terraform/language/modules/sources) to declare modules that use the **CGD Toolkit**'s module source code.

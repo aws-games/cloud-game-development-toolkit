@@ -4,15 +4,17 @@
 
 ### GPU Instance Types Required
 
-**⚠️ ALL TEMPLATES BUILD NVIDIA-OPTIMIZED AMIs**
+#### **⚠️ ALL TEMPLATES BUILD NVIDIA-OPTIMIZED AMIs**
 
-**For Packer Build:**
+### **For Packer Build:**
+
 - ✅ **GPU instances**: `g4dn.*`, `g5.*`, `p3.*`, `p4.*` (full functionality)
 - ⚠️ **Non-GPU instances**: `t3.*`, `m5.*`, `c5.*`, `r5.*` (builds succeed, skips NVIDIA drivers)
 - 🔧 **Current defaults**: `g4dn.2xlarge` (recommended for production)
 - 🎓 **Workshop friendly**: C instances work fine for learning/demos
 
 **For Final VDI Deployment:**
+
 - ✅ **Recommended**: GPU instances for full functionality
 - ⚠️ **Will boot but degraded**: Non-GPU instances (software rendering only)
 - ❌ **GPU apps will fail**: Unreal Engine, CUDA applications
@@ -32,7 +34,7 @@
 
 ## Directory Structure
 
-```
+```text
 assets/packer/virtual-workstations/
 ├── shared/                    # REQUIRED - Base infrastructure scripts
 │   ├── base_infrastructure.ps1    # NVIDIA + DCV + AWS tools + dev tools
@@ -96,6 +98,7 @@ packer build -var capacity_reservation_preference=none windows-server-2025-light
 ## Available Templates
 
 ### Lightweight AMI
+
 **Best for:** Runtime software customization via VDI Terraform module
 
 ```bash
@@ -110,6 +113,7 @@ packer build windows-server-2025-lightweight.pkr.hcl
 **Build Time:** ~25 minutes
 
 ### UE GameDev AMI
+
 **Best for:** Immediate Unreal Engine development
 
 ```bash
@@ -122,8 +126,6 @@ packer build windows-server-2025-ue-gamedev.pkr.hcl
 
 **Includes:** Lightweight base + Visual Studio 2022 + Epic Games Launcher (UE requires manual install)
 **Build Time:** ~45 minutes
-
-
 
 ## Shared Infrastructure
 
@@ -140,6 +142,7 @@ All templates use the shared base infrastructure script that provides:
 ## Template Dependencies
 
 **Each template references shared scripts:**
+
 - `../shared/base_infrastructure.ps1` - Common infrastructure setup
 - `../shared/sysprep.ps1` - EC2Launch configuration
 - `../shared/userdata.ps1` - Packer WinRM connectivity
@@ -181,11 +184,13 @@ module "vdi" {
 ## Troubleshooting
 
 **"Script not found" errors:**
+
 - Ensure you're running from the correct subdirectory
 - Verify the `shared/` directory exists at the same level
 - Check that you have the complete repository structure
 
 **Build failures:**
+
 - Verify AWS credentials are configured
 - Check VPC/subnet configuration in variables
 - Ensure instance type supports GPU drivers (g4dn.* recommended)
@@ -193,6 +198,7 @@ module "vdi" {
 ## Contributing
 
 When adding new templates:
+
 1. Create new subdirectory (e.g., `audio/`)
 2. Reference shared scripts: `../shared/base_infrastructure.ps1`
 3. Add template-specific scripts in the subdirectory

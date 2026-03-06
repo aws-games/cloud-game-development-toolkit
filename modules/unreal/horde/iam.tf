@@ -45,7 +45,21 @@ data "aws_iam_policy_document" "unreal_horde_elasticache_policy" {
 
   }
 }
-
+data "aws_iam_policy_document" "unreal_horde_recycle_policy" {
+  count = var.create_unreal_horde_recycle_policy ? 1 : 0
+  # EC2
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+      "ec2:RunInstances",
+      "ec2:StartInstances",
+      "ec2:StopInstances",
+      "ec2:ModifyInstanceAttribute",
+    ]
+    resources = ["*"]
+  }
+}
 
 resource "aws_iam_policy" "unreal_horde_default_policy" {
   count = var.create_unreal_horde_default_policy ? 1 : 0
@@ -61,6 +75,14 @@ resource "aws_iam_policy" "unreal_horde_elasticache_policy" {
   name        = "${var.project_prefix}-unreal_horde-elasticache-policy"
   description = "Policy granting elasticache connect permissions for Unreal Horde."
   policy      = data.aws_iam_policy_document.unreal_horde_elasticache_policy[0].json
+}
+
+resource "aws_iam_policy" "unreal_horde_recycle_policy" {
+  count = var.create_unreal_horde_recycle_policy ? 1 : 0
+
+  name        = "${var.project_prefix}-unreal_horde-recycle-policy"
+  description = "Policy granting Unreal Horde access to EC2 for agent reuse/recycling."
+  policy      = data.aws_iam_policy_document.unreal_horde_recycle_policy[0].json
 }
 
 resource "aws_iam_role" "unreal_horde_default_role" {
@@ -87,6 +109,12 @@ resource "aws_iam_role_policy_attachment" "unreal_horde_default_policy_attachmen
   policy_arn = aws_iam_policy.unreal_horde_default_policy[0].arn
 }
 
+resource "aws_iam_role_policy_attachment" "unreal_horde_recycle_attachment" {
+  count = var.create_unreal_horde_recycle_policy ? 1 : 0
+
+  role       = aws_iam_role.unreal_horde_default_role[0].name
+  policy_arn = aws_iam_policy.unreal_horde_recycle_policy[0].arn
+}
 
 data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
   count = var.github_credentials_secret_arn != null || var.p4_super_user_username_secret_arn != null ? 1 : 0

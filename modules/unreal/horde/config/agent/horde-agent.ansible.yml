@@ -65,7 +65,9 @@
       ansible.builtin.set_fact:
         appsettings: "{{ appsettings.content | b64decode | from_json | combine(item, recursive=True) }}"
       loop:
-        - { Horde: { wineExecutablePath: /usr/bin/wine } }
+        - Horde:
+            EnableAwsEc2Support: true
+            wineExecutablePath: /usr/bin/wine
     - name: Debug updated appsettings.json
       ansible.builtin.debug:
         var: appsettings

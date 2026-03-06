@@ -1,10 +1,28 @@
-{% extends "base.html" %}
-
-{% block outdated %}
-  You're not viewing the latest version.
-  <a href="{{ '../' ~ base_url }}">
+{% extends "base.html" %} {% block outdated %} You're not viewing the latest
+version.
+<a href="{{ '../' ~ base_url }}">
     <strong>Click here to go to latest.</strong>
-  </a>
+</a>
+{% endblock %} {% block scripts %} {{ super() }}
+<script>
+    // Hide preview versions from version selector
+    document.addEventListener("DOMContentLoaded", function () {
+        // Find all version links in the selector
+        const versionLinks = document.querySelectorAll(".md-version__link");
+
+        versionLinks.forEach(function (link) {
+            const versionText = link.textContent.trim();
+
+            // Hide preview versions (format: preview-pr-123)
+            if (versionText.startsWith("preview-pr-")) {
+                const listItem = link.closest("li");
+                if (listItem) {
+                    listItem.style.display = "none";
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
 
 <!-- Meta tags -->

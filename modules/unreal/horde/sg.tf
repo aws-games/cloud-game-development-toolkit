@@ -221,6 +221,17 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_horde_service_inbound_age
   ip_protocol                  = "tcp"
 }
 
+# Horde Internal ALB allow inbound HTTPS access from Containers
+resource "aws_vpc_security_group_ingress_rule" "unreal_horde_service_inbound_containers" {
+  count                        = var.create_internal_alb ? 1 : 0
+  security_group_id            = aws_security_group.unreal_horde_internal_alb_sg[0].id
+  description                  = "Allow inbound traffic to Unreal Horde Service from containers."
+  referenced_security_group_id = aws_security_group.unreal_horde_sg.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
+
 # Horde agents allow inbound access from other agents
 resource "aws_vpc_security_group_ingress_rule" "unreal_horde_agents_inbound_agents" {
   count                        = length(var.agents) > 0 ? 1 : 0

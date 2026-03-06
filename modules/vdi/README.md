@@ -1,6 +1,6 @@
 # VDI (Virtual Desktop Infrastructure) Module
 
-[![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](LICENSE)
+[![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](../../LICENSE)
 
 > **ℹ️ Prerequisites**: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's [Packer templates](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) (`lightweight/` and `ue-gamedev/`), but any Windows Server 2019/2022/2025 AMI works. See [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/) for complete setup guidance.
 
@@ -11,7 +11,7 @@
 - **Game Development Ready** - GPU instances, high-performance storage, UE-optimized AMIs
 - **Intelligent Drive Management** - Automatic Windows drive letter assignment and volume lifecycle
 - **Complete VDI Infrastructure** - EC2 workstations, security, IAM, and user management
-- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access
+- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access, termination protection
 - **Flexible Authentication** - EC2 key pairs (emergency) and Secrets Manager (production)
 - **Runtime Software Installation** - Automated package installation via SSM and Chocolatey
 
@@ -66,7 +66,7 @@ module "vdi" {
 
 ## Architecture
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Remote User   │    │   VPN Client     │    │  VDI Workstation│
 │  Web Browser    │───▶│  (Private Mode)  │───▶│   EC2 Instance  │
@@ -179,6 +179,7 @@ terraform output connection_info
 **Why AWS Client VPN is Required:**
 
 For private connectivity, AWS Client VPN is essential because:
+
 - **Custom DNS Resolution**: Private workstation URLs like `https://username.vdi.internal:8443` only resolve when connected to the VPN
 - **Network Access**: Private subnets are not accessible from the internet - VPN provides secure tunnel access
 - **Security**: Eliminates need to expose workstations to public internet
@@ -204,6 +205,7 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/D
 **For detailed setup instructions**: See [AWS Client VPN User Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-user/)
 
 **Connection Flow:**
+
 1. Connect to AWS Client VPN using your `.ovpn` file
 2. Access workstation via private DNS: `https://username.vdi.internal:8443`
 3. Login with credentials from Secrets Manager
@@ -382,67 +384,65 @@ presets = {
 }
 ```
 
-
-
 ## Troubleshooting
 
 ### Common Issues
 
-**Instance Launch Failures**
+#### Instance Launch Failures
 
 - Verify AMI exists: `aws ec2 describe-images --owners self --filters "Name=name,Values=*windows-server-2025*"`
 - Check AMI is in correct region
 - Ensure Packer build completed successfully
 
-**Drive Letter Issues**
+#### Drive Letter Issues
 
 - Check drive assignment: `Get-Disk | Format-Table Number, Size, BusType`
 - Volume scripts re-run automatically when volume configuration changes
 
-**Connection Timeouts**
+#### Connection Timeouts
 
 - Check security group allows your IP: `curl https://checkip.amazonaws.com/`
 - Verify instance is running: `aws ec2 describe-instances`
 - Test port connectivity: `telnet <instance-ip> 8443`
 
-**Password Retrieval Issues**
+#### Password Retrieval Issues
 
 - Wait 5-10 minutes after instance launch for password generation
 - Check Secrets Manager if user passwords not available
 - Use S3 backup key if Terraform output fails
 
-**DCV "Connecting" Spinner**
+#### DCV "Connecting" Spinner
 
 - Connect via SSM: `aws ssm start-session --target <instance-id>`
 - Check DCV sessions: `dcv list-sessions`
 - Restart DCV service: `Restart-Service dcvserver`
 
-**VPN Connection Issues**
+#### VPN Connection Issues
 
 - Check VPN endpoint DNS resolves: `nslookup [endpoint].prod.clientvpn.us-east-1.amazonaws.com`
 - Wait 5-15 minutes for AWS to activate endpoint
 - Check for CIDR conflicts with local network
 - Disconnect from other VPNs
 
-**User Accounts Not Created**
+#### User Accounts Not Created
 
 - Check SSM command status: `aws ssm list-command-invocations --instance-id <id>`
 - Check user creation status: `aws ssm get-parameter --name "/{project}/{workstation}/users/{username}/status_user_creation"`
 - Scripts re-run automatically when user configuration changes
 
-**Volume Initialization Issues**
+#### Volume Initialization Issues
 
 - Check volume status: `aws ssm get-parameter --name "/{project}/{workstation}/volume_status"`
 - Check volume messages: `aws ssm get-parameter --name "/{project}/{workstation}/volume_message"`
 - Scripts re-run automatically when volume configuration changes
 
-**Volume Resize Issues**
+#### Volume Resize Issues
 
 - Check disk sizes vs partition sizes: `Get-Disk | Format-Table Number, Size, BusType`
 - Check partition sizes: `Get-Partition | Format-Table DiskNumber, DriveLetter, Size`
 - Manual partition extension: `Resize-Partition -DriveLetter F -Size (Get-PartitionSupportedSize -DriveLetter F).SizeMax`
 
-**Manual Volume Initialization (if SSM script failed)**
+#### Manual Volume Initialization (if SSM script failed)
 
 ```powershell
 # Initialize any RAW disks
@@ -452,7 +452,7 @@ New-Partition -AssignDriveLetter -UseMaximumSize |
 Format-Volume -FileSystem NTFS -Confirm:$false
 ```
 
-**Software Installation Problems**
+#### Software Installation Problems
 
 - Check software status: `aws ssm get-parameter --name "/{project}/{workstation}/software_status"`
 - Check failed packages: `aws ssm get-parameter --name "/{project}/{workstation}/software_message"`
@@ -489,39 +489,38 @@ aws ec2 get-password-data --instance-id <id> --priv-launch-key temp_key.pem
 aws secretsmanager get-secret-value --secret-id "cgd/vdi-001/users/naruto-uzumaki"
 ```
 
-
-
 ## Contributing
 
 See the [Contributing Guidelines](../../CONTRIBUTING.md) for information on how to contribute to this project.
 
 ## License
 
-This project is licensed under the MIT-0 License. See the [LICENSE](../../../LICENSE) file for details.
+This project is licensed under the MIT-0 License. See the [LICENSE](../../LICENSE) file for details.
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.13 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.0.0 |
-| <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.0.0 |
-| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.0.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0.0 |
-| <a name="requirement_time"></a> [time](#requirement\_time) | >= 0.9.0 |
-| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >= 4.0.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | ~> 1.0 |
+| <a name="requirement_http"></a> [http](#requirement\_http) | ~> 3.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | ~> 0.9 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.0.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | >= 3.0.0 |
-| <a name="provider_time"></a> [time](#provider\_time) | >= 0.9.0 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | >= 4.0.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | ~> 1.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.0 |
+| <a name="provider_time"></a> [time](#provider\_time) | ~> 0.9 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | ~> 4.0 |
 
 ## Modules
 
@@ -610,6 +609,7 @@ No modules.
 | <a name="input_client_vpn_config"></a> [client\_vpn\_config](#input\_client\_vpn\_config) | Client VPN configuration for private connectivity | <pre>object({<br>    client_cidr_block       = optional(string, "192.168.0.0/16")<br>    generate_client_configs = optional(bool, true)<br>    split_tunnel            = optional(bool, true)<br>  })</pre> | `{}` | no |
 | <a name="input_create_client_vpn"></a> [create\_client\_vpn](#input\_create\_client\_vpn) | Create AWS Client VPN endpoint infrastructure (VPN endpoint, certificates, S3 bucket for configs) | `bool` | `false` | no |
 | <a name="input_create_default_security_groups"></a> [create\_default\_security\_groups](#input\_create\_default\_security\_groups) | Create default security groups for VDI workstations | `bool` | `true` | no |
+| <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode. When true, disables termination protection for CI/CD environments. When false, enables termination protection for production environments. | `bool` | `false` | no |
 | <a name="input_ebs_kms_key_id"></a> [ebs\_kms\_key\_id](#input\_ebs\_kms\_key\_id) | KMS key ID for EBS encryption (if encryption enabled) | `string` | `null` | no |
 | <a name="input_enable_centralized_logging"></a> [enable\_centralized\_logging](#input\_enable\_centralized\_logging) | Enable centralized logging with CloudWatch log groups following CGD Toolkit patterns | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod, etc.) | `string` | `"dev"` | no |
@@ -633,6 +633,7 @@ No modules.
 | <a name="output_public_ips"></a> [public\_ips](#output\_public\_ips) | Map of workstation public IP addresses |
 | <a name="output_vpn_configs_bucket"></a> [vpn\_configs\_bucket](#output\_vpn\_configs\_bucket) | S3 bucket name for VPN configuration files |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
 
 ## Volume Management
 
@@ -653,7 +654,7 @@ No modules.
 - ✅ **Proper cleanup** - Drive letters managed automatically
 - ✅ **Clean plans** - No continuous Terraform drift
 
-**Alternative: Manual Administration**
+#### Alternative: Manual Administration
 
 For immediate results, you can skip waiting for SSM and manually initialize volumes:
 
@@ -663,9 +664,10 @@ For immediate results, you can skip waiting for SSM and manually initialize volu
 
 ### Volume Limitations
 
-**Volume Size Reduction - NOT SUPPORTED**
+#### Volume Size Reduction - NOT SUPPORTED
 
-**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform limitation, not a module limitation.
+**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform
+limitation, not a module limitation.
 
 **What Happens**: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):
 

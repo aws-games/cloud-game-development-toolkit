@@ -17,7 +17,7 @@ jobs:
       actions: read  # Uncomment the permissions if installing in a private repository.
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v4.1.6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.1.6
         with:
           persist-credentials: false
       - name: "Run analysis"
@@ -27,13 +27,13 @@ jobs:
           results_format: sarif
           publish_results: true # Publish results to OpenSSF REST API for easy access by consumers
       - name: "Upload artifact"
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: SARIF file
           path: results.sarif
           retention-days: 5
       # Upload the results to GitHub's code scanning dashboard (optional).
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@4e0b2cd8144ac9869cf8b34acc9a106efea83a8c # v3.30.7
+        uses: github/codeql-action/upload-sarif@c793b717bc78562f491db7b0e93a3a178b099162 # v3.30.7
         with:
           sarif_file: results.sarif

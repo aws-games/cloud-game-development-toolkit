@@ -1,4 +1,4 @@
-# Amazon Q Operation Guidelines
+# Kiro Operation Guidelines
 
 ## Task Management for Complex Requests
 

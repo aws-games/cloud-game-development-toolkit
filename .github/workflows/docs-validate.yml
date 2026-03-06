@@ -1,0 +1,503 @@
+name: Validate Documentation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "docs/**"
+      - ".config/.markdownlint-cli2.jsonc"
+      - ".config/lychee.toml"
+  push:
+    branches: [main]
+    # No path filter - run on every push to catch all issues
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      scope:
+        description: "Validation scope: 'changed' for only changed files, 'all' for entire project"
+        required: false
+        type: string
+        default: "changed"
+      create_issue:
+        description: "Whether to create a GitHub issue on validation failure"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Determine scope
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "scope=changed" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_call" ]; then
+            echo "scope=${{ inputs.scope || 'all' }}" >> $GITHUB_OUTPUT
+          else
+            echo "scope=all" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get changed markdown/html files
+        if: steps.scope.outputs.scope == 'changed'
+        id: changed-files
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        with:
+          files: |
+            **/*.md
+            **/*.html
+
+      - name: Check links in changed files
+        if: steps.scope.outputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
+        id: lychee-changed
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          args: --config .config/lychee.toml --no-progress ${{ steps.changed-files.outputs.all_changed_files }}
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check all links
+        if: steps.scope.outputs.scope == 'all'
+        id: lychee-all
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          args: --config .config/lychee.toml --no-progress '**/*.md' '**/*.html'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Determine scope
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "scope=changed" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_call" ]; then
+            echo "scope=${{ inputs.scope || 'all' }}" >> $GITHUB_OUTPUT
+          else
+            echo "scope=all" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get changed markdown files
+        if: steps.scope.outputs.scope == 'changed'
+        id: changed-files
+        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        with:
+          files: "**/*.md"
+          separator: " "
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: "20"
+
+      - name: Install GitHub Actions formatter
+        run: npm install markdownlint-cli2-formatter-template
+
+      - name: Lint markdown files
+        id: lint
+        run: |
+          if [ "${{ steps.scope.outputs.scope }}" == "changed" ]; then
+            if [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
+              npx markdownlint-cli2 \
+                --config .config/ci.markdownlint-cli2.jsonc \
+                ${{ steps.changed-files.outputs.all_changed_files }}
+            fi
+          else
+            npx markdownlint-cli2 \
+              --config .config/ci.markdownlint-cli2.jsonc \
+              '**/*.md'
+          fi
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "docs/requirements.txt"
+
+      - name: Build documentation
+        id: build
+        run: |
+          pip install -r docs/requirements.txt
+          mkdocs build --strict
+
+  report-status:
+    name: Report Documentation Status
+    needs: [check-links, lint-markdown, build-docs]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    if: always()
+
+    steps:
+      # PR Comments: Delete comments for checks that are now passing
+      - name: Delete PR comment - Link Check Success
+        if: github.event_name == 'pull_request' && needs.check-links.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-link-check
+          delete: true
+
+      - name: Delete PR comment - Lint Success
+        if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-lint-failure
+          delete: true
+
+      - name: Delete PR comment - Build Success
+        if: github.event_name == 'pull_request' && needs.build-docs.result == 'success'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-build-failure
+          delete: true
+
+      # PR Comments: Post sticky comments for link and build failures
+      - name: Comment on PR - Link Check Failure
+        if: github.event_name == 'pull_request' && needs.check-links.result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-link-check
+          message: |
+            ## 🔗 Link Check Failed
+
+            The link checker has found broken links in the changed documentation files.
+
+            ### Action Required
+            Please review the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix the broken links.
+
+            ### Common Causes
+            - External links may have broken or moved
+            - Internal links may reference renamed or deleted files
+            - URLs may contain typos
+
+            ---
+            *Last checked: ${{ github.event.pull_request.head.sha }}*
+            *This comment will update automatically when you push new commits*
+
+      - name: Comment on PR - Lint Failure
+        if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-lint-failure
+          message: |
+            ## 📝 Markdown Linting Failed
+
+            The markdown linter has found issues in the changed documentation files.
+
+            ### Action Required
+            Please review the inline annotations in the **Files changed** tab and the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to fix the linting errors.
+
+            ### Common Issues
+            - Missing blank lines around headings, lists, or code blocks
+            - Inconsistent list styles
+            - Code blocks without language specifiers
+            - Emphasis used instead of proper headings
+
+            ### Auto-fix Available
+            Many issues can be automatically fixed by running:
+            ```bash
+            npx markdownlint-cli2 --fix "**/*.md"
+            ```
+
+            ---
+            *Last checked: ${{ github.event.pull_request.head.sha }}*
+            *This comment will update automatically when you push new commits*
+
+      - name: Comment on PR - Build Failure
+        if: github.event_name == 'pull_request' && needs.build-docs.result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: doc-build-failure
+          message: |
+            ## 📚 Documentation Build Failed
+
+            The mkdocs build has failed with errors.
+
+            ### Action Required
+            Please review the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix the build errors.
+
+            ### Common Causes
+            - Invalid mkdocs.yml configuration
+            - Missing or incorrectly formatted documentation files
+            - Broken navigation structure
+            - Plugin errors
+
+            ---
+            *Last checked: ${{ github.event.pull_request.head.sha }}*
+            *This comment will update automatically when you push new commits*
+
+      # Push to Main: Create/update GitHub issues for link and build failures
+      - name: Create or update link check issue
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-links.result == 'failure'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const issueTitle = '🔗 Documentation Link Check Failed';
+            const issueBody = `## Link Check Failures Detected
+
+            The link checker has found broken links in the documentation.
+
+            ### Action Required
+            Please review the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the broken links.
+
+            ### Common Causes
+            - External links may have broken or moved
+            - Internal links may reference renamed or deleted files
+            - URLs may contain typos
+
+            ---
+            *Last checked: ${new Date().toISOString()}*
+            *Run: ${context.runId}*
+            *Commit: ${context.sha}*`;
+
+            // Find existing link check issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated,link-check'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'link-check', 'bug']
+              });
+              console.log('Created new link check issue');
+            }
+
+      - name: Create or update lint failure issue
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.lint-markdown.result == 'failure'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const issueTitle = '📝 Markdown Linting Failed';
+            const issueBody = `## Markdown Linting Failures Detected
+
+            The markdown linter has found issues in the documentation.
+
+            ### Action Required
+            Please review the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the linting errors.
+
+            ### Common Issues
+            - Missing blank lines around headings, lists, or code blocks
+            - Inconsistent list styles
+            - Code blocks without language specifiers
+            - Emphasis used instead of proper headings
+
+            ### Auto-fix Available
+            Many issues can be automatically fixed by running:
+            \`\`\`bash
+            npx markdownlint-cli2 --fix "**/*.md"
+            \`\`\`
+
+            ---
+            *Last checked: ${new Date().toISOString()}*
+            *Run: ${context.runId}*
+            *Commit: ${context.sha}*`;
+
+            // Find existing lint issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated,lint'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'lint', 'bug']
+              });
+              console.log('Created new lint issue');
+            }
+
+      - name: Create or update build failure issue
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-docs.result == 'failure'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const issueTitle = '📚 Documentation Build Failed';
+            const issueBody = `## Documentation Build Failures Detected
+
+            The mkdocs build has failed with errors.
+
+            ### Action Required
+            Please review the [workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) and fix the build errors.
+
+            ### Common Causes
+            - Invalid mkdocs.yml configuration
+            - Missing or incorrectly formatted documentation files
+            - Broken navigation structure
+            - Plugin errors
+
+            ---
+            *Last checked: ${new Date().toISOString()}*
+            *Run: ${context.runId}*
+            *Commit: ${context.sha}*`;
+
+            // Find existing build issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated,build'
+            });
+
+            const existingIssue = issues.find(issue => issue.title === issueTitle);
+
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: issueBody
+              });
+              console.log(`Updated issue #${existingIssue.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['documentation', 'automated', 'build', 'bug']
+              });
+              console.log('Created new build issue');
+            }
+
+      # Push to Main: Close issues when checks pass
+      - name: Close issues when passing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,automated'
+            });
+
+            // Close link check issue if links are now passing
+            if ('${{ needs.check-links.result }}' === 'success') {
+              const linkIssue = issues.find(issue => issue.title === '🔗 Documentation Link Check Failed');
+              if (linkIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: linkIssue.number,
+                  state: 'closed'
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: linkIssue.number,
+                  body: `✅ Link check now passing. Closing issue.\n\nRun: ${context.runId}`
+                });
+                console.log(`Closed link check issue #${linkIssue.number}`);
+              }
+            }
+
+            // Close lint issue if linting is now passing
+            if ('${{ needs.lint-markdown.result }}' === 'success') {
+              const lintIssue = issues.find(issue => issue.title === '📝 Markdown Linting Failed');
+              if (lintIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: lintIssue.number,
+                  state: 'closed'
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: lintIssue.number,
+                  body: `✅ Markdown linting now passing. Closing issue.\n\nRun: ${context.runId}`
+                });
+                console.log(`Closed lint issue #${lintIssue.number}`);
+              }
+            }
+
+            // Close build issue if build is now passing
+            if ('${{ needs.build-docs.result }}' === 'success') {
+              const buildIssue = issues.find(issue => issue.title === '📚 Documentation Build Failed');
+              if (buildIssue) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: buildIssue.number,
+                  state: 'closed'
+                });
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: buildIssue.number,
+                  body: `✅ Documentation build now passing. Closing issue.\n\nRun: ${context.runId}`
+                });
+                console.log(`Closed build issue #${buildIssue.number}`);
+              }
+            }

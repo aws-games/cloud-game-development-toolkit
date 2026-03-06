@@ -1,0 +1,22 @@
+name: Documentation Health Check
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9am UTC to catch link rot and regressions
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    name: Validate All Documentation
+    uses: ./.github/workflows/docs-validate.yml
+    permissions:
+      contents: read
+      issues: write
+    with:
+      scope: "all"
+      create_issue: true

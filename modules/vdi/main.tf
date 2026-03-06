@@ -48,6 +48,9 @@ resource "aws_instance" "workstations" {
   associate_public_ip_address = each.value.associate_public_ip_address
   availability_zone           = each.value.availability_zone
 
+  # Termination protection enabled by default, disabled in debug mode for CI/CD
+  disable_api_termination = !var.debug
+
   iam_instance_profile = each.value.iam_instance_profile != null ? each.value.iam_instance_profile : aws_iam_instance_profile.vdi_instance_profile[each.key].name
 
   root_block_device {

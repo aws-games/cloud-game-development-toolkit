@@ -1,3 +1,23 @@
+locals {
+  unreal_horde_agent_userdata_windows = base64encode(templatefile("${path.module}/config/agent/agent-config.ps1", {
+    p4_trust_bucket             = local.need_p4_trust && length(var.agents) > 0 ? aws_s3_bucket.ansible_playbooks[0].id : null
+    fully_qualified_domain_name = var.fully_qualified_domain_name
+    dotnet_runtime_version      = var.agent_dotnet_runtime_version
+  }))
+}
+
+# Need to fetch the AMI info to determine the platform
+data "aws_ami" "unreal_horde_agent_ami" {
+  for_each = var.agents
+
+  most_recent = true
+
+  filter {
+    name   = "image-id"
+    values = [each.value.ami]
+  }
+}
+
 resource "aws_launch_template" "unreal_horde_agent_template" {
   for_each    = var.agents
   name_prefix = "unreal_horde_agent-${each.key}"
@@ -18,8 +38,13 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
     }
   }
 
+  user_data = data.aws_ami.unreal_horde_agent_ami[each.key].platform == "windows" ? local.unreal_horde_agent_userdata_windows : null
+
   vpc_security_group_ids = [aws_security_group.unreal_horde_agent_sg[0].id]
 
+  private_dns_name_options {
+    hostname_type = "resource-name"
+  }
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"
@@ -29,27 +54,35 @@ resource "aws_launch_template" "unreal_horde_agent_template" {
   iam_instance_profile {
     arn = aws_iam_instance_profile.unreal_horde_agent_instance_profile[0].arn
   }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = merge(
+      {
+        Name = "${each.key} Horde Agent"
+      },
+      each.value.horde_pool_name != null ? {
+        Horde_Autoscale_Pool = each.value.horde_pool_name
+      } : {},
+    )
+  }
 }
 
 resource "aws_autoscaling_group" "unreal_horde_agent_asg" {
-  for_each    = aws_launch_template.unreal_horde_agent_template
+  for_each    = { for k, v in var.agents : k => v if v.create_asg }
   name_prefix = "unreal_horde_agents-${each.key}-"
 
   launch_template {
-    id      = each.value.id
+    id      = aws_launch_template.unreal_horde_agent_template[each.key].id
     version = "$Latest"
   }
 
+  #checkov:skip=CKV_AWS_153: Autoscaling groups should supply tags to launch configurations
+
   vpc_zone_identifier = var.unreal_horde_service_subnets
 
-  min_size = var.agents[each.key].min_size
-  max_size = var.agents[each.key].max_size
-
-  tag {
-    key                 = "Name"
-    value               = "${each.key} Horde Agent"
-    propagate_at_launch = true
-  }
+  min_size = each.value.min_size
+  max_size = each.value.max_size
 
   depends_on = [aws_ecs_service.unreal_horde]
 }
@@ -84,11 +117,32 @@ data "aws_iam_policy_document" "horde_agents_s3_policy" {
   }
 }
 
+// This is required for Horde Agents to be able to query their tags (Horde Agent does not yet support reading tags from IMDS).
+data "aws_iam_policy_document" "horde_agents_ec2_policy" {
+  count = length(var.agents) > 0 ? 1 : 0
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeTags",
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
 resource "aws_iam_policy" "horde_agents_s3_policy" {
   count       = length(var.agents) > 0 ? 1 : 0
   name        = "${var.project_prefix}-horde-agents-s3-policy"
   description = "Policy granting Horde Agent EC2 instances access to Amazon S3."
   policy      = data.aws_iam_policy_document.horde_agents_s3_policy[0].json
+}
+
+resource "aws_iam_policy" "horde_agents_ec2_policy" {
+  count       = length(var.agents) > 0 ? 1 : 0
+  name        = "${var.project_prefix}-horde-agents-ec2-policy"
+  description = "Policy granting Horde Agent EC2 instances access to Amazon EC2 APIs."
+  policy      = data.aws_iam_policy_document.horde_agents_ec2_policy[0].json
 }
 
 # Instance Role
@@ -100,13 +154,22 @@ resource "aws_iam_role" "unreal_horde_agent_default_role" {
   tags = local.tags
 }
 
-resource "aws_iam_role_policy_attachments_exclusive" "unreal_horde_agent_policy_attachments" {
-  count     = length(var.agents) > 0 ? 1 : 0
-  role_name = aws_iam_role.unreal_horde_agent_default_role[0].name
-  policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    aws_iam_policy.horde_agents_s3_policy[0].arn
-  ]
+resource "aws_iam_role_policy_attachment" "unreal_horde_agent_policy_attachments" {
+  count      = length(var.agents) > 0 ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.unreal_horde_agent_default_role[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "unreal_horde_agents_s3_policy" {
+  count      = length(var.agents) > 0 ? 1 : 0
+  policy_arn = aws_iam_policy.horde_agents_s3_policy[0].arn
+  role       = aws_iam_role.unreal_horde_agent_default_role[0].name
+}
+
+resource "aws_iam_role_policy_attachment" "unreal_horde_agents_ec2_policy" {
+  count      = length(var.agents) > 0 ? 1 : 0
+  policy_arn = aws_iam_policy.horde_agents_ec2_policy[0].arn
+  role       = aws_iam_role.unreal_horde_agent_default_role[0].name
 }
 
 # Instance Profile
@@ -205,8 +268,12 @@ resource "aws_ssm_association" "configure_unreal_horde_agent" {
   }
 
   targets {
-    key    = "tag:aws:autoscaling:groupName"
-    values = values(aws_autoscaling_group.unreal_horde_agent_asg)[*].name
+    // Only apply to instances created from the launch template on Linux (platform == "")
+    key = "tag:aws:ec2launchtemplate:id"
+    values = [
+      for name, lt in aws_launch_template.unreal_horde_agent_template :
+      lt.id if data.aws_ami.unreal_horde_agent_ami[name].platform == ""
+    ]
   }
 
   # Wait for service to be ready before attempting enrollment

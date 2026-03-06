@@ -46,138 +46,143 @@ git checkout -b feature/your-feature-name
 - Validation tests for variable constraints
 
 ### Test Structure
-**REQUIRED**: Organize tests with type prefix, number, and description:
+**REQUIRED**: Organize tests with number and description:
 ```
 tests/
-├── setup/                                   # Shared test setup (REQUIRED)
-│   ├── ssm.tf                              # SSM parameter retrieval
-│   └── versions.tf                         # Test setup versions
-├── unit_01_basic_single_region.tftest.hcl          # Unit test (plan only)
-├── unit_02_basic_multi_region.tftest.hcl           # Unit test (plan only)
-├── integration_01_single_region_deploy.tftest.hcl  # Integration/E2E test (apply)
-└── integration_02_multi_region_deploy.tftest.hcl   # Integration/E2E test (apply)
+├── 01_basic.tftest.hcl      # Basic deployment scenario
+├── 02_complete.tftest.hcl   # Full-featured deployment
+├── 03_feature.tftest.hcl    # Specific feature tests
+└── README.md                # Test documentation
 ```
 
 **Naming Pattern**: `{number}_{description}.tftest.hcl`
 - **Number**: `01`, `02`, etc. for execution order
-- **Description**: Brief description of what the test covers (e.g., `basic_single_region`, `basic_multi_region`)
+- **Description**: Brief description of what the test covers (e.g., `basic`, `complete`, `auth_methods`)
 
 **Test Types:**
-- **Unit Tests**: Use `command = plan` to validate configuration without deployment
-- **Integration Tests**: Use `command = apply` for full deployment (apply + validate + destroy = E2E)
+- **Unit Tests**: Use `command = plan` with mocked providers to validate module logic
+- **Integration Tests**: Not implemented (Terraform test lacks cleanup functionality)
 
 **Test Execution:**
 ```bash
-# IMPORTANT: Run from module root directory (where tests/ directory is located)
-cd /path/to/module  # Directory containing tests/ folder
-terraform init      # Initialize from module root
+# Run from module root directory (where tests/ directory is located)
+cd modules/{module-name}
+terraform init      # Initialize (downloads providers)
 terraform test      # Run all tests in numbered order
 
 # Run specific test
-terraform test -filter="01_basic_single_region.tftest.hcl"
+terraform test -filter=tests/01_basic.tftest.hcl
+
+# Verbose output
+terraform test -verbose
+
+# Skip initialization for faster iteration
+terraform test -no-init
 ```
 
 **Common Test Issues:**
 - **❌ Wrong directory**: Don't run from inside `tests/` directory
 - **✅ Correct directory**: Run from module root (where `tests/` directory is located)
-- **❌ No init**: Must run `terraform init` before `terraform test`
-- **✅ Relative paths**: Test files use `./examples/` which only works from module root
+- **❌ No init**: Must run `terraform init` before first `terraform test`
+- **❌ Missing mocks**: Ensure all data sources used by module are mocked
 
-### Test Setup Directory (REQUIRED)
-**MANDATORY**: All modules must have a `tests/setup/` directory that retrieves test values from CI AWS account.
+### Test Setup with Mocked Providers (REQUIRED)
+**MANDATORY**: All modules must use mocked providers for unit tests to avoid AWS costs and cleanup issues.
 
 **Purpose**:
-- Store test configuration values in AWS Systems Manager Parameter Store
-- Avoid hardcoding sensitive or environment-specific values in test files
-- Enable consistent testing across different environments
+- Test module logic without creating actual AWS resources
+- Zero AWS costs and no cleanup required
+- Fast execution (seconds vs minutes)
+- No AWS credentials needed
 
-**Setup Structure:**
+**Mock Provider Structure:**
 ```hcl
-# tests/setup/ssm.tf
-data "aws_ssm_parameter" "route53_public_hosted_zone_name" {
-  name = "/cgd-toolkit/tests/route53-public-hosted-zone-name"
+# Each test file must include mock providers (cannot be shared)
+mock_provider "aws" {
+  mock_data "aws_region" {
+    defaults = {
+      name = "us-east-1"
+      id   = "us-east-1"
+    }
+  }
+
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "123456789012"
+    }
+  }
 }
 
-data "aws_ssm_parameter" "ghcr_credentials_secret_arn" {
-  name = "/cgd-toolkit/tests/ghcr-credentials-secret-arn"
-}
-
-output "route53_public_hosted_zone_name" {
-  value = data.aws_ssm_parameter.route53_public_hosted_zone_name.value
-}
-
-output "ghcr_credentials_secret_arn" {
-  value = data.aws_ssm_parameter.ghcr_credentials_secret_arn.value
-}
+mock_provider "random" {}
 ```
-
-**Parameter Requirements:**
-- **CRITICAL**: Parameters must exist in CI AWS account before tests can run
-- **Naming Convention**: `/cgd-toolkit/tests/{parameter-name}`
-- **Validation**: Test parameter existence before creating tests
-- **Documentation**: Document required parameters in module README
 
 **Test Usage:**
 ```hcl
-# tests/unit_01_basic_single_region.tftest.hcl
-run "setup" {
-  command = plan
-  module {
-    source = "./tests/setup"
-  }
+# tests/01_basic.tftest.hcl
+mock_provider "aws" {
+  # Mock data sources
 }
 
-run "unit_test" {
+run "unit_test_basic" {
   command = plan
 
   variables {
-    route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
-    ghcr_credentials_secret_arn = run.setup.ghcr_credentials_secret_arn
+    vpc_id = "vpc-test123"
+    # Test values directly in file
   }
 
-  module {
-    source = "./examples/single-region-basic"
+  assert {
+    condition     = length(aws_resource.main) > 0
+    error_message = "Resource should be created"
   }
 }
 ```
 
+**Important Notes:**
+- Mock providers must be duplicated in each test file (Terraform limitation)
+- Test module logic, not AWS behavior
+- No integration tests (Terraform test lacks cleanup functionality)
+
 ### Test Requirements
-**REQUIRED**: Tests must reference examples and use setup directory:
-- All tests in `tests/` directory must use `module.source = "./examples/[example-name]"`
-- Tests must include setup run block to retrieve CI account parameters
+**REQUIRED**: Tests must use mocked providers and reference examples:
+- All tests in `tests/` directory must use `mock_provider` blocks
+- Tests must use `command = plan` for unit testing
+- Tests should reference examples: `module.source = "./examples/[example-name]"`
 - Tests validate common usage patterns through examples
-- Both unit and integration tests are required for new modules
-- **Parameter Validation**: Verify all required SSM parameters exist in CI account before test creation
+- Only unit tests are required (no integration tests due to cleanup limitations)
+- Mock providers must be duplicated in each test file (Terraform limitation)
 
 ### Example Testing Template
 ```hcl
-# tests/01_basic_single_region.tftest.hcl
-run "setup" {
-  command = plan
-  module {
-    source = "./tests/setup"
+# tests/01_basic.tftest.hcl
+# Note: Mock providers must be duplicated in each test file (Terraform limitation)
+mock_provider "aws" {
+  mock_data "aws_region" {
+    defaults = { name = "us-east-1" }
+  }
+
+  mock_data "aws_caller_identity" {
+    defaults = { account_id = "123456789012" }
   }
 }
 
-run "unit_test" {
+mock_provider "random" {}
+
+run "unit_test_basic" {
   command = plan  # Unit tests use plan only
 
   variables {
-    route53_public_hosted_zone_name = run.setup.route53_public_hosted_zone_name
+    vpc_id = "vpc-test123"
+    # Test values directly in file
   }
 
-  module {
-    source = "./examples/single-region-basic"  # Always reference examples
+  assert {
+    condition     = length(aws_resource.main) > 0
+    error_message = "Resource should be created"
   }
 }
 
-# Integration test (currently disabled due to Terraform test limitations)
-# run "integration_test" {
-#   command = apply
-#   module {
-#     source = "./examples/single-region-basic"
-#   }
-# }
+# Integration tests not implemented (Terraform test lacks cleanup functionality)
 ```
 
 ## Security Scanning
@@ -239,12 +244,10 @@ terraform validate
 
 ### Proactive Suggestions
 **After completing module work, ALWAYS ask:**
-- "Would you like me to help create Terraform tests for this module?"
+- "Would you like me to help create Terraform tests with mocked providers for this module?"
 - "Should I run a security scan with Checkov to check for issues?"
 - "Do you need help updating the documentation?"
 - "Would you like me to create an example configuration?"
-- "Do you need help setting up the tests/setup/ directory with SSM parameter retrieval?"
-- "Should I help you identify which SSM parameters need to be created in the CI account?"
 - "Would you like me to implement centralized logging following the CGD Toolkit standards?"
 
 ## Centralized Logging Implementation

@@ -4,23 +4,23 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.6.0"
+      version = "~> 6.6"
     }
     awscc = {
       source  = "hashicorp/awscc"
-      version = "1.50.0"
+      version = "~> 1.51"
     }
     random = {
       source  = "hashicorp/random"
-      version = "3.7.2"
+      version = "~> 3.7"
     }
     http = {
       source  = "hashicorp/http"
-      version = "3.5.0"
+      version = "~> 3.5"
     }
     netapp-ontap = {
       source  = "NetApp/netapp-ontap"
-      version = "2.3.0"
+      version = "~> 2.3"
     }
   }
 }

@@ -1,0 +1,118 @@
+name: Terraform Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'modules/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    name: Detect Changed Modules
+    runs-on: ubuntu-latest
+    outputs:
+      test_dirs: ${{ steps.set-matrix.outputs.test_dirs }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          list-files: json
+          filters: |
+            modules:
+              - 'modules/**'
+
+      - name: Find directories to test
+        id: set-matrix
+        env:
+          CHANGED_FILES: ${{ steps.filter.outputs.modules_files }}
+        run: |
+          echo "Event: ${{ github.event_name }}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger for all modules"
+            # Find all directories containing tests
+            dirs=$(find modules -type d -name tests -exec dirname {} \; | sed 's|modules/||' | jq -R -s -c 'split("\n")[:-1]')
+          elif [ "${{ steps.filter.outputs.modules }}" = "true" ]; then
+            echo "PR with module changes detected"
+            echo "Changed files: $CHANGED_FILES"
+            # Extract unique module paths from changed files, then find which ones have tests
+            changed_modules=$(echo "$CHANGED_FILES" | jq -r '.[]' | grep '^modules/' | sed 's|^modules/||' | cut -d'/' -f1-2 | sort -u)
+            test_dirs=()
+            for module_path in $changed_modules; do
+              # Check if this path or any subdirectories have tests
+              if [ -d "modules/$module_path/tests" ]; then
+                test_dirs+=("$module_path")
+              fi
+              # Also check for nested modules with tests
+              while IFS= read -r test_dir; do
+                relative_path=$(echo "$test_dir" | sed 's|modules/||' | sed 's|/tests$||')
+                if [[ "$relative_path" == "$module_path"* ]]; then
+                  test_dirs+=("$relative_path")
+                fi
+              done < <(find "modules/$module_path" -type d -name tests 2>/dev/null | sed 's|/tests$||')
+            done
+            # Remove duplicates and convert to JSON array
+            dirs=$(printf '%s\n' "${test_dirs[@]}" | sort -u | jq -R -s -c 'split("\n")[:-1]')
+          else
+            echo "No module changes detected"
+            dirs="[]"
+          fi
+
+          echo "Modules to test: $dirs"
+          echo "test_dirs=$dirs" >> $GITHUB_OUTPUT
+
+  test:
+    name: Test ${{ matrix.module }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test_dirs != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.detect-changes.outputs.test_dirs) }}
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
+        with:
+          terraform_version: "1.14.2"
+
+      - name: Check for tests
+        id: check-tests
+        run: |
+          echo "::group::Checking for tests in ${{ matrix.module }}"
+          if [ -d "modules/${{ matrix.module }}/tests" ] && [ -n "$(find modules/${{ matrix.module }}/tests -name '*.tftest.hcl')" ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+            echo "✅ Found tests"
+            find modules/${{ matrix.module }}/tests -name '*.tftest.hcl' | head -5
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No tests found"
+          fi
+          echo "::endgroup::"
+
+      - name: Run tests
+        if: steps.check-tests.outputs.has_tests == 'true'
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          echo "::group::Running Terraform tests"
+          terraform init
+          terraform test -verbose
+          echo "::endgroup::"
+
+      - name: Comment on PR
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ Terraform tests failed for module: **${{ matrix.module }}**\n\nPlease check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.`
+            })

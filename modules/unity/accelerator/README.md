@@ -1,4 +1,5 @@
 # Unity Accelerator Module
+
 [Unity Accelerator](https://docs.unity3d.com/6000.0/Documentation/Manual/UnityAccelerator.html) is a caching service that speeds up project operations in [Unity](https://unity.com/) by storing and sharing asset cache data among team members, significantly reducing build times and asset imports by allowing team members to reuse previously processed assets instead of having to process the same assets independently.
 
 This Unity Accelerator deployment uses an [Elastic Container Service](https://aws.amazon.com/ecs/) cluster for task deployment, with Amazon [Elastic File System](https://aws.amazon.com/efs/) providing persistent storage for configurations and cache. Access is managed through two load balancers: an [Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/application-load-balancer/) for secure, password-protected web dashboard access via HTTPS, and a [Network Load Balancer](https://aws.amazon.com/elasticloadbalancing/network-load-balancer/) for efficient cache-related protobuf traffic.
@@ -6,28 +7,31 @@ This Unity Accelerator deployment uses an [Elastic Container Service](https://aw
 A [Secrets Manager](https://aws.amazon.com/secrets-manager/) password entry, to be used as the Unity Accelerator's web dashboard password, is required beforehand. Password must be stored as a plaintext secret, not as key/value JSON secret, and the password's ARN must be provided as the value for the `unity_accelerator_dashboard_password_arn` variable.
 
 ## Deployment Architecture
+
 ![Unity Accelerator Module Architecture](./assets/media/diagrams/unity-accelerator-architecture.png)
 
 ## Examples
+
 For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unity/accelerator/examples).
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | 6.6.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | 1.50.0 |
-| <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.6 |
+| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | ~> 1.51 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.6.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.50.0 |
-| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.6 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | ~> 1.51 |
+| <a name="provider_random"></a> [random](#provider\_random) | ~> 3.7 |
 
 ## Modules
 
@@ -37,61 +41,61 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_log_group.unity_accelerator_log_group](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/cloudwatch_log_group) | resource |
-| [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_cluster) | resource |
-| [aws_ecs_service.unity_accelerator](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_service) | resource |
-| [aws_ecs_task_definition.unity_accelerator_task_definition](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_task_definition) | resource |
-| [aws_efs_access_point.unity_accelerator_efs_data_access_point](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/efs_access_point) | resource |
-| [aws_efs_file_system.unity_accelerator_efs](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/efs_file_system) | resource |
-| [aws_efs_mount_target.unity_accelerator_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/efs_mount_target) | resource |
-| [aws_iam_policy.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.secret_access_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_policy) | resource |
-| [aws_iam_role.unity_accelerator_default_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role) | resource |
-| [aws_iam_role.unity_accelerator_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy_attachment.cloudwatch_logs_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.task_execution_role_secret_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.unity_accelerator_default_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.unity_accelerator_task_execution_role_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_lb.unity_accelerator_external_alb](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb) | resource |
-| [aws_lb.unity_accelerator_external_nlb](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb) | resource |
-| [aws_lb_listener.unity_accelerator_cache_listener](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb_listener) | resource |
-| [aws_lb_listener.unity_accelerator_https_dashboard_listener](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb_listener) | resource |
-| [aws_lb_listener.unity_accelerator_https_dashboard_redirect](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb_listener) | resource |
-| [aws_lb_target_group.unity_accelerator_cache_target_group](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb_target_group) | resource |
-| [aws_lb_target_group.unity_accelerator_dashboard_target_group](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/lb_target_group) | resource |
-| [aws_s3_bucket.unity_accelerator_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/s3_bucket_lifecycle_configuration) | resource |
-| [aws_s3_bucket_policy.lb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_security_group.unity_accelerator_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
-| [aws_security_group.unity_accelerator_efs_sg](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
-| [aws_security_group.unity_accelerator_service_sg](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
-| [aws_security_group.vpc_endpoint_sg](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group) | resource |
-| [aws_vpc_endpoint.ec2messages_vpce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_endpoint) | resource |
-| [aws_vpc_endpoint.ssm_vpce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_endpoint) | resource |
-| [aws_vpc_endpoint.ssmmessages_vpce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_endpoint) | resource |
-| [aws_vpc_security_group_egress_rule.unity_accelerator_alb_egress_service_80](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.unity_accelerator_service_egress_all](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.service_efs](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unity_accelerator_ingress_to_vpce](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_alb_80](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_nlb_10080](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_nlb_80](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.vpc_endpoint_https](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [awscc_secretsmanager_secret.dashboard_password_arn](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
-| [awscc_secretsmanager_secret.dashboard_username_arn](https://registry.terraform.io/providers/hashicorp/awscc/1.50.0/docs/resources/secretsmanager_secret) | resource |
-| [random_string.unity_accelerator_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/3.7.2/docs/resources/string) | resource |
-| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/caller_identity) | data source |
-| [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/ecs_cluster) | data source |
-| [aws_efs_file_system.efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/efs_file_system) | data source |
-| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/elb_service_account) | data source |
-| [aws_iam_policy_document.access_logs_bucket_lb_write](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/iam_policy_document) | data source |
-| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/region) | data source |
-| [aws_subnet.nlb_subnets](https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/subnet) | data source |
+| [aws_cloudwatch_log_group.unity_accelerator_log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
+| [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
+| [aws_ecs_service.unity_accelerator](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
+| [aws_ecs_task_definition.unity_accelerator_task_definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
+| [aws_efs_access_point.unity_accelerator_efs_data_access_point](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point) | resource |
+| [aws_efs_file_system.unity_accelerator_efs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system) | resource |
+| [aws_efs_mount_target.unity_accelerator_efs_mount_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_mount_target) | resource |
+| [aws_iam_policy.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.secret_access_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.unity_accelerator_default_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.unity_accelerator_task_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.cloudwatch_logs_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.task_execution_role_secret_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.unity_accelerator_default_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.unity_accelerator_task_execution_role_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_lb.unity_accelerator_external_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
+| [aws_lb.unity_accelerator_external_nlb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
+| [aws_lb_listener.unity_accelerator_cache_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unity_accelerator_https_dashboard_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_listener.unity_accelerator_https_dashboard_redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_lb_target_group.unity_accelerator_cache_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_lb_target_group.unity_accelerator_dashboard_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
+| [aws_s3_bucket.unity_accelerator_lb_access_logs_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
+| [aws_s3_bucket_policy.lb_access_logs_bucket_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_s3_bucket_public_access_block.access_logs_bucket_public_block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
+| [aws_security_group.unity_accelerator_alb_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.unity_accelerator_efs_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.unity_accelerator_service_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.vpc_endpoint_sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_endpoint.ec2messages_vpce](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_endpoint.ssm_vpce](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_endpoint.ssmmessages_vpce](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_security_group_egress_rule.unity_accelerator_alb_egress_service_80](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.unity_accelerator_service_egress_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.service_efs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_ingress_to_vpce](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_alb_80](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_nlb_10080](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.unity_accelerator_service_ingress_from_nlb_80](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.vpc_endpoint_https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [awscc_secretsmanager_secret.dashboard_password_arn](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.dashboard_username_arn](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [random_string.unity_accelerator_lb_access_logs_bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_ecs_cluster.unity_accelerator_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster) | data source |
+| [aws_efs_file_system.efs_file_system](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_file_system) | data source |
+| [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
+| [aws_iam_policy_document.access_logs_bucket_lb_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.cloudwatch_logs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.ecs_tasks_trust_relationship](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.unity_accelerator_default_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
+| [aws_subnet.nlb_subnets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 
 ## Inputs
 
@@ -142,3 +146,4 @@ No modules.
 | <a name="output_unity_accelerator_dashboard_password_arn"></a> [unity\_accelerator\_dashboard\_password\_arn](#output\_unity\_accelerator\_dashboard\_password\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's username. |
 | <a name="output_unity_accelerator_dashboard_username_arn"></a> [unity\_accelerator\_dashboard\_username\_arn](#output\_unity\_accelerator\_dashboard\_username\_arn) | AWS Secrets Manager secret's ARN containing the Unity Accelerator web dashboard's password. |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
