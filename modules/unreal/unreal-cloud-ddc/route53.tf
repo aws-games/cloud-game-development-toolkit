@@ -2,8 +2,10 @@
 # DDC DNS Strategy Implementation
 ##########################################
 
-# Private hosted zone for internal DNS (always created)
+# Private hosted zone for internal DNS (only created in primary region)
 resource "aws_route53_zone" "private" {
+  count = var.is_primary_region ? 1 : 0
+  
   name = local.service_domain
   # CRITICAL: External-DNS EKS Addon creates records (A, AAAA, TXT) that can't be cleaned up when EKS cluster is destroyed
   # because the External-DNS addon terminates with the cluster. force_destroy automatically deletes all
@@ -25,9 +27,9 @@ resource "aws_route53_zone" "private" {
 
 # Additional VPC associations for cross-region access
 resource "aws_route53_zone_association" "additional_vpcs" {
-  for_each = var.additional_vpc_associations != null ? var.additional_vpc_associations : {}
+  for_each = var.is_primary_region && var.additional_vpc_associations != null ? var.additional_vpc_associations : {}
 
-  zone_id = aws_route53_zone.private.zone_id
+  zone_id = aws_route53_zone.private[0].zone_id
   vpc_id  = each.value.vpc_id
 }
 
@@ -37,8 +39,8 @@ resource "aws_route53_zone_association" "additional_vpcs" {
 
 # ScyllaDB DNS records for internal service discovery
 resource "aws_route53_record" "scylla_cluster" {
-  count   = var.ddc_infra_config != null && local.database_type == "scylla" && length(module.ddc_infra.scylla_ips) > 0 ? 1 : 0
-  zone_id = aws_route53_zone.private.zone_id
+  count   = var.is_primary_region && var.ddc_infra_config != null && local.database_type == "scylla" && length(module.ddc_infra.scylla_ips) > 0 ? 1 : 0
+  zone_id = aws_route53_zone.private[0].zone_id
   name    = "scylla.${local.service_domain}"
   type    = "A"
   ttl     = 300
@@ -47,8 +49,8 @@ resource "aws_route53_record" "scylla_cluster" {
 
 # Individual ScyllaDB node records for debugging
 resource "aws_route53_record" "scylla_nodes" {
-  count   = var.ddc_infra_config != null && local.database_type == "scylla" ? length(module.ddc_infra.scylla_ips) : 0
-  zone_id = aws_route53_zone.private.zone_id
+  count   = var.is_primary_region && var.ddc_infra_config != null && local.database_type == "scylla" ? length(module.ddc_infra.scylla_ips) : 0
+  zone_id = aws_route53_zone.private[0].zone_id
   name    = "scylla-${count.index + 1}.${local.service_domain}"
   type    = "A"
   ttl     = 300
