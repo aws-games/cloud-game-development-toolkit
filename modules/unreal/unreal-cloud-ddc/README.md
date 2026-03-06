@@ -87,6 +87,81 @@ choco install awscli kubernetes-cli kubernetes-helm jq terraform
    - Office/VPN IP ranges for security group access
    - VPC CIDR planning for multi-region deployments
 
+## Known AWS Service Issues & Workarounds
+
+⚠️ **IMPORTANT**: This module includes automatic workarounds for known AWS service bugs that are **not CGD Toolkit issues**. These are upstream service limitations that affect all users of these AWS services.
+
+### 1. EKS Auto Mode Security Group Cleanup Bug
+
+**Issue**: EKS Auto Mode creates security groups for LoadBalancer services but fails to clean them up during cluster deletion, blocking VPC destruction.
+
+**AWS Service**: EKS Auto Mode
+**Impact**: VPC deletion fails with "DependencyViolation" errors
+**Root Cause**: EKS DeleteCluster API returns success before load balancer cleanup completes
+
+**Evidence**:
+- Security groups tagged with `service.eks.amazonaws.com/resource: ManagedBackendSecurityGroup`
+- Group names like `k8s-traffic-{cluster-name}-{suffix}`
+- Created automatically when DDC application deploys LoadBalancer services
+- Not cleaned up when EKS cluster is deleted
+
+**Our Workaround**: Automatic cleanup script with 30-minute retry logic that:
+- Detects orphaned EKS Auto Mode security groups
+- Removes dependent ENIs and security group rules
+- Retries deletion until successful
+- Only runs when `ddc_application_config` is provided (when LoadBalancer services exist)
+
+**When You'll Encounter This**:
+- ✅ **Terraform DDC deployment**: Automatic cleanup handles it
+- ❌ **Manual app deployment**: You'll need manual cleanup if you deploy LoadBalancer services outside Terraform
+- ❌ **Infrastructure-only deployment**: No LoadBalancer services = no security groups = no issue
+
+### 2. External-DNS Record Cleanup Bug
+
+**Issue**: External-DNS EKS addon creates DNS records but doesn't clean them up during cluster deletion.
+
+**AWS Service**: External-DNS EKS addon
+**Impact**: Orphaned DNS records remain in Route53 hosted zones
+**Root Cause**: External-DNS addon doesn't have cleanup hooks for cluster deletion
+
+**Our Workaround**: Automatic cleanup script that:
+- Identifies External-DNS created records by naming pattern
+- Removes records matching cluster and environment patterns
+- Runs during Terraform destroy process
+
+### Manual Cleanup (If Needed)
+
+If you encounter these issues outside of Terraform-managed deployments:
+
+**EKS Auto Mode Security Groups**:
+```bash
+# Find orphaned security groups
+aws ec2 describe-security-groups \
+  --filters "Name=group-name,Values=k8s-traffic-*" \
+  --query 'SecurityGroups[*].{GroupId:GroupId,GroupName:GroupName}'
+
+# Delete security group (replace with actual ID)
+aws ec2 delete-security-group --group-id sg-xxxxxxxxx
+```
+
+**External-DNS Records**:
+```bash
+# List DNS records in hosted zone
+aws route53 list-resource-record-sets --hosted-zone-id Z1234567890ABC
+
+# Delete specific record (use AWS Console or CLI)
+```
+
+### Future Improvements
+
+These are known current AWS service limitations. We track these issues and aim to remove this workaround logic in future versions of the module when AWS resolves the underlying service bugs.
+
+### Prevention
+
+- **Use this module**: Automatic workarounds handle both issues
+- **Infrastructure-only deployments**: Won't encounter EKS Auto Mode security group issue
+- **Manual deployments**: Be prepared for manual cleanup of both issues
+
 ### Authentication Setup
 
 #### Step 1: Create GitHub Personal Access Token

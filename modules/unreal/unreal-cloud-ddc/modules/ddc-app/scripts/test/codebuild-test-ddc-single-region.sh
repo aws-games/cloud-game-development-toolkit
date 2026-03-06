@@ -391,26 +391,51 @@ fi
 echo ""
 echo "📥 Testing GET operation..."
 echo "=========================="
-echo "   🔄 Attempting GET request (timeout: 30s)..."
-if [ "$USE_RESOLVED_IP" = "true" ]; then
-    GET_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_DOWNLOAD:%{size_download}" \
-        -H "Host: $DNS_HOST" \
-        "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-else
-    GET_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_DOWNLOAD:%{size_download}" \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
-fi
+GET_SUCCESS=false
+GET_ATTEMPTS=5
+get_attempt=1
+while [ $get_attempt -le $GET_ATTEMPTS ]; do
+    echo "   🔄 GET attempt $get_attempt/$GET_ATTEMPTS: Attempting GET request (timeout: 30s)..."
+    if [ "$USE_RESOLVED_IP" = "true" ]; then
+        GET_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_DOWNLOAD:%{size_download}" \
+            -H "Host: $DNS_HOST" \
+            "$RESOLVED_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    else
+        GET_RESPONSE=$(curl -s --max-time 30 $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}\nTIME_TOTAL:%{time_total}\nSIZE_DOWNLOAD:%{size_download}" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    fi
 
-if echo "$GET_RESPONSE" | grep -q "CURL_FAILED"; then
-    echo "❌ GET request failed - curl command timed out or failed"
+    if echo "$GET_RESPONSE" | grep -q "CURL_FAILED"; then
+        echo "   ❌ GET attempt $get_attempt failed: curl command timed out or failed"
+        if [ $get_attempt -lt $GET_ATTEMPTS ]; then
+            echo "   ⏳ Waiting 30 seconds before retry..."
+            sleep 30
+        fi
+    else
+        GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        if [ "$GET_STATUS" = "200" ]; then
+            GET_TIME=$(echo "$GET_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
+            GET_SIZE=$(echo "$GET_RESPONSE" | grep "SIZE_DOWNLOAD:" | cut -d: -f2)
+            echo "   ✅ GET attempt $get_attempt successful!"
+            GET_SUCCESS=true
+            break
+        else
+            echo "   ❌ GET attempt $get_attempt failed: HTTP $GET_STATUS"
+            if [ $get_attempt -lt $GET_ATTEMPTS ]; then
+                echo "   ⏳ Waiting 30 seconds before retry..."
+                sleep 30
+            fi
+        fi
+    fi
+    get_attempt=$((get_attempt + 1))
+done
+
+if [ "$GET_SUCCESS" = "false" ]; then
+    echo "❌ GET request failed after $GET_ATTEMPTS attempts"
     exit 1
 fi
-
-GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-GET_TIME=$(echo "$GET_RESPONSE" | grep "TIME_TOTAL:" | cut -d: -f2)
-GET_SIZE=$(echo "$GET_RESPONSE" | grep "SIZE_DOWNLOAD:" | cut -d: -f2)
 
 echo "📊 GET Results:"
 echo "   Status: $GET_STATUS"

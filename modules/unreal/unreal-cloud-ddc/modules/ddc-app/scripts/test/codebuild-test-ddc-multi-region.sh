@@ -160,33 +160,59 @@ echo "📤 Step 1: PUT data to primary region ($PRIMARY_REGION)..."
 PRIMARY_DNS_HOST=$(echo "$PRIMARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
 PRIMARY_DNS_IP=$(dig @8.8.8.8 +short "$PRIMARY_DNS_HOST" | head -1)
 
-if [ -n "$PRIMARY_DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$PRIMARY_DNS_HOST"* ]]; then
-    PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        -H "Host: $PRIMARY_DNS_HOST" \
-        "$(echo "$PRIMARY_ENDPOINT" | sed "s|$PRIMARY_DNS_HOST|$PRIMARY_DNS_IP|")/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN")
-else
-    PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
-        -X PUT \
-        --data "$TEST_DATA" \
-        -H 'content-type: application/octet-stream' \
-        -H "X-Jupiter-IoHash: $TEST_IOHASH" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN")
-fi
+PUT_SUCCESS=false
+PUT_ATTEMPTS=3
+put_attempt=1
+while [ $put_attempt -le $PUT_ATTEMPTS ]; do
+    echo "   🔄 PUT attempt $put_attempt/$PUT_ATTEMPTS: Attempting PUT request..."
+    if [ -n "$PRIMARY_DNS_IP" ] && [[ "$PRIMARY_ENDPOINT" == *"$PRIMARY_DNS_HOST"* ]]; then
+        PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            -H "Host: $PRIMARY_DNS_HOST" \
+            "$(echo "$PRIMARY_ENDPOINT" | sed "s|$PRIMARY_DNS_HOST|$PRIMARY_DNS_IP|")/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    else
+        PUT_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            "$PRIMARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH" \
+            -X PUT \
+            --data "$TEST_DATA" \
+            -H 'content-type: application/octet-stream' \
+            -H "X-Jupiter-IoHash: $TEST_IOHASH" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    fi
 
-PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-if [[ "$PUT_STATUS" == "200" || "$PUT_STATUS" == "201" ]]; then
-    echo "✅ PUT to primary region successful"
-else
-    echo "❌ PUT to primary region failed (HTTP $PUT_STATUS)"
-    echo "$PUT_RESPONSE"
+    if echo "$PUT_RESPONSE" | grep -q "CURL_FAILED"; then
+        echo "   ❌ PUT attempt $put_attempt failed: curl command failed"
+        if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+            echo "   ⏳ Waiting 30 seconds before retry..."
+            sleep 30
+        fi
+    else
+        PUT_STATUS=$(echo "$PUT_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        if [[ "$PUT_STATUS" == "200" || "$PUT_STATUS" == "201" ]]; then
+            echo "   ✅ PUT attempt $put_attempt successful!"
+            PUT_SUCCESS=true
+            break
+        else
+            echo "   ❌ PUT attempt $put_attempt failed: HTTP $PUT_STATUS"
+            if [ $put_attempt -lt $PUT_ATTEMPTS ]; then
+                echo "   ⏳ Waiting 30 seconds before retry..."
+                sleep 30
+            fi
+        fi
+    fi
+    put_attempt=$((put_attempt + 1))
+done
+
+if [ "$PUT_SUCCESS" = "false" ]; then
+    echo "❌ PUT to primary region failed after $PUT_ATTEMPTS attempts"
     exit 1
 fi
+
+echo "✅ PUT to primary region successful"
 
 echo ""
 echo "⏳ Step 2: Waiting for ScyllaDB cross-region replication..."
@@ -208,28 +234,53 @@ echo "📥 Step 3: GET data from secondary region ($SECONDARY_REGION)..."
 SECONDARY_DNS_HOST=$(echo "$SECONDARY_ENDPOINT" | sed 's|https://||' | sed 's|http://||')
 SECONDARY_DNS_IP=$(dig @8.8.8.8 +short "$SECONDARY_DNS_HOST" | head -1)
 
-if [ -n "$SECONDARY_DNS_IP" ] && [[ "$SECONDARY_ENDPOINT" == *"$SECONDARY_DNS_HOST"* ]]; then
-    GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        -H "Host: $SECONDARY_DNS_HOST" \
-        "$(echo "$SECONDARY_ENDPOINT" | sed "s|$SECONDARY_DNS_HOST|$SECONDARY_DNS_IP|")/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN")
-else
-    GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
-        "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
-        -H "Authorization: ServiceAccount $BEARER_TOKEN")
-fi
+GET_SUCCESS=false
+GET_ATTEMPTS=3
+get_attempt=1
+while [ $get_attempt -le $GET_ATTEMPTS ]; do
+    echo "   🔄 GET attempt $get_attempt/$GET_ATTEMPTS: Attempting GET request..."
+    if [ -n "$SECONDARY_DNS_IP" ] && [[ "$SECONDARY_ENDPOINT" == *"$SECONDARY_DNS_HOST"* ]]; then
+        GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            -H "Host: $SECONDARY_DNS_HOST" \
+            "$(echo "$SECONDARY_ENDPOINT" | sed "s|$SECONDARY_DNS_HOST|$SECONDARY_DNS_IP|")/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    else
+        GET_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_STATUS:%{http_code}" \
+            "$SECONDARY_ENDPOINT/api/v1/refs/$DEFAULT_DDC_NAMESPACE/default/$TEST_HASH.raw" \
+            -H "Authorization: ServiceAccount $BEARER_TOKEN" || echo "CURL_FAILED")
+    fi
 
-GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-GET_DATA=$(echo "$GET_RESPONSE" | grep -v "HTTP_STATUS:")
+    if echo "$GET_RESPONSE" | grep -q "CURL_FAILED"; then
+        echo "   ❌ GET attempt $get_attempt failed: curl command failed"
+        if [ $get_attempt -lt $GET_ATTEMPTS ]; then
+            echo "   ⏳ Waiting 30 seconds before retry..."
+            sleep 30
+        fi
+    else
+        GET_STATUS=$(echo "$GET_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+        if [[ "$GET_STATUS" == "200" ]]; then
+            GET_DATA=$(echo "$GET_RESPONSE" | grep -v "HTTP_STATUS:")
+            echo "   ✅ GET attempt $get_attempt successful!"
+            GET_SUCCESS=true
+            break
+        else
+            echo "   ❌ GET attempt $get_attempt failed: HTTP $GET_STATUS"
+            if [ $get_attempt -lt $GET_ATTEMPTS ]; then
+                echo "   ⏳ Waiting 30 seconds before retry..."
+                sleep 30
+            fi
+        fi
+    fi
+    get_attempt=$((get_attempt + 1))
+done
 
-if [[ "$GET_STATUS" == "200" ]]; then
-    echo "✅ GET from secondary region successful"
-    echo "📄 Retrieved data: $GET_DATA"
-else
-    echo "❌ GET from secondary region failed (HTTP $GET_STATUS)"
-    echo "$GET_RESPONSE"
+if [ "$GET_SUCCESS" = "false" ]; then
+    echo "❌ GET from secondary region failed after $GET_ATTEMPTS attempts"
     exit 1
 fi
+
+echo "✅ GET from secondary region successful"
+echo "📄 Retrieved data: $GET_DATA"
 
 echo ""
 echo "🔍 Step 4: Verify data integrity..."
