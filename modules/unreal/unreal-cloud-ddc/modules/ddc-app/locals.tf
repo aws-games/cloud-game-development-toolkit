@@ -425,7 +425,7 @@ resource "local_file" "ddc_helm_values" {
 
 # User-visible debug file → created in example root when debug=true
 resource "local_file" "debug_helm_values" {
-  count = var.debug ? 1 : 0
+  count = var.force_codebuild_run ? 1 : 0
   
   content  = local.helm_values_yaml
   filename = "${path.root}/generated/helm-values/debug-unreal-cloud-ddc-values.yaml"

@@ -4,7 +4,6 @@
 ########################################
 
 
-
 ########################################
 # DDC Infrastructure (Always Created)
 ########################################
@@ -22,7 +21,7 @@ module "ddc_infra" {
   region         = local.region
   debug          = var.debug_mode == "enabled"
   vpc_id         = var.vpc_id
-  
+
 
   # Security groups now embedded in load_balancers_config and direct EKS variables
 
@@ -42,7 +41,7 @@ module "ddc_infra" {
   # EKS Configuration
   kubernetes_version     = var.ddc_infra_config.kubernetes_version
   eks_node_group_subnets = var.ddc_infra_config.eks_node_group_subnets
-  
+
 
 
   # EKS Access Configuration (direct AWS provider mapping)
@@ -75,7 +74,6 @@ module "ddc_infra" {
   log_retention_days        = var.log_retention_days
 
 
-  
   # Multi-region configuration
   is_primary_region = var.is_primary_region
 
@@ -91,7 +89,6 @@ module "ddc_infra" {
 
   tags = local.default_tags
 }
-
 
 
 ########################################
@@ -160,9 +157,8 @@ module "ddc_app" {
   kubernetes_service_account_name = var.ddc_infra_config.kubernetes_service_account_name
 
 
-
   # Debug configuration
-  debug = var.debug
+  force_codebuild_run = var.force_codebuild_run
 
   # VPC configuration
   vpc_id = var.vpc_id
@@ -175,10 +171,10 @@ module "ddc_app" {
 
   # Certificate configuration
   certificate_arn = var.certificate_arn
-  
+
   # Load balancer configuration
   load_balancers_config = var.load_balancers_config
-  
+
   # Security group for explicit lifecycle management
   nlb_security_group_id = var.ddc_infra_config != null ? aws_security_group.nlb[0].id : null
 

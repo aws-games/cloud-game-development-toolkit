@@ -1,13 +1,17 @@
 ################################################################################
-# DDC Application Outputs
+# DDC Application Deployment Outputs
 ################################################################################
 
-output "helm_ddc_app_id" {
-  description = "ID of the DDC deployment trigger for dependency management"
-  value       = terraform_data.deploy_trigger.id
-}
-
-output "cleanup_complete_id" {
-  description = "ID that signals DDC app deployment has completed (for dependency management)"
-  value       = terraform_data.deploy_trigger.id
+output "codebuild_projects" {
+  description = "CodeBuild project information for monitoring deployment progress"
+  value = {
+    deployer = {
+      name = aws_codebuild_project.ddc_deployer.name
+      arn  = aws_codebuild_project.ddc_deployer.arn
+    }
+    tester = {
+      name = aws_codebuild_project.ddc_tester.name
+      arn  = aws_codebuild_project.ddc_tester.arn
+    }
+  }
 }

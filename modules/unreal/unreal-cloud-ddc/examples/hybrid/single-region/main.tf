@@ -8,7 +8,7 @@ module "unreal_cloud_ddc" {
 
 
   # Development & Debugging
-  debug = false
+  force_codebuild_run = false
 
   vpc_id         = aws_vpc.main.id
   certificate_arn = aws_acm_certificate.ddc.arn

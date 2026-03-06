@@ -8,6 +8,7 @@ resource "aws_route53_zone" "private" {
   # CRITICAL: External-DNS EKS Addon creates records (A, AAAA, TXT) that can't be cleaned up when EKS cluster is destroyed
   # because the External-DNS addon terminates with the cluster. force_destroy automatically deletes all
   # records before zone deletion, preventing "HostedZoneNotEmpty" errors during terraform destroy.
+  # there is also a cleanup script in place to handle this as well (cleanup.tf)
   force_destroy = true
 
   vpc {
@@ -53,15 +54,3 @@ resource "aws_route53_record" "scylla_nodes" {
   ttl     = 300
   records = [module.ddc_infra.scylla_ips[count.index]]
 }
-
-##########################################
-# Public DNS Records (Example Level)
-##########################################
-
-# Public DNS records are created at the example level per design standards
-# Examples create:
-# - ACM certificates for HTTPS
-# - Public Route53 records pointing to NLB
-# - Regional endpoint pattern: us-east-1.ddc.company.com
-#
-# See examples/complete/dns.tf for implementation

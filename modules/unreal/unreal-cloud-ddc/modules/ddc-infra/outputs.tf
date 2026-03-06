@@ -17,11 +17,6 @@ output "cluster_arn" {
   description = "ARN of the EKS Cluster"
 }
 
-output "cluster_version" {
-  value       = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.version
-  description = "EKS Cluster Version"
-}
-
 output "cluster_certificate_authority_data" {
   value       = aws_eks_cluster.unreal_cloud_ddc_eks_cluster.certificate_authority[0].data
   description = "Base64 encoded certificate data required to communicate with the cluster"
@@ -32,24 +27,9 @@ output "cluster_security_group_id" {
   description = "ID of the EKS cluster security group"
 }
 
-output "eks_access_config" {
-  value = {
-    public_enabled       = local.eks_public_enabled
-    private_enabled      = local.eks_private_enabled
-    public_cidrs         = local.eks_public_cidrs
-    vpc_endpoint_enabled = var.eks_uses_vpc_endpoint
-  }
-  description = "EKS access configuration details"
-}
-
 output "oidc_provider_arn" {
   value       = var.is_primary_region ? aws_iam_openid_connect_provider.eks_oidc[0].arn : null
   description = "ARN of the EKS OIDC Provider"
-}
-
-output "oidc_provider_url" {
-  value       = replace(aws_eks_cluster.unreal_cloud_ddc_eks_cluster.identity[0].oidc[0].issuer, "https://", "")
-  description = "OIDC provider URL without https:// prefix (for IAM trust policies)"
 }
 
 ################################################################################
@@ -73,26 +53,6 @@ output "service_account_arn" {
 output "eks_cluster_role_arn" {
   value       = aws_iam_role.eks_cluster_role.arn
   description = "ARN of the EKS cluster IAM role"
-}
-
-output "aws_load_balancer_controller_role_arn" {
-  value       = var.is_primary_region ? aws_iam_role.aws_load_balancer_controller_role[0].arn : null
-  description = "ARN of the AWS Load Balancer Controller IAM role for NLB/ALB management"
-}
-
-output "fluent_bit_role_arn" {
-  value       = var.is_primary_region && local.ddc_logging_enabled ? aws_iam_role.fluent_bit_role[0].arn : null
-  description = "ARN of the Fluent Bit IAM role for centralized logging"
-}
-
-output "cert_manager_role_arn" {
-  value       = var.is_primary_region && var.enable_certificate_manager ? aws_iam_role.cert_manager_role[0].arn : null
-  description = "ARN of the Cert Manager IAM role for HTTPS certificates"
-}
-
-output "ebs_csi_role_arn" {
-  value       = null # EKS Auto handles EBS CSI automatically
-  description = "ARN of the EBS CSI driver IAM role (handled by EKS Auto)"
 }
 
 ################################################################################
@@ -134,16 +94,6 @@ output "scylla_ips" {
       flatten(aws_instance.scylla_ec2_instance_other_nodes[*].private_ip)
   ) : []
   description = "IPs of the Scylla EC2 instances"
-}
-
-output "scylla_security_group" {
-  value       = var.scylla_config != null ? aws_security_group.scylla_security_group.id : null
-  description = "ScyllaDB security group id"
-}
-
-output "peer_security_group_id" {
-  value       = var.scylla_config != null ? aws_security_group.scylla_security_group.id : null
-  description = "ID of the Peer Security Group (Scylla only)"
 }
 
 output "scylla_datacenter_name" {

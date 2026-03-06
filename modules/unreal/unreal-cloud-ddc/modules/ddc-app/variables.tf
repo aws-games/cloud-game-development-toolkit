@@ -26,9 +26,9 @@ variable "region" {
   default     = "us-west-2"
 }
 
-variable "debug" {
+variable "force_codebuild_run" {
   type        = bool
-  description = "Enable debug mode for development and testing. When true, forces CodeBuild deployment and testing actions to run on every terraform apply (regardless of configuration changes). When false, actions only run when there are actual changes to configuration, buildspecs, or assets. Passed from parent module."
+  description = "Force CodeBuild deployment and testing actions to run on every terraform apply, regardless of whether configuration has changed. Passed from parent module for development and troubleshooting."
   default     = false
 }
 
@@ -378,11 +378,3 @@ variable "tags" {
     "ModuleSource"   = "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/unreal-cloud-ddc/modules/ddc-app"
   }
 }
-
-# COMMENTED OUT FOR EKS AUTO MODE TESTING
-# EKS Auto Mode creates OIDC provider automatically
-# variable "oidc_provider_arn" {
-#   description = "OIDC provider ARN for EKS cluster (for IRSA)"
-#   type        = string
-#   default     = null
-# }

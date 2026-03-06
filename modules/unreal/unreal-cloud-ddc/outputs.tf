@@ -241,11 +241,3 @@ output "name_prefix" {
   description = "Standardized name prefix for consistent resource naming"
   value       = local.name_prefix
 }
-################################################################################
-# Cleanup Gatekeeper Output
-################################################################################
-
-output "cleanup_complete_id" {
-  description = "ID of the DDC cleanup resource for infrastructure dependency management. Only available when ddc_application_config is provided. Add 'depends_on = [module.unreal_cloud_ddc.cleanup_complete_id]' to VPC resources (IGW, NAT Gateway, etc.) that you create to ensure they wait for DDC cleanup before deletion. This prevents destroy failures caused by EKS LoadBalancer services creating EIPs outside Terraform state."
-  value       = var.ddc_application_config != null ? module.ddc_app[0].helm_ddc_app_id : null
-}

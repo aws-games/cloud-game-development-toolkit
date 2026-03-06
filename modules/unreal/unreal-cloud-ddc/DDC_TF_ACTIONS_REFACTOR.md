@@ -39,13 +39,14 @@
 - [x] Implemented CodeBuild VPC configuration
 - [x] VPC-based CodeBuild tested and working
 
-**Phase 5: EKS Auto Mode Destroy Cleanup 🧪 TESTING**
-- [x] **CONFIRMED**: EKS Auto Mode inherently leaves orphaned NLBs on destroy
-- [x] **VALIDATED**: Manual NLB cleanup enables clean 3-second destroy
-- [x] **IDENTIFIED**: Problem affects any networking resource destruction (VPC, subnets, IGW, ACM)
-- [x] **IMPLEMENTED**: Local-exec destroy provisioner (targeted approach)
-- [ ] **TESTING**: Validate local-exec provisioner works in practice
-- [ ] **FALLBACK**: Document two-step manual process if local-exec fails
+**Phase 5: EKS Auto Mode & External-DNS Cleanup ✅ COMPLETE**
+- [x] **CONFIRMED**: EKS Auto Mode leaves orphaned security groups on destroy
+- [x] **CONFIRMED**: External-DNS leaves orphaned DNS records on destroy
+- [x] **IMPLEMENTED**: Comprehensive cleanup scripts with 30-minute retry logic
+- [x] **TESTED**: Both cleanup scripts working in production
+- [x] **VALIDATED**: Clean destroy with zero lingering resources (146 resources destroyed)
+- [x] **FIXED**: External-DNS TXT record JSON parsing issues
+- [x] **PRODUCTION READY**: Automatic workarounds for AWS service bugs
 
 ## Final Architecture (Production)
 ```
@@ -107,21 +108,18 @@ Parent Module (main.tf)
 - [ ] **Test destroy scenarios** (full destroy, subnet CIDR changes, etc.)
 - [ ] **Update TESTING_STEPS.md** with destroy validation steps
 
-**Phase 6: EKS Auto Mode Load Balancer Migration**:
-- [ ] **Research**: Validate EKS Auto Mode managed load balancing capabilities
-- [ ] **Test**: External-DNS compatibility with EKS Auto Mode managed NLBs
-- [ ] **Remove**: Manual LBC installation (install-controllers.sh script)
-- [ ] **Remove**: LBC IAM roles and policies from iam.tf
-- [ ] **Implement**: LoadBalancer service type with EKS Auto Mode
-- [ ] **Validate**: Route53 record creation with managed load balancing
-- [ ] **Test**: Clean destroy behavior without manual LBC
-- [ ] **Document**: Migration path and breaking changes
+**Phase 6: Single-Region Cleanup & Multi-Region Preparation 🔄 IN PROGRESS**
+- [ ] **CLEANUP**: Remove unused/legacy code and scripts
+- [ ] **CONSOLIDATE**: Streamline file structure and dependencies
+- [ ] **MULTI-REGION**: Fix multi-region test script parity issues
+- [ ] **VALIDATE**: Test multi-region deployment and cleanup
+- [ ] **SCALE**: Ensure cleanup scripts work for multi-region scenarios
 
-**For PR Submission**:
-- [ ] Update Kubernetes version to 1.35
-- [ ] Implement conditional multi-region buildspec logic
-- [ ] Final documentation review
-- [ ] Integration test validation
+**For Next Phase**:
+- [ ] **CLEANUP**: Remove legacy/unused code and scripts
+- [ ] **MULTI-REGION**: Fix multi-region test script environment variables and DNS fallback
+- [ ] **SCALE**: Test multi-region deployment and cleanup scripts
+- [ ] **OPTIMIZE**: Consolidate file structure and remove redundancy
 
 **Documentation Tasks**:
 - [ ] Update testing documentation for CodeBuild scripts
