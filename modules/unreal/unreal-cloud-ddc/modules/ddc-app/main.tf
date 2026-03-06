@@ -7,6 +7,8 @@ resource "aws_codebuild_project" "ddc_deployer" {
   description  = "Deploy Unreal Cloud DDC via Helm to EKS cluster"
   service_role = aws_iam_role.codebuild_role.arn
 
+  depends_on = [time_sleep.iam_propagation]
+
   artifacts {
     type = "NO_ARTIFACTS"
   }
@@ -97,6 +99,8 @@ resource "aws_codebuild_project" "ddc_tester" {
   name         = "${local.name_prefix}-ddc-tester"
   description  = "Test Unreal Cloud DDC functionality after deployment"
   service_role = aws_iam_role.codebuild_role.arn
+
+  depends_on = [time_sleep.iam_propagation]
 
   artifacts {
     type = "NO_ARTIFACTS"
@@ -237,7 +241,8 @@ resource "terraform_data" "deploy_trigger" {
   }
 
   depends_on = [
-    aws_s3_object.deploy_assets  # Only depend on deploy assets
+    aws_s3_object.deploy_assets,  # Only depend on deploy assets
+    time_sleep.iam_propagation    # Wait for IAM permissions to propagate
   ]
 }
 
@@ -281,7 +286,7 @@ resource "terraform_data" "test_trigger" {
     }
   }
 
-  depends_on = [terraform_data.deploy_trigger]  # NOTE: This is ignored due to Terraform Actions bug
+  depends_on = [terraform_data.deploy_trigger, time_sleep.iam_propagation]  # NOTE: deploy_trigger dependency is ignored due to Terraform Actions bug
 }
 
 action "aws_codebuild_start_build" "deploy_ddc" {
@@ -442,6 +447,16 @@ resource "aws_iam_role_policy" "codebuild_policy" {
   name   = "${local.name_prefix}-codebuild-policy"
   role   = aws_iam_role.codebuild_role.id
   policy = data.aws_iam_policy_document.codebuild_policy.json
+}
+
+# IAM permission propagation delay
+resource "time_sleep" "iam_propagation" {
+  depends_on = [
+    aws_iam_role.codebuild_role,
+    aws_iam_role_policy.codebuild_policy
+  ]
+  
+  create_duration = "60s"
 }
 
 

@@ -94,7 +94,7 @@ kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-cont
 
 ### Generated Values Inspection
 
-**Debug Mode**: Enable `debug = true` to generate user-visible values file:
+**Debug Mode**: Enable `force_codebuild_run = true` to generate user-visible values file:
 
 ```bash
 # File created at: examples/single-region/generated/helm-values/debug-unreal-cloud-ddc-values.yaml

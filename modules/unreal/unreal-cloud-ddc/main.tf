@@ -19,7 +19,7 @@ module "ddc_infra" {
   project_prefix = var.project_prefix
   environment    = var.environment
   region         = local.region
-  debug          = var.debug_mode == "enabled"
+  debug_mode     = var.debug_mode == "enabled"
   vpc_id         = var.vpc_id
 
 

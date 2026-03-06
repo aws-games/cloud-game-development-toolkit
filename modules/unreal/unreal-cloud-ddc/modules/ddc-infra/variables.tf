@@ -42,7 +42,7 @@ variable "is_primary_region" {
   default     = true
 }
 
-variable "debug" {
+variable "debug_mode" {
   description = "Enable debug mode for development and testing. When true, forces infrastructure setup actions to run on every terraform apply. When false, actions only run when there are actual changes. Passed from parent module."
   type        = bool
   default     = false
