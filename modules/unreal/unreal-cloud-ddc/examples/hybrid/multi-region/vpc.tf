@@ -76,6 +76,7 @@ resource "aws_internet_gateway" "primary_igw" {
 
 # Primary Region NAT Gateway
 resource "aws_eip" "primary_nat_eip" {
+  domain = "vpc"
   depends_on = [aws_internet_gateway.primary_igw]
   #checkov:skip=CKV2_AWS_19:EIP associated with NAT Gateway through association ID
 
@@ -216,6 +217,7 @@ resource "aws_internet_gateway" "secondary_igw" {
 # Secondary Region NAT Gateway
 resource "aws_eip" "secondary_nat_eip" {
   region = local.secondary_region
+  domain = "vpc"
   depends_on = [aws_internet_gateway.secondary_igw]
   #checkov:skip=CKV2_AWS_19:EIP associated with NAT Gateway through association ID
 
@@ -303,16 +305,53 @@ resource "aws_vpc_peering_connection_accepter" "secondary_accept" {
   })
 }
 
-# Cross-region routes for VPC peering
+# Cross-region routes for VPC peering - PRIMARY REGION
 resource "aws_route" "primary_to_secondary_peering" {
   route_table_id            = aws_route_table.primary_private_rt.id
   destination_cidr_block    = aws_vpc.secondary.cidr_block
   vpc_peering_connection_id = aws_vpc_peering_connection.primary_to_secondary.id
 }
 
+# Cross-region routes for VPC peering - SECONDARY REGION
 resource "aws_route" "secondary_to_primary_peering" {
   region = local.secondary_region
   route_table_id            = aws_route_table.secondary_private_rt.id
+  destination_cidr_block    = aws_vpc.primary.cidr_block
+  vpc_peering_connection_id = aws_vpc_peering_connection.primary_to_secondary.id
+}
+
+# CRITICAL FIX: Add peering routes to ALL route tables that need cross-region access
+# This ensures any additional route tables (like those created by modules) get the peering routes
+data "aws_route_tables" "primary_all" {
+  vpc_id = aws_vpc.primary.id
+}
+
+data "aws_route_tables" "secondary_all" {
+  region = local.secondary_region
+  vpc_id = aws_vpc.secondary.id
+}
+
+# Add peering routes to all primary region route tables (except main/default)
+resource "aws_route" "primary_all_to_secondary_peering" {
+  for_each = {
+    for rt_id in data.aws_route_tables.primary_all.ids : rt_id => rt_id
+    if rt_id != aws_route_table.primary_private_rt.id && rt_id != aws_route_table.primary_public_rt.id
+  }
+  
+  route_table_id            = each.value
+  destination_cidr_block    = aws_vpc.secondary.cidr_block
+  vpc_peering_connection_id = aws_vpc_peering_connection.primary_to_secondary.id
+}
+
+# Add peering routes to all secondary region route tables (except main/default)
+resource "aws_route" "secondary_all_to_primary_peering" {
+  region = local.secondary_region
+  for_each = {
+    for rt_id in data.aws_route_tables.secondary_all.ids : rt_id => rt_id
+    if rt_id != aws_route_table.secondary_private_rt.id && rt_id != aws_route_table.secondary_public_rt.id
+  }
+  
+  route_table_id            = each.value
   destination_cidr_block    = aws_vpc.primary.cidr_block
   vpc_peering_connection_id = aws_vpc_peering_connection.primary_to_secondary.id
 }
