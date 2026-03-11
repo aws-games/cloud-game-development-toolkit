@@ -1,0 +1,17 @@
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: ddc-nodeclass
+spec:
+  role: $NODE_ROLE_NAME
+  subnetSelectorTerms:
+    - id: $NODE_SUBNET_1
+    - id: $NODE_SUBNET_2
+  securityGroupSelectorTerms:
+    - id: $CLUSTER_SG_ID
+  ephemeralStorage:
+    iops: 3000
+    size: 80Gi
+    throughput: 125
+  networkPolicy: DefaultAllow
+  snatPolicy: Random

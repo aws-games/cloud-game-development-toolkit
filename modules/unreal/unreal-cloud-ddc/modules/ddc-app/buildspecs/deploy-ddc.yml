@@ -1,0 +1,24 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo "Installing kubectl and helm"
+      - curl -LO https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl
+      - chmod +x kubectl && mv kubectl /usr/local/bin/
+      - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - yum install -y jq
+  pre_build:
+    commands:
+      - echo "Configuring kubectl access"
+      - aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+      - kubectl cluster-info --request-timeout=30s
+      - echo "$HELM_VALUES_CONTENT" | base64 -d > /tmp/ddc-helm-values.yaml
+  build:
+    commands:
+      - echo "Starting DDC deployment"
+      - chmod +x scripts/deploy/codebuild-deploy-ddc.sh
+      - ./scripts/deploy/codebuild-deploy-ddc.sh
+      - echo "Deployment completed"
+  post_build:
+    commands:
+      - echo "Build completed successfully"
