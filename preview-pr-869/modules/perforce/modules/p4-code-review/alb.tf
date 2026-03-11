@@ -42,13 +42,14 @@ resource "aws_lb" "alb" {
 resource "aws_lb_target_group" "alb_target_group" {
   #checkov:skip=CKV_AWS_378: Using ALB for TLS termination
   name                 = "${local.name_prefix}-tg"
-  port                 = var.container_port
+  port                 = local.application_port
   protocol             = "HTTP"
-  target_type          = "ip"
+  target_type          = "instance"
   vpc_id               = var.vpc_id
-  deregistration_delay = var.deregistration_delay # Fix LB listener from failing to be deleted because targets are still registered.
+  deregistration_delay = var.deregistration_delay
+
   health_check {
-    path                = "/login" # must match path in the health check in the ECS service that references this target group
+    path                = "/login"
     protocol            = "HTTP"
     matcher             = "200"
     port                = "traffic-port"
@@ -63,14 +64,13 @@ resource "aws_lb_target_group" "alb_target_group" {
       Name = "${local.name_prefix}-tg"
     }
   )
-
 }
 
 
 ##########################################
 # Application Load Balancer | Listeners
 ##########################################
-# HTTPS listener for p4_auth ALB
+# HTTPS listener for P4 Code Review ALB
 resource "aws_lb_listener" "alb_https_listener" {
   count             = var.create_application_load_balancer ? 1 : 0
   load_balancer_arn = aws_lb.alb[0].arn
@@ -89,8 +89,6 @@ resource "aws_lb_listener" "alb_https_listener" {
       Name = "${local.name_prefix}-tg-listener"
     }
   )
-
-  depends_on = [aws_ecs_service.service]
 }
 
 
