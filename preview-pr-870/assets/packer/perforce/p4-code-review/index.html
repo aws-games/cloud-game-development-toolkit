@@ -12,31 +12,31 @@
         <meta name="author" content="Amazon Web Services">
       
       
-        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-870/modules/jenkins/index.html">
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-870/assets/packer/perforce/p4-code-review/index.html">
       
       
-        <link rel="prev" href="../teamcity/index.html">
+        <link rel="prev" href="../p4-server/index.html">
       
       
-        <link rel="next" href="../unreal/horde/index.html">
+        <link rel="next" href="../../virtual-workstations/index.html">
       
       
         
       
       
-      <link rel="icon" href="../../docs/media/logos/favicon.ico">
+      <link rel="icon" href="../../../../docs/media/logos/favicon.ico">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
-        <title>Jenkins - Cloud Game Development Toolkit</title>
+        <title>P4 Code Review - Cloud Game Development Toolkit</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../stylesheets/palette.ab4e12ef.min.css">
       
       
   
@@ -67,13 +67,13 @@
       
     
     
-      <link rel="stylesheet" href="../../docs/stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/extra.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/themes.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/themes.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/hero.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/hero.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -107,7 +107,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#jenkins" class="md-skip">
+        <a href="#p4-code-review-packer-template" class="md-skip">
           Skip to content
         </a>
       
@@ -123,9 +123,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -142,7 +142,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Jenkins
+              P4 Code Review
             
           </span>
         </div>
@@ -264,7 +264,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/index.html" class="md-tabs__link">
+      <a href="../../../../docs/index.html" class="md-tabs__link">
         
   
   
@@ -283,7 +283,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/getting-started.html" class="md-tabs__link">
+      <a href="../../../../docs/getting-started.html" class="md-tabs__link">
         
   
   
@@ -300,11 +300,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../docs/assets/index.html" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../../docs/assets/index.html" class="md-tabs__link">
           
   
   
@@ -322,13 +324,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../index.html" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../../modules/index.html" class="md-tabs__link">
           
   
   
@@ -350,7 +350,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../samples/index.html" class="md-tabs__link">
+        <a href="../../../../samples/index.html" class="md-tabs__link">
           
   
   
@@ -370,7 +370,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/changelog.html" class="md-tabs__link">
+      <a href="../../../../docs/changelog.html" class="md-tabs__link">
         
   
   
@@ -389,7 +389,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/security.html" class="md-tabs__link">
+      <a href="../../../../docs/security.html" class="md-tabs__link">
         
   
   
@@ -408,7 +408,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/contributing.html" class="md-tabs__link">
+      <a href="../../../../docs/contributing.html" class="md-tabs__link">
         
   
   
@@ -468,9 +468,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     Cloud Game Development Toolkit
@@ -497,7 +497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/index.html" class="md-nav__link">
+      <a href="../../../../docs/index.html" class="md-nav__link">
         
   
   
@@ -524,7 +524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/getting-started.html" class="md-nav__link">
+      <a href="../../../../docs/getting-started.html" class="md-nav__link">
         
   
   
@@ -548,6 +548,8 @@
       
   
   
+    
+  
   
   
     
@@ -569,20 +571,23 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/index.html" class="md-nav__link ">
+            <a href="../../../../docs/assets/index.html" class="md-nav__link ">
               
   
   
@@ -600,13 +605,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -623,6 +628,8 @@
                 
   
   
+    
+  
   
   
     
@@ -646,18 +653,21 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/packer/index.html" class="md-nav__link ">
+            <a href="../../../../docs/assets/packer/index.html" class="md-nav__link ">
               
   
   
@@ -675,13 +685,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -782,7 +792,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+            <a href="../../build-agents/linux/index.html" class="md-nav__link ">
               
   
   
@@ -852,7 +862,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+            <a href="../../build-agents/windows/index.html" class="md-nav__link ">
               
   
   
@@ -907,7 +917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../p4-server/index.html" class="md-nav__link">
         
   
   
@@ -932,10 +942,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="index.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -951,6 +988,349 @@
   
 
       </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Gets Installed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Gets Installed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#software-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-not-configured-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's NOT Configured Yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-configuration-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building the AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building the AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-using-default-vpc-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Using Default VPC (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-using-custom-vpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Custom VPC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-using-variables-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Using Variables File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-your-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Your AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Your AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-all-p4-code-review-amis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List All P4 Code Review AMIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-the-latest-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get the Latest AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-details-about-a-specific-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Details About a Specific AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-default-vpc-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "No default VPC available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-connect-to-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Unable to connect to instance"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package-installation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Package installation failed"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ami-already-exists-with-that-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "AMI already exists with that name"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#need-to-debug-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Need to debug the build?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions-or-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions or Issues?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -963,7 +1343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+      <a href="../../virtual-workstations/index.html" class="md-nav__link">
         
   
   
@@ -999,7 +1379,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/jenkins-pipelines/index.html" class="md-nav__link">
+      <a href="../../../jenkins-pipelines/index.html" class="md-nav__link">
         
   
   
@@ -1027,7 +1407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../../../ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
         
   
   
@@ -1055,7 +1435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/assets/dockerfiles.html" class="md-nav__link">
+      <a href="../../../../docs/assets/dockerfiles.html" class="md-nav__link">
         
   
   
@@ -1087,8 +1467,6 @@
       
   
   
-    
-  
   
   
     
@@ -1116,23 +1494,20 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../index.html" class="md-nav__link ">
+            <a href="../../../../modules/index.html" class="md-nav__link ">
               
   
   
@@ -1150,13 +1525,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1176,7 +1551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DESIGN_STANDARDS.html" class="md-nav__link">
+      <a href="../../../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
         
   
   
@@ -1214,20 +1589,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
         
           
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
             
   
   
@@ -1344,7 +1716,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/index.html" class="md-nav__link ">
               
   
   
@@ -1474,7 +1846,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-server/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
               
   
   
@@ -1544,7 +1916,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-auth/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
               
   
   
@@ -1614,7 +1986,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
               
   
   
@@ -1695,20 +2067,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
             
   
   
@@ -1823,7 +2192,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../teamcity/index.html" class="md-nav__link ">
+            <a href="../../../../modules/teamcity/index.html" class="md-nav__link ">
               
   
   
@@ -1883,10 +2252,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1898,20 +2265,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
         
           
-          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
             
   
   
@@ -1929,7 +2293,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1944,10 +2308,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1962,11 +2324,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" >
         
           
           <label class="md-nav__link" for="__nav_4_5_1" id="__nav_4_5_1_label" tabindex="0">
@@ -1987,7 +2349,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_5_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2002,8 +2364,6 @@
                 
   
   
-    
-  
   
   
     
@@ -2022,15 +2382,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1_1" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="../../../../modules/jenkins/index.html" class="md-nav__link ">
               
   
   
@@ -2049,7 +2409,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_5_1_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_5_1_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_5_1_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2105,20 +2465,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
             
   
   
@@ -2233,7 +2590,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/horde/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/horde/index.html" class="md-nav__link ">
               
   
   
@@ -2369,7 +2726,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
               
   
   
@@ -2439,7 +2796,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
               
   
   
@@ -2514,20 +2871,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
             
   
   
@@ -2642,7 +2996,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unity/accelerator/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unity/accelerator/index.html" class="md-nav__link ">
               
   
   
@@ -2776,7 +3130,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unity/floating-license-server/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
               
   
   
@@ -2849,20 +3203,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
             
   
   
@@ -2977,7 +3328,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../vdi/index.html" class="md-nav__link ">
+            <a href="../../../../modules/vdi/index.html" class="md-nav__link ">
               
   
   
@@ -3074,7 +3425,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../samples/index.html" class="md-nav__link ">
+            <a href="../../../../samples/index.html" class="md-nav__link ">
               
   
   
@@ -3118,7 +3469,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../samples/simple-build-pipeline/index.html" class="md-nav__link">
+      <a href="../../../../samples/simple-build-pipeline/index.html" class="md-nav__link">
         
   
   
@@ -3146,7 +3497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../samples/unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+      <a href="../../../../samples/unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
         
   
   
@@ -3181,7 +3532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/changelog.html" class="md-nav__link">
+      <a href="../../../../docs/changelog.html" class="md-nav__link">
         
   
   
@@ -3208,7 +3559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/security.html" class="md-nav__link">
+      <a href="../../../../docs/security.html" class="md-nav__link">
         
   
   
@@ -3235,7 +3586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/contributing.html" class="md-nav__link">
+      <a href="../../../../docs/contributing.html" class="md-nav__link">
         
   
   
@@ -3311,10 +3662,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#table-of-contents" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Requirements
+        Table of Contents
       
     </span>
   </a>
@@ -3322,10 +3673,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#providers" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Providers
+        Prerequisites
       
     </span>
   </a>
@@ -3333,10 +3684,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modules
+        Quick Start
       
     </span>
   </a>
@@ -3344,10 +3695,182 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#resources" class="md-nav__link">
+  <a href="#what-gets-installed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resources
+        What Gets Installed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Gets Installed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#software-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Software Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-not-configured-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's NOT Configured Yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-configuration-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building the AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building the AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-using-default-vpc-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Using Default VPC (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-using-custom-vpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Using Custom VPC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-using-variables-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Using Variables File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-your-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Your AMI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Your AMI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list-all-p4-code-review-amis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List All P4 Code Review AMIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-the-latest-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get the Latest AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-details-about-a-specific-ami" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Details About a Specific AMI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -3355,10 +3878,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#inputs" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inputs
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-default-vpc-available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "No default VPC available"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-connect-to-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Unable to connect to instance"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package-installation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Package installation failed"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ami-already-exists-with-that-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "AMI already exists with that name"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#need-to-debug-the-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Need to debug the build?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
       
     </span>
   </a>
@@ -3366,10 +3972,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#outputs" class="md-nav__link">
+  <a href="#questions-or-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Outputs
+        Questions or Issues?
       
     </span>
   </a>
@@ -3396,635 +4002,300 @@
   
 
 
-<h1 id="jenkins">Jenkins<a class="headerlink" href="#jenkins" title="Permanent link">&para;</a></h1>
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
-<td>&gt;= 1.0</td>
-</tr>
-<tr>
-<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="requirement_random"></a> <a href="#requirement_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
-<p>No modules.</p>
-<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group">aws_autoscaling_group.jenkins_build_farm_asg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.jenkins_service_log_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster">aws_ecs_cluster.jenkins_cluster</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster_capacity_providers">aws_ecs_cluster_capacity_providers.jenkins_cluster_fargate_rpvodiers</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service">aws_ecs_service.jenkins_service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition">aws_ecs_task_definition.jenkins_task_definition</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point">aws_efs_access_point.jenkins_efs_access_point</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_backup_policy">aws_efs_backup_policy.policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system">aws_efs_file_system.jenkins_efs_file_system</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_mount_target">aws_efs_mount_target.jenkins_efs_mount_target</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_openzfs_file_system">aws_fsx_openzfs_file_system.jenkins_build_farm_fsxz_file_system</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/fsx_openzfs_volume">aws_fsx_openzfs_volume.jenkins_build_farm_fsxz_volume</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile">aws_iam_instance_profile.build_farm_instance_profile</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.build_farm_fsxz_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.build_farm_s3_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.ec2_fleet_plugin_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.jenkins_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.build_farm_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.jenkins_default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.jenkins_task_execution_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.build_farm_role_fsxz_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.build_farm_role_s3_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.ec2_fleet_plugin_policy_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.task_execution</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template">aws_launch_template.jenkins_build_farm_launch_template</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb">aws_lb.jenkins_alb</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener">aws_lb_listener.jenkins_alb_https_listener</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group">aws_lb_target_group.jenkins_alb_target_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket">aws_s3_bucket.artifact_buckets</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket">aws_s3_bucket.jenkins_alb_access_logs_bucket</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration">aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy">aws_s3_bucket_policy.alb_access_logs_bucket_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block">aws_s3_bucket_public_access_block.access_logs_bucket_public_block</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block">aws_s3_bucket_public_access_block.artifacts_bucket_public_block</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning">aws_s3_bucket_versioning.artifact_bucket_versioning</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.jenkins_alb_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.jenkins_build_farm_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.jenkins_build_storage_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.jenkins_efs_security_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.jenkins_service_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.jenkins_alb_outbound_service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv4</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.jenkins_build_farm_outbound_ipv6</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv4</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.jenkins_service_outbound_ipv6</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.jenkins_build_farm_inbound_ssh_service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.jenkins_build_vpc_all_traffic</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.jenkins_efs_inbound_service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.jenkins_service_inbound_alb</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.artifact_buckets</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.build_farm</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.fsxz</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.jenkins</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.jenkins_alb_access_logs_bucket_suffix</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity">aws_caller_identity.current</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster">aws_ecs_cluster.jenkins_cluster</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account">aws_elb_service_account.main</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.access_logs_bucket_alb_write</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.build_farm_fsxz_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.build_farm_s3_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ec2_fleet_plugin_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ec2_trust_relationship</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ecs_tasks_trust_relationship</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.jenkins_default_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region">aws_region.current</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc">aws_vpc.build_farm_vpc</a></td>
-<td>data source</td>
-</tr>
-</tbody>
-</table>
-<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Type</th>
-<th>Default</th>
-<th style="text-align: center;">Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="input_build_farm_subnets"></a> <a href="#input_build_farm_subnets">build_farm_subnets</a></td>
-<td>The subnets to deploy the build farms into.</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_alb_subnets"></a> <a href="#input_jenkins_alb_subnets">jenkins_alb_subnets</a></td>
-<td>A list of subnet ids to deploy the Jenkins load balancer into. Public subnets are recommended.</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_service_subnets"></a> <a href="#input_jenkins_service_subnets">jenkins_service_subnets</a></td>
-<td>A list of subnets to deploy the Jenkins service into. Private subnets are recommended.</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
-<td>The ID of the existing VPC you would like to deploy the Jenkins service and build farms into.</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_artifact_buckets"></a> <a href="#input_artifact_buckets">artifact_buckets</a></td>
-<td>List of Amazon S3 buckets you wish to create to store build farm artifacts.</td>
-<td><pre>map(<br>    object({<br>      name                 = string<br>      enable_force_destroy = optional(bool, true)<br>      enable_versioning    = optional(bool, true)<br>      tags                 = optional(map(string), {})<br>    })<br>  )</pre></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_build_farm_compute"></a> <a href="#input_build_farm_compute">build_farm_compute</a></td>
-<td>Each object in this map corresponds to an ASG used by Jenkins as build agents.</td>
-<td><pre>map(object(<br>    {<br>      ami = string<br>      #TODO: Support mixed instances / spot with custom policies<br>      instance_type     = string<br>      ebs_optimized     = optional(bool, true)<br>      enable_monitoring = optional(bool, true)<br>    }<br>  ))</pre></td>
-<td><code>{}</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_build_farm_fsx_openzfs_storage"></a> <a href="#input_build_farm_fsx_openzfs_storage">build_farm_fsx_openzfs_storage</a></td>
-<td>Each object in this map corresponds to an FSx OpenZFS file system used by the Jenkins build agents.</td>
-<td><pre>map(object(<br>    {<br>      storage_capacity    = number<br>      throughput_capacity = number<br>      storage_type        = optional(string, "SSD") # "SSD", "HDD"<br>      deployment_type     = optional(string, "SINGLE_AZ_1")<br>      route_table_ids     = optional(list(string), null)<br>      tags                = optional(map(string), null)<br>    }<br>  ))</pre></td>
-<td><code>{}</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_certificate_arn"></a> <a href="#input_certificate_arn">certificate_arn</a></td>
-<td>The TLS certificate ARN for the Jenkins service load balancer.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
-<td>The ARN of the cluster to deploy the Jenkins service into. Defaults to null and a cluster will be created.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_cpu"></a> <a href="#input_container_cpu">container_cpu</a></td>
-<td>The CPU allotment for the Jenkins container.</td>
-<td><code>number</code></td>
-<td><code>1024</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_memory"></a> <a href="#input_container_memory">container_memory</a></td>
-<td>The memory allotment for the Jenkins container.</td>
-<td><code>number</code></td>
-<td><code>4096</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_name"></a> <a href="#input_container_name">container_name</a></td>
-<td>The name of the Jenkins service container.</td>
-<td><code>string</code></td>
-<td><code>"jenkins-container"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_port"></a> <a href="#input_container_port">container_port</a></td>
-<td>The container port used by the Jenkins service container.</td>
-<td><code>number</code></td>
-<td><code>8080</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_application_load_balancer"></a> <a href="#input_create_application_load_balancer">create_application_load_balancer</a></td>
-<td>Controls creation of an application load balancer within the module. Defaults to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_ec2_fleet_plugin_policy"></a> <a href="#input_create_ec2_fleet_plugin_policy">create_ec2_fleet_plugin_policy</a></td>
-<td>Optional creation of IAM Policy required for Jenkins EC2 Fleet plugin. Default is set to false.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_jenkins_default_policy"></a> <a href="#input_create_jenkins_default_policy">create_jenkins_default_policy</a></td>
-<td>Optional creation of Jenkins Default IAM Policy. Default is set to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_jenkins_default_role"></a> <a href="#input_create_jenkins_default_role">create_jenkins_default_role</a></td>
-<td>Optional creation of Jenkins Default IAM Role. Default is set to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_custom_jenkins_role"></a> <a href="#input_custom_jenkins_role">custom_jenkins_role</a></td>
-<td>ARN of the custom IAM Role you wish to use with Jenkins.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_debug"></a> <a href="#input_debug">debug</a></td>
-<td>This value disables certain protections to accelerate testing (note that by enabling this variable, data will not be saved between destroys)</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_enable_default_efs_backup_plan"></a> <a href="#input_enable_default_efs_backup_plan">enable_default_efs_backup_plan</a></td>
-<td>This flag controls EFS backups for the Jenkins module. Default is set to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_enable_jenkins_alb_access_logs"></a> <a href="#input_enable_jenkins_alb_access_logs">enable_jenkins_alb_access_logs</a></td>
-<td>Enables access logging for the Jenkins ALB. Defaults to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_enable_jenkins_alb_deletion_protection"></a> <a href="#input_enable_jenkins_alb_deletion_protection">enable_jenkins_alb_deletion_protection</a></td>
-<td>Enables deletion protection for the Jenkins ALB. Defaults to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_environment"></a> <a href="#input_environment">environment</a></td>
-<td>The current environment (e.g. dev, prod, etc.)</td>
-<td><code>string</code></td>
-<td><code>"dev"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_existing_artifact_buckets"></a> <a href="#input_existing_artifact_buckets">existing_artifact_buckets</a></td>
-<td>List of ARNs of the S3 buckets used to store artifacts created by the build farm.</td>
-<td><code>list(string)</code></td>
-<td><code>[]</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_existing_security_groups"></a> <a href="#input_existing_security_groups">existing_security_groups</a></td>
-<td>A list of existing security group IDs to attach to the Jenkins service load balancer.</td>
-<td><code>list(string)</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_internal"></a> <a href="#input_internal">internal</a></td>
-<td>Set this flag to true if you do not want the Jenkins service load balancer to have a public IP.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_agent_secret_arns"></a> <a href="#input_jenkins_agent_secret_arns">jenkins_agent_secret_arns</a></td>
-<td>A list of secretmanager ARNs (wildcards allowed) that contain any secrets which need to be accessed by the Jenkins service.</td>
-<td><code>list(string)</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_alb_access_logs_bucket"></a> <a href="#input_jenkins_alb_access_logs_bucket">jenkins_alb_access_logs_bucket</a></td>
-<td>ID of the S3 bucket for Jenkins ALB access log storage. If access logging is enabled and this is null the module creates a bucket.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_alb_access_logs_prefix"></a> <a href="#input_jenkins_alb_access_logs_prefix">jenkins_alb_access_logs_prefix</a></td>
-<td>Log prefix for Jenkins ALB access logs. If null the project prefix and module name are used.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_cloudwatch_log_retention_in_days"></a> <a href="#input_jenkins_cloudwatch_log_retention_in_days">jenkins_cloudwatch_log_retention_in_days</a></td>
-<td>The log retention in days of the cloudwatch log group for Jenkins.</td>
-<td><code>string</code></td>
-<td><code>365</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_efs_performance_mode"></a> <a href="#input_jenkins_efs_performance_mode">jenkins_efs_performance_mode</a></td>
-<td>The performance mode of the EFS file system used by the Jenkins service. Defaults to general purpose.</td>
-<td><code>string</code></td>
-<td><code>"generalPurpose"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_efs_throughput_mode"></a> <a href="#input_jenkins_efs_throughput_mode">jenkins_efs_throughput_mode</a></td>
-<td>The throughput mode of the EFS file system used by the Jenkins service. Defaults to bursting.</td>
-<td><code>string</code></td>
-<td><code>"bursting"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_jenkins_service_desired_container_count"></a> <a href="#input_jenkins_service_desired_container_count">jenkins_service_desired_container_count</a></td>
-<td>The desired number of containers running the Jenkins service.</td>
-<td><code>number</code></td>
-<td><code>1</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_name"></a> <a href="#input_name">name</a></td>
-<td>The name attached to Jenkins module resources.</td>
-<td><code>string</code></td>
-<td><code>"jenkins"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_project_prefix"></a> <a href="#input_project_prefix">project_prefix</a></td>
-<td>The project prefix for this workload. This is appeneded to the beginning of most resource names.</td>
-<td><code>string</code></td>
-<td><code>"cgd"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
-<td>Tags to apply to resources.</td>
-<td><code>map(any)</code></td>
-<td><pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "Jenkins",<br>  "iac-provider": "Terraform"<br>}</pre></td>
-<td style="text-align: center;">no</td>
-</tr>
-</tbody>
-</table>
-<h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="output_alb_security_group_id"></a> <a href="#output_alb_security_group_id">alb_security_group_id</a></td>
-<td>Security group associated with the Jenkins load balancer</td>
-</tr>
-<tr>
-<td><a name="output_build_farm_security_group_id"></a> <a href="#output_build_farm_security_group_id">build_farm_security_group_id</a></td>
-<td>Security group associated with the build farm autoscaling groups</td>
-</tr>
-<tr>
-<td><a name="output_jenkins_alb_dns_name"></a> <a href="#output_jenkins_alb_dns_name">jenkins_alb_dns_name</a></td>
-<td>The DNS name of the Jenkins application load balancer.</td>
-</tr>
-<tr>
-<td><a name="output_jenkins_alb_zone_id"></a> <a href="#output_jenkins_alb_zone_id">jenkins_alb_zone_id</a></td>
-<td>The zone ID of the Jenkins ALB.</td>
-</tr>
-<tr>
-<td><a name="output_service_security_group_id"></a> <a href="#output_service_security_group_id">service_security_group_id</a></td>
-<td>Security group associated with the ECS service hosting jenkins</td>
-</tr>
-<tr>
-<td><a name="output_service_target_group_arn"></a> <a href="#output_service_target_group_arn">service_target_group_arn</a></td>
-<td>The ARN of the Jenkins service target group</td>
-</tr>
-</tbody>
-</table>
-<!-- END_TF_DOCS -->
-<!-- markdownlint-enable -->
+<h1 id="p4-code-review-packer-template">P4 Code Review Packer Template<a class="headerlink" href="#p4-code-review-packer-template" title="Permanent link">&para;</a></h1>
+<p>This Packer template creates an Amazon Machine Image (AMI) for P4 Code Review (Helix Swarm) on Ubuntu 24.04 LTS. The AMI includes all necessary software pre-installed, with runtime configuration handled automatically during instance launch.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#what-gets-installed">What Gets Installed</a></li>
+<li><a href="#building-the-ami">Building the AMI</a></li>
+<li><a href="#finding-your-ami">Finding Your AMI</a></li>
+<li><a href="#next-steps">Next Steps</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before building the AMI, ensure you have:</p>
+<ol>
+<li><strong>AWS CLI</strong> configured with valid credentials:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>configure
+<span class="c1"># Verify access</span>
+aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity
+</code></pre></div>
+<ol>
+<li><strong>Packer</strong> installed (version &gt;= 1.8.0):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>version
+</code></pre></div>
+<p>If not installed, download from <a href="https://www.packer.io/downloads">https://www.packer.io/downloads</a></p>
+<ol>
+<li><strong>VPC Access</strong>:</li>
+<li>Default VPC in your region (Default behaviour)</li>
+<li>
+<p>OR custom VPC with a public subnet (Can be configured by passing the VPC id through the <code>vpc_id</code> variable)</p>
+</li>
+<li>
+<p><strong>IAM Permissions</strong>: Your AWS credentials need permissions to:</p>
+</li>
+<li>Launch EC2 instances</li>
+<li>Create AMIs</li>
+<li>Create/delete security groups</li>
+<li>Create/delete key pairs</li>
+</ol>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<p>From the <strong>repository root</strong>, run:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Navigate to Packer template directory</span>
+<span class="nb">cd</span><span class="w"> </span>assets/packer/perforce/p4-code-review
+
+<span class="c1"># 2. Initialize Packer (downloads required plugins)</span>
+packer<span class="w"> </span>init<span class="w"> </span>p4_code_review_x86.pkr.hcl
+
+<span class="c1"># 3. Validate the template</span>
+packer<span class="w"> </span>validate<span class="w"> </span>p4_code_review_x86.pkr.hcl
+
+<span class="c1"># 4. Build the AMI (takes ~10-15 minutes)</span>
+packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p>At the end of the build, Packer will output the AMI ID:</p>
+<div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
+</code></pre></div>
+<p><strong>Save this AMI ID</strong> - you'll need it for Terraform deployment.</p>
+<h2 id="what-gets-installed">What Gets Installed<a class="headerlink" href="#what-gets-installed" title="Permanent link">&para;</a></h2>
+<p>The AMI includes a complete P4 Code Review installation:</p>
+<h3 id="software-components">Software Components<a class="headerlink" href="#software-components" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Perforce Repository</strong>: Official Perforce package repository (Ubuntu jammy/22.04 compatible)</li>
+<li><strong>PHP 8.x</strong>: PHP runtime with all required extensions:<ol>
+<li>Core: curl, mbstring, xml, intl, ldap, bcmath</li>
+<li>Database: mysql</li>
+<li>Graphics: gd</li>
+<li>Archive: zip</li>
+<li>PECL: igbinary, msgpack, redis</li>
+</ol>
+</li>
+<li><strong>Helix Swarm</strong>: Native DEB installation via <code>helix-swarm</code> package</li>
+<li><strong>Apache2</strong>: Web server with mod_php and required modules (rewrite, proxy, proxy_fcgi)</li>
+<li><strong>PHP-FPM</strong>: FastCGI Process Manager for PHP</li>
+<li><strong>helix-swarm-optional</strong> (optional, installed by default): LibreOffice for document preview (.docx, .xlsx, .pptx) and ImageMagick for image preview (.png, .jpg, .tiff, etc.) (~500MB)</li>
+<li><strong>AWS CLI v2</strong>: Required for Secrets Manager access and EBS volume operations at runtime</li>
+<li><strong>Configuration Script</strong>: <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> for runtime setup (see Runtime Configuration Details below)</li>
+</ol>
+<h3 id="system-configuration">System Configuration<a class="headerlink" href="#system-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>AppArmor</strong>: Ubuntu's security module (less restrictive by default for <code>/opt</code>)</li>
+<li><strong>Services</strong>: Apache2 and PHP-FPM enabled for automatic startup</li>
+<li><strong>User</strong>: <code>swarm</code> system user created with proper permissions</li>
+<li><strong>Directories</strong>: <code>/opt/perforce/swarm</code> prepared with correct ownership</li>
+</ul>
+<h3 id="whats-not-configured-yet">What's NOT Configured Yet<a class="headerlink" href="#whats-not-configured-yet" title="Permanent link">&para;</a></h3>
+<p>The following are configured at <strong>deployment</strong> when you launch an instance:</p>
+<ul>
+<li>P4 Server connection details</li>
+<li>P4 user credentials (fetched from AWS Secrets Manager)</li>
+<li>Redis cache connection</li>
+<li>External hostname/URL</li>
+<li>SSO settings</li>
+<li>EBS volume mounting for persistent data</li>
+<li>Queue worker configuration (cron job and endpoint)</li>
+<li>File permissions for worker processes</li>
+<li>P4 Server extension installation (Swarm triggers)</li>
+</ul>
+<h3 id="runtime-configuration-details">Runtime Configuration Details<a class="headerlink" href="#runtime-configuration-details" title="Permanent link">&para;</a></h3>
+<p>When an EC2 instance launches, the user-data script performs the following steps:</p>
+<ol>
+<li><strong>EBS Volume Attachment</strong>: Finds and attaches the persistent data volume by tags</li>
+<li><strong>Filesystem Setup</strong>: Creates ext4 filesystem (first launch) or mounts existing one</li>
+<li><strong>Swarm Configuration</strong>: Executes <code>/home/ubuntu/swarm_scripts/swarm_instance_init.sh</code> which:</li>
+<li>Retrieves P4 credentials from AWS Secrets Manager</li>
+<li>Runs Perforce's official <code>configure-swarm.sh</code> to:<ul>
+<li>Connect to P4 Server and validate credentials</li>
+<li>Install Swarm extension on P4 Server (enables event triggers)</li>
+<li>Create initial configuration file</li>
+<li>Set up Apache VirtualHost</li>
+<li>Create cron job for queue workers</li>
+</ul>
+</li>
+<li>Configures file permissions for queue worker functionality</li>
+<li>Updates configuration with Redis connection details</li>
+<li>Configures queue workers to use localhost endpoint</li>
+<li>Starts Apache and PHP-FPM services</li>
+</ol>
+<p><strong>Queue Workers</strong>: P4 Code Review requires background workers to process events, send notifications, and index files. These are spawned by a cron job (created by <code>configure-swarm.sh</code>) that runs every minute. The runtime configuration ensures workers have proper permissions and connect to the correct endpoint.</p>
+<h2 id="building-the-ami">Building the AMI<a class="headerlink" href="#building-the-ami" title="Permanent link">&para;</a></h2>
+<h3 id="option-1-using-default-vpc-recommended">Option 1: Using Default VPC (Recommended)<a class="headerlink" href="#option-1-using-default-vpc-recommended" title="Permanent link">&para;</a></h3>
+<p>If your AWS region has a default VPC:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/packer/perforce/p4-code-review
+packer<span class="w"> </span>init<span class="w"> </span>p4_code_review_x86.pkr.hcl
+packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="option-2-using-custom-vpc">Option 2: Using Custom VPC<a class="headerlink" href="#option-2-using-custom-vpc" title="Permanent link">&para;</a></h3>
+<p>If you don't have a default VPC, specify your own:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;region=us-west-2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;associate_public_ip_address=true&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;ssh_interface=public_ip&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p><strong>Requirements for custom VPC</strong>:</p>
+<ul>
+<li>Subnet must be in a <strong>public</strong> subnet (has route to Internet Gateway)</li>
+<li><code>associate_public_ip_address=true</code> if subnet doesn't auto-assign public IPs</li>
+<li>Security group allows outbound internet access (for package downloads)</li>
+</ul>
+<h3 id="option-3-using-variables-file">Option 3: Using Variables File<a class="headerlink" href="#option-3-using-variables-file" title="Permanent link">&para;</a></h3>
+<p>Create a <code>my-vars.pkrvars.hcl</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="na">vpc_id</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vpc-xxxxx&quot;</span>
+<span class="na">subnet_id</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-xxxxx&quot;</span>
+<span class="na">associate_public_ip_address</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="na">ssh_interface</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;public_ip&quot;</span>
+</code></pre></div>
+<p>Then build:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">&quot;my-vars.pkrvars.hcl&quot;</span><span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="build-output">Build Output<a class="headerlink" href="#build-output" title="Permanent link">&para;</a></h3>
+<p>Successful build output looks like:</p>
+<div class="highlight"><pre><span></span><code>==&gt; amazon-ebs.ubuntu2404: Stopping the source instance...
+==&gt; amazon-ebs.ubuntu2404: Waiting for the instance to stop...
+==&gt; amazon-ebs.ubuntu2404: Creating AMI p4_code_review_ubuntu-20231209123456 from instance i-xxxxx
+==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
+==&gt; amazon-ebs.ubuntu2404: Waiting for AMI to become ready...
+==&gt; amazon-ebs.ubuntu2404: Terminating the source AWS instance...
+Build &#39;amazon-ebs.ubuntu2404&#39; finished after 12 minutes 34 seconds.
+
+==&gt; Wait completed after 12 minutes 34 seconds
+
+==&gt; Builds finished. The artifacts of successful builds are:
+--&gt; amazon-ebs.ubuntu2404: AMIs were created:
+us-west-2: ami-0abc123def456789
+</code></pre></div>
+<p><strong>Copy the AMI ID</strong> (e.g., <code>ami-0abc123def456789</code>) - you'll need this for Terraform.</p>
+<h2 id="finding-your-ami">Finding Your AMI<a class="headerlink" href="#finding-your-ami" title="Permanent link">&para;</a></h2>
+<h3 id="list-all-p4-code-review-amis">List All P4 Code Review AMIs<a class="headerlink" href="#list-all-p4-code-review-amis" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[*].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+</code></pre></div>
+<p>Output:</p>
+<div class="highlight"><pre><span></span><code>+-----------------------------------------------------------------------+
+|                         DescribeImages                                |
++----------------------+---------------------------------------+--------+
+|  ami-0abc123def456   | p4_code_review_ubuntu-20231209    | 2023...|
+|  ami-0def456abc789   | p4_code_review_ubuntu-20231208    | 2023...|
++----------------------+---------------------------------------+--------+
+</code></pre></div>
+<h3 id="get-the-latest-ami">Get the Latest AMI<a class="headerlink" href="#get-the-latest-ami" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images | sort_by(@, &amp;CreationDate) | [-1].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+</code></pre></div>
+<h3 id="get-details-about-a-specific-ami">Get Details About a Specific AMI<a class="headerlink" href="#get-details-about-a-specific-ami" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--image-ids<span class="w"> </span>ami-0abc123def456789
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Now that you have an AMI, proceed to deploy P4 Code Review infrastructure:</p>
+<ol>
+<li>
+<p><strong>Read the <a href="../../../../modules/perforce/modules/p4-code-review/index.html">P4 Code Review Module Documentation</a></strong></p>
+</li>
+<li>
+<p><strong>Follow the deployment guide</strong> in the module README, which covers:</p>
+</li>
+<li>Creating AWS Secrets Manager secrets for P4 credentials</li>
+<li>Writing Terraform configuration</li>
+<li>Deploying the infrastructure</li>
+<li>Accessing the P4 Code Review web console</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="no-default-vpc-available">"No default VPC available"<a class="headerlink" href="#no-default-vpc-available" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: Packer fails with "No default VPC for this user"</p>
+<p><strong>Solution</strong>: Use Option 2 or 3 above to specify your VPC and subnet:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h3 id="unable-to-connect-to-instance">"Unable to connect to instance"<a class="headerlink" href="#unable-to-connect-to-instance" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: Packer times out connecting to the instance</p>
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>Subnet is not public (no route to Internet Gateway)</li>
+<li>Security group blocks SSH (port 22)</li>
+<li>No public IP assigned to instance</li>
+</ol>
+<p><strong>Solution</strong>: Verify your subnet has:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check if subnet has route to IGW</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=association.subnet-id,Values=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;RouteTables[*].Routes[?GatewayId!=`local`]&#39;</span>
+</code></pre></div>
+<h3 id="package-installation-failed">"Package installation failed"<a class="headerlink" href="#package-installation-failed" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: APT/DEB errors during build</p>
+<p><strong>Possible causes</strong>:</p>
+<ol>
+<li>No internet access from instance</li>
+<li>Perforce repository temporarily unavailable</li>
+<li>Package version conflicts</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ul>
+<li>Check build instance has outbound internet access</li>
+<li>Try rebuilding (temporary outages resolve themselves)</li>
+<li>Review <code>/var/log/swarm_setup.log</code> on build instance</li>
+</ul>
+<h3 id="ami-already-exists-with-that-name">"AMI already exists with that name"<a class="headerlink" href="#ami-already-exists-with-that-name" title="Permanent link">&para;</a></h3>
+<p><strong>Error</strong>: "AMI name 'p4_code_review_ubuntu-TIMESTAMP' already exists"</p>
+<p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># List your AMIs</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span>
+
+<span class="c1"># Deregister old AMI if no longer needed</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span class="w"> </span>--image-id<span class="w"> </span>ami-xxxxx
+</code></pre></div>
+<h3 id="build-is-slow">Build is slow<a class="headerlink" href="#build-is-slow" title="Permanent link">&para;</a></h3>
+<p><strong>Normal build time</strong>: 10-15 minutes</p>
+<p><strong>If taking longer</strong>:</p>
+<ul>
+<li>Package downloads can be slow depending on region</li>
+<li>Perforce repository might be experiencing high load</li>
+<li>This is normal - be patient</li>
+</ul>
+<h3 id="need-to-debug-the-build">Need to debug the build?<a class="headerlink" href="#need-to-debug-the-build" title="Permanent link">&para;</a></h3>
+<p><strong>Enable debug mode to step through each provisioner</strong>:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-debug<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<p>This will pause before each provisioner step, allowing you to:</p>
+<ul>
+<li>SSH into the build instance</li>
+<li>Inspect the current state</li>
+<li>Verify installation progress</li>
+<li>Press Enter to continue to the next step</li>
+</ul>
+<p><strong>Enable detailed logging</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">PACKER_LOG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pkr.hcl
+</code></pre></div>
+<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.packer.io/docs">Packer Documentation</a></li>
+<li><a href="https://www.perforce.com/manuals/swarm/Content/Swarm/Home-swarm.html">Perforce Helix Swarm Admin Guide</a></li>
+<li><a href="https://ubuntu.com/server/docs">Ubuntu 24.04 LTS Documentation</a></li>
+</ul>
+<h2 id="questions-or-issues">Questions or Issues?<a class="headerlink" href="#questions-or-issues" title="Permanent link">&para;</a></h2>
+<p>If you encounter problems:</p>
+<ol>
+<li>Check the troubleshooting section above</li>
+<li>Review Packer logs with <code>PACKER_LOG=1</code></li>
+<li>Use <code>packer build -debug</code> to step through the build process</li>
+<li>Verify AWS credentials and permissions</li>
+</ol>
 
 
 
@@ -4045,7 +4316,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-02-25
   </span>
 
     
@@ -4083,7 +4354,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../teamcity/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: TeamCity Module">
+          <a href="../p4-server/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: P4 Server">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -4093,20 +4364,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                TeamCity Module
+                P4 Server
               </div>
             </div>
           </a>
         
         
           
-          <a href="../unreal/horde/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Unreal Horde">
+          <a href="../../virtual-workstations/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Virtual Workstations">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Unreal Horde
+                Virtual Workstations
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -4185,12 +4456,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="../../js/open_in_new_tab.js"></script>
+        <script src="../../../../js/open_in_new_tab.js"></script>
       
     
 <script>
