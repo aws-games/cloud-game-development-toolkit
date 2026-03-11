@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material:9.7.3@sha256:8f41b6089700e1c32212c3857936f14e88a3306a35be4ffd1826420e2f3e4197
+FROM squidfunk/mkdocs-material:9.7.5@sha256:c3739993c3e7c92cfe649ba03cbc04f4fa9b1497886abd16267eb413cda8aecf
 COPY requirements.txt ./
 ARG VERSION ALIAS
 ENV VERSION=$VERSION ALIAS=$ALIAS
