@@ -36,6 +36,7 @@ repos:
           - --hook-config=--retry-once-with-cleanup=true # If validation fails, delete corrupted .terraform dirs and retry
           - --args=-no-color # Cleaner output
       - id: terraform_fmt
+        files: \.(tf|tfvars|tftest\.hcl)$
       - id: terraform_tflint
   - repo: https://github.com/lycheeverse/lychee
     rev: "v0.15.1"
