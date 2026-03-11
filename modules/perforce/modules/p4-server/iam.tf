@@ -29,8 +29,9 @@ data "aws_iam_policy_document" "default_policy" {
       "secretsmanager:BatchGetSecretValue"
     ]
     resources = compact([
-      var.super_user_password_secret_arn == null ? awscc_secretsmanager_secret.super_user_username[0].secret_id : var.super_user_password_secret_arn,
-      var.super_user_username_secret_arn == null ? awscc_secretsmanager_secret.super_user_password[0].secret_id : var.super_user_username_secret_arn,
+      local.super_password_secret,
+      local.admin_username_secret,
+      local.admin_password_secret,
       var.storage_type == "FSxN" && var.protocol == "ISCSI" ? var.fsxn_password : null
     ])
   }

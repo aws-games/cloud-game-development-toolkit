@@ -214,8 +214,8 @@ variable "p4_server_config" {
     existing_security_groups = optional(list(string), [])
     internal                 = optional(bool, false)
 
-    super_user_password_secret_arn = optional(string, null)
-    super_user_username_secret_arn = optional(string, null)
+    admin_username            = optional(string, "perforce")
+    admin_password_secret_arn = optional(string, null)
 
     create_default_role = optional(bool, true)
     custom_role         = optional(string, null)
@@ -286,9 +286,9 @@ variable "p4_server_config" {
 
     internal: "Set this flag to true if you do not want the P4 Server instance to have a public IP."
 
-    super_user_password_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used."
+    admin_username: "Username for the Perforce admin account. The 'super' service account is always created automatically for internal tooling. Default is 'perforce'."
 
-    super_user_username_secret_arn: "If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here."
+    admin_password_secret_arn: "Optional ARN of existing Secrets Manager secret for admin password. If not provided, a password will be auto-generated."
 
     create_default_role: "Optional creation of P4 Server default IAM Role with SSM managed instance core policy attached. Default is set to true."
 
@@ -440,14 +440,12 @@ variable "p4_code_review_config" {
     name                        = optional(string, "p4-code-review")
     project_prefix              = optional(string, "cgd")
     environment                 = optional(string, "dev")
-    debug                       = optional(bool, false)
     fully_qualified_domain_name = string
 
     # Compute
-    container_name   = optional(string, "p4-code-review-container")
-    container_port   = optional(number, 80)
-    container_cpu    = optional(number, 1024)
-    container_memory = optional(number, 4096)
+    application_port = optional(number, 80)
+    instance_type    = optional(string, "m5.large")
+    ami_id           = optional(string, null)
     p4d_port         = optional(string, null)
     p4charset        = optional(string, null)
     existing_redis_connection = optional(object({
@@ -457,22 +455,20 @@ variable "p4_code_review_config" {
 
     # Storage & Logging
     cloudwatch_log_retention_in_days = optional(number, 365)
+    ebs_volume_size                  = optional(number, 20)
+    ebs_volume_type                  = optional(string, "gp3")
+    ebs_volume_encrypted             = optional(bool, true)
+    ebs_availability_zone            = optional(string, null)
 
     # Networking & Security
     create_default_sgs       = optional(bool, true)
     existing_security_groups = optional(list(string), [])
     internal                 = optional(bool, false)
     service_subnets          = optional(list(string), null)
+    instance_subnet_id       = string
 
-    create_default_role = optional(bool, true)
-    custom_role         = optional(string, null)
-
-    super_user_password_secret_arn          = optional(string, null)
-    super_user_username_secret_arn          = optional(string, null)
-    p4_code_review_user_password_secret_arn = optional(string, null)
-    p4_code_review_user_username_secret_arn = optional(string, null)
-    enable_sso                              = optional(string, true)
-    config_php_source                       = optional(string, null)
+    super_user_password_secret_arn = optional(string, null)
+    custom_config                  = optional(string, null)
 
     # Caching
     elasticache_node_count = optional(number, 1)
@@ -489,23 +485,19 @@ variable "p4_code_review_config" {
 
     environment : "The environment where the P4 Code Review service will be deployed. Default is 'dev'."
 
-    debug : "Whether to enable debug mode for the P4 Code Review service. Default is 'false'."
-
     fully_qualified_domain_name : "The FQDN for the P4 Code Review Service. This is used for the P4 Code Review's Perforce configuration."
 
 
     # Compute
-    container_name : "The name of the P4 Code Review service container. Default is 'p4-code-review-container'."
+    application_port : "The port on which the P4 Code Review service will be listening. Default is '80'."
 
-    container_port : "The port on which the P4 Code Review service will be listening. Default is '3000'."
+    instance_type : "EC2 instance type for running P4 Code Review. Default is 'm5.large'."
 
-    container_cpu : "The number of CPU units to reserve for the P4 Code Review service container. Default is '1024'."
+    ami_id : "Optional AMI ID for P4 Code Review. If not provided, will use the latest Packer-built AMI."
 
-    container_memory : "The number of CPU units to reserve for the P4 Code Review service container. Default is '4096'."
+    p4d_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
 
-    pd4_port : "The full URL you will use to access the P4 Depot in clients such P4V and P4Admin. Note, this typically starts with 'ssl:' and ends with the default port of ':1666'."
-
-    p4charset : "The P4CHARSET environment variable to set in the P4 Code Review container."
+    p4charset : "The P4CHARSET environment variable to set for the P4 Code Review instance."
 
     existing_redis_connection : "The existing Redis connection for the P4 Code Review service."
 
@@ -513,29 +505,25 @@ variable "p4_code_review_config" {
     # Storage & Logging
     cloudwatch_log_retention_in_days : "The number of days to retain the P4 Code Review service logs in CloudWatch. Default is 365 days."
 
+    ebs_volume_size : "Size in GB for the EBS volume that stores P4 Code Review data. Default is '20'."
+
+    ebs_volume_type : "EBS volume type for P4 Code Review data storage. Default is 'gp3'."
+
+    ebs_volume_encrypted : "Enable encryption for the EBS volume storing P4 Code Review data. Default is 'true'."
+
+    ebs_availability_zone : "Availability zone for the EBS volume. Must match the EC2 instance AZ."
+
 
     # Networking & Security
     create_default_sgs : "Whether to create default security groups for the P4 Code Review service."
 
     internal : "Set this flag to true if you do not want the P4 Code Review service to have a public IP."
 
-    create_default_role : "Whether to create the P4 Code Review default IAM Role. Default is set to true."
+    instance_subnet_id : "The subnet ID where the EC2 instance will be launched. Should be a private subnet for security."
 
-    custom_role : "ARN of a custom IAM Role you wish to use with P4 Code Review."
+    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Server super user password. The super user is used for both Swarm runtime operations and administrative tasks."
 
-    super_user_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator username."
-
-    super_user_username_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review Administrator password."
-
-    p4d_p4_code_review_user_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's username."
-
-    p4d_p4_code_review_password_secret_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
-
-    p4d_p4_code_review_user_password_arn : "Optionally provide the ARN of an AWS Secret for the P4 Code Review user's password."
-
-    enable_sso : "Whether to enable SSO for the P4 Code Review service. Default is set to false."
-
-    config_php_source : "Used as the ValueFrom for P4CR's config.php. Contents should be base64 encoded, and will be combined with the generated config.php via array_replace_recursive."
+    custom_config : "JSON string with additional Swarm configuration to merge with the generated config.php. Use this for SSO/SAML setup, notifications, Jira integration, etc."
 
 
     # Caching
