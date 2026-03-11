@@ -12,29 +12,47 @@ This module provisions P4 Server on an EC2 Instance with three dedicated EBS vol
 
 This module deploys P4 Server on AWS using an Amazon Machine Image (AMI) that is included in the Cloud Game Development Toolkit. You **must** provision this AMI using [Hashicorp Packer](https://www.packer.io/) prior to deploying this module. To get started consult [the documentation for the P4 Server AMI](../../../../assets/packer/perforce/p4-server/README.md).
 
-### Optional
+### User Management
 
-You can optionally define the Helix Core super user's credentials prior to deployment. To do so, create a secret for the Helix Core super user's username and password:
+This module creates two users with super privileges:
 
-```bash
-aws secretsmanager create-secret \
-    --name HelixCoreSuperUser \
-    --description "Helix Core Super User" \
-    --secret-string "{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"
-```
+1. **Service Account (`super`)**: An internal service account used by P4 Code Review (Helix Swarm) and other Perforce tooling. This user is always created automatically with a randomly generated password stored in AWS Secrets Manager. The service account uses password-based authentication (non-SSO).
 
-You can then provide the relevant ARN as variables when you define the Helix Core module in your Terraform configurations:
+2. **Admin Account**: A human administrator account for managing the Perforce server. The username defaults to `perforce` but can be customized via the `admin_username` variable. The password is auto-generated and stored in AWS Secrets Manager, or you can provide your own secret ARN.
+
+#### Configuring the Admin Account
+
+By default, an admin user named `perforce` is created:
 
 ```hcl
-module "perforce_helix_core" {
-    source = "modules/perforce/helix-core"
+module "p4_server" {
+    source = "modules/perforce/modules/p4-server"
     ...
-    helix_core_super_user_username_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixCoreSuperUser-a1b2c3:username::"
-    helix_core_super_user_password_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:HelixCoreSuperUser-a1b2c3:password::"
+    # Uses default admin_username = "perforce"
+    # Password auto-generated and stored in Secrets Manager
 }
 ```
 
-If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere.
+To customize the admin username:
+
+```hcl
+module "p4_server" {
+    source = "modules/perforce/modules/p4-server"
+    ...
+    admin_username = "myadmin"
+}
+```
+
+To use an existing password secret:
+
+```hcl
+module "p4_server" {
+    source = "modules/perforce/modules/p4-server"
+    ...
+    admin_username            = "myadmin"
+    admin_password_secret_arn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyAdminPassword-a1b2c3"
+}
+```
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
@@ -93,8 +111,9 @@ No modules.
 | [aws_vpc_security_group_egress_rule.link_outbound_fsxn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.server_internet](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.fsxn_inbound_link](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [awscc_secretsmanager_secret.super_user_password](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
-| [awscc_secretsmanager_secret.super_user_username](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.admin_password](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.admin_username](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
+| [awscc_secretsmanager_secret.super_password](https://registry.terraform.io/providers/hashicorp/awscc/latest/docs/resources/secretsmanager_secret) | resource |
 | [netapp-ontap_lun.depots_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun) | resource |
 | [netapp-ontap_lun.logs_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun) | resource |
 | [netapp-ontap_lun.metadata_volume_lun](https://registry.terraform.io/providers/NetApp/netapp-ontap/latest/docs/resources/lun) | resource |
@@ -116,6 +135,8 @@ No modules.
 | <a name="input_p4_server_type"></a> [p4\_server\_type](#input\_p4\_server\_type) | The Perforce P4 Server type. | `string` | n/a | yes |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | The type of backing store [EBS, FSxN] | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC where P4 Server should be deployed | `string` | n/a | yes |
+| <a name="input_admin_password_secret_arn"></a> [admin\_password\_secret\_arn](#input\_admin\_password\_secret\_arn) | Optional ARN of existing Secrets Manager secret for admin password. If not provided, a password will be auto-generated. | `string` | `null` | no |
+| <a name="input_admin_username"></a> [admin\_username](#input\_admin\_username) | Username for the Perforce admin account (human user). The 'super' service account is always created automatically for internal tooling. | `string` | `"perforce"` | no |
 | <a name="input_amazon_fsxn_filesystem_id"></a> [amazon\_fsxn\_filesystem\_id](#input\_amazon\_fsxn\_filesystem\_id) | The ID of the existing FSx ONTAP file system to use if storage type is FSxN. | `string` | `null` | no |
 | <a name="input_amazon_fsxn_svm_id"></a> [amazon\_fsxn\_svm\_id](#input\_amazon\_fsxn\_svm\_id) | The ID of the Storage Virtual Machine (SVM) for the FSx ONTAP filesystem. | `string` | `null` | no |
 | <a name="input_auth_service_url"></a> [auth\_service\_url](#input\_auth\_service\_url) | The URL for the P4Auth Service. | `string` | `null` | no |
@@ -143,22 +164,21 @@ No modules.
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_protocol"></a> [protocol](#input\_protocol) | Specify the protocol (NFS or ISCSI) | `string` | `null` | no |
 | <a name="input_selinux"></a> [selinux](#input\_selinux) | Whether to apply SELinux label updates for P4 Server. Don't enable this if SELinux is disabled on your target operating system. | `bool` | `false` | no |
-| <a name="input_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#input\_super\_user\_password\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's password here. | `string` | `null` | no |
-| <a name="input_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#input\_super\_user\_username\_secret\_arn) | If you would like to manage your own super user credentials through AWS Secrets Manager provide the ARN for the super user's username here. Otherwise, the default of 'perforce' will be used. | `string` | `null` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "p4-server",<br>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br>  "RootModuleName": "terraform-aws-perforce"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "p4-server",<br/>  "ModuleSource": "https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce",<br/>  "RootModuleName": "terraform-aws-perforce"<br/>}</pre> | no |
 | <a name="input_unicode"></a> [unicode](#input\_unicode) | Whether to enable Unicode configuration for P4 Server the -xi flag for p4d. Set to true to enable Unicode support. | `bool` | `false` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
+| <a name="output_admin_password_secret_arn"></a> [admin\_password\_secret\_arn](#output\_admin\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding the admin account password. |
+| <a name="output_admin_username_secret_arn"></a> [admin\_username\_secret\_arn](#output\_admin\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding the admin account username. |
 | <a name="output_eip_id"></a> [eip\_id](#output\_eip\_id) | The ID of the Elastic IP associated with your P4 Server instance. |
 | <a name="output_eip_public_ip"></a> [eip\_public\_ip](#output\_eip\_public\_ip) | The public IP of your P4 Server instance. |
 | <a name="output_instance_id"></a> [instance\_id](#output\_instance\_id) | Instance ID for the P4 Server instance |
 | <a name="output_lambda_link_name"></a> [lambda\_link\_name](#output\_lambda\_link\_name) | Lambda function name for the FSxN Link |
 | <a name="output_private_ip"></a> [private\_ip](#output\_private\_ip) | Private IP for the P4 Server instance |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The default security group of your P4 Server instance. |
-| <a name="output_super_user_password_secret_arn"></a> [super\_user\_password\_secret\_arn](#output\_super\_user\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's password. |
-| <a name="output_super_user_username_secret_arn"></a> [super\_user\_username\_secret\_arn](#output\_super\_user\_username\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding your P4 Server super user's username. |
+| <a name="output_super_password_secret_arn"></a> [super\_password\_secret\_arn](#output\_super\_password\_secret\_arn) | The ARN of the AWS Secrets Manager secret holding the service account (super) password. |
 <!-- END_TF_DOCS -->
 <!-- markdownlint-enable -->
