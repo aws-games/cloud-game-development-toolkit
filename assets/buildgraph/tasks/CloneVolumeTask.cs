@@ -103,7 +103,7 @@ namespace AutomationTool.Tasks
 
 			try
 			{
-				CreateFlexCloneVolumeAsync().Wait();
+				CreateFlexCloneVolumeAsync().GetAwaiter().GetResult();
 				Logger.LogInformation("FlexClone volume creation completed successfully");
 			}
 			catch (Exception ex)
@@ -177,15 +177,6 @@ namespace AutomationTool.Tasks
 				}
 
 				Logger.LogInformation("Source volume '{SourceVolume}' verified", _parameters.SourceVolume);
-
-				// Check if clone volume already exists
-				Logger.LogInformation("Checking if clone volume '{CloneVolumeName}' already exists...", _parameters.CloneVolumeName);
-				bool cloneExists = await ontapUtils.VolumeExistsAsync(_parameters.CloneVolumeName, _parameters.SvmName);
-
-				if (cloneExists)
-				{
-					throw new AutomationException($"Clone volume '{_parameters.CloneVolumeName}' already exists. Please delete it first or use a different name.");
-				}
 
 				// Create the FlexClone volume
 				string cloneVolumeName = await ontapUtils.CreateFlexCloneVolumeAsync(

@@ -66,6 +66,11 @@ namespace AutomationTool
 					
 					IProcessResult result = CommandUtils.Run("aws", arguments, Options: CommandUtils.ERunOptions.Default);
 
+					if (result.ExitCode != 0)
+					{
+						throw new AutomationException($"AWS CLI failed with exit code {result.ExitCode} when retrieving secret '{secretName}'");
+					}
+
 					string secretValue = result.Output.Trim();
 					
 					if (string.IsNullOrEmpty(secretValue))

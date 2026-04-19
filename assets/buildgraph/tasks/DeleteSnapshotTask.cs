@@ -79,6 +79,9 @@ namespace AutomationTool.Tasks
 		/// <param name="tagNameToFileSet">Mapping from tag names to the set of files they include</param>
 		public override void Execute(JobContext job, HashSet<FileReference> buildProducts, Dictionary<string, HashSet<FileReference>> tagNameToFileSet)
 		{
+			// Validate all required parameters
+			ValidateParameters();
+
 			Logger.LogInformation("Starting ONTAP snapshot deletion");
 			Logger.LogInformation("Volume: {VolumeName}", _parameters.VolumeName);
 			Logger.LogInformation("Snapshot: {SnapshotName}", _parameters.SnapshotName);
@@ -92,6 +95,37 @@ namespace AutomationTool.Tasks
 			{
 				Logger.LogError(ex, "Failed to delete snapshot '{SnapshotName}' from volume '{VolumeName}'", _parameters.SnapshotName, _parameters.VolumeName);
 				throw;
+			}
+		}
+
+		/// <summary>
+		/// Validates that all required parameters are provided
+		/// </summary>
+		private void ValidateParameters()
+		{
+			if (String.IsNullOrEmpty(_parameters.VolumeName))
+			{
+				throw new AutomationException("VolumeName parameter is required");
+			}
+			if (String.IsNullOrEmpty(_parameters.SnapshotName))
+			{
+				throw new AutomationException("SnapshotName parameter is required");
+			}
+			if (String.IsNullOrEmpty(_parameters.FsxAdminIp))
+			{
+				throw new AutomationException("FsxAdminIp parameter is required");
+			}
+			if (String.IsNullOrEmpty(_parameters.OntapUser))
+			{
+				throw new AutomationException("OntapUser parameter is required");
+			}
+			if (String.IsNullOrEmpty(_parameters.OntapPasswordSecretName))
+			{
+				throw new AutomationException("OntapPasswordSecretName parameter is required");
+			}
+			if (String.IsNullOrEmpty(_parameters.AwsRegion))
+			{
+				throw new AutomationException("AwsRegion parameter is required");
 			}
 		}
 

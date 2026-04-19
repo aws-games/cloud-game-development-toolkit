@@ -10,7 +10,7 @@ Custom BuildGraph tasks for integrating Perforce syncing with NetApp ONTAP FlexC
 - `DeleteVolumeTask.cs` - Delete ONTAP volume
 - `DeleteSnapshotTask.cs` - Delete ONTAP snapshot
 
-**AutomationUtils/** - Helper utilities
+**Utils/** - Helper utilities
 - `OntapUtils.cs` - ONTAP REST API operations and AWS Secrets Manager integration
 
 **Examples/** - BuildGraph XML workflows
@@ -20,7 +20,6 @@ Custom BuildGraph tasks for integrating Perforce syncing with NetApp ONTAP FlexC
 
 ## Prerequisites
 
-- AWS CLI configured with credentials
 - Perforce client (p4)
 - AWS Secrets Manager secret containing FSx ONTAP password
 - FSx ONTAP file system with SVM configured
