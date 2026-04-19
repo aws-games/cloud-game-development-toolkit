@@ -68,7 +68,7 @@ namespace AutomationTool
 
 					if (result.ExitCode != 0)
 					{
-						throw new AutomationException($"AWS CLI failed with exit code {result.ExitCode} when retrieving secret '{secretName}'");
+						throw new AutomationException($"AWS CLI failed with exit code {result.ExitCode}: {result.Output}");
 					}
 
 					string secretValue = result.Output.Trim();
