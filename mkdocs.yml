@@ -95,17 +95,18 @@ nav:
   - Assets:
       - Overview: docs/assets/index.md
       - Packer Templates:
-          - Overview: docs/assets/packer/index.md
+          - Overview: docs/assets/packer/README.md
           - Build Agents:
               - Linux Build Agents:
                   - assets/packer/build-agents/linux/README.md
               - Windows Build Agent:
                   - assets/packer/build-agents/windows/README.md
           - P4 Server: assets/packer/perforce/p4-server/README.md
+          - P4 Code Review: assets/packer/perforce/p4-code-review/README.md
           - Virtual Workstations: assets/packer/virtual-workstations/README.md
       - Jenkins Pipelines: assets/jenkins-pipelines/README.md
       - Ansible Playbooks: assets/ansible-playbooks/perforce/p4-server/README.md
-      - Dockerfiles: docs/assets/dockerfiles.md
+      - Dockerfiles: docs/assets/docker/README.md
   - Modules:
       - Overview: modules/README.md
       - Design Standards: modules/DESIGN_STANDARDS.md

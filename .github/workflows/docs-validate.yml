@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
       - name: Get changed markdown/html files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             **/*.md
@@ -63,7 +63,7 @@ jobs:
       - name: Check links in changed files
         if: steps.scope.outputs.scope == 'changed' && steps.changed-files.outputs.any_changed == 'true'
         id: lychee-changed
-        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
           args: --config .config/lychee.toml --no-progress ${{ steps.changed-files.outputs.all_changed_files }}
           fail: true
@@ -73,7 +73,7 @@ jobs:
       - name: Check all links
         if: steps.scope.outputs.scope == 'all'
         id: lychee-all
-        uses: lycheeverse/lychee-action@a8c4c7cb88f0c7386610c35eb25108e448569cb0 # v2.7.0
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
           args: --config .config/lychee.toml --no-progress '**/*.md' '**/*.html'
           fail: true
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
@@ -107,13 +107,13 @@ jobs:
       - name: Get changed markdown files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: "**/*.md"
           separator: " "
 
       - name: Setup Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: "20"
 
@@ -142,7 +142,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -170,21 +170,21 @@ jobs:
       # PR Comments: Delete comments for checks that are now passing
       - name: Delete PR comment - Link Check Success
         if: github.event_name == 'pull_request' && needs.check-links.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-link-check
           delete: true
 
       - name: Delete PR comment - Lint Success
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-lint-failure
           delete: true
 
       - name: Delete PR comment - Build Success
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-build-failure
           delete: true
@@ -192,7 +192,7 @@ jobs:
       # PR Comments: Post sticky comments for link and build failures
       - name: Comment on PR - Link Check Failure
         if: github.event_name == 'pull_request' && needs.check-links.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-link-check
           message: |
@@ -214,7 +214,7 @@ jobs:
 
       - name: Comment on PR - Lint Failure
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-lint-failure
           message: |
@@ -243,7 +243,7 @@ jobs:
 
       - name: Comment on PR - Build Failure
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
         with:
           header: doc-build-failure
           message: |
