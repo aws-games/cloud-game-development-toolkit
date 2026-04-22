@@ -8,7 +8,9 @@ Write-Host "Starting shared VDI base infrastructure setup..."
 New-Item -ItemType Directory -Force -Path "C:\temp" | Out-Null
 
 # Install NVIDIA GRID drivers if GPU instance
-$instanceType = (Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-type" -TimeoutSec 10)
+# IMDSv2: fetch a session token first, then use it for metadata requests
+$imdsToken = (Invoke-RestMethod -Method PUT -Uri "http://169.254.169.254/latest/api/token" -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "300"} -TimeoutSec 10)
+$instanceType = (Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-type" -Headers @{"X-aws-ec2-metadata-token" = $imdsToken} -TimeoutSec 10)
 if ($instanceType -match "^(g3|g4|g5|g6|p2|p3|p4)") {
     Write-Host "GPU instance detected ($instanceType), installing NVIDIA GRID drivers..."
 
