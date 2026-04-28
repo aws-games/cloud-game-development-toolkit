@@ -81,13 +81,15 @@ jobs:
       - name: Check for content changes
         if: steps.docs-changed.outputs.any_changed == 'true'
         id: check-changes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Clone gh-pages to check if files differ
           git clone --depth=1 --single-branch --branch gh-pages https://github.com/${{ github.repository }}.git /tmp/gh-pages
 
           # Compare the built site with existing preview (mike-based location)
-          if [ -d "/tmp/gh-pages/preview-pr-${{ github.event.pull_request.number }}" ]; then
-            if diff -qr site /tmp/gh-pages/preview-pr-${{ github.event.pull_request.number }} > /dev/null 2>&1; then
+          if [ -d "/tmp/gh-pages/preview-pr-${PR_NUMBER}" ]; then
+            if diff -qr site "/tmp/gh-pages/preview-pr-${PR_NUMBER}" > /dev/null 2>&1; then
               echo "has_changes=false" >> $GITHUB_OUTPUT
             else
               echo "has_changes=true" >> $GITHUB_OUTPUT
