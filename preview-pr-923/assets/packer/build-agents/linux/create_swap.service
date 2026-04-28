@@ -1,0 +1,12 @@
+[Unit]
+Description=Run create_swap.sh script at boot
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/create_swap.sh
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
