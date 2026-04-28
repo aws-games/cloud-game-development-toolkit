@@ -1,0 +1,5527 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cloud Game Development Toolkit | Docs">
+      
+      
+        <meta name="author" content="Amazon Web Services">
+      
+      
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/samples/unity-build-pipeline/index.html">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../docs/media/logos/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Unity Build Pipeline - Cloud Game Development Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M0%208a8%208%200%201%201%2016%200A8%208%200%200%201%200%208m8-6.5a6.5%206.5%200%201%200%200%2013%206.5%206.5%200%200%200%200-13M6.5%207.75A.75.75%200%200%201%207.25%207h1a.75.75%200%200%201%20.75.75v2.75h.25a.75.75%200%200%201%200%201.5h-2a.75.75%200%200%201%200-1.5h.25v-2h-.25a.75.75%200%200%201-.75-.75M8%206a1%201%200%201%201%200-2%201%201%200%200%201%200%202%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/themes.css">
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/hero.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+
+<!-- Determine title -->
+
+<!-- prettier-ignore -->
+
+
+
+
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unity-build-pipeline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Cloud Game Development Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Unity Build Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2C5.13 2 2 5.13 2 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7M6 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H6zm13-8h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9zm-2.15 5.65L18 15l1.15 3.65z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/index.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/getting-started.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../docs/assets/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Assets
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../modules/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Samples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/changelog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/security.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/contributing.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    Cloud Game Development Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/getting-started.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../docs/assets/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Assets
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../docs/assets/packer/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packer Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Packer Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Linux Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Linux Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Build Agent
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Windows Build Agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Virtual Workstations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/jenkins-pipelines/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ansible Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/assets/docker/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dockerfiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1" id="__nav_4_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1_2" id="__nav_4_3_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submodules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Submodules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4Auth
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4Auth
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Code Review
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_1" id="__nav_4_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/teamcity/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5_1" id="__nav_4_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/jenkins/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_5_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_1" id="__nav_4_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine Horde
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine Horde
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/horde/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2" id="__nav_4_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Cloud DDC
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Intra-Cluster
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Intra-Cluster
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_1" id="__nav_4_7_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accelerator
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accelerator
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unity/accelerator/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_2" id="__nav_4_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing Server
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Licensing Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8_1" id="__nav_4_8_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_8_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/vdi/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_8_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Samples
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Samples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../simple-build-pipeline/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simple Build Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Single Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/changelog.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/security.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/contributing.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Guide
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment Guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-predeployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Predeployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-postdeployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Postdeployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#networking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Networking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-availability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High Availability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-agent-storage-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Agent Storage Strategies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build Agent Storage Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ephemeral-storage-current-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ephemeral Storage (Current Default)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#efs-persistent-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EFS Persistent Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#netapp-ontap-flexclone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NetApp ONTAP FlexClone
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Maintenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#updating-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-and-disaster-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup and Disaster Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#secrets-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compliance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support-and-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support and Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#providers_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="unity-build-pipeline">Unity Build Pipeline<a class="headerlink" href="#unity-build-pipeline" title="Permanent link">&para;</a></h1>
+<p>This sample demonstrates how to deploy a complete Unity build pipeline on AWS using the Cloud Game Development Toolkit. This configuration is designed for production Unity game development workflows and includes version control, CI/CD, asset acceleration, license management, and artifact storage.</p>
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<p>This Unity build pipeline consists of the following components:</p>
+<p><img alt="Unity Build Pipeline Architecture" src="assets/media/diagrams/architecture.png" /></p>
+<h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Perforce (Version Control)</strong></li>
+<li>P4 Server (Helix Core) for source code management</li>
+<li>P4 Swarm (Code Review) for peer code reviews</li>
+<li>
+<p>Deployed on EC2 with Auto Scaling Group (P4 Swarm) and persistent EBS storage</p>
+</li>
+<li>
+<p><strong>TeamCity (CI/CD)</strong></p>
+</li>
+<li>TeamCity Server for build orchestration</li>
+<li>Auto-scaling build agents on Fargate</li>
+<li>
+<p>Integration with Perforce for source control</p>
+</li>
+<li>
+<p><strong>Unity Accelerator</strong></p>
+</li>
+<li>Caches Unity Library folder artifacts</li>
+<li>Reduces import times for distributed teams</li>
+<li>
+<p>Deployed on ECS with persistent storage</p>
+</li>
+<li>
+<p><strong>Unity Floating License Server</strong></p>
+</li>
+<li>Manages Unity Pro/Enterprise licenses</li>
+<li>Supports concurrent license checkout</li>
+<li>
+<p>Deployed on EC2 with stable network identity (ENI)</p>
+</li>
+<li>
+<p><strong>S3 Artifacts Bucket</strong></p>
+</li>
+<li>Stores build outputs (executables, asset bundles)</li>
+<li>Lifecycle policies for cost optimization</li>
+<li>Versioning enabled for rollback capability</li>
+</ol>
+<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Complete CI/CD Pipeline</strong>: From code commit to build artifact</li>
+<li><strong>Version Control</strong>: Enterprise-grade Perforce deployment</li>
+<li><strong>Build Acceleration</strong>: Unity Accelerator for faster iteration</li>
+<li><strong>License Management</strong>: Floating license server for team collaboration</li>
+<li><strong>Secure Access</strong>: HTTPS everywhere with SSL/TLS certificates</li>
+<li><strong>DNS Integration</strong>: Custom domain names for all services</li>
+<li><strong>High Availability</strong>: Multi-AZ deployments where applicable</li>
+<li><strong>Cost Optimized</strong>: Auto-scaling and right-sized resources</li>
+</ul>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before deploying this pipeline, ensure you have:</p>
+<ol>
+<li><strong>Tools Installed</strong></li>
+<li><a href="https://developer.hashicorp.com/terraform/install">Terraform CLI</a> (&gt;= 1.0)</li>
+<li><a href="https://developer.hashicorp.com/packer/install">Packer CLI</a> (for AMI creation)</li>
+<li>
+<p><a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">AWS CLI v2</a></p>
+</li>
+<li>
+<p><strong>AWS Account</strong></p>
+</li>
+<li>AWS account with appropriate permissions</li>
+<li>AWS CLI configured with credentials</li>
+<li>
+<p>Sufficient service quotas for ECS, EC2, and RDS</p>
+</li>
+<li>
+<p><strong>Domain and DNS</strong></p>
+</li>
+<li>Route53 hosted zone for your domain</li>
+<li>
+<p>Ability to validate SSL certificates via DNS</p>
+</li>
+<li>
+<p><strong>Unity Licensing</strong></p>
+</li>
+<li>Unity Pro or Enterprise license with floating license entitlement</li>
+<li>Unity Floating License Server binaries (download from https://id.unity.com/)</li>
+<li>Valid <code>services-config.json</code> license file from Unity</li>
+</ol>
+<h2 id="deployment-guide">Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-predeployment">Phase 1: Predeployment<a class="headerlink" href="#phase-1-predeployment" title="Permanent link">&para;</a></h3>
+<h4 id="step-1-create-perforce-server-ami">Step 1: Create Perforce Server AMI<a class="headerlink" href="#step-1-create-perforce-server-ami" title="Permanent link">&para;</a></h4>
+<p>The Perforce module requires a custom AMI with Perforce Helix Core pre-installed.</p>
+<blockquote>
+<p><strong>Important</strong>: If building on Windows, use WSL or a Unix-based system to avoid line ending issues with shell scripts.</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code><span class="c1"># Navigate to the Packer template directory</span>
+<span class="nb">cd</span><span class="w"> </span>assets/packer/perforce/p4-server
+
+<span class="c1"># Initialize Packer</span>
+packer<span class="w"> </span>init<span class="w"> </span>perforce_x86.pkr.hcl
+
+<span class="c1"># Build the AMI (this will use your default AWS region)</span>
+packer<span class="w"> </span>build<span class="w"> </span>perforce_x86.pkr.hcl
+</code></pre></div>
+<p>Take note of the AMI ID from the output.</p>
+<p><strong>Verify the AMI was created successfully:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Verify the AMI is available in your account</span>
+aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_al2023*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[0].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+</code></pre></div>
+<p>The Terraform configuration will automatically discover this AMI by searching for images with the name pattern <code>p4_al2023*</code> owned by your account.</p>
+<blockquote>
+<p><strong>Note</strong>: The AMI must be created in the same AWS region where you plan to deploy the pipeline.</p>
+</blockquote>
+<h4 id="step-2-create-route53-hosted-zone">Step 2: Create Route53 Hosted Zone<a class="headerlink" href="#step-2-create-route53-hosted-zone" title="Permanent link">&para;</a></h4>
+<p>This pipeline requires a Route53 hosted zone for DNS records and SSL certificate validation.</p>
+<h5 id="option-a-register-a-new-domain-with-route53">Option A: Register a new domain with Route53<a class="headerlink" href="#option-a-register-a-new-domain-with-route53" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Follow the <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html">Route53 domain registration guide</a></li>
+<li>A hosted zone is automatically created</li>
+</ul>
+<h5 id="option-b-use-an-existing-domain">Option B: Use an existing domain<a class="headerlink" href="#option-b-use-an-existing-domain" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Follow the guide to <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/MigratingDNS.html">make Route53 the DNS service</a></li>
+<li>Create a hosted zone for your domain</li>
+</ul>
+<p>Your services will be accessible at subdomains:</p>
+<ul>
+<li><code>perforce.yourdomain.com</code> - Perforce server</li>
+<li><code>swarm.yourdomain.com</code> - P4 Swarm (Code Review)</li>
+<li><code>teamcity.yourdomain.com</code> - TeamCity server</li>
+<li><code>unity-accelerator.yourdomain.com</code> - Unity Accelerator</li>
+<li><code>unity-license.yourdomain.com</code> - Unity License Server</li>
+</ul>
+<h4 id="step-3-download-unity-license-server-binaries">Step 3: Download Unity License Server Binaries<a class="headerlink" href="#step-3-download-unity-license-server-binaries" title="Permanent link">&para;</a></h4>
+<p>Download the Unity Floating License Server installer:</p>
+<ol>
+<li>Log in to https://id.unity.com/</li>
+<li>Navigate to "Organizations" → Select your organization → "Subscriptions"</li>
+<li>Download the <strong>Linux version</strong> of the Unity Floating License Server (e.g., <code>Unity.Licensing.Server.linux-x64-v2.1.0.zip</code>)</li>
+<li>Save the file to a known location on your machine - you'll reference this path in <code>terraform.tfvars</code></li>
+</ol>
+<blockquote>
+<p><strong>Important - License Server Binding</strong>: The Unity License Server binds itself to the machine's identity on first startup, including: MAC address, operating system, number of processor cores, and server name.</p>
+<p>This module uses an <strong>Elastic Network Interface (ENI)</strong> to provide a stable MAC address, and enables <strong>EC2 termination protection</strong> by default. However, if the EC2 instance is destroyed and recreated (not just stopped/started), you will need to contact Unity Support to revoke the old registration before deploying a new one. This process can take several days.</p>
+<p>To protect against accidental deletion, consider adding <code>prevent_destroy</code> lifecycle rules after initial deployment (see Phase 3, Step 5).</p>
+</blockquote>
+<h4 id="step-4-build-unity-teamcity-agent-docker-image">Step 4: Build Unity TeamCity Agent Docker Image<a class="headerlink" href="#step-4-build-unity-teamcity-agent-docker-image" title="Permanent link">&para;</a></h4>
+<blockquote>
+<p><strong>Critical</strong>: This step must be completed BEFORE running <code>terraform apply</code>. The TeamCity agent deployment requires a valid Docker image URI.</p>
+</blockquote>
+<p>The sample includes a Dockerfile for building a Unity TeamCity build agent. This image combines Unity Editor, TeamCity agent runtime, and necessary tools (Perforce P4 CLI, AWS CLI, Git).</p>
+<p><strong>Quick build steps:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Navigate to the Docker directory</span>
+<span class="nb">cd</span><span class="w"> </span>docker/teamcity-unity-build-agent/
+
+<span class="c1"># Step 1: Create ECR repository</span>
+aws<span class="w"> </span>ecr<span class="w"> </span>create-repository<span class="w"> </span>--repository-name<span class="w"> </span>unity-teamcity-agent<span class="w"> </span>--region<span class="w"> </span>us-east-1
+
+<span class="c1"># Step 2: Log in to ECR</span>
+aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com
+
+<span class="c1"># Step 3: Build the image (takes 15-30 minutes)</span>
+docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="m">6000</span>.0.23f1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_CHANGESET</span><span class="o">=</span>bd20d88e54b8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+
+<span class="c1"># Step 4: Tag and push to ECR</span>
+docker<span class="w"> </span>tag<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+
+docker<span class="w"> </span>push<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+
+<span class="c1"># Step 5: Get your image URI for terraform.tfvars</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+</code></pre></div>
+<p>Copy the image URI from the output - you'll need it for your <code>terraform.tfvars</code> file in the next phase.</p>
+<blockquote>
+<p><strong>Note</strong>: For detailed instructions including how to find Unity version/changeset information and building different Unity versions, see the comprehensive guide in <code>docker/README.md</code>.</p>
+</blockquote>
+<h3 id="phase-2-deployment">Phase 2: Deployment<a class="headerlink" href="#phase-2-deployment" title="Permanent link">&para;</a></h3>
+<h4 id="step-1-configure-variables">Step 1: Configure Variables<a class="headerlink" href="#step-1-configure-variables" title="Permanent link">&para;</a></h4>
+<p>Navigate to the unity-build-pipeline directory and create your <code>terraform.tfvars</code> file from the example:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>samples/unity-build-pipeline
+cp<span class="w"> </span>terraform.tfvars.example<span class="w"> </span>terraform.tfvars
+</code></pre></div>
+<p>Edit <code>terraform.tfvars</code> with your values:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Your Route53 hosted zone domain name</span>
+<span class="na">route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;yourdomain.com&quot;</span>
+
+<span class="c1"># Path to Unity License Server zip file (from Phase 1, Step 3)</span>
+<span class="na">unity_license_server_file_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/path/to/Unity.Licensing.Server.linux-x64-v2.1.0.zip&quot;</span>
+
+<span class="c1"># Unity TeamCity agent Docker image URI (from Phase 1, Step 4)</span>
+<span class="na">unity_teamcity_agent_image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;123456789012.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+</code></pre></div>
+<h4 id="step-2-review-and-customize-localstf-optional">Step 2: Review and Customize locals.tf (optional)<a class="headerlink" href="#step-2-review-and-customize-localstf-optional" title="Permanent link">&para;</a></h4>
+<p>Note that the values in <code>locals.tf</code> are sensible defaults and will work without changes. The option to change them is there for those who want to further customize the deployment.</p>
+<p>Edit <code>locals.tf</code> to customize:</p>
+<ul>
+<li><strong>Project prefix</strong>: <code>project_prefix = "ubp"</code> - used as a prefix for resource names</li>
+<li><strong>Subdomain names</strong>: Change service subdomains (e.g., <code>perforce_subdomain = "p4"</code>)</li>
+<li><strong>VPC CIDR blocks</strong>: Adjust network ranges if needed to avoid conflicts with existing networks</li>
+<li><strong>Tags</strong>: Add or modify resource tags for cost tracking or organization</li>
+</ul>
+<h4 id="step-3-initialize-terraform">Step 3: Initialize Terraform<a class="headerlink" href="#step-3-initialize-terraform" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
+</code></pre></div>
+<p>This downloads required providers and modules.</p>
+<h4 id="step-4-deploy-the-pipeline">Step 4: Deploy the Pipeline<a class="headerlink" href="#step-4-deploy-the-pipeline" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Review the planned changes</span>
+terraform<span class="w"> </span>plan
+
+<span class="c1"># Apply the configuration</span>
+terraform<span class="w"> </span>apply
+</code></pre></div>
+<p>The deployment takes approximately 15-20 minutes. Terraform will:</p>
+<ol>
+<li>Create VPC and networking infrastructure</li>
+<li>Deploy Perforce with P4 Server and P4 Swarm (Code Review)</li>
+<li>Deploy TeamCity server and agents</li>
+<li>Deploy Unity Accelerator and License Server</li>
+<li>Create S3 bucket for artifacts</li>
+<li>Configure DNS records and SSL certificates</li>
+</ol>
+<h4 id="step-5-verify-deployment">Step 5: Verify Deployment<a class="headerlink" href="#step-5-verify-deployment" title="Permanent link">&para;</a></h4>
+<p>After <code>terraform apply</code> completes, verify all services deployed successfully:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># View all Terraform outputs</span>
+terraform<span class="w"> </span>output
+
+<span class="c1"># Check ECS services are running</span>
+aws<span class="w"> </span>ecs<span class="w"> </span>list-services<span class="w"> </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+
+<span class="c1"># Verify ECS service health</span>
+aws<span class="w"> </span>ecs<span class="w"> </span>describe-services<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--services<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>ecs<span class="w"> </span>list-services<span class="w"> </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span>--query<span class="w"> </span><span class="s1">&#39;serviceArns[*]&#39;</span><span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;services[*].[serviceName,status,runningCount,desiredCount]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>table
+
+<span class="c1"># Test DNS resolution for your services</span>
+nslookup<span class="w"> </span>perforce.yourdomain.com
+nslookup<span class="w"> </span>swarm.yourdomain.com
+nslookup<span class="w"> </span>teamcity.yourdomain.com
+nslookup<span class="w"> </span>unity-accelerator.yourdomain.com
+nslookup<span class="w"> </span>unity-license.yourdomain.com
+</code></pre></div>
+<p>All services should show <code>ACTIVE</code> status with <code>runningCount</code> matching <code>desiredCount</code>.</p>
+<h3 id="phase-3-postdeployment">Phase 3: Postdeployment<a class="headerlink" href="#phase-3-postdeployment" title="Permanent link">&para;</a></h3>
+<h4 id="understanding-security-group-access">Understanding Security Group Access<a class="headerlink" href="#understanding-security-group-access" title="Permanent link">&para;</a></h4>
+<p>This sample automatically configures security group rules to allow access from your current IP address (detected at deployment time) to all web services. The rules are defined in <code>security.tf</code> and grant access to:</p>
+<ul>
+<li><strong>Perforce (P4 Server)</strong>: Ports 1666 (P4 protocol) and 443 (HTTPS)</li>
+<li><strong>TeamCity</strong>: Port 443 (HTTPS)</li>
+<li><strong>Unity Accelerator</strong>: Port 443 (HTTPS)</li>
+<li><strong>Unity License Server</strong>: Ports 443 (HTTPS) and 8080 (HTTP)</li>
+</ul>
+<p>If your IP address changes or you need to grant access to additional users/IP ranges, update the security group rules in <code>security.tf</code> or add rules directly in the AWS Console.</p>
+<p>To add access for additional IP addresses, you can either:</p>
+<ol>
+<li><strong>Modify <code>security.tf</code></strong> and run <code>terraform apply</code></li>
+<li><strong>Use AWS Console</strong> to add ingress rules to the relevant security groups (find them using <code>terraform output</code>)</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong>: Each module exposes its ALB security group ID as an output (e.g., <code>module.teamcity.alb_security_group_id</code>), allowing you to attach custom ingress rules.</p>
+</blockquote>
+<h4 id="step-1-configure-perforce-p4-server">Step 1: Configure Perforce (P4 Server)<a class="headerlink" href="#step-1-configure-perforce-p4-server" title="Permanent link">&para;</a></h4>
+<p>This section walks you through the initial Perforce setup, creating your first depot, stream, and workspace.</p>
+<h5 id="step-11-retrieve-administrator-credentials">Step 1.1: Retrieve Administrator Credentials<a class="headerlink" href="#step-11-retrieve-administrator-credentials" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get the Perforce super user username</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_username_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>text
+
+<span class="c1"># Get the Perforce super user password</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>text
+</code></pre></div>
+<h5 id="step-12-initial-connection-and-login">Step 1.2: Initial Connection and Login<a class="headerlink" href="#step-12-initial-connection-and-login" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Set your P4PORT environment variable</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">P4PORT</span><span class="o">=</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>p4_server_connection_string<span class="k">)</span>
+
+<span class="c1"># Set your P4USER to the super user</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">P4USER</span><span class="o">=</span>&lt;username-from-above&gt;
+
+<span class="c1"># Login with super user credentials (enter password when prompted)</span>
+p4<span class="w"> </span>login
+
+<span class="c1"># Verify connection</span>
+p4<span class="w"> </span>info
+</code></pre></div>
+<h5 id="step-13-create-a-stream-depot">Step 1.3: Create a Stream Depot<a class="headerlink" href="#step-13-create-a-stream-depot" title="Permanent link">&para;</a></h5>
+<p>Stream depots are recommended for modern Perforce workflows and work well with Unity projects.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a new stream depot named &quot;game&quot;</span>
+p4<span class="w"> </span>depot<span class="w"> </span>-t<span class="w"> </span>stream<span class="w"> </span>-o<span class="w"> </span>game<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>depot<span class="w"> </span>-i
+
+<span class="c1"># Verify the depot was created</span>
+p4<span class="w"> </span>depots
+</code></pre></div>
+<h5 id="step-14-create-a-mainline-stream">Step 1.4: Create a Mainline Stream<a class="headerlink" href="#step-14-create-a-mainline-stream" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create the mainline stream</span>
+p4<span class="w"> </span>stream<span class="w"> </span>-t<span class="w"> </span>mainline<span class="w"> </span>-o<span class="w"> </span>//game/main<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>stream<span class="w"> </span>-i
+
+<span class="c1"># Verify the stream was created</span>
+p4<span class="w"> </span>streams<span class="w"> </span>//game/...
+</code></pre></div>
+<h5 id="step-15-create-a-workspace-and-submit-initial-files">Step 1.5: Create a Workspace and Submit Initial Files<a class="headerlink" href="#step-15-create-a-workspace-and-submit-initial-files" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a workspace mapped to the mainline stream</span>
+p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span>-S<span class="w"> </span>//game/main<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>client<span class="w"> </span>-i
+
+<span class="c1"># Get the workspace name (usually &lt;username&gt;_&lt;hostname&gt;)</span>
+p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;^Client:&#39;</span>
+
+<span class="c1"># Sync the workspace (will be empty initially)</span>
+p4<span class="w"> </span>sync
+
+<span class="c1"># Navigate to your workspace root</span>
+<span class="nb">cd</span><span class="w"> </span>~/perforce/&lt;workspace-name&gt;/
+
+<span class="c1"># Create a README file</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;# Unity Game Project&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>README.md
+
+<span class="c1"># Add the file to Perforce</span>
+p4<span class="w"> </span>add<span class="w"> </span>README.md
+
+<span class="c1"># Submit the changelist</span>
+p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;Initial commit: Add README&quot;</span>
+
+<span class="c1"># Verify the file was submitted</span>
+p4<span class="w"> </span>files<span class="w"> </span>//game/main/...
+</code></pre></div>
+<h5 id="step-16-create-additional-users">Step 1.6: Create Additional Users<a class="headerlink" href="#step-16-create-additional-users" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a new user (replace &#39;developer1&#39;)</span>
+p4<span class="w"> </span>user<span class="w"> </span>-o<span class="w"> </span>developer1<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>user<span class="w"> </span>-i<span class="w"> </span>-f
+
+<span class="c1"># Set a password for the new user</span>
+p4<span class="w"> </span>passwd<span class="w"> </span>developer1
+
+<span class="c1"># Grant appropriate permissions (optional: edit protections table)</span>
+p4<span class="w"> </span>protect
+</code></pre></div>
+<p>Your Perforce server is now ready for your team to use. Users can connect using P4V or P4 CLI with the connection string from <code>terraform output p4_server_connection_string</code>.</p>
+<h4 id="step-2-configure-p4-swarm-code-review">Step 2: Configure P4 Swarm (Code Review)<a class="headerlink" href="#step-2-configure-p4-swarm-code-review" title="Permanent link">&para;</a></h4>
+<p>P4 Swarm provides web-based code review for your Perforce projects. It automatically connects to your P4 Server and configures itself on first access.</p>
+<h5 id="step-21-initial-access">Step 2.1: Initial Access<a class="headerlink" href="#step-21-initial-access" title="Permanent link">&para;</a></h5>
+<p>Visit <code>https://swarm.yourdomain.com</code> in your browser. On first access, Swarm will:</p>
+<ol>
+<li>Automatically connect to the P4 Server</li>
+<li>Install required triggers on the P4 Server</li>
+<li>Complete initial setup</li>
+</ol>
+<h5 id="step-22-log-in">Step 2.2: Log In<a class="headerlink" href="#step-22-log-in" title="Permanent link">&para;</a></h5>
+<p>Log in with your Perforce credentials (the same username/password you use for P4V or P4 CLI). The super user credentials can be retrieved with:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get Perforce super user credentials</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_username_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
+
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>perforce_super_user_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
+</code></pre></div>
+<h5 id="step-23-verify-setup">Step 2.3: Verify Setup<a class="headerlink" href="#step-23-verify-setup" title="Permanent link">&para;</a></h5>
+<p>Once logged in:</p>
+<ol>
+<li>Navigate to the Projects page - you should see your Perforce depot(s)</li>
+<li>Create a test review to verify functionality:</li>
+<li>Make a shelved changelist in Perforce</li>
+<li>In Swarm, create a review from the shelved changelist</li>
+<li>Add reviewers and verify email notifications work</li>
+</ol>
+<p>Your team can now use Swarm for code reviews before submitting changes to mainline!</p>
+<h4 id="step-3-configure-teamcity">Step 3: Configure TeamCity<a class="headerlink" href="#step-3-configure-teamcity" title="Permanent link">&para;</a></h4>
+<p>TeamCity is deployed with an Aurora Serverless PostgreSQL database that is automatically configured via environment variables.</p>
+<h5 id="step-31-complete-initial-setup-wizard">Step 3.1: Complete Initial Setup Wizard<a class="headerlink" href="#step-31-complete-initial-setup-wizard" title="Permanent link">&para;</a></h5>
+<ol>
+<li>
+<p>Visit <code>https://teamcity.yourdomain.com</code></p>
+</li>
+<li>
+<p>On first access, TeamCity will display the setup wizard. Follow the prompts:</p>
+</li>
+<li><strong>Data Directory</strong>: Pre-configured, click "Proceed"</li>
+<li><strong>Database Connection</strong>: Automatically configured, click "Proceed"</li>
+<li><strong>License Agreement</strong>: Accept the JetBrains agreement</li>
+<li>
+<p><strong>Create Administrator Account</strong>: Set up your admin user credentials</p>
+</li>
+<li>
+<p>TeamCity will initialize the database and complete setup (takes 2-3 minutes)</p>
+</li>
+</ol>
+<h5 id="step-32-authorize-build-agents">Step 3.2: Authorize Build Agents<a class="headerlink" href="#step-32-authorize-build-agents" title="Permanent link">&para;</a></h5>
+<p>The Unity build agents you deployed will automatically register with the TeamCity server but require authorization.</p>
+<ol>
+<li>Navigate to <strong>Agents</strong> → <strong>Unauthorized</strong></li>
+<li>You should see your Unity build agents listed (e.g., <code>unity-builder-xxxx</code>)</li>
+<li>Click on each agent and click <strong>Authorize</strong></li>
+<li>(Optional) Assign agents to specific agent pools based on your build requirements</li>
+</ol>
+<p>The agents are now ready to accept build jobs.</p>
+<h5 id="step-33-configure-perforce-vcs-root">Step 3.3: Configure Perforce VCS Root<a class="headerlink" href="#step-33-configure-perforce-vcs-root" title="Permanent link">&para;</a></h5>
+<p>To connect TeamCity to your Perforce server:</p>
+<ol>
+<li>Navigate to <strong>Administration</strong> → <strong>VCS Roots</strong></li>
+<li>Click <strong>Create VCS Root</strong></li>
+<li>Select <strong>Perforce</strong> as the VCS type</li>
+<li>Configure the connection:</li>
+<li><strong>VCS root name</strong>: <code>Perforce Main</code></li>
+<li><strong>Port</strong>: <code>ssl:perforce.yourdomain.com:1666</code></li>
+<li><strong>Stream</strong>: <code>//game/main</code> (or your depot/stream path)</li>
+<li><strong>Authentication</strong>: Enter Perforce username and password</li>
+<li>Click <strong>Test Connection</strong> to verify</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<p>Your TeamCity server is now connected to Perforce and ready to run builds.</p>
+<h4 id="step-4-configure-unity-accelerator">Step 4: Configure Unity Accelerator<a class="headerlink" href="#step-4-configure-unity-accelerator" title="Permanent link">&para;</a></h4>
+<p><strong>Access Unity Accelerator Dashboard</strong>:</p>
+<ol>
+<li><strong>Get the dashboard credentials</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get username</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_accelerator_dashboard_username_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
+
+<span class="c1"># Get password</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_accelerator_dashboard_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
+</code></pre></div>
+<ol>
+<li><strong>Log in to the dashboard</strong>:</li>
+<li>Visit <code>https://unity-accelerator.yourdomain.com</code></li>
+<li>Enter the username and password from above</li>
+<li>Review cache statistics and configuration</li>
+</ol>
+<p><strong>Configure Unity Editor to Use Accelerator</strong>:</p>
+<p>In Unity Editor preferences:</p>
+<ol>
+<li>Go to Preferences → Asset Pipeline → Cache Server</li>
+<li>Set mode to "Remote"</li>
+<li>Enter IP: <code>unity-accelerator.yourdomain.com</code></li>
+<li>Port: <code>10080</code></li>
+<li>Enable "Download" and "Upload"</li>
+</ol>
+<p>The Accelerator will cache Unity Library folder artifacts and dramatically reduce import times for your team.</p>
+<h4 id="step-5-configure-unity-license-server">Step 5: Configure Unity License Server<a class="headerlink" href="#step-5-configure-unity-license-server" title="Permanent link">&para;</a></h4>
+<p>The Unity Floating License Server requires a multi-step registration process with Unity to activate your floating licenses.</p>
+<h5 id="step-51-download-server-registration-request">Step 5.1: Download Server Registration Request<a class="headerlink" href="#step-51-download-server-registration-request" title="Permanent link">&para;</a></h5>
+<p>After deployment, the license server creates a registration request file containing the server's machine binding information.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Download the server registration request file</span>
+wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_registration_request_url<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-O<span class="w"> </span>server-registration-request.xml
+</code></pre></div>
+<blockquote>
+<p><strong>Note</strong>: This presigned URL is valid for 1 hour. If expired, regenerate with <code>terraform refresh</code>.</p>
+</blockquote>
+<h5 id="step-52-register-server-with-unity">Step 5.2: Register Server with Unity<a class="headerlink" href="#step-52-register-server-with-unity" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Log in to <a href="https://id.unity.com/">https://id.unity.com/</a></li>
+<li>Navigate to "Organizations" → Select your organization → "Subscriptions"</li>
+<li>Upload the <code>server-registration-request.xml</code> file</li>
+<li>Download the licenses zip file Unity provides (e.g., <code>Unity_v2024.x_Linux.zip</code>)</li>
+</ol>
+<blockquote>
+<p><strong>Important</strong>: Do not rename the licenses zip file - Unity expects the original filename.</p>
+</blockquote>
+<h5 id="step-53-upload-licenses-to-s3">Step 5.3: Upload Licenses to S3<a class="headerlink" href="#step-53-upload-licenses-to-s3" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Upload licenses zip (replace with your actual filename)</span>
+aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>Unity_v2024.x_Linux.zip<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>s3://<span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_s3_bucket<span class="k">)</span>/
+</code></pre></div>
+<p>The license server monitors this bucket and will automatically import licenses within 60 seconds.</p>
+<h5 id="step-54-verify-license-import">Step 5.4: Verify License Import<a class="headerlink" href="#step-54-verify-license-import" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get dashboard URL and password</span>
+<span class="nb">echo</span><span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_url<span class="k">)</span>
+
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_dashboard_password_secret_arn<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text
+</code></pre></div>
+<p>Visit the dashboard URL and log in with username <code>admin</code> and the password from above. Verify your licenses appear with status "Available".</p>
+<h5 id="step-55-configure-client-access-to-license-server">Step 5.5: Configure Client Access to License Server<a class="headerlink" href="#step-55-configure-client-access-to-license-server" title="Permanent link">&para;</a></h5>
+<p>Unity clients require a <code>services-config.json</code> file to connect to the license server.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Download services-config.json</span>
+wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unity_license_server_services_config_url<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-O<span class="w"> </span>services-config.json
+</code></pre></div>
+<p><strong>For TeamCity build agents (Docker containers):</strong></p>
+<p>The agents in this sample run as Docker containers in ECS. To add the services-config.json:</p>
+<ol>
+<li><strong>Option A: Add to Docker image</strong> (recommended)</li>
+</ol>
+<p>Edit <code>docker/teamcity-unity-build-agent/Dockerfile</code> to copy the file during build:</p>
+<div class="highlight"><pre><span></span><code><span class="k">COPY</span><span class="w"> </span>services-config.json<span class="w"> </span>/usr/share/unity3d/config/services-config.json
+</code></pre></div>
+<p>Then rebuild and push your Docker image.</p>
+<ol>
+<li><strong>Option B: Download at runtime</strong></li>
+</ol>
+<p>Modify your container's entrypoint script to download from S3 on startup.</p>
+<p><strong>For developer workstations:</strong></p>
+<p>Deploy <code>services-config.json</code> to:</p>
+<ul>
+<li><strong>Windows</strong>: <code>%PROGRAMDATA%\Unity\config\services-config.json</code></li>
+<li><strong>Linux</strong>: <code>/usr/share/unity3d/config/services-config.json</code></li>
+<li><strong>macOS</strong>: <code>/Library/Application Support/Unity/config/services-config.json</code></li>
+</ul>
+<p>Without this file in the correct location, Unity will not be able to connect to the license server.</p>
+<h5 id="step-56-protect-license-server-from-accidental-deletion-critical">Step 5.6: Protect License Server from Accidental Deletion (CRITICAL)<a class="headerlink" href="#step-56-protect-license-server-from-accidental-deletion-critical" title="Permanent link">&para;</a></h5>
+<blockquote>
+<p><strong>Critical</strong>: The Unity License Server binds to its machine's MAC address. If the EC2 instance is destroyed, you must contact Unity Support to revoke the registration before deploying a new server. <strong>Unity Support response can take up to 48 hours</strong>, during which your team will not have access to Unity licenses.</p>
+</blockquote>
+<p><strong>Terraform does not respect EC2 termination protection.</strong> Even though the module enables instance termination protection by default, running <code>terraform destroy</code> will still destroy the instance. You must add a Terraform lifecycle block to prevent deletion.</p>
+<p>Edit <code>main.tf</code> and add the lifecycle block to the Unity License Server module:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;unity_license_server&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">count</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">var.unity_license_server_file_path</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">0</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unity/floating-license-server&quot;</span>
+
+<span class="c1">  # ... existing configuration ...</span>
+
+<span class="w">  </span><span class="nb">lifecycle</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">prevent_destroy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Apply the change:</p>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply
+</code></pre></div>
+<p>With this protection in place, <code>terraform destroy</code> will fail if it tries to destroy the license server, preventing accidental deletion. To intentionally destroy the license server later, you must first remove this lifecycle block.</p>
+<h4 id="step-6-create-your-first-build-configuration">Step 6: Create Your First Build Configuration<a class="headerlink" href="#step-6-create-your-first-build-configuration" title="Permanent link">&para;</a></h4>
+<p>This section walks through creating a Unity build configuration in TeamCity.</p>
+<h5 id="step-61-create-a-teamcity-project">Step 6.1: Create a TeamCity Project<a class="headerlink" href="#step-61-create-a-teamcity-project" title="Permanent link">&para;</a></h5>
+<ol>
+<li>In TeamCity, click <strong>Administration</strong> → <strong>Projects</strong></li>
+<li>Click <strong>Create project</strong></li>
+<li>Select <strong>Manually</strong></li>
+<li>Enter:</li>
+<li><strong>Name</strong>: <code>Unity Game Project</code></li>
+<li><strong>Project ID</strong>: <code>UnityGameProject</code> (auto-generated)</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h5 id="step-62-create-a-build-configuration">Step 6.2: Create a Build Configuration<a class="headerlink" href="#step-62-create-a-build-configuration" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Inside your new project, click <strong>Create build configuration</strong></li>
+<li>Enter:</li>
+<li><strong>Name</strong>: <code>Build Android</code></li>
+<li><strong>Build configuration ID</strong>: <code>BuildAndroid</code> (auto-generated)</li>
+<li>Click <strong>Create</strong></li>
+</ol>
+<h5 id="step-63-attach-vcs-root">Step 6.3: Attach VCS Root<a class="headerlink" href="#step-63-attach-vcs-root" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Click <strong>VCS Roots</strong> in the left sidebar</li>
+<li>Click <strong>Attach VCS root</strong></li>
+<li>Select the Perforce VCS root you created in Step 3.3</li>
+<li>Click <strong>Attach</strong></li>
+</ol>
+<h5 id="step-64-add-build-steps">Step 6.4: Add Build Steps<a class="headerlink" href="#step-64-add-build-steps" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Click <strong>Build Steps</strong> in the left sidebar</li>
+<li>Click <strong>Add build step</strong></li>
+<li>Select <strong>Command Line</strong> as the runner type</li>
+<li>Configure:</li>
+<li><strong>Step name</strong>: <code>Unity Build</code></li>
+<li><strong>Run</strong>: <code>Custom script</code></li>
+<li>
+<p><strong>Custom script</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Unity build command</span>
+/opt/unity/Editor/Unity<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-quit<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-batchmode<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-nographics<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-projectPath<span class="w"> </span>.<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-buildTarget<span class="w"> </span>Android<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-logFile<span class="w"> </span>-<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-executeMethod<span class="w"> </span>BuildScript.Build
+</code></pre></div>
+</li>
+<li>
+<p>Click <strong>Save</strong></p>
+</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong>: The <code>-executeMethod BuildScript.Build</code> assumes you have a static method in your Unity project at <code>Assets/Editor/BuildScript.cs</code>. You'll need to create this script in your Unity project to define the build logic.</p>
+</blockquote>
+<h5 id="step-65-optional-add-artifact-upload-to-s3">Step 6.5: (Optional) Add Artifact Upload to S3<a class="headerlink" href="#step-65-optional-add-artifact-upload-to-s3" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Click <strong>Add build step</strong></li>
+<li>Select <strong>Command Line</strong></li>
+<li>Configure:</li>
+<li><strong>Step name</strong>: <code>Upload to S3</code></li>
+<li>
+<p><strong>Custom script</strong>:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>build/<span class="w"> </span>s3://YOUR_BUCKET_NAME/builds/%build.number%/<span class="w"> </span>--recursive
+</code></pre></div>
+</li>
+<li>
+<p>Replace <code>YOUR_BUCKET_NAME</code> with your artifacts bucket (or use a TeamCity parameter)</p>
+</li>
+<li>
+<p>Click <strong>Save</strong></p>
+</li>
+</ol>
+<h5 id="step-66-configure-build-triggers-optional">Step 6.6: Configure Build Triggers (Optional)<a class="headerlink" href="#step-66-configure-build-triggers-optional" title="Permanent link">&para;</a></h5>
+<ol>
+<li>Click <strong>Triggers</strong> in the left sidebar</li>
+<li>Click <strong>Add new trigger</strong></li>
+<li>Select <strong>VCS Trigger</strong></li>
+<li>Configure to trigger on every Perforce commit</li>
+<li>Click <strong>Save</strong></li>
+</ol>
+<p>Your build configuration is ready!</p>
+<h4 id="step-7-verify-end-to-end-pipeline">Step 7: Verify End-to-End Pipeline<a class="headerlink" href="#step-7-verify-end-to-end-pipeline" title="Permanent link">&para;</a></h4>
+<p>Test that the entire pipeline works:</p>
+<ol>
+<li><strong>Commit a Unity project to Perforce</strong> (if you haven't already)</li>
+<li><strong>Trigger a build</strong> in TeamCity (Run → Run Build)</li>
+<li><strong>Monitor the build log</strong> and verify:</li>
+<li>Perforce syncs successfully</li>
+<li>Unity license is checked out</li>
+<li>Unity build completes</li>
+<li>Build finishes with success status</li>
+</ol>
+<p>If the build completes successfully, your Unity build pipeline is fully operational!</p>
+<h2 id="architecture-details">Architecture Details<a class="headerlink" href="#architecture-details" title="Permanent link">&para;</a></h2>
+<h3 id="networking">Networking<a class="headerlink" href="#networking" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>VPC (10.0.0.0/16)
+├── Public Subnets (10.0.1.0/24, 10.0.2.0/24)
+│   └── NAT Gateways, Load Balancers
+├── Private Subnets (10.0.3.0/24, 10.0.4.0/24)
+│   └── ECS Services, RDS, Build Agents
+└── DNS
+    └── Private Route53 zone for internal service discovery
+</code></pre></div>
+<h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Encryption</strong>: All data encrypted at rest and in transit</li>
+<li><strong>Network Isolation</strong>: Services deployed in private subnets</li>
+<li><strong>Security Groups</strong>: Least privilege access between services</li>
+<li><strong>Secrets Management</strong>: Credentials stored in AWS Secrets Manager</li>
+<li><strong>HTTPS</strong>: All public endpoints use TLS 1.2+</li>
+<li><strong>IAM Roles</strong>: Task-specific roles with minimal permissions</li>
+</ul>
+<h3 id="high-availability">High Availability<a class="headerlink" href="#high-availability" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Multi-AZ</strong>: RDS and load balancers span availability zones</li>
+<li><strong>Auto Scaling</strong>: TeamCity agents scale based on queue depth</li>
+<li><strong>Health Checks</strong>: Load balancer health checks for all services</li>
+<li><strong>Backup</strong>: Automated RDS snapshots for Perforce metadata</li>
+<li><strong>Storage</strong>: EBS volumes with snapshots for critical data</li>
+</ul>
+<h3 id="cost-optimization">Cost Optimization<a class="headerlink" href="#cost-optimization" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Right-Sizing</strong>: Instance types optimized for workload</li>
+<li><strong>Auto Scaling</strong>: Agents scale down when idle</li>
+<li><strong>S3 Lifecycle</strong>: Artifacts transition to cheaper storage tiers</li>
+<li><strong>Spot Instances</strong>: Optional for TeamCity build agents</li>
+<li><strong>Scheduling</strong>: Can stop/start non-critical services outside work hours</li>
+</ul>
+<h2 id="build-agent-storage-strategies">Build Agent Storage Strategies<a class="headerlink" href="#build-agent-storage-strategies" title="Permanent link">&para;</a></h2>
+<p>TeamCity build agents need access to source code and Unity assets. This sample uses ephemeral storage by default, but larger studios should consider persistent storage for performance.</p>
+<h3 id="ephemeral-storage-current-default">Ephemeral Storage (Current Default)<a class="headerlink" href="#ephemeral-storage-current-default" title="Permanent link">&para;</a></h3>
+<p><strong>How it works:</strong> Each agent gets 50GB that's wiped when the container stops. Every new agent downloads the full repository and re-imports all Unity assets.</p>
+<p><strong>Best for:</strong> Small teams, infrequent builds, demos
+<strong>Cost:</strong> $0/month
+<strong>Build overhead:</strong> 5-15 minutes per build (full P4 sync + Unity import)</p>
+<h3 id="efs-persistent-storage">EFS Persistent Storage<a class="headerlink" href="#efs-persistent-storage" title="Permanent link">&para;</a></h3>
+<p><strong>How it works:</strong> Mount a shared EFS volume to <code>/opt/buildAgent/work</code>. TeamCity creates a unique working directory per agent (hash-based naming like <code>a54a2cadb9b4d269</code>). Each agent maintains its own Perforce workspace and Unity Library cache on EFS, persisting across container restarts.</p>
+<p><strong>Storage pattern:</strong> With 5 agents, you'll have 5 separate directories on EFS, each containing a full P4 workspace + Unity cache. Total storage = (project size + Unity cache) × number of agents.</p>
+<p><strong>Setup:</strong></p>
+<ol>
+<li>Create EFS file system in your VPC</li>
+<li>Mount EFS to <code>/opt/buildAgent/work</code> in agent task definition</li>
+<li>TeamCity automatically isolates each agent to its own subdirectory</li>
+<li>First build per agent syncs fully; subsequent builds sync incrementally</li>
+</ol>
+<p><strong>Best for:</strong> Medium teams (10-50 devs), frequent builds
+<strong>Cost:</strong> ~$5-30/month (15-100GB per agent × agent count)
+<strong>Build overhead:</strong> 30 seconds - 2 minutes (incremental sync + Unity cache reuse)</p>
+<h3 id="netapp-ontap-flexclone">NetApp ONTAP FlexClone<a class="headerlink" href="#netapp-ontap-flexclone" title="Permanent link">&para;</a></h3>
+<p><strong>How it works:</strong> Run a scheduled job (Lambda/ECS task) that maintains a "golden" FlexVol on FSx for NetApp ONTAP—fully synced to latest Perforce changelist with Unity Library pre-imported. When a build starts, create an instant FlexClone (writable snapshot) and attach it to the agent. Agent works on the clone in isolation. After the build, delete the clone.</p>
+<p><strong>Storage pattern:</strong> One golden volume (repository + Unity cache) + thin clones for active builds. 100GB repo with 10 parallel builds = 100GB parent + ~10GB deltas (not 1TB).</p>
+<p><strong>Setup:</strong></p>
+<ol>
+<li>Deploy FSx for NetApp ONTAP in your VPC</li>
+<li>Create golden volume update automation (nightly or on-demand)</li>
+<li>Integrate TeamCity with NetApp API to create/destroy clones per build</li>
+<li>Mount clone as <code>/opt/buildAgent/work</code> when agent starts</li>
+</ol>
+<p><strong>Update strategy:</strong> Golden volume updates on schedule (e.g., nightly) or triggered by significant P4 changes. Builds use snapshot from last update, plus incremental P4 sync for any new changes.</p>
+<p><strong>Best for:</strong> Large teams (50+ devs), high build frequency, large repos (100GB+), snapshot-based testing
+<strong>Cost:</strong> ~$230+/month (1TB minimum)
+<strong>Build overhead:</strong> &lt; 30 seconds (clone creation + small P4 delta sync)</p>
+<h3 id="quick-comparison">Quick Comparison<a class="headerlink" href="#quick-comparison" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Monthly Cost</th>
+<th>Storage Per Agent</th>
+<th>Best Build Frequency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ephemeral</strong></td>
+<td>$0</td>
+<td>0 (wiped)</td>
+<td>&lt; 10/day</td>
+</tr>
+<tr>
+<td><strong>EFS</strong></td>
+<td>$5-30/agent</td>
+<td>Full copy per agent</td>
+<td>10-100/day</td>
+</tr>
+<tr>
+<td><strong>NetApp</strong></td>
+<td>$230+</td>
+<td>Shared + thin deltas</td>
+<td>100+/day</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommendation:</strong> Start with ephemeral. Add EFS when builds exceed 10/day. Consider NetApp only at enterprise scale (50+ agents, 100GB+ repos).</p>
+<h2 id="maintenance">Maintenance<a class="headerlink" href="#maintenance" title="Permanent link">&para;</a></h2>
+<h3 id="updating-components">Updating Components<a class="headerlink" href="#updating-components" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Update Terraform configuration</span>
+git<span class="w"> </span>pull
+
+<span class="c1"># Review changes</span>
+terraform<span class="w"> </span>plan
+
+<span class="c1"># Apply updates</span>
+terraform<span class="w"> </span>apply
+</code></pre></div>
+<h3 id="scaling">Scaling<a class="headerlink" href="#scaling" title="Permanent link">&para;</a></h3>
+<p><strong>TeamCity Agents</strong>:
+Edit <code>locals.tf</code> and modify <code>teamcity_agent_count</code> or enable auto-scaling.</p>
+<p><strong>Unity Accelerator</strong>:
+Increase cache size by modifying <code>unity_accelerator_cache_size_gb</code> in <code>locals.tf</code>.</p>
+<p><strong>Perforce Storage</strong>:
+Extend EBS volume size through AWS Console or CLI, then resize filesystem.</p>
+<h3 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">&para;</a></h3>
+<p>Key metrics to monitor:</p>
+<ul>
+<li>TeamCity build queue depth and agent utilization</li>
+<li>Unity Accelerator cache hit rate</li>
+<li>Perforce disk usage and connection count</li>
+<li>S3 bucket size and request rates</li>
+<li>RDS CPU, memory, and connection count</li>
+</ul>
+<h3 id="backup-and-disaster-recovery">Backup and Disaster Recovery<a class="headerlink" href="#backup-and-disaster-recovery" title="Permanent link">&para;</a></h3>
+<p><strong>Perforce</strong>:</p>
+<ul>
+<li>Daily automated snapshots of EBS volumes</li>
+<li>RDS automated backups (7-day retention)</li>
+<li>Export metadata with <code>p4 admin checkpoint</code></li>
+</ul>
+<p><strong>TeamCity</strong>:</p>
+<ul>
+<li>RDS automated backups</li>
+<li>Configuration exported to S3 (manual)</li>
+</ul>
+<p><strong>S3 Artifacts</strong>:</p>
+<ul>
+<li>Versioning enabled</li>
+<li>Cross-region replication (optional)</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Perforce connection refused</strong>:</p>
+<ul>
+<li>Check security group rules allow port 1666</li>
+<li>Verify P4 Server EC2 instance is running</li>
+<li>Check DNS resolution</li>
+</ul>
+<p><strong>TeamCity agents not connecting</strong>:</p>
+<ul>
+<li>Verify server URL in agent configuration</li>
+<li>Check security groups allow agent-to-server communication</li>
+<li>Review agent logs in CloudWatch</li>
+</ul>
+<p><strong>Unity Accelerator not caching</strong>:</p>
+<ul>
+<li>Verify Unity Editor configuration</li>
+<li>Check accelerator logs for errors</li>
+<li>Ensure port 10080 is accessible</li>
+</ul>
+<p><strong>License server not responding</strong>:</p>
+<ul>
+<li>Verify EC2 instance is running</li>
+<li>Check license file validity</li>
+<li>Review license server logs</li>
+</ul>
+<h3 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h3>
+<p>All services log to CloudWatch Logs:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># View Perforce logs</span>
+aws<span class="w"> </span>logs<span class="w"> </span>tail<span class="w"> </span>/ecs/perforce-server<span class="w"> </span>--follow
+
+<span class="c1"># View TeamCity logs</span>
+aws<span class="w"> </span>logs<span class="w"> </span>tail<span class="w"> </span>/ecs/teamcity-server<span class="w"> </span>--follow
+
+<span class="c1"># View Unity Accelerator logs</span>
+aws<span class="w"> </span>logs<span class="w"> </span>tail<span class="w"> </span>/ecs/unity-accelerator<span class="w"> </span>--follow
+</code></pre></div>
+<h2 id="cleanup">Cleanup<a class="headerlink" href="#cleanup" title="Permanent link">&para;</a></h2>
+<p>To destroy all resources:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Destroy all Terraform-managed resources</span>
+terraform<span class="w"> </span>destroy
+</code></pre></div>
+<p><strong>Note</strong>: This will NOT delete:</p>
+<ul>
+<li>AMIs created with Packer</li>
+<li>Route53 hosted zone</li>
+<li>Manual secrets in Secrets Manager</li>
+<li>EBS snapshots (if retention configured)</li>
+</ul>
+<p>Delete these manually if needed.</p>
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<h3 id="secrets-management">Secrets Management<a class="headerlink" href="#secrets-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Never commit credentials to Git</li>
+<li>Rotate secrets regularly</li>
+<li>Use AWS Secrets Manager for all credentials</li>
+<li>Enable audit logging for secret access</li>
+</ul>
+<h3 id="network-security">Network Security<a class="headerlink" href="#network-security" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Deploy in private subnets</li>
+<li>Use security groups for least privilege access</li>
+<li>Enable VPC Flow Logs for traffic analysis</li>
+<li>Consider AWS PrivateLink for service endpoints</li>
+</ul>
+<h3 id="access-control">Access Control<a class="headerlink" href="#access-control" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use IAM roles instead of access keys</li>
+<li>Enable MFA for administrative access</li>
+<li>Implement least privilege principle</li>
+<li>Configure Perforce user permissions with protections table</li>
+</ul>
+<h3 id="compliance">Compliance<a class="headerlink" href="#compliance" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Enable CloudTrail for audit logging</li>
+<li>Use AWS Config for compliance monitoring</li>
+<li>Encrypt all data at rest</li>
+<li>Implement backup and retention policies</li>
+</ul>
+<h2 id="support-and-resources">Support and Resources<a class="headerlink" href="#support-and-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>CGD Toolkit Documentation</strong>: https://aws-games.github.io/cloud-game-development-toolkit/</li>
+<li><strong>Report Issues</strong>: https://github.com/aws-games/cloud-game-development-toolkit/issues</li>
+<li><strong>Discussions</strong>: https://github.com/aws-games/cloud-game-development-toolkit/discussions</li>
+<li><strong>Perforce Documentation</strong>: https://www.perforce.com/manuals/p4sag/</li>
+<li><strong>TeamCity Documentation</strong>: https://www.jetbrains.com/help/teamcity/</li>
+<li><strong>Unity Documentation</strong>: https://docs.unity3d.com/</li>
+</ul>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>This sample is part of the Cloud Game Development Toolkit and is licensed under MIT-0. See <a href="../../LICENSE">LICENSE</a> for details.</p>
+<hr />
+<p><strong>Built for game developers, by game developers</strong> 🎮</p>
+<!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
+<td>&gt;= 1.0</td>
+</tr>
+<tr>
+<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
+<td>6.6.0</td>
+</tr>
+<tr>
+<td><a name="requirement_http"></a> <a href="#requirement_http">http</a></td>
+<td>3.5.0</td>
+</tr>
+<tr>
+<td><a name="requirement_netapp-ontap"></a> <a href="#requirement_netapp-ontap">netapp-ontap</a></td>
+<td>2.3.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>6.6.0</td>
+</tr>
+<tr>
+<td><a name="provider_http"></a> <a href="#provider_http">http</a></td>
+<td>3.5.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="module_perforce"></a> <a href="#module_perforce">perforce</a></td>
+<td>../../modules/perforce</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_teamcity"></a> <a href="#module_teamcity">teamcity</a></td>
+<td>../../modules/teamcity</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_unity_accelerator"></a> <a href="#module_unity_accelerator">unity_accelerator</a></td>
+<td>../../modules/unity/accelerator</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_unity_license_server"></a> <a href="#module_unity_license_server">unity_license_server</a></td>
+<td>../../modules/unity/floating-license-server</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/acm_certificate">aws_acm_certificate.shared</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.shared</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/default_security_group">aws_default_security_group.default</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_cluster">aws_ecs_cluster.unity_pipeline_cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_cluster_capacity_providers">aws_ecs_cluster_capacity_providers.providers</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/eip">aws_eip.nat_gateway_eip</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/internet_gateway">aws_internet_gateway.igw</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/nat_gateway">aws_nat_gateway.nat_gateway</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route">aws_route.private_nat_access</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route">aws_route.public_internet_access</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.certificate_validation</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.p4_server_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.p4_swarm_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.teamcity_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.unity_accelerator_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.unity_license_server_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table">aws_route_table.private_rt</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table">aws_route_table.public_rt</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association">aws_route_table_association.private_rt_asso</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association">aws_route_table_association.public_rt_asso</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group">aws_security_group.allow_my_ip</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/subnet">aws_subnet.private_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/subnet">aws_subnet.public_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc">aws_vpc.unity_pipeline_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.allow_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.allow_perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_from_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_from_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/availability_zones">aws_availability_zones.available</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/route53_zone">aws_route53_zone.root</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/http/3.5.0/docs/data-sources/http">http_http.my_ip</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table>
+<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+<th>Default</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="input_route53_public_hosted_zone_name"></a> <a href="#input_route53_public_hosted_zone_name">route53_public_hosted_zone_name</a></td>
+<td>The fully qualified domain name of your existing Route53 Hosted Zone (e.g., 'example.com').</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_unity_license_server_file_path"></a> <a href="#input_unity_license_server_file_path">unity_license_server_file_path</a></td>
+<td>Local path to the Linux version of the Unity Floating License Server zip file. Download from Unity ID portal at https://id.unity.com/. Set to null to skip Unity License Server deployment.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_unity_teamcity_agent_image"></a> <a href="#input_unity_teamcity_agent_image">unity_teamcity_agent_image</a></td>
+<td>Container image URI for Unity TeamCity build agents. Must include Unity Hub and Unity Editor. Build your own using the Dockerfile in docker/teamcity-unity-build-agent/, or set to null to skip Unity agent deployment.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+</tbody>
+</table>
+<h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="output_ecs_cluster_name"></a> <a href="#output_ecs_cluster_name">ecs_cluster_name</a></td>
+<td>The name of the shared ECS cluster</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_connection_string"></a> <a href="#output_p4_server_connection_string">p4_server_connection_string</a></td>
+<td>The connection string for the P4 Server. Set your P4PORT environment variable to this value.</td>
+</tr>
+<tr>
+<td><a name="output_p4_swarm_url"></a> <a href="#output_p4_swarm_url">p4_swarm_url</a></td>
+<td>The URL for the P4 Swarm (Code Review) service.</td>
+</tr>
+<tr>
+<td><a name="output_perforce_super_user_password_secret_arn"></a> <a href="#output_perforce_super_user_password_secret_arn">perforce_super_user_password_secret_arn</a></td>
+<td>ARN of the secret containing Perforce super user password</td>
+</tr>
+<tr>
+<td><a name="output_perforce_super_user_username_secret_arn"></a> <a href="#output_perforce_super_user_username_secret_arn">perforce_super_user_username_secret_arn</a></td>
+<td>ARN of the secret containing Perforce super user username</td>
+</tr>
+<tr>
+<td><a name="output_teamcity_url"></a> <a href="#output_teamcity_url">teamcity_url</a></td>
+<td>The URL for the TeamCity server.</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_dashboard_password_secret_arn"></a> <a href="#output_unity_accelerator_dashboard_password_secret_arn">unity_accelerator_dashboard_password_secret_arn</a></td>
+<td>ARN of the secret containing Unity Accelerator dashboard password</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_dashboard_username_secret_arn"></a> <a href="#output_unity_accelerator_dashboard_username_secret_arn">unity_accelerator_dashboard_username_secret_arn</a></td>
+<td>ARN of the secret containing Unity Accelerator dashboard username</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_url"></a> <a href="#output_unity_accelerator_url">unity_accelerator_url</a></td>
+<td>The URL for the Unity Accelerator dashboard.</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_dashboard_password_secret_arn"></a> <a href="#output_unity_license_server_dashboard_password_secret_arn">unity_license_server_dashboard_password_secret_arn</a></td>
+<td>ARN of the secret containing Unity License Server dashboard password (if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_registration_request_url"></a> <a href="#output_unity_license_server_registration_request_url">unity_license_server_registration_request_url</a></td>
+<td>Presigned URL for downloading the server-registration-request.xml file (valid for 1 hour, if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_services_config_url"></a> <a href="#output_unity_license_server_services_config_url">unity_license_server_services_config_url</a></td>
+<td>Presigned URL for downloading the services-config.json file (valid for 1 hour, if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_url"></a> <a href="#output_unity_license_server_url">unity_license_server_url</a></td>
+<td>The URL for the Unity License Server dashboard (if deployed).</td>
+</tr>
+</tbody>
+</table>
+<!-- END_TF_DOCS -->
+
+<!-- markdownlint-disable -->
+<!-- BEGIN_TF_DOCS -->
+<h2 id="requirements_1">Requirements<a class="headerlink" href="#requirements_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
+<td>&gt;= 1.0</td>
+</tr>
+<tr>
+<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
+<td>6.6.0</td>
+</tr>
+<tr>
+<td><a name="requirement_http"></a> <a href="#requirement_http">http</a></td>
+<td>3.5.0</td>
+</tr>
+<tr>
+<td><a name="requirement_netapp-ontap"></a> <a href="#requirement_netapp-ontap">netapp-ontap</a></td>
+<td>2.3.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="providers_1">Providers<a class="headerlink" href="#providers_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>6.6.0</td>
+</tr>
+<tr>
+<td><a name="provider_http"></a> <a href="#provider_http">http</a></td>
+<td>3.5.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="modules_1">Modules<a class="headerlink" href="#modules_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="module_perforce"></a> <a href="#module_perforce">perforce</a></td>
+<td>../../modules/perforce</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_teamcity"></a> <a href="#module_teamcity">teamcity</a></td>
+<td>../../modules/teamcity</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_unity_accelerator"></a> <a href="#module_unity_accelerator">unity_accelerator</a></td>
+<td>../../modules/unity/accelerator</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="module_unity_license_server"></a> <a href="#module_unity_license_server">unity_license_server</a></td>
+<td>../../modules/unity/floating-license-server</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<h2 id="resources_1">Resources<a class="headerlink" href="#resources_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/acm_certificate">aws_acm_certificate.shared</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.shared</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/default_security_group">aws_default_security_group.default</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_cluster">aws_ecs_cluster.unity_pipeline_cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/ecs_cluster_capacity_providers">aws_ecs_cluster_capacity_providers.providers</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/eip">aws_eip.nat_gateway_eip</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/internet_gateway">aws_internet_gateway.igw</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/nat_gateway">aws_nat_gateway.nat_gateway</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route">aws_route.private_nat_access</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route">aws_route.public_internet_access</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.certificate_validation</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.p4_server_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.p4_swarm_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.teamcity_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.unity_accelerator_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route53_record">aws_route53_record.unity_license_server_public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table">aws_route_table.private_rt</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table">aws_route_table.public_rt</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association">aws_route_table_association.private_rt_asso</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/route_table_association">aws_route_table_association.public_rt_asso</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/security_group">aws_security_group.allow_my_ip</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/subnet">aws_subnet.private_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/subnet">aws_subnet.public_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc">aws_vpc.unity_pipeline_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.allow_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.allow_perforce</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_from_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.perforce_nlb_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.teamcity_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_accelerator_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_from_vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_http</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unity_license_server_https</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/availability_zones">aws_availability_zones.available</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/6.6.0/docs/data-sources/route53_zone">aws_route53_zone.root</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/http/3.5.0/docs/data-sources/http">http_http.my_ip</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table>
+<h2 id="inputs_1">Inputs<a class="headerlink" href="#inputs_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+<th>Default</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="input_route53_public_hosted_zone_name"></a> <a href="#input_route53_public_hosted_zone_name">route53_public_hosted_zone_name</a></td>
+<td>The fully qualified domain name of your existing Route53 Hosted Zone (e.g., 'example.com').</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_unity_license_server_file_path"></a> <a href="#input_unity_license_server_file_path">unity_license_server_file_path</a></td>
+<td>Local path to the Linux version of the Unity Floating License Server zip file. Download from Unity ID portal at https://id.unity.com/. Set to null to skip Unity License Server deployment.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_unity_teamcity_agent_image"></a> <a href="#input_unity_teamcity_agent_image">unity_teamcity_agent_image</a></td>
+<td>Container image URI for Unity TeamCity build agents. Must include Unity Hub and Unity Editor. Build your own using the Dockerfile in docker/teamcity-unity-build-agent/, or set to null to skip Unity agent deployment.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+</tbody>
+</table>
+<h2 id="outputs_1">Outputs<a class="headerlink" href="#outputs_1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="output_ecs_cluster_name"></a> <a href="#output_ecs_cluster_name">ecs_cluster_name</a></td>
+<td>The name of the shared ECS cluster</td>
+</tr>
+<tr>
+<td><a name="output_p4_server_connection_string"></a> <a href="#output_p4_server_connection_string">p4_server_connection_string</a></td>
+<td>The connection string for the P4 Server. Set your P4PORT environment variable to this value.</td>
+</tr>
+<tr>
+<td><a name="output_p4_swarm_url"></a> <a href="#output_p4_swarm_url">p4_swarm_url</a></td>
+<td>The URL for the P4 Swarm (Code Review) service.</td>
+</tr>
+<tr>
+<td><a name="output_perforce_admin_password_secret_arn"></a> <a href="#output_perforce_admin_password_secret_arn">perforce_admin_password_secret_arn</a></td>
+<td>ARN of the secret containing Perforce admin password</td>
+</tr>
+<tr>
+<td><a name="output_perforce_admin_username_secret_arn"></a> <a href="#output_perforce_admin_username_secret_arn">perforce_admin_username_secret_arn</a></td>
+<td>ARN of the secret containing Perforce admin username</td>
+</tr>
+<tr>
+<td><a name="output_perforce_super_user_password_secret_arn"></a> <a href="#output_perforce_super_user_password_secret_arn">perforce_super_user_password_secret_arn</a></td>
+<td>ARN of the secret containing Perforce super user password</td>
+</tr>
+<tr>
+<td><a name="output_teamcity_url"></a> <a href="#output_teamcity_url">teamcity_url</a></td>
+<td>The URL for the TeamCity server.</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_dashboard_password_secret_arn"></a> <a href="#output_unity_accelerator_dashboard_password_secret_arn">unity_accelerator_dashboard_password_secret_arn</a></td>
+<td>ARN of the secret containing Unity Accelerator dashboard password</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_dashboard_username_secret_arn"></a> <a href="#output_unity_accelerator_dashboard_username_secret_arn">unity_accelerator_dashboard_username_secret_arn</a></td>
+<td>ARN of the secret containing Unity Accelerator dashboard username</td>
+</tr>
+<tr>
+<td><a name="output_unity_accelerator_url"></a> <a href="#output_unity_accelerator_url">unity_accelerator_url</a></td>
+<td>The URL for the Unity Accelerator dashboard.</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_dashboard_password_secret_arn"></a> <a href="#output_unity_license_server_dashboard_password_secret_arn">unity_license_server_dashboard_password_secret_arn</a></td>
+<td>ARN of the secret containing Unity License Server dashboard password (if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_registration_request_url"></a> <a href="#output_unity_license_server_registration_request_url">unity_license_server_registration_request_url</a></td>
+<td>Presigned URL for downloading the server-registration-request.xml file (valid for 1 hour, if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_services_config_url"></a> <a href="#output_unity_license_server_services_config_url">unity_license_server_services_config_url</a></td>
+<td>Presigned URL for downloading the services-config.json file (valid for 1 hour, if deployed)</td>
+</tr>
+<tr>
+<td><a name="output_unity_license_server_url"></a> <a href="#output_unity_license_server_url">unity_license_server_url</a></td>
+<td>The URL for the Unity License Server dashboard (if deployed).</td>
+</tr>
+</tbody>
+</table>
+<!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    2026-04-28
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Amazon Web Services
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/aws-games/cloud-game-development-toolkit" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://x.com/AWSGameTech" target="_blank" rel="noopener" title="x.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M357.2 48h70.6L273.6 224.2 455 464H313L201.7 318.6 74.5 464H3.8l164.9-188.5L-5.2 48h145.6l100.5 132.9zm-24.8 373.8h39.1L119.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/awsgametech" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+     
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/open_in_new_tab.js"></script>
+      
+    
+<script>
+    // Hide preview versions from version selector
+    document.addEventListener("DOMContentLoaded", function () {
+        // Find all version links in the selector
+        const versionLinks = document.querySelectorAll(".md-version__link");
+
+        versionLinks.forEach(function (link) {
+            const versionText = link.textContent.trim();
+
+            // Hide preview versions (format: preview-pr-123)
+            if (versionText.startsWith("preview-pr-")) {
+                const listItem = link.closest("li");
+                if (listItem) {
+                    listItem.style.display = "none";
+                }
+            }
+        });
+    });
+</script>
+
+  </body>
+</html>

@@ -17,6 +17,9 @@ locals {
   efs_file_system_arn = var.efs_id != null ? data.aws_efs_file_system.efs_file_system[0].arn : aws_efs_file_system.teamcity_efs_file_system[0].arn
   efs_access_point_id = var.efs_access_point_id != null ? var.efs_access_point_id : aws_efs_access_point.teamcity_efs_data_access_point[0].id
 
+  # Service Connect namespace
+  service_connect_namespace_arn = aws_service_discovery_http_namespace.teamcity.arn
+
   # TeamCity Server Information
   # Set environment variables
   base_env = [
@@ -40,9 +43,6 @@ locals {
       value = local.database_master_password
     }
   ] : []
-
-  # Service Connect namespace
-  service_connect_namespace_arn = aws_service_discovery_http_namespace.teamcity.arn
 }
 data "aws_region" "current" {}
 

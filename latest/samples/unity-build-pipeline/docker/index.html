@@ -12,31 +12,27 @@
         <meta name="author" content="Amazon Web Services">
       
       
-        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/modules/teamcity/index.html">
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/samples/unity-build-pipeline/docker/index.html">
       
       
-        <link rel="prev" href="../perforce/modules/p4-code-review/index.html">
-      
-      
-        <link rel="next" href="../jenkins/index.html">
       
       
         
       
       
-      <link rel="icon" href="../../docs/media/logos/favicon.ico">
+      <link rel="icon" href="../../../docs/media/logos/favicon.ico">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>TeamCity Module - Cloud Game Development Toolkit</title>
+        <title>Unity + TeamCity Build Agent Docker Image - Cloud Game Development Toolkit</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
   
@@ -67,13 +63,13 @@
       
     
     
-      <link rel="stylesheet" href="../../docs/stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../docs/stylesheets/extra.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/themes.css">
+      <link rel="stylesheet" href="../../../docs/stylesheets/themes.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/hero.css">
+      <link rel="stylesheet" href="../../../docs/stylesheets/hero.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -107,7 +103,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#teamcity-module" class="md-skip">
+        <a href="#unity-teamcity-build-agent-docker-image" class="md-skip">
           Skip to content
         </a>
       
@@ -123,9 +119,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -142,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              TeamCity Module
+              Unity + TeamCity Build Agent Docker Image
             
           </span>
         </div>
@@ -264,7 +260,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/index.html" class="md-tabs__link">
+      <a href="../../../docs/index.html" class="md-tabs__link">
         
   
   
@@ -283,7 +279,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/getting-started.html" class="md-tabs__link">
+      <a href="../../../docs/getting-started.html" class="md-tabs__link">
         
   
   
@@ -304,7 +300,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../docs/assets/index.html" class="md-tabs__link">
+        <a href="../../../docs/assets/index.html" class="md-tabs__link">
           
   
   
@@ -322,13 +318,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../index.html" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../modules/index.html" class="md-tabs__link">
           
   
   
@@ -350,7 +344,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../samples/index.html" class="md-tabs__link">
+        <a href="../../index.html" class="md-tabs__link">
           
   
   
@@ -370,7 +364,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/changelog.html" class="md-tabs__link">
+      <a href="../../../docs/changelog.html" class="md-tabs__link">
         
   
   
@@ -389,7 +383,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/security.html" class="md-tabs__link">
+      <a href="../../../docs/security.html" class="md-tabs__link">
         
   
   
@@ -408,7 +402,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/contributing.html" class="md-tabs__link">
+      <a href="../../../docs/contributing.html" class="md-tabs__link">
         
   
   
@@ -468,9 +462,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     Cloud Game Development Toolkit
@@ -497,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/index.html" class="md-nav__link">
+      <a href="../../../docs/index.html" class="md-nav__link">
         
   
   
@@ -524,7 +518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/getting-started.html" class="md-nav__link">
+      <a href="../../../docs/getting-started.html" class="md-nav__link">
         
   
   
@@ -582,7 +576,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/index.html" class="md-nav__link ">
+            <a href="../../../docs/assets/index.html" class="md-nav__link ">
               
   
   
@@ -657,7 +651,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/packer/index.html" class="md-nav__link ">
+            <a href="../../../docs/assets/packer/index.html" class="md-nav__link ">
               
   
   
@@ -782,7 +776,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+            <a href="../../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
               
   
   
@@ -852,7 +846,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+            <a href="../../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
               
   
   
@@ -907,7 +901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
         
   
   
@@ -935,7 +929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+      <a href="../../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
         
   
   
@@ -963,7 +957,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+      <a href="../../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
         
   
   
@@ -999,7 +993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/jenkins-pipelines/index.html" class="md-nav__link">
+      <a href="../../../assets/jenkins-pipelines/index.html" class="md-nav__link">
         
   
   
@@ -1027,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
         
   
   
@@ -1055,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/assets/docker/index.html" class="md-nav__link">
+      <a href="../../../docs/assets/docker/index.html" class="md-nav__link">
         
   
   
@@ -1087,8 +1081,6 @@
       
   
   
-    
-  
   
   
     
@@ -1116,23 +1108,20 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../index.html" class="md-nav__link ">
+            <a href="../../../modules/index.html" class="md-nav__link ">
               
   
   
@@ -1150,13 +1139,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1176,7 +1165,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DESIGN_STANDARDS.html" class="md-nav__link">
+      <a href="../../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
         
   
   
@@ -1214,20 +1203,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
         
           
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
             
   
   
@@ -1344,7 +1330,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/index.html" class="md-nav__link ">
+            <a href="../../../modules/perforce/index.html" class="md-nav__link ">
               
   
   
@@ -1474,7 +1460,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-server/index.html" class="md-nav__link ">
+            <a href="../../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
               
   
   
@@ -1544,7 +1530,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-auth/index.html" class="md-nav__link ">
+            <a href="../../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
               
   
   
@@ -1614,7 +1600,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+            <a href="../../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
               
   
   
@@ -1682,10 +1668,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1697,20 +1681,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
             
   
   
@@ -1728,7 +1709,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1743,10 +1724,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1761,11 +1740,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" >
         
           
           <label class="md-nav__link" for="__nav_4_4_1" id="__nav_4_4_1_label" tabindex="0">
@@ -1786,7 +1765,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_4_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1801,8 +1780,6 @@
                 
   
   
-    
-  
   
   
     
@@ -1821,15 +1798,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1_1" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="index.html" class="md-nav__link md-nav__link--active">
+            <a href="../../../modules/teamcity/index.html" class="md-nav__link ">
               
   
   
@@ -1848,7 +1825,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_1_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_1_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_4_1_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1902,20 +1879,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
         
           
-          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
             
   
   
@@ -2030,7 +2004,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../jenkins/index.html" class="md-nav__link ">
+            <a href="../../../modules/jenkins/index.html" class="md-nav__link ">
               
   
   
@@ -2105,20 +2079,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
             
   
   
@@ -2233,7 +2204,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/horde/index.html" class="md-nav__link ">
+            <a href="../../../modules/unreal/horde/index.html" class="md-nav__link ">
               
   
   
@@ -2369,7 +2340,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+            <a href="../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
               
   
   
@@ -2439,7 +2410,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+            <a href="../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
               
   
   
@@ -2514,20 +2485,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
             
   
   
@@ -2642,7 +2610,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unity/accelerator/index.html" class="md-nav__link ">
+            <a href="../../../modules/unity/accelerator/index.html" class="md-nav__link ">
               
   
   
@@ -2776,7 +2744,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../unity/floating-license-server/index.html" class="md-nav__link ">
+            <a href="../../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
               
   
   
@@ -2849,20 +2817,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
             
   
   
@@ -2977,7 +2942,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../vdi/index.html" class="md-nav__link ">
+            <a href="../../../modules/vdi/index.html" class="md-nav__link ">
               
   
   
@@ -3074,7 +3039,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../samples/index.html" class="md-nav__link ">
+            <a href="../../index.html" class="md-nav__link ">
               
   
   
@@ -3118,7 +3083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../samples/simple-build-pipeline/index.html" class="md-nav__link">
+      <a href="../../simple-build-pipeline/index.html" class="md-nav__link">
         
   
   
@@ -3146,7 +3111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../samples/unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+      <a href="../../unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
         
   
   
@@ -3181,7 +3146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/changelog.html" class="md-nav__link">
+      <a href="../../../docs/changelog.html" class="md-nav__link">
         
   
   
@@ -3208,7 +3173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/security.html" class="md-nav__link">
+      <a href="../../../docs/security.html" class="md-nav__link">
         
   
   
@@ -3235,7 +3200,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/contributing.html" class="md-nav__link">
+      <a href="../../../docs/contributing.html" class="md-nav__link">
         
   
   
@@ -3311,10 +3276,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#deployment-architecture" class="md-nav__link">
+  <a href="#whats-included" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deployment Architecture
+        What's Included
       
     </span>
   </a>
@@ -3322,10 +3287,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
+  <a href="#building-the-image" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Examples
+        Building the Image
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Building the Image">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-unity-version-and-changeset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Unity Version and Changeset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-build-and-push" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Build and Push
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-different-unity-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Different Unity Versions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-the-build-script-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the Build Script (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-image-in-terraform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the Image in Terraform
       
     </span>
   </a>
@@ -3333,10 +3370,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#teamcity-agent-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Requirements
+        TeamCity Agent Behavior
       
     </span>
   </a>
@@ -3344,10 +3381,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#providers" class="md-nav__link">
+  <a href="#testing-locally" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Providers
+        Testing Locally
       
     </span>
   </a>
@@ -3355,10 +3392,99 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
+  <a href="#advanced-customization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modules
+        Advanced Customization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Customization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-additional-unity-modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Additional Unity Modules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-fails-during-unity-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build fails during Unity installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ecr-push-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ECR push fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unity-license-activation-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unity license activation issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#image-size-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Image size concerns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternative-approaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative Approaches
       
     </span>
   </a>
@@ -3366,32 +3492,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#resources" class="md-nav__link">
+  <a href="#support" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resources
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#outputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Outputs
+        Support
       
     </span>
   </a>
@@ -3418,564 +3522,217 @@
   
 
 
-<h1 id="teamcity-module">TeamCity Module<a class="headerlink" href="#teamcity-module" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.jetbrains.com/teamcity/">TeamCity</a> is a user-friendly continuous integration (CI) server for developers and build engineers created by JetBrains. This module deploys a TeamCity server on <a href="https://aws.amazon.com/ecs/">AWS Elastic Container Service</a>.</p>
-<p>The TeamCity server relies on shared file system for persistent storage of configuration, build results, and current operation files as well as a SQL database to store build history, user data, build results, and runtime data. This module provides these services by provisioning an <a href="https://aws.amazon.com/efs/">Amazon Elastic File System</a> and an <a href="https://aws.amazon.com/rds/aurora/serverless/">Amazon Amazon Aurora Serverless V2</a> cluster running the PostgreSQL engine.</p>
-<h2 id="deployment-architecture">Deployment Architecture<a class="headerlink" href="#deployment-architecture" title="Permanent link">&para;</a></h2>
-<p><img alt="TeamCity Module Architecture" src="assets/media/diagrams/teamcity-server-architecture.png" /></p>
-<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<p>For example configurations, please see the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/teamcity/examples">examples</a>.</p>
-<!-- TODO -->
-<!-- ## Deployment Instructions -->
+<h1 id="unity-teamcity-build-agent-docker-image">Unity + TeamCity Build Agent Docker Image<a class="headerlink" href="#unity-teamcity-build-agent-docker-image" title="Permanent link">&para;</a></h1>
+<p>This directory contains a Docker image that combines Unity Editor with TeamCity Build Agent for automated Unity builds.</p>
+<p>The image uses official Unity Hub and Unity Editor installations.</p>
+<h2 id="whats-included">What's Included<a class="headerlink" href="#whats-included" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Unity Hub</strong> (latest stable version from official repository)</li>
+<li><strong>Unity Editor</strong> (optional - specify version at build time or install at runtime)</li>
+<li><strong>TeamCity Build Agent</strong> runtime</li>
+<li><strong>Perforce P4 CLI</strong> for source control integration</li>
+<li><strong>Git + Git LFS</strong> for additional VCS support</li>
+<li><strong>AWS CLI v2</strong> for artifact management to S3</li>
+<li><strong>Java 17</strong> for TeamCity agent runtime</li>
+</ul>
+<p>All components are installed from official sources using standard package managers and installers.</p>
+<blockquote>
+<p><strong>Note:</strong> Unity Editor installation is optional. You can either install a specific version at build time or install it at runtime using Unity Hub. The build script includes example values for Unity 6 LTS.</p>
+</blockquote>
+<h2 id="building-the-image">Building the Image<a class="headerlink" href="#building-the-image" title="Permanent link">&para;</a></h2>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Docker Desktop or Docker Engine</li>
+<li>AWS CLI v2 configured with credentials</li>
+<li>AWS account with ECR access</li>
+</ul>
+<h3 id="finding-unity-version-and-changeset">Finding Unity Version and Changeset<a class="headerlink" href="#finding-unity-version-and-changeset" title="Permanent link">&para;</a></h3>
+<p>Unity Editor installation requires both a <strong>version</strong> and <strong>changeset</strong>. To find these:</p>
+<ol>
+<li>Visit <a href="https://unity.com/releases/editor/archive">Unity Download Archive</a></li>
+<li>Click on the version you want (e.g., "6000.0.23f1")</li>
+<li>Look at the URL or release notes page - it contains the changeset</li>
+</ol>
+<p><strong>Example:</strong> For Unity 6000.0.23f1</p>
+<ul>
+<li>URL: <code>https://unity.com/releases/editor/whats-new/6000.0.23f1#bd20d88e54b8</code></li>
+<li>Version: <code>6000.0.23f1</code></li>
+<li>Changeset: <code>bd20d88e54b8</code> (found in the URL after the <code>#</code>)</li>
+</ul>
+<p><strong>Tip:</strong> You can also leave version and changeset empty to build an image with only Unity Hub, then install specific editor versions at runtime.</p>
+<h3 id="manual-build-and-push">Manual Build and Push<a class="headerlink" href="#manual-build-and-push" title="Permanent link">&para;</a></h3>
+<p>Follow these steps to build and push the Docker image to ECR using Unity 6 LTS (default). Adjust version numbers as needed for different Unity versions.</p>
+<h4 id="step-1-create-ecr-repository-if-it-doesnt-exist">Step 1: Create ECR repository (if it doesn't exist)<a class="headerlink" href="#step-1-create-ecr-repository-if-it-doesnt-exist" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>describe-repositories<span class="w"> </span>--repository-names<span class="w"> </span>unity-teamcity-agent<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>aws<span class="w"> </span>ecr<span class="w"> </span>create-repository<span class="w"> </span>--repository-name<span class="w"> </span>unity-teamcity-agent<span class="w"> </span>--region<span class="w"> </span>us-east-1
+</code></pre></div>
+<h4 id="step-2-log-in-to-ecr">Step 2: Log in to ECR<a class="headerlink" href="#step-2-log-in-to-ecr" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com
+</code></pre></div>
+<h4 id="step-3-build-the-docker-image">Step 3: Build the Docker image<a class="headerlink" href="#step-3-build-the-docker-image" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>teamcity-unity-build-agent/
 
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="requirement_terraform"></a> <a href="#requirement_terraform">terraform</a></td>
-<td>&gt;= 1.9</td>
-</tr>
-<tr>
-<td><a name="requirement_aws"></a> <a href="#requirement_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="requirement_random"></a> <a href="#requirement_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Version</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>~&gt; 6.6</td>
-</tr>
-<tr>
-<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>~&gt; 3.7</td>
-</tr>
-</tbody>
-</table>
-<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
-<p>No modules.</p>
-<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.teamcity_agent</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.teamcity_log_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group">aws_db_subnet_group.teamcity_db_subnet_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster">aws_ecs_cluster.teamcity_cluster</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service">aws_ecs_service.teamcity</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service">aws_ecs_service.teamcity_agent</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition">aws_ecs_task_definition.teamcity_agent</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition">aws_ecs_task_definition.teamcity_task_definition</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_access_point">aws_efs_access_point.teamcity_efs_data_access_point</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system">aws_efs_file_system.teamcity_efs_file_system</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_mount_target">aws_efs_mount_target.teamcity_efs_mount_target</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.teamcity_agent_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.teamcity_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.teamcity_execution_database_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.teamcity_agent_default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.teamcity_agent_task_execution_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.teamcity_default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.teamcity_task_execution_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.teamcity_agent_default_role_policy_attachment</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.teamcity_agent_task_execution_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.teamcity_default_role</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.teamcity_task_execution_database_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.teamcity_task_execution_default_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb">aws_lb.teamcity_external_lb</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener">aws_lb_listener.teamcity_listener</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group">aws_lb_target_group.teamcity_target_group</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster">aws_rds_cluster.teamcity_db_cluster</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_instance">aws_rds_cluster_instance.teamcity_db_cluster_instance</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket">aws_s3_bucket.teamcity_alb_access_logs_bucket</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration">aws_s3_bucket_lifecycle_configuration.access_logs_bucket_lifecycle_configuration</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy">aws_s3_bucket_policy.alb_access_logs_bucket_policy</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block">aws_s3_bucket_public_access_block.access_logs_bucket_public_block</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.teamcity_agent_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.teamcity_alb_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.teamcity_db_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.teamcity_efs_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.teamcity_service_sg</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_http_namespace">aws_service_discovery_http_namespace.teamcity</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.alb_outbound_service</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.service_outbound_internet</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule">aws_vpc_security_group_egress_rule.teamcity_agent_outbound</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.service_db</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.service_efs</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.service_inbound_alb</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.teamcity_agent_inbound</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.teamcity_alb_access_logs_bucket_suffix</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster">aws_ecs_cluster.teamcity_cluster</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_file_system">aws_efs_file_system.efs_file_system</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account">aws_elb_service_account.main</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.access_logs_bucket_alb_write</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.ecs_tasks_trust_relationship</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.teamcity_agent_default_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.teamcity_default_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.teamcity_execution_database_policy</a></td>
-<td>data source</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region">aws_region.current</a></td>
-<td>data source</td>
-</tr>
-</tbody>
-</table>
-<h2 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Type</th>
-<th>Default</th>
-<th style="text-align: center;">Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="input_service_subnets"></a> <a href="#input_service_subnets">service_subnets</a></td>
-<td>The subnets in which the TeamCity server service will be deployed</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
-<td>The ID of the VPC in which the service will be deployed</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_agent_log_group_retention_in_days"></a> <a href="#input_agent_log_group_retention_in_days">agent_log_group_retention_in_days</a></td>
-<td>n/a</td>
-<td><code>number</code></td>
-<td><code>7</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_alb_certificate_arn"></a> <a href="#input_alb_certificate_arn">alb_certificate_arn</a></td>
-<td>The ARN of the SSL certificate to use for the ALB</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_alb_subnets"></a> <a href="#input_alb_subnets">alb_subnets</a></td>
-<td>The subnets in which the ALB will be deployed</td>
-<td><code>list(string)</code></td>
-<td><code>[]</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_aurora_instance_count"></a> <a href="#input_aurora_instance_count">aurora_instance_count</a></td>
-<td>Number of instances to provision for the Aurora cluster</td>
-<td><code>number</code></td>
-<td><code>2</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_aurora_skip_final_snapshot"></a> <a href="#input_aurora_skip_final_snapshot">aurora_skip_final_snapshot</a></td>
-<td>Flag for whether a final snapshot should be created when the cluster is destroyed.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_build_farm_config"></a> <a href="#input_build_farm_config">build_farm_config</a></td>
-<td>Map of build agent configurations where each key is the agent name and the value defines:<br/>- image: Container image for the build agent<br/>- desired_count: Number of agent instances to run<br/>- cpu: CPU units to allocate (1024 = 1 vCPU)<br/>- memory: Memory in MiB to allocate<br/>- environment: Optional map of custom environment variables for non-sensitive configuration<br/>- ephemeral_storage_gib: Optional ephemeral storage size in GiB (defaults to 20 GiB)</td>
-<td><pre>map(object({<br/>    image                 = string<br/>    desired_count         = number<br/>    cpu                   = number<br/>    memory                = number<br/>    environment           = optional(map(string), {})<br/>    ephemeral_storage_gib = optional(number, 20)<br/>  }))</pre></td>
-<td><code>{}</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
-<td>The name of the ECS cluster to deploy TeamCity to.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_cpu"></a> <a href="#input_container_cpu">container_cpu</a></td>
-<td>The number of CPU units to allocate to the TeamCity server container</td>
-<td><code>number</code></td>
-<td><code>1024</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_memory"></a> <a href="#input_container_memory">container_memory</a></td>
-<td>The number of MB of memory to allocate to the TeamCity server container</td>
-<td><code>number</code></td>
-<td><code>4096</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_name"></a> <a href="#input_container_name">container_name</a></td>
-<td>The name of the TeamCity server container</td>
-<td><code>string</code></td>
-<td><code>"teamcity"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_container_port"></a> <a href="#input_container_port">container_port</a></td>
-<td>The port on which the TeamCity server container listens</td>
-<td><code>number</code></td>
-<td><code>8111</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_create_external_alb"></a> <a href="#input_create_external_alb">create_external_alb</a></td>
-<td>Set this flag to true to create an external load balancer for TeamCity.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_database_connection_string"></a> <a href="#input_database_connection_string">database_connection_string</a></td>
-<td>The database connection string for TeamCity</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_database_master_password"></a> <a href="#input_database_master_password">database_master_password</a></td>
-<td>The master password for the database</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_database_master_username"></a> <a href="#input_database_master_username">database_master_username</a></td>
-<td>The master username for the database</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_debug"></a> <a href="#input_debug">debug</a></td>
-<td>Set this flag to enable ECS execute permissions on the TeamCity server container and force new service deployments on Terraform apply.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_desired_container_count"></a> <a href="#input_desired_container_count">desired_container_count</a></td>
-<td>The desired number of containers running TeamCity server.</td>
-<td><code>number</code></td>
-<td><code>1</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_efs_access_point_id"></a> <a href="#input_efs_access_point_id">efs_access_point_id</a></td>
-<td>The ID of the EFS access point to use for the TeamCity data volume.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_efs_encryption_enabled"></a> <a href="#input_efs_encryption_enabled">efs_encryption_enabled</a></td>
-<td>Set this flag to true to enable EFS encryption.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_efs_id"></a> <a href="#input_efs_id">efs_id</a></td>
-<td>The ID of the EFS file system to use for the TeamCity service.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_enable_teamcity_alb_access_logs"></a> <a href="#input_enable_teamcity_alb_access_logs">enable_teamcity_alb_access_logs</a></td>
-<td>Enables access logging for the TeamCity ALB. Defaults to true.</td>
-<td><code>bool</code></td>
-<td><code>true</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_enable_teamcity_alb_deletion_protection"></a> <a href="#input_enable_teamcity_alb_deletion_protection">enable_teamcity_alb_deletion_protection</a></td>
-<td>Enables deletion protection for the TeamCity ALB. Defaults to true.</td>
-<td><code>bool</code></td>
-<td><code>false</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_environment"></a> <a href="#input_environment">environment</a></td>
-<td>The current environment (e.g. dev, prod, etc.)</td>
-<td><code>string</code></td>
-<td><code>"dev"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_name"></a> <a href="#input_name">name</a></td>
-<td>The name applied to resources in the TeamCity module</td>
-<td><code>string</code></td>
-<td><code>"teamcity"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
-<td>Tags to apply to resources.</td>
-<td><code>map(any)</code></td>
-<td><pre>{<br/>  "iac-management": "CGD-Toolkit",<br/>  "iac-module": "TeamCity",<br/>  "iac-provider": "Terraform"<br/>}</pre></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_teamcity_alb_access_logs_bucket"></a> <a href="#input_teamcity_alb_access_logs_bucket">teamcity_alb_access_logs_bucket</a></td>
-<td>ID of the S3 bucket for TeamCity ALB access log storage. If access logging is enabled and this is null the module creates a bucket.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_teamcity_alb_access_logs_prefix"></a> <a href="#input_teamcity_alb_access_logs_prefix">teamcity_alb_access_logs_prefix</a></td>
-<td>Log prefix for TeamCity ALB access logs. If null the project prefix and module name are used.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_teamcity_cloudwatch_log_retention_in_days"></a> <a href="#input_teamcity_cloudwatch_log_retention_in_days">teamcity_cloudwatch_log_retention_in_days</a></td>
-<td>The log retention in days of the cloudwatch log group for TeamCity.</td>
-<td><code>string</code></td>
-<td><code>365</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_teamcity_efs_performance_mode"></a> <a href="#input_teamcity_efs_performance_mode">teamcity_efs_performance_mode</a></td>
-<td>The performance mode of the EFS file system used by the TeamCity service. Defaults to general purpose.</td>
-<td><code>string</code></td>
-<td><code>"generalPurpose"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_teamcity_efs_throughput_mode"></a> <a href="#input_teamcity_efs_throughput_mode">teamcity_efs_throughput_mode</a></td>
-<td>The throughput mode of the EFS file system used by the TeamCity service. Defaults to bursting.</td>
-<td><code>string</code></td>
-<td><code>"bursting"</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-</tbody>
-</table>
-<h2 id="outputs">Outputs<a class="headerlink" href="#outputs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a name="output_alb_security_group_id"></a> <a href="#output_alb_security_group_id">alb_security_group_id</a></td>
-<td>ID of the ALB security group. Use this to add ingress rules for web UI access.</td>
-</tr>
-<tr>
-<td><a name="output_external_alb_dns_name"></a> <a href="#output_external_alb_dns_name">external_alb_dns_name</a></td>
-<td>DNS endpoint of Application Load Balancer (ALB)</td>
-</tr>
-<tr>
-<td><a name="output_external_alb_zone_id"></a> <a href="#output_external_alb_zone_id">external_alb_zone_id</a></td>
-<td>Zone ID for internet facing load balancer</td>
-</tr>
-<tr>
-<td><a name="output_security_group_id"></a> <a href="#output_security_group_id">security_group_id</a></td>
-<td>The default security group of your Teamcity service.</td>
-</tr>
-<tr>
-<td><a name="output_teamcity_cluster_id"></a> <a href="#output_teamcity_cluster_id">teamcity_cluster_id</a></td>
-<td>The ID of the ECS cluster</td>
-</tr>
-</tbody>
-</table>
-<!-- END_TF_DOCS -->
-<!-- markdownlint-enable -->
+<span class="c1"># With Unity Editor (example: Unity 6 LTS)</span>
+docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="m">6000</span>.0.23f1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_CHANGESET</span><span class="o">=</span>bd20d88e54b8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+
+<span class="c1"># OR: Hub only (no editor pre-installed)</span>
+docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+</code></pre></div>
+<p>This will take 15-30 minutes if installing Unity Editor, or ~5 minutes for Hub-only build, depending on your internet connection and system performance.</p>
+<h4 id="step-4-tag-and-push-to-ecr">Step 4: Tag and push to ECR<a class="headerlink" href="#step-4-tag-and-push-to-ecr" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>tag<span class="w"> </span>unity-teamcity-agent:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+
+docker<span class="w"> </span>push<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+</code></pre></div>
+<h4 id="step-5-get-your-image-uri-for-terraform">Step 5: Get your image URI for Terraform<a class="headerlink" href="#step-5-get-your-image-uri-for-terraform" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+</code></pre></div>
+<p>Copy this URI to use in your <code>terraform.tfvars</code> file.</p>
+<h3 id="building-different-unity-versions">Building Different Unity Versions<a class="headerlink" href="#building-different-unity-versions" title="Permanent link">&para;</a></h3>
+<p>To build with a different Unity version, adjust the build args:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Unity 2022 LTS</span>
+docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="m">2022</span>.3.50f1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_CHANGESET</span><span class="o">=</span>cc9fd8c8b302<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>unity-teamcity-agent:unity-2022-lts<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+
+<span class="c1"># Unity 2023 LTS</span>
+docker<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="m">2023</span>.2.20f1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--build-arg<span class="w"> </span><span class="nv">UNITY_CHANGESET</span><span class="o">=</span>b00aa8a6c14f<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-t<span class="w"> </span>unity-teamcity-agent:unity-2023-lts<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+</code></pre></div>
+<p>Find more versions and their changesets at: https://unity.com/releases/editor/archive</p>
+<h3 id="using-the-build-script-recommended">Using the Build Script (Recommended)<a class="headerlink" href="#using-the-build-script-recommended" title="Permanent link">&para;</a></h3>
+<p>For convenience, a <code>build-and-push.sh</code> script is provided that automates all the above steps:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>teamcity-unity-build-agent/
+./build-and-push.sh
+</code></pre></div>
+<p>The script includes example values (Unity 6 LTS) that work out of the box. You can customize the build with environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Build with Unity 2022 LTS</span>
+<span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="m">2022</span>.3.50f1<span class="w"> </span><span class="se">\</span>
+<span class="nv">UNITY_CHANGESET</span><span class="o">=</span>cc9fd8c8b302<span class="w"> </span><span class="se">\</span>
+<span class="nv">IMAGE_TAG</span><span class="o">=</span>unity-2022-lts<span class="w"> </span><span class="se">\</span>
+./build-and-push.sh
+
+<span class="c1"># Build Hub-only (no editor)</span>
+<span class="nv">UNITY_VERSION</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="nv">UNITY_CHANGESET</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="se">\</span>
+./build-and-push.sh
+</code></pre></div>
+<p><strong>Available environment variables:</strong></p>
+<ul>
+<li><code>UNITY_VERSION</code> - Unity Editor version (e.g., <code>6000.0.23f1</code>) or empty for Hub-only</li>
+<li><code>UNITY_CHANGESET</code> - Unity changeset hash (e.g., <code>bd20d88e54b8</code>) or empty for Hub-only</li>
+<li><code>IMAGE_TAG</code> - Docker image tag (default: <code>latest</code>)</li>
+<li><code>ECR_REPOSITORY_NAME</code> - ECR repository name (default: <code>unity-teamcity-agent</code>)</li>
+<li><code>AWS_REGION</code> - AWS region (default: <code>us-east-1</code>)</li>
+</ul>
+<h2 id="using-the-image-in-terraform">Using the Image in Terraform<a class="headerlink" href="#using-the-image-in-terraform" title="Permanent link">&para;</a></h2>
+<p>After building and pushing your image, update <code>../../main.tf</code> with your ECR image URI:</p>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;teamcity&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/teamcity&quot;</span>
+
+<span class="c1">  # ... other configuration ...</span>
+
+<span class="w">  </span><span class="nb">build_farm_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;unity-builder&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">image</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_ACCOUNT_ID&gt;.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+<span class="w">      </span><span class="na">cpu</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="m">4096</span><span class="c1">   # 4 vCPU recommended for Unity builds</span>
+<span class="w">      </span><span class="na">memory</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="m">8192</span><span class="c1">   # 8 GB RAM recommended</span>
+<span class="w">      </span><span class="na">desired_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
+<span class="w">      </span><span class="nb">environment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="na">UNITY_LICENSE_SERVER_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://&lt;license-server-ip&gt;:8080&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Then apply with Terraform:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>../../<span class="w">  </span><span class="c1"># Back to unity-build-pipeline root</span>
+terraform<span class="w"> </span>apply
+</code></pre></div>
+<h2 id="teamcity-agent-behavior">TeamCity Agent Behavior<a class="headerlink" href="#teamcity-agent-behavior" title="Permanent link">&para;</a></h2>
+<p>The agents automatically:</p>
+<ol>
+<li>Download TeamCity agent binaries from your TeamCity server on first startup</li>
+<li>Register with the TeamCity server</li>
+<li>Start accepting build jobs</li>
+</ol>
+<p>Configuration is handled via environment variables in the ECS task definition.</p>
+<h2 id="testing-locally">Testing Locally<a class="headerlink" href="#testing-locally" title="Permanent link">&para;</a></h2>
+<p>To test the image locally before deploying:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Pull your image from ECR</span>
+aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span>&lt;ACCOUNT_ID&gt;.dkr.ecr.us-east-1.amazonaws.com
+
+docker<span class="w"> </span>pull<span class="w"> </span>&lt;ACCOUNT_ID&gt;.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+
+<span class="c1"># Run locally (requires TeamCity server URL)</span>
+docker<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span><span class="nv">SERVER_URL</span><span class="o">=</span>https://teamcity.yourdomain.com<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">AGENT_NAME</span><span class="o">=</span>local-test<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&lt;ACCOUNT_ID&gt;.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
+</code></pre></div>
+<h2 id="advanced-customization">Advanced Customization<a class="headerlink" href="#advanced-customization" title="Permanent link">&para;</a></h2>
+<h3 id="adding-additional-unity-modules">Adding Additional Unity Modules<a class="headerlink" href="#adding-additional-unity-modules" title="Permanent link">&para;</a></h3>
+<p>Edit <code>teamcity-unity-build-agent/Dockerfile</code> to add more modules to the Unity Editor installation:</p>
+<div class="highlight"><pre><span></span><code><span class="k">RUN</span><span class="w"> </span>xvfb-run<span class="w"> </span>--auto-servernum<span class="w"> </span>--server-args<span class="o">=</span><span class="s1">&#39;-screen 0 640x480x24&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>unityhub<span class="w"> </span>--headless<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--version<span class="w"> </span><span class="si">${</span><span class="nv">UNITY_VERSION</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--changeset<span class="w"> </span><span class="si">${</span><span class="nv">UNITY_CHANGESET</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--module<span class="w"> </span>linux-il2cpp<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--module<span class="w"> </span>android<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--module<span class="w"> </span>webgl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--module<span class="w"> </span>ios
+</code></pre></div>
+<p>Available modules: <code>linux-il2cpp</code>, <code>windows-mono</code>, <code>mac-mono</code>, <code>android</code>, <code>ios</code>, <code>webgl</code>, <code>linux-server</code></p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="build-fails-during-unity-installation">Build fails during Unity installation<a class="headerlink" href="#build-fails-during-unity-installation" title="Permanent link">&para;</a></h3>
+<p><strong>Issue:</strong> Unity Hub installation fails or Unity Editor download times out</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Check your internet connection</li>
+<li>Verify the Unity version and changeset are correct</li>
+<li>Try a different Unity version (some versions may have download issues)</li>
+<li>Check Unity Download Archive for version availability</li>
+</ul>
+<h3 id="ecr-push-fails">ECR push fails<a class="headerlink" href="#ecr-push-fails" title="Permanent link">&para;</a></h3>
+<p><strong>Issue:</strong> Cannot push image to ECR</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Verify AWS credentials: <code>aws sts get-caller-identity</code></li>
+<li>Check ECR permissions in your IAM policy</li>
+<li>Ensure you're logged into ECR: <code>aws ecr get-login-password | docker login ...</code></li>
+</ul>
+<h3 id="unity-license-activation-issues">Unity license activation issues<a class="headerlink" href="#unity-license-activation-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Issue:</strong> Unity requires activation in container</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Unity builds use the Unity License Server for license management</li>
+<li>Ensure <code>UNITY_LICENSE_SERVER_URL</code> environment variable is set in TeamCity agent config</li>
+<li>Verify the license server is accessible from agent containers</li>
+<li>Check license server logs for connection issues</li>
+</ul>
+<h3 id="image-size-concerns">Image size concerns<a class="headerlink" href="#image-size-concerns" title="Permanent link">&para;</a></h3>
+<p><strong>Note:</strong> The image is large (~10-15GB) due to Unity Editor installation. This is expected and normal for Unity containerized builds.</p>
+<h2 id="alternative-approaches">Alternative Approaches<a class="headerlink" href="#alternative-approaches" title="Permanent link">&para;</a></h2>
+<p>If build time is a critical concern, consider the community-maintained <a href="https://game.ci/">GameCI project</a> which provides pre-built Unity Docker images. Note that you would still need to add TeamCity agent integration on top of the GameCI Unity images.</p>
+<h2 id="support">Support<a class="headerlink" href="#support" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Unity Hub Documentation</strong>: https://docs.unity3d.com/hub/manual/index.html</li>
+<li><strong>TeamCity Agent Documentation</strong>: https://www.jetbrains.com/help/teamcity/build-agent.html</li>
+<li><strong>CGD Toolkit Issues</strong>: https://github.com/aws-games/cloud-game-development-toolkit/issues</li>
+</ul>
 
 
 
@@ -4029,44 +3786,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../perforce/modules/p4-code-review/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: P4 Code Review Submodule">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                P4 Code Review Submodule
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../jenkins/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Jenkins">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Jenkins
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
@@ -4136,12 +3855,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="../../js/open_in_new_tab.js"></script>
+        <script src="../../../js/open_in_new_tab.js"></script>
       
     
 <script>
