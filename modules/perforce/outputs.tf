@@ -3,9 +3,35 @@ output "shared_network_load_balancer_arn" {
   value       = var.create_shared_network_load_balancer ? aws_lb.perforce[0].arn : null
   description = "The ARN of the shared network load balancer."
 }
+
+output "shared_network_load_balancer_dns_name" {
+  value       = var.create_shared_network_load_balancer ? aws_lb.perforce[0].dns_name : null
+  description = "The DNS name of the shared network load balancer."
+}
+
+output "shared_network_load_balancer_zone_id" {
+  value       = var.create_shared_network_load_balancer ? aws_lb.perforce[0].zone_id : null
+  description = "The zone ID of the shared network load balancer."
+}
+
+output "shared_network_load_balancer_security_group_id" {
+  value       = var.create_shared_network_load_balancer && var.create_default_sgs ? aws_security_group.perforce_network_load_balancer[0].id : null
+  description = "The security group ID of the shared network load balancer."
+}
+
 output "shared_application_load_balancer_arn" {
   value       = var.create_shared_application_load_balancer ? aws_lb.perforce_web_services[0].arn : null
   description = "The ARN of the shared application load balancer."
+}
+
+output "shared_application_load_balancer_dns_name" {
+  value       = var.create_shared_application_load_balancer ? aws_lb.perforce_web_services[0].dns_name : null
+  description = "The DNS name of the shared application load balancer."
+}
+
+output "shared_application_load_balancer_zone_id" {
+  value       = var.create_shared_application_load_balancer ? aws_lb.perforce_web_services[0].zone_id : null
+  description = "The zone ID of the shared application load balancer."
 }
 
 # P4 Server
