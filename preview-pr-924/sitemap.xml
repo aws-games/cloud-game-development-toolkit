@@ -2,194 +2,202 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/AGENTS.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/CHANGELOG.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/CODE_OF_CONDUCT.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/CONTRIBUTING.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/SECURITY.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/ansible-playbooks/perforce/p4-server/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/buildgraph/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/jenkins-pipelines/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/build-agents/linux/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/build-agents/windows/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/perforce/p4-code-review/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/perforce/p4-server/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/virtual-workstations/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/virtual-workstations/lightweight/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/assets/packer/virtual-workstations/ue-gamedev/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/changelog.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/contributing.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/getting-started.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/security.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/assets/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/assets/docker/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/assets/packer/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/docs/modules/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/CONTRIBUTING.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/DESIGN_STANDARDS.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/jenkins/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/examples/create-resources-complete/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/modules/p4-auth/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/modules/p4-code-review/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/modules/p4-server/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/perforce/tests/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/teamcity/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unity/accelerator/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unity/floating-license-server/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unreal/horde/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unreal/horde/tests/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/vdi/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/vdi/examples/private-connectivity/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/modules/vdi/examples/public-connectivity/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/samples/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/samples/simple-build-pipeline/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
+    </url>
+    <url>
+         <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/samples/unity-build-pipeline/index.html</loc>
+         <lastmod>2026-05-01</lastmod>
+    </url>
+    <url>
+         <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/samples/unity-build-pipeline/docker/index.html</loc>
+         <lastmod>2026-05-01</lastmod>
     </url>
     <url>
          <loc>https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-924/samples/unreal-cloud-ddc-single-region/index.html</loc>
-         <lastmod>2026-04-28</lastmod>
+         <lastmod>2026-05-01</lastmod>
     </url>
 </urlset>
