@@ -96,9 +96,18 @@ apt-get install -y apache2 \
 log_message "Installing PHP PECL extensions"
 apt-get install -y php${PHP_VERSION}-igbinary php${PHP_VERSION}-msgpack php${PHP_VERSION}-redis
 
-# Install Helix Swarm
+# Install Helix Swarm (retry up to 3 times to handle transient Perforce repo failures)
 log_message "Installing Helix Swarm"
-apt-get install -y helix-swarm
+for attempt in 1 2 3; do
+  apt-get install -y helix-swarm && break
+  log_message "helix-swarm install attempt ${attempt} failed, retrying in 30s..."
+  apt-get update
+  sleep 30
+  if [ $attempt -eq 3 ]; then
+    log_message "ERROR: helix-swarm install failed after 3 attempts"
+    exit 1
+  fi
+done
 
 # Install helix-swarm-optional package (LibreOffice, ImageMagick)
 if [ "${INSTALL_SWARM_OPTIONAL:-true}" = "true" ]; then
@@ -117,7 +126,7 @@ a2enmod setenvif
 
 # Enable PHP-FPM configuration for Apache
 log_message "Configuring PHP-FPM for Apache"
-a2enconf php*-fpm
+a2enconf php${PHP_VERSION}-fpm
 
 # Enable and configure Apache
 log_message "Enabling Apache service"
