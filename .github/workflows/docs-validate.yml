@@ -267,7 +267,7 @@ jobs:
       # Push to Main: Create/update GitHub issues for link and build failures
       - name: Create or update link check issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.check-links.result == 'failure'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const issueTitle = '🔗 Documentation Link Check Failed';
@@ -319,7 +319,7 @@ jobs:
 
       - name: Create or update lint failure issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.lint-markdown.result == 'failure'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const issueTitle = '📝 Markdown Linting Failed';
@@ -378,7 +378,7 @@ jobs:
 
       - name: Create or update build failure issue
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-docs.result == 'failure'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const issueTitle = '📚 Documentation Build Failed';
@@ -432,7 +432,7 @@ jobs:
       # Push to Main: Close issues when checks pass
       - name: Close issues when passing
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
