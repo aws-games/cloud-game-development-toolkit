@@ -388,6 +388,14 @@ resource "aws_cloudwatch_log_group" "teamcity_log_group" {
   tags              = local.tags
 }
 
+resource "aws_cloudwatch_log_group" "teamcity_secret_rotation" {
+  #checkov:skip=CKV_AWS_158: KMS Encryption disabled by default
+  count             = local.secret_rotation_enabled ? 1 : 0
+  name              = "/aws/lambda/${local.name_prefix}-secret-rotation"
+  retention_in_days = var.teamcity_cloudwatch_log_retention_in_days
+  tags              = local.tags
+}
+
 # Load Balancer for TeamCity Service
 resource "aws_lb" "teamcity_external_lb" {
   count              = var.create_external_alb ? 1 : 0
@@ -670,8 +678,6 @@ resource "aws_iam_role" "teamcity_secret_rotation_lambda_role" {
 }
 
 data "aws_iam_policy_document" "teamcity_secret_rotation_lambda_policy" {
-  #checkov:skip=CKV_AWS_111: logs:CreateLogGroup requires wildcard resource — log group does not exist on first Lambda invocation
-  #checkov:skip=CKV_AWS_356: logs:CreateLogGroup requires wildcard resource — log group does not exist on first Lambda invocation
   count = local.secret_rotation_enabled ? 1 : 0
   statement {
     sid     = "ECSUpdateService"
@@ -682,15 +688,10 @@ data "aws_iam_policy_document" "teamcity_secret_rotation_lambda_policy" {
     ]
   }
   statement {
-    sid       = "CloudWatchLogsCreateGroup"
-    effect    = "Allow"
-    actions   = ["logs:CreateLogGroup"]
-    resources = ["*"]
-  }
-  statement {
     sid    = "CloudWatchLogs"
     effect = "Allow"
     actions = [
+      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
@@ -753,6 +754,8 @@ resource "aws_lambda_function" "teamcity_secret_rotation" {
       ECS_SERVICE_NAME = aws_ecs_service.teamcity.name
     }
   }
+
+  depends_on = [aws_cloudwatch_log_group.teamcity_secret_rotation]
 
   tags = local.tags
 }
