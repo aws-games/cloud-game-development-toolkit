@@ -649,10 +649,6 @@ resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
 # Secret Rotation Auto-Restart (EventBridge + Lambda)
 ###############################################
 
-locals {
-  ecs_cluster_arn = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].arn : aws_ecs_cluster.teamcity_cluster[0].arn
-}
-
 data "aws_iam_policy_document" "lambda_trust_relationship" {
   count = local.secret_rotation_enabled ? 1 : 0
   statement {
