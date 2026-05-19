@@ -691,7 +691,6 @@ data "aws_iam_policy_document" "teamcity_secret_rotation_lambda_policy" {
     sid    = "CloudWatchLogs"
     effect = "Allow"
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
