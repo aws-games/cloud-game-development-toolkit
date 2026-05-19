@@ -644,3 +644,145 @@ resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+###############################################
+# Secret Rotation Auto-Restart (EventBridge + Lambda)
+###############################################
+
+locals {
+  ecs_cluster_arn = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].arn : aws_ecs_cluster.teamcity_cluster[0].arn
+}
+
+data "aws_iam_policy_document" "lambda_trust_relationship" {
+  count = local.secret_rotation_enabled ? 1 : 0
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "teamcity_secret_rotation_lambda_role" {
+  count              = local.secret_rotation_enabled ? 1 : 0
+  name               = "teamcity-secret-rotation-lambda-role"
+  description        = "IAM role for the TeamCity secret rotation Lambda function."
+  assume_role_policy = data.aws_iam_policy_document.lambda_trust_relationship[0].json
+  tags               = local.tags
+}
+
+data "aws_iam_policy_document" "teamcity_secret_rotation_lambda_policy" {
+  count = local.secret_rotation_enabled ? 1 : 0
+  statement {
+    sid     = "ECSUpdateService"
+    effect  = "Allow"
+    actions = ["ecs:UpdateService"]
+    resources = [
+      aws_ecs_service.teamcity.id
+    ]
+  }
+  statement {
+    sid       = "CloudWatchLogsCreateGroup"
+    effect    = "Allow"
+    actions   = ["logs:CreateLogGroup"]
+    resources = ["*"]
+  }
+  statement {
+    sid    = "CloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["arn:aws:logs:*:*:log-group:/aws/lambda/${local.name_prefix}-secret-rotation:*"]
+  }
+}
+
+resource "aws_iam_policy" "teamcity_secret_rotation_lambda_policy" {
+  count       = local.secret_rotation_enabled ? 1 : 0
+  name        = "teamcity-secret-rotation-lambda-policy"
+  description = "Policy granting the TeamCity secret rotation Lambda permissions to restart the ECS service."
+  policy      = data.aws_iam_policy_document.teamcity_secret_rotation_lambda_policy[0].json
+}
+
+resource "aws_iam_role_policy_attachment" "teamcity_secret_rotation_lambda_policy" {
+  count      = local.secret_rotation_enabled ? 1 : 0
+  role       = aws_iam_role.teamcity_secret_rotation_lambda_role[0].name
+  policy_arn = aws_iam_policy.teamcity_secret_rotation_lambda_policy[0].arn
+}
+
+data "archive_file" "teamcity_secret_rotation" {
+  count       = local.secret_rotation_enabled ? 1 : 0
+  type        = "zip"
+  output_path = "/tmp/teamcity_secret_rotation.zip"
+  source {
+    content  = <<-PYTHON
+import boto3, os
+
+def handler(event, context):
+    ecs = boto3.client("ecs")
+    ecs.update_service(
+        cluster=os.environ["ECS_CLUSTER_ARN"],
+        service=os.environ["ECS_SERVICE_NAME"],
+        forceNewDeployment=True,
+    )
+PYTHON
+    filename = "index.py"
+  }
+}
+
+resource "aws_lambda_function" "teamcity_secret_rotation" {
+  count            = local.secret_rotation_enabled ? 1 : 0
+  function_name    = "${local.name_prefix}-secret-rotation"
+  role             = aws_iam_role.teamcity_secret_rotation_lambda_role[0].arn
+  filename         = data.archive_file.teamcity_secret_rotation[0].output_path
+  source_code_hash = data.archive_file.teamcity_secret_rotation[0].output_base64sha256
+  runtime          = "python3.12"
+  handler          = "index.handler"
+
+  reserved_concurrent_executions = 1
+
+  environment {
+    variables = {
+      ECS_CLUSTER_ARN  = local.ecs_cluster_arn
+      ECS_SERVICE_NAME = aws_ecs_service.teamcity.name
+    }
+  }
+
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_event_rule" "teamcity_secret_rotation" {
+  count       = local.secret_rotation_enabled ? 1 : 0
+  name        = "${local.name_prefix}-secret-rotation"
+  description = "Triggers TeamCity ECS service restart when RDS master password rotation succeeds."
+  event_pattern = jsonencode({
+    source      = ["aws.secretsmanager"]
+    detail-type = ["AWS API Call via CloudTrail"]
+    detail = {
+      eventSource = ["secretsmanager.amazonaws.com"]
+      eventName   = ["RotateSecret"]
+      requestParameters = {
+        secretId = [aws_rds_cluster.teamcity_db_cluster[0].master_user_secret[0].secret_arn]
+      }
+    }
+  })
+  tags = local.tags
+}
+
+resource "aws_cloudwatch_event_target" "teamcity_secret_rotation" {
+  count = local.secret_rotation_enabled ? 1 : 0
+  rule  = aws_cloudwatch_event_rule.teamcity_secret_rotation[0].name
+  arn   = aws_lambda_function.teamcity_secret_rotation[0].arn
+}
+
+resource "aws_lambda_permission" "teamcity_secret_rotation" {
+  count         = local.secret_rotation_enabled ? 1 : 0
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.teamcity_secret_rotation[0].function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.teamcity_secret_rotation[0].arn
+}

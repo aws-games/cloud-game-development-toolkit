@@ -1,5 +1,6 @@
 locals {
-  name_prefix = "teamcity"
+  name_prefix             = "teamcity"
+  secret_rotation_enabled = var.database_connection_string == null && var.enable_auto_restart_on_secret_rotation
   tags = merge(var.tags, {
     "environment" = var.environment
   })
