@@ -1,5 +1,6 @@
 locals {
-  name_prefix = "teamcity"
+  name_prefix             = "teamcity"
+  secret_rotation_enabled = var.database_connection_string == null && var.enable_auto_restart_on_secret_rotation
   tags = merge(var.tags, {
     "environment" = var.environment
   })
@@ -16,6 +17,9 @@ locals {
   efs_file_system_id  = var.efs_id != null ? var.efs_id : aws_efs_file_system.teamcity_efs_file_system[0].id
   efs_file_system_arn = var.efs_id != null ? data.aws_efs_file_system.efs_file_system[0].arn : aws_efs_file_system.teamcity_efs_file_system[0].arn
   efs_access_point_id = var.efs_access_point_id != null ? var.efs_access_point_id : aws_efs_access_point.teamcity_efs_data_access_point[0].id
+
+  # ECS cluster ARN
+  ecs_cluster_arn = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].arn : aws_ecs_cluster.teamcity_cluster[0].arn
 
   # Service Connect namespace
   service_connect_namespace_arn = aws_service_discovery_http_namespace.teamcity.arn
