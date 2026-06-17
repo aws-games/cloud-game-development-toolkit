@@ -17,11 +17,11 @@ run "creates_vpc_when_vpc_id_is_null" {
   command = plan
 
   variables {
-    project_prefix     = "lore"
-    environment        = "dev"
-    vpc_id             = null
-    vpc_cidr           = "10.0.0.0/16"
-    availability_zones = ["us-east-1a", "us-east-1b"]
+    project_prefix        = "lore"
+    environment           = "dev"
+    vpc_id                = null
+    vpc_cidr              = "10.0.0.0/16"
+    availability_zones    = ["us-east-1a", "us-east-1b"]
     container_image       = "placeholder:latest"
     allowed_ingress_cidrs = ["10.0.0.0/8"]
   }
@@ -36,11 +36,11 @@ run "skips_vpc_when_vpc_id_provided" {
   command = plan
 
   variables {
-    project_prefix     = "lore"
-    environment        = "dev"
-    vpc_id             = "vpc-12345678"
-    private_subnet_ids = ["subnet-aaa", "subnet-bbb"]
-    public_subnet_ids  = ["subnet-ccc", "subnet-ddd"]
+    project_prefix        = "lore"
+    environment           = "dev"
+    vpc_id                = "vpc-12345678"
+    private_subnet_ids    = ["subnet-aaa", "subnet-bbb"]
+    public_subnet_ids     = ["subnet-ccc", "subnet-ddd"]
     container_image       = "placeholder:latest"
     allowed_ingress_cidrs = ["10.0.0.0/8"]
   }
@@ -55,11 +55,11 @@ run "name_prefix_uses_project_and_environment" {
   command = plan
 
   variables {
-    project_prefix     = "mystudio"
-    environment        = "prod"
-    vpc_id             = null
-    vpc_cidr           = "10.0.0.0/16"
-    availability_zones = ["us-east-1a", "us-east-1b"]
+    project_prefix        = "mystudio"
+    environment           = "prod"
+    vpc_id                = null
+    vpc_cidr              = "10.0.0.0/16"
+    availability_zones    = ["us-east-1a", "us-east-1b"]
     container_image       = "placeholder:latest"
     allowed_ingress_cidrs = ["10.0.0.0/8"]
   }

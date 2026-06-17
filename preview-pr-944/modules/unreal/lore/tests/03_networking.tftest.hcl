@@ -15,11 +15,11 @@ run "networking_module_plans_successfully" {
   command = plan
 
   variables {
-    project_prefix     = "lore"
-    environment        = "dev"
-    vpc_id             = null
-    vpc_cidr           = "10.0.0.0/16"
-    availability_zones = ["us-east-1a", "us-east-1b"]
+    project_prefix        = "lore"
+    environment           = "dev"
+    vpc_id                = null
+    vpc_cidr              = "10.0.0.0/16"
+    availability_zones    = ["us-east-1a", "us-east-1b"]
     container_image       = "placeholder:latest"
     allowed_ingress_cidrs = ["10.0.0.0/8"]
   }
