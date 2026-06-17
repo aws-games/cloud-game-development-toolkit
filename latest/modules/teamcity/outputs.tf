@@ -22,3 +22,8 @@ output "teamcity_cluster_id" {
   value       = var.cluster_name != null ? data.aws_ecs_cluster.teamcity_cluster[0].id : aws_ecs_cluster.teamcity_cluster[0].id
   description = "The ID of the ECS cluster"
 }
+
+output "secret_rotation_lambda_arn" {
+  value       = local.secret_rotation_enabled ? aws_lambda_function.teamcity_secret_rotation[0].arn : null
+  description = "ARN of the Lambda function that restarts TeamCity on RDS password rotation."
+}

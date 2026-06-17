@@ -255,3 +255,9 @@ variable "agent_log_group_retention_in_days" {
   type    = number
   default = 7
 }
+
+variable "enable_auto_restart_on_secret_rotation" {
+  type        = bool
+  description = "When true, automatically restarts the TeamCity ECS service when the RDS master password rotates. Only applies when using the module-managed database."
+  default     = true
+}
