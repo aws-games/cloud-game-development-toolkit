@@ -1,0 +1,29 @@
+#!/usr/bin/expect -f
+log_file /tmp/unity_import.log
+exp_internal 1
+set timeout 30
+
+# Use bash for command execution
+spawn bash
+expect "$"
+
+# Run the Unity Licensing Server import command (using full paths)
+send "cd /opt/UnityLicensingServer && sudo ./Unity.Licensing.Server import ${license_server_name}.zip\r"
+expect {
+    "Enter the index number of the toolset that should be used by default:" {
+        send "1\r"
+        exp_continue
+    }
+    "Successfully imported licensing files" {
+        puts "IMPORT_SUCCESSFUL"
+        exit 0
+    }
+    timeout {
+        puts "TIMEOUT_ERROR"
+        exit 2
+    }
+    eof {
+        puts "UNEXPECTED_EOF"
+        exit 1
+    }
+}
