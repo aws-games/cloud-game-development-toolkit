@@ -149,6 +149,7 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 data "aws_iam_policy_document" "ecr" {
+  #checkov:skip=CKV_AWS_356: ecr:GetAuthorizationToken requires resource "*" — AWS API limitation, cannot be scoped to specific repos
   statement {
     actions = [
       "ecr:GetAuthorizationToken",
@@ -176,6 +177,8 @@ resource "aws_iam_instance_profile" "edge" {
 # =============================================================================
 
 resource "aws_instance" "edge" {
+  #checkov:skip=CKV_AWS_126: Detailed monitoring optional — adds cost, basic monitoring sufficient for cache nodes
+  #checkov:skip=CKV_AWS_135: EBS optimization not applicable — NVMe instance store is the primary storage, not EBS
   ami                    = data.aws_ssm_parameter.al2023_ami.value
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
