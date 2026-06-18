@@ -53,6 +53,8 @@ resource "tls_locally_signed_cert" "server" {
 }
 
 resource "aws_secretsmanager_secret" "tls_cert" {
+  #checkov:skip=CKV_AWS_149: Rotation not applicable — TLS cert is Terraform-generated and replaced on apply
+  #checkov:skip=CKV2_AWS_57: Rotation not applicable — TLS cert is Terraform-generated and replaced on apply
   count       = var.tls_certificate_secret_arn == null ? 1 : 0
   name_prefix = "${var.name_prefix}-tls-cert-"
   tags        = var.tags
@@ -65,6 +67,8 @@ resource "aws_secretsmanager_secret_version" "tls_cert" {
 }
 
 resource "aws_secretsmanager_secret" "tls_ca" {
+  #checkov:skip=CKV_AWS_149: Rotation not applicable — CA cert is Terraform-generated trust anchor, replaced on apply
+  #checkov:skip=CKV2_AWS_57: Rotation not applicable — CA cert is Terraform-generated trust anchor, replaced on apply
   count       = var.tls_certificate_secret_arn == null ? 1 : 0
   name_prefix = "${var.name_prefix}-tls-ca-"
   tags        = var.tags
@@ -77,6 +81,8 @@ resource "aws_secretsmanager_secret_version" "tls_ca" {
 }
 
 resource "aws_secretsmanager_secret" "tls_key" {
+  #checkov:skip=CKV_AWS_149: Rotation not applicable — private key is Terraform-generated, replaced on apply
+  #checkov:skip=CKV2_AWS_57: Rotation not applicable — private key is Terraform-generated, replaced on apply
   count       = var.tls_private_key_secret_arn == null ? 1 : 0
   name_prefix = "${var.name_prefix}-tls-key-"
   tags        = var.tags
@@ -98,6 +104,8 @@ resource "random_bytes" "hmac_key" {
 }
 
 resource "aws_secretsmanager_secret" "hmac_key" {
+  #checkov:skip=CKV_AWS_149: Rotation not applicable — HMAC key is Terraform-generated random bytes, replaced on apply
+  #checkov:skip=CKV2_AWS_57: Rotation not applicable — HMAC key is Terraform-generated random bytes, replaced on apply
   count       = var.hmac_key_secret_arn == null ? 1 : 0
   name_prefix = "${var.name_prefix}-hmac-"
   tags        = var.tags

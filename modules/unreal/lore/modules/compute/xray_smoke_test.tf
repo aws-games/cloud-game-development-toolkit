@@ -10,6 +10,12 @@ data "archive_file" "xray_smoke_test" {
 }
 
 resource "aws_lambda_function" "xray_smoke_test" {
+  #checkov:skip=CKV_AWS_116: DLQ not applicable — diagnostic utility Lambda invoked manually, not event-driven
+  #checkov:skip=CKV_AWS_272: Code-signing not required — source is inline Terraform archive
+  #checkov:skip=CKV_AWS_173: No sensitive env vars — only ENVIRONMENT name string
+  #checkov:skip=CKV_AWS_115: Concurrency limit not needed — manual invocation only, not production traffic
+  #checkov:skip=CKV_AWS_117: VPC not required — only calls X-Ray API, no VPC resources accessed
+  #checkov:skip=CKV_AWS_50: X-Ray tracing on the X-Ray test Lambda is circular — function tests X-Ray, not itself traced
   count            = var.enable_xray_smoke_test ? 1 : 0
   function_name    = "${var.name_prefix}-xray-smoke-test"
   handler          = "xray_smoke_test.handler"
