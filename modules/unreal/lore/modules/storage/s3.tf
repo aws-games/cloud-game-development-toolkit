@@ -3,6 +3,11 @@
 # =============================================================================
 
 resource "aws_s3_bucket" "fragments" {
+  #checkov:skip=CKV_AWS_18: Access logging optional — can be added by user via bucket policy
+  #checkov:skip=CKV_AWS_144: Cross-region replication not required — single-region deployment, edge pods handle distribution
+  #checkov:skip=CKV_AWS_145: SSE-S3 (AES256) sufficient — KMS CMK adds cost with no security benefit for content-addressed blobs
+  #checkov:skip=CKV_AWS_21: Versioning intentionally disabled — fragments are immutable content-addressed blobs, versioning adds cost with no benefit
+  #checkov:skip=CKV2_AWS_62: Event notifications optional — not required for module operation
   bucket_prefix = "${var.name_prefix}-fragments-"
   force_destroy = var.enable_force_destroy
 

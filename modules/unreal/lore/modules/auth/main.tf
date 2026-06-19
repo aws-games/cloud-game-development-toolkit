@@ -79,6 +79,12 @@ resource "aws_iam_role_policy_attachment" "pre_token_lambda_logs" {
 }
 
 resource "aws_lambda_function" "pre_token" {
+  #checkov:skip=CKV_AWS_116: DLQ not applicable — synchronous Cognito pre-token trigger, errors surface to caller
+  #checkov:skip=CKV_AWS_272: Code-signing not required — source is inline Terraform archive, not externally published
+  #checkov:skip=CKV_AWS_173: No sensitive env vars — only ENVIRONMENT name string
+  #checkov:skip=CKV_AWS_115: Concurrency limit not needed — invoked only by Cognito token flow, scales with auth requests
+  #checkov:skip=CKV_AWS_117: VPC not required — no VPC resources accessed, only transforms JWT claims
+  #checkov:skip=CKV_AWS_50: X-Ray not needed — trivial claim-mapping function, tracing adds no diagnostic value
   function_name    = "${var.name_prefix}-pre-token-gen"
   handler          = "pre_token_generation.handler"
   runtime          = "nodejs20.x"
