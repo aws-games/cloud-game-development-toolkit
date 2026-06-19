@@ -3,6 +3,12 @@ locals {
     p4_trust_bucket             = local.need_p4_trust && length(var.agents) > 0 ? aws_s3_bucket.ansible_playbooks[0].id : null
     fully_qualified_domain_name = var.fully_qualified_domain_name
     dotnet_runtime_version      = var.agent_dotnet_runtime_version
+    p4_port                     = var.p4_port
+    agent_working_dir           = var.agent_working_dir
+    enable_long_paths           = var.agent_enable_long_paths
+    uba_compute_ports           = var.agent_uba_compute_ports
+    uba_horde_pool              = var.agent_uba_horde_pool
+    uba_max_workers             = var.agent_uba_max_workers
   }))
 }
 

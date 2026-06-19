@@ -35,6 +35,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
     name = "unreal-horde-config"
   }
 
+  volume {
+    name = "unreal-horde-data"
+  }
+
   container_definitions = jsonencode(concat([
     {
       name  = var.container_name
@@ -99,6 +103,10 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         {
           sourceVolume  = "unreal-horde-config",
           containerPath = "/app/config"
+        },
+        {
+          sourceVolume  = "unreal-horde-data",
+          containerPath = "/app/Data"
         }
       ],
       dependsOn = concat(
@@ -113,15 +121,28 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
       )
     },
     {
-      name                     = "unreal-horde-docdb-cert",
-      image                    = "public.ecr.aws/docker/library/bash:5.3",
-      essential                = false
-      command                  = ["wget", "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem", "-P", "/app/config/"]
+      name      = "unreal-horde-docdb-cert",
+      image     = "public.ecr.aws/docker/library/bash:5.3",
+      essential = false
+      command = ["sh", "-c", join(" && ", compact([
+        "wget -O /app/config/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem",
+        "printf '%s' '${replace(local.server_json, "'", "'\\''")}' > /app/Data/server.json",
+        "cat /app/Data/server.json",
+        # Only write globals.json when the consumer actually supplied content. The variable
+        # defaults to "" (not null), so guarding on `!= null` alone is always true and would
+        # write an EMPTY /app/Data/globals.json — worse than writing nothing, since Horde then
+        # loads a blank config. Require a non-empty string before writing.
+        var.config_globals_json != null && var.config_globals_json != "" ? "printf '%s' '${replace(var.config_globals_json, "'", "'\\''")}' > /app/Data/globals.json && cat /app/Data/globals.json" : "echo 'No globals.json to write'"
+      ]))]
       readonly_root_filesystem = false
       mountPoints = [
         {
           sourceVolume  = "unreal-horde-config",
           containerPath = "/app/config"
+        },
+        {
+          sourceVolume  = "unreal-horde-data",
+          containerPath = "/app/Data"
         }
       ]
       logConfiguration = {

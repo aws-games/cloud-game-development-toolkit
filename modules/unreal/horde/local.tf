@@ -23,6 +23,26 @@ locals {
 
   need_p4_trust = var.p4_port != null && startswith(var.p4_port, "ssl:")
 
+  server_json = jsonencode({
+    "Horde" = {
+      "configPath"                 = var.config_path
+      "forceConfigUpdateOnStartup" = true
+      "enableNewAgentsByDefault"   = true
+      "plugins" = var.p4_port != null ? {
+        "build" = {
+          "perforce" = [{
+            "id"            = "default"
+            "serverAndPort" = var.p4_port
+            "credentials" = {
+              "userName" = var.p4_username
+              "password" = var.p4_password
+            }
+          }]
+        }
+      } : {}
+    }
+  })
+
   horde_service_env = [for config in [
     {
       name  = "Horde__authMethod"
@@ -61,23 +81,14 @@ locals {
       value = tostring(var.enable_new_agents_by_default)
     },
     {
-      name  = "Horde__Perforce__0__ServerAndPort"
-      value = var.p4_port
-    },
-    {
       name  = "ASPNETCORE_ENVIRONMENT"
       value = var.environment
-    }
+    },
   ] : config.value != null ? config : null]
 
-  horde_service_secrets = [for config in [
-    {
-      name      = "Horde__Perforce__0__credentials__username"
-      valueFrom = var.p4_super_user_username_secret_arn
-    },
-    {
-      name      = "Horde__Perforce__0__credentials__password"
-      valueFrom = var.p4_super_user_password_secret_arn
-    },
-  ] : config.valueFrom != null ? config : null]
+  # Perforce credentials and the config path are now delivered to the server via the
+  # rendered /app/Data/server.json file (see server_json above + the docdb-cert init
+  # container in ecs.tf), not via environment variables or Secrets Manager. The legacy
+  # Horde__Perforce__0__* env/secret entries have been removed accordingly.
+  horde_service_secrets = []
 }
