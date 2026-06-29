@@ -510,3 +510,12 @@ variable "enable_new_agents_by_default" {
   description = "Set this flag to automatically enable new agents that enroll with the Horde Server."
   default     = false
 }
+
+variable "extra_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  description = "Additional environment variables to pass to the Horde container."
+  default     = []
+}

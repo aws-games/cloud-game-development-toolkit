@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
           name  = "P4TRUST"
           value = "/app/config/.p4trust"
         },
-      ], local.horde_service_env)
+      ], local.horde_service_env, var.extra_environment)
       secrets = local.horde_service_secrets
       logConfiguration = {
         logDriver = "awslogs"

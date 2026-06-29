@@ -23,5 +23,24 @@ module "horde" {
   p4_port                           = ""
   agents                            = {}
 
+  extra_environment = var.enable_mrap ? [
+    {
+      name  = "Horde__Plugins__Storage__Backends__0__Id"
+      value = "default"
+    },
+    {
+      name  = "Horde__Plugins__Storage__Backends__0__Type"
+      value = "Aws"
+    },
+    {
+      name  = "Horde__Plugins__Storage__Backends__0__AwsBucketName"
+      value = aws_s3control_multi_region_access_point.horde[0].arn
+    },
+    {
+      name  = "Horde__Plugins__Storage__Backends__0__AwsRegion"
+      value = "us-east-1"
+    },
+  ] : []
+
   depends_on = [aws_acm_certificate_validation.horde]
 }
