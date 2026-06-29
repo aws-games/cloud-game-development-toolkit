@@ -20,6 +20,7 @@ module "horde" {
   tags                              = local.tags
   elasticache_engine                = "valkey"
   auth_method                       = "Anonymous"
+  enable_new_agents_by_default      = true
   p4_port                           = ""
   agents = var.enable_agents ? {
     linux-x86 = {
