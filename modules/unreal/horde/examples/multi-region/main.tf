@@ -35,48 +35,28 @@ module "horde" {
     }
   } : {}
 
-  extra_environment = concat(
-    var.enable_mrap ? [
-      {
-        name  = "Horde__Plugins__Storage__Backends__0__Id"
-        value = "default"
-      },
-      {
-        name  = "Horde__Plugins__Storage__Backends__0__Type"
-        value = "Aws"
-      },
-      {
-        name  = "Horde__Plugins__Storage__Backends__0__AwsBucketName"
-        value = aws_s3control_multi_region_access_point.horde[0].arn
-      },
-      {
-        name  = "Horde__Plugins__Storage__Backends__0__AwsRegion"
-        value = "us-east-1"
-      },
-    ] : [],
-    [
-      {
-        name  = "Horde__http2Port"
-        value = "0"
-      },
-      {
-        name  = "Horde__serverUrl"
-        value = "https://horde.${var.root_domain_name}"
-      },
-      {
-        name  = "Horde__Plugins__Tools__Tools__0__Id"
-        value = "horde-agent"
-      },
-      {
-        name  = "Horde__Plugins__Tools__Tools__0__Name"
-        value = "Horde Agent"
-      },
-      {
-        name  = "Horde__Plugins__Tools__Tools__0__Public"
-        value = "true"
-      },
-    ]
-  )
+  extra_environment = [
+    {
+      name  = "Horde__http2Port"
+      value = "0"
+    },
+    {
+      name  = "Horde__serverUrl"
+      value = "https://horde.${var.root_domain_name}"
+    },
+    {
+      name  = "Horde__Plugins__Tools__Tools__0__Id"
+      value = "horde-agent"
+    },
+    {
+      name  = "Horde__Plugins__Tools__Tools__0__Name"
+      value = "Horde Agent"
+    },
+    {
+      name  = "Horde__Plugins__Tools__Tools__0__Public"
+      value = "true"
+    },
+  ]
 
   depends_on = [aws_acm_certificate_validation.horde]
 }
