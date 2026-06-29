@@ -21,7 +21,18 @@ module "horde" {
   elasticache_engine                = "valkey"
   auth_method                       = "Anonymous"
   p4_port                           = ""
-  agents                            = {}
+  agents = var.enable_agents ? {
+    linux-x86 = {
+      ami           = data.aws_ami.ubuntu.id
+      instance_type = "c6a.large"
+      min_size      = 0
+      max_size      = 2
+      block_device_mappings = [{
+        device_name = "/dev/sda1"
+        ebs = { volume_size = 64 }
+      }]
+    }
+  } : {}
 
   extra_environment = var.enable_mrap ? [
     {

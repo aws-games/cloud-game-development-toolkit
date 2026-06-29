@@ -47,3 +47,23 @@ resource "aws_route53_record" "horde_external" {
     evaluate_target_health = true
   }
 }
+
+# Private hosted zone for agents to reach Horde via internal ALB
+resource "aws_route53_zone" "horde_private" {
+  name = "horde.${var.root_domain_name}"
+
+  vpc {
+    vpc_id = aws_vpc.primary.id
+  }
+}
+
+resource "aws_route53_record" "horde_internal" {
+  zone_id = aws_route53_zone.horde_private.zone_id
+  name    = aws_route53_zone.horde_private.name
+  type    = "A"
+  alias {
+    name                   = module.horde.internal_alb_dns_name
+    zone_id                = module.horde.internal_alb_zone_id
+    evaluate_target_health = true
+  }
+}

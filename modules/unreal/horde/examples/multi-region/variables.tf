@@ -21,3 +21,9 @@ variable "enable_mrap" {
   description = "Enable S3 Multi-Region Access Point (Phase 3+)."
   default     = false
 }
+
+variable "enable_agents" {
+  type        = bool
+  description = "Enable Horde build agents in primary region."
+  default     = false
+}
