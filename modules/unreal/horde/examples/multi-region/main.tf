@@ -56,6 +56,14 @@ module "horde" {
     ] : [],
     [
       {
+        name  = "Horde__http2Port"
+        value = "0"
+      },
+      {
+        name  = "Horde__serverUrl"
+        value = "https://horde.${var.root_domain_name}"
+      },
+      {
         name  = "Horde__Plugins__Tools__Tools__0__Id"
         value = "horde-agent"
       },
