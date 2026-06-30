@@ -45,6 +45,10 @@ module "horde" {
       value = "https://horde.${var.root_domain_name}"
     },
     {
+      name  = "Horde__forceConfigUpdateOnStartup"
+      value = "true"
+    },
+    {
       name  = "Horde__Plugins__Tools__Tools__0__Id"
       value = "horde-agent"
     },
