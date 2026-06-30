@@ -49,6 +49,10 @@ module "horde" {
       value = "true"
     },
     {
+      name  = "Horde__Compute__WithAws"
+      value = "true"
+    },
+    {
       name  = "Horde__Plugins__Tools__Tools__0__Id"
       value = "horde-agent"
     },
