@@ -95,7 +95,7 @@ docker run --rm --entrypoint cat horde-server:multi-region /app/AWSSDK.Extension
 
 ## Deployment (Phased)
 
-Deploy incrementally. Each phase validates a component before adding the next.
+Deploy incrementally. **Do not proceed to the next phase until the checkpoint passes.**
 
 ```bash
 cd modules/unreal/horde/examples/multi-region/
@@ -104,65 +104,242 @@ terraform init
 
 ### Phase 1: Server Only
 
-Deploy the Horde server, database, cache, and networking. No agents, no MRAP.
+Deploys Horde server, DocumentDB, ElastiCache, ALBs, VPC, and DNS.
 
 ```bash
 terraform apply \
-  -var="image=<account-id>.dkr.ecr.us-east-1.amazonaws.com/horde-server:multi-region" \
-  -var="root_domain_name=example.com" \
-  -var="enable_agents=false" \
-  -var="enable_mrap=false" \
-  -var="enable_secondary_region=false"
+  -var="image=<account-id>.dkr.ecr.<primary-region>.amazonaws.com/horde-server:multi-region" \
+  -var="root_domain_name=example.com"
 ```
 
-**Validate:** `curl https://horde.example.com/api/v1/server/info` returns server metadata.
+> Deploys ~75 resources. Takes 10-15 minutes (DocumentDB creation is the bottleneck).
+
+**Checkpoint 1a — Terraform outputs:**
+```bash
+terraform output
+```
+Expected:
+```
+external_alb_dns = "cgd-unreal-horde-ext-alb-XXXXXXXXX.us-east-1.elb.amazonaws.com"
+horde_url = "https://horde.example.com"
+```
+
+**Checkpoint 1b — Server responds:**
+```bash
+curl -sk https://horde.example.com/api/v1/server/info | jq .
+```
+Expected:
+```json
+{
+  "apiVersion": 4,
+  "serverVersion": "1.0.0",
+  "plugins": [
+    {"name": "storage", "loaded": true},
+    {"name": "compute", "loaded": true},
+    {"name": "tools", "loaded": true}
+  ]
+}
+```
+
+> **If this fails:** Check ECS service events (`aws ecs describe-services --cluster cgd-unreal-horde-cluster --services cgd-unreal-horde`). Common issues: DocumentDB not ready yet (wait 2 min and retry), ACM cert not validated (check Route53 CNAME).
+
+**Checkpoint 1c — Storage plugin loaded:**
+```bash
+curl -sk https://horde.example.com/api/v1/tools | jq .
+```
+Expected:
+```json
+{"tools": [{"id": "horde-agent", "name": "Horde Agent", "public": true}]}
+```
+
+> If tools list is empty, the `forceConfigUpdateOnStartup=true` env var may not be set. Check the ECS task definition.
+
+---
 
 ### Phase 2: Enable MRAP
 
-Creates S3 buckets in both regions, the Multi-Region Access Point, and bidirectional replication.
+Creates S3 buckets in both regions, configures bidirectional replication, and provisions the Multi-Region Access Point.
 
 ```bash
 terraform apply \
-  -var="image=<account-id>.dkr.ecr.us-east-1.amazonaws.com/horde-server:multi-region" \
+  -var="image=<account-id>.dkr.ecr.<primary-region>.amazonaws.com/horde-server:multi-region" \
   -var="root_domain_name=example.com" \
-  -var="enable_agents=false" \
-  -var="enable_mrap=true" \
-  -var="enable_secondary_region=false"
+  -var="enable_mrap=true"
 ```
 
-> **Note:** MRAP provisioning takes ~5 minutes. Terraform will wait.
+> MRAP provisioning takes ~5 minutes.
 
-**Validate:** The `mrap_arn` output is populated. Update `globals.json` to use the MRAP ARN as `awsBucketName` (see [Configuration](#configuration)).
+**Checkpoint 2a — MRAP exists:**
+```bash
+terraform output mrap_arn
+```
+Expected: `arn:aws:s3::<account-id>:accesspoint/<alias>.mrap`
+
+**Checkpoint 2b — Write routing works (from primary region):**
+```bash
+echo "checkpoint-test" | aws s3 cp - \
+  s3://$(terraform output -raw mrap_arn)/test/checkpoint.txt \
+  --region us-east-1
+
+# Verify it landed in the primary bucket:
+aws s3 ls s3://horde-artifacts-us-east-1-$(aws sts get-caller-identity --query Account --output text)/test/ --region us-east-1
+```
+Expected: `checkpoint.txt` appears in the us-east-1 bucket.
+
+**Checkpoint 2c — CRR replicates:**
+```bash
+# Wait 5 seconds, then check the secondary bucket:
+sleep 5
+aws s3 ls s3://horde-artifacts-eu-west-1-$(aws sts get-caller-identity --query Account --output text)/test/ --region eu-west-1
+```
+Expected: `checkpoint.txt` appears in the eu-west-1 bucket (replica).
+
+> **If CRR doesn't replicate:** Check IAM replication roles and bucket versioning. Both buckets must have versioning enabled.
+
+**Checkpoint 2d — Clean up test object:**
+```bash
+aws s3 rm s3://$(terraform output -raw mrap_arn)/test/checkpoint.txt --region us-east-1
+```
+
+---
 
 ### Phase 3: Enable Primary Agents
 
-Deploys build agents in the primary region.
+Deploys EC2 Auto Scaling Group with build agents in the primary region.
 
 ```bash
 terraform apply \
-  -var="image=<account-id>.dkr.ecr.us-east-1.amazonaws.com/horde-server:multi-region" \
+  -var="image=<account-id>.dkr.ecr.<primary-region>.amazonaws.com/horde-server:multi-region" \
   -var="root_domain_name=example.com" \
-  -var="enable_agents=true" \
   -var="enable_mrap=true" \
-  -var="enable_secondary_region=false"
+  -var="enable_agents=true"
 ```
 
-**Validate:** Agents appear in the Horde dashboard under Agents. They show status "Ready."
+**Checkpoint 3a — ASG created:**
+```bash
+aws autoscaling describe-auto-scaling-groups --region us-east-1 \
+  --query 'AutoScalingGroups[?contains(AutoScalingGroupName, `horde`)].{Name:AutoScalingGroupName,Min:MinSize,Max:MaxSize}'
+```
+Expected: One ASG with Min=0, Max=2.
+
+**Checkpoint 3b — Upload agent software:**
+
+Before agents can enroll, upload the agent binary:
+```bash
+# Build agent from source (same Horde source tree)
+cd Engine/Source/Programs/Horde
+dotnet publish HordeAgent/HordeAgent.csproj -c Release -r linux-x64 --self-contained -o /tmp/horde-agent
+cd /tmp/horde-agent && zip -r /tmp/horde-agent.zip .
+
+# Upload to Horde
+curl -sk -X POST "https://horde.example.com/api/v1/tools/horde-agent/deployments" \
+  -F "file=@/tmp/horde-agent.zip;type=application/zip" \
+  -F "version=1.0.0"
+```
+Expected: `{"id": "<deployment-id>"}` with HTTP 200.
+
+**Checkpoint 3c — Agent enrolls:**
+
+Scale ASG to 1 and verify enrollment:
+```bash
+aws autoscaling set-desired-capacity \
+  --auto-scaling-group-name $(aws autoscaling describe-auto-scaling-groups --region us-east-1 \
+    --query 'AutoScalingGroups[?contains(AutoScalingGroupName, `horde`)].AutoScalingGroupName' --output text) \
+  --desired-capacity 1 --region us-east-1
+
+# Wait 2-3 minutes for agent to boot and enroll, then:
+curl -sk https://horde.example.com/api/v1/agents | jq '.[].name'
+```
+Expected: Agent hostname appears in the list.
+
+> **If agent doesn't appear:** Get a registration token from `https://horde.example.com/api/v1/admin/registrationtoken` and configure it on the agent via SSM.
+
+---
 
 ### Phase 4: Enable Secondary Region
 
-Deploys VPC, networking, and agent ASG in the secondary region.
+Deploys VPC, networking, and agent ASG in the secondary region (eu-west-1).
 
 ```bash
 terraform apply \
-  -var="image=<account-id>.dkr.ecr.us-east-1.amazonaws.com/horde-server:multi-region" \
+  -var="image=<account-id>.dkr.ecr.<primary-region>.amazonaws.com/horde-server:multi-region" \
   -var="root_domain_name=example.com" \
-  -var="enable_agents=true" \
   -var="enable_mrap=true" \
+  -var="enable_agents=true" \
   -var="enable_secondary_region=true"
 ```
 
-**Validate:** Scale EU ASG to 1 instance. Agent registers with the Horde server and shows EU availability zone.
+**Checkpoint 4a — EU VPC and ASG created:**
+```bash
+aws autoscaling describe-auto-scaling-groups --region eu-west-1 \
+  --query 'AutoScalingGroups[?contains(AutoScalingGroupName, `horde`)].{Name:AutoScalingGroupName,Min:MinSize,Max:MaxSize}'
+```
+Expected: One ASG in eu-west-1 with Min=0, Max=2.
+
+**Checkpoint 4b — Fleet manager scales EU ASG:**
+
+The Horde fleet service should detect the EU-Linux pool and manage the ASG. Check CloudTrail:
+```bash
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=DescribeAutoScalingGroups \
+  --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --region eu-west-1 --query 'Events[0].EventTime'
+```
+Expected: Recent timestamp (confirms the Horde server is calling eu-west-1 AutoScaling API).
+
+**Checkpoint 4c — EU agent connectivity:**
+
+Scale EU ASG to 1 and verify the agent can reach the Horde server:
+```bash
+aws autoscaling set-desired-capacity \
+  --auto-scaling-group-name $(aws autoscaling describe-auto-scaling-groups --region eu-west-1 \
+    --query 'AutoScalingGroups[?contains(AutoScalingGroupName, `horde`)].AutoScalingGroupName' --output text) \
+  --desired-capacity 1 --region eu-west-1
+
+# Wait 2-3 minutes, then verify via SSM:
+EU_INSTANCE=$(aws ec2 describe-instances --region eu-west-1 \
+  --filters "Name=instance-state-name,Values=running" "Name=tag-key,Values=aws:autoscaling:groupName" \
+  --query 'Reservations[0].Instances[0].InstanceId' --output text)
+
+aws ssm send-command --instance-ids $EU_INSTANCE \
+  --document-name AWS-RunShellScript \
+  --parameters 'commands=["curl -sk https://horde.example.com/api/v1/server/info | head -1"]' \
+  --region eu-west-1
+```
+Expected: Server responds with JSON (confirms cross-region connectivity over public internet).
+
+**Checkpoint 4d — MRAP write routing from EU:**
+
+Verify that an EU-based write lands in the EU bucket:
+```bash
+aws ssm send-command --instance-ids $EU_INSTANCE \
+  --document-name AWS-RunShellScript \
+  --parameters 'commands=["echo eu-test | aws s3 cp - s3://arn:aws:s3::<account>:accesspoint/<mrap-alias>.mrap/test/eu-routing.txt"]' \
+  --region eu-west-1
+
+# Check ReplicationStatus to confirm it originated in EU:
+aws s3api head-object \
+  --bucket horde-artifacts-eu-west-1-<account> \
+  --key test/eu-routing.txt \
+  --region eu-west-1 \
+  --query 'ReplicationStatus'
+```
+Expected: `"COMPLETED"` (this is the source bucket — the write landed here, not in US).
+
+> **If it shows REPLICA:** The write went to the US bucket and replicated to EU. This means the EU instance is routing through a US-based NAT or proxy. Check the VPC's NAT gateway and internet gateway configuration.
+
+---
+
+## All Checkpoints Passed?
+
+**Congratulations!** You have a working multi-region Horde deployment where:
+- ✅ Server runs in the primary region with all metadata
+- ✅ Agents in both regions connect to the single control plane
+- ✅ Artifacts upload to the nearest S3 bucket automatically
+- ✅ CRR replicates artifacts to all regions
+- ✅ Fleet manager scales agent ASGs across regions
+
+You can now configure BuildGraph templates with region-specific agent types to route jobs to the appropriate regional pool.
 
 ## Post-Deployment Steps
 
