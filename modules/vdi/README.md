@@ -2,20 +2,20 @@
 
 [![License: MIT-0](https://img.shields.io/badge/License-MIT-0)](../../LICENSE)
 
-> **ℹ️ Prerequisites**: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's [Packer templates](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) (`lightweight/` and `ue-gamedev/`), but any Windows Server 2019/2022/2025 AMI works. See [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/) for complete setup guidance.
+> **Prerequisites**: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's [Packer templates](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) (`lightweight/` and `ue-gamedev/`), but any Windows Server 2019/2022/2025 AMI works. See [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/) for complete setup guidance.
 >
 > **Testing and Development Only**: This module is designed for testing and development workflows. It is not recommended for production use. For production virtual desktop solutions, consider [Amazon WorkSpaces](https://aws.amazon.com/workspaces/) or [Amazon AppStream 2.0](https://aws.amazon.com/appstream2/).
 
 ## Features
 
-- **Amazon DCV Integration** - High-performance streaming protocol optimized for graphics workloads
-- **Dual Connectivity** - Public internet or private VPN access with custom DNS support
-- **Game Development Ready** - GPU instances, high-performance storage, UE-optimized AMIs
-- **Intelligent Drive Management** - Automatic Windows drive letter assignment and volume lifecycle
-- **Complete VDI Infrastructure** - EC2 workstations, security, IAM, and user management
-- **Security by Default** - Least privilege IAM, encrypted storage, restricted network access, termination protection
-- **Flexible Authentication** - EC2 key pairs (emergency) and Secrets Manager (production)
-- **Runtime Software Installation** - Automated package installation via SSM and Chocolatey
+- Amazon DCV for high-performance remote streaming of graphics workloads
+- Public internet or private VPN access with custom DNS support
+- GPU instances, high-performance storage, and UE-optimized AMIs
+- Automatic Windows drive letter assignment and EBS volume lifecycle management
+- IAM, security groups, and user management included
+- Encrypted storage, restricted network access, and termination protection
+- EC2 key pairs (emergency) and Secrets Manager (production) for authentication
+- Automated software installation via SSM and Chocolatey
 
 ## Connectivity Patterns
 
@@ -87,14 +87,14 @@ module "vdi" {
 
 ### Account Creation Pattern
 
-| Account Type                               | Created When     | Password Storage | Scope                | Use Case                   |
-| ------------------------------------------ | ---------------- | ---------------- | -------------------- | -------------------------- |
-| 🆘 **Administrator** (built-in)            | Windows boot     | EC2 Key Pair     | All workstations     | Emergency break-glass only |
-| 🛡️ **Fleet Admin** (`fleet_administrator`) | SSM (if defined) | Secrets Manager  | All workstations     | Fleet management           |
-| 🔧 **Local Admin** (`administrator`)       | SSM (if defined) | Secrets Manager  | Assigned workstation | Local administration       |
-| 💻 **Standard User** (`user`)              | SSM (if defined) | Secrets Manager  | Assigned workstation | Daily usage                |
+| Account Type                              | Created When     | Password Storage | Scope                | Use Case                   |
+| ----------------------------------------- | ---------------- | ---------------- | -------------------- | -------------------------- |
+| **Administrator** (built-in)              | Windows boot     | EC2 Key Pair     | All workstations     | Emergency break-glass only |
+| **Fleet Admin** (`fleet_administrator`)   | SSM (if defined) | Secrets Manager  | All workstations     | Fleet management           |
+| **Local Admin** (`administrator`)         | SSM (if defined) | Secrets Manager  | Assigned workstation | Local administration       |
+| **Standard User** (`user`)                | SSM (if defined) | Secrets Manager  | Assigned workstation | Daily usage                |
 
-**Key Point**: Only the built-in Administrator exists automatically. All other accounts must be explicitly defined in the `users` variable.
+Only the built-in Administrator exists automatically. All other accounts must be explicitly defined in the `users` variable.
 
 ## Prerequisites
 
@@ -110,7 +110,7 @@ module "vdi" {
 
 ## Cost Estimates
 
-⚠️ **Cost Warning**: These examples deploy expensive GPU instances (~$1,430/month per workstation). Review costs before deployment.
+These examples deploy GPU instances (~$1,430/month per workstation). Review costs before deployment.
 
 **Example Configuration Costs (per workstation/month):**
 
@@ -178,13 +178,10 @@ terraform output connection_info
 
 ### AWS Client VPN Setup (Private Connectivity)
 
-**Why AWS Client VPN is Required:**
+For private connectivity, AWS Client VPN is required because:
 
-For private connectivity, AWS Client VPN is essential because:
-
-- **Custom DNS Resolution**: Private workstation URLs like `https://username.vdi.internal:8443` only resolve when connected to the VPN
-- **Network Access**: Private subnets are not accessible from the internet - VPN provides secure tunnel access
-- **Security**: Eliminates need to expose workstations to public internet
+- Private workstation URLs like `https://username.vdi.internal:8443` only resolve when connected to the VPN
+- Private subnets are not accessible from the internet — the VPN provides secure tunnel access
 
 **Setup Process:**
 
@@ -204,25 +201,23 @@ aws s3 cp s3://cgd-vdi-vpn-configs-XXXXXXXX/your-username/your-username.ovpn ~/D
 # OpenVPN: Import the .ovpn file directly
 ```
 
-**For detailed setup instructions**: See [AWS Client VPN User Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-user/)
+For detailed setup instructions, see the [AWS Client VPN User Guide](https://docs.aws.amazon.com/vpn/latest/clientvpn-user/).
 
-**Connection Flow:**
-
-1. Connect to AWS Client VPN using your `.ovpn` file
-2. Access workstation via private DNS: `https://username.vdi.internal:8443`
-3. Login with credentials from Secrets Manager
+Once connected to the VPN, access your workstation via private DNS (`https://username.vdi.internal:8443`) and log in with credentials from Secrets Manager.
 
 ## Connection Guide
 
-### ⚠️ CRITICAL: Wait for Windows Boot
+### Wait for Windows Boot
 
-**After `terraform apply` completes, wait 5-10 minutes for Windows initialization before attempting login.**
+After `terraform apply` completes, wait 5-10 minutes for Windows initialization before attempting login.
 
-During boot, you'll see:
+During boot, you may see:
 
-- "Wrong username or password" errors (expected)
-- DCV connection failures (expected)
-- Certificate warnings (expected)
+- "Wrong username or password" errors
+- DCV connection failures
+- Certificate warnings
+
+These are expected while the instance is still initializing.
 
 **Check boot status:**
 
@@ -230,11 +225,7 @@ During boot, you'll see:
 aws ec2 get-console-output --instance-id $(terraform output -json connection_info | jq -r '."vdi-001".instance_id') --latest
 ```
 
-**Ready when you see:**
-
-- `EC2Launch: EC2 Launch has completed`
-- User creation script completion
-- DCV service startup messages
+The instance is ready when you see `EC2Launch: EC2 Launch has completed` in the console output.
 
 ### Get Credentials
 
@@ -283,17 +274,15 @@ rm temp_key.pem
 
 ### Automatic Script Re-execution
 
-The module automatically re-runs configuration scripts when you modify infrastructure. Changes to volumes, users, or software packages trigger the appropriate scripts to run via AWS SSM - no manual intervention required.
+The module re-runs configuration scripts via SSM when you modify volumes, users, or software packages. Scripts only execute when infrastructure actually changes.
 
-Scripts only execute when infrastructure actually changes, providing clean Terraform plans and predictable behavior.
-
-**Manual Alternative**: For immediate results or troubleshooting, you can RDP to the instance as Administrator and run operations manually.
+For immediate results or troubleshooting, you can RDP to the instance as Administrator and run operations manually.
 
 ## Volume Configuration
 
 ### EBS Volume Management
 
-**Volume changes do NOT trigger instance replacement.** Instances continue running during volume operations.
+Volume changes do not trigger instance replacement. Instances continue running during volume operations.
 
 ### Required Root Volume
 
@@ -324,7 +313,7 @@ volumes = {
 - `g4dn.4xlarge`: 225GB NVMe SSD (auto-assigned)
 - `g4dn.8xlarge`: 900GB NVMe SSD (auto-assigned)
 
-**Benefits**: Simple configuration with no drive letter conflicts, Windows native behavior, user customizable via Disk Management, and cost efficiency by utilizing included instance store.
+This avoids drive letter conflicts, follows Windows native behavior, and makes use of the included instance store.
 
 ### Volume Change Lifecycle
 
@@ -641,47 +630,24 @@ No modules.
 
 ### Dynamic Volume Operations
 
-**Adding/Resizing Volumes:**
+To add or resize volumes:
 
-1. Add or modify volumes in Terraform configuration
+1. Update volumes in your Terraform configuration
 2. Run `terraform apply`
-3. **Wait 5-10 minutes** for automatic SSM volume script execution
+3. Wait 5-10 minutes for the SSM volume script to execute
 4. Verify volumes are initialized via RDP
 
-**How it works:**
-
-- ✅ **Fully automated** - Lifecycle rules handle all triggering
-- ✅ **Reliable triggering** - Automatically detects volume changes
-- ✅ **Predictable timing** - 5-10 minutes for script execution
-- ✅ **Proper cleanup** - Drive letters managed automatically
-- ✅ **Clean plans** - No continuous Terraform drift
-
-#### Alternative: Manual Administration
-
-For immediate results, you can skip waiting for SSM and manually initialize volumes:
-
-1. RDP to instance as Administrator after `terraform apply`
-2. Run PowerShell commands to initialize volumes immediately
-3. Complete in under 2 minutes with full control
+Alternatively, you can RDP to the instance as Administrator after `terraform apply` and manually initialize volumes with PowerShell.
 
 ### Volume Limitations
 
-#### Volume Size Reduction - NOT SUPPORTED
+#### Volume Size Reduction
 
-**AWS Limitation**: EBS volumes cannot be reduced in size. This is an AWS platform
-limitation, not a module limitation.
+EBS volumes cannot be reduced in size. This is an AWS platform limitation. If you attempt to decrease volume capacity in Terraform, the apply will fail with `InvalidParameterValue`.
 
-**What Happens**: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):
+To work around this:
 
-```bash
-terraform apply
-# ❌ Error: InvalidParameterValue: Cannot decrease volume size from 500 to 200
-# ❌ The apply will FAIL IMMEDIATELY - no waiting required
-```
-
-**Workaround for Size Reduction**:
-
-1. **Create new smaller volume** in Terraform config
-2. **Manually migrate data** from old to new volume via RDP
-3. **Remove old volume** from Terraform config
-4. **Apply changes** - old volume will be deleted
+1. Create a new smaller volume in Terraform config
+2. Manually migrate data from the old volume to the new one via RDP
+3. Remove the old volume from Terraform config
+4. Run `terraform apply` — the old volume will be deleted
