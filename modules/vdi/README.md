@@ -637,13 +637,16 @@ To add or resize volumes:
 3. Wait 5-10 minutes for the SSM volume script to execute
 4. Verify volumes are initialized via RDP
 
-Alternatively, you can RDP to the instance as Administrator after `terraform apply` and manually initialize volumes with PowerShell.
+Alternatively, you can RDP to the instance as Administrator after
+`terraform apply` and manually initialize volumes with PowerShell.
 
 ### Volume Limitations
 
 #### Volume Size Reduction
 
-EBS volumes cannot be reduced in size. This is an AWS platform limitation. If you attempt to decrease volume capacity in Terraform, the apply will fail with `InvalidParameterValue`.
+EBS volumes cannot be reduced in size. This is an AWS platform limitation.
+If you attempt to decrease volume capacity in Terraform, the apply will
+fail with `InvalidParameterValue`.
 
 To work around this:
 
