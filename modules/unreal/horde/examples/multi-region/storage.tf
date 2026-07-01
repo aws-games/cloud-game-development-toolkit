@@ -1,10 +1,10 @@
-# S3 Multi-Region Access Point infrastructure for Horde SigV4a testing
+# S3 Multi-Region Access Point infrastructure for Horde artifact storage
 
 # --- S3 Buckets ---
 
 resource "aws_s3_bucket" "primary" {
   count  = var.enable_mrap ? 1 : 0
-  bucket = "horde-artifacts-us-east-1-968702293218"
+  bucket = "horde-artifacts-${var.primary_region}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "primary" {
@@ -18,7 +18,7 @@ resource "aws_s3_bucket_versioning" "primary" {
 resource "aws_s3_bucket" "secondary" {
   count    = var.enable_mrap ? 1 : 0
   provider = aws.secondary
-  bucket   = "horde-artifacts-eu-west-1-968702293218"
+  bucket   = "horde-artifacts-${var.secondary_region}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "secondary" {
@@ -34,19 +34,19 @@ resource "aws_s3_bucket_versioning" "secondary" {
 
 resource "aws_s3control_multi_region_access_point" "horde" {
   count      = var.enable_mrap ? 1 : 0
-  account_id = "968702293218"
+  account_id = data.aws_caller_identity.current.account_id
 
   details {
     name = "horde-mrap"
 
     region {
-      bucket       = aws_s3_bucket.primary[0].id
-      bucket_account_id = "968702293218"
+      bucket            = aws_s3_bucket.primary[0].id
+      bucket_account_id = data.aws_caller_identity.current.account_id
     }
 
     region {
-      bucket       = aws_s3_bucket.secondary[0].id
-      bucket_account_id = "968702293218"
+      bucket            = aws_s3_bucket.secondary[0].id
+      bucket_account_id = data.aws_caller_identity.current.account_id
     }
   }
 }
@@ -137,6 +137,12 @@ resource "aws_s3_bucket_replication_configuration" "primary_to_secondary" {
     id     = "replicate-to-secondary"
     status = "Enabled"
 
+    filter {}
+
+    delete_marker_replication {
+      status = "Enabled"
+    }
+
     destination {
       bucket        = aws_s3_bucket.secondary[0].arn
       storage_class = "STANDARD"
@@ -155,6 +161,12 @@ resource "aws_s3_bucket_replication_configuration" "secondary_to_primary" {
   rule {
     id     = "replicate-to-primary"
     status = "Enabled"
+
+    filter {}
+
+    delete_marker_replication {
+      status = "Enabled"
+    }
 
     destination {
       bucket        = aws_s3_bucket.primary[0].arn

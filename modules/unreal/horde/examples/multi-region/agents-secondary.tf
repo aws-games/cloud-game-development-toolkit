@@ -1,13 +1,3 @@
-data "aws_ami" "ubuntu_secondary" {
-  provider    = aws.secondary
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
-}
-
 # --- VPC ---
 
 resource "aws_vpc" "secondary_agents" {
@@ -118,6 +108,14 @@ resource "aws_security_group" "secondary_agents" {
     description = "HTTPS + gRPC to Horde server"
   }
 
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTP for apt package updates and dotnet install"
+  }
+
   tags = merge(local.tags, { Name = "horde-agents-eu" })
 }
 
@@ -130,8 +128,8 @@ resource "aws_iam_role" "secondary_agents" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }
     }]
   })
@@ -230,12 +228,12 @@ EOF
 # --- ASG ---
 
 resource "aws_autoscaling_group" "secondary_agents" {
-  count              = var.enable_secondary_region ? 1 : 0
-  provider           = aws.secondary
-  name_prefix        = "horde-agents-eu-"
-  min_size           = 0
-  max_size           = 2
-  desired_capacity   = 0
+  count               = var.enable_secondary_region ? 1 : 0
+  provider            = aws.secondary
+  name_prefix         = "horde-agents-eu-"
+  min_size            = 0
+  max_size            = 2
+  desired_capacity    = 0
   vpc_zone_identifier = aws_subnet.secondary_agents_private[*].id
 
   launch_template {

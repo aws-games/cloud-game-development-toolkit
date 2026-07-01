@@ -1,10 +1,10 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.primary_region
 }
 
 provider "aws" {
   alias  = "secondary"
-  region = "eu-west-1"
+  region = var.secondary_region
 }
 
 module "horde" {
@@ -30,7 +30,7 @@ module "horde" {
       max_size      = 2
       block_device_mappings = [{
         device_name = "/dev/sda1"
-        ebs = { volume_size = 64 }
+        ebs         = { volume_size = 64 }
       }]
     }
   } : {}
@@ -49,22 +49,24 @@ module "horde" {
       value = "true"
     },
     {
-      name  = "Horde__Compute__WithAws"
+      name  = "Horde__Plugins__Compute__WithAws"
       value = "true"
     },
     {
-      name  = "Horde__Plugins__Tools__Tools__0__Id"
-      value = "horde-agent"
-    },
-    {
-      name  = "Horde__Plugins__Tools__Tools__0__Name"
-      value = "Horde Agent"
-    },
-    {
-      name  = "Horde__Plugins__Tools__Tools__0__Public"
-      value = "true"
+      name  = "AWS_REGION"
+      value = var.primary_region
     },
   ]
 
   depends_on = [aws_acm_certificate_validation.horde]
+}
+
+# Allow HTTPS ingress to the external ALB from anywhere (agents + developers)
+resource "aws_vpc_security_group_ingress_rule" "external_alb_https" {
+  security_group_id = module.horde.external_alb_sg_id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow HTTPS from anywhere (agents + developers)"
 }
