@@ -1,0 +1,7 @@
+# Copy this file to terraform.tfvars and fill in your values.
+#
+# container_image: Your Lore server ECR image URI
+# allowed_ingress_cidrs: Network ranges that can reach the server
+
+container_image       = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.1.0"
+allowed_ingress_cidrs = ["10.0.0.0/8"]
