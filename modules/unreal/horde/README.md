@@ -1,15 +1,17 @@
 # Unreal Horde
 
-[Unreal Engine Horde](https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde) is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the [image available from the Epic Games Github organization.](https://github.com/orgs/EpicGames/packages/container/package/horde-server). Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an [Amazon Elasticache with Redis OSS Compatibility](https://aws.amazon.com/elasticache/redis/) cluster and an [Amazon DocumentDB](https://aws.amazon.com/documentdb/) cluster.
+[Unreal Engine Horde](https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde) is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the [image available from the Epic Games Github organization](https://github.com/orgs/EpicGames/packages/container/package/horde-server). Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an [Amazon Elasticache with Redis OSS Compatibility](https://aws.amazon.com/elasticache/redis/) cluster and an [Amazon DocumentDB](https://aws.amazon.com/documentdb/) cluster.
 
 Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde module:
 
 [![Watch the video](https://img.youtube.com/vi/kIP4wsVprYY/0.jpg)](https://www.youtube.com/watch?v=kIP4wsVprYY)
 
 ## Deployment Architecture
+
 ![Unreal Engine Horde Module Architecture](./assets/media/diagrams/unreal-engine-horde-architecture.png)
 
 ## Prerequisites
+
 Unreal Engine Horde is only available through the Epic Games Github organization's package registry or the Unreal Engine source code. In order to get access to this software you will need to [join the Epic Games organization](https://github.com/EpicGames/Signup) on Github and accept the Unreal Engine EULA.
 
 ## Examples
@@ -19,7 +21,7 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
-# Horde Server Source Build Deployment Guide
+## Horde Server Source Build Deployment Guide
 
 This guide documents how to build Horde Server from source and use the build as part of your Horde deployment with the Cloud Game Development Toolkit.
 
@@ -34,12 +36,14 @@ This guide documents how to build Horde Server from source and use the build as 
 You can follow the steps documented in the [Unreal Engine Source Code](https://github.com/EpicGames/UnrealEngine/tree/release). Be sure to run both Setup and GenerateProjectFiles scripts before proceeding.
 
 ## Authenticate to your ECR registry
+
 In a terminal window, run the following command to authenticate to your ECR registry:
+
 ```bash
-    aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region.>.amazonaws.com
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account-id>.dkr.ecr.<region>.amazonaws.com
 ```
 
-## Create a repsoitory in Amazon ECR for storing your Horde Server container image:
+## Create a repository in Amazon ECR for storing your Horde Server container image
 
 In a terminal window, run the following command:
 ```bash
@@ -48,7 +52,7 @@ aws ecr create-repository --repository-name horde-server --image-scanning-config
 
 ## Build Horde Server container image from source and publish to Amazon ECR
 
-### For devices using ARM64 architecture
+### Modify the Dockerfile for multi-architecture support
 
 1. In an IDE, open the Horde Server Dockerfile located at `/Engine/Source/Programs/Horde/HordeServer/Dockerfile`.
 2. Replace the code between `COPY --from=redis /usr/local/bin/redis-server /usr/local/bin/redis-server` and `COPY Source/Programs/Shared/EpicGames.Core/*.csproj ./Source/Programs/Shared/EpicGames.Core/` with the following:
@@ -96,57 +100,58 @@ RUN ARCH=$(dpkg --print-architecture) && \
         rm -rf /app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so; \
     fi
 ```
-## Update server.json (Optional)
-
-
 ## Update the Horde BuildGraph
 
-1. In an IDE, open the file `Engine/Source/Programs/Horde/BuildHorde.xml `.
-2. Create a new build target to build the Hord Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for `<account-id>` and `<region>` with your own values.
+1. In an IDE, open the file `Engine/Source/Programs/Horde/BuildHorde.xml`.
+2. Create a new build target to build the Horde Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for `<account-id>` and `<region>` with your own values.
     ```xml
     <Node Name="Build and Publish HordeServer to ECR" Requires="Build HordeServer;Build HordeDashboard">
         <!-- Create a new image by combining server and dashboard image into one -->
         <Docker-Build BaseDir="Engine/Source/Programs/Horde/HordeServer" Files="Dockerfile*" UseBuildKit="true" Tag="horde-server" DockerFile="Engine/Source/Programs/Horde/HordeServer/Dockerfile.dashboard" />
 
         <!-- Publish the docker image to Amazon ECR -->
-        <Docker-Push Repository="<account-id>.dkr.ecr.<region>.amazonaws.com" Image="horde-server" TargetImage="horde/horde-server:$(Version)" AwsEcr="True" />
+        <Docker-Push Repository="<account-id>.dkr.ecr.<region>.amazonaws.com" Image="horde-server" TargetImage="horde-server:$(Version)" AwsEcr="True" />
     </Node>
     ```
 
-4. In your terminal window, and navigate to `Engine/Build/BatchFiles`.
+3. In your terminal window, navigate to `Engine/Build/BatchFiles`.
     ```bash
     cd Engine/Build/BatchFiles
     ```
 
-6. Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.
+4. Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.
+
     ### Windows
+
     ```powershell
     RunUAT.bat BuildGraph -Script=Engine/Source/Programs/Horde/BuildHorde.xml -Target="Build and Publish HordeServer to ECR"
     ```
 
     ### Linux and Mac
+
     ```bash
     ./RunUAT.sh BuildGraph -Script=Engine/Source/Programs/Horde/BuildHorde.xml -Target="Build and Publish HordeServer to ECR"
     ```
 
-7. Note the URI of the image that was published to Amazon ECR. It should be in the format of `<account-id>.dkr.ecr.<region>.amazonaws.com/horde/horde-server:<version>`
+5. Note the URI of the image that was published to Amazon ECR. It should be in the format of `<account-id>.dkr.ecr.<region>.amazonaws.com/horde-server:<version>`
 
-8. You can also locate the URI of the image in the AWS Console under Amazon ECR, or using the AWS CLI command:
+6. You can also locate the URI of the image in the AWS Console under Amazon ECR, or using the AWS CLI command:
     ```bash
     aws ecr describe-images --repository-name horde-server
     ```
 
 ## Update your Cloud Game Development Toolkit configuration
 
-In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the `image` variable. For this example we will be using the example deployment located at `modules/unreal/horde/examples/complete`
+In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the `image` variable. For this example we will be using the example deployment located at `modules/unreal/horde/examples/complete`.
+
 1. In your IDE, open the main.tf located at `modules/unreal/horde/examples/complete/main.tf`.
-2. Under the module declaration `"unreal_engine_horde"` add the following line with the value of the image URI you noted earlier. Be sure to also set the value of `is_source_build` to `true` and set the value of `horde_server_architecture` to `ARM64` or `X_86` by passing the value with the `var.horde_server_architecture` variable as shown below:
-    ```python
+2. Under the module declaration `"unreal_engine_horde"` add the following line with the value of the image URI you noted earlier. Be sure to also set the value of `is_source_build` to `true` and set the value of `horde_server_architecture` to `ARM64` or `X86_64` as shown below:
+    ```hcl
     module "unreal_engine_horde" {
         ...
-        image = "<image-uri>"
-        is_source_build = true
-        horde_server_architecture = "<horde-server-architecture>"
+        image                     = "<image-uri>"
+        is_source_build           = true
+        horde_server_architecture = "<ARM64 or X86_64>"
         ...
     }
     ```
@@ -156,6 +161,7 @@ In order to use your newly created container image as your Horde Server image, y
     terraform apply
     ```
 
+<!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
@@ -360,3 +366,4 @@ No modules.
 | <a name="output_internal_alb_zone_id"></a> [internal\_alb\_zone\_id](#output\_internal\_alb\_zone\_id) | n/a |
 | <a name="output_service_security_group_id"></a> [service\_security\_group\_id](#output\_service\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
