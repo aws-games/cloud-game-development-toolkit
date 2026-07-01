@@ -7,8 +7,9 @@ LOGS_VOLUME_NAME=${logs_volume_name}
     --hx_metadata $METADATA_VOLUME_NAME \
     --hx_depots $DEPOT_VOLUME_NAME \
     --p4d_type ${p4_server_type} \
-    --username ${username_secret} \
-    --password ${password_secret} \
+    --super_password ${super_password_secret} \
+    --admin_username ${admin_username_secret} \
+    --admin_password ${admin_password_secret} \
     %{ if fqdn != "" ~}
     --fqdn ${fqdn} \
     %{ endif ~}

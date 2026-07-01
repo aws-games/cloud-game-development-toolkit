@@ -121,7 +121,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
     }),
     {
       name                     = "unreal-horde-docdb-cert",
-      image                    = "public.ecr.aws/docker/library/bash:latest",
+      image                    = "public.ecr.aws/docker/library/bash:5.3",
       essential                = false
       command                  = ["wget", "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem", "-P", "/app/config/"]
       readonly_root_filesystem = false

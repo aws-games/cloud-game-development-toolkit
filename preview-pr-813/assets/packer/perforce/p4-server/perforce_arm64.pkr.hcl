@@ -60,6 +60,14 @@ source "amazon-ebs" "al2023" {
   }
 
   ssh_username = "ec2-user"
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+  imds_support = "v2.0"
 }
 
 build {

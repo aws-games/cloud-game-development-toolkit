@@ -99,6 +99,14 @@ source "amazon-ebs" "base" {
   associate_public_ip_address = var.associate_public_ip_address
   ssh_interface = var.ssh_interface
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+  imds_support = "v2.0"
+
   # storage specifications - expand root
   launch_block_device_mappings {
     device_name = "/dev/sda1"

@@ -66,9 +66,7 @@ module "terraform-aws-perforce" {
     name                        = "p4-auth"
     fully_qualified_domain_name = local.p4_auth_fully_qualified_domain_name
     debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0
     service_subnets             = aws_subnet.private_subnets[*].id
-    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
   }
 
 
@@ -76,15 +74,9 @@ module "terraform-aws-perforce" {
   p4_code_review_config = {
     name                        = "p4-code-review"
     fully_qualified_domain_name = local.p4_code_review_fully_qualified_domain_name
-    debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0
+    instance_subnet_id          = aws_subnet.private_subnets[0].id
     service_subnets             = aws_subnet.private_subnets[*].id
-    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
-
-    # Configuration
-    enable_sso = true
-
-    p4d_port = "ssl:${local.p4_server_fully_qualified_domain_name}:1666"
+    p4d_port                    = "ssl:${local.p4_server_fully_qualified_domain_name}:1666"
   }
 }
 ##########################################

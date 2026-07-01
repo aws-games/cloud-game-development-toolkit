@@ -107,6 +107,14 @@ source "amazon-ebs" "ue-gamedev" {
   associate_public_ip_address     = var.associate_public_ip_address
   capacity_reservation_preference = var.capacity_reservation_preference
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+  imds_support = "v2.0"
+
   launch_block_device_mappings {
     device_name           = "/dev/sda1"
     volume_size           = var.root_volume_size
@@ -165,19 +173,14 @@ build {
     script            = "../shared/sysprep.ps1"
   }
 
-  # Clean restart before sysprep
-  provisioner "windows-restart" {
-    restart_timeout = "5m"
-  }
 
-  # Run sysprep and shutdown
+  # Run sysprep and shutdown - no restart needed
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
     inline = [
       "Write-Host 'Starting sysprep for UE GameDev VDI AMI...'",
-      "Start-Process -FilePath \"$${env:ProgramFiles}\\Amazon\\EC2Launch\\ec2launch.exe\" -ArgumentList 'sysprep', '--shutdown' -WindowStyle Hidden -Wait:$false",
-      "Start-Sleep -Seconds 5"
+      "C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /shutdown /unattend:C:\\ProgramData\\Amazon\\EC2Launch\\sysprep2008.xml"
     ]
   }
 }

@@ -22,5 +22,9 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.5"
     }
+    netapp-ontap = {
+      source  = "NetApp/netapp-ontap"
+      version = "~> 2.3"
+    }
   }
 }

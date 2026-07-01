@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.6">
     
     
       
@@ -638,6 +638,8 @@
       
         
       
+        
+      
     
     
     
@@ -933,6 +935,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
         
   
@@ -1025,7 +1055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../docs/assets/dockerfiles.html" class="md-nav__link">
+      <a href="../../../docs/assets/docker/index.html" class="md-nav__link">
         
   
   
@@ -3313,6 +3343,205 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#horde-server-source-build-deployment-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Horde Server Source Build Deployment Guide
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fork-and-clone-the-unreal-engine-github-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fork and clone the Unreal Engine Github repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authenticate-to-your-ecr-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authenticate to your ECR registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-repository-in-amazon-ecr-for-storing-your-horde-server-container-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a repository in Amazon ECR for storing your Horde Server container image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-horde-server-container-image-from-source-and-publish-to-amazon-ecr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Horde Server container image from source and publish to Amazon ECR
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build Horde Server container image from source and publish to Amazon ECR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modify-the-dockerfile-for-multi-architecture-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modify the Dockerfile for multi-architecture support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-the-horde-buildgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update the Horde BuildGraph
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update the Horde BuildGraph">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-and-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux and Mac
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-your-cloud-game-development-toolkit-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update your Cloud Game Development Toolkit configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3334,7 +3563,7 @@
 
 
 <h1 id="unreal-horde">Unreal Horde<a class="headerlink" href="#unreal-horde" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde">Unreal Engine Horde</a> is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the image available from the Epic Games Github organization (requires <a href="https://github.com/EpicGames/Signup">Epic Games organization membership</a>). Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an <a href="https://aws.amazon.com/elasticache/redis/">Amazon Elasticache with Redis OSS Compatibility</a> cluster and an <a href="https://aws.amazon.com/documentdb/">Amazon DocumentDB</a> cluster.</p>
+<p><a href="https://github.com/EpicGames/UnrealEngine/tree/5.4/Engine/Source/Programs/Horde">Unreal Engine Horde</a> is a set of services supporting workflows Epic uses to develop Fortnite, Unreal Engine, and other titles. This module deploys the Unreal Engine Horde server on AWS Elastic Container Service using the <a href="https://github.com/orgs/EpicGames/packages/container/package/horde-server">image available from the Epic Games Github organization</a>. Unreal Engine Horde relies on a Redis cache and a MongoDB compatible database. This module provides these services by provisioning an <a href="https://aws.amazon.com/elasticache/redis/">Amazon Elasticache with Redis OSS Compatibility</a> cluster and an <a href="https://aws.amazon.com/documentdb/">Amazon DocumentDB</a> cluster.</p>
 <p>Check out this video from Unreal Fest 2024 to learn more about the Unreal Horde module:</p>
 <p><a href="https://www.youtube.com/watch?v=kIP4wsVprYY"><img alt="Watch the video" src="https://img.youtube.com/vi/kIP4wsVprYY/0.jpg" /></a></p>
 <h2 id="deployment-architecture">Deployment Architecture<a class="headerlink" href="#deployment-architecture" title="Permanent link">&para;</a></h2>
@@ -3345,7 +3574,8 @@
 <p>For example configurations, please see the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/horde/examples">examples</a>.</p>
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
-<h1 id="horde-server-source-build-deployment-guide">Horde Server Source Build Deployment Guide<a class="headerlink" href="#horde-server-source-build-deployment-guide" title="Permanent link">&para;</a></h1>
+
+<h2 id="horde-server-source-build-deployment-guide">Horde Server Source Build Deployment Guide<a class="headerlink" href="#horde-server-source-build-deployment-guide" title="Permanent link">&para;</a></h2>
 <p>This guide documents how to build Horde Server from source and use the build as part of your Horde deployment with the Cloud Game Development Toolkit.</p>
 <h2 id="prerequisites_1">Prerequisites<a class="headerlink" href="#prerequisites_1" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3356,15 +3586,15 @@
 <h2 id="fork-and-clone-the-unreal-engine-github-repository">Fork and clone the Unreal Engine Github repository<a class="headerlink" href="#fork-and-clone-the-unreal-engine-github-repository" title="Permanent link">&para;</a></h2>
 <p>You can follow the steps documented in the <a href="https://github.com/EpicGames/UnrealEngine/tree/release">Unreal Engine Source Code</a>. Be sure to run both Setup and GenerateProjectFiles scripts before proceeding.</p>
 <h2 id="authenticate-to-your-ecr-registry">Authenticate to your ECR registry<a class="headerlink" href="#authenticate-to-your-ecr-registry" title="Permanent link">&para;</a></h2>
-<p>In a terminal window, run the following command to authenticate to your ECR registry:
-<div class="highlight"><pre><span></span><code><span class="w">    </span>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span>&lt;account-id&gt;.dkr.ecr.&lt;region.&gt;.amazonaws.com
-</code></pre></div></p>
-<h2 id="create-a-repsoitory-in-amazon-ecr-for-storing-your-horde-server-container-image">Create a repsoitory in Amazon ECR for storing your Horde Server container image:<a class="headerlink" href="#create-a-repsoitory-in-amazon-ecr-for-storing-your-horde-server-container-image" title="Permanent link">&para;</a></h2>
+<p>In a terminal window, run the following command to authenticate to your ECR registry:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span>&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com
+</code></pre></div>
+<h2 id="create-a-repository-in-amazon-ecr-for-storing-your-horde-server-container-image">Create a repository in Amazon ECR for storing your Horde Server container image<a class="headerlink" href="#create-a-repository-in-amazon-ecr-for-storing-your-horde-server-container-image" title="Permanent link">&para;</a></h2>
 <p>In a terminal window, run the following command:
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ecr<span class="w"> </span>create-repository<span class="w"> </span>--repository-name<span class="w"> </span>horde-server<span class="w"> </span>--image-scanning-configuration<span class="w"> </span><span class="nv">scanOnPush</span><span class="o">=</span><span class="nb">true</span>
 </code></pre></div></p>
 <h2 id="build-horde-server-container-image-from-source-and-publish-to-amazon-ecr">Build Horde Server container image from source and publish to Amazon ECR<a class="headerlink" href="#build-horde-server-container-image-from-source-and-publish-to-amazon-ecr" title="Permanent link">&para;</a></h2>
-<h3 id="for-devices-using-arm64-architecture">For devices using ARM64 architecture<a class="headerlink" href="#for-devices-using-arm64-architecture" title="Permanent link">&para;</a></h3>
+<h3 id="modify-the-dockerfile-for-multi-architecture-support">Modify the Dockerfile for multi-architecture support<a class="headerlink" href="#modify-the-dockerfile-for-multi-architecture-support" title="Permanent link">&para;</a></h3>
 <ol>
 <li>In an IDE, open the Horde Server Dockerfile located at <code>/Engine/Source/Programs/Horde/HordeServer/Dockerfile</code>.</li>
 <li>
@@ -3410,39 +3640,38 @@
 <span class="w">        </span>rm<span class="w"> </span>-rf<span class="w"> </span>/app/out/runtimes/linux/native/libgrpc_csharp_ext.x64.so<span class="p">;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span><span class="k">fi</span>
 </code></pre></div></p>
-<h2 id="update-serverjson-optional">Update server.json (Optional)<a class="headerlink" href="#update-serverjson-optional" title="Permanent link">&para;</a></h2>
-</li>
-</ol>
 <h2 id="update-the-horde-buildgraph">Update the Horde BuildGraph<a class="headerlink" href="#update-the-horde-buildgraph" title="Permanent link">&para;</a></h2>
-<ol>
-<li>In an IDE, open the file <code>Engine/Source/Programs/Horde/BuildHorde.xml</code>.</li>
+</li>
 <li>
-<p>Create a new build target to build the Hord Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for <code>&lt;account-id&gt;</code> and <code>&lt;region&gt;</code> with your own values.
+<p>In an IDE, open the file <code>Engine/Source/Programs/Horde/BuildHorde.xml</code>.</p>
+</li>
+<li>
+<p>Create a new build target to build the Horde Server with the Dashboard and push the image to your Amazon ECR repository. Be sure to replace the values for <code>&lt;account-id&gt;</code> and <code>&lt;region&gt;</code> with your own values.
     <div class="highlight"><pre><span></span><code><span class="nt">&lt;Node</span><span class="w"> </span><span class="na">Name=</span><span class="s">&quot;Build and Publish HordeServer to ECR&quot;</span><span class="w"> </span><span class="na">Requires=</span><span class="s">&quot;Build HordeServer;Build HordeDashboard&quot;</span><span class="nt">&gt;</span>
 <span class="w">    </span><span class="cm">&lt;!-- Create a new image by combining server and dashboard image into one --&gt;</span>
 <span class="w">    </span><span class="nt">&lt;Docker-Build</span><span class="w"> </span><span class="na">BaseDir=</span><span class="s">&quot;Engine/Source/Programs/Horde/HordeServer&quot;</span><span class="w"> </span><span class="na">Files=</span><span class="s">&quot;Dockerfile*&quot;</span><span class="w"> </span><span class="na">UseBuildKit=</span><span class="s">&quot;true&quot;</span><span class="w"> </span><span class="na">Tag=</span><span class="s">&quot;horde-server&quot;</span><span class="w"> </span><span class="na">DockerFile=</span><span class="s">&quot;Engine/Source/Programs/Horde/HordeServer/Dockerfile.dashboard&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
 
 <span class="w">    </span><span class="cm">&lt;!-- Publish the docker image to Amazon ECR --&gt;</span>
-<span class="w">    </span><span class="nt">&lt;Docker-Push</span><span class="w"> </span><span class="na">Repository=</span><span class="s">&quot;&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com&quot;</span><span class="w"> </span><span class="na">Image=</span><span class="s">&quot;horde-server&quot;</span><span class="w"> </span><span class="na">TargetImage=</span><span class="s">&quot;horde/horde-server:$(Version)&quot;</span><span class="w"> </span><span class="na">AwsEcr=</span><span class="s">&quot;True&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Docker-Push</span><span class="w"> </span><span class="na">Repository=</span><span class="s">&quot;&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com&quot;</span><span class="w"> </span><span class="na">Image=</span><span class="s">&quot;horde-server&quot;</span><span class="w"> </span><span class="na">TargetImage=</span><span class="s">&quot;horde-server:$(Version)&quot;</span><span class="w"> </span><span class="na">AwsEcr=</span><span class="s">&quot;True&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
 <span class="nt">&lt;/Node&gt;</span>
 </code></pre></div></p>
 </li>
 <li>
-<p>In your terminal window, and navigate to <code>Engine/Build/BatchFiles</code>.
+<p>In your terminal window, navigate to <code>Engine/Build/BatchFiles</code>.
     <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>Engine/Build/BatchFiles
 </code></pre></div></p>
 </li>
 <li>
-<p>Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.
-    ### Windows
-    <div class="highlight"><pre><span></span><code><span class="n">RunUAT</span><span class="p">.</span><span class="n">bat</span> <span class="n">BuildGraph</span> <span class="n">-Script</span><span class="p">=</span><span class="n">Engine</span><span class="p">/</span><span class="n">Source</span><span class="p">/</span><span class="n">Programs</span><span class="p">/</span><span class="n">Horde</span><span class="p">/</span><span class="n">BuildHorde</span><span class="p">.</span><span class="n">xml</span> <span class="n">-Target</span><span class="p">=</span><span class="s2">&quot;Build and Publish HordeServer to ECR&quot;</span>
-</code></pre></div></p>
+<p>Run the following command to build the Horde Server and Dashboard, then publish your docker image to Amazon ECR.</p>
+<h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">RunUAT</span><span class="p">.</span><span class="n">bat</span> <span class="n">BuildGraph</span> <span class="n">-Script</span><span class="p">=</span><span class="n">Engine</span><span class="p">/</span><span class="n">Source</span><span class="p">/</span><span class="n">Programs</span><span class="p">/</span><span class="n">Horde</span><span class="p">/</span><span class="n">BuildHorde</span><span class="p">.</span><span class="n">xml</span> <span class="n">-Target</span><span class="p">=</span><span class="s2">&quot;Build and Publish HordeServer to ECR&quot;</span>
+</code></pre></div>
 <h3 id="linux-and-mac">Linux and Mac<a class="headerlink" href="#linux-and-mac" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>./RunUAT.sh<span class="w"> </span>BuildGraph<span class="w"> </span>-Script<span class="o">=</span>Engine/Source/Programs/Horde/BuildHorde.xml<span class="w"> </span>-Target<span class="o">=</span><span class="s2">&quot;Build and Publish HordeServer to ECR&quot;</span>
 </code></pre></div>
 </li>
 <li>
-<p>Note the URI of the image that was published to Amazon ECR. It should be in the format of <code>&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/horde/horde-server:&lt;version&gt;</code></p>
+<p>Note the URI of the image that was published to Amazon ECR. It should be in the format of <code>&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/horde-server:&lt;version&gt;</code></p>
 </li>
 <li>
 <p>You can also locate the URI of the image in the AWS Console under Amazon ECR, or using the AWS CLI command:
@@ -3451,21 +3680,23 @@
 </li>
 </ol>
 <h2 id="update-your-cloud-game-development-toolkit-configuration">Update your Cloud Game Development Toolkit configuration<a class="headerlink" href="#update-your-cloud-game-development-toolkit-configuration" title="Permanent link">&para;</a></h2>
-<p>In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the <code>image</code> variable. For this example we will be using the example deployment located at <code>modules/unreal/horde/examples/complete</code>
-1. In your IDE, open the main.tf located at <code>modules/unreal/horde/examples/complete/main.tf</code>.
-2. Under the module declaration <code>"unreal_engine_horde"</code> add the following line with the value of the image URI you noted earlier. Be sure to also set the value of <code>is_source_build</code> to <code>true</code> and set the value of <code>horde_server_architecture</code> to <code>ARM64</code> or <code>X_86</code> by passing the value with the <code>var.horde_server_architecture</code> variable as shown below:
-    <div class="highlight"><pre><span></span><code><span class="n">module</span> <span class="s2">&quot;unreal_engine_horde&quot;</span> <span class="p">{</span>
-    <span class="o">...</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="s2">&quot;&lt;image-uri&gt;&quot;</span>
-    <span class="n">is_source_build</span> <span class="o">=</span> <span class="n">true</span>
-    <span class="n">horde_server_architecture</span> <span class="o">=</span> <span class="s2">&quot;&lt;horde-server-architecture&gt;&quot;</span>
-    <span class="o">...</span>
+<p>In order to use your newly created container image as your Horde Server image, you will need to specify the URI of the image as the value for the <code>image</code> variable. For this example we will be using the example deployment located at <code>modules/unreal/horde/examples/complete</code>.</p>
+<ol>
+<li>In your IDE, open the main.tf located at <code>modules/unreal/horde/examples/complete/main.tf</code>.</li>
+<li>Under the module declaration <code>"unreal_engine_horde"</code> add the following line with the value of the image URI you noted earlier. Be sure to also set the value of <code>is_source_build</code> to <code>true</code> and set the value of <code>horde_server_architecture</code> to <code>ARM64</code> or <code>X86_64</code> as shown below:
+    <div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;unreal_engine_horde&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="na">image</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&lt;image-uri&gt;&quot;</span>
+<span class="w">    </span><span class="na">is_source_build</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">    </span><span class="na">horde_server_architecture</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&lt;ARM64 or X86_64&gt;&quot;</span>
+<span class="w">    </span><span class="p">...</span>
 <span class="p">}</span>
-</code></pre></div>
-3. In a new terminal window, navigate to the directory <code>modules/unreal/horde/examples/complete</code> and run the following commands:
+</code></pre></div></li>
+<li>In a new terminal window, navigate to the directory <code>modules/unreal/horde/examples/complete</code> and run the following commands:
     <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 terraform<span class="w"> </span>apply
-</code></pre></div></p>
+</code></pre></div></li>
+</ol>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -4453,7 +4684,7 @@ terraform<span class="w"> </span>apply
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-19
+    2026-07-01
   </span>
 
     

@@ -68,21 +68,21 @@ variable "is_source_build" {
 
 variable "horde_server_architecture" {
   type        = string
-  description = "The CPU architecture for Horde server container. Valid values: x86 or arm64"
+  description = "The CPU architecture for Horde server container. Valid values: X86_64 or ARM64"
   default     = "X86_64"
   validation {
     condition     = contains(["X86_64", "ARM64"], var.horde_server_architecture)
-    error_message = "horde_server_architecture must be either 'X_86' or 'ARM64'"
+    error_message = "horde_server_architecture must be either 'X86_64' or 'ARM64'"
   }
 }
 
 variable "operating_system" {
   type        = string
-  description = "The operating system for the Horde server container. Valid values: linux or windows"
-  default     = "WINDOWS_SERVER_2019_CORE"
+  description = "The operating system for the Horde server container. Valid values: LINUX, WINDOWS_SERVER_2019_CORE, etc."
+  default     = "LINUX"
   validation {
     condition     = contains(["LINUX", "WINDOWS_SERVER_2025_FULL", "WINDOWS_SERVER_2025_CORE", "WINDOWS_SERVER_2022_FULL", "WINDOWS_SERVER_2022_CORE", "WINDOWS_SERVER_2019_FULL", "WINDOWS_SERVER_2019_CORE"], var.operating_system)
-    error_message = "Operating_system must be either LINUX, WINDOWS_SERVER_2025_FULL, WINDOWS_SERVER_2025_CORE, WINDOWS_SERVER_2022_FULL, WINDOWS_SERVER_2022_CORE, WINDOWS_SERVER_2019_FULL, and WINDOWS_SERVER_2019_CORE."
+    error_message = "operating_system must be one of: LINUX, WINDOWS_SERVER_2025_FULL, WINDOWS_SERVER_2025_CORE, WINDOWS_SERVER_2022_FULL, WINDOWS_SERVER_2022_CORE, WINDOWS_SERVER_2019_FULL, WINDOWS_SERVER_2019_CORE."
   }
 }
 

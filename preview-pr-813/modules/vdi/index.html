@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.6">
     
     
       
@@ -638,6 +638,8 @@
       
         
       
+        
+      
     
     
     
@@ -933,6 +935,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
         
   
@@ -1025,7 +1055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/assets/dockerfiles.html" class="md-nav__link">
+      <a href="../../docs/assets/docker/index.html" class="md-nav__link">
         
   
   
@@ -3487,10 +3517,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#critical-wait-for-windows-boot" class="md-nav__link">
+  <a href="#wait-for-windows-boot" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ⚠️ CRITICAL: Wait for Windows Boot
+        Wait for Windows Boot
       
     </span>
   </a>
@@ -3885,18 +3915,19 @@
 <h1 id="vdi-virtual-desktop-infrastructure-module">VDI (Virtual Desktop Infrastructure) Module<a class="headerlink" href="#vdi-virtual-desktop-infrastructure-module" title="Permanent link">&para;</a></h1>
 <p><a href="../../LICENSE"><img alt="License: MIT-0" src="https://img.shields.io/badge/License-MIT-0" /></a></p>
 <blockquote>
-<p><strong>ℹ️ Prerequisites</strong>: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations">Packer templates</a> (<code>lightweight/</code> and <code>ue-gamedev/</code>), but any Windows Server 2019/2022/2025 AMI works. See <a href="https://docs.aws.amazon.com/dcv/">Amazon DCV Documentation</a> for complete setup guidance.</p>
+<p><strong>Prerequisites</strong>: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations">Packer templates</a> (<code>lightweight/</code> and <code>ue-gamedev/</code>), but any Windows Server 2019/2022/2025 AMI works. See <a href="https://docs.aws.amazon.com/dcv/">Amazon DCV Documentation</a> for complete setup guidance.</p>
+<p><strong>Testing and Development Only</strong>: This module is designed for testing and development workflows. It is not recommended for production use. For production virtual desktop solutions, consider <a href="https://aws.amazon.com/workspaces/">Amazon WorkSpaces</a> or <a href="https://aws.amazon.com/appstream2/">Amazon AppStream 2.0</a>.</p>
 </blockquote>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Amazon DCV Integration</strong> - High-performance streaming protocol optimized for graphics workloads</li>
-<li><strong>Dual Connectivity</strong> - Public internet or private VPN access with custom DNS support</li>
-<li><strong>Game Development Ready</strong> - GPU instances, high-performance storage, UE-optimized AMIs</li>
-<li><strong>Intelligent Drive Management</strong> - Automatic Windows drive letter assignment and volume lifecycle</li>
-<li><strong>Complete VDI Infrastructure</strong> - EC2 workstations, security, IAM, and user management</li>
-<li><strong>Security by Default</strong> - Least privilege IAM, encrypted storage, restricted network access, termination protection</li>
-<li><strong>Flexible Authentication</strong> - EC2 key pairs (emergency) and Secrets Manager (production)</li>
-<li><strong>Runtime Software Installation</strong> - Automated package installation via SSM and Chocolatey</li>
+<li>Amazon DCV for high-performance remote streaming of graphics workloads</li>
+<li>Public internet or private VPN access with custom DNS support</li>
+<li>GPU instances, high-performance storage, and UE-optimized AMIs</li>
+<li>Automatic Windows drive letter assignment and EBS volume lifecycle management</li>
+<li>IAM, security groups, and user management included</li>
+<li>Encrypted storage, restricted network access, and termination protection</li>
+<li>EC2 key pairs (emergency) and Secrets Manager (production) for authentication</li>
+<li>Automated software installation via SSM and Chocolatey</li>
 </ul>
 <h2 id="connectivity-patterns">Connectivity Patterns<a class="headerlink" href="#connectivity-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="public-connectivity">Public Connectivity<a class="headerlink" href="#public-connectivity" title="Permanent link">&para;</a></h3>
@@ -3967,28 +3998,28 @@
 </thead>
 <tbody>
 <tr>
-<td>🆘 <strong>Administrator</strong> (built-in)</td>
+<td><strong>Administrator</strong> (built-in)</td>
 <td>Windows boot</td>
 <td>EC2 Key Pair</td>
 <td>All workstations</td>
 <td>Emergency break-glass only</td>
 </tr>
 <tr>
-<td>🛡️ <strong>Fleet Admin</strong> (<code>fleet_administrator</code>)</td>
+<td><strong>Fleet Admin</strong> (<code>fleet_administrator</code>)</td>
 <td>SSM (if defined)</td>
 <td>Secrets Manager</td>
 <td>All workstations</td>
 <td>Fleet management</td>
 </tr>
 <tr>
-<td>🔧 <strong>Local Admin</strong> (<code>administrator</code>)</td>
+<td><strong>Local Admin</strong> (<code>administrator</code>)</td>
 <td>SSM (if defined)</td>
 <td>Secrets Manager</td>
 <td>Assigned workstation</td>
 <td>Local administration</td>
 </tr>
 <tr>
-<td>💻 <strong>Standard User</strong> (<code>user</code>)</td>
+<td><strong>Standard User</strong> (<code>user</code>)</td>
 <td>SSM (if defined)</td>
 <td>Secrets Manager</td>
 <td>Assigned workstation</td>
@@ -3996,7 +4027,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Key Point</strong>: Only the built-in Administrator exists automatically. All other accounts must be explicitly defined in the <code>users</code> variable.</p>
+<p>Only the built-in Administrator exists automatically. All other accounts must be explicitly defined in the <code>users</code> variable.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ol>
 <li>
@@ -4016,7 +4047,7 @@
 <li><strong>Private connectivity</strong>: VPN setup and VPC CIDR planning</li>
 </ol>
 <h2 id="cost-estimates">Cost Estimates<a class="headerlink" href="#cost-estimates" title="Permanent link">&para;</a></h2>
-<p>⚠️ <strong>Cost Warning</strong>: These examples deploy expensive GPU instances (~$1,430/month per workstation). Review costs before deployment.</p>
+<p>These examples deploy GPU instances (~$1,430/month per workstation). Review costs before deployment.</p>
 <p><strong>Example Configuration Costs (per workstation/month):</strong></p>
 <ul>
 <li><strong>g4dn.4xlarge instance</strong>: ~$1,200/month</li>
@@ -4064,12 +4095,10 @@ terraform<span class="w"> </span>apply
 </code></pre></div>
 <h3 id="5-connect-private-only">5. Connect (Private Only)<a class="headerlink" href="#5-connect-private-only" title="Permanent link">&para;</a></h3>
 <h3 id="aws-client-vpn-setup-private-connectivity">AWS Client VPN Setup (Private Connectivity)<a class="headerlink" href="#aws-client-vpn-setup-private-connectivity" title="Permanent link">&para;</a></h3>
-<p><strong>Why AWS Client VPN is Required:</strong></p>
-<p>For private connectivity, AWS Client VPN is essential because:</p>
+<p>For private connectivity, AWS Client VPN is required because:</p>
 <ul>
-<li><strong>Custom DNS Resolution</strong>: Private workstation URLs like <code>https://username.vdi.internal:8443</code> only resolve when connected to the VPN</li>
-<li><strong>Network Access</strong>: Private subnets are not accessible from the internet - VPN provides secure tunnel access</li>
-<li><strong>Security</strong>: Eliminates need to expose workstations to public internet</li>
+<li>Private workstation URLs like <code>https://username.vdi.internal:8443</code> only resolve when connected to the VPN</li>
+<li>Private subnets are not accessible from the internet — the VPN provides secure tunnel access</li>
 </ul>
 <p><strong>Setup Process:</strong></p>
 <ol>
@@ -4086,31 +4115,22 @@ aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>s
 <span class="c1"># AWS VPN Client: File → Manage Profiles → Add Profile</span>
 <span class="c1"># OpenVPN: Import the .ovpn file directly</span>
 </code></pre></div>
-<p><strong>For detailed setup instructions</strong>: See <a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-user/">AWS Client VPN User Guide</a></p>
-<p><strong>Connection Flow:</strong></p>
-<ol>
-<li>Connect to AWS Client VPN using your <code>.ovpn</code> file</li>
-<li>Access workstation via private DNS: <code>https://username.vdi.internal:8443</code></li>
-<li>Login with credentials from Secrets Manager</li>
-</ol>
+<p>For detailed setup instructions, see the <a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-user/">AWS Client VPN User Guide</a>.</p>
+<p>Once connected to the VPN, access your workstation via private DNS (<code>https://username.vdi.internal:8443</code>) and log in with credentials from Secrets Manager.</p>
 <h2 id="connection-guide">Connection Guide<a class="headerlink" href="#connection-guide" title="Permanent link">&para;</a></h2>
-<h3 id="critical-wait-for-windows-boot">⚠️ CRITICAL: Wait for Windows Boot<a class="headerlink" href="#critical-wait-for-windows-boot" title="Permanent link">&para;</a></h3>
-<p><strong>After <code>terraform apply</code> completes, wait 5-10 minutes for Windows initialization before attempting login.</strong></p>
-<p>During boot, you'll see:</p>
+<h3 id="wait-for-windows-boot">Wait for Windows Boot<a class="headerlink" href="#wait-for-windows-boot" title="Permanent link">&para;</a></h3>
+<p>After <code>terraform apply</code> completes, wait 5-10 minutes for Windows initialization before attempting login.</p>
+<p>During boot, you may see:</p>
 <ul>
-<li>"Wrong username or password" errors (expected)</li>
-<li>DCV connection failures (expected)</li>
-<li>Certificate warnings (expected)</li>
+<li>"Wrong username or password" errors</li>
+<li>DCV connection failures</li>
+<li>Certificate warnings</li>
 </ul>
+<p>These are expected while the instance is still initializing.</p>
 <p><strong>Check boot status:</strong></p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>get-console-output<span class="w"> </span>--instance-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;.instance_id&#39;</span><span class="k">)</span><span class="w"> </span>--latest
 </code></pre></div>
-<p><strong>Ready when you see:</strong></p>
-<ul>
-<li><code>EC2Launch: EC2 Launch has completed</code></li>
-<li>User creation script completion</li>
-<li>DCV service startup messages</li>
-</ul>
+<p>The instance is ready when you see <code>EC2Launch: EC2 Launch has completed</code> in the console output.</p>
 <h3 id="get-credentials">Get Credentials<a class="headerlink" href="#get-credentials" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get connection info</span>
 terraform<span class="w"> </span>output<span class="w"> </span>connection_info
@@ -4150,12 +4170,11 @@ rm<span class="w"> </span>temp_key.pem
 <li><strong>Lifecycle</strong>: Users can manage passwords in Windows or continue using Secrets Manager passwords</li>
 </ul>
 <h3 id="automatic-script-re-execution">Automatic Script Re-execution<a class="headerlink" href="#automatic-script-re-execution" title="Permanent link">&para;</a></h3>
-<p>The module automatically re-runs configuration scripts when you modify infrastructure. Changes to volumes, users, or software packages trigger the appropriate scripts to run via AWS SSM - no manual intervention required.</p>
-<p>Scripts only execute when infrastructure actually changes, providing clean Terraform plans and predictable behavior.</p>
-<p><strong>Manual Alternative</strong>: For immediate results or troubleshooting, you can RDP to the instance as Administrator and run operations manually.</p>
+<p>The module re-runs configuration scripts via SSM when you modify volumes, users, or software packages. Scripts only execute when infrastructure actually changes.</p>
+<p>For immediate results or troubleshooting, you can RDP to the instance as Administrator and run operations manually.</p>
 <h2 id="volume-configuration">Volume Configuration<a class="headerlink" href="#volume-configuration" title="Permanent link">&para;</a></h2>
 <h3 id="ebs-volume-management">EBS Volume Management<a class="headerlink" href="#ebs-volume-management" title="Permanent link">&para;</a></h3>
-<p><strong>Volume changes do NOT trigger instance replacement.</strong> Instances continue running during volume operations.</p>
+<p>Volume changes do not trigger instance replacement. Instances continue running during volume operations.</p>
 <h3 id="required-root-volume">Required Root Volume<a class="headerlink" href="#required-root-volume" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nb">volumes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">Root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="c1">                    # ← MUST be exactly &quot;Root&quot; (case-sensitive)</span>
@@ -4181,7 +4200,7 @@ rm<span class="w"> </span>temp_key.pem
 <li><code>g4dn.4xlarge</code>: 225GB NVMe SSD (auto-assigned)</li>
 <li><code>g4dn.8xlarge</code>: 900GB NVMe SSD (auto-assigned)</li>
 </ul>
-<p><strong>Benefits</strong>: Simple configuration with no drive letter conflicts, Windows native behavior, user customizable via Disk Management, and cost efficiency by utilizing included instance store.</p>
+<p>This avoids drive letter conflicts, follows Windows native behavior, and makes use of the included instance store.</p>
 <h3 id="volume-change-lifecycle">Volume Change Lifecycle<a class="headerlink" href="#volume-change-lifecycle" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -4901,43 +4920,26 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 
 <h2 id="volume-management">Volume Management<a class="headerlink" href="#volume-management" title="Permanent link">&para;</a></h2>
 <h3 id="dynamic-volume-operations">Dynamic Volume Operations<a class="headerlink" href="#dynamic-volume-operations" title="Permanent link">&para;</a></h3>
-<p><strong>Adding/Resizing Volumes:</strong></p>
+<p>To add or resize volumes:</p>
 <ol>
-<li>Add or modify volumes in Terraform configuration</li>
+<li>Update volumes in your Terraform configuration</li>
 <li>Run <code>terraform apply</code></li>
-<li><strong>Wait 5-10 minutes</strong> for automatic SSM volume script execution</li>
+<li>Wait 5-10 minutes for the SSM volume script to execute</li>
 <li>Verify volumes are initialized via RDP</li>
 </ol>
-<p><strong>How it works:</strong></p>
-<ul>
-<li>✅ <strong>Fully automated</strong> - Lifecycle rules handle all triggering</li>
-<li>✅ <strong>Reliable triggering</strong> - Automatically detects volume changes</li>
-<li>✅ <strong>Predictable timing</strong> - 5-10 minutes for script execution</li>
-<li>✅ <strong>Proper cleanup</strong> - Drive letters managed automatically</li>
-<li>✅ <strong>Clean plans</strong> - No continuous Terraform drift</li>
-</ul>
-<h4 id="alternative-manual-administration">Alternative: Manual Administration<a class="headerlink" href="#alternative-manual-administration" title="Permanent link">&para;</a></h4>
-<p>For immediate results, you can skip waiting for SSM and manually initialize volumes:</p>
-<ol>
-<li>RDP to instance as Administrator after <code>terraform apply</code></li>
-<li>Run PowerShell commands to initialize volumes immediately</li>
-<li>Complete in under 2 minutes with full control</li>
-</ol>
+<p>Alternatively, you can RDP to the instance as Administrator after
+<code>terraform apply</code> and manually initialize volumes with PowerShell.</p>
 <h3 id="volume-limitations_1">Volume Limitations<a class="headerlink" href="#volume-limitations_1" title="Permanent link">&para;</a></h3>
-<h4 id="volume-size-reduction-not-supported">Volume Size Reduction - NOT SUPPORTED<a class="headerlink" href="#volume-size-reduction-not-supported" title="Permanent link">&para;</a></h4>
-<p><strong>AWS Limitation</strong>: EBS volumes cannot be reduced in size. This is an AWS platform
-limitation, not a module limitation.</p>
-<p><strong>What Happens</strong>: If you reduce volume capacity in Terraform (e.g., 500GB → 200GB):</p>
-<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply
-<span class="c1"># ❌ Error: InvalidParameterValue: Cannot decrease volume size from 500 to 200</span>
-<span class="c1"># ❌ The apply will FAIL IMMEDIATELY - no waiting required</span>
-</code></pre></div>
-<p><strong>Workaround for Size Reduction</strong>:</p>
+<h4 id="volume-size-reduction">Volume Size Reduction<a class="headerlink" href="#volume-size-reduction" title="Permanent link">&para;</a></h4>
+<p>EBS volumes cannot be reduced in size. This is an AWS platform limitation.
+If you attempt to decrease volume capacity in Terraform, the apply will
+fail with <code>InvalidParameterValue</code>.</p>
+<p>To work around this:</p>
 <ol>
-<li><strong>Create new smaller volume</strong> in Terraform config</li>
-<li><strong>Manually migrate data</strong> from old to new volume via RDP</li>
-<li><strong>Remove old volume</strong> from Terraform config</li>
-<li><strong>Apply changes</strong> - old volume will be deleted</li>
+<li>Create a new smaller volume in Terraform config</li>
+<li>Manually migrate data from the old volume to the new one via RDP</li>
+<li>Remove the old volume from Terraform config</li>
+<li>Run <code>terraform apply</code> — the old volume will be deleted</li>
 </ol>
 
 
@@ -4959,7 +4961,7 @@ limitation, not a module limitation.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-07-01
   </span>
 
     

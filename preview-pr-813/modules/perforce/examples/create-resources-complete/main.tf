@@ -1,6 +1,9 @@
 module "terraform-aws-perforce" {
   source = "../../"
 
+  # Ensure module is destroyed before IGW to prevent "mapped public address" errors
+  depends_on = [aws_internet_gateway.igw]
+
   # - Shared -
   project_prefix = local.project_prefix
   vpc_id         = aws_vpc.perforce_vpc.id
@@ -51,13 +54,15 @@ module "terraform-aws-perforce" {
     name                        = "p4-code-review"
     fully_qualified_domain_name = local.p4_code_review_fully_qualified_domain_name
     existing_security_groups    = [aws_security_group.allow_my_ip.id]
-    debug                       = true # optional to use for debugging. Default is false if omitted
-    deregistration_delay        = 0
     service_subnets             = aws_subnet.private_subnets[*].id
-    # Allow ECS tasks to be immediately deregistered from target group. Helps to prevent race conditions during `terraform destroy`
+    instance_subnet_id          = aws_subnet.private_subnets[0].id
 
-    # Configuration
-    enable_sso = true
+    # SSO Configuration - uses HAS for authentication
+    custom_config = jsonencode({
+      p4 = {
+        sso = "optional" # "optional" allows both SSO and password login, "enabled" forces SSO
+      }
+    })
   }
 }
 
