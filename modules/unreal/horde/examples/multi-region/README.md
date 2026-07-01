@@ -513,6 +513,73 @@ aws s3api head-object --bucket horde-artifacts-eu-west-1-<account> --key test/ro
 | Single point of failure | If us-east-1 Horde server is down, all regions stop | Acceptable for PoC; add HA for production |
 | S3 CRR is eventual | Sub-second for small objects, seconds for large | Consumers may need to retry if accessing just-written cross-region artifacts |
 
+## Troubleshooting
+
+### ECS Service Timeout (20 minutes)
+
+**Symptom:** `terraform apply` fails after 20 minutes with:
+```
+Error: waiting for ECS Service update: timeout while waiting for state to become 'tfSTABLE'
+```
+
+**Cause:** The ECS service takes longer than 20 minutes to reach steady state. This often happens on Phase 2 (MRAP enable) when the task definition changes trigger a full service replacement.
+
+**Fix:** The service is likely running fine — Terraform just timed out waiting. Run:
+```bash
+# Check if the service is actually healthy
+aws elbv2 describe-target-health \
+  --target-group-arn $(aws elbv2 describe-target-groups --region us-east-1 \
+    --query 'TargetGroups[?contains(TargetGroupName, `ext-api`)].TargetGroupArn' --output text) \
+  --region us-east-1 --query 'TargetHealthDescriptions[*].TargetHealth.State'
+
+# If healthy, just re-run apply to sync state:
+terraform apply [same vars as before]
+```
+
+If the service is NOT healthy, check CloudWatch logs:
+```bash
+aws logs tail cgd-unreal-horde-log-group --region us-east-1 --since 5m --format short
+```
+
+### Agent Not Appearing in Dashboard
+
+**Symptom:** Agent instance is running (ASG shows InService) but doesn't appear in the Horde dashboard under Agents.
+
+**Cause:** The agent needs a registration token on first connection. The CGD module's SSM/Ansible bootstrap handles this, but may take 3-5 minutes to complete. For manually provisioned agents:
+
+```bash
+# Get a registration token
+curl -sk https://horde.<domain>/api/v1/admin/registrationtoken
+
+# Configure the agent with the token
+dotnet HordeAgent.dll SetServer -Name=Default -Url=https://horde.<domain> -Token=<token> -Default
+```
+
+### Container Crash: AwsCloudWatchMultiplexer
+
+**Symptom:** ECS task keeps restarting. CloudWatch logs show:
+```
+System.ArgumentException: At least one client must be specified (Parameter 'clients')
+   at HordeServer.Aws.AwsCloudWatchMultiplexer
+```
+
+**Cause:** `Compute.WithAws=true` requires at least one CloudWatch region configured.
+
+**Fix:** Ensure this environment variable is set in the ECS task:
+```
+Horde__Compute__AwsCloudWatchRegions__0=us-east-1
+```
+
+This is already configured in the example's `extra_environment` block.
+
+### Credentials Expire During Apply
+
+**Symptom:** Apply succeeds for 15+ minutes then fails with `ExpiredTokenException`.
+
+**Cause:** Session-based AWS credentials (SSO, Isengard) expire before the 20-minute ECS wait completes.
+
+**Fix:** Use longer-lived credentials for the initial deployment, or increase session duration. After the first successful deploy, subsequent applies are much faster.
+
 ## Clean Up
 
 ```bash

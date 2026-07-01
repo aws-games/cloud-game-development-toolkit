@@ -49,8 +49,12 @@ module "horde" {
       value = "true"
     },
     {
-      name  = "Horde__Plugins__Compute__WithAws"
+      name  = "Horde__Compute__WithAws"
       value = "true"
+    },
+    {
+      name  = "Horde__Compute__AwsCloudWatchRegions__0"
+      value = var.primary_region
     },
     {
       name  = "AWS_REGION"
