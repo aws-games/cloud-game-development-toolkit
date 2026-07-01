@@ -4927,10 +4927,13 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 <li>Wait 5-10 minutes for the SSM volume script to execute</li>
 <li>Verify volumes are initialized via RDP</li>
 </ol>
-<p>Alternatively, you can RDP to the instance as Administrator after <code>terraform apply</code> and manually initialize volumes with PowerShell.</p>
+<p>Alternatively, you can RDP to the instance as Administrator after
+<code>terraform apply</code> and manually initialize volumes with PowerShell.</p>
 <h3 id="volume-limitations_1">Volume Limitations<a class="headerlink" href="#volume-limitations_1" title="Permanent link">&para;</a></h3>
 <h4 id="volume-size-reduction">Volume Size Reduction<a class="headerlink" href="#volume-size-reduction" title="Permanent link">&para;</a></h4>
-<p>EBS volumes cannot be reduced in size. This is an AWS platform limitation. If you attempt to decrease volume capacity in Terraform, the apply will fail with <code>InvalidParameterValue</code>.</p>
+<p>EBS volumes cannot be reduced in size. This is an AWS platform limitation.
+If you attempt to decrease volume capacity in Terraform, the apply will
+fail with <code>InvalidParameterValue</code>.</p>
 <p>To work around this:</p>
 <ol>
 <li>Create a new smaller volume in Terraform config</li>
