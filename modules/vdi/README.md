@@ -4,7 +4,7 @@
 
 > **ℹ️ Prerequisites**: You need a Windows Server AMI. The examples use Packer-built AMIs from this repo's [Packer templates](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/assets/packer/virtual-workstations) (`lightweight/` and `ue-gamedev/`), but any Windows Server 2019/2022/2025 AMI works. See [Amazon DCV Documentation](https://docs.aws.amazon.com/dcv/) for complete setup guidance.
 >
-> **⚠️ Testing and Development Only**: This module is designed for testing and development workflows. It is not recommended for production use. For production virtual desktop solutions, consider [Amazon WorkSpaces](https://aws.amazon.com/workspaces/) or [Amazon AppStream 2.0](https://aws.amazon.com/appstream2/).
+> **Testing and Development Only**: This module is designed for testing and development workflows. It is not recommended for production use. For production virtual desktop solutions, consider [Amazon WorkSpaces](https://aws.amazon.com/workspaces/) or [Amazon AppStream 2.0](https://aws.amazon.com/appstream2/).
 
 ## Features
 
