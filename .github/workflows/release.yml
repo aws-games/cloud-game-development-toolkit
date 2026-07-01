@@ -56,7 +56,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changelog changes to commit"
           else
-            git commit -m "chore: regenerate changelog for $GITHUB_REF_NAME"
+            git commit -m "chore: regenerate changelog for $GITHUB_REF_NAME [skip ci]"
             git push origin HEAD:main
           fi
 
