@@ -1,93 +1,86 @@
 # --- VPC ---
 
 resource "aws_vpc" "secondary_agents" {
-  count      = var.enable_secondary_region ? 1 : 0
   provider   = aws.secondary
   cidr_block = "10.2.0.0/16"
   tags       = merge(local.tags, { Name = "horde-agents-eu" })
 }
 
 resource "aws_internet_gateway" "secondary_agents" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
-  vpc_id   = aws_vpc.secondary_agents[0].id
+  vpc_id   = aws_vpc.secondary_agents.id
   tags     = merge(local.tags, { Name = "horde-agents-eu" })
 }
 
 resource "aws_subnet" "secondary_agents_public" {
-  count                   = var.enable_secondary_region ? 2 : 0
+  count                   = 2
   provider                = aws.secondary
-  vpc_id                  = aws_vpc.secondary_agents[0].id
+  vpc_id                  = aws_vpc.secondary_agents.id
   cidr_block              = cidrsubnet("10.2.0.0/16", 8, count.index)
-  availability_zone       = data.aws_availability_zones.secondary[0].names[count.index]
+  availability_zone       = data.aws_availability_zones.secondary.names[count.index]
   map_public_ip_on_launch = true
   tags                    = merge(local.tags, { Name = "horde-agents-eu-public-${count.index}" })
 }
 
 resource "aws_subnet" "secondary_agents_private" {
-  count             = var.enable_secondary_region ? 2 : 0
+  count             = 2
   provider          = aws.secondary
-  vpc_id            = aws_vpc.secondary_agents[0].id
+  vpc_id            = aws_vpc.secondary_agents.id
   cidr_block        = cidrsubnet("10.2.0.0/16", 8, count.index + 10)
-  availability_zone = data.aws_availability_zones.secondary[0].names[count.index]
+  availability_zone = data.aws_availability_zones.secondary.names[count.index]
   tags              = merge(local.tags, { Name = "horde-agents-eu-private-${count.index}" })
 }
 
 resource "aws_route_table" "secondary_agents_public" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
-  vpc_id   = aws_vpc.secondary_agents[0].id
+  vpc_id   = aws_vpc.secondary_agents.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.secondary_agents[0].id
+    gateway_id = aws_internet_gateway.secondary_agents.id
   }
   tags = merge(local.tags, { Name = "horde-agents-eu-public" })
 }
 
 resource "aws_route_table_association" "secondary_agents_public" {
-  count          = var.enable_secondary_region ? 2 : 0
+  count          = 2
   provider       = aws.secondary
   subnet_id      = aws_subnet.secondary_agents_public[count.index].id
-  route_table_id = aws_route_table.secondary_agents_public[0].id
+  route_table_id = aws_route_table.secondary_agents_public.id
 }
 
 resource "aws_eip" "secondary_agents_nat" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
   domain   = "vpc"
   tags     = merge(local.tags, { Name = "horde-agents-eu-nat" })
 }
 
 resource "aws_nat_gateway" "secondary_agents" {
-  count         = var.enable_secondary_region ? 1 : 0
   provider      = aws.secondary
-  allocation_id = aws_eip.secondary_agents_nat[0].id
+  allocation_id = aws_eip.secondary_agents_nat.id
   subnet_id     = aws_subnet.secondary_agents_public[0].id
   tags          = merge(local.tags, { Name = "horde-agents-eu" })
 }
 
 resource "aws_route_table" "secondary_agents_private" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
-  vpc_id   = aws_vpc.secondary_agents[0].id
+  vpc_id   = aws_vpc.secondary_agents.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.secondary_agents[0].id
+    nat_gateway_id = aws_nat_gateway.secondary_agents.id
   }
   tags = merge(local.tags, { Name = "horde-agents-eu-private" })
 }
 
 resource "aws_route_table_association" "secondary_agents_private" {
-  count          = var.enable_secondary_region ? 2 : 0
+  count          = 2
   provider       = aws.secondary
   subnet_id      = aws_subnet.secondary_agents_private[count.index].id
-  route_table_id = aws_route_table.secondary_agents_private[0].id
+  route_table_id = aws_route_table.secondary_agents_private.id
 }
 
 # --- AZs data source ---
 
 data "aws_availability_zones" "secondary" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
   state    = "available"
 }
@@ -95,10 +88,9 @@ data "aws_availability_zones" "secondary" {
 # --- Security Group ---
 
 resource "aws_security_group" "secondary_agents" {
-  count       = var.enable_secondary_region ? 1 : 0
   provider    = aws.secondary
   name_prefix = "horde-agents-eu-"
-  vpc_id      = aws_vpc.secondary_agents[0].id
+  vpc_id      = aws_vpc.secondary_agents.id
 
   egress {
     from_port   = 443
@@ -122,7 +114,6 @@ resource "aws_security_group" "secondary_agents" {
 # --- IAM ---
 
 resource "aws_iam_role" "secondary_agents" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
   name     = "horde-agents-eu"
   assume_role_policy = jsonencode({
@@ -137,33 +128,30 @@ resource "aws_iam_role" "secondary_agents" {
 }
 
 resource "aws_iam_role_policy_attachment" "secondary_agents_ssm" {
-  count      = var.enable_secondary_region ? 1 : 0
   provider   = aws.secondary
-  role       = aws_iam_role.secondary_agents[0].name
+  role       = aws_iam_role.secondary_agents.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "secondary_agents" {
-  count    = var.enable_secondary_region ? 1 : 0
   provider = aws.secondary
   name     = "horde-agents-eu"
-  role     = aws_iam_role.secondary_agents[0].name
+  role     = aws_iam_role.secondary_agents.name
 }
 
 # --- Launch Template ---
 
 resource "aws_launch_template" "secondary_agents" {
-  count         = var.enable_secondary_region ? 1 : 0
   provider      = aws.secondary
   name_prefix   = "horde-agent-eu-"
   image_id      = data.aws_ami.ubuntu_secondary.id
   instance_type = "c6a.large"
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.secondary_agents[0].arn
+    arn = aws_iam_instance_profile.secondary_agents.arn
   }
 
-  vpc_security_group_ids = [aws_security_group.secondary_agents[0].id]
+  vpc_security_group_ids = [aws_security_group.secondary_agents.id]
 
   block_device_mappings {
     device_name = "/dev/sda1"
@@ -228,7 +216,6 @@ EOF
 # --- ASG ---
 
 resource "aws_autoscaling_group" "secondary_agents" {
-  count               = var.enable_secondary_region ? 1 : 0
   provider            = aws.secondary
   name_prefix         = "horde-agents-eu-"
   min_size            = 0
@@ -237,7 +224,7 @@ resource "aws_autoscaling_group" "secondary_agents" {
   vpc_zone_identifier = aws_subnet.secondary_agents_private[*].id
 
   launch_template {
-    id      = aws_launch_template.secondary_agents[0].id
+    id      = aws_launch_template.secondary_agents.id
     version = "$Latest"
   }
 

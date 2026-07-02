@@ -3,28 +3,24 @@
 # --- S3 Buckets ---
 
 resource "aws_s3_bucket" "primary" {
-  count  = var.enable_mrap ? 1 : 0
   bucket = "horde-artifacts-${var.primary_region}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "primary" {
-  count  = var.enable_mrap ? 1 : 0
-  bucket = aws_s3_bucket.primary[0].id
+  bucket = aws_s3_bucket.primary.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_s3_bucket" "secondary" {
-  count    = var.enable_mrap ? 1 : 0
   provider = aws.secondary
   bucket   = "horde-artifacts-${var.secondary_region}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "secondary" {
-  count    = var.enable_mrap ? 1 : 0
   provider = aws.secondary
-  bucket   = aws_s3_bucket.secondary[0].id
+  bucket   = aws_s3_bucket.secondary.id
   versioning_configuration {
     status = "Enabled"
   }
@@ -33,19 +29,18 @@ resource "aws_s3_bucket_versioning" "secondary" {
 # --- Multi-Region Access Point ---
 
 resource "aws_s3control_multi_region_access_point" "horde" {
-  count      = var.enable_mrap ? 1 : 0
   account_id = data.aws_caller_identity.current.account_id
 
   details {
     name = "horde-mrap"
 
     region {
-      bucket            = aws_s3_bucket.primary[0].id
+      bucket            = aws_s3_bucket.primary.id
       bucket_account_id = data.aws_caller_identity.current.account_id
     }
 
     region {
-      bucket            = aws_s3_bucket.secondary[0].id
+      bucket            = aws_s3_bucket.secondary.id
       bucket_account_id = data.aws_caller_identity.current.account_id
     }
   }
@@ -54,7 +49,6 @@ resource "aws_s3control_multi_region_access_point" "horde" {
 # --- Replication IAM ---
 
 data "aws_iam_policy_document" "replication_assume" {
-  count = var.enable_mrap ? 1 : 0
   statement {
     actions = ["sts:AssumeRole"]
     principals {
@@ -65,15 +59,14 @@ data "aws_iam_policy_document" "replication_assume" {
 }
 
 data "aws_iam_policy_document" "replication_policy" {
-  count = var.enable_mrap ? 1 : 0
   statement {
     actions = [
       "s3:GetReplicationConfiguration",
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.primary[0].arn,
-      aws_s3_bucket.secondary[0].arn,
+      aws_s3_bucket.primary.arn,
+      aws_s3_bucket.secondary.arn,
     ]
   }
   statement {
@@ -83,8 +76,8 @@ data "aws_iam_policy_document" "replication_policy" {
       "s3:GetObjectVersionTagging",
     ]
     resources = [
-      "${aws_s3_bucket.primary[0].arn}/*",
-      "${aws_s3_bucket.secondary[0].arn}/*",
+      "${aws_s3_bucket.primary.arn}/*",
+      "${aws_s3_bucket.secondary.arn}/*",
     ]
   }
   statement {
@@ -94,44 +87,39 @@ data "aws_iam_policy_document" "replication_policy" {
       "s3:ReplicateTags",
     ]
     resources = [
-      "${aws_s3_bucket.primary[0].arn}/*",
-      "${aws_s3_bucket.secondary[0].arn}/*",
+      "${aws_s3_bucket.primary.arn}/*",
+      "${aws_s3_bucket.secondary.arn}/*",
     ]
   }
 }
 
 resource "aws_iam_role" "replication_primary" {
-  count              = var.enable_mrap ? 1 : 0
   name               = "horde-s3-replication-primary"
-  assume_role_policy = data.aws_iam_policy_document.replication_assume[0].json
+  assume_role_policy = data.aws_iam_policy_document.replication_assume.json
 }
 
 resource "aws_iam_role_policy" "replication_primary" {
-  count  = var.enable_mrap ? 1 : 0
   name   = "replication"
-  role   = aws_iam_role.replication_primary[0].id
-  policy = data.aws_iam_policy_document.replication_policy[0].json
+  role   = aws_iam_role.replication_primary.id
+  policy = data.aws_iam_policy_document.replication_policy.json
 }
 
 resource "aws_iam_role" "replication_secondary" {
-  count              = var.enable_mrap ? 1 : 0
   name               = "horde-s3-replication-secondary"
-  assume_role_policy = data.aws_iam_policy_document.replication_assume[0].json
+  assume_role_policy = data.aws_iam_policy_document.replication_assume.json
 }
 
 resource "aws_iam_role_policy" "replication_secondary" {
-  count  = var.enable_mrap ? 1 : 0
   name   = "replication"
-  role   = aws_iam_role.replication_secondary[0].id
-  policy = data.aws_iam_policy_document.replication_policy[0].json
+  role   = aws_iam_role.replication_secondary.id
+  policy = data.aws_iam_policy_document.replication_policy.json
 }
 
 # --- Replication Configuration ---
 
 resource "aws_s3_bucket_replication_configuration" "primary_to_secondary" {
-  count  = var.enable_mrap ? 1 : 0
-  bucket = aws_s3_bucket.primary[0].id
-  role   = aws_iam_role.replication_primary[0].arn
+  bucket = aws_s3_bucket.primary.id
+  role   = aws_iam_role.replication_primary.arn
 
   rule {
     id     = "replicate-to-secondary"
@@ -144,7 +132,7 @@ resource "aws_s3_bucket_replication_configuration" "primary_to_secondary" {
     }
 
     destination {
-      bucket        = aws_s3_bucket.secondary[0].arn
+      bucket        = aws_s3_bucket.secondary.arn
       storage_class = "STANDARD"
     }
   }
@@ -153,10 +141,9 @@ resource "aws_s3_bucket_replication_configuration" "primary_to_secondary" {
 }
 
 resource "aws_s3_bucket_replication_configuration" "secondary_to_primary" {
-  count    = var.enable_mrap ? 1 : 0
   provider = aws.secondary
-  bucket   = aws_s3_bucket.secondary[0].id
-  role     = aws_iam_role.replication_secondary[0].arn
+  bucket   = aws_s3_bucket.secondary.id
+  role     = aws_iam_role.replication_secondary.arn
 
   rule {
     id     = "replicate-to-primary"
@@ -169,7 +156,7 @@ resource "aws_s3_bucket_replication_configuration" "secondary_to_primary" {
     }
 
     destination {
-      bucket        = aws_s3_bucket.primary[0].arn
+      bucket        = aws_s3_bucket.primary.arn
       storage_class = "STANDARD"
     }
   }

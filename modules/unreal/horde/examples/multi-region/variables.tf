@@ -21,21 +21,3 @@ variable "secondary_region" {
   description = "The secondary AWS region for cross-region agents and storage."
   default     = "eu-west-1"
 }
-
-variable "enable_secondary_region" {
-  type        = bool
-  description = "Enable secondary region resources (Phase 2+)."
-  default     = false
-}
-
-variable "enable_mrap" {
-  type        = bool
-  description = "Enable S3 Multi-Region Access Point (Phase 3+)."
-  default     = false
-}
-
-variable "enable_agents" {
-  type        = bool
-  description = "Enable Horde build agents in primary region."
-  default     = false
-}

@@ -22,7 +22,8 @@ module "horde" {
   auth_method                       = "Anonymous"
   enable_new_agents_by_default      = true
   p4_port                           = ""
-  agents = var.enable_agents ? {
+
+  agents = {
     linux-x86 = {
       ami           = data.aws_ami.ubuntu.id
       instance_type = "c6a.large"
@@ -33,7 +34,7 @@ module "horde" {
         ebs         = { volume_size = 64 }
       }]
     }
-  } : {}
+  }
 
   extra_environment = [
     {
