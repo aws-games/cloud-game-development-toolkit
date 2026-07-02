@@ -38,7 +38,7 @@ module "horde" {
   extra_environment = [
     {
       name  = "Horde__http2Port"
-      value = "0"
+      value = "5002"
     },
     {
       name  = "Horde__serverUrl"

@@ -409,7 +409,7 @@ Add region properties to agent pools in `globals.json`:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `Horde__http2Port` | `0` | Routes gRPC over port 443 (behind ALB) |
+| `Horde__http2Port` | `5002` | Enables gRPC/HTTP2 listener on port 5002 (behind ALB) |
 | `Horde__serverUrl` | `https://horde.<domain>` | External URL for presigned URL generation |
 | `Horde__forceConfigUpdateOnStartup` | `true` | Re-reads globals.json on every boot |
 | `Horde__Plugins__Compute__WithAws` | `true` | Enables AWS compute plugin (fleet management) |

@@ -62,7 +62,7 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_external" {
   vpc_id           = var.vpc_id
   health_check {
     path                = "/health/ok"
-    port                = "5000"
+    port                = "traffic-port"
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30
@@ -194,7 +194,7 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_internal" {
   vpc_id           = var.vpc_id
   health_check {
     path                = "/health/ok"
-    port                = "5000"
+    port                = "traffic-port"
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30
