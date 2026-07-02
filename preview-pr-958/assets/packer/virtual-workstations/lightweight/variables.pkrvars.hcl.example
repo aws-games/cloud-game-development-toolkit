@@ -1,0 +1,21 @@
+# Example variables for VDI Lightweight AMI build
+# Copy this file to variables.pkrvars.hcl and customize for your environment
+
+# AWS Region where AMI will be built and stored
+region = "us-east-1"
+
+# VPC and subnet for build instance (optional - uses default VPC if not specified)
+# vpc_id    = "vpc-12345678"
+# subnet_id = "subnet-12345678"
+
+# Instance type for build (g4dn.2xlarge recommended for GPU driver testing)
+instance_type = "g4dn.2xlarge"
+
+# Whether build instance should have public IP (required if using default VPC)
+associate_public_ip_address = true
+
+# AMI naming prefix (timestamp will be appended automatically)
+ami_prefix = "vdi-lightweight-windows-server-2025"
+
+# Root volume size in GB (80GB minimum recommended)
+root_volume_size = 80
