@@ -60,18 +60,17 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_external" {
   protocol_version = "HTTP2"
   target_type      = "ip"
   vpc_id           = var.vpc_id
-  #checkov:skip=CKV_AWS_261: No health check defined for GRPC target group
+  health_check {
+    path                = "/health/ok"
+    port                = "5000"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
 
-  # health_check {
-  #   path                = "/"
-  #   protocol            = "HTTP"
-  #   matcher             = "12"
-  #   port                = "traffic-port"
-  #   healthy_threshold   = 2
-  #   unhealthy_threshold = 2
-  #   timeout             = 10
-  #   interval            = 30
-  # }
   tags = local.tags
 }
 
@@ -193,18 +192,16 @@ resource "aws_lb_target_group" "unreal_horde_grpc_target_group_internal" {
   protocol_version = "HTTP2"
   target_type      = "ip"
   vpc_id           = var.vpc_id
-  #checkov:skip=CKV_AWS_261: No health check defined for GRPC target group
-
-  # health_check {
-  #   path                = "/"
-  #   protocol            = "HTTP"
-  #   matcher             = "12"
-  #   port                = "traffic-port"
-  #   healthy_threshold   = 2
-  #   unhealthy_threshold = 2
-  #   timeout             = 10
-  #   interval            = 30
-  # }
+  health_check {
+    path                = "/health/ok"
+    port                = "5000"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
 
   tags = local.tags
 }
