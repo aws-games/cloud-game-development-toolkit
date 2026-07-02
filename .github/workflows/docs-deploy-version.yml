@@ -25,6 +25,8 @@ on:
 permissions:
   contents: write
   pages: write
+  issues: write
+  pull-requests: write
 
 jobs:
   validate:
@@ -34,6 +36,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      pull-requests: write
     with:
       scope: "all"
       create_issue: false
