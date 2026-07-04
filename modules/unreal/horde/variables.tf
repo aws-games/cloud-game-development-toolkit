@@ -60,6 +60,32 @@ variable "image" {
   default     = "ghcr.io/epicgames/horde-server:latest-bundled"
 }
 
+variable "is_source_build" {
+  type        = bool
+  description = "Set this flag to true if you are using a custom built Horde Server image from source."
+  default     = false
+}
+
+variable "horde_server_architecture" {
+  type        = string
+  description = "The CPU architecture for Horde server container. Valid values: X86_64 or ARM64"
+  default     = "X86_64"
+  validation {
+    condition     = contains(["X86_64", "ARM64"], var.horde_server_architecture)
+    error_message = "horde_server_architecture must be either 'X86_64' or 'ARM64'"
+  }
+}
+
+variable "operating_system" {
+  type        = string
+  description = "The operating system for the Horde server container. Valid values: LINUX, WINDOWS_SERVER_2019_CORE, etc."
+  default     = "LINUX"
+  validation {
+    condition     = contains(["LINUX", "WINDOWS_SERVER_2025_FULL", "WINDOWS_SERVER_2025_CORE", "WINDOWS_SERVER_2022_FULL", "WINDOWS_SERVER_2022_CORE", "WINDOWS_SERVER_2019_FULL", "WINDOWS_SERVER_2019_CORE"], var.operating_system)
+    error_message = "operating_system must be one of: LINUX, WINDOWS_SERVER_2025_FULL, WINDOWS_SERVER_2025_CORE, WINDOWS_SERVER_2022_FULL, WINDOWS_SERVER_2022_CORE, WINDOWS_SERVER_2019_FULL, WINDOWS_SERVER_2019_CORE."
+  }
+}
+
 variable "cluster_name" {
   type        = string
   description = "The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created."
