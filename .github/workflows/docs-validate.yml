@@ -54,7 +54,7 @@ jobs:
       - name: Get changed markdown/html files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             **/*.md
@@ -107,7 +107,7 @@ jobs:
       - name: Get changed markdown files
         if: steps.scope.outputs.scope == 'changed'
         id: changed-files
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: "**/*.md"
           separator: " "
@@ -170,21 +170,21 @@ jobs:
       # PR Comments: Delete comments for checks that are now passing
       - name: Delete PR comment - Link Check Success
         if: github.event_name == 'pull_request' && needs.check-links.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-link-check
           delete: true
 
       - name: Delete PR comment - Lint Success
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-lint-failure
           delete: true
 
       - name: Delete PR comment - Build Success
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-build-failure
           delete: true
@@ -192,7 +192,7 @@ jobs:
       # PR Comments: Post sticky comments for link and build failures
       - name: Comment on PR - Link Check Failure
         if: github.event_name == 'pull_request' && needs.check-links.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-link-check
           message: |
@@ -214,7 +214,7 @@ jobs:
 
       - name: Comment on PR - Lint Failure
         if: github.event_name == 'pull_request' && needs.lint-markdown.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-lint-failure
           message: |
@@ -243,7 +243,7 @@ jobs:
 
       - name: Comment on PR - Build Failure
         if: github.event_name == 'pull_request' && needs.build-docs.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: doc-build-failure
           message: |
