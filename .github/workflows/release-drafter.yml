@@ -20,6 +20,6 @@ jobs:
       contents: write  # create release in draft mode
       pull-requests: write
     steps:
-      - uses: release-drafter/release-drafter@5de93583980a40bd78603b6dfdcda5b4df377b32
+      - uses: release-drafter/release-drafter@4d75298e00d9e34c483e5ff8c68d0ea1c1940c1e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
