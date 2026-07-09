@@ -230,7 +230,7 @@ variable "create_unreal_horde_recycle_policy" {
 }
 
 ######################
-# OIDC CONFIG
+# PERFORCE CONFIG
 ######################
 
 variable "p4_port" {
@@ -239,53 +239,19 @@ variable "p4_port" {
   default     = null
 }
 
-variable "p4_username" {
+variable "p4_credentials_secret_arn" {
   type        = string
-  description = "Perforce username the Horde server connects with. Rendered into /app/Data/server.json under plugins.build.perforce. Required when p4_port is set."
+  description = "ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {\"username\": \"...\", \"password\": \"...\"}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4_port is set."
   default     = null
 
   validation {
-    condition     = var.p4_port == null || var.p4_username != null
-    error_message = "p4_username must be set when p4_port is provided (the server's Perforce connection is now rendered into server.json, not sourced from the p4_super_user_*_secret_arn variables)."
-  }
-}
-
-variable "p4_password" {
-  type        = string
-  description = "Perforce password the Horde server connects with. Rendered into /app/Data/server.json under plugins.build.perforce. Required when p4_port is set."
-  default     = null
-  sensitive   = true
-
-  validation {
-    condition     = var.p4_port == null || var.p4_password != null
-    error_message = "p4_password must be set when p4_port is provided (the server's Perforce connection is now rendered into server.json, not sourced from the p4_super_user_*_secret_arn variables)."
-  }
-}
-
-variable "p4_super_user_username_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
-  default     = null
-
-  validation {
-    condition     = var.p4_super_user_username_secret_arn == null || var.p4_port != null
-    error_message = "p4_super_user_username_secret_arn cannot be passed unless p4_port is also passed."
-  }
-}
-
-variable "p4_super_user_password_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
-  default     = null
-
-  validation {
-    condition     = var.p4_super_user_password_secret_arn == null || var.p4_port != null
-    error_message = "p4_super_user_password_secret_arn cannot be passed unless p4_port is also passed."
+    condition     = var.p4_port == null || var.p4_credentials_secret_arn != null
+    error_message = "p4_credentials_secret_arn must be set when p4_port is provided. Create a Secrets Manager secret containing {\"username\": \"...\", \"password\": \"...\"} for the Perforce user Horde should connect as."
   }
 
   validation {
-    condition     = (var.p4_super_user_username_secret_arn == null) == (var.p4_super_user_password_secret_arn == null)
-    error_message = "p4_super_user_username_secret_arn and p4_super_user_password_secret_arn must be provided together."
+    condition     = var.p4_credentials_secret_arn == null || var.p4_port != null
+    error_message = "p4_credentials_secret_arn cannot be passed unless p4_port is also passed."
   }
 }
 

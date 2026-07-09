@@ -23,6 +23,11 @@ locals {
 
   need_p4_trust = var.p4_port != null && startswith(var.p4_port, "ssl:")
 
+  # Rendered with placeholder tokens instead of credentials: the init container
+  # substitutes the real values at startup from environment variables that ECS
+  # injects from the p4_credentials_secret_arn secret. This keeps the credentials
+  # out of the task definition JSON (visible in the ECS console and CloudTrail)
+  # and out of the Terraform state's rendered container command.
   server_json = jsonencode({
     "Horde" = {
       "configPath"                 = var.config_path
@@ -34,8 +39,8 @@ locals {
             "id"            = "default"
             "serverAndPort" = var.p4_port
             "credentials" = {
-              "userName" = var.p4_username
-              "password" = var.p4_password
+              "userName" = "__P4_USERNAME__"
+              "password" = "__P4_PASSWORD__"
             }
           }]
         }
@@ -86,9 +91,24 @@ locals {
     },
   ] : config.value != null ? config : null]
 
-  # Perforce credentials and the config path are now delivered to the server via the
-  # rendered /app/Data/server.json file (see server_json above + the docdb-cert init
-  # container in ecs.tf), not via environment variables or Secrets Manager. The legacy
-  # Horde__Perforce__0__* env/secret entries have been removed accordingly.
+  # The Perforce connection and config path are now delivered to the server via the
+  # rendered /app/Data/server.json file (see server_json above + the unreal-horde-init
+  # container in ecs.tf), so the legacy Horde__Perforce__0__* env/secret entries on the
+  # app container have been removed. The credentials themselves are injected into the
+  # init container (not the app container) from p4_credentials_secret_arn.
   horde_service_secrets = []
+
+  # ECS-native Secrets Manager injection for the init container: the execution role
+  # fetches the JSON secret and exposes its username/password keys as environment
+  # variables, which the init script substitutes into server.json at startup.
+  horde_init_secrets = var.p4_credentials_secret_arn != null ? [
+    {
+      name      = "P4_USERNAME"
+      valueFrom = "${var.p4_credentials_secret_arn}:username::"
+    },
+    {
+      name      = "P4_PASSWORD"
+      valueFrom = "${var.p4_credentials_secret_arn}:password::"
+    },
+  ] : []
 }

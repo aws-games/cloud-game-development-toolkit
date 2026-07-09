@@ -18,6 +18,31 @@ Unreal Engine Horde is only available through the Epic Games Github organization
 
 For example configurations, please see the [examples](https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/horde/examples).
 
+## Server Configuration Delivery
+
+The Horde server reads its startup settings from `/app/Data/server.json`. An init container (`unreal-horde-init`) renders this file before the server starts, so the settings the current Horde image honors (config path, Perforce connection) are delivered as configuration files rather than environment variables.
+
+### Perforce connection
+
+To connect Horde to a Perforce server, set `p4_port` and provide the credentials through AWS Secrets Manager:
+
+1. Create a Secrets Manager secret containing a JSON object with the Perforce username and password Horde should connect as:
+
+    ```json
+    {"username": "horde-service-user", "password": "example-password"}
+    ```
+
+2. Pass the secret's ARN to the module via `p4_credentials_secret_arn`.
+
+The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted `secretsmanager:GetSecretValue` on the secret automatically). The init container substitutes them into `server.json` under `plugins.build.perforce` in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.
+
+### Horde configuration (globals.json)
+
+The `config_path` variable controls the Horde server's `configPath` setting:
+
+- Set `config_path = "globals.json"` together with `config_globals_json` (a JSON string) to have the init container write your Horde configuration to `/app/Data/globals.json`.
+- Set `config_path` to a Perforce depot path (e.g. `"//UE/Main/Config/globals.json"`) to have Horde load its configuration from your depot instead.
+
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
@@ -151,9 +176,16 @@ No modules.
 | <a name="input_admin_claim_type"></a> [admin\_claim\_type](#input\_admin\_claim\_type) | The claim type for administrators. | `string` | `null` | no |
 | <a name="input_admin_claim_value"></a> [admin\_claim\_value](#input\_admin\_claim\_value) | The claim value for administrators. | `string` | `null` | no |
 | <a name="input_agent_dotnet_runtime_version"></a> [agent\_dotnet\_runtime\_version](#input\_agent\_dotnet\_runtime\_version) | The dotnet-runtime-{} package to install (see your engine version's release notes for supported version) | `string` | `"6.0"` | no |
+| <a name="input_agent_enable_long_paths"></a> [agent\_enable\_long\_paths](#input\_agent\_enable\_long\_paths) | Enable NTFS long-path support (LongPathsEnabled=1) on Windows agents. Recommended for from-source Unreal Engine builds, which routinely exceed MAX\_PATH. | `bool` | `false` | no |
+| <a name="input_agent_uba_compute_ports"></a> [agent\_uba\_compute\_ports](#input\_agent\_uba\_compute\_ports) | Inbound TCP port range to open in the host Windows Firewall for UBA (Unreal Build Accelerator) distributed compile workers, e.g. "7000-7010". The agent security group must also allow this range. Set to null to skip the firewall rule. | `string` | `null` | no |
+| <a name="input_agent_uba_horde_pool"></a> [agent\_uba\_horde\_pool](#input\_agent\_uba\_horde\_pool) | If set, writes a UBT BuildConfiguration.xml on Windows agents that enables UBA-over-Horde, targeting this Horde pool name (must match a pool in your globals.json, e.g. "Win-UE5"). Leave null to not configure UBA-over-Horde. | `string` | `null` | no |
+| <a name="input_agent_uba_max_workers"></a> [agent\_uba\_max\_workers](#input\_agent\_uba\_max\_workers) | MaxWorkers value for the UBT BuildConfiguration.xml <Horde> block (only used when agent\_uba\_horde\_pool is set). | `number` | `4` | no |
+| <a name="input_agent_working_dir"></a> [agent\_working\_dir](#input\_agent\_working\_dir) | Working directory for the Horde agent on Windows. A SHORT path (e.g. "C:\\H") keeps deeply-nested engine-plugin response-file paths under MAX\_PATH for link.exe/cl.exe. Written to the durable agent.json so it survives agent self-upgrades. Set to null to leave the agent default. | `string` | `null` | no |
 | <a name="input_agents"></a> [agents](#input\_agents) | Configures autoscaling groups to be used as build agents by Unreal Engine Horde. | <pre>map(object({<br>    ami             = string<br>    instance_type   = string<br>    horde_pool_name = optional(string)<br>    create_asg      = optional(bool, true)<br>    block_device_mappings = list(<br>      object({<br>        device_name = string<br>        ebs = object({<br>          volume_size = number<br>        })<br>      })<br>    )<br>    min_size = optional(number, 0)<br>    max_size = optional(number, 1)<br>  }))</pre> | `{}` | no |
 | <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created. | `string` | `null` | no |
+| <a name="input_config_globals_json"></a> [config\_globals\_json](#input\_config\_globals\_json) | JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config\_path = "globals.json". Leave empty to manage config another way (e.g. a Perforce config\_path). | `string` | `""` | no |
+| <a name="input_config_path"></a> [config\_path](#input\_config\_path) | Value for the Horde server's `configPath` setting (written to /app/Data/server.json). Use "globals.json" to load the file rendered from `config_globals_json` into /app/Data, or a Perforce path (e.g. "//UE/Main/...") to load config from the depot. | `string` | `null` | no |
 | <a name="input_container_api_port"></a> [container\_api\_port](#input\_container\_api\_port) | The container port for the Unreal Horde web server. | `number` | `5000` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the Unreal Horde container. | `number` | `1024` | no |
 | <a name="input_container_grpc_port"></a> [container\_grpc\_port](#input\_container\_grpc\_port) | The container port for the Unreal Horde GRPC channel. | `number` | `5002` | no |
@@ -200,9 +232,8 @@ No modules.
 | <a name="input_oidc_client_id"></a> [oidc\_client\_id](#input\_oidc\_client\_id) | The client ID used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_client_secret"></a> [oidc\_client\_secret](#input\_oidc\_client\_secret) | The client secret used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_signin_redirect"></a> [oidc\_signin\_redirect](#input\_oidc\_signin\_redirect) | The sign-in redirect URL for the OIDC provider. | `string` | `null` | no |
+| <a name="input_p4_credentials_secret_arn"></a> [p4\_credentials\_secret\_arn](#input\_p4\_credentials\_secret\_arn) | ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4\_port is set. | `string` | `null` | no |
 | <a name="input_p4_port"></a> [p4\_port](#input\_p4\_port) | The Perforce server to connect to. | `string` | `null` | no |
-| <a name="input_p4_super_user_password_secret_arn"></a> [p4\_super\_user\_password\_secret\_arn](#input\_p4\_super\_user\_password\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d super user password. | `string` | `null` | no |
-| <a name="input_p4_super_user_username_secret_arn"></a> [p4\_super\_user\_username\_secret\_arn](#input\_p4\_super\_user\_username\_secret\_arn) | Optionally provide the ARN of an AWS Secret for the p4d super user username. | `string` | `null` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "unreal-horde",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
 | <a name="input_unreal_horde_alb_access_logs_bucket"></a> [unreal\_horde\_alb\_access\_logs\_bucket](#input\_unreal\_horde\_alb\_access\_logs\_bucket) | ID of the S3 bucket for Unreal Horde ALB access log storage. If access logging is enabled and this is null the module creates a bucket. | `string` | `null` | no |

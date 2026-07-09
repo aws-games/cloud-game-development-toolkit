@@ -111,7 +111,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
       ],
       dependsOn = concat(
         [{
-          containerName = "unreal-horde-docdb-cert",
+          containerName = "unreal-horde-init",
           condition     = "SUCCESS"
         }],
         local.need_p4_trust ? [{
@@ -121,19 +121,36 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
       )
     },
     {
-      name      = "unreal-horde-docdb-cert",
+      name      = "unreal-horde-init",
       image     = "public.ecr.aws/docker/library/bash:5.3",
       essential = false
-      command = ["sh", "-c", join(" && ", compact([
+      # The Perforce credentials never appear in this command (nor in the task
+      # definition JSON or Terraform state): server.json is rendered with
+      # __P4_USERNAME__/__P4_PASSWORD__ placeholders, and ECS injects the real
+      # values from p4_credentials_secret_arn as environment variables (see
+      # local.horde_init_secrets) which this script substitutes in at startup.
+      # bash (not sh) is required for the ${var//pattern/replacement} expansions,
+      # and the rendered server.json is deliberately never printed to the logs.
+      command = ["bash", "-ec", join("\n", compact([
         "wget -O /app/config/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem",
-        "printf '%s' '${replace(local.server_json, "'", "'\\''")}' > /app/Data/server.json",
-        "cat /app/Data/server.json",
+        "server_json='${replace(local.server_json, "'", "'\\''")}'",
+        var.p4_credentials_secret_arn != null ? <<-EOT
+          bs='\' qt='"'
+          u=$${P4_USERNAME//"$bs"/"$bs$bs"}; u=$${u//"$qt"/"$bs$qt"}
+          p=$${P4_PASSWORD//"$bs"/"$bs$bs"}; p=$${p//"$qt"/"$bs$qt"}
+          server_json=$${server_json//__P4_USERNAME__/"$u"}
+          server_json=$${server_json//__P4_PASSWORD__/"$p"}
+        EOT
+        : null,
+        "printf '%s' \"$server_json\" > /app/Data/server.json",
+        "echo 'Wrote /app/Data/server.json'",
         # Only write globals.json when the consumer actually supplied content. The variable
         # defaults to "" (not null), so guarding on `!= null` alone is always true and would
         # write an EMPTY /app/Data/globals.json — worse than writing nothing, since Horde then
         # loads a blank config. Require a non-empty string before writing.
         var.config_globals_json != null && var.config_globals_json != "" ? "printf '%s' '${replace(var.config_globals_json, "'", "'\\''")}' > /app/Data/globals.json && cat /app/Data/globals.json" : "echo 'No globals.json to write'"
       ]))]
+      secrets                  = local.horde_init_secrets
       readonly_root_filesystem = false
       mountPoints = [
         {
@@ -150,7 +167,7 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         options = {
           awslogs-group         = aws_cloudwatch_log_group.unreal_horde_log_group.name
           awslogs-region        = data.aws_region.current.id
-          awslogs-stream-prefix = "[DOCDB CERT]"
+          awslogs-stream-prefix = "[INIT]"
         }
       },
     }],
