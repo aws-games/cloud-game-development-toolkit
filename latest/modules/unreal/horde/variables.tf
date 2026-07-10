@@ -230,7 +230,7 @@ variable "create_unreal_horde_recycle_policy" {
 }
 
 ######################
-# OIDC CONFIG
+# PERFORCE CONFIG
 ######################
 
 variable "p4_port" {
@@ -239,30 +239,19 @@ variable "p4_port" {
   default     = null
 }
 
-variable "p4_super_user_username_secret_arn" {
+variable "p4_credentials_secret_arn" {
   type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user username."
+  description = "ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {\"username\": \"...\", \"password\": \"...\"}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4_port is set."
   default     = null
 
   validation {
-    condition     = var.p4_super_user_username_secret_arn == null || var.p4_port != null
-    error_message = "p4_super_user_username_secret_arn cannot be passed unless p4_port is also passed."
-  }
-}
-
-variable "p4_super_user_password_secret_arn" {
-  type        = string
-  description = "Optionally provide the ARN of an AWS Secret for the p4d super user password."
-  default     = null
-
-  validation {
-    condition     = var.p4_super_user_password_secret_arn == null || var.p4_port != null
-    error_message = "p4_super_user_password_secret_arn cannot be passed unless p4_port is also passed."
+    condition     = var.p4_port == null || var.p4_credentials_secret_arn != null
+    error_message = "p4_credentials_secret_arn must be set when p4_port is provided. Create a Secrets Manager secret containing {\"username\": \"...\", \"password\": \"...\"} for the Perforce user Horde should connect as."
   }
 
   validation {
-    condition     = (var.p4_super_user_username_secret_arn == null) == (var.p4_super_user_password_secret_arn == null)
-    error_message = "p4_super_user_username_secret_arn and p4_super_user_password_secret_arn must be provided together."
+    condition     = var.p4_credentials_secret_arn == null || var.p4_port != null
+    error_message = "p4_credentials_secret_arn cannot be passed unless p4_port is also passed."
   }
 }
 
@@ -500,6 +489,43 @@ variable "agent_dotnet_runtime_version" {
   default     = "6.0"
 }
 
+#######################################
+# WINDOWS AGENT BUILD HARDENING
+#######################################
+# These options codify host configuration that large Unreal Engine builds (especially
+# from-source engine compiles and UBA distributed compilation) require on Windows agents.
+# All default to backward-compatible values so existing deployments are unaffected.
+
+variable "agent_working_dir" {
+  type        = string
+  description = "Working directory for the Horde agent on Windows. A SHORT path (e.g. \"C:\\\\H\") keeps deeply-nested engine-plugin response-file paths under MAX_PATH for link.exe/cl.exe. Written to the durable agent.json so it survives agent self-upgrades. Set to null to leave the agent default."
+  default     = null
+}
+
+variable "agent_enable_long_paths" {
+  type        = bool
+  description = "Enable NTFS long-path support (LongPathsEnabled=1) on Windows agents. Recommended for from-source Unreal Engine builds, which routinely exceed MAX_PATH."
+  default     = false
+}
+
+variable "agent_uba_compute_ports" {
+  type        = string
+  description = "Inbound TCP port range to open in the host Windows Firewall for UBA (Unreal Build Accelerator) distributed compile workers, e.g. \"7000-7010\". The agent security group must also allow this range. Set to null to skip the firewall rule."
+  default     = null
+}
+
+variable "agent_uba_horde_pool" {
+  type        = string
+  description = "If set, writes a UBT BuildConfiguration.xml on Windows agents that enables UBA-over-Horde, targeting this Horde pool name (must match a pool in your globals.json, e.g. \"Win-UE5\"). Leave null to not configure UBA-over-Horde."
+  default     = null
+}
+
+variable "agent_uba_max_workers" {
+  type        = number
+  description = "MaxWorkers value for the UBT BuildConfiguration.xml <Horde> block (only used when agent_uba_horde_pool is set)."
+  default     = 4
+}
+
 variable "fully_qualified_domain_name" {
   type        = string
   description = "The fully qualified domain name where your Unreal Engine Horde server will be available. This agents will use this to enroll."
@@ -509,4 +535,16 @@ variable "enable_new_agents_by_default" {
   type        = bool
   description = "Set this flag to automatically enable new agents that enroll with the Horde Server."
   default     = false
+}
+
+variable "config_path" {
+  type        = string
+  description = "Value for the Horde server's `configPath` setting (written to /app/Data/server.json). Use \"globals.json\" to load the file rendered from `config_globals_json` into /app/Data, or a Perforce path (e.g. \"//UE/Main/...\") to load config from the depot."
+  default     = null
+}
+
+variable "config_globals_json" {
+  type        = string
+  description = "JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = \"globals.json\". Leave empty to manage config another way (e.g. a Perforce config_path)."
+  default     = ""
 }

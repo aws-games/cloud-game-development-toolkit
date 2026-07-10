@@ -3344,6 +3344,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#server-configuration-delivery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Configuration Delivery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Server Configuration Delivery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#perforce-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perforce connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#horde-configuration-globalsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Horde configuration (globals.json)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3439,6 +3478,27 @@
 <p>Unreal Engine Horde is only available through the Epic Games Github organization's package registry or the Unreal Engine source code. In order to get access to this software you will need to <a href="https://github.com/EpicGames/Signup">join the Epic Games organization</a> on Github and accept the Unreal Engine EULA.</p>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <p>For example configurations, please see the <a href="https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/unreal/horde/examples">examples</a>.</p>
+<h2 id="server-configuration-delivery">Server Configuration Delivery<a class="headerlink" href="#server-configuration-delivery" title="Permanent link">&para;</a></h2>
+<p>The Horde server reads its startup settings from <code>/app/Data/server.json</code>. An init container (<code>unreal-horde-init</code>) renders this file before the server starts, so the settings the current Horde image honors (config path, Perforce connection) are delivered as configuration files rather than environment variables.</p>
+<h3 id="perforce-connection">Perforce connection<a class="headerlink" href="#perforce-connection" title="Permanent link">&para;</a></h3>
+<p>To connect Horde to a Perforce server, set <code>p4_port</code> and provide the credentials through AWS Secrets Manager:</p>
+<ol>
+<li>
+<p>Create a Secrets Manager secret containing a JSON object with the Perforce username and password Horde should connect as:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;horde-service-user&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;example-password&quot;</span><span class="p">}</span>
+</code></pre></div>
+</li>
+<li>
+<p>Pass the secret's ARN to the module via <code>p4_credentials_secret_arn</code>.</p>
+</li>
+</ol>
+<p>The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted <code>secretsmanager:GetSecretValue</code> on the secret automatically). The init container substitutes them into <code>server.json</code> under <code>plugins.build.perforce</code> in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.</p>
+<h3 id="horde-configuration-globalsjson">Horde configuration (globals.json)<a class="headerlink" href="#horde-configuration-globalsjson" title="Permanent link">&para;</a></h3>
+<p>The <code>config_path</code> variable controls the Horde server's <code>configPath</code> setting:</p>
+<ul>
+<li>Set <code>config_path = "globals.json"</code> together with <code>config_globals_json</code> (a JSON string) to have the init container write your Horde configuration to <code>/app/Data/globals.json</code>.</li>
+<li>Set <code>config_path</code> to a Perforce depot path (e.g. <code>"//UE/Main/Config/globals.json"</code>) to have Horde load its configuration from your depot instead.</li>
+</ul>
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
@@ -3933,6 +3993,41 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_agent_enable_long_paths"></a> <a href="#input_agent_enable_long_paths">agent_enable_long_paths</a></td>
+<td>Enable NTFS long-path support (LongPathsEnabled=1) on Windows agents. Recommended for from-source Unreal Engine builds, which routinely exceed MAX_PATH.</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_agent_uba_compute_ports"></a> <a href="#input_agent_uba_compute_ports">agent_uba_compute_ports</a></td>
+<td>Inbound TCP port range to open in the host Windows Firewall for UBA (Unreal Build Accelerator) distributed compile workers, e.g. "7000-7010". The agent security group must also allow this range. Set to null to skip the firewall rule.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_agent_uba_horde_pool"></a> <a href="#input_agent_uba_horde_pool">agent_uba_horde_pool</a></td>
+<td>If set, writes a UBT BuildConfiguration.xml on Windows agents that enables UBA-over-Horde, targeting this Horde pool name (must match a pool in your globals.json, e.g. "Win-UE5"). Leave null to not configure UBA-over-Horde.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_agent_uba_max_workers"></a> <a href="#input_agent_uba_max_workers">agent_uba_max_workers</a></td>
+<td>MaxWorkers value for the UBT BuildConfiguration.xml <Horde> block (only used when agent_uba_horde_pool is set).</td>
+<td><code>number</code></td>
+<td><code>4</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_agent_working_dir"></a> <a href="#input_agent_working_dir">agent_working_dir</a></td>
+<td>Working directory for the Horde agent on Windows. A SHORT path (e.g. "C:\H") keeps deeply-nested engine-plugin response-file paths under MAX_PATH for link.exe/cl.exe. Written to the durable agent.json so it survives agent self-upgrades. Set to null to leave the agent default.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_agents"></a> <a href="#input_agents">agents</a></td>
 <td>Configures autoscaling groups to be used as build agents by Unreal Engine Horde.</td>
 <td><pre>map(object({<br>    ami             = string<br>    instance_type   = string<br>    horde_pool_name = optional(string)<br>    create_asg      = optional(bool, true)<br>    block_device_mappings = list(<br>      object({<br>        device_name = string<br>        ebs = object({<br>          volume_size = number<br>        })<br>      })<br>    )<br>    min_size = optional(number, 0)<br>    max_size = optional(number, 1)<br>  }))</pre></td>
@@ -3949,6 +4044,20 @@
 <tr>
 <td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
 <td>The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_config_globals_json"></a> <a href="#input_config_globals_json">config_globals_json</a></td>
+<td>JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = "globals.json". Leave empty to manage config another way (e.g. a Perforce config_path).</td>
+<td><code>string</code></td>
+<td><code>""</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_config_path"></a> <a href="#input_config_path">config_path</a></td>
+<td>Value for the Horde server's <code>configPath</code> setting (written to /app/Data/server.json). Use "globals.json" to load the file rendered from <code>config_globals_json</code> into /app/Data, or a Perforce path (e.g. "//UE/Main/...") to load config from the depot.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -4276,22 +4385,15 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_p4_credentials_secret_arn"></a> <a href="#input_p4_credentials_secret_arn">p4_credentials_secret_arn</a></td>
+<td>ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4_port is set.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_p4_port"></a> <a href="#input_p4_port">p4_port</a></td>
 <td>The Perforce server to connect to.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_p4_super_user_password_secret_arn"></a> <a href="#input_p4_super_user_password_secret_arn">p4_super_user_password_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d super user password.</td>
-<td><code>string</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_p4_super_user_username_secret_arn"></a> <a href="#input_p4_super_user_username_secret_arn">p4_super_user_username_secret_arn</a></td>
-<td>Optionally provide the ARN of an AWS Secret for the p4d super user username.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -4412,7 +4514,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-01-07
+    2026-07-10
   </span>
 
     

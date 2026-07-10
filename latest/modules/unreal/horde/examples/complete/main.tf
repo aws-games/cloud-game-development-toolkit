@@ -18,6 +18,22 @@ module "unreal_engine_horde" {
   github_credentials_secret_arn     = var.github_credentials_secret_arn
   tags                              = local.tags
   elasticache_engine                = "valkey"
+
+  # Perforce integration (optional): the credentials secret must contain
+  # {"username": "...", "password": "..."} for the Perforce user Horde
+  # connects as. Credentials are fetched at container startup and never
+  # appear in the ECS task definition or Terraform state.
+  p4_port                   = var.p4_port
+  p4_credentials_secret_arn = var.p4_credentials_secret_arn
+
+  # Horde configuration: the init container writes the JSON below to
+  # /app/Data/globals.json and points the server's configPath at it. Populate
+  # it with your projects, streams, and agent pools (see the Horde docs for
+  # the globals.json schema). Alternatively set config_path to a Perforce
+  # depot path (e.g. "//UE/Main/Config/globals.json") and omit
+  # config_globals_json to manage Horde configuration in your depot.
+  config_path         = "globals.json"
+  config_globals_json = file("${path.module}/globals.json")
   agents = {
     ubuntu-x86 = {
       ami           = data.aws_ami.ubuntu_noble_amd.id
