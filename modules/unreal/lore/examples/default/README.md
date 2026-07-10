@@ -1,12 +1,12 @@
 # Default Example
 
-Write tier + 2 edge pods with Cloud Map service discovery. No auth.
+Write tier + multi-edge pods with Cloud Map service discovery. No auth.
 
 ## What it creates
 
 - Write tier: ECS on c8gd.8xlarge with S3+DynamoDB storage, Cloud Map registration
-- Edge pod 1: EC2 with NVMe cache in AZ-a
-- Edge pod 2: EC2 with NVMe cache in AZ-b
+- Edge pod 1: EC2 with NVMe cache in UZ-a
+- Edge pod 2: EC2 with NVMe cache in UZ-b
 - Cloud Map private DNS for edge pod → write tier discovery
 
 ## Usage
