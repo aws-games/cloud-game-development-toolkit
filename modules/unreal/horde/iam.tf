@@ -117,7 +117,7 @@ resource "aws_iam_role_policy_attachment" "unreal_horde_recycle_attachment" {
 }
 
 data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
-  count = var.github_credentials_secret_arn != null || var.p4_super_user_username_secret_arn != null ? 1 : 0
+  count = var.github_credentials_secret_arn != null || var.p4_credentials_secret_arn != null ? 1 : 0
   statement {
     effect = "Allow"
     actions = [
@@ -127,16 +127,15 @@ data "aws_iam_policy_document" "unreal_horde_secrets_manager_policy" {
       var.github_credentials_secret_arn != null ? [
         var.github_credentials_secret_arn
       ] : [],
-      var.p4_super_user_username_secret_arn != null ? [
-        var.p4_super_user_username_secret_arn,
-        var.p4_super_user_password_secret_arn,
+      var.p4_credentials_secret_arn != null ? [
+        var.p4_credentials_secret_arn
       ] : []
     )
   }
 }
 
 resource "aws_iam_policy" "unreal_horde_secrets_manager_policy" {
-  count       = var.github_credentials_secret_arn != null || var.p4_super_user_username_secret_arn != null ? 1 : 0
+  count       = var.github_credentials_secret_arn != null || var.p4_credentials_secret_arn != null ? 1 : 0
   name        = "${var.project_prefix}-unreal-horde-secrets-manager-policy"
   description = "Policy granting permissions for Unreal Horde task execution role to access SSM."
   policy      = data.aws_iam_policy_document.unreal_horde_secrets_manager_policy[0].json
@@ -154,7 +153,7 @@ resource "aws_iam_role_policy_attachment" "unreal_horde_task_execution_policy_at
 }
 
 resource "aws_iam_role_policy_attachment" "unreal_horde_secrets_manager_policy_attachment" {
-  count = var.github_credentials_secret_arn != null || var.p4_super_user_username_secret_arn != null ? 1 : 0
+  count = var.github_credentials_secret_arn != null || var.p4_credentials_secret_arn != null ? 1 : 0
 
   role       = aws_iam_role.unreal_horde_task_execution_role.name
   policy_arn = aws_iam_policy.unreal_horde_secrets_manager_policy[0].arn

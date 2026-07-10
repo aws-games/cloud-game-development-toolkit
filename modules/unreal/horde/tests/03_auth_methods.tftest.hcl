@@ -213,13 +213,60 @@ run "unit_test_perforce_integration" {
     name                = "horde-p4"
 
     # Perforce configuration
-    p4_port                           = "ssl:perforce.example.com:1666"
-    p4_super_user_username_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:p4-user"
-    p4_super_user_password_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:p4-pass"
+    p4_port                   = "ssl:perforce.example.com:1666"
+    p4_credentials_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:p4-creds"
   }
 
   assert {
     condition     = length(aws_ecs_service.unreal_horde) > 0
     error_message = "ECS service should be created with Perforce integration"
   }
+
+  # The credentials must be delivered to the init container via ECS-native
+  # Secrets Manager injection, never rendered into the container command.
+  assert {
+    condition = contains(
+      [for secret in local.horde_init_secrets : secret.valueFrom],
+      "arn:aws:secretsmanager:us-east-1:123456789012:secret:p4-creds:username::"
+    )
+    error_message = "Init container should fetch the Perforce username from the credentials secret"
+  }
+
+  assert {
+    condition = contains(
+      [for secret in local.horde_init_secrets : secret.valueFrom],
+      "arn:aws:secretsmanager:us-east-1:123456789012:secret:p4-creds:password::"
+    )
+    error_message = "Init container should fetch the Perforce password from the credentials secret"
+  }
+
+  # server.json rendered into the task definition must carry placeholders only.
+  assert {
+    condition     = strcontains(local.server_json, "__P4_USERNAME__") && strcontains(local.server_json, "__P4_PASSWORD__")
+    error_message = "server.json in the task definition should contain credential placeholders, not values"
+  }
+}
+
+# Test: Perforce integration without credentials secret should fail validation
+run "unit_test_perforce_missing_credentials" {
+  command = plan
+
+  variables {
+    vpc_id                            = "vpc-12345678"
+    unreal_horde_service_subnets      = ["subnet-123", "subnet-456"]
+    unreal_horde_internal_alb_subnets = ["subnet-123", "subnet-456"]
+    certificate_arn                   = "arn:aws:acm:us-east-1:123456789012:certificate/test"
+    fully_qualified_domain_name       = "horde.example.com"
+
+    create_external_alb = false
+    create_internal_alb = true
+    name                = "horde-p4-nocreds"
+
+    # Perforce configuration without the required credentials secret
+    p4_port = "ssl:perforce.example.com:1666"
+  }
+
+  expect_failures = [
+    var.p4_credentials_secret_arn
+  ]
 }
