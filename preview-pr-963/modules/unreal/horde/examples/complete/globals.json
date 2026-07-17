@@ -1,0 +1,4 @@
+{
+  "$comment": "Minimal Horde globals.json. Populate with your projects, streams, and agent pools - see https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Programs/Horde/Docs/Config/Schema/Globals.md for the full schema.",
+  "projects": []
+}
