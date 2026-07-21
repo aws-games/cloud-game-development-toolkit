@@ -17,14 +17,6 @@
       "Resource": ["*"]
     },
     {
-      "Sid": "CloudFront",
-      "Effect": "Allow",
-      "Action": [
-        "cloudfront:updateDistribution"
-      ],
-      "Resource": ["*"]
-    },
-    {
       "Sid": "Cognito",
       "Effect": "Allow",
       "Action": [
@@ -296,23 +288,6 @@
       "Action": [
         "ssm:Get*",
         "ssm:GetParameter"
-      ],
-      "Resource": ["*"]
-    },
-    {
-      "Sid": "VPCLattice",
-      "Effect": "Allow",
-      "Action": [
-        "vpc-lattice:CreateServiceNetworkVpcEndpointAssociation",
-        "vpc-lattice:DescribeServiceNetworkVpcEndpointAssociation"
-      ],
-      "Resource": ["*"]
-    },
-    {
-      "Sid": "VPCEndpoints",
-      "Effect": "Allow",
-      "Action": [
-        "vpce:AllowMultiRegion"
       ],
       "Resource": ["*"]
     }
