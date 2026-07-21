@@ -1,0 +1,4 @@
+# Copy this file to terraform.tfvars and fill in your values.
+
+container_image       = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v1.0.0"
+allowed_ingress_cidrs = ["203.0.113.0/24"]  # Your studio office/VPN CIDR

@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+
+set servername [lindex $argv 0]
+set serverport [lindex $argv 1]
+set password "[ADMIN_PWD_PLACEHOLDER]"
+spawn ./Unity.Licensing.Server setup
+expect "Enter the server name"
+send "$servername\r"
+expect "Do you want the licensing server to use HTTPS?"
+send "n\r"
+expect "Enter the index number of the network interface"
+send "2\r"
+expect "Enter server's listening port number"
+send "$serverport\r"
+expect "Create a password"
+send "$password\r"
+expect "Confirm the password"
+send "$password\r"
+expect eof
