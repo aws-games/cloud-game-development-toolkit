@@ -21,7 +21,7 @@ required if using `auth_mode = "cognito"` or X-Ray smoke tests.
 
 For dev/test, `AdministratorAccess` covers everything. For production,
 use the scoped policy at
-[policies/deployer-permissions.json](policies/deployer-permissions.json).
+[deployer-permissions.json](deployer-permissions.json).
 
 The `VpcNetworking` statement can be omitted if you provide your own
 VPC via the `vpc_id` and subnet variables.
