@@ -3287,6 +3287,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#iam-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IAM Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3359,6 +3398,73 @@
 <li><strong>Observability</strong> — CloudWatch logs, optional X-Ray tracing</li>
 </ul>
 <p>You provide: a container image and a list of allowed client CIDRs.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<h3 id="iam-permissions">IAM Permissions<a class="headerlink" href="#iam-permissions" title="Permanent link">&para;</a></h3>
+<p>The IAM principal running <code>terraform apply</code> needs permissions for the
+following AWS services:</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EC2 / VPC</strong></td>
+<td>Create/manage VPCs, subnets, security groups, internet gateways, NAT gateways, route tables, EIPs, VPC endpoints, instances, launch templates, flow logs</td>
+</tr>
+<tr>
+<td><strong>ECS</strong></td>
+<td>Create/manage clusters, services, task definitions, capacity providers</td>
+</tr>
+<tr>
+<td><strong>Auto Scaling</strong></td>
+<td>Create/manage auto scaling groups</td>
+</tr>
+<tr>
+<td><strong>IAM</strong></td>
+<td>Create/manage roles, instance profiles, policies, policy attachments</td>
+</tr>
+<tr>
+<td><strong>S3</strong></td>
+<td>Create/manage buckets, lifecycle rules, encryption, public access blocks</td>
+</tr>
+<tr>
+<td><strong>DynamoDB</strong></td>
+<td>Create/manage tables</td>
+</tr>
+<tr>
+<td><strong>Secrets Manager</strong></td>
+<td>Create/manage secrets</td>
+</tr>
+<tr>
+<td><strong>CloudWatch Logs</strong></td>
+<td>Create/manage log groups</td>
+</tr>
+<tr>
+<td><strong>Service Discovery</strong></td>
+<td>Create/manage namespaces and services</td>
+</tr>
+<tr>
+<td><strong>Cognito</strong></td>
+<td>Create/manage user pools, clients, domains (if using <code>auth_mode = "cognito"</code>)</td>
+</tr>
+<tr>
+<td><strong>Lambda</strong></td>
+<td>Create/manage functions (if using Cognito auth or X-Ray smoke tests)</td>
+</tr>
+</tbody>
+</table>
+<p>For development and testing, the <code>AdministratorAccess</code> managed policy
+covers all of the above. For production environments, scope permissions
+to the specific services listed.</p>
+<h3 id="other-requirements">Other Requirements<a class="headerlink" href="#other-requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Terraform &gt;= 1.9</li>
+<li>A Lore container image accessible to ECS (public registry or ECR)</li>
+<li>Client CIDRs for security group ingress rules</li>
+</ul>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>examples/default
 terraform<span class="w"> </span>init<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>terraform<span class="w"> </span>apply
@@ -3417,7 +3523,7 @@ terraform<span class="w"> </span>init<span class="w"> </span><span class="o">&am
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-06-17
+    2026-07-21
   </span>
 
     
