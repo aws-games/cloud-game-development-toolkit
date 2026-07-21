@@ -206,18 +206,6 @@
       "Resource": ["*"]
     },
     {
-      "Sid": "ManagedFleets",
-      "Effect": "Allow",
-      "Action": [
-        "managed-fleets:DeleteAutoScalingGroup",
-        "managed-fleets:DeregisterAutoScalingGroup",
-        "managed-fleets:Get*",
-        "managed-fleets:RegisterAutoScalingGroup",
-        "managed-fleets:UpdateAutoScalingGroup"
-      ],
-      "Resource": ["*"]
-    },
-    {
       "Sid": "S3",
       "Effect": "Allow",
       "Action": [
