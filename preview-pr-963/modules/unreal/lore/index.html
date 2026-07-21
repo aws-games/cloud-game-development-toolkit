@@ -3400,65 +3400,15 @@
 <p>You provide: a container image and a list of allowed client CIDRs.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <h3 id="iam-permissions">IAM Permissions<a class="headerlink" href="#iam-permissions" title="Permanent link">&para;</a></h3>
-<p>The IAM principal running <code>terraform apply</code> needs permissions for the
-following AWS services:</p>
-<table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>EC2 / VPC</strong></td>
-<td>Create/manage VPCs, subnets, security groups, internet gateways, NAT gateways, route tables, EIPs, VPC endpoints, instances, launch templates, flow logs</td>
-</tr>
-<tr>
-<td><strong>ECS</strong></td>
-<td>Create/manage clusters, services, task definitions, capacity providers</td>
-</tr>
-<tr>
-<td><strong>Auto Scaling</strong></td>
-<td>Create/manage auto scaling groups</td>
-</tr>
-<tr>
-<td><strong>IAM</strong></td>
-<td>Create/manage roles, instance profiles, policies, policy attachments</td>
-</tr>
-<tr>
-<td><strong>S3</strong></td>
-<td>Create/manage buckets, lifecycle rules, encryption, public access blocks</td>
-</tr>
-<tr>
-<td><strong>DynamoDB</strong></td>
-<td>Create/manage tables</td>
-</tr>
-<tr>
-<td><strong>Secrets Manager</strong></td>
-<td>Create/manage secrets</td>
-</tr>
-<tr>
-<td><strong>CloudWatch Logs</strong></td>
-<td>Create/manage log groups</td>
-</tr>
-<tr>
-<td><strong>Service Discovery</strong></td>
-<td>Create/manage namespaces and services</td>
-</tr>
-<tr>
-<td><strong>Cognito</strong></td>
-<td>Create/manage user pools, clients, domains (if using <code>auth_mode = "cognito"</code>)</td>
-</tr>
-<tr>
-<td><strong>Lambda</strong></td>
-<td>Create/manage functions (if using Cognito auth or X-Ray smoke tests)</td>
-</tr>
-</tbody>
-</table>
-<p>For development and testing, the <code>AdministratorAccess</code> managed policy
-covers all of the above. For production environments, scope permissions
-to the specific services listed.</p>
+<p>The IAM principal running <code>terraform apply</code> needs permissions for
+EC2/VPC, ECS, Auto Scaling, IAM, S3, DynamoDB, Secrets Manager,
+CloudWatch Logs, and Service Discovery. Cognito and Lambda are only
+required if using <code>auth_mode = "cognito"</code> or X-Ray smoke tests.</p>
+<p>For dev/test, <code>AdministratorAccess</code> covers everything. For production,
+use the scoped policy at
+<a href="policies/deployer-permissions.json">policies/deployer-permissions.json</a>.</p>
+<p>The <code>VpcNetworking</code> statement can be omitted if you provide your own
+VPC via the <code>vpc_id</code> and subnet variables.</p>
 <h3 id="other-requirements">Other Requirements<a class="headerlink" href="#other-requirements" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Terraform &gt;= 1.9</li>
