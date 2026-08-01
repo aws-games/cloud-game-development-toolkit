@@ -1,0 +1,15 @@
+[Unit]
+Description=Unity License Server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=unity-licensing-server
+WorkingDirectory=/opt/UnityLicensingServer
+ExecStart=/opt/UnityLicensingServer/Unity.Licensing.Server run
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
