@@ -264,7 +264,7 @@ variable "auth_method" {
   description = "The authentication method for the Horde server."
   default     = null
   validation {
-    condition     = var.auth_method == null || contains(["Anonymous", "Okta", "OpenIdConnect", "Horde"], var.auth_method)
+    condition     = var.auth_method == null ? true : contains(["Anonymous", "Okta", "OpenIdConnect", "Horde"], var.auth_method)
     error_message = "Invalid authentication method. Must be one of: Anonymous, Okta, OpenIdConnect, Horde"
   }
 }
