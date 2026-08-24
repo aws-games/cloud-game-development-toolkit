@@ -274,7 +274,7 @@ variable "oidc_authority" {
   description = "The authority for the OIDC authentication provider used."
   default     = null
   validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_authority != null : var.oidc_authority == null
+    condition     = var.auth_method == null ? var.oidc_authority == null : (contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_authority != null : var.oidc_authority == null)
     error_message = "An OIDC authority must be provided for Okta and OpenIdConnect authentication methods."
   }
 }
@@ -284,7 +284,7 @@ variable "oidc_audience" {
   description = "The audience used for validating externally issued tokens."
   default     = null
   validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_audience != null : var.oidc_audience == null
+    condition     = var.auth_method == null ? var.oidc_audience == null : (contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_audience != null : var.oidc_audience == null)
     error_message = "An OIDC audience must be provided for Okta and OpenIdConnect authentication methods."
   }
 }
@@ -294,7 +294,7 @@ variable "oidc_client_id" {
   description = "The client ID used for authenticating with the OIDC provider."
   default     = null
   validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_id != null : var.oidc_client_id == null
+    condition     = var.auth_method == null ? var.oidc_client_id == null : (contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_id != null : var.oidc_client_id == null)
     error_message = "An OIDC client ID must be provided for Okta and OpenIdConnect authentication methods."
   }
 }
@@ -304,7 +304,7 @@ variable "oidc_client_secret" {
   description = "The client secret used for authenticating with the OIDC provider."
   default     = null
   validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_secret != null : var.oidc_client_secret == null
+    condition     = var.auth_method == null ? var.oidc_client_secret == null : (contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_client_secret != null : var.oidc_client_secret == null)
     error_message = "An OIDC client secret must be provided for Okta and OpenIdConnect authentication methods."
   }
 }
@@ -314,7 +314,7 @@ variable "oidc_signin_redirect" {
   description = "The sign-in redirect URL for the OIDC provider."
   default     = null
   validation {
-    condition     = var.auth_method != null && contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_signin_redirect != null : var.oidc_signin_redirect == null
+    condition     = var.auth_method == null ? var.oidc_signin_redirect == null : (contains(["Okta", "OpenIdConnect"], var.auth_method) ? var.oidc_signin_redirect != null : var.oidc_signin_redirect == null)
     error_message = "An OIDC sign-in redirect URL must be provided for Okta and OpenIdConnect authentication methods."
   }
 }
