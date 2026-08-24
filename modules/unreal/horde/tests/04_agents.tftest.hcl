@@ -135,6 +135,21 @@ run "unit_test_single_agent_pool" {
     condition     = length(aws_iam_instance_profile.unreal_horde_agent_instance_profile) == 1
     error_message = "Agent instance profile should be created"
   }
+
+  assert {
+    condition     = length(output.agent_launch_template_ids) > 0
+    error_message = "agent_launch_template_ids output should be non-empty when agents are configured"
+  }
+
+  assert {
+    condition     = output.agent_instance_role_name != null
+    error_message = "agent_instance_role_name output should be non-null when agents are configured"
+  }
+
+  assert {
+    condition     = output.agent_instance_role_arn != null
+    error_message = "agent_instance_role_arn output should be non-null when agents are configured"
+  }
 }
 
 # Test: Multiple agent pools with different configurations
