@@ -97,15 +97,16 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "agent_config" {
 
 # Intended S3 object keys (kept in locals so the SSM Associations and the
 # guarded uploads reference the same paths).
+#
+# NOTE: the Windows build-agent script is delivered to instances INLINE via
+# templatefile() in the AWS-RunPowerShellScript association (see below), so it
+# is intentionally NOT uploaded as an S3 object. Only the Linux Ansible
+# playbook — which AWS-ApplyAnsiblePlaybooks pulls from S3 — is uploaded here.
 locals {
   sync_agent_playbook_key = "config/sync-agent.ansible.yml"
-  build_agent_script_key  = "config/build-agent-setup.ps1"
 
-  # TODO(JT-14/JT-15): these files are delivered in Phase 2. fileexists() lets
-  # validate/plan pass now; the objects upload once the files exist.
   agent_config_files = {
     (local.sync_agent_playbook_key) = "${path.module}/config/sync-agent.ansible.yml"
-    (local.build_agent_script_key)  = "${path.module}/config/build-agent-setup.ps1"
   }
 }
 
@@ -153,13 +154,17 @@ resource "aws_ssm_association" "configure_sync_agent" {
 
 # --- Build Agent (Windows) SSM Association ---------------------------------
 #
-# Uses the AWS-managed AWS-RunPowerShellScript document. The script body is read
-# from the Phase 2 file when present; until then a documented placeholder script
-# keeps the association valid so `terraform validate`/`plan` pass.
+# Uses the AWS-managed AWS-RunPowerShellScript document. The script body is
+# rendered from config/build-agent-setup.ps1.tpl via templatefile() at apply
+# time, injecting the same four NON-secret runtime values the Linux sync-agent
+# association receives (FSxN NFS endpoint, workspace junction, P4PORT, P4USER).
+# This makes Windows symmetric with Linux — the script no longer scrapes EC2
+# tags/IMDS. The P4 PASSWORD is NEVER injected; it stays in Secrets Manager.
 #
-# TODO(JT-15): replace the placeholder body by delivering
-# config/build-agent-setup.ps1 in Phase 2. The fileexists() guard swaps in the
-# real script automatically once it exists.
+# p4_port is local.perforce_endpoint, which already coalesces to the deployed
+# P4 server's ssl:<ip>:1666 or the user-supplied existing endpoint. When no
+# Perforce endpoint exists it is null; templatefile coerces null to "" and the
+# script skips the P4PORT step with a warning (idempotent, non-fatal).
 resource "aws_ssm_association" "configure_build_agent" {
   association_name = "${local.name_prefix}-configure-build-agent"
   name             = "AWS-RunPowerShellScript"
@@ -170,6 +175,11 @@ resource "aws_ssm_association" "configure_build_agent" {
   }
 
   parameters = {
-    commands = fileexists("${path.module}/config/build-agent-setup.ps1") ? file("${path.module}/config/build-agent-setup.ps1") : "Write-Output 'TODO(JT-15): build-agent-setup.ps1 delivered in Phase 2. Placeholder until then.'"
+    commands = templatefile("${path.module}/config/build-agent-setup.ps1.tpl", {
+      fsxn_nfs_endpoint     = aws_fsx_ontap_storage_virtual_machine.workspace.endpoints[0].nfs[0].dns_name
+      p4_workspace_junction = local.fsxn_source_junction_path
+      p4_port               = local.perforce_endpoint == null ? "" : local.perforce_endpoint
+      p4_user               = local.horde_p4_username
+    })
   }
 }
