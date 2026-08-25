@@ -249,6 +249,25 @@ module "horde" {
   p4_port                   = local.perforce_endpoint
   p4_credentials_secret_arn = local.deploy_perforce ? aws_secretsmanager_secret.horde_p4_credentials[0].arn : null
 
+  # - Horde configuration (globals.json) — JT-18 -
+  #
+  # We render config/horde/globals.json.tpl (injecting var.perforce_stream) and
+  # pass the JSON INLINE via config_globals_json. The module's init container
+  # writes that rendered JSON to /app/Data/globals.json, and the app loads it
+  # because config_path = "globals.json" sets configPath in server.json
+  # (verified: ecs.tf init container write logic + local.tf server_json.configPath).
+  #
+  # globals.json references the Perforce connection by clusterName = "default",
+  # which the module already defines in server.json
+  # (plugins.build.perforce[{ id: "default", ... }]) — so we do NOT redefine
+  # perforceClusters/credentials in globals.json.
+  #
+  # NOTE: JT-18's original plan called for an "extra_environment" input; that
+  # variable does not exist on this module. config_globals_json + config_path is
+  # the supported mechanism.
+  config_globals_json = templatefile("${path.module}/config/horde/globals.json.tpl", { perforce_stream = var.perforce_stream })
+  config_path         = "globals.json"
+
   # - Agents -
   enable_new_agents_by_default = var.enable_new_agents_by_default
 
