@@ -21,7 +21,7 @@ locals {
 
   database_connection_string = var.database_connection_string != null ? var.database_connection_string : "mongodb://${var.docdb_master_username}:${var.docdb_master_password}@${aws_docdb_cluster.horde[0].endpoint}:27017/?tls=true&tlsCAFile=/app/config/global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
 
-  need_p4_trust = var.p4_port != null && startswith(var.p4_port, "ssl:")
+  need_p4_trust = var.p4_port != null ? startswith(var.p4_port, "ssl:") : false
 
   # Rendered with placeholder tokens instead of credentials: the init container
   # substitutes the real values at startup from environment variables that ECS
