@@ -7,7 +7,7 @@ data "aws_ssm_parameter" "al2023_ami" {
 locals {
   instance_family = split(".", var.instance_type)[0]
   is_arm64        = contains(["c8gd", "c8g", "c7gd", "c7g", "c7gn", "m7g", "m7gd", "m8g", "r7g", "r7gd", "r8g", "t4g", "im4gn", "is4gen", "x2gd", "hpc7g"], local.instance_family)
-  ecr_region      = join("", [data.aws_region.current.name]) # strip deprecation mark to avoid templatefile() inconsistency error
+  ecr_region      = data.aws_region.current.region
   ecr_registry    = split("/", var.container_image)[0]
   hmac_key        = var.hmac_key != null ? var.hmac_key : random_id.hmac[0].hex
 }
