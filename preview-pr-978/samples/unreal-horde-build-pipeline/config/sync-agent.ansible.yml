@@ -1,0 +1,160 @@
+---
+# =============================================================================
+# Sync Agent (Linux) — Horde Agent EXTENSION playbook  (JT-14)
+# =============================================================================
+#
+# Runs via the AWS-managed SSM document `AWS-ApplyAnsiblePlaybooks`, invoked by
+# `aws_ssm_association.configure_sync_agent` in the sample's iam.tf. That
+# association targets the sync-agent launch template by ID and supplies these
+# extra-vars (ExtraVariables, Ansible `-e`):
+#
+#     fsxn_nfs_endpoint      = <SVM NFS DNS name>
+#     p4_workspace_junction  = /p4-workspace   (local.fsxn_source_junction_path)
+#
+# THIS PLAYBOOK IS ADDITIVE. The base module playbook
+# (modules/unreal/horde/config/agent/horde-agent.ansible.yml) has ALREADY
+# installed, configured, and registered the Horde agent + dotnet on this host
+# via the module's own SSM association (ADR-005). We DO NOT reinstall or
+# re-register the Horde agent here — we only add:
+#   * NFS client (nfs-utils), Perforce p4 CLI (helix-cli), AWS CLI
+#   * a boot-time /etc/fstab NFSv3 mount of the FSxN source volume
+#
+# ADR notes:
+#   * ADR-001: Sync Agent runs on Amazon Linux 2023.
+#   * ADR-002: NFS ONLY (never SMB/CIFS/AD). The Linux SOURCE volume mounts via
+#              /etc/fstab (fixed, boot-time) using the NFSv3 family.
+#   * ADR-004: autofs/NFSv4 wildcard maps apply ONLY to the Linux-BUILD-agent
+#              extension (per-job FlexClones) — NOT to this sync agent. The
+#              sync agent mounts the single persistent source volume via fstab.
+#   * Security: the mount is unauthenticated at the network layer but locked
+#              down by the FSxN SG (NFSv3 2049/111 from the agent SG only) and
+#              /32 rules already defined in security.tf. This playbook opens
+#              nothing and adds no network access.
+#
+# No secrets are present or referenced in this file. The P4 password is fetched
+# at build time from Secrets Manager by the BuildGraph task, not here.
+# =============================================================================
+
+- name: Sync Agent — NFS + p4 CLI extension (additive to base Horde agent)
+  hosts: all
+  become: true
+
+  vars:
+    # --- Variables supplied by the SSM association's ExtraVariables ----------
+    # `fsxn_nfs_endpoint` and `p4_workspace_junction` are passed via `-e`. The
+    # defaults below are safe fallbacks only; the association always overrides
+    # them. Do NOT hardcode real values here.
+    fsxn_nfs_endpoint: ""
+    p4_workspace_junction: "/p4-workspace"
+
+    # Local mount point for the persistent FSxN source volume (ADR path).
+    p4_workspace_mount: "/mnt/p4-workspace"
+
+    # NFS mount options. NFSv3 family per ADR-002. `_netdev` + `nofail` keep the
+    # boot resilient if the endpoint is briefly unavailable.
+    nfs_mount_opts: "nfsvers=3,rw,hard,rsize=65536,wsize=65536,_netdev,nofail"
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # 0. Validate required extra-vars are present (fail fast, clear message).
+    # -------------------------------------------------------------------------
+    - name: Assert fsxn_nfs_endpoint was provided
+      ansible.builtin.assert:
+        that:
+          - fsxn_nfs_endpoint is defined
+          - fsxn_nfs_endpoint | length > 0
+        fail_msg: >-
+          fsxn_nfs_endpoint is empty. The SSM association must pass
+          -e "fsxn_nfs_endpoint=<svm-nfs-dns-name>".
+        success_msg: "fsxn_nfs_endpoint provided: {{ fsxn_nfs_endpoint }}"
+
+    - name: Assert p4_workspace_junction was provided
+      ansible.builtin.assert:
+        that:
+          - p4_workspace_junction is defined
+          - p4_workspace_junction | length > 0
+        fail_msg: >-
+          p4_workspace_junction is empty. The SSM association must pass
+          -e "p4_workspace_junction=/p4-workspace".
+        success_msg: "p4_workspace_junction provided: {{ p4_workspace_junction }}"
+
+    # -------------------------------------------------------------------------
+    # 1. Install packages: NFS client, AWS CLI. (Idempotent — package module.)
+    #    Amazon Linux 2023 provides nfs-utils and awscli(2) in its default repos.
+    # -------------------------------------------------------------------------
+    - name: Install NFS client and AWS CLI
+      ansible.builtin.package:
+        name:
+          - nfs-utils
+          - awscli
+        state: present
+
+    # -------------------------------------------------------------------------
+    # 2. Install the Perforce p4 CLI (helix-cli).
+    #    The Perforce package repo is NOT configured on AL2023 by default, so we
+    #    add the official Perforce yum repo, then install helix-cli. All steps
+    #    are idempotent (creates:/state:present/repo file check).
+    # -------------------------------------------------------------------------
+    - name: Check whether p4 CLI is already installed
+      ansible.builtin.command: which p4
+      register: p4_which
+      changed_when: false
+      failed_when: false
+
+    - name: Add the Perforce package repository (helix-cli)
+      ansible.builtin.yum_repository:
+        name: perforce
+        description: Perforce Helix Core packages
+        # Perforce publishes RHEL/CentOS RPMs; the rhel/9 tree installs cleanly
+        # on Amazon Linux 2023 (both are EL9-family, x86_64).
+        baseurl: "https://package.perforce.com/yum/rhel/9/x86_64/"
+        gpgcheck: true
+        gpgkey: "https://package.perforce.com/perforce.pubkey"
+        enabled: true
+      when: p4_which.rc != 0
+
+    - name: Install the Perforce p4 CLI (helix-cli)
+      ansible.builtin.package:
+        name: helix-cli
+        state: present
+      when: p4_which.rc != 0
+
+    # -------------------------------------------------------------------------
+    # 3. Ensure the mount point directory exists.
+    # -------------------------------------------------------------------------
+    - name: Ensure the FSxN source volume mount point exists
+      ansible.builtin.file:
+        path: "{{ p4_workspace_mount }}"
+        state: directory
+        mode: "0755"
+
+    # -------------------------------------------------------------------------
+    # 4. Add the NFSv3 mount to /etc/fstab (boot-time, fixed) and mount it now.
+    #    ansible.builtin.mount is idempotent: it manages the fstab entry AND
+    #    mounts it (state: mounted). Re-runs are a no-op if already mounted with
+    #    matching options.
+    # -------------------------------------------------------------------------
+    - name: Configure and activate the FSxN source volume NFSv3 mount (fstab)
+      ansible.posix.mount:
+        path: "{{ p4_workspace_mount }}"
+        # export path on the SVM = the volume junction path (e.g. /p4-workspace)
+        src: "{{ fsxn_nfs_endpoint }}:{{ p4_workspace_junction }}"
+        fstype: nfs
+        opts: "{{ nfs_mount_opts }}"
+        state: mounted
+
+    # -------------------------------------------------------------------------
+    # 5. Verify the mount is active (idempotent verification, no side effects).
+    # -------------------------------------------------------------------------
+    - name: Verify the FSxN source volume is mounted
+      ansible.builtin.command: "mountpoint -q {{ p4_workspace_mount }}"
+      register: mount_check
+      changed_when: false
+      failed_when: mount_check.rc != 0
+
+    - name: Report mount status
+      ansible.builtin.debug:
+        msg: >-
+          FSxN source volume mounted:
+          {{ fsxn_nfs_endpoint }}:{{ p4_workspace_junction }}
+          -> {{ p4_workspace_mount }} (NFSv3)

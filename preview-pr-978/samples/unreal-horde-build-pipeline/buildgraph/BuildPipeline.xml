@@ -1,0 +1,128 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- =====================================================================
+	     BuildPipeline.xml  (JT-20)
+	     =====================================================================
+	     Purpose: on-demand build. Create a per-build FlexClone from the latest
+	     ONTAP snapshot of the source volume, mount it, incremental-sync into it,
+	     compile Unreal, then ALWAYS clean up (unmount + delete the clone). Runs
+	     on the Windows build agent.
+
+	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
+	       * <Agent Name="BuildAgent"> matches the agentTypes key "BuildAgent"
+	         (type = BuildPool, condition OSFamily == 'Windows').
+	       * <Node Name="Compile"> matches the "build" template argument
+	         -Target=Compile.
+	       * globals.json passes -Script=Build/BuildPipeline.xml. That path
+	         resolves against the depot STREAM ROOT once this buildgraph/ dir is
+	         submitted to Perforce. Confirming path resolution is a Phase 6
+	         live-validation item.
+
+	     DESIGN NOTE: unlike the CloneVolumeExample / DeleteVolumeExample (which
+	     use separate CloneAgent / CleanupAgent), the ENTIRE per-build FlexClone
+	     lifecycle (clone -> mount -> compile -> unmount -> delete) is placed on
+	     the SINGLE BuildAgent. This scopes the clone to exactly one build and
+	     guarantees the same host that created and mounted the clone also tears
+	     it down.
+	     ===================================================================== -->
+
+	<!-- FlexClone / ONTAP parameters -->
+	<Option Name="SourceVolume" Description="Source ONTAP volume that holds the snapshot to clone from" />
+	<Option Name="SnapshotName" Description="Snapshot to clone from (produced by the hydrate pipeline)" />
+	<Option Name="CloneVolumeName" Description="Name for the per-build FlexClone volume (scoped to this build)" />
+	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for the ONTAP password" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+
+	<!-- Perforce parameters (incremental sync into the mounted clone) -->
+	<Option Name="Stream" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
+	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
+	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
+
+	<!-- Unreal compile parameters -->
+	<Option Name="UEProject" DefaultValue="" Description="Path to the .uproject relative to the mounted clone (e.g. W:/MyGame/MyGame.uproject). Empty = engine-only build." />
+	<Option Name="UETarget" DefaultValue="Editor" Description="Unreal build target to compile (e.g. Editor, Game, Server)" />
+	<Option Name="UEPlatform" DefaultValue="Win64" Description="Target platform for the Unreal compile" />
+	<Option Name="UEConfiguration" DefaultValue="Development" Description="Build configuration (Debug, Development, Shipping)" />
+
+	<!-- BuildAgent maps to the BuildPool Windows agent (globals.json agentTypes
+	     key "BuildAgent"). Type AnyAgent lets Horde place it on the pool selected
+	     by the template; the pool condition (OSFamily == 'Windows') is enforced
+	     in globals.json. ADR-004: the Windows build agent uses per-job FlexClones
+	     mounted for the duration of the build. -->
+	<Agent Name="BuildAgent" Type="AnyAgent">
+
+		<!-- Step 1: create the FlexClone from $(SourceVolume)+$(SnapshotName)
+		     as $(CloneVolumeName), then mount it to drive W: on this Windows
+		     host. -->
+		<Node Name="Clone And Mount">
+			<!-- Create FlexClone volume from the source volume's snapshot. -->
+			<CloneVolume
+				SourceVolume="$(SourceVolume)"
+				SnapshotName="$(SnapshotName)"
+				CloneVolumeName="$(CloneVolumeName)"
+				SvmName="$(SvmName)"
+				FsxAdminIp="$(FsxAdminIp)"
+				OntapUser="$(OntapUser)"
+				OntapPasswordSecretName="$(OntapPasswordSecretName)"
+				AwsRegion="$(AwsRegion)" />
+
+			<!-- Mount the freshly created clone to W:.
+			     The clone is exposed under the SVM at junction path
+			     /$(CloneVolumeName) (see CloneVolumeTask logging: "Junction
+			     Path: /<CloneVolumeName>"). We map it to W: via SMB here.
+			     NOTE: the EXACT mount command depends on the clone's
+			     export/junction path and SVM SMB/NFS DNS name, which are only
+			     known against a live FSxN SVM. Wiring the concrete UNC/NFS path
+			     is a Phase 6 live-validation item. -->
+			<Spawn Exe="cmd.exe" Arguments="/C net use W: \\$(SvmName)\$(CloneVolumeName) /persistent:no" />
+		</Node>
+
+		<!-- Step 2: the Compile node. Depends on the clone being created and
+		     mounted. Node name MUST be "Compile" to match globals.json
+		     -Target=Compile. -->
+		<Node Name="Compile" Requires="Clone And Mount">
+			<!-- Incremental p4 sync into the mounted clone (W:). The
+			     BuildWorkspace is marked incremental in globals.json, so this
+			     only transfers files changed since the snapshot was taken. -->
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="W:/" />
+
+			<!-- Real Unreal compile step. This invokes UnrealBuildTool via the
+			     engine's BatchFiles to build the requested target from the
+			     source tree now present on W:. This is the actual UE build (not
+			     a stub); adjust UEProject/UETarget/UEPlatform/UEConfiguration
+			     options per the game project. For a project build, pass
+			     -Project=$(UEProject). Verifying the exact BatchFiles path and
+			     target names against the checked-out engine is a Phase 6 item. -->
+			<Spawn Exe="cmd.exe" Arguments="/C W:\Engine\Build\BatchFiles\Build.bat $(UETarget) $(UEPlatform) $(UEConfiguration) $(UEProject)" WorkingDir="W:/" />
+		</Node>
+
+		<!-- Step 3: cleanup. RunLate="true" on this node, combined with the
+		     Requires on the clone node ("Clone And Mount") rather than on
+		     Compile, ensures BuildGraph schedules it to run at the END of the
+		     agent's work regardless of whether Compile succeeded or failed.
+		     This is CRITICAL: the per-build FlexClone must always be deleted,
+		     otherwise failed builds would leak FlexClones that accumulate on
+		     the FSxN filesystem. RunLate guarantees the unmount + DeleteVolume
+		     run even on Compile failure. -->
+		<Node Name="Cleanup Clone" Requires="Clone And Mount" RunLate="true">
+			<!-- Unmount W: first so the volume is not busy when we delete it. -->
+			<Spawn Exe="cmd.exe" Arguments="/C net use W: /delete /yes" />
+
+			<!-- Delete the per-build FlexClone. We intentionally delete ONLY the
+			     clone (DeleteVolume), NOT the source snapshot: the snapshot is
+			     owned by the hydrate pipeline and shared across builds. -->
+			<DeleteVolume
+				VolumeName="$(CloneVolumeName)"
+				SvmName="$(SvmName)"
+				FsxAdminIp="$(FsxAdminIp)"
+				OntapUser="$(OntapUser)"
+				OntapPasswordSecretName="$(OntapPasswordSecretName)"
+				AwsRegion="$(AwsRegion)" />
+		</Node>
+	</Agent>
+</BuildGraph>
