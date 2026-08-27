@@ -67,3 +67,7 @@ perforce_stream = "//YourGame/main"
 # (set to null if the image does not require authentication):
 # github_credentials_secret_arn = null
 # enable_new_agents_by_default = true
+
+# --- External access ---
+# Additional operator IPs allowed to reach the Horde web UI (each a specific CIDR; never 0.0.0.0/0).
+# additional_allowed_cidrs = ["203.0.113.4/32"]

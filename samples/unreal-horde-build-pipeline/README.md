@@ -47,6 +47,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
 - **Epic Games GitHub organization access.** The default Horde server image `ghcr.io/epicgames/horde-server:latest-bundled` is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:
   - provide `github_credentials_secret_arn` — a Secrets Manager secret with GitHub credentials that can read the private image; or
   - override `horde_server_image` with an image you can pull without authentication.
+- **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.)
 - **Custom BuildGraph tasks compiled into your Unreal build tooling.** The pipelines use custom tasks (`SyncAndSnapshot`, `CloneVolume`, `DeleteVolume`, `DeleteSnapshot`) whose C# sources live in `assets/buildgraph/tasks`. These must be compiled into your Unreal `AutomationTool`/`UnrealBuildTool` so BuildGraph recognizes them.
 - **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root.
 
@@ -64,6 +65,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
    - `route53_public_hosted_zone_name` — your existing public hosted zone (e.g. `example.com`).
    - `certificate_domain` — the public FQDN for the Horde HTTPS endpoint, under the public zone (e.g. `horde.example.com`).
    - `perforce_stream` — the Perforce stream to sync into the FSxN source volume (e.g. `//YourGame/main`).
+   - `horde_p4_credentials_secret_arn` — ARN of the pre-created Secrets Manager secret (`{"username":"svc-horde","password":"..."}`) for the Horde P4 user (required when deploying the bundled Perforce; see Prerequisites).
 
    Optional variables (Perforce endpoint, FSxN sizing, agent instance types and counts, Horde image) are documented with defaults in `terraform.tfvars.example`.
 
@@ -89,16 +91,20 @@ Terraform emits the following outputs (see `outputs.tf`):
 - `fsxn_management_endpoint` / `fsxn_svm_management_endpoint` — ONTAP REST API targets for the BuildGraph tasks.
 - `sync_agent_launch_template_id` / `build_agent_launch_template_id` — launch template IDs for the two agent pools.
 - `agent_instance_role_name` — the IAM role attached to agent instances (has the secrets-read policy).
-- `horde_p4_credentials_secret_arn` — the Horde P4 username/password secret (JSON, sensitive).
+- `horde_p4_credentials_secret_arn` — echoes the pre-created Horde P4 username/password secret ARN you passed in via `horde_p4_credentials_secret_arn` (JSON, sensitive). This sample does not create the secret.
 - `fsxn_password_secret_arn` — the FSxN `fsxadmin` password secret (sensitive).
 - `agent_config_bucket` — the S3 bucket holding agent configuration playbooks and scripts.
 
 ### Align the Perforce `svc-horde` password (required)
 
-This sample creates a Secrets Manager secret with a **random placeholder password** for the Horde P4 user (`svc-horde`). Terraform cannot set the password on the P4 user itself. After the P4 server is up, align the user's password with the secret value or Horde will not be able to authenticate to Perforce:
+The secret you pre-created (and passed via `horde_p4_credentials_secret_arn`) holds the **real
+password you chose** for the Horde P4 user (`svc-horde`). Terraform cannot set that password on
+the P4 user itself. After the P4 server is up, set the `svc-horde` user's password **on the
+server** to match the value already in the secret, or Horde will not be able to authenticate to
+Perforce:
 
 ```bash
-# Fetch the password Terraform stored for svc-horde
+# Confirm the password already stored in your pre-created secret
 aws secretsmanager get-secret-value --secret-id <horde_p4_credentials_secret_arn>
 
 # On the P4 server, set the svc-horde user's password to that value

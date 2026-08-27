@@ -6,6 +6,12 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.6.0"
     }
+    # Required (and configured in providers.tf) because the perforce module uses
+    # awscc-native resources. Version matches the lock file already present.
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = "1.98.0"
+    }
     random = {
       source  = "hashicorp/random"
       version = "3.7.2"
