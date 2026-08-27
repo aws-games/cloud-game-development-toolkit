@@ -3432,6 +3432,7 @@
 <li><strong>Epic Games GitHub organization access.</strong> The default Horde server image <code>ghcr.io/epicgames/horde-server:latest-bundled</code> is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:</li>
 <li>provide <code>github_credentials_secret_arn</code> — a Secrets Manager secret with GitHub credentials that can read the private image; or</li>
 <li>override <code>horde_server_image</code> with an image you can pull without authentication.</li>
+<li><strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This sample does <strong>not</strong> create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve against an ARN that is only known after apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.)</li>
 <li><strong>Custom BuildGraph tasks compiled into your Unreal build tooling.</strong> The pipelines use custom tasks (<code>SyncAndSnapshot</code>, <code>CloneVolume</code>, <code>DeleteVolume</code>, <code>DeleteSnapshot</code>) whose C# sources live in <code>assets/buildgraph/tasks</code>. These must be compiled into your Unreal <code>AutomationTool</code>/<code>UnrealBuildTool</code> so BuildGraph recognizes them.</li>
 <li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files must be submitted to your Perforce depot under <code>Build/</code> so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve against the stream root.</li>
 </ul>
@@ -3451,6 +3452,7 @@
 <li><code>route53_public_hosted_zone_name</code> — your existing public hosted zone (e.g. <code>example.com</code>).</li>
 <li><code>certificate_domain</code> — the public FQDN for the Horde HTTPS endpoint, under the public zone (e.g. <code>horde.example.com</code>).</li>
 <li><code>perforce_stream</code> — the Perforce stream to sync into the FSxN source volume (e.g. <code>//YourGame/main</code>).</li>
+<li><code>horde_p4_credentials_secret_arn</code> — ARN of the pre-created Secrets Manager secret (<code>{"username":"svc-horde","password":"..."}</code>) for the Horde P4 user (required when deploying the bundled Perforce; see Prerequisites).</li>
 </ol>
 <p>Optional variables (Perforce endpoint, FSxN sizing, agent instance types and counts, Horde image) are documented with defaults in <code>terraform.tfvars.example</code>.</p>
 <ol>
@@ -3471,13 +3473,17 @@ terraform<span class="w"> </span>apply
 <li><code>fsxn_management_endpoint</code> / <code>fsxn_svm_management_endpoint</code> — ONTAP REST API targets for the BuildGraph tasks.</li>
 <li><code>sync_agent_launch_template_id</code> / <code>build_agent_launch_template_id</code> — launch template IDs for the two agent pools.</li>
 <li><code>agent_instance_role_name</code> — the IAM role attached to agent instances (has the secrets-read policy).</li>
-<li><code>horde_p4_credentials_secret_arn</code> — the Horde P4 username/password secret (JSON, sensitive).</li>
+<li><code>horde_p4_credentials_secret_arn</code> — echoes the pre-created Horde P4 username/password secret ARN you passed in via <code>horde_p4_credentials_secret_arn</code> (JSON, sensitive). This sample does not create the secret.</li>
 <li><code>fsxn_password_secret_arn</code> — the FSxN <code>fsxadmin</code> password secret (sensitive).</li>
 <li><code>agent_config_bucket</code> — the S3 bucket holding agent configuration playbooks and scripts.</li>
 </ul>
 <h3 id="align-the-perforce-svc-horde-password-required">Align the Perforce <code>svc-horde</code> password (required)<a class="headerlink" href="#align-the-perforce-svc-horde-password-required" title="Permanent link">&para;</a></h3>
-<p>This sample creates a Secrets Manager secret with a <strong>random placeholder password</strong> for the Horde P4 user (<code>svc-horde</code>). Terraform cannot set the password on the P4 user itself. After the P4 server is up, align the user's password with the secret value or Horde will not be able to authenticate to Perforce:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Fetch the password Terraform stored for svc-horde</span>
+<p>The secret you pre-created (and passed via <code>horde_p4_credentials_secret_arn</code>) holds the <strong>real
+password you chose</strong> for the Horde P4 user (<code>svc-horde</code>). Terraform cannot set that password on
+the P4 user itself. After the P4 server is up, set the <code>svc-horde</code> user's password <strong>on the
+server</strong> to match the value already in the secret, or Horde will not be able to authenticate to
+Perforce:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Confirm the password already stored in your pre-created secret</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;horde_p4_credentials_secret_arn&gt;
 
 <span class="c1"># On the P4 server, set the svc-horde user's password to that value</span>
@@ -3530,7 +3536,7 @@ p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-08-26
+    2026-08-27
   </span>
 
     

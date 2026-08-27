@@ -75,3 +75,57 @@ resource "aws_route53_record" "horde_public" {
     evaluate_target_health = false
   }
 }
+
+##################################################
+# Split-Horizon Private Override of the Public Zone (JT-11 / Phase 6)
+#
+# Private-subnet Horde agents must enroll against the *public* FQDN
+# (horde.gabeaws.people.aws.dev = local.horde_public_fqdn = var.certificate_domain)
+# because that is the name embedded in the agent's server config and in the ACM
+# certificate. The real public hosted zone points that FQDN at the EXTERNAL ALB,
+# whose SG is locked to the deployer /32 — so in-VPC agents cannot reach it.
+#
+# To fix this WITHOUT relaxing any SG or changing the cert, we create a SECOND
+# hosted zone for the SAME apex domain (var.route53_public_hosted_zone_name) but
+# make it PRIVATE and associate it ONLY with this sample's VPC. Route 53 resolves
+# the most specific/associated private zone first for queries originating inside
+# the VPC, so:
+#   * INSIDE the VPC  -> this private-split zone answers horde.<domain> with the
+#                        INTERNAL ALB (agents enroll over 10.0.x.x, TLS still
+#                        valid because the internal ALB serves the same ACM cert
+#                        with SAN horde.gabeaws.people.aws.dev).
+#   * OUTSIDE the VPC -> the real public zone still answers with the EXTERNAL ALB
+#                        (browser traffic, /32-locked), completely unchanged.
+#
+# This is a classic split-horizon DNS override. No SG, cert, or module change.
+##################################################
+
+resource "aws_route53_zone" "public_split" {
+  name = var.route53_public_hosted_zone_name
+
+  vpc {
+    vpc_id = aws_vpc.horde_pipeline_vpc.id
+  }
+
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-public-split-zone"
+  })
+
+  #checkov:skip=CKV2_AWS_38:Private (split-horizon) hosted zone; DNSSEC not applicable
+  #checkov:skip=CKV2_AWS_39:Query logging out of scope for this sample
+}
+
+# In-VPC override: public Horde FQDN -> Horde INTERNAL ALB (agent enrollment).
+# Mirrors aws_route53_record.horde_internal but uses the public FQDN so agents
+# resolving the public name from inside the VPC land on the internal ALB.
+resource "aws_route53_record" "horde_public_split" {
+  zone_id = aws_route53_zone.public_split.zone_id
+  name    = local.horde_public_fqdn
+  type    = "A"
+
+  alias {
+    name                   = module.horde.internal_alb_dns_name
+    zone_id                = module.horde.internal_alb_zone_id
+    evaluate_target_health = false
+  }
+}

@@ -22,7 +22,7 @@ data "aws_iam_policy_document" "agent_secrets_read" {
     # super/admin secrets are only present when this sample deploys Perforce.
     resources = compact([
       aws_secretsmanager_secret.fsxn_admin.arn,
-      local.deploy_perforce ? aws_secretsmanager_secret.horde_p4_credentials[0].arn : "",
+      var.horde_p4_credentials_secret_arn != null ? var.horde_p4_credentials_secret_arn : "",
       local.deploy_perforce ? module.perforce[0].p4_server_super_password_secret_arn : "",
     ])
   }
@@ -41,6 +41,50 @@ resource "aws_iam_policy" "agent_secrets_read" {
 resource "aws_iam_role_policy_attachment" "agent_secrets_read" {
   role       = module.horde.agent_instance_role_name
   policy_arn = aws_iam_policy.agent_secrets_read.arn
+}
+
+##################################################
+# Horde Agent — Agent Config Bucket Read
+#
+# The sync-agent SSM Association uses AWS-ApplyAnsiblePlaybooks, which pulls the
+# playbook from the agent config S3 bucket. The Horde module's agent instance
+# role does NOT grant access to this sample-created bucket, so SSM's
+# downloadContent step fails with AccessDenied (s3:ListBucket). This policy
+# grants the exact read access needed, scoped to the agent config bucket only:
+#   * s3:ListBucket on the bucket ARN
+#   * s3:GetObject on the bucket objects
+# The bucket uses SSE-S3 (AES256), so no kms:Decrypt is required.
+##################################################
+
+data "aws_iam_policy_document" "agent_config_read" {
+  statement {
+    sid       = "ListAgentConfigBucket"
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.agent_config.arn]
+  }
+
+  statement {
+    sid       = "GetAgentConfigObjects"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.agent_config.arn}/*"]
+  }
+}
+
+resource "aws_iam_policy" "agent_config_read" {
+  name        = "${local.name_prefix}-agent-config-read"
+  description = "Allow Horde agents to read the agent config bucket (Ansible playbook) via SSM. Scoped to the bucket only."
+  policy      = data.aws_iam_policy_document.agent_config_read.json
+
+  tags = merge(local.tags, {
+    Name = "${local.name_prefix}-agent-config-read"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "agent_config_read" {
+  role       = module.horde.agent_instance_role_name
+  policy_arn = aws_iam_policy.agent_config_read.arn
 }
 
 ##################################################
@@ -88,9 +132,14 @@ resource "aws_s3_bucket_public_access_block" "agent_config" {
 resource "aws_s3_bucket_server_side_encryption_configuration" "agent_config" {
   bucket = aws_s3_bucket.agent_config.id
 
+  # SSE-S3 (AES256) rather than SSE-KMS: this is a non-sensitive sample config
+  # bucket (it holds the sync-agent Ansible playbook only). Using SSE-S3
+  # eliminates the KMS decrypt dependency for the agent instance role — the
+  # role only needs s3:GetObject/s3:ListBucket to pull the playbook via SSM
+  # AWS-ApplyAnsiblePlaybooks. No kms:Decrypt required.
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm = "AES256"
     }
   }
 }

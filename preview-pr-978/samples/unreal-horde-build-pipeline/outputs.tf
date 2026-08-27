@@ -49,7 +49,7 @@ output "agent_instance_role_name" {
 
 output "horde_p4_credentials_secret_arn" {
   description = "ARN of the Secrets Manager secret holding the Horde P4 username/password (JSON)."
-  value       = local.deploy_perforce ? aws_secretsmanager_secret.horde_p4_credentials[0].arn : null
+  value       = var.horde_p4_credentials_secret_arn
   sensitive   = true
 }
 

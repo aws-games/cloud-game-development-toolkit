@@ -58,58 +58,6 @@ module "perforce" {
 }
 
 ##########################################
-# Horde P4 Credentials Secret — JT-06
-#
-# The Horde module's `p4_credentials_secret_arn` expects a secret whose value is
-# a JSON object: {"username": "...", "password": "..."}. This is a DIFFERENT
-# shape than the perforce module's super-password secret (which stores a bare
-# password string), so the module's secret cannot be passed to Horde directly.
-#
-# We therefore create a purpose-built secret for the dedicated Perforce user
-# that Horde authenticates as (e.g. a "svc-horde" account).
-#
-# IMPORTANT (post-deploy step): the password generated here is a PLACEHOLDER so
-# that nothing real is hardcoded and Terraform can create the secret. After the
-# P4 Server is up, the operator must create/align the Horde P4 user
-# (local.horde_p4_username) with THIS password, e.g.:
-#     p4 -u <super> passwd svc-horde   # set to the value in this secret
-# or update this secret's value to match the password set on the P4 user.
-# Rotating either side without the other will break Horde's Perforce connection.
-##########################################
-
-resource "random_password" "horde_p4" {
-  count = local.deploy_perforce ? 1 : 0
-
-  length  = 24
-  special = true
-  # Keep to a P4-safe special-character set.
-  override_special = "!#$%&*()-_=+[]{}"
-}
-
-resource "aws_secretsmanager_secret" "horde_p4_credentials" {
-  count = local.deploy_perforce ? 1 : 0
-
-  name        = "${local.name_prefix}-horde-p4-credentials"
-  description = "Perforce username/password (JSON) the Horde server authenticates with. Shape: {\"username\":\"...\",\"password\":\"...\"}."
-
-  tags = merge(local.tags, {
-    Name = "${local.name_prefix}-horde-p4-credentials"
-  })
-
-  #checkov:skip=CKV2_AWS_57: Automatic rotation is out of scope for this sample
-}
-
-resource "aws_secretsmanager_secret_version" "horde_p4_credentials" {
-  count = local.deploy_perforce ? 1 : 0
-
-  secret_id = aws_secretsmanager_secret.horde_p4_credentials[0].id
-  secret_string = jsonencode({
-    username = local.horde_p4_username
-    password = random_password.horde_p4[0].result
-  })
-}
-
-##########################################
 # ACM Certificate for the Horde HTTPS endpoint — JT-07 (partial)
 #
 # The Horde module requires a `certificate_arn` for its external ALB HTTPS
@@ -245,9 +193,11 @@ module "horde" {
 
   # - Perforce wiring -
   # p4_port is ssl:<host>:1666 (built in locals.tf). The credentials secret is
-  # the purpose-built JSON secret created in JT-06 above.
+  # a pre-created JSON secret ({"username":"...","password":"..."}) passed via
+  # var.horde_p4_credentials_secret_arn. Passing a pre-created secret keeps its
+  # ARN known at plan time so the Horde module's count logic resolves cleanly.
   p4_port                   = local.perforce_endpoint
-  p4_credentials_secret_arn = local.deploy_perforce ? aws_secretsmanager_secret.horde_p4_credentials[0].arn : null
+  p4_credentials_secret_arn = var.horde_p4_credentials_secret_arn
 
   # - Horde configuration (globals.json) — JT-18 -
   #
@@ -308,5 +258,23 @@ module "horde" {
         }
       ]
     }
+  }
+}
+
+##########################################
+# Validation: bundled-Perforce requires a pre-created P4 credentials secret
+#
+# When the sample deploys the bundled Perforce server
+# (existing_perforce_server_endpoint = null), a pre-created Horde P4 credentials
+# secret ARN MUST be supplied via var.horde_p4_credentials_secret_arn. Passing a
+# pre-created secret keeps its ARN known at plan time so the Horde module's
+# count logic resolves without an unknown-count error. This is expressed as a
+# check block because it depends on two variables (cross-variable) and cannot be
+# a single-variable validation.
+##########################################
+check "horde_p4_credentials_secret_required" {
+  assert {
+    condition     = !local.deploy_perforce || var.horde_p4_credentials_secret_arn != null
+    error_message = "var.horde_p4_credentials_secret_arn must be set when deploying the bundled Perforce server (existing_perforce_server_endpoint = null)."
   }
 }

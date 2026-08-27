@@ -134,8 +134,28 @@ variable "github_credentials_secret_arn" {
   default     = null
 }
 
+variable "horde_p4_credentials_secret_arn" {
+  type        = string
+  description = "ARN of a pre-created Secrets Manager secret holding the Horde P4 credentials as JSON {\"username\":\"...\",\"password\":\"...\"}. Passing a pre-created secret keeps its ARN known at plan time. Required when deploying the bundled Perforce server (existing_perforce_server_endpoint = null); may be null only if wiring an existing Perforce with its own credentials handling."
+  default     = null
+}
+
 variable "enable_new_agents_by_default" {
   type        = bool
   description = "Whether newly registered Horde agents are enabled automatically."
   default     = true
+}
+
+##################################################
+# External Access
+##################################################
+
+variable "additional_allowed_cidrs" {
+  type        = list(string)
+  description = "Additional operator CIDR blocks (e.g. individual /32s) allowed to reach the Horde external ALB (HTTPS 443 + HTTP 80 redirect), in addition to the auto-detected deployer IP. Each entry MUST be a specific CIDR; never 0.0.0.0/0."
+  default     = []
+  validation {
+    condition     = alltrue([for c in var.additional_allowed_cidrs : c != "0.0.0.0/0" && c != "::/0"])
+    error_message = "additional_allowed_cidrs must not contain 0.0.0.0/0 or ::/0 - external access must be scoped to specific CIDRs."
+  }
 }
