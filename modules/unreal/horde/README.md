@@ -34,7 +34,12 @@ To connect Horde to a Perforce server, set `p4_port` and provide the credentials
 
 2. Pass the secret's ARN to the module via `p4_credentials_secret_arn`.
 
-The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted `secretsmanager:GetSecretValue` on the secret automatically). The init container substitutes them into `server.json` under `plugins.build.perforce` in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.
+The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted `secretsmanager:GetSecretValue` on the secret automatically). The init container substitutes them in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.
+
+The init container substitutes the credentials into two places, using the `__P4_USERNAME__` / `__P4_PASSWORD__` placeholder tokens:
+
+- **`server.json`** (rendered by the module) under `plugins.build.perforce` — the Horde server's Perforce connection.
+- **`globals.json`** (supplied by you via `config_globals_json`) — see below.
 
 ### Horde configuration (globals.json)
 
@@ -42,6 +47,27 @@ The `config_path` variable controls the Horde server's `configPath` setting:
 
 - Set `config_path = "globals.json"` together with `config_globals_json` (a JSON string) to have the init container write your Horde configuration to `/app/Data/globals.json`.
 - Set `config_path` to a Perforce depot path (e.g. `"//UE/Main/Config/globals.json"`) to have Horde load its configuration from your depot instead.
+
+#### Perforce cluster credentials in globals.json
+
+Horde 5.5 resolves the Perforce cluster used for **stream polling** from the top-level `perforceClusters` array in `globals.json`, and it does **not** fall back to `server.json` for that path. If your `perforceClusters` entry omits credentials, stream polling authenticates as the wrong user (or the OS default) and fails.
+
+To deliver the Perforce credentials to a cluster without ever placing the password in your config string or Terraform state, put the same placeholder tokens inside a cluster's `credentials` entry. The init container substitutes them from `p4_credentials_secret_arn` at startup:
+
+```json
+"perforceClusters": [
+  {
+    "name": "default",
+    "serviceAccount": "svc-horde",
+    "servers": [ { "serverAndPort": "ssl:perforce.example.com:1666" } ],
+    "credentials": [
+      { "userName": "__P4_USERNAME__", "password": "__P4_PASSWORD__" }
+    ]
+  }
+]
+```
+
+The `credentials` substitution is a no-op when the placeholders are absent, so existing `config_globals_json` values are unaffected. For deploy diagnostics the init container prints `globals.json` to the `[INIT]` CloudWatch log **before** substituting the password, so `__P4_PASSWORD__` appears as a literal placeholder in the log and the injected secret is never written to CloudWatch.
 
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
@@ -184,7 +210,7 @@ No modules.
 | <a name="input_agents"></a> [agents](#input\_agents) | Configures autoscaling groups to be used as build agents by Unreal Engine Horde. | <pre>map(object({<br>    ami             = string<br>    instance_type   = string<br>    horde_pool_name = optional(string)<br>    create_asg      = optional(bool, true)<br>    block_device_mappings = list(<br>      object({<br>        device_name = string<br>        ebs = object({<br>          volume_size = number<br>        })<br>      })<br>    )<br>    min_size = optional(number, 0)<br>    max_size = optional(number, 1)<br>  }))</pre> | `{}` | no |
 | <a name="input_auth_method"></a> [auth\_method](#input\_auth\_method) | The authentication method for the Horde server. | `string` | `null` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The name of the cluster to deploy the Unreal Horde into. Defaults to null and a cluster will be created. | `string` | `null` | no |
-| <a name="input_config_globals_json"></a> [config\_globals\_json](#input\_config\_globals\_json) | JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config\_path = "globals.json". Leave empty to manage config another way (e.g. a Perforce config\_path). | `string` | `""` | no |
+| <a name="input_config_globals_json"></a> [config\_globals\_json](#input\_config\_globals\_json) | JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config\_path = "globals.json". The init container substitutes the \_\_P4\_USERNAME\_\_ / \_\_P4\_PASSWORD\_\_ placeholder tokens (from p4\_credentials\_secret\_arn) into this content at startup, so you can place them inside a perforceClusters[].credentials entry without the password ever landing in Terraform state or the task definition. Substitution is a no-op when the placeholders are absent. Leave empty to manage config another way (e.g. a Perforce config\_path). | `string` | `""` | no |
 | <a name="input_config_path"></a> [config\_path](#input\_config\_path) | Value for the Horde server's `configPath` setting (written to /app/Data/server.json). Use "globals.json" to load the file rendered from `config_globals_json` into /app/Data, or a Perforce path (e.g. "//UE/Main/...") to load config from the depot. | `string` | `null` | no |
 | <a name="input_container_api_port"></a> [container\_api\_port](#input\_container\_api\_port) | The container port for the Unreal Horde web server. | `number` | `5000` | no |
 | <a name="input_container_cpu"></a> [container\_cpu](#input\_container\_cpu) | The CPU allotment for the Unreal Horde container. | `number` | `1024` | no |
@@ -232,7 +258,7 @@ No modules.
 | <a name="input_oidc_client_id"></a> [oidc\_client\_id](#input\_oidc\_client\_id) | The client ID used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_client_secret"></a> [oidc\_client\_secret](#input\_oidc\_client\_secret) | The client secret used for authenticating with the OIDC provider. | `string` | `null` | no |
 | <a name="input_oidc_signin_redirect"></a> [oidc\_signin\_redirect](#input\_oidc\_signin\_redirect) | The sign-in redirect URL for the OIDC provider. | `string` | `null` | no |
-| <a name="input_p4_credentials_secret_arn"></a> [p4\_credentials\_secret\_arn](#input\_p4\_credentials\_secret\_arn) | ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4\_port is set. | `string` | `null` | no |
+| <a name="input_p4_credentials_secret_arn"></a> [p4\_credentials\_secret\_arn](#input\_p4\_credentials\_secret\_arn) | ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce (and into any \_\_P4\_USERNAME\_\_/\_\_P4\_PASSWORD\_\_ placeholders in config\_globals\_json) - they never appear in the ECS task definition or Terraform state. Required when p4\_port is set. | `string` | `null` | no |
 | <a name="input_p4_port"></a> [p4\_port](#input\_p4\_port) | The Perforce server to connect to. | `string` | `null` | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appeneded to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "iac-management": "CGD-Toolkit",<br>  "iac-module": "unreal-horde",<br>  "iac-provider": "Terraform"<br>}</pre> | no |
