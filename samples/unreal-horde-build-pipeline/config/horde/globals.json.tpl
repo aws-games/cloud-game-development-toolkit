@@ -47,8 +47,11 @@
     "     names defined in the BuildGraph XML.",
     "",
     "BuildWorkspace.view (Windows conform fix): the BuildWorkspace workspaceType sets a custom",
-    "'view' that EXCLUDES the Linux cross-compile toolchain",
-    "(-//Lyra/main/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/...). That subtree ships Linux",
+    "'view' that EXCLUDES the Linux cross-compile toolchain. Horde workspace view lines are",
+    "STREAM-RELATIVE (like autoSdkConfig.view '...'), NOT absolute //depot paths — an absolute",
+    "'//Lyra/main/...' include maps ZERO files into the client and the sync silently populates",
+    "nothing. So the view is ['...', '-Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/...']. That",
+    "subtree ships Linux",
     "kernel netfilter headers whose names differ ONLY by case (xt_CONNMARK.h vs xt_connmark.h and",
     "15 more pairs). Horde's Windows agent uses a CASE-INSENSITIVE ManagedWorkspace dictionary",
     "during conform/sync, so those pairs collide and abort with 'System.ArgumentException: An item",
@@ -102,8 +105,8 @@
               "cluster": "default",
               "incremental": true,
               "view": [
-                "//Lyra/main/...",
-                "-//Lyra/main/Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/..."
+                "...",
+                "-Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/..."
               ]
             }
           },
