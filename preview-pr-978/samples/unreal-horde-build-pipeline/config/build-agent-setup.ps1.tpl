@@ -72,6 +72,11 @@ $P4WorkspaceJunction  = '${p4_workspace_junction}'
 $P4Port               = '${p4_port}'
 $P4User               = '${p4_user}'
 
+# Horde server URL the agent enrolls against (public HTTPS FQDN). Injected by
+# iam.tf. Used by step 7/8 below to finish the Horde agent enrollment that the
+# base module user_data could not complete on this AMI (see step 7 header).
+$HordeServerUrl       = '${horde_server_url}'
+
 # NOTE (R2): no $WorkspaceDriveLetter here — the build agent does NOT
 # bootstrap-mount the source volume. The per-job clone is mounted at V: inside
 # BuildPipeline.xml. FsxnNfsEndpoint / P4WorkspaceJunction are retained above
@@ -303,6 +308,132 @@ catch {
 Write-Log ('Skipping bootstrap source-volume mount by design (R2): the build ' +
            'uses a per-job FlexClone mounted at V: inside BuildPipeline.xml. ' +
            "SVM NFS endpoint (for reference): $FsxnNfsEndpoint")
+
+# =============================================================================
+# 7. Make the .NET 6 Horde AGENT runnable on this host, and (step 8) complete
+#    the Horde agent enrollment.
+#
+#    ROOT CAUSE this fixes (live-diagnosed on the first BuildAgent bringup):
+#      The base module Windows user_data (agent-config.ps1) does, at first boot:
+#        `choco install -y --no-progress dotnet-6.0-runtime`
+#        `HordeAgent.exe SetServer -Default -Url=<horde>`
+#        `HordeAgent.exe Service Install -Start=false`
+#      But on this AMI Chocolatey is NOT present when user_data runs, so the
+#      `choco install dotnet-6.0-runtime` step FAILS ("'choco' is not
+#      recognized"). HordeAgent.exe is a .NET 6 app (runtimeconfig tfm=net6.0,
+#      Microsoft.NETCore.App 6.0.0). With no .NET 6 runtime, SetServer and
+#      Service Install ALSO fail ("You must install or update .NET to run this
+#      application ... framework 'Microsoft.NETCore.App' version '6.0.0'"), so
+#      the agent service is never installed and the agent NEVER enrolls.
+#
+#    FIX (no module change, no extra download): this extension already installs
+#    the .NET 8 SDK (step 3) for UE 5.5 UAT. Rather than fetch a separate .NET 6
+#    runtime (the choco `aspnetcore-runtime-6.0`/`dotnet-6.0-runtime` packages
+#    are unreliable/absent on the community feed), we set
+#    DOTNET_ROLL_FORWARD=LatestMajor MACHINE-wide. That tells the .NET host to
+#    run the net6.0 HordeAgent on the already-installed .NET 8 shared framework
+#    (roll-forward across a major version). Live-verified: with this set, the
+#    agent launches ("Version: 5.5.0-...", "Application started"). Machine-wide
+#    so the HordeAgent Windows service (step 8) inherits it.
+# =============================================================================
+function Test-DotnetRuntimeAny {
+    if (-not (Test-Command 'dotnet')) { return $false }
+    try {
+        $rts = & dotnet --list-runtimes 2>$null
+        return [bool]($rts | Where-Object { $_ -match '^Microsoft\.NETCore\.App ' })
+    }
+    catch { return $false }
+}
+
+try {
+    if (-not (Test-DotnetRuntimeAny)) {
+        throw 'No Microsoft.NETCore.App runtime found; cannot run the Horde agent. Step 3 (.NET 8 SDK) should have provided one.'
+    }
+    # Roll-forward across major versions so the net6.0 agent runs on .NET 8.
+    [System.Environment]::SetEnvironmentVariable('DOTNET_ROLL_FORWARD', 'LatestMajor', 'Machine')
+    $env:DOTNET_ROLL_FORWARD = 'LatestMajor'
+    Write-Log 'Set machine env DOTNET_ROLL_FORWARD=LatestMajor (net6.0 agent runs on installed .NET 8).'
+}
+catch {
+    Write-Log "Failed to configure .NET roll-forward for the Horde agent: $($_.Exception.Message)" 'ERROR'
+    exit 1
+}
+
+# =============================================================================
+# 8. Complete Horde agent enrollment: SetServer + Service Install/Start.
+#    Idempotent — SetServer re-affirms the profile; Service Install is a no-op
+#    if the service already exists (we then just ensure it is started).
+#    Skipped (with a warning) if HordeServerUrl or HordeAgent.exe is absent.
+# =============================================================================
+try {
+    $HordeExe = 'C:\Horde\HordeAgent.exe'
+    if ([string]::IsNullOrWhiteSpace($HordeServerUrl)) {
+        Write-Log 'HordeServerUrl not provided; skipping Horde agent enrollment.' 'WARN'
+    }
+    elseif (-not (Test-Path $HordeExe)) {
+        Write-Log "HordeAgent.exe not found at $HordeExe; cannot enroll. Base user_data may not have downloaded it." 'WARN'
+    }
+    else {
+        Write-Log "Configuring Horde server URL: $HordeServerUrl"
+        & $HordeExe SetServer -Default -Url="$HordeServerUrl" 2>&1 | ForEach-Object { Write-Log "SetServer: $_" }
+        if ($LASTEXITCODE -ne 0) { throw "HordeAgent SetServer returned $LASTEXITCODE" }
+
+        $svc = Get-Service -Name 'HordeAgent' -ErrorAction SilentlyContinue
+        if (-not $svc) {
+            Write-Log 'Installing HordeAgent service...'
+            & $HordeExe Service Install -Start=true 2>&1 | ForEach-Object { Write-Log "Service Install: $_" }
+            if ($LASTEXITCODE -ne 0) { throw "HordeAgent Service Install returned $LASTEXITCODE" }
+        }
+        else {
+            Write-Log "HordeAgent service already exists (Status=$($svc.Status)); ensuring it is started."
+        }
+
+        # SCM cannot resolve the bare `dotnet` token in the service ImagePath
+        # that `Service Install` registers ("dotnet \"C:\Horde\HordeAgent.dll\"
+        # service run") — the service start fails with ERROR_FILE_NOT_FOUND
+        # (0x2) because the SCM launch environment does not search the full PATH
+        # for the image. Rewrite the ImagePath to the ABSOLUTE dotnet.exe so the
+        # service can start. Live-verified fix. We set it via the registry
+        # (ExpandString) to avoid sc.exe's brittle quoting of the space in
+        # "C:\Program Files\dotnet".
+        $dotnetExe = Join-Path $env:ProgramFiles 'dotnet\dotnet.exe'
+        $svcReg    = 'HKLM:\SYSTEM\CurrentControlSet\Services\HordeAgent'
+        if ((Test-Path $dotnetExe) -and (Test-Path $svcReg)) {
+            $curImage = (Get-ItemProperty -Path $svcReg -Name ImagePath -ErrorAction SilentlyContinue).ImagePath
+            if ($curImage -notlike ('*' + $dotnetExe + '*')) {
+                $newImage = '"{0}" "C:\Horde\HordeAgent.dll" service run' -f $dotnetExe
+                Set-ItemProperty -Path $svcReg -Name ImagePath -Value $newImage -Type ExpandString
+                Write-Log "Rewrote HordeAgent service ImagePath to absolute dotnet: $newImage"
+            }
+            else {
+                Write-Log 'HordeAgent service ImagePath already absolute; leaving as-is.'
+            }
+        }
+
+        # Ensure the service is running regardless of the install path.
+        Set-Service -Name 'HordeAgent' -StartupType Automatic -ErrorAction SilentlyContinue
+        Start-Service -Name 'HordeAgent' -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 5
+        $svc = Get-Service -Name 'HordeAgent' -ErrorAction SilentlyContinue
+        if ($svc) {
+            Write-Log "HordeAgent service status: $($svc.Status)"
+            if ($svc.Status -ne 'Running') {
+                Write-Log 'HordeAgent service not Running after start; check C:\ProgramData\Epic\Horde\Agent logs.' 'WARN'
+            }
+        }
+        else {
+            Write-Log 'HordeAgent service not present after install attempt.' 'WARN'
+        }
+        Write-Log ('Horde agent enrollment step completed. NOTE: a newly ' +
+                   'enrolled agent waits in the Horde ENROLLMENT queue until ' +
+                   'approved (GET/POST /api/v1/enrollment) or auto-approved by ' +
+                   'server policy before it joins its pool.')
+    }
+}
+catch {
+    Write-Log "Failed to complete Horde agent enrollment: $($_.Exception.Message)" 'ERROR'
+    exit 1
+}
 
 Write-Log 'Build agent extension setup completed successfully.'
 exit 0

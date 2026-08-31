@@ -44,7 +44,21 @@
     "  2. -Script= paths (Build/HydratePipeline.xml, Build/BuildPipeline.xml) resolving correctly",
     "     against the stream root once the buildgraph/ files are submitted to depot.",
     "  3. -Target node names (\"Sync And Snapshot\", \"Compile\") matching the actual node/aggregate",
-    "     names defined in the BuildGraph XML."
+    "     names defined in the BuildGraph XML.",
+    "",
+    "BuildWorkspace.view (Windows conform fix): the BuildWorkspace workspaceType sets a custom",
+    "'view' that EXCLUDES the Linux cross-compile toolchain. Horde workspace view lines are",
+    "STREAM-RELATIVE (like autoSdkConfig.view '...'), NOT absolute //depot paths — an absolute",
+    "'//Lyra/main/...' include maps ZERO files into the client and the sync silently populates",
+    "nothing. So the view is ['...', '-Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/...']. That",
+    "subtree ships Linux",
+    "kernel netfilter headers whose names differ ONLY by case (xt_CONNMARK.h vs xt_connmark.h and",
+    "15 more pairs). Horde's Windows agent uses a CASE-INSENSITIVE ManagedWorkspace dictionary",
+    "during conform/sync, so those pairs collide and abort with 'System.ArgumentException: An item",
+    "with the same key has already been added. Key: xt_connmark.h' -> the build batch fails with",
+    "SyncingFailed BEFORE BuildGraph runs. The HostLinux SDK is only needed to cross-compile FOR",
+    "Linux; the Win64 LyraEditor build does not use it, so excluding it is safe. SyncWorkspace",
+    "(Linux, case-SENSITIVE) is left full so the hydrate snapshot keeps the complete tree."
   ],
   "version": 2,
   "perforceClusters": [
@@ -87,7 +101,14 @@
           },
           "workspaceTypes": {
             "SyncWorkspace": { "cluster": "default", "incremental": true },
-            "BuildWorkspace": { "cluster": "default", "incremental": true }
+            "BuildWorkspace": {
+              "cluster": "default",
+              "incremental": true,
+              "view": [
+                "...",
+                "-Engine/Extras/ThirdPartyNotUE/SDKs/HostLinux/..."
+              ]
+            }
           },
           "templates": [
             {
