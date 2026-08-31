@@ -4,10 +4,11 @@
 	<!-- =====================================================================
 	     BuildPipeline.xml  (JT-20)
 	     =====================================================================
-	     Purpose: on-demand build. Create a per-build FlexClone from the latest
-	     ONTAP snapshot of the source volume, mount it, incremental-sync into it,
-	     compile Unreal, then ALWAYS clean up (unmount + delete the clone). Runs
-	     on the Windows build agent.
+	     Purpose: on-demand build. Create a per-build FlexClone from the ONTAP
+	     snapshot the hydrate pipeline produced (hydrate-<CL>), mount the clone
+	     over the Windows NFSv3 client, incremental-sync into it, compile the
+	     Lyra EDITOR target, then ALWAYS clean up (unmount + delete the clone).
+	     Runs on the Windows build agent.
 
 	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
 	       * <Agent Name="BuildAgent"> matches the agentTypes key "BuildAgent"
@@ -16,8 +17,7 @@
 	         -Target=Compile.
 	       * globals.json passes -Script=Build/BuildPipeline.xml. That path
 	         resolves against the depot STREAM ROOT once this buildgraph/ dir is
-	         submitted to Perforce. Confirming path resolution is a Phase 6
-	         live-validation item.
+	         submitted to Perforce (Build/ maps to this buildgraph/ folder).
 
 	     DESIGN NOTE: unlike the CloneVolumeExample / DeleteVolumeExample (which
 	     use separate CloneAgent / CleanupAgent), the ENTIRE per-build FlexClone
@@ -29,10 +29,11 @@
 
 	<!-- FlexClone / ONTAP parameters -->
 	<Option Name="SourceVolume" DefaultValue="" Description="Source ONTAP volume that holds the snapshot to clone from" />
-	<Option Name="SnapshotName" DefaultValue="" Description="Snapshot to clone from (produced by the hydrate pipeline)" />
-	<Option Name="CloneVolumeName" DefaultValue="" Description="Name for the per-build FlexClone volume (scoped to this build)" />
-	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
-	<Option Name="FsxAdminIp" DefaultValue="" Description="FSx ONTAP management IP address" />
+	<Option Name="SnapshotName" DefaultValue="" Description="OPTIONAL explicit snapshot to clone from. If empty, the name is derived below from the built-in $(Change) property (hydrate-&lt;CL&gt;). Set this to point a build at a specific existing snapshot (e.g. hydrate-19 for the first green build)." />
+	<Option Name="CloneVolumeName" DefaultValue="" Description="OPTIONAL explicit name for the per-build FlexClone volume. If empty, a name is derived below (build-&lt;CL&gt;)." />
+	<Option Name="SvmName" DefaultValue="workspace" Description="Storage Virtual Machine name" />
+	<Option Name="SvmNfsEndpoint" DefaultValue="" Description="SVM NFS DNS endpoint used to mount the clone over the Windows NFSv3 client (e.g. svm-xxxx.fs-xxxx.fsx.&lt;region&gt;.amazonaws.com). NOT the SVM short name and NOT SMB — this SVM has no CIFS." />
+	<Option Name="FsxAdminIp" DefaultValue="" Description="ONTAP CLUSTER management endpoint (fsxadmin auth works only against cluster mgmt, e.g. management.fs-xxxx... / 10.0.20.104 — NOT the SVM data LIF)" />
 	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
 	<Option Name="OntapPasswordSecretName" DefaultValue="" Description="AWS Secrets Manager secret name for the ONTAP password" />
 	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
@@ -43,11 +44,65 @@
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
 
-	<!-- Unreal compile parameters -->
-	<Option Name="UEProject" DefaultValue="" Description="Path to the .uproject relative to the mounted clone (e.g. W:/MyGame/MyGame.uproject). Empty = engine-only build." />
-	<Option Name="UETarget" DefaultValue="Editor" Description="Unreal build target to compile (e.g. Editor, Game, Server)" />
+	<!-- Unreal compile parameters.
+	     Defaults wire the LYRA EDITOR (Win64 Development) build off the clone.
+	     UEProjectRelative is the .uproject path RELATIVE to the clone drive root
+	     (live-verified on the synced tree: Samples/Games/Lyra/Lyra.uproject).
+	     UETarget is the target NAME (LyraEditor), passed FIRST to Build.bat; the
+	     project is passed as the -Project=<...>.uproject FLAG (not a bare
+	     positional). -->
+	<Option Name="UEProjectRelative" DefaultValue="Samples/Games/Lyra/Lyra.uproject" Description="Path to the .uproject RELATIVE to the mounted clone root (e.g. Samples/Games/Lyra/Lyra.uproject). Empty = engine-only build." />
+	<Option Name="UETarget" DefaultValue="LyraEditor" Description="Unreal build target NAME to compile (e.g. LyraEditor, LyraGame, LyraServer)" />
 	<Option Name="UEPlatform" DefaultValue="Win64" Description="Target platform for the Unreal compile" />
 	<Option Name="UEConfiguration" DefaultValue="Development" Description="Build configuration (Debug, Development, Shipping)" />
+
+	<!-- Drive letters + local intermediates.
+	     R2: the build agent bootstrap (build-agent-setup.ps1) pre-mounts the
+	     SOURCE volume at W:. The per-build CLONE must therefore use a DIFFERENT
+	     letter so the build reads the CLONE, not the source. We mount the clone
+	     at V:.
+	     B3: to sidestep NFSv3 small-file/locking risk and for performance, UE
+	     build intermediates + Saved go to LOCAL disk (C:) via UBT's
+	     -Intermediate/-Saved overrides, NOT onto the NFS clone mount. -->
+	<Option Name="CloneDriveLetter" DefaultValue="V:" Description="Drive letter to mount the per-build clone at. MUST differ from the bootstrap source mount (W:) so the build reads the clone, not the source." />
+	<Option Name="LocalIntermediateDir" DefaultValue="C:\build\intermediate" Description="LOCAL (non-NFS) directory for UE build intermediates. Keeps small-file/locking-heavy IO off the NFSv3 clone mount." />
+	<Option Name="LocalSavedDir" DefaultValue="C:\build\saved" Description="LOCAL (non-NFS) directory for UE Saved output. Keeps it off the NFSv3 clone mount." />
+
+	<!-- ================================================================
+	     B1: Derive Effective snapshot/clone names from BuildGraph's built-in
+	     $(Change) property, mirroring the proven HydratePipeline.xml fix.
+	     $(Change) is a first-class BuildGraph property populated from the P4
+	     changelist the job runs at (it uses $(...) syntax, NOT ${...}; the old
+	     globals.json literal '-set:SnapshotName=hydrate-${Change}' never
+	     expanded because BuildGraph does not interpolate ${...}). We compute the
+	     names here instead.
+
+	     COUPLING to HydratePipeline.xml: hydrate names its snapshot
+	     hydrate-$(Change) at hydrate time. To clone an EXISTING snapshot, the
+	     build must clone hydrate-<the SAME CL the hydrate ran at>. For the FIRST
+	     green build the live snapshot is hydrate-19, and a fresh build job's
+	     $(Change) may differ from 19 — so we keep an explicit SnapshotName
+	     OVERRIDE: the tracer passes -set:SnapshotName=hydrate-19 to target it.
+	     When no override is given, the default derives from $(Change).
+
+	     EffectiveSnapshotName:
+	       * explicit SnapshotName override wins (tracer -> hydrate-19);
+	       * else hydrate-<CL> when we have a real changelist;
+	       * else hydrate-job-<HordeJobId> fallback (never a bare literal).
+	     EffectiveCloneVolumeName:
+	       * explicit CloneVolumeName override wins;
+	       * else build-<CL> when we have a real changelist;
+	       * else build-job-<HordeJobId> fallback.
+	     ================================================================ -->
+	<EnvVar Name="UE_HORDE_JOBID" />
+
+	<Property Name="EffectiveSnapshotName" Value="hydrate-job-$(UE_HORDE_JOBID)" />
+	<Property Name="EffectiveSnapshotName" Value="hydrate-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
+	<Property Name="EffectiveSnapshotName" Value="$(SnapshotName)" If="'$(SnapshotName)' != ''" />
+
+	<Property Name="EffectiveCloneVolumeName" Value="build-job-$(UE_HORDE_JOBID)" />
+	<Property Name="EffectiveCloneVolumeName" Value="build-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
+	<Property Name="EffectiveCloneVolumeName" Value="$(CloneVolumeName)" If="'$(CloneVolumeName)' != ''" />
 
 	<!-- BuildAgent maps to the BuildPool Windows agent (globals.json agentTypes
 	     key "BuildAgent"). The Agent Type MUST equal a key in the stream's
@@ -58,49 +113,58 @@
 	     per-job FlexClones mounted for the duration of the build. -->
 	<Agent Name="BuildAgent" Type="BuildAgent">
 
-		<!-- Step 1: create the FlexClone from $(SourceVolume)+$(SnapshotName)
-		     as $(CloneVolumeName), then mount it to drive W: on this Windows
-		     host. -->
+		<!-- Step 1: create the FlexClone from $(SourceVolume)+EffectiveSnapshotName
+		     as EffectiveCloneVolumeName, then mount it over NFSv3 to the CLONE
+		     drive letter (V:) on this Windows host. -->
 		<Node Name="Clone And Mount">
-			<!-- Create FlexClone volume from the source volume's snapshot. -->
+			<!-- Create FlexClone volume from the source volume's snapshot.
+			     FsxAdminIp is the ONTAP CLUSTER management endpoint (R3) —
+			     fsxadmin auth is rejected by the SVM data LIF. -->
 			<CloneVolume
 				SourceVolume="$(SourceVolume)"
-				SnapshotName="$(SnapshotName)"
-				CloneVolumeName="$(CloneVolumeName)"
+				SnapshotName="$(EffectiveSnapshotName)"
+				CloneVolumeName="$(EffectiveCloneVolumeName)"
 				SvmName="$(SvmName)"
 				FsxAdminIp="$(FsxAdminIp)"
 				OntapUser="$(OntapUser)"
 				OntapPasswordSecretName="$(OntapPasswordSecretName)"
 				AwsRegion="$(AwsRegion)" />
 
-			<!-- Mount the freshly created clone to W:.
-			     The clone is exposed under the SVM at junction path
-			     /$(CloneVolumeName) (see CloneVolumeTask logging: "Junction
-			     Path: /<CloneVolumeName>"). We map it to W: via SMB here.
-			     NOTE: the EXACT mount command depends on the clone's
-			     export/junction path and SVM SMB/NFS DNS name, which are only
-			     known against a live FSxN SVM. Wiring the concrete UNC/NFS path
-			     is a Phase 6 live-validation item. -->
-			<Spawn Exe="cmd.exe" Arguments="/C net use W: \\$(SvmName)\$(CloneVolumeName) /persistent:no" />
+			<!-- B2: Mount the freshly created clone over the Windows NFSv3
+			     client (Client for NFS) to the CLONE drive letter (V:).
+			     The clone is exposed by the SVM at junction path
+			     /<CloneVolumeName>. We mount it against the SVM NFS DNS ENDPOINT
+			     ($(SvmNfsEndpoint)) — NOT the SVM short name, and NOT SMB (this
+			     SVM has no CIFS). Windows NFS uses backslashes and the junction
+			     path WITHOUT its leading slash: \\<endpoint>\<CloneVolumeName>.
+			     NFSv3 opts mirror the bootstrap source mount. -->
+			<Spawn Exe="cmd.exe" Arguments="/C mount.exe -o mtype=hard,nolock,casesensitive=yes \\$(SvmNfsEndpoint)\$(EffectiveCloneVolumeName) $(CloneDriveLetter)" />
+
+			<!-- Ensure the LOCAL intermediate/saved dirs exist (off the NFS mount). -->
+			<Spawn Exe="cmd.exe" Arguments="/C if not exist &quot;$(LocalIntermediateDir)&quot; mkdir &quot;$(LocalIntermediateDir)&quot;" />
+			<Spawn Exe="cmd.exe" Arguments="/C if not exist &quot;$(LocalSavedDir)&quot; mkdir &quot;$(LocalSavedDir)&quot;" />
 		</Node>
 
 		<!-- Step 2: the Compile node. Depends on the clone being created and
 		     mounted. Node name MUST be "Compile" to match globals.json
 		     -Target=Compile. -->
 		<Node Name="Compile" Requires="Clone And Mount">
-			<!-- Incremental p4 sync into the mounted clone (W:). The
+			<!-- Incremental p4 sync into the mounted clone (V:). The
 			     BuildWorkspace is marked incremental in globals.json, so this
 			     only transfers files changed since the snapshot was taken. -->
-			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="W:/" />
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="$(CloneDriveLetter)/" />
 
-			<!-- Real Unreal compile step. This invokes UnrealBuildTool via the
-			     engine's BatchFiles to build the requested target from the
-			     source tree now present on W:. This is the actual UE build (not
-			     a stub); adjust UEProject/UETarget/UEPlatform/UEConfiguration
-			     options per the game project. For a project build, pass
-			     -Project=$(UEProject). Verifying the exact BatchFiles path and
-			     target names against the checked-out engine is a Phase 6 item. -->
-			<Spawn Exe="cmd.exe" Arguments="/C W:\Engine\Build\BatchFiles\Build.bat $(UETarget) $(UEPlatform) $(UEConfiguration) $(UEProject)" WorkingDir="W:/" />
+			<!-- B3: Real Unreal compile of the LYRA EDITOR target.
+			     Correct Build.bat argument form: TARGET first, then platform +
+			     configuration, and the project as the -Project=<...>.uproject
+			     FLAG (NOT a bare positional). The engine + Lyra are read from
+			     the CLONE drive (R2).
+			     Local intermediates/output (B3): UBT honours -Intermediate= and
+			     the project's Saved dir is redirected via -Saved= so the small-
+			     file/locking-heavy IO lands on LOCAL disk (C:), NOT the NFSv3
+			     clone mount. -WaitMutex/-FromMsBuild are standard BatchFiles
+			     UBT flags. -->
+			<Spawn Exe="cmd.exe" Arguments="/C $(CloneDriveLetter)\Engine\Build\BatchFiles\Build.bat $(UETarget) $(UEPlatform) $(UEConfiguration) -Project=&quot;$(CloneDriveLetter)\$(UEProjectRelative)&quot; -Intermediate=&quot;$(LocalIntermediateDir)&quot; -Saved=&quot;$(LocalSavedDir)&quot; -NoUBA -WaitMutex -FromMsBuild" WorkingDir="$(CloneDriveLetter)/" />
 		</Node>
 
 		<!-- Step 3: cleanup. RunLate="true" on this node, combined with the
@@ -112,14 +176,17 @@
 		     the FSxN filesystem. RunLate guarantees the unmount + DeleteVolume
 		     run even on Compile failure. -->
 		<Node Name="Cleanup Clone" Requires="Clone And Mount" RunLate="true">
-			<!-- Unmount W: first so the volume is not busy when we delete it. -->
-			<Spawn Exe="cmd.exe" Arguments="/C net use W: /delete /yes" />
+			<!-- B2: Unmount the NFSv3 clone first (umount, NOT net use /delete)
+			     so the volume is not busy when we delete it. Windows NFS client
+			     provides umount.exe; -f forces even if handles linger. -->
+			<Spawn Exe="cmd.exe" Arguments="/C umount.exe -f $(CloneDriveLetter)" />
 
 			<!-- Delete the per-build FlexClone. We intentionally delete ONLY the
 			     clone (DeleteVolume), NOT the source snapshot: the snapshot is
-			     owned by the hydrate pipeline and shared across builds. -->
+			     owned by the hydrate pipeline and shared across builds.
+			     FsxAdminIp is the cluster mgmt endpoint (R3). -->
 			<DeleteVolume
-				VolumeName="$(CloneVolumeName)"
+				VolumeName="$(EffectiveCloneVolumeName)"
 				SvmName="$(SvmName)"
 				FsxAdminIp="$(FsxAdminIp)"
 				OntapUser="$(OntapUser)"

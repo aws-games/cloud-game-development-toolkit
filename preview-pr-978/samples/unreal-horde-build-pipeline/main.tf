@@ -252,6 +252,13 @@ module "horde" {
     ontap_password_secret_name = aws_secretsmanager_secret.fsxn_admin.arn
     volume_name                = local.fsxn_source_volume_name
     svm_name                   = local.fsxn_svm_name
+    # SVM NFS DNS endpoint (data LIF) — used by BuildPipeline.xml to mount the
+    # per-build FlexClone over the Windows NFSv3 client (mount.exe against this
+    # endpoint, NOT the SVM short name and NOT SMB). Distinct from
+    # fsx_management_ip, which is the CLUSTER management endpoint used ONLY for
+    # fsxadmin ONTAP REST auth (CloneVolume/DeleteVolume). fsxadmin auth is
+    # rejected by the SVM data LIF, so the two MUST stay separate.
+    svm_nfs_endpoint           = aws_fsx_ontap_storage_virtual_machine.workspace.endpoints[0].nfs[0].dns_name
     aws_region                 = var.region
   })
   config_path         = "globals.json"

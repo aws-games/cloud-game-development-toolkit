@@ -121,9 +121,8 @@
                 "-set:P4Port=${perforce_endpoint}",
                 "-set:P4User=${p4_service_account}",
                 "-set:SourceVolume=${volume_name}",
-                "-set:SnapshotName=hydrate-$${Change}",
-                "-set:CloneVolumeName=build-$${Change}",
                 "-set:SvmName=${svm_name}",
+                "-set:SvmNfsEndpoint=${svm_nfs_endpoint}",
                 "-set:FsxAdminIp=${fsx_management_ip}",
                 "-set:OntapPasswordSecretName=${ontap_password_secret_name}",
                 "-set:AwsRegion=${aws_region}"

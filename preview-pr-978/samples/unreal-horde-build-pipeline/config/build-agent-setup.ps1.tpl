@@ -26,9 +26,18 @@
 
  ADR notes:
    * ADR-001: Build Agents run Windows Server 2022.
-   * ADR-002: NFS ONLY (never SMB/CIFS/AD). Windows NFS Client is NFSv3 — mount
-              with `mount.exe -o ... \\<endpoint>\<junction> W:`. Drive letter W:
-              is chosen to keep paths short (MAX_PATH headroom).
+   * ADR-002: NFS ONLY (never SMB/CIFS/AD). Windows NFS Client is NFSv3. This
+              script does NOT bootstrap-mount the source volume (R2): each build
+              job creates and mounts its OWN per-job FlexClone at drive V: inside
+              BuildPipeline.xml (mount.exe -o ... \\<svm-nfs-endpoint>\<clone>).
+              The NFS-Client feature is installed here so that per-job mount
+              works. Drive V: for the clone avoids colliding with anything the
+              base image maps; the build reads engine/Lyra from the CLONE (V:),
+              never the source.
+   * ADR (R1): the P4 server is SSL — this script establishes machine-wide P4
+              SSL trust (p4 trust -y, idempotent) so the build job's incremental
+              `p4 sync` does not fail with an SSL trust error (Windows analog of
+              the Linux sync-agent trust fix).
    * Security: the mount is unauthenticated at the network layer but locked
               down by the FSxN SG + /32 rules already in security.tf. This
               script opens nothing.
@@ -63,8 +72,10 @@ $P4WorkspaceJunction  = '${p4_workspace_junction}'
 $P4Port               = '${p4_port}'
 $P4User               = '${p4_user}'
 
-$WorkspaceDriveLetter = 'W:'
-$NfsMountOptions       = 'mtype=hard,nolock,casesensitive=yes'  # NFSv3 client opts
+# NOTE (R2): no $WorkspaceDriveLetter here — the build agent does NOT
+# bootstrap-mount the source volume. The per-job clone is mounted at V: inside
+# BuildPipeline.xml. FsxnNfsEndpoint / P4WorkspaceJunction are retained above
+# for reference/logging only.
 
 function Write-Log {
     param([string]$Message, [string]$Level = 'INFO')
@@ -218,40 +229,80 @@ catch {
 }
 
 # =============================================================================
-# 5. Mount the FSxN source volume to drive W: via the Windows NFS client (NFSv3).
-#    Idempotent: skip if W: is already mapped. Requires the FsxnNfsEndpoint and
-#    P4WorkspaceJunction values; if absent, warn and skip (do not fail the run).
+# 5. Establish P4 SSL trust for the build agent's run-as user (R1).
+#    The Perforce server is SSL (ssl:<host>:1666). Before any `p4` command can
+#    run against it, the run-as user must trust the server's SSL fingerprint —
+#    otherwise the first `p4` call (the BuildPipeline incremental sync) fails
+#    with an SSL trust error. This is the Windows analog of the Linux sync-agent
+#    `p4 trust -y` fix (config/sync-agent.ansible.yml section 8).
+#
+#    Trust is stored per-user in %USERPROFILE%\p4trust.txt (or P4TRUST). This
+#    SSM script runs as the SSM agent user (LocalSystem/SSM), and Horde build
+#    jobs run as the Horde agent service account. To cover the account that
+#    actually runs the build, we write trust MACHINE-wide by setting a fixed
+#    machine-level P4TRUST path and running `p4 trust -y` against it; the build
+#    job inherits the machine P4TRUST env var. `p4 trust -y` is idempotent — it
+#    re-affirms the fingerprint on re-run.
+#
+#    SKIP CASE: when $P4Port is empty (operator wired an external endpoint
+#    unknown at apply time) we skip trust, mirroring the null-safe P4PORT step.
 # =============================================================================
 try {
-    if ([string]::IsNullOrWhiteSpace($FsxnNfsEndpoint) -or [string]::IsNullOrWhiteSpace($P4WorkspaceJunction)) {
-        Write-Log ('FsxnNfsEndpoint/P4WorkspaceJunction value(s) missing; skipping ' +
-                   'NFS mount. These are injected by Terraform at apply time.') 'WARN'
+    if ([string]::IsNullOrWhiteSpace($P4Port)) {
+        Write-Log 'P4Port not provided; skipping P4 SSL trust.' 'WARN'
     }
-    elseif (Test-Path $WorkspaceDriveLetter) {
-        Write-Log "$WorkspaceDriveLetter already mounted; skipping NFS mount."
+    elseif (-not (Test-Command 'p4')) {
+        Write-Log 'p4.exe not available; cannot establish P4 SSL trust.' 'WARN'
     }
     else {
-        # Windows NFS uses backslashes and the junction path WITHOUT its leading
-        # slash: \\<endpoint>\<junction>. e.g. \\svm-x.fs-x...\p4-workspace
-        $junctionNoSlash = $P4WorkspaceJunction.TrimStart('/').Replace('/', '\')
-        $unc = "\\$FsxnNfsEndpoint\$junctionNoSlash"
-        Write-Log "Mounting NFS (NFSv3) $unc -> $WorkspaceDriveLetter"
+        # Machine-wide trust file so the Horde agent service account (which runs
+        # the build job) uses the same trusted fingerprint we establish here.
+        $P4TrustFile = 'C:\ProgramData\Perforce\p4trust.txt'
+        $p4TrustDir  = Split-Path -Parent $P4TrustFile
+        if (-not (Test-Path $p4TrustDir)) {
+            New-Item -ItemType Directory -Path $p4TrustDir -Force | Out-Null
+        }
+        [System.Environment]::SetEnvironmentVariable('P4TRUST', $P4TrustFile, 'Machine')
+        $env:P4TRUST = $P4TrustFile
 
-        & mount.exe -o $NfsMountOptions $unc $WorkspaceDriveLetter
+        Write-Log "Establishing P4 SSL trust for $P4Port (P4TRUST=$P4TrustFile)..."
+        # -y auto-accepts the fingerprint; idempotent (re-affirms on re-run).
+        & p4 -p $P4Port trust -y 2>&1 | ForEach-Object { Write-Log "p4 trust: $_" }
         if ($LASTEXITCODE -ne 0) {
-            throw "mount.exe returned $LASTEXITCODE for $unc"
+            throw "p4 trust -y returned $LASTEXITCODE for $P4Port"
         }
-
-        if (-not (Test-Path $WorkspaceDriveLetter)) {
-            throw "Mount reported success but $WorkspaceDriveLetter is not accessible."
-        }
-        Write-Log "Mounted FSxN source volume at $WorkspaceDriveLetter (NFSv3)."
+        Write-Log 'P4 SSL trust established/affirmed.'
     }
 }
 catch {
-    Write-Log "Failed to mount FSxN source volume: $($_.Exception.Message)" 'ERROR'
+    Write-Log "Failed to establish P4 SSL trust: $($_.Exception.Message)" 'ERROR'
     exit 1
 }
+
+# =============================================================================
+# 6. NO bootstrap NFS mount of the SOURCE volume on the build agent (R2).
+#
+#    The build agent does NOT mount the persistent source volume. Each build job
+#    creates its OWN per-job FlexClone from the hydrate snapshot and mounts THAT
+#    clone (at drive V:) inside BuildPipeline.xml for the duration of the build
+#    (CloneVolume -> mount.exe -> compile -> umount -> DeleteVolume).
+#
+#    WHY WE REMOVED THE OLD BOOTSTRAP W: SOURCE-MOUNT:
+#      * Correctness: a build must read the CLONE, not the live source. Mounting
+#        the source at W: at bootstrap created a W:-vs-clone collision (R2) that
+#        risked the build compiling against the shared source volume.
+#      * The clone is the whole point (ADR-004: per-job FlexClones): the build
+#        agent has no need for the source volume mounted at all.
+#      * Removing it also avoids a persistent NFS handle on the source from the
+#        Windows agent (which is meant to scale 0->1->0 per build).
+#    The NFS-Client feature is still installed above so BuildPipeline.xml's
+#    per-job mount.exe works. FsxnNfsEndpoint / P4WorkspaceJunction remain
+#    injected (they document the SVM NFS endpoint and are harmless) but are no
+#    longer consumed for a bootstrap mount here.
+# =============================================================================
+Write-Log ('Skipping bootstrap source-volume mount by design (R2): the build ' +
+           'uses a per-job FlexClone mounted at V: inside BuildPipeline.xml. ' +
+           "SVM NFS endpoint (for reference): $FsxnNfsEndpoint")
 
 Write-Log 'Build agent extension setup completed successfully.'
 exit 0
