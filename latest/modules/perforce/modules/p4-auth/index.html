@@ -3447,15 +3447,15 @@
 <p>Should you choose to create this administrative user yourself you will need to specify the ARN for the username and password as module variables. You can create the secret using the AWS CLI:</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>P4AuthAdmin<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4Auth Admin&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;{\&quot;username\&quot;:\&quot;admin\&quot;,\&quot;password\&quot;:\&quot;EXAMPLE-PASSWORD\&quot;}&quot;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"P4Auth Admin"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"{\"username\":\"admin\",\"password\":\"EXAMPLE-PASSWORD\"}"</span>
 </code></pre></div>
 <p>And then provide the relevant ARNs as variables when you define the Helix Authentication module in your Terraform configurations:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_auth&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-auth&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_auth"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-auth"</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">admin_username_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4AuthAdmin-a1b2c3:username::&quot;</span>
-<span class="w">    </span><span class="na">admin_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4AuthAdmin-a1b2c3:password::&quot;</span>
+<span class="w">    </span><span class="na">admin_username_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4AuthAdmin-a1b2c3:username::"</span>
+<span class="w">    </span><span class="na">admin_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4AuthAdmin-a1b2c3:password::"</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>If you do not provide these the module will create a random Super User and create the secret for you. The ARN of this secret is then available as an output to be referenced elsewhere, and can be accessed from the AWS Secrets Manager console.</p>
@@ -3468,18 +3468,18 @@
 <li>Set up connectivity between P4 Server and P4Auth. The parent module does this for you.</li>
 </ol>
 <p>Once this is set up, you can verify that SCIM works by making the following call to create a user:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Authorization: Bearer &lt;base64-encoded bearer token&gt;&#39;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/scim+json&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;schemas&quot;: [&quot;urn:ietf:params:scim:schemas:core:2.0:User&quot;],</span>
-<span class="s1">    &quot;userName&quot;: &quot;example1&quot;,</span>
-<span class="s1">    &quot;externalId&quot;: &quot;example1&quot;,</span>
-<span class="s1">    &quot;name&quot;: {</span>
-<span class="s1">      &quot;formatted&quot;: &quot;Example 1&quot;,</span>
-<span class="s1">      &quot;familyName&quot;: &quot;Example&quot;,</span>
-<span class="s1">      &quot;givenName&quot;: &quot;One&quot;</span>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Authorization: Bearer &lt;base64-encoded bearer token&gt;'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/scim+json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],</span>
+<span class="s1">    "userName": "example1",</span>
+<span class="s1">    "externalId": "example1",</span>
+<span class="s1">    "name": {</span>
+<span class="s1">      "formatted": "Example 1",</span>
+<span class="s1">      "familyName": "Example",</span>
+<span class="s1">      "givenName": "One"</span>
 <span class="s1">    }</span>
-<span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\ </span>-v<span class="w"> </span>-v<span class="w"> </span>-v<span class="w"> </span>https://&lt;p4auth<span class="w"> </span>domain<span class="w"> </span>name&gt;/scim/v2/Users
+<span class="s1">  }'</span><span class="w"> </span><span class="se">\ </span>-v<span class="w"> </span>-v<span class="w"> </span>-v<span class="w"> </span>https://&lt;p4auth<span class="w"> </span>domain<span class="w"> </span>name&gt;/scim/v2/Users
 </code></pre></div>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->

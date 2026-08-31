@@ -3934,11 +3934,11 @@
 <p><strong>When</strong>: Workstations in public subnets with Internet Gateway routes
 <strong>Access</strong>: Direct internet with IP restrictions</p>
 <div class="highlight"><pre><span></span><code><span class="nb">workstations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;vdi-001&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">preset_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-preset&quot;</span>
-<span class="w">    </span><span class="na">assigned_user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;naruto-uzumaki&quot;</span>
+<span class="w">  </span><span class="s2">"vdi-001"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">preset_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my-preset"</span>
+<span class="w">    </span><span class="na">assigned_user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"naruto-uzumaki"</span>
 <span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_subnet.public_subnet.id</span>
-<span class="w">    </span><span class="na">allowed_cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;198.51.100.1/32&quot;</span><span class="p">]</span><span class="c1">  # Replace with user&#39;s public IP</span>
+<span class="w">    </span><span class="na">allowed_cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"198.51.100.1/32"</span><span class="p">]</span><span class="c1">  # Replace with user's public IP</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -3946,25 +3946,25 @@
 <p><strong>When</strong>: Workstations in private subnets with NAT Gateway routes
 <strong>Access</strong>: Via VPN, Direct Connect, or Site-to-Site VPN
 <strong>DNS Requirement</strong>: AWS Client VPN connection required to resolve private DNS names (<code>username.vdi.internal</code>)</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vdi&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"vdi"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">create_client_vpn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">  # Creates Client VPN infrastructure</span>
 
 <span class="w">  </span><span class="nb">users</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;naruto-uzumaki&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">given_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Naruto&quot;</span>
-<span class="w">      </span><span class="na">family_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Uzumaki&quot;</span>
-<span class="w">      </span><span class="na">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;naruto@example.com&quot;</span>
-<span class="w">      </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;administrator&quot;</span>
+<span class="w">    </span><span class="s2">"naruto-uzumaki"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">given_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Naruto"</span>
+<span class="w">      </span><span class="na">family_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Uzumaki"</span>
+<span class="w">      </span><span class="na">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"naruto@example.com"</span>
+<span class="w">      </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"administrator"</span>
 <span class="w">      </span><span class="na">use_client_vpn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">  # Gets VPN access + certificates</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nb">workstations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;vdi-001&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">preset_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-preset&quot;</span>
-<span class="w">      </span><span class="na">assigned_user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;naruto-uzumaki&quot;</span>
+<span class="w">    </span><span class="s2">"vdi-001"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">preset_key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my-preset"</span>
+<span class="w">      </span><span class="na">assigned_user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"naruto-uzumaki"</span>
 <span class="w">      </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_subnet.private_subnet.id</span>
-<span class="w">      </span><span class="na">allowed_cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;10.0.0.0/16&quot;</span><span class="p">]</span><span class="c1">  # VPC CIDR only</span>
+<span class="w">      </span><span class="na">allowed_cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"10.0.0.0/16"</span><span class="p">]</span><span class="c1">  # VPC CIDR only</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -4128,7 +4128,7 @@ aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span>s
 </ul>
 <p>These are expected while the instance is still initializing.</p>
 <p><strong>Check boot status:</strong></p>
-<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>get-console-output<span class="w"> </span>--instance-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;.instance_id&#39;</span><span class="k">)</span><span class="w"> </span>--latest
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>get-console-output<span class="w"> </span>--instance-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'."vdi-001".instance_id'</span><span class="k">)</span><span class="w"> </span>--latest
 </code></pre></div>
 <p>The instance is ready when you see <code>EC2Launch: EC2 Launch has completed</code> in the console output.</p>
 <h3 id="get-credentials">Get Credentials<a class="headerlink" href="#get-credentials" title="Permanent link">&para;</a></h3>
@@ -4137,7 +4137,7 @@ terraform<span class="w"> </span>output<span class="w"> </span>connection_info
 
 <span class="c1"># Get user password from Secrets Manager</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--secret-id<span class="w"> </span><span class="s2">&quot;cgd/vdi-001/users/your-username&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span><span class="s2">"cgd/vdi-001/users/your-username"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
 <h3 id="connect-via-dcv">Connect via DCV<a class="headerlink" href="#connect-via-dcv" title="Permanent link">&para;</a></h3>
@@ -4154,11 +4154,11 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 </ol>
 <h3 id="emergency-access">Emergency Access<a class="headerlink" href="#emergency-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get Administrator password</span>
-terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>private_keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>temp_key.pem
+terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>private_keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'."vdi-001"'</span><span class="w"> </span>&gt;<span class="w"> </span>temp_key.pem
 chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>temp_key.pem
 aws<span class="w"> </span>ec2<span class="w"> </span>get-password-data<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--instance-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;.instance_id&#39;</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--priv-launch-key<span class="w"> </span>temp_key.pem<span class="w"> </span>--query<span class="w"> </span><span class="s1">&#39;PasswordData&#39;</span><span class="w"> </span>--output<span class="w"> </span>text
+<span class="w">  </span>--instance-id<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'."vdi-001".instance_id'</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--priv-launch-key<span class="w"> </span>temp_key.pem<span class="w"> </span>--query<span class="w"> </span><span class="s1">'PasswordData'</span><span class="w"> </span>--output<span class="w"> </span>text
 rm<span class="w"> </span>temp_key.pem
 </code></pre></div>
 <h2 id="password-management">Password Management<a class="headerlink" href="#password-management" title="Permanent link">&para;</a></h2>
@@ -4177,13 +4177,13 @@ rm<span class="w"> </span>temp_key.pem
 <p>Volume changes do not trigger instance replacement. Instances continue running during volume operations.</p>
 <h3 id="required-root-volume">Required Root Volume<a class="headerlink" href="#required-root-volume" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nb">volumes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nb">Root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="c1">                    # ← MUST be exactly &quot;Root&quot; (case-sensitive)</span>
+<span class="w">  </span><span class="nb">Root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="c1">                    # ← MUST be exactly "Root" (case-sensitive)</span>
 <span class="w">    </span><span class="na">capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">256</span><span class="c1">            # ← Root volume automatically gets C: drive</span>
-<span class="w">    </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gp3&quot;</span>
+<span class="w">    </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gp3"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="c1">  # Add additional drives as needed (auto-assigned D:, E:, F:, etc.)</span>
-<span class="c1">  # Projects = { capacity = 1000, type = &quot;gp3&quot; }</span>
-<span class="c1">  # Cache = { capacity = 500, type = &quot;gp3&quot; }</span>
+<span class="c1">  # Projects = { capacity = 1000, type = "gp3" }</span>
+<span class="c1">  # Cache = { capacity = 500, type = "gp3" }</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="drive-letter-assignment">Drive Letter Assignment<a class="headerlink" href="#drive-letter-assignment" title="Permanent link">&para;</a></h3>
@@ -4257,33 +4257,33 @@ rm<span class="w"> </span>temp_key.pem
 <h3 id="on-demand-capacity-reservations-odcr">On-Demand Capacity Reservations (ODCR)<a class="headerlink" href="#on-demand-capacity-reservations-odcr" title="Permanent link">&para;</a></h3>
 <p>Use existing capacity reservations if available. See <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html">AWS ODCR Documentation</a> for details.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Module-level default (applies to all workstations)</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vdi&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">capacity_reservation_preference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;open&quot;</span><span class="c1">  # Use ODCR if available</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"vdi"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">capacity_reservation_preference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"open"</span><span class="c1">  # Use ODCR if available</span>
 
 <span class="w">  </span><span class="nb">workstations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;ws1&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-123&quot; }  # Inherits &quot;open&quot;</span>
-<span class="w">    </span><span class="s2">&quot;ws2&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-456&quot; }  # Inherits &quot;open&quot;</span>
+<span class="w">    </span><span class="s2">"ws1"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-123" }  # Inherits "open"</span>
+<span class="w">    </span><span class="s2">"ws2"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-456" }  # Inherits "open"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># Per-workstation control</span>
 <span class="nb">workstations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;prod-ws&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">capacity_reservation_preference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;open&quot;</span><span class="c1">  # Use ODCR</span>
-<span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-123&quot;</span>
+<span class="w">  </span><span class="s2">"prod-ws"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">capacity_reservation_preference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"open"</span><span class="c1">  # Use ODCR</span>
+<span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-123"</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="s2">&quot;dev-ws&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="c1">    # capacity_reservation_preference = &quot;none&quot;  # Optional - omit if you don&#39;t use ODCR</span>
-<span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-456&quot;</span>
+<span class="w">  </span><span class="s2">"dev-ws"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">    # capacity_reservation_preference = "none"  # Optional - omit if you don't use ODCR</span>
+<span class="w">    </span><span class="na">subnet_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-456"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="software-installation">Software Installation<a class="headerlink" href="#software-installation" title="Permanent link">&para;</a></h3>
 <p><strong>Available packages</strong>: Any valid <a href="https://community.chocolatey.org/packages">Chocolatey package</a>. Common examples: <code>git</code>, <code>vscode</code>, <code>notepadplusplus</code>, <code>7zip</code></p>
 <div class="highlight"><pre><span></span><code><span class="nb">presets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;ue-dev&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.2xlarge&quot;</span>
-<span class="w">    </span><span class="na">software_packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;git&quot;, &quot;vscode&quot;, &quot;notepadplusplus&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="s2">"ue-dev"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.2xlarge"</span>
+<span class="w">    </span><span class="na">software_packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"git", "vscode", "notepadplusplus"</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4345,7 +4345,7 @@ rm<span class="w"> </span>temp_key.pem
 </ul>
 <h4 id="manual-volume-initialization-if-ssm-script-failed">Manual Volume Initialization (if SSM script failed)<a class="headerlink" href="#manual-volume-initialization-if-ssm-script-failed" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c"># Initialize any RAW disks</span>
-<span class="nb">Get-Disk</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">PartitionStyle</span> <span class="o">-eq</span> <span class="s1">&#39;RAW&#39;</span> <span class="p">}</span> <span class="p">|</span>
+<span class="nb">Get-Disk</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">PartitionStyle</span> <span class="o">-eq</span> <span class="s1">'RAW'</span> <span class="p">}</span> <span class="p">|</span>
 <span class="nb">Initialize-Disk</span> <span class="n">-PartitionStyle</span> <span class="n">MBR</span> <span class="n">-PassThru</span> <span class="p">|</span>
 <span class="nb">New-Partition</span> <span class="n">-AssignDriveLetter</span> <span class="n">-UseMaximumSize</span> <span class="p">|</span>
 <span class="nb">Format-Volume</span> <span class="n">-FileSystem</span> <span class="n">NTFS</span> <span class="n">-Confirm</span><span class="p">:</span><span class="nv">$false</span>
@@ -4369,17 +4369,17 @@ ping<span class="w"> </span>naruto-uzumaki.vdi.internal
 nslookup<span class="w"> </span>naruto-uzumaki.vdi.internal
 
 <span class="c1"># Volume troubleshooting</span>
-<span class="nv">INSTANCE_ID</span><span class="o">=</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;.instance_id&#39;</span><span class="k">)</span>
+<span class="nv">INSTANCE_ID</span><span class="o">=</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>connection_info<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'."vdi-001".instance_id'</span><span class="k">)</span>
 aws<span class="w"> </span>ssm<span class="w"> </span>list-command-invocations<span class="w"> </span>--instance-id<span class="w"> </span><span class="nv">$INSTANCE_ID</span><span class="w"> </span>--filters<span class="w"> </span><span class="nv">Key</span><span class="o">=</span>DocumentName,Values<span class="o">=</span>cgd-dev-initialize-volumes
 aws<span class="w"> </span>ssm<span class="w"> </span>get-command-invocation<span class="w"> </span>--command-id<span class="w"> </span>&lt;COMMAND_ID&gt;<span class="w"> </span>--instance-id<span class="w"> </span><span class="nv">$INSTANCE_ID</span>
 </code></pre></div>
 <h3 id="password-retrieval">Password Retrieval<a class="headerlink" href="#password-retrieval" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Administrator password</span>
-terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>private_keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.&quot;vdi-001&quot;&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>temp_key.pem
+terraform<span class="w"> </span>output<span class="w"> </span>-json<span class="w"> </span>private_keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'."vdi-001"'</span><span class="w"> </span>&gt;<span class="w"> </span>temp_key.pem
 aws<span class="w"> </span>ec2<span class="w"> </span>get-password-data<span class="w"> </span>--instance-id<span class="w"> </span>&lt;id&gt;<span class="w"> </span>--priv-launch-key<span class="w"> </span>temp_key.pem
 
 <span class="c1"># User passwords</span>
-aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span><span class="s2">&quot;cgd/vdi-001/users/naruto-uzumaki&quot;</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span><span class="s2">"cgd/vdi-001/users/naruto-uzumaki"</span>
 </code></pre></div>
 <h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
 <p>See the <a href="../../CONTRIBUTING.html">Contributing Guidelines</a> for information on how to contribute to this project.</p>

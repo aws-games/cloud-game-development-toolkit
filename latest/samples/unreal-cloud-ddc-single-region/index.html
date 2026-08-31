@@ -3691,8 +3691,8 @@
 <h2 id="predeployment-set-up-github-content-repository-credentials">Predeployment - Set Up Github Content Repository Credentials<a class="headerlink" href="#predeployment-set-up-github-content-repository-credentials" title="Permanent link">&para;</a></h2>
 <p>The <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html">Unreal Cloud DDC Intra Cluster module</a> utilizes a pull through cache to access the <a href="https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc">Unreal Cloud DDC image</a>. This requires a secret in <a href="https://aws.amazon.com/secrets-manager/">Secrets Manager</a>. The secret needs to be prefixed with <code>ecr-pullthroughcache/</code>. Additionally, the secret is required to be in the following format:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;GITHUB-USER-NAME-PLACEHOLDER&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;access-token&quot;</span><span class="p">:</span><span class="s2">&quot;GITHUB-ACCESS-TOKEN-PLACEHOLDER&quot;</span>
+<span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="s2">"GITHUB-USER-NAME-PLACEHOLDER"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"access-token"</span><span class="p">:</span><span class="s2">"GITHUB-ACCESS-TOKEN-PLACEHOLDER"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
@@ -3703,10 +3703,10 @@
 <h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
 <p>The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.</p>
 <p>The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager. The ARN of this secret is provided as a Terraform output (<code>"unreal_cloud_ddc_bearer_token_arn"</code>) on the console following deployment. To fetch the bearer token you can use the aws CLI:</p>
-<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;<span class="s2">&quot;unreal_cloud_ddc_bearer_token_arn&quot;</span>&gt;
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;<span class="s2">"unreal_cloud_ddc_bearer_token_arn"</span>&gt;
 </code></pre></div>
 <p>To validate you can put an object you can run:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>--data<span class="w"> </span><span class="s1">&#39;test&#39;</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;content-type: application/octet-stream&#39;</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA&#39;</span><span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Authorization: ServiceAccount &lt;secret-manager-token&gt;&#39;</span>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>--data<span class="w"> </span><span class="s1">'test'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'content-type: application/octet-stream'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA'</span><span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Authorization: ServiceAccount &lt;secret-manager-token&gt;'</span>
 </code></pre></div>
 <p>After running this you should get a response that looks as the following:</p>
 <div class="highlight"><pre><span></span><code><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
@@ -3715,12 +3715,12 @@
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json; charset=utf-8</span>
 <span class="na">Transfer-Encoding</span><span class="o">:</span> <span class="l">chunked</span>
 <span class="na">Connection</span><span class="o">:</span> <span class="l">keep-alive</span>
-<span class="na">Server-Timing</span><span class="o">:</span> <span class="l">blob.put.FileSystemStore;dur=0.1451;desc=&quot;PUT to store: &#39;FileSystemStore&#39;&quot;,blob.put.AmazonS3Store;dur=267.0449;desc=&quot;PUT to store: &#39;AmazonS3Store&#39;&quot;,blob.get-metadata.FileSystemStore;dur=0.0406;desc=&quot;Blob GET Metadata from: &#39;FileSystemStore&#39;&quot;,ref.finalize;dur=7.1407;desc=&quot;Finalizing the ref&quot;,ref.put;dur=25.2064;desc=&quot;Inserting ref&quot;</span>
+<span class="na">Server-Timing</span><span class="o">:</span> <span class="l">blob.put.FileSystemStore;dur=0.1451;desc="PUT to store: 'FileSystemStore'",blob.put.AmazonS3Store;dur=267.0449;desc="PUT to store: 'AmazonS3Store'",blob.get-metadata.FileSystemStore;dur=0.0406;desc="Blob GET Metadata from: 'FileSystemStore'",ref.finalize;dur=7.1407;desc="Finalizing the ref",ref.put;dur=25.2064;desc="Inserting ref"</span>
 
-<span class="p">{</span><span class="nt">&quot;needs&quot;</span><span class="p">:[]}</span><span class="err">%</span>
+<span class="p">{</span><span class="nt">"needs"</span><span class="p">:[]}</span><span class="err">%</span>
 </code></pre></div>
 <p>You can then access the same chunk with the following command:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json<span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token&gt;&#39;</span>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json<span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token&gt;'</span>
 </code></pre></div>
 <p>The response should look like the following:</p>
 <div class="highlight"><pre><span></span><code><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
@@ -3731,14 +3731,14 @@
 <span class="na">Connection</span><span class="o">:</span> <span class="l">keep-alive</span>
 <span class="na">X-Jupiter-IoHash</span><span class="o">:</span> <span class="l">7D873DCC262F62FBAA871FE61B2B52D715A1171E</span>
 <span class="na">X-Jupiter-LastAccess</span><span class="o">:</span> <span class="l">01/29/2025 19:16:46</span>
-<span class="na">Server-Timing</span><span class="o">:</span> <span class="l">ref.get;dur=0.0299;desc=&quot;Fetching Ref from DB&quot;</span>
+<span class="na">Server-Timing</span><span class="o">:</span> <span class="l">ref.get;dur=0.0299;desc="Fetching Ref from DB"</span>
 
-<span class="p">{</span><span class="nt">&quot;RawHash&quot;</span><span class="p">:</span><span class="s2">&quot;4878ca0425c739fa427f7eda20fe845f6b2e46ba&quot;</span><span class="p">,</span><span class="nt">&quot;RawSize&quot;</span><span class="p">:</span><span class="mi">4</span><span class="p">}</span><span class="err">%</span>
+<span class="p">{</span><span class="nt">"RawHash"</span><span class="p">:</span><span class="s2">"4878ca0425c739fa427f7eda20fe845f6b2e46ba"</span><span class="p">,</span><span class="nt">"RawSize"</span><span class="p">:</span><span class="mi">4</span><span class="p">}</span><span class="err">%</span>
 </code></pre></div>
 <p>For a more comprehensive test of your deployment, we recommend using the <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks">bench marking tools</a>. To do so we used a x2idn.32xlarge as it matched Epic's benchmarking instance to test their configuration.</p>
 <p>With the benchmarking tools we ran the following command after compiling the docker image:</p>
 <div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>jupiter_benchmark<span class="w"> </span>--seed<span class="w"> </span>--seed-remote<span class="w"> </span>--host<span class="w"> </span>http://&lt;unreal_ddc_url&gt;<span class="w"> </span>--namespace<span class="w"> </span>ddc<span class="w"> </span><span class="se">\</span>
---header<span class="o">=</span><span class="s2">&quot;Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token&gt;&quot;</span><span class="w"> </span>all
+--header<span class="o">=</span><span class="s2">"Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token&gt;"</span><span class="w"> </span>all
 </code></pre></div>
 <p>Just a note here, you will have to specify the namespace to be DDC as the token only has access to that namespace.</p>
 <p><strong>It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.</strong></p>

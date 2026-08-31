@@ -3775,10 +3775,10 @@ packer<span class="w"> </span>build<span class="w"> </span>windows-server-2025-l
 cp<span class="w"> </span>variables.pkrvars.hcl.example<span class="w"> </span>variables.pkrvars.hcl
 
 <span class="c1"># Edit variables.pkrvars.hcl</span>
-<span class="nv">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.4xlarge&quot;</span><span class="w">  </span><span class="c1"># Must be GPU-enabled</span>
+<span class="nv">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.4xlarge"</span><span class="w">  </span><span class="c1"># Must be GPU-enabled</span>
 
 <span class="c1"># Build with custom variables</span>
-packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">&quot;variables.pkrvars.hcl&quot;</span><span class="w"> </span>windows-server-2025-lightweight.pkr.hcl
+packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">"variables.pkrvars.hcl"</span><span class="w"> </span>windows-server-2025-lightweight.pkr.hcl
 </code></pre></div>
 <p><strong>On-Demand Capacity Reservations (ODCR):</strong></p>
 <p>Use existing capacity reservations during AMI builds:</p>
@@ -3830,22 +3830,22 @@ packer<span class="w"> </span>build<span class="w"> </span>windows-server-2025-u
 <p><strong>This is why the complete directory structure is required.</strong></p>
 <h2 id="usage-with-vdi-module">Usage with VDI Module<a class="headerlink" href="#usage-with-vdi-module" title="Permanent link">&para;</a></h2>
 <p>After building an AMI, use it with the VDI Terraform module:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vdi&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;path/to/vdi/module&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"vdi"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"path/to/vdi/module"</span>
 
 <span class="c1">  # Core configuration</span>
-<span class="w">  </span><span class="na">project_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gamedev&quot;</span>
-<span class="w">  </span><span class="na">environment</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
+<span class="w">  </span><span class="na">project_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gamedev"</span>
+<span class="w">  </span><span class="na">environment</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"dev"</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_vpc.vdi_vpc.id</span>
 
 <span class="c1">  # Templates reference your built AMIs</span>
 <span class="w">  </span><span class="nb">templates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;developer&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.2xlarge&quot;</span>
-<span class="w">      </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ami-0d22cd2c73f6b623&quot;</span><span class="c1">  # Use AMI ID from Packer build output</span>
+<span class="w">    </span><span class="s2">"developer"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.2xlarge"</span>
+<span class="w">      </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">"ami-0d22cd2c73f6b623"</span><span class="c1">  # Use AMI ID from Packer build output</span>
 <span class="w">      </span><span class="nb">volumes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nb">Root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">256</span><span class="p">,</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gp3&quot;, windows_drive = &quot;C:&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">        </span><span class="nb">Projects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1024</span><span class="p">,</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;gp3&quot;, windows_drive = &quot;D:&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="nb">Root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">256</span><span class="p">,</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gp3", windows_drive = "C:"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="nb">Projects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1024</span><span class="p">,</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gp3", windows_drive = "D:"</span><span class="w"> </span><span class="p">}</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>

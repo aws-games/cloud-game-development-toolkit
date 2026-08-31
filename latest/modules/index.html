@@ -3673,30 +3673,30 @@
 <p>Important, currently there is a staggered release process. When a PR is merged to main, that doesn't immediately trigger a new release. <strong>⚠️ should we be doing this still?</strong></p>
 <p><strong>Option 1: Git Release Tag (Recommended ✅)</strong>
 Use case: Explicit version tracking. Easy to pin to specific versions of modules.</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;example_module&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=v1.1.5&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"example_module"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=v1.1.5"</span>
 <span class="c1">  # ... configuration</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Option 2: Specific Commit Hash</strong>
 Use case: If you want the latest and greatest, even before a release may be cut. As such we recommend caution with this option as well.</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;example_module&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=abc123def456&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"example_module"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=abc123def456"</span>
 <span class="c1">  # ... configuration (replace abc123def456 with actual commit hash)</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Option 3: Git Branch (⚠️ Caution)</strong>
 Use case: If you don't care about tracking versions and just want to use whatever is the latest. Due to the fact that you cant track versions with this, we recommend high caution using this method.</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;example_module&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=main&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"example_module"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/path/to/module?ref=main"</span>
 <span class="c1">  # ... configuration</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Option 4: Submodule Reference</strong>
 You can also include the <strong>CGD Toolkit</strong> repository as a git submodule in your own infrastructure repository as a way of depending on the modules within an (existing) Terraform root module. Forking the <strong>CGD Toolkit</strong> and submoduling your fork may be a good approach if you intend to make changes to any modules. We recommend starting with the <a href="https://developer.hashicorp.com/terraform/language/modules">Terraform module documentation</a> for a crash course in the way patterns that influence the way that the <strong>CGD Toolkit</strong> is designed. Note how you can use the <a href="https://developer.hashicorp.com/terraform/language/modules/sources">module source argument</a> to declare modules that use the <strong>CGD Toolkit</strong>'s module source code.</p>
 <h3 id="basic-usage-pattern">Basic Usage Pattern<a class="headerlink" href="#basic-usage-pattern" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/service-name?ref=v1.2.0&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"service"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/service-name?ref=v1.2.0"</span>
 
 <span class="c1">  # Networking (3-tier architecture)</span>
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets</span><span class="c1">  # Primary business applications</span>
@@ -3722,8 +3722,8 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 <p>CGD Toolkit modules support three deployment patterns:</p>
 <h3 id="pattern-1-fully-public-development"><strong>Pattern 1: Fully Public (Development)</strong><a class="headerlink" href="#pattern-1-fully-public-development" title="Permanent link">&para;</a></h3>
 <p><strong>Use Case:</strong> Development, testing, proof-of-concept</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.public_subnets</span><span class="c1">   # Applications in public subnets</span>
 <span class="w">  </span><span class="na">service_subnets</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="nv">var.public_subnets</span><span class="c1">    # Services in public subnets</span>
@@ -3738,8 +3738,8 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </code></pre></div>
 <h3 id="pattern-2-fully-private-high-security"><strong>Pattern 2: Fully Private (High Security)</strong><a class="headerlink" href="#pattern-2-fully-private-high-security" title="Permanent link">&para;</a></h3>
 <p><strong>Use Case:</strong> High security, compliance, production</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets</span><span class="c1">  # Applications in private subnets</span>
 <span class="w">  </span><span class="na">service_subnets</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets</span><span class="c1">   # Services in private subnets</span>
@@ -3756,8 +3756,8 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </code></pre></div>
 <h3 id="pattern-3-hybrid-recommended"><strong>Pattern 3: Hybrid (Recommended)</strong><a class="headerlink" href="#pattern-3-hybrid-recommended" title="Permanent link">&para;</a></h3>
 <p><strong>Use Case:</strong> Production with external access needs</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets</span><span class="c1">  # Applications secure</span>
 <span class="w">  </span><span class="na">service_subnets</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets</span><span class="c1">   # Services secure</span>
@@ -3780,7 +3780,7 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 <span class="w">    </span><span class="na">enabled</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">                 # Required for most modules</span>
 <span class="w">    </span><span class="na">internet_facing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">                 # true = public, false = internal</span>
 <span class="w">    </span><span class="na">subnets</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nv">var.public_subnets</span><span class="c1">   # Where to place the NLB</span>
-<span class="w">    </span><span class="na">name_suffix</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;game-clients&quot;</span><span class="c1">        # Optional naming</span>
+<span class="w">    </span><span class="na">name_suffix</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"game-clients"</span><span class="c1">        # Optional naming</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -3801,8 +3801,8 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </code></pre></div>
 <p><strong>Important:</strong> All subnet variables are user-defined:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Your root module defines subnets</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;public_subnets&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;private_subnets&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"public_subnets"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"private_subnets"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 
 <span class="c1"># Or use direct resource references</span>
 <span class="na">subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_subnet.public</span><span class="p">[</span><span class="err">*</span><span class="p">].</span><span class="err">id</span>
@@ -3823,10 +3823,10 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </ul>
 <p>With AWS Provider v6, multi-region is simplified:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># AWS Provider v6 - No provider aliases needed for AWS resources</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_east_1"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="c1">  # Automatic region inheritance</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span><span class="c1">  # Automatic region inheritance</span>
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets_us_east_1</span>
 
 <span class="w">  </span><span class="nb">load_balancer_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -3843,10 +3843,10 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_west_2&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_west_2"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="c1">  # Automatic region inheritance</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span><span class="c1">  # Automatic region inheritance</span>
 <span class="w">  </span><span class="na">application_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.private_subnets_us_west_2</span>
 
 <span class="w">  </span><span class="nb">load_balancer_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -3864,25 +3864,25 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 <span class="p">}</span>
 
 <span class="c1"># Provider aliases required for non-enhanced providers</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
 <span class="c1">  # Configuration for us-east-1 cluster</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
 <span class="c1">  # Configuration for us-west-2 cluster</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;helm&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"helm"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
 <span class="w">  </span><span class="nb">kubernetes</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">    # Reference us-east-1 cluster</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;helm&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"helm"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
 <span class="w">  </span><span class="nb">kubernetes</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">    # Reference us-west-2 cluster</span>
 <span class="w">  </span><span class="p">}</span>
@@ -3898,22 +3898,22 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 </ul>
 <h3 id="access-control"><strong>Access Control</strong><a class="headerlink" href="#access-control" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Create restricted security groups</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;office_access&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;office-access&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"office_access"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"office-access"</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.vpc_id</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_security_group_ingress_rule&quot;</span><span class="w"> </span><span class="nv">&quot;office_https&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_security_group_ingress_rule"</span><span class="w"> </span><span class="nv">"office_https"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_group_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_security_group.office_access.id</span>
-<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;HTTPS from office network&quot;</span>
-<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"HTTPS from office network"</span>
+<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"tcp"</span>
 <span class="w">  </span><span class="na">from_port</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
 <span class="w">  </span><span class="na">to_port</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
-<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;203.0.113.0/24&quot;</span><span class="c1">  # Your office CIDR</span>
+<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">"203.0.113.0/24"</span><span class="c1">  # Your office CIDR</span>
 <span class="p">}</span>
 
 <span class="c1"># Use in module configuration</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"service"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">aws_security_group.office_access.id</span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -3963,8 +3963,8 @@ You can also include the <strong>CGD Toolkit</strong> repository as a git submod
 terraform<span class="w"> </span><span class="o">{</span>
 <span class="w">  </span>required_providers<span class="w"> </span><span class="o">{</span>
 <span class="w">    </span><span class="nv">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">{</span>
-<span class="w">      </span><span class="nb">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/aws&quot;</span>
-<span class="w">      </span><span class="nv">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 6.0.0&quot;</span>
+<span class="w">      </span><span class="nb">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/aws"</span>
+<span class="w">      </span><span class="nv">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 6.0.0"</span>
 <span class="w">    </span><span class="o">}</span>
 <span class="w">  </span><span class="o">}</span>
 <span class="o">}</span>

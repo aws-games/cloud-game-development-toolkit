@@ -3321,8 +3321,8 @@ A module should *not* define its own provider configuration. Required provider v
 <div class="highlight"><pre><span></span><code><span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">required_providers</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="nb">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="na">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/aws&quot;</span>
-<span class="w">            </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 5.30.0&quot;</span>
+<span class="w">            </span><span class="na">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/aws"</span>
+<span class="w">            </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 5.30.0"</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="c1">        #...additional required providers</span>
 <span class="w">    </span><span class="p">}</span>
@@ -3351,7 +3351,7 @@ Ensure that tags have default values, but can be overwritten by users. For tags 
 <div class="highlight"><pre><span></span><code><span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="s2">&quot;environment&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.environment</span>
+<span class="w">        </span><span class="s2">"environment"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.environment</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="nv">var.tags</span><span class="p">,</span>
 <span class="w">    </span><span class="p">)</span>
@@ -3360,7 +3360,7 @@ Ensure that tags have default values, but can be overwritten by users. For tags 
 ### main.tf
 
 <div class="highlight"><pre><span></span><code><span class="w">  </span><span class="na">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="nv">local.tags</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-${var.p4_server_type}-${local.p4_server_az}&quot;</span>
+<span class="w">    </span><span class="na">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-${var.p4_server_type}-${local.p4_server_az}"</span>
 <span class="w">  </span><span class="p">})</span>
 </code></pre></div>
 The tags themselves should at the minimum include:
@@ -3372,15 +3372,15 @@ The tags themselves should at the minimum include:
 - `ModuleSource` - The location where the module is hosted
 
 For example:
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;tags&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">"tags"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">map</span><span class="p">(</span><span class="err">any</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Tags to apply to resources.&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Tags to apply to resources."</span>
 <span class="w">  </span><span class="nb">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;IaC&quot;</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Terraform&quot;</span>
-<span class="w">    </span><span class="s2">&quot;ModuleBy&quot;</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;CGD-Toolkit&quot;</span>
-<span class="w">    </span><span class="s2">&quot;ParentModuleName&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;terraform-aws-perforce&quot;</span>
-<span class="w">    </span><span class="s2">&quot;ModuleName&quot;</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;p4-server&quot;</span>
-<span class="w">    </span><span class="s2">&quot;ModuleSource&quot;</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce&quot;</span>
+<span class="w">    </span><span class="s2">"IaC"</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="s2">"Terraform"</span>
+<span class="w">    </span><span class="s2">"ModuleBy"</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"CGD-Toolkit"</span>
+<span class="w">    </span><span class="s2">"ParentModuleName"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"terraform-aws-perforce"</span>
+<span class="w">    </span><span class="s2">"ModuleName"</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"p4-server"</span>
+<span class="w">    </span><span class="s2">"ModuleSource"</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://github.com/aws-games/cloud-game-development-toolkit/tree/main/modules/perforce"</span>
 <span class="w">  </span><span class="p">}</span>
 </code></pre></div>
 

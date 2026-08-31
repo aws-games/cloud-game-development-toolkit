@@ -3567,7 +3567,7 @@
 <p>Instructions on creating a new access token can be found <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">here</a>. You will need to provide the <code>read:package</code> and <code>repo</code> permissions to the access token you create.</p>
 </div>
 <p>You can then upload the secret to AWS Secret Manager using the following <a href="https://aws.amazon.com/cli/">AWS CLI</a> command:</p>
-<div class="highlight"><pre><span></span><code>aws secretsmanager create-secret --name &quot;ecr-pullthroughcache/github-credentials&quot; --secret-string &#39;{&quot;username&quot;:&quot;USERNAME-PLACEHOLDER&quot;,&quot;access-token&quot;:&quot;ACCESS-TOKEN-PLACEHOLDER&quot;}&#39;
+<div class="highlight"><pre><span></span><code>aws secretsmanager create-secret --name "ecr-pullthroughcache/github-credentials" --secret-string '{"username":"USERNAME-PLACEHOLDER","access-token":"ACCESS-TOKEN-PLACEHOLDER"}'
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -3585,7 +3585,7 @@
 <p class="admonition-title">Note</p>
 <p>Make sure to replace the <code>CLIENT-SECRET-PLACEHOLDER</code> and <code>CLIENT-ID-PLACEHOLDER</code> with the appropriate values from your IDP prior to running the command.</p>
 </div>
-<div class="highlight"><pre><span></span><code>aws secretsmanager create-secret --name &quot;external-idp-oidc-credentials&quot; --secret-string &#39;{&quot;client_secret&quot;:&quot;CLIENT-SECRET-PLACEHOLDER&quot;,&quot;client_id&quot;:&quot;CLIENT-ID-PLACEHOLDER&quot;}&#39;
+<div class="highlight"><pre><span></span><code>aws secretsmanager create-secret --name "external-idp-oidc-credentials" --secret-string '{"client_secret":"CLIENT-SECRET-PLACEHOLDER","client_id":"CLIENT-ID-PLACEHOLDER"}'
 </code></pre></div>
 <p>The ARN for the newly created secret must then be passed to the <code>oidc_credentials_secret_manager_arn</code> variable. The secret is referenced using the following format and should be passed into the variable using the same format:</p>
 <p><code>aws!arn:aws:secretsmanager:&lt;region&gt;:&lt;aws-account-number&gt;:secret:&lt;secret-name&gt;|&lt;json-field&gt;</code></p>
@@ -3598,7 +3598,7 @@
 <p>While we highly encourage the use of OIDC tokens for production environments, users can use a bearer token in its place by providing the token to the <code>unreal_cloud_ddc_helm_values</code> variable. See DDC sample for an example implementation.</p>
 </div>
 <div class="highlight"><pre><span></span><code><span class="na">unreal_cloud_ddc_helm_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="nf">templatefile</span><span class="p">(</span><span class="s2">&quot;${path.module}/assets/unreal_cloud_ddc_single_region.yaml&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nf">templatefile</span><span class="p">(</span><span class="s2">"${path.module}/assets/unreal_cloud_ddc_single_region.yaml"</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">&lt;bearer-token&gt;</span>
 <span class="c1">        # Other templatefile parameters...</span>
 <span class="w">    </span><span class="p">})</span>

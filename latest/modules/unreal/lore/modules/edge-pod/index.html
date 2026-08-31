@@ -3398,8 +3398,8 @@
 <p>Deploys a single Lore edge pod — a self-hydrating read cache that proxies branch resolution
 to the write tier and serves clones from local NVMe.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;edge_pod&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;terraform-aws-lore//modules/edge-pod&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"edge_pod"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"terraform-aws-lore//modules/edge-pod"</span>
 
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.vpc_id</span>
 <span class="w">  </span><span class="na">subnet_id</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.private_subnet_ids[0</span><span class="p">]</span>

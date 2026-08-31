@@ -3775,13 +3775,13 @@
 </ul>
 <p><strong>Example Excellence Pattern:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># DDC Module - Different providers justify submodules</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_infra&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/ddc-infra&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_infra"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/ddc-infra"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">aws</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_services&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/ddc-services&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_services"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/ddc-services"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">kubernetes</span>
 <span class="w">    </span><span class="na">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">helm</span>
@@ -3793,78 +3793,78 @@
 <h2 id="variable-naming-standards">🏷️ Variable Naming Standards<a class="headerlink" href="#variable-naming-standards" title="Permanent link">&para;</a></h2>
 <h3 id="excellence-pattern-existing_-prefix-for-external-resources"><strong>Excellence Pattern: <code>existing_</code> Prefix for External Resources</strong><a class="headerlink" href="#excellence-pattern-existing_-prefix-for-external-resources" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Use existing_ prefix for user-provided resources</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_vpc_id&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_vpc_id"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;VPC ID where resources will be created&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"VPC ID where resources will be created"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_load_balancer_subnets&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_load_balancer_subnets"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Subnets for load balancers (public for internet, private for VPC-only)&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Subnets for load balancers (public for internet, private for VPC-only)"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_service_subnets&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_service_subnets"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Subnets for services (EKS, databases, applications)&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Subnets for services (EKS, databases, applications)"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Security group IDs for external access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Security group IDs for external access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Topology-based naming</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;public_subnets&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Implies specific network topology</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;private_subnets&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1"> # Less flexible than purpose-based naming</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"public_subnets"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Implies specific network topology</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"private_subnets"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1"> # Less flexible than purpose-based naming</span>
 </code></pre></div>
 <h3 id="excellence-pattern-purpose-based-variable-names"><strong>Excellence Pattern: Purpose-Based Variable Names</strong><a class="headerlink" href="#excellence-pattern-purpose-based-variable-names" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Purpose-based, configurable</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;project_prefix&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"project_prefix"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Prefix for all resource names&quot;</span>
-<span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cgd&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Prefix for all resource names"</span>
+<span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"cgd"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;debug_mode&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"debug_mode"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Debug mode: &#39;enabled&#39; relaxes security constraints for troubleshooting, &#39;disabled&#39; enforces production security&quot;</span>
-<span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;disabled&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Debug mode: 'enabled' relaxes security constraints for troubleshooting, 'disabled' enforces production security"</span>
+<span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"disabled"</span>
 
 <span class="w">  </span><span class="nb">validation</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">condition</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nf">contains</span><span class="p">([</span><span class="s2">&quot;enabled&quot;, &quot;disabled&quot;</span><span class="p">],</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="p">)</span>
-<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;debug_mode must be &#39;enabled&#39; or &#39;disabled&#39;&quot;</span>
+<span class="w">    </span><span class="na">condition</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nf">contains</span><span class="p">([</span><span class="s2">"enabled", "disabled"</span><span class="p">],</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="p">)</span>
+<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"debug_mode must be 'enabled' or 'disabled'"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Opinionated variables</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;access_method&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Let examples show patterns instead</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"access_method"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Let examples show patterns instead</span>
 </code></pre></div>
 <h3 id="excellence-pattern-tiered-security-group-strategy"><strong>Excellence Pattern: Tiered Security Group Strategy</strong><a class="headerlink" href="#excellence-pattern-tiered-security-group-strategy" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># General access (applies to all public-facing components)</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Security group IDs for general access to public services&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Security group IDs for general access to public services"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 
 <span class="c1"># Component-specific access (when needed)</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_load_balancer_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_load_balancer_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Additional security group IDs for load balancer access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Additional security group IDs for load balancer access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_eks_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_eks_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Additional security group IDs for EKS API access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Additional security group IDs for EKS API access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="resource-naming-standards">🏠 Resource Naming Standards<a class="headerlink" href="#resource-naming-standards" title="Permanent link">&para;</a></h2>
 <h3 id="excellence-pattern-random-ids-for-predictable-names"><strong>Excellence Pattern: Random IDs for Predictable Names</strong><a class="headerlink" href="#excellence-pattern-random-ids-for-predictable-names" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Predictable, conflict-free naming</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;random_id&quot;</span><span class="w"> </span><span class="nv">&quot;suffix&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"random_id"</span><span class="w"> </span><span class="nv">"suffix"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">byte_length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span>
 <span class="w">  </span><span class="nb">keepers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">project_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.project_prefix</span>
@@ -3873,35 +3873,35 @@
 <span class="p">}</span>
 
 <span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.project_prefix}-${local.name}&quot;</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${var.project_prefix}-${local.name}"</span>
 <span class="w">  </span><span class="na">name_suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">random_id.suffix.hex</span>
 
 <span class="c1">  # Predictable, readable names</span>
-<span class="w">  </span><span class="na">nlb_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-nlb-${local.name_suffix}&quot;</span>
-<span class="c1">  # Result: &quot;cgd-unreal-cloud-ddc-nlb-a1b2c3d4&quot;</span>
+<span class="w">  </span><span class="na">nlb_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-nlb-${local.name_suffix}"</span>
+<span class="c1">  # Result: "cgd-unreal-cloud-ddc-nlb-a1b2c3d4"</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Unpredictable name_prefix</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;cgd-ddc-&quot;</span><span class="c1">  # AWS generates random suffix</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"cgd-ddc-"</span><span class="c1">  # AWS generates random suffix</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="excellence-pattern-standardized-logical-names"><strong>Excellence Pattern: Standardized Logical Names</strong><a class="headerlink" href="#excellence-pattern-standardized-logical-names" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Use these EXACT logical names in every module</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Network Load Balancer</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;alb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Application Load Balancer</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Primary EKS cluster</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # NLB security group</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;eks_cluster&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1"> # EKS cluster security group</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;internal&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">   # Internal service communication</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;artifacts&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">       # Artifacts storage</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;logs&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">            # Logs storage</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;private&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">      # Private DNS zone</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Network Load Balancer</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"alb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Application Load Balancer</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Primary EKS cluster</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # NLB security group</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"eks_cluster"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1"> # EKS cluster security group</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"internal"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">   # Internal service communication</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"artifacts"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">       # Artifacts storage</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"logs"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">            # Logs storage</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"private"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">      # Private DNS zone</span>
 
 <span class="c1"># ❌ AVOID - Inconsistent naming</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;this&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">           # Too generic</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;ddc_nlb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # Module-specific</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;load_balancer&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Verbose</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"this"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">           # Too generic</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"ddc_nlb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # Module-specific</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"load_balancer"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Verbose</span>
 </code></pre></div>
 <h3 id="excellence-pattern-provider-configurations"><strong>Excellence Pattern: Provider Configurations</strong><a class="headerlink" href="#excellence-pattern-provider-configurations" title="Permanent link">&para;</a></h3>
 <p><strong>CRITICAL</strong>: Modules should NOT define provider configurations - only version requirements.</p>
@@ -3917,16 +3917,16 @@
 </ul>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Universal requirements</span>
 <span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">required_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 1.11&quot;</span>
+<span class="w">  </span><span class="na">required_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 1.11"</span>
 
 <span class="w">  </span><span class="nb">required_providers</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/aws&quot;</span>
-<span class="w">      </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 6.0.0&quot;</span><span class="c1">  # CRITICAL for enhanced region support</span>
+<span class="w">      </span><span class="na">source</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/aws"</span>
+<span class="w">      </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 6.0.0"</span><span class="c1">  # CRITICAL for enhanced region support</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="c1">    # Add additional providers only when needed:</span>
-<span class="c1">    # kubernetes = { source = &quot;hashicorp/kubernetes&quot;, version = &quot;&gt;= 2.33.0&quot; }</span>
-<span class="c1">    # helm = { source = &quot;hashicorp/helm&quot;, version = &quot;&gt;= 3.0.0&quot; }</span>
+<span class="c1">    # kubernetes = { source = "hashicorp/kubernetes", version = "&gt;= 2.33.0" }</span>
+<span class="c1">    # helm = { source = "hashicorp/helm", version = "&gt;= 3.0.0" }</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -3934,38 +3934,38 @@
 <h2 id="security-standards">🔒 Security Standards<a class="headerlink" href="#security-standards" title="Permanent link">&para;</a></h2>
 <h3 id="excellence-pattern-user-controlled-access"><strong>Excellence Pattern: User-Controlled Access</strong><a class="headerlink" href="#excellence-pattern-user-controlled-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Users control external access, we create internal communication</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Security group IDs for external access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Security group IDs for external access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ EXCELLENT - Internal communication security group</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;internal&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-internal&quot;</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Internal service communication&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"internal"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-internal"</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Internal service communication"</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_vpc_id</span>
 
 <span class="c1">  # Internal service rules only</span>
 <span class="w">  </span><span class="nb">ingress</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">from_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9042</span>
 <span class="w">    </span><span class="na">to_port</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="m">9042</span>
-<span class="w">    </span><span class="na">protocol</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">    </span><span class="na">protocol</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"tcp"</span>
 <span class="w">    </span><span class="na">self</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="no">true</span><span class="c1">  # Only from same security group</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="c1">  # ✅ ACCEPTABLE - Outbound internet access for AWS APIs</span>
 <span class="w">  </span><span class="nb">egress</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;All outbound traffic (AWS APIs, updates, container registry)&quot;</span>
+<span class="w">    </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"All outbound traffic (AWS APIs, updates, container registry)"</span>
 <span class="w">    </span><span class="na">from_port</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
 <span class="w">    </span><span class="na">to_port</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
-<span class="w">    </span><span class="na">protocol</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;-1&quot;</span>
-<span class="w">    </span><span class="na">cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">]</span><span class="c1">  # Required for AWS API calls</span>
+<span class="w">    </span><span class="na">protocol</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"-1"</span>
+<span class="w">    </span><span class="na">cidr_blocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"0.0.0.0/0"</span><span class="p">]</span><span class="c1">  # Required for AWS API calls</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ EXCELLENT - Apply security groups with concat</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_node_group&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_node_group"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span>
 <span class="w">    </span><span class="nv">var.existing_security_groups</span><span class="p">,</span><span class="c1">              # User-controlled</span>
 <span class="w">    </span><span class="nv">var.existing_load_balancer_security_groups</span><span class="p">,</span><span class="c1"> # Component-specific</span>
@@ -3975,65 +3975,65 @@
 </code></pre></div>
 <h3 id="excellence-pattern-security-validation"><strong>Excellence Pattern: Security Validation</strong><a class="headerlink" href="#excellence-pattern-security-validation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Prevent insecure configurations</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;allowed_external_cidrs&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"allowed_external_cidrs"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;CIDR blocks for external access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"CIDR blocks for external access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 
 <span class="w">  </span><span class="nb">validation</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">condition</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">!</span><span class="nf">contains</span><span class="p">(</span><span class="nv">var.allowed_external_cidrs</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="p">)</span>
-<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.0.0.0/0 not allowed for ingress. Specify actual CIDR blocks.&quot;</span>
+<span class="w">    </span><span class="na">condition</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">!</span><span class="nf">contains</span><span class="p">(</span><span class="nv">var.allowed_external_cidrs</span><span class="p">,</span><span class="w"> </span><span class="s2">"0.0.0.0/0"</span><span class="p">)</span>
+<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.0.0.0/0 not allowed for ingress. Specify actual CIDR blocks."</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="excellence-pattern-https-first-policy"><strong>Excellence Pattern: HTTPS-First Policy</strong><a class="headerlink" href="#excellence-pattern-https-first-policy" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Certificate validation for internet-facing services</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;existing_certificate_arn&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"existing_certificate_arn"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ACM certificate ARN for HTTPS listeners (required for internet-facing)&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ACM certificate ARN for HTTPS listeners (required for internet-facing)"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="kt">null</span>
 
 <span class="w">  </span><span class="nb">validation</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">condition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.internet_facing</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="no">false</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">&quot;enabled&quot;</span>
-<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Certificate ARN required for internet-facing services unless debug_mode enabled&quot;</span>
+<span class="w">    </span><span class="na">condition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.internet_facing</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="no">false</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">"enabled"</span>
+<span class="w">    </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Certificate ARN required for internet-facing services unless debug_mode enabled"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ EXCELLENT - HTTPS listener (production)</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb_listener&quot;</span><span class="w"> </span><span class="nv">&quot;https&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb_listener"</span><span class="w"> </span><span class="nv">"https"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">count</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">0</span>
 <span class="w">  </span><span class="na">load_balancer_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_lb.nlb.arn</span>
-<span class="w">  </span><span class="na">port</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;443&quot;</span>
-<span class="w">  </span><span class="na">protocol</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TLS&quot;</span>
+<span class="w">  </span><span class="na">port</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="s2">"443"</span>
+<span class="w">  </span><span class="na">protocol</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="s2">"TLS"</span>
 <span class="w">  </span><span class="na">certificate_arn</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span>
 
 <span class="w">  </span><span class="nb">default_action</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">type</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;forward&quot;</span>
+<span class="w">    </span><span class="na">type</span><span class="w">             </span><span class="o">=</span><span class="w"> </span><span class="s2">"forward"</span>
 <span class="w">    </span><span class="na">target_group_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_lb_target_group.main.arn</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ EXCELLENT - HTTP redirect to HTTPS or debug mode</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb_listener&quot;</span><span class="w"> </span><span class="nv">&quot;http&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb_listener"</span><span class="w"> </span><span class="nv">"http"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">load_balancer_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_lb.nlb.arn</span>
-<span class="w">  </span><span class="na">port</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;80&quot;</span>
-<span class="w">  </span><span class="na">protocol</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;TCP&quot;</span>
+<span class="w">  </span><span class="na">port</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="s2">"80"</span>
+<span class="w">  </span><span class="na">protocol</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="s2">"TCP"</span>
 
 <span class="w">  </span><span class="nb">default_action</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">&quot;enabled&quot; ? &quot;forward&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">(</span>
-<span class="w">      </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="s2">&quot;redirect&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;forward&quot;</span>
+<span class="w">    </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">"enabled" ? "forward"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">(</span>
+<span class="w">      </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="s2">"redirect"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">"forward"</span>
 <span class="w">    </span><span class="p">)</span>
 
-<span class="w">    </span><span class="err">dynamic</span><span class="w"> </span><span class="s2">&quot;redirect&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">for_each</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">&quot;disabled&quot;</span><span class="w"> </span><span class="err">&amp;&amp;</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="p">[</span><span class="m">1</span><span class="p">]</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="err">dynamic</span><span class="w"> </span><span class="s2">"redirect"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">for_each</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">"disabled"</span><span class="w"> </span><span class="err">&amp;&amp;</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="p">[</span><span class="m">1</span><span class="p">]</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
 <span class="w">      </span><span class="nb">content</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">port</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;443&quot;</span>
-<span class="w">        </span><span class="na">protocol</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;HTTPS&quot;</span>
-<span class="w">        </span><span class="na">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;HTTP_301&quot;</span>
+<span class="w">        </span><span class="na">port</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="s2">"443"</span>
+<span class="w">        </span><span class="na">protocol</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"HTTPS"</span>
+<span class="w">        </span><span class="na">status_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"HTTP_301"</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="na">target_group_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">&quot;enabled&quot;</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
+<span class="w">    </span><span class="na">target_group_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.debug_mode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s2">"enabled"</span><span class="w"> </span><span class="err">||</span><span class="w"> </span><span class="nv">var.existing_certificate_arn</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
 <span class="w">      </span><span class="nv">aws_lb_target_group.main.arn</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">null</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -4043,10 +4043,10 @@
 <p><strong>Reasoning</strong>: Private hosted zones provide essential internal service discovery, enable future multi-region replication, and support operational troubleshooting without additional cost. They're created automatically to ensure consistent DNS patterns across all modules.</p>
 <p><strong>Note</strong>: As with all standards, we evaluate exceptions on a case-by-case basis. If your specific use case doesn't benefit from private DNS, discuss with the team.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Always create private zone</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;private&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"private"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
-<span class="w">    </span><span class="s2">&quot;${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}&quot;</span><span class="w"> </span><span class="o">:</span>
-<span class="w">    </span><span class="s2">&quot;${var.project_prefix}.internal&quot;</span>
+<span class="w">    </span><span class="s2">"${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}"</span><span class="w"> </span><span class="o">:</span>
+<span class="w">    </span><span class="s2">"${var.project_prefix}.internal"</span>
 
 <span class="w">  </span><span class="nb">vpc</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_vpc_id</span>
@@ -4054,10 +4054,10 @@
 <span class="p">}</span>
 
 <span class="c1"># ✅ EXCELLENT - Always create service records for internal discovery</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_record&quot;</span><span class="w"> </span><span class="nv">&quot;scylla&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_record"</span><span class="w"> </span><span class="nv">"scylla"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">zone_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_route53_zone.private.zone_id</span>
-<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;scylla&quot;</span>
-<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;A&quot;</span>
+<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"scylla"</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"A"</span>
 <span class="w">  </span><span class="na">ttl</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="m">300</span>
 <span class="w">  </span><span class="na">records</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_instance.scylla</span><span class="p">[</span><span class="err">*</span><span class="p">].</span><span class="err">private_ip</span>
 <span class="p">}</span>
@@ -4067,10 +4067,10 @@
 <span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">  # Regional endpoint: {region}.{service}.{domain}</span>
 <span class="w">  </span><span class="na">public_dns_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
-<span class="w">    </span><span class="s2">&quot;${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}&quot;</span><span class="w"> </span><span class="o">:</span>
+<span class="w">    </span><span class="s2">"${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}"</span><span class="w"> </span><span class="o">:</span>
 <span class="w">    </span><span class="kt">null</span>
 
-<span class="w">  </span><span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ddc&quot;  # or &quot;perforce&quot;, &quot;jenkins&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">etc</span><span class="p">.</span>
+<span class="w">  </span><span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ddc"  # or "perforce", "jenkins"</span><span class="p">,</span><span class="w"> </span><span class="err">etc</span><span class="p">.</span>
 <span class="p">}</span>
 
 <span class="c1"># Examples:</span>
@@ -4082,42 +4082,42 @@
 <h3 id="excellence-pattern-terraform-test-framework"><strong>Excellence Pattern: Terraform Test Framework</strong><a class="headerlink" href="#excellence-pattern-terraform-test-framework" title="Permanent link">&para;</a></h3>
 <p>All modules must implement comprehensive testing using the Terraform Test Framework:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># tests/unit_01_basic_single_region.tftest.hcl</span>
-<span class="err">run</span><span class="w"> </span><span class="s2">&quot;setup&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="err">run</span><span class="w"> </span><span class="s2">"setup"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">plan</span>
 <span class="w">  </span><span class="nb">module</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./tests/setup&quot;</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./tests/setup"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="err">run</span><span class="w"> </span><span class="s2">&quot;unit_test&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="err">run</span><span class="w"> </span><span class="s2">"unit_test"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">plan</span>
 
 <span class="w">  </span><span class="nb">variables</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vpc-12345678&quot;</span>
-<span class="w">    </span><span class="na">existing_load_balancer_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;subnet-12345678&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="na">existing_service_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;subnet-87654321&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-12345678"</span>
+<span class="w">    </span><span class="na">existing_load_balancer_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"subnet-12345678"</span><span class="p">]</span>
+<span class="w">    </span><span class="na">existing_service_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"subnet-87654321"</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nb">module</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./examples/complete&quot;</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./examples/complete"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="excellence-pattern-test-setup-directory"><strong>Excellence Pattern: Test Setup Directory</strong><a class="headerlink" href="#excellence-pattern-test-setup-directory" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># tests/setup/ssm.tf - REQUIRED for all modules</span>
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_ssm_parameter&quot;</span><span class="w"> </span><span class="nv">&quot;route53_public_hosted_zone_name&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/cgd-toolkit/tests/route53-public-hosted-zone-name&quot;</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_ssm_parameter"</span><span class="w"> </span><span class="nv">"route53_public_hosted_zone_name"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/cgd-toolkit/tests/route53-public-hosted-zone-name"</span>
 <span class="p">}</span>
 
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_ssm_parameter&quot;</span><span class="w"> </span><span class="nv">&quot;ghcr_credentials_secret_arn&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/cgd-toolkit/tests/ghcr-credentials-secret-arn&quot;</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_ssm_parameter"</span><span class="w"> </span><span class="nv">"ghcr_credentials_secret_arn"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/cgd-toolkit/tests/ghcr-credentials-secret-arn"</span>
 <span class="p">}</span>
 
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;route53_public_hosted_zone_name&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"route53_public_hosted_zone_name"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_ssm_parameter.route53_public_hosted_zone_name.value</span>
 <span class="p">}</span>
 
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;ghcr_credentials_secret_arn&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"ghcr_credentials_secret_arn"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_ssm_parameter.ghcr_credentials_secret_arn.value</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4196,8 +4196,8 @@
 <p><strong>AWS Provider v6 Enhanced Region Support:</strong>
 We leverage Terraform's enhanced AWS provider region support for multi-region deployments. AWS Provider v6+ automatically handles region inheritance, reducing provider configuration complexity.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ EXCELLENT - Enhanced region support (AWS Provider v6+)</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_primary&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_primary"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
 <span class="c1">  # Enhanced region support - AWS provider auto-inherited</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -4217,8 +4217,8 @@ We leverage Terraform's enhanced AWS provider region support for multi-region de
 <span class="p">}</span>
 
 <span class="c1"># Secondary region</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_secondary&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_secondary"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc?ref=v1.2.0"</span>
 
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kubernetes.secondary</span>
@@ -4256,19 +4256,19 @@ We leverage Terraform's enhanced AWS provider region support for multi-region de
 </ul>
 <p><strong>Safe Enhancement Patterns:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ SAFE - Adding new resources</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;new_bucket&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.name_prefix}-new-bucket&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"new_bucket"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${var.name_prefix}-new-bucket"</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ SAFE - Adding optional variables with defaults</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;new_feature_enabled&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"new_feature_enabled"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">bool</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Enable new feature&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Enable new feature"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="c1">  # REQUIRED default</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ SAFE - Adding new outputs</span>
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;new_resource_id&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"new_resource_id"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_s3_bucket.new_bucket.id</span>
 <span class="p">}</span>
 </code></pre></div>

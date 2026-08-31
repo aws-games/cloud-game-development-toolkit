@@ -3783,7 +3783,7 @@ terraform<span class="w"> </span>apply
 terraform<span class="w"> </span>output<span class="w"> </span>password_retrieval_commands
 
 <span class="c1"># Example: Get naruto-uzumaki password</span>
-aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:cgd/vdi-001/users/naruto-uzumaki-XXXXX&quot;</span><span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.password&#39;</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span><span class="s2">"arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:cgd/vdi-001/users/naruto-uzumaki-XXXXX"</span><span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.password'</span>
 </code></pre></div>
 <h3 id="connect-via-dcv-public-internet">Connect via DCV (Public Internet)<a class="headerlink" href="#connect-via-dcv-public-internet" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3853,10 +3853,10 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 aws<span class="w"> </span>ssm<span class="w"> </span>list-command-invocations<span class="w"> </span>--instance-id<span class="w"> </span>&lt;instance-id&gt;
 
 <span class="c1"># Check user creation status</span>
-aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;/cgd/vdi-001/users/naruto-uzumaki/status_user_creation&quot;</span>
+aws<span class="w"> </span>ssm<span class="w"> </span>get-parameter<span class="w"> </span>--name<span class="w"> </span><span class="s2">"/cgd/vdi-001/users/naruto-uzumaki/status_user_creation"</span>
 
 <span class="c1"># Force retry user creation</span>
-<span class="c1"># Set force_run_provisioning = &quot;true&quot; in main.tf and apply</span>
+<span class="c1"># Set force_run_provisioning = "true" in main.tf and apply</span>
 </code></pre></div>
 <h3 id="ami-not-found">AMI Not Found<a class="headerlink" href="#ami-not-found" title="Permanent link">&para;</a></h3>
 <p>If custom AMIs aren't built, Terraform will fail with data source error:</p>
