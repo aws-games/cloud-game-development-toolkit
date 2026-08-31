@@ -229,6 +229,16 @@ resource "aws_ssm_association" "configure_build_agent" {
       p4_workspace_junction = local.fsxn_source_junction_path
       p4_port               = local.perforce_endpoint == null ? "" : local.perforce_endpoint
       p4_user               = local.horde_p4_username
+      # Horde server URL the agent must enroll against. The base module Windows
+      # user_data (agent-config.ps1) runs HordeAgent.exe SetServer against this
+      # URL, BUT on this AMI its `choco install dotnet-6.0-runtime` fails (choco
+      # is not present at user_data time), so the .NET 6 runtime the agent needs
+      # is missing and SetServer/Service-Install never complete — the agent
+      # never enrolls. This extension script (which DOES install choco) installs
+      # the .NET 6 runtime and completes SetServer + Service Install/Start.
+      # Uses the public HTTPS FQDN (matches the durable agent.json the base
+      # user_data writes). Sample-side fix only; no modules/ change.
+      horde_server_url = "https://${local.horde_public_fqdn}"
     })
   }
 }
