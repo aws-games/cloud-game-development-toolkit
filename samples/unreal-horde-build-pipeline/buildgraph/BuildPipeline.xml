@@ -144,6 +144,14 @@
 			     SVM has no CIFS). Windows NFS uses backslashes and the junction
 			     path WITHOUT its leading slash: \\<endpoint>\<CloneVolumeName>.
 			     NFSv3 opts mirror the bootstrap source mount. -->
+
+			<!-- Defensive pre-umount (idempotent): if a PRIOR build left a stale
+			     mount on this drive letter (e.g. its Cleanup node was skipped
+			     because Compile failed and BuildGraph aborts downstream nodes),
+			     a fresh 'mount ... V:' fails with "Network Error - 85"
+			     (ERROR_ALREADY_ASSIGNED). Force-umount first; ignore errors when
+			     nothing is mounted (ErrorLevel=0 so a non-zero exit is tolerated). -->
+			<Spawn Exe="cmd.exe" Arguments="/C umount.exe -f $(CloneDriveLetter)" ErrorLevel="0" />
 			<Spawn Exe="cmd.exe" Arguments="/C mount.exe -o mtype=hard,nolock,casesensitive=yes \\$(SvmNfsEndpoint)\$(EffectiveCloneVolumeName) $(CloneDriveLetter)" />
 
 			<!-- Ensure the LOCAL intermediate/saved dirs exist (off the NFS mount). -->
