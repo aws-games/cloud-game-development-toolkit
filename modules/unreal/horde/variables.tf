@@ -241,7 +241,7 @@ variable "p4_port" {
 
 variable "p4_credentials_secret_arn" {
   type        = string
-  description = "ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {\"username\": \"...\", \"password\": \"...\"}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4_port is set."
+  description = "ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {\"username\": \"...\", \"password\": \"...\"}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce (and into any __P4_USERNAME__/__P4_PASSWORD__ placeholders in config_globals_json) - they never appear in the ECS task definition or Terraform state. Required when p4_port is set."
   default     = null
 
   validation {
@@ -545,6 +545,6 @@ variable "config_path" {
 
 variable "config_globals_json" {
   type        = string
-  description = "JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = \"globals.json\". Leave empty to manage config another way (e.g. a Perforce config_path)."
+  description = "JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = \"globals.json\". The init container substitutes the __P4_USERNAME__ / __P4_PASSWORD__ placeholder tokens (from p4_credentials_secret_arn) into this content at startup, so you can place them inside a perforceClusters[].credentials entry without the password ever landing in Terraform state or the task definition. Substitution is a no-op when the placeholders are absent. Leave empty to manage config another way (e.g. a Perforce config_path)."
   default     = ""
 }
