@@ -122,10 +122,14 @@ variable "build_agent_max_count" {
 # Horde Server
 ##################################################
 
+# Pinned by digest to Horde/UE 5.5.0-32559309 for reproducibility so the server
+# version cannot drift. The custom BuildGraph tasks and the Unreal engine source
+# in Perforce must match this Horde/UE version — override only with a matching
+# version. Pulling the default requires Epic Games GitHub org access.
 variable "horde_server_image" {
   type        = string
-  description = "Container image URI for the Horde server. The default requires Epic Games organization access to GitHub Container Registry."
-  default     = "ghcr.io/epicgames/horde-server:latest-bundled"
+  description = "Container image URI for the Horde server. Pinned by digest to Horde/UE 5.5.0-32559309 for reproducibility — the custom BuildGraph tasks and the Unreal engine source in Perforce must match this Horde/UE version. Override only with a matching version. Pulling the default requires Epic Games GitHub org access."
+  default     = "ghcr.io/epicgames/horde-server@sha256:2a3a3009c05d1dcf4ecbed640d2eb4b5eb9ce974df056e011f476aba4cf5c12d"
 }
 
 variable "github_credentials_secret_arn" {
@@ -138,6 +142,18 @@ variable "horde_p4_credentials_secret_arn" {
   type        = string
   description = "ARN of a pre-created Secrets Manager secret holding the Horde P4 credentials as JSON {\"username\":\"...\",\"password\":\"...\"}. Passing a pre-created secret keeps its ARN known at plan time. Required when deploying the bundled Perforce server (existing_perforce_server_endpoint = null); may be null only if wiring an existing Perforce with its own credentials handling."
   default     = null
+}
+
+# NON-SECRET. This is only the Perforce USERNAME that Horde logs in as (rendered
+# into globals.json's perforceClusters "default" cluster as serviceAccount). It
+# MUST match the "username" field inside the p4_credentials secret referenced by
+# var.horde_p4_credentials_secret_arn. The PASSWORD is never rendered here — it
+# is delivered separately via the secret (module server.json). Because this is a
+# username only, rendering it via Terraform into globals.json / TF state is safe.
+variable "horde_p4_service_account_username" {
+  type        = string
+  description = "NON-SECRET Perforce username Horde authenticates as (rendered into globals.json perforceClusters 'default' cluster as serviceAccount). MUST match the 'username' field in the p4_credentials secret (var.horde_p4_credentials_secret_arn). The password is delivered via the secret and is never rendered here."
+  default     = "svc-horde"
 }
 
 variable "enable_new_agents_by_default" {

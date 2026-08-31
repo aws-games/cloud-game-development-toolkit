@@ -3298,6 +3298,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#seeding-perforce-required-before-first-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeding Perforce (required before first run)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Seeding Perforce (required before first run)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-github-epic-access-the-1-gotcha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. GitHub / Epic access (the #1 gotcha)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-obtain-a-buildable-engine-game-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Obtain a buildable engine + game tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-place-the-custom-buildgraph-tasks-in-tree-uat-auto-compiles-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Place the custom BuildGraph tasks in-tree (UAT auto-compiles them)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-place-the-buildgraph-scripts-under-build-at-the-stream-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Place the BuildGraph scripts under Build/ at the stream root
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-create-the-stream-and-submit-the-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Create the stream and submit the tree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-net-on-the-agents-match-your-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. .NET on the agents (match your engine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3429,13 +3512,101 @@
 <ul>
 <li><a href="https://developer.hashicorp.com/terraform/install">Terraform</a> and valid AWS credentials for the target account.</li>
 <li>An <strong>existing Route53 public hosted zone</strong> (required). The ACM certificate DNS validation records and the public Horde record are created in this zone. This sample does not create the public zone for you.</li>
-<li><strong>Epic Games GitHub organization access.</strong> The default Horde server image <code>ghcr.io/epicgames/horde-server:latest-bundled</code> is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:</li>
+<li><strong>Epic Games GitHub organization access.</strong> The Horde server image is <strong>pinned by digest to Horde/UE 5.5.0-32559309</strong> for reproducibility (<code>ghcr.io/epicgames/horde-server@sha256:2a3a3009c05d1dcf4ecbed640d2eb4b5eb9ce974df056e011f476aba4cf5c12d</code>) so the server version cannot drift. It is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:</li>
 <li>provide <code>github_credentials_secret_arn</code> — a Secrets Manager secret with GitHub credentials that can read the private image; or</li>
-<li>override <code>horde_server_image</code> with an image you can pull without authentication.</li>
-<li><strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This sample does <strong>not</strong> create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve against an ARN that is only known after apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.)</li>
-<li><strong>Custom BuildGraph tasks compiled into your Unreal build tooling.</strong> The pipelines use custom tasks (<code>SyncAndSnapshot</code>, <code>CloneVolume</code>, <code>DeleteVolume</code>, <code>DeleteSnapshot</code>) whose C# sources live in <code>assets/buildgraph/tasks</code>. These must be compiled into your Unreal <code>AutomationTool</code>/<code>UnrealBuildTool</code> so BuildGraph recognizes them.</li>
-<li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files must be submitted to your Perforce depot under <code>Build/</code> so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve against the stream root.</li>
+<li>override <code>horde_server_image</code> with an image you can pull.</li>
 </ul>
+<p><strong>Why the pin matters:</strong> the custom BuildGraph tasks and the Unreal engine source you sync from Perforce must be the <strong>same UE 5.5 lineage</strong> as the Horde server. If you override <code>horde_server_image</code>, use a matching Horde/UE version and keep the tasks and engine source aligned, or builds will break.
+- <strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This sample does <strong>not</strong> create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve against an ARN that is only known after apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.)
+- <strong>Custom BuildGraph tasks available to your Unreal build tooling.</strong> The pipelines use custom tasks (<code>SyncAndSnapshot</code>, <code>CloneVolume</code>, <code>DeleteVolume</code>, <code>DeleteSnapshot</code>) whose C# sources live in <code>assets/buildgraph</code>. You do <strong>not</strong> pre-compile these: when placed in-tree they self-compile in <code>RunUAT</code> at job time. See <a href="#seeding-perforce-required-before-first-run">Seeding Perforce</a> step 3.
+- <strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files must be submitted to your Perforce depot under <code>Build/</code> at the stream root so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve. See <a href="#seeding-perforce-required-before-first-run">Seeding Perforce</a> step 4.</p>
+<h2 id="seeding-perforce-required-before-first-run">Seeding Perforce (required before first run)<a class="headerlink" href="#seeding-perforce-required-before-first-run" title="Permanent link">&para;</a></h2>
+<p>This sample deploys the Perforce <strong>server</strong> (or wires the agents to your existing one via <code>existing_perforce_server_endpoint</code>) but it does <strong>not</strong> populate the depot. Seeding your Perforce with the Unreal engine source, your game, the custom BuildGraph tasks, and the BuildGraph scripts is your responsibility, and it must be done <strong>before</strong> the pipelines can run. Work through the steps below in order.</p>
+<h3 id="1-github-epic-access-the-1-gotcha">1. GitHub / Epic access (the #1 gotcha)<a class="headerlink" href="#1-github-epic-access-the-1-gotcha" title="Permanent link">&para;</a></h3>
+<p>To clone the Unreal Engine source you need an Epic Games account with your GitHub account <strong>linked</strong> and the Unreal Engine EULA <strong>accepted</strong> at <a href="https://www.unrealengine.com/en-US/ue-on-github">https://www.unrealengine.com/en-US/ue-on-github</a>, and you must authenticate with <strong>that same linked GitHub account's</strong> credentials.</p>
+<p>Being a <strong>member</strong> of the <code>EpicGames</code> GitHub org is <strong>not</strong> sufficient by itself. Access to the private <code>EpicGames/UnrealEngine</code> repo is granted specifically by accepting the UE-on-GitHub agreement with your linked account. A token from an org member who has <strong>not</strong> accepted the agreement returns a bare <code>404</code> on the repo (not a permission error), which is easy to misdiagnose.</p>
+<p>Use a <strong>classic Personal Access Token</strong> with the <code>repo</code> scope, and authorize SSO for the <code>EpicGames</code> org on the token if prompted. Verify access before doing anything else:</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>ls-remote<span class="w"> </span>https://github.com/EpicGames/UnrealEngine.git
+</code></pre></div>
+<p>If that lists refs, you're good. If it 404s, revisit the EULA acceptance and SSO authorization above.</p>
+<h3 id="2-obtain-a-buildable-engine-game-tree">2. Obtain a buildable engine + game tree<a class="headerlink" href="#2-obtain-a-buildable-engine-game-tree" title="Permanent link">&para;</a></h3>
+<p>Clone <code>EpicGames/UnrealEngine</code> at the tag that <strong>matches your Horde server version</strong>. This sample pins Horde to a specific UE 5.5 release (see Prerequisites), so clone the matching engine tag (e.g. a <code>5.5.x-release</code> tag) to keep the engine source lineage aligned with the Horde/UAT version. Then run the setup script to fetch the binary GitDependencies — the tree is <strong>not</strong> buildable until this completes (on the order of ~100 GB):</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>&lt;<span class="m">5</span>.5.x-release-tag&gt;<span class="w"> </span>https://github.com/EpicGames/UnrealEngine.git
+<span class="nb">cd</span><span class="w"> </span>UnrealEngine
+./Setup.sh<span class="w">          </span><span class="c1"># Linux/macOS</span>
+<span class="c1"># Setup.bat         # Windows</span>
+</code></pre></div>
+<p>A sample game (for example, Lyra) ships <strong>in-tree</strong> under <code>Samples/Games/</code>, so a single clone yields both the engine and the sample game — you don't need a separate game repo to try the pipeline.</p>
+<h3 id="3-place-the-custom-buildgraph-tasks-in-tree-uat-auto-compiles-them">3. Place the custom BuildGraph tasks in-tree (UAT auto-compiles them)<a class="headerlink" href="#3-place-the-custom-buildgraph-tasks-in-tree-uat-auto-compiles-them" title="Permanent link">&para;</a></h3>
+<p>Copy the custom tasks, utils, and project file into the engine's AutomationTool directory as their own module, beside the engine's own automation modules (AutomationUtils, BuildGraph, Gauntlet, ...):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># From the repo root of this sample, into your engine clone:</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>&lt;engine&gt;/Engine/Source/Programs/AutomationTool/Ontap
+cp<span class="w"> </span>-r<span class="w"> </span>assets/buildgraph/tasks<span class="w">  </span>&lt;engine&gt;/Engine/Source/Programs/AutomationTool/Ontap/
+cp<span class="w"> </span>-r<span class="w"> </span>assets/buildgraph/utils<span class="w">  </span>&lt;engine&gt;/Engine/Source/Programs/AutomationTool/Ontap/
+cp<span class="w"> </span>assets/buildgraph/CGDT.Ontap.Automation.csproj<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>&lt;engine&gt;/Engine/Source/Programs/AutomationTool/Ontap/
+</code></pre></div>
+<p>The layout should be the <code>CGDT.Ontap.Automation.csproj</code> at <code>.../AutomationTool/Ontap/</code> with <code>tasks/</code> and <code>utils/</code> subfolders beside it.</p>
+<blockquote>
+<p><strong>Important — place <code>Ontap/</code> beside <code>Scripts/</code>, NOT inside it.</strong> The engine's
+<code>AutomationTool/Scripts/AutomationScripts.Automation.csproj</code> is an SDK-style
+project that compiles <strong>every</strong> <code>*.cs</code> under <code>Scripts/</code> recursively (it leaves
+<code>EnableDefaultCompileItems</code> at its default of <code>true</code>). If our task files lived
+under <code>Scripts/Ontap/</code>, AutomationScripts would sweep them into its own
+compile — and since AutomationScripts does not reference the BuildGraph
+assembly (and treats warnings as errors), our BuildGraph task types
+(<code>CustomTask</code>, <code>[TaskElement]</code>, <code>[TaskParameter]</code>, <code>JobContext</code>) would fail
+with <code>CS0246</code>. Every other automation module lives as a sibling directory
+directly under <code>AutomationTool/</code>, so <code>Ontap/</code> follows that same convention.
+This keeps our sources out of the AutomationScripts glob and requires no
+edits to any Epic-owned file.</p>
+</blockquote>
+<p>You do <strong>not</strong> pre-compile these tasks. <code>RunUAT</code> auto-discovers and compiles any <code>*.Automation.csproj</code> found under the engine's AutomationTool directory at job time, so the custom tasks self-compile the first time a pipeline runs.</p>
+<p>The csproj is SDK-style and targets <strong><code>net8.0</code></strong>, and it uses <strong>relative <code>ProjectReference</code>s</strong> to the engine's <code>EpicGames.Core</code>, <code>EpicGames.Build</code>, <code>UnrealBuildTool</code>, <code>AutomationUtils</code>, and <code>BuildGraph</code> projects. That is why it must live inside the engine tree at the path above — the relative references resolve against the surrounding engine source. The <code>BuildGraph</code> reference is what provides the task API (<code>CustomTask</code>, <code>[TaskElement]</code>, <code>[TaskParameter]</code>, <code>JobContext</code>) our tasks build on.</p>
+<h3 id="4-place-the-buildgraph-scripts-under-build-at-the-stream-root">4. Place the BuildGraph scripts under <code>Build/</code> at the stream root<a class="headerlink" href="#4-place-the-buildgraph-scripts-under-build-at-the-stream-root" title="Permanent link">&para;</a></h3>
+<p>Copy the pipeline XMLs to a <code>Build/</code> directory at the <strong>root of your stream</strong> so the script paths referenced in <code>globals.json</code> resolve:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>Build
+cp<span class="w"> </span>buildgraph/HydratePipeline.xml<span class="w"> </span>Build/
+cp<span class="w"> </span>buildgraph/BuildPipeline.xml<span class="w">   </span>Build/
+</code></pre></div>
+<p>This makes <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> resolve against the stream root at job time.</p>
+<h3 id="5-create-the-stream-and-submit-the-tree">5. Create the stream and submit the tree<a class="headerlink" href="#5-create-the-stream-and-submit-the-tree" title="Permanent link">&para;</a></h3>
+<p>On a fresh Perforce, create a <strong>stream depot</strong> and a <strong>mainline stream</strong> that match your <code>perforce_stream</code> variable (e.g. depot <code>YourGame</code>, stream <code>//YourGame/main</code>).</p>
+<p>Set a sensible <code>p4 typemap</code> <strong>before</strong> submitting a large engine tree, so Perforce does not try to text-delta binaries. A reasonable baseline:</p>
+<div class="highlight"><pre><span></span><code># p4 typemap  (p4 typemap -o | edit | p4 typemap -i)
+Typemap:
+    binary+l //....uasset
+    binary+l //....umap
+    binary+F //....pak
+    binary+F //....ucas
+    binary+F //....utoc
+    binary+F //....dll
+    binary+F //....pdb
+    binary+F //....so
+    binary+F //....lib
+    binary+F //....exe
+    # artifacts / blobs / images / audio / video
+    binary+F //....bin
+    binary+F //....png
+    binary+F //....tga
+    binary+F //....wav
+    binary+F //....mp4
+    # GOTCHA: .rc resource scripts auto-type as text but are often non-UTF8
+    # and can abort a submit. Force them (and similar) to binary.
+    binary+F //....rc
+    binary+F //....ico
+    binary+F //....cur
+</code></pre></div>
+<p>Audit <code>.ico</code> / <code>.cur</code> / <code>.bin</code> (and any other non-UTF8 source-tree files) the same way if a submit aborts on a text-encoding error.</p>
+<p>Then submit the tree <strong>excluding</strong> <code>.git</code> (use a <code>.p4ignore</code> containing <code>.git</code>). For a ~100 GB tree of hundreds of thousands of files, submit in <strong>batches</strong> (e.g. one top-level directory per changelist) rather than one giant changelist, to avoid client/server memory limits:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># example: add and submit per top-level directory</span>
+p4<span class="w"> </span>add<span class="w"> </span>-f<span class="w"> </span><span class="s2">"Engine/..."</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">"Seed: Engine"</span>
+p4<span class="w"> </span>add<span class="w"> </span>-f<span class="w"> </span><span class="s2">"Samples/..."</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">"Seed: Samples"</span>
+p4<span class="w"> </span>add<span class="w"> </span>-f<span class="w"> </span><span class="s2">"Build/..."</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">"Seed: BuildGraph scripts"</span>
+<span class="c1"># ...repeat for remaining top-level directories</span>
+</code></pre></div>
+<h3 id="6-net-on-the-agents-match-your-engine">6. .NET on the agents (match your engine)<a class="headerlink" href="#6-net-on-the-agents-match-your-engine" title="Permanent link">&para;</a></h3>
+<p>UE 5.5's UAT compiles the automation csproj at job time targeting <strong>.NET 8</strong>, so the build/sync agents need the <strong>.NET 8 SDK</strong>. This sample's agent configuration installs it. If you run a different UE version, match the .NET SDK version to what your engine's UAT expects.</p>
 <h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Copy the example variables file and fill in the required values:</li>
@@ -3507,9 +3678,11 @@ p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"
 <p>The Terraform in this sample validates and plans, but the <strong>end-to-end build has not been run against a live Horde server, FSxN file system, and Unreal engine yet</strong> (that is Phase 6). Treat the following as things to confirm when you deploy. They are also flagged inline in the source (<code>config/horde/globals.json.tpl</code> <code>UNCERTAINTIES</code> block and the <code>BuildPipeline.xml</code> comments):</p>
 <ol>
 <li><strong>Windows clone mount command.</strong> <code>BuildPipeline.xml</code> mounts the clone with <code>net use W: \\&lt;Svm&gt;\&lt;CloneVolumeName&gt;</code>. The exact UNC/NFS path depends on the real SVM export/junction path and DNS name, which are only known against a live SVM. Verify and adjust the mount command.</li>
-<li><strong>Unreal compile arguments.</strong> The <code>Compile</code> node calls <code>W:\Engine\Build\BatchFiles\Build.bat</code> with <code>UETarget</code>/<code>UEPlatform</code>/<code>UEConfiguration</code>/<code>UEProject</code>. For a real project build (for example, Lyra) set <code>UEProject</code> to the <code>.uproject</code> path on the mounted clone and confirm the BatchFiles path and target names against your checked-out engine.</li>
+<li><strong>Unreal compile arguments.</strong> The <code>Compile</code> node calls <code>W:\Engine\Build\BatchFiles\Build.bat</code> with <code>UETarget</code>/<code>UEPlatform</code>/<code>UEConfiguration</code>/<code>UEProject</code>. For a real project build (for example, Lyra, which ships in-tree under <code>Samples/Games/</code> — see <a href="#seeding-perforce-required-before-first-run">Seeding Perforce</a>) set <code>UEProject</code> to the <code>.uproject</code> path on the mounted clone and confirm the BatchFiles path and target names against your checked-out engine.</li>
 <li><strong>Horde <code>globals.json</code> schema.</strong> The pool conditions (<code>OSFamily == 'Linux'</code> / <code>'Windows'</code>) casing and the legacy top-level (version 1) vs. newer nested schema may need adjustment for your deployed Horde server version.</li>
-<li><strong><code>-Script</code> depot paths.</strong> <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> resolve against the stream root only once the <code>buildgraph/</code> files are submitted to the depot under <code>Build/</code>. Confirm the paths resolve after submitting.</li>
+<li><strong><code>-Script</code> depot paths.</strong> <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> resolve against the stream root only once the <code>buildgraph/</code> files are submitted to the depot under <code>Build/</code> (see <a href="#seeding-perforce-required-before-first-run">Seeding Perforce</a> step 4). Confirm the paths resolve after submitting.</li>
+<li><strong>P4 server <code>db-pt</code> directory ownership.</strong> On the P4 Server the metadata directory that holds the <code>db.*</code> files (the <code>db-pt</code>/metadata path) can end up owned by <code>root</code> rather than the <code>perforce</code> user (for example after a manual restore or an out-of-band operation as root). If the P4 daemon runs as <code>perforce</code> but the metadata dir is root-owned, <code>p4d</code> fails to open/write its database files. Confirm the metadata directory and its contents are owned by the <code>perforce</code> user (recursively) and fix ownership if a P4 operation reports a permission/DB error.</li>
+<li><strong>Agent P4 SSL trust.</strong> The Perforce endpoint is SSL (<code>ssl:&lt;host&gt;:1666</code>). Before an agent can run <code>p4</code> commands against it, the agent's OS user must trust the server's SSL fingerprint (<code>p4 trust -y</code>) and then authenticate (<code>p4 login</code>). A fresh agent that has never trusted the server will fail its first <code>p4</code> command with an SSL trust error until <code>p4 trust</code> is run for that user. Ensure the agent's P4 user establishes trust and logs in (typically as part of agent bootstrap) before the sync/build steps run.</li>
 </ol>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
@@ -3536,7 +3709,7 @@ p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-08-27
+    2026-08-31
   </span>
 
     

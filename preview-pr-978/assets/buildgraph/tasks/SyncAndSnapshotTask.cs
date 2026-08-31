@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using EpicGames.Core;
@@ -168,7 +169,11 @@ namespace AutomationTool.Tasks
 				client.Host = Unreal.MachineName;
 				client.RootPath = syncDir;
 				client.Name = _parameters.WorkspaceName;
-				client.Options = P4ClientOption.NoAllWrite | P4ClientOption.NoClobber | P4ClientOption.NoCompress | P4ClientOption.Unlocked | P4ClientOption.NoModTime | P4ClientOption.NoRmDir;
+				// Hydrate is a full-repopulation of the SOURCE volume: use Clobber so a force
+				// sync can overwrite pre-existing writable files left by a previous hydrate.
+				// With NoClobber, 'p4 sync -f' still refuses to overwrite writable files that
+				// are not opened for edit ("Can't clobber writable file"), which broke re-runs.
+				client.Options = P4ClientOption.NoAllWrite | P4ClientOption.Clobber | P4ClientOption.NoCompress | P4ClientOption.Unlocked | P4ClientOption.NoModTime | P4ClientOption.NoRmDir;
 				client.SubmitOptions = P4SubmitOption.SubmitUnchanged;
 				client.LineEnd = P4LineEnd.Local;
 				client.Stream = _parameters.Stream;
@@ -193,9 +198,12 @@ namespace AutomationTool.Tasks
 			Environment.CurrentDirectory = syncDir ?? Environment.CurrentDirectory;
 			Logger.LogInformation("Changed to sync directory: {SyncDir}", syncDir);
 
-			// Perform the sync
-			Logger.LogInformation("Syncing: {SyncPath}", syncPath);
-			submitP4.Sync(syncPath, AllowSpew: true);
+			// Perform the sync. Hydrate uses a FORCE sync ("-f") so it re-transfers all files
+			// regardless of the have-list, establishing a clean, fully-populated baseline on the
+			// source volume on every run. The Sync(CommandLine) overload passes the string straight
+			// through to 'p4 sync <CommandLine>', so prefixing "-f " is the supported way to force.
+			Logger.LogInformation("Force-syncing: {SyncPath}", syncPath);
+			submitP4.Sync("-f " + syncPath, AllowSpew: true);
 
 			Logger.LogInformation("Successfully synced from {Stream}", _parameters.Stream);
 
