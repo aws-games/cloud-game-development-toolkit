@@ -9,15 +9,45 @@ Write-Host "Installing Unreal Engine development stack..."
 # Windows installers update system PATH but current session still has old PATH from when it started
 # Without this refresh, 'choco' command fails and Visual Studio never gets installed
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-Write-Host "Refreshed PATH - Chocolatey now available in current PowerShell session"
 
-# Verify Chocolatey is available
-try {
-    $chocoVersion = choco --version
-    Write-Host "Chocolatey found: $chocoVersion"
-} catch {
-    Write-Host "Chocolatey not found in PATH - this is required for Unreal development stack" -ForegroundColor Red
+# Resolve choco.exe by absolute path rather than relying on PATH alone. The machine
+# PATH written by the Chocolatey installer in the previous provisioner's session is
+# not always visible to this one yet, which made this check fail intermittently --
+# unchanged builds would resolve Chocolatey on one run and report
+# "Chocolatey dependency not met" on the next.
+$chocoInstall = if ($env:ChocolateyInstall) { $env:ChocolateyInstall } else { Join-Path $env:ProgramData 'chocolatey' }
+$chocoExe = Join-Path $chocoInstall 'bin\choco.exe'
+
+# Give the installer's PATH/filesystem changes a moment to land before giving up.
+$chocoVersion = $null
+foreach ($delay in 0, 5, 10, 20) {
+    if ($delay -gt 0) {
+        Write-Host "Chocolatey not resolvable yet; waiting ${delay}s..."
+        Start-Sleep -Seconds $delay
+    }
+    if (Test-Path $chocoExe) {
+        $chocoVersion = & $chocoExe --version
+        break
+    }
+    # Fall back to PATH lookup in case Chocolatey lives somewhere non-standard.
+    $onPath = Get-Command choco -ErrorAction SilentlyContinue
+    if ($onPath) {
+        $chocoExe = $onPath.Source
+        $chocoVersion = & $chocoExe --version
+        break
+    }
+}
+
+if (-not $chocoVersion) {
+    Write-Host "Chocolatey not found at $chocoExe or on PATH - required for the Unreal development stack" -ForegroundColor Red
     throw "Chocolatey dependency not met"
+}
+Write-Host "Chocolatey found: $chocoVersion (at $chocoExe)"
+
+# Make sure the rest of this script's `choco` calls resolve, even if PATH is stale.
+$chocoBin = Split-Path $chocoExe -Parent
+if ($env:Path -notlike "*$chocoBin*") {
+    $env:Path = "$chocoBin;$env:Path"
 }
 
 try {
