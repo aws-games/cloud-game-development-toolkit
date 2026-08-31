@@ -30,6 +30,19 @@
 	        exactly why the iSCSI/LUN-based hydration is tracked as a separate
 	        spike. The clone create + mount + cleanup path is proven; the Windows
 	        NFS data-read path is the blocker for the compile.
+
+	     KNOWN LIMITATION #2 (benchmark finding) — MISSING C++ TOOLCHAIN:
+	     Independently of NFS, the Windows BuildAgent AMI has NO Visual Studio /
+	     MSVC C++ build tools and NO Windows 10/11 SDK, so UnrealBuildTool reports
+	     "Unable to find valid SDK(s) for Win64 ... Registering build platform:
+	     Win64 - buildable: False" and fails with "Platform Win64 is not a valid
+	     platform to build." UBT itself (C#/.NET) builds fine, but the C++ compile
+	     cannot run. This affects ALL cells (NFS-clone AND the plain local-disk
+	     control): a local p4 sync of //Lyra/main to C:\ (verified: files readable
+	     locally, unlike NFS) still cannot compile without MSVC. Installing the VS
+	     C++ Build Tools (MSVC v14.x) + Windows SDK is a multi-GB agent-image /
+	     provisioning change (belongs in the base agent AMI or a dedicated setup
+	     step), i.e. an architecture change — out of scope for this benchmark run.
 	     ===================================================================== 
 
 	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
