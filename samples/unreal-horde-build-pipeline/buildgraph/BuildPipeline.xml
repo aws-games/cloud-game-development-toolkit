@@ -155,10 +155,21 @@
 		     mounted. Node name MUST be "Compile" to match globals.json
 		     -Target=Compile. -->
 		<Node Name="Compile" Requires="Clone And Mount">
-			<!-- Incremental p4 sync into the mounted clone (V:). The
-			     BuildWorkspace is marked incremental in globals.json, so this
-			     only transfers files changed since the snapshot was taken. -->
-			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="$(CloneDriveLetter)/" />
+			<!-- NO incremental p4 sync here.
+			     The per-build FlexClone (mounted at $(CloneDriveLetter), e.g. V:)
+			     is a clone of the hydrate-<CL> SNAPSHOT, which the hydrate
+			     pipeline produced from a FULL p4 sync of the stream. So the clone
+			     ALREADY contains the complete engine + Lyra tree at that CL — the
+			     build reads it directly off V:. The previous incremental
+			     'p4.exe -c $(WorkspaceName) sync $(Stream)/...' step was both
+			     unnecessary AND broken: $(WorkspaceName) ('BuildWorkspace') is
+			     the Horde workspaceType KEY, not a real P4 client — p4 failed
+			     with "Client 'BuildWorkspace' unknown". (The real Horde client is
+			     'Horde+<host>+++Lyra+main+BuildWorkspace', rooted at the agent
+			     sandbox, NOT at the NFS clone V:.) Creating a second client
+			     rooted at V: to re-sync over the clone would also defeat the
+			     whole point of cloning the snapshot. The tracer targets a fixed
+			     snapshot (hydrate-19), so no post-snapshot catch-up is needed. -->
 
 			<!-- B3: Real Unreal compile of the LYRA EDITOR target.
 			     Correct Build.bat argument form: TARGET first, then platform +
