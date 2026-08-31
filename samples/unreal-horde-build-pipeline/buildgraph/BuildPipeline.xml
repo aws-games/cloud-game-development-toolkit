@@ -30,7 +30,7 @@
 	<!-- FlexClone / ONTAP parameters -->
 	<Option Name="SourceVolume" DefaultValue="" Description="Source ONTAP volume that holds the snapshot to clone from" />
 	<Option Name="SnapshotName" DefaultValue="" Description="OPTIONAL explicit snapshot to clone from. If empty, the name is derived below from the built-in $(Change) property (hydrate-&lt;CL&gt;). Set this to point a build at a specific existing snapshot (e.g. hydrate-19 for the first green build)." />
-	<Option Name="CloneVolumeName" DefaultValue="" Description="OPTIONAL explicit name for the per-build FlexClone volume. If empty, a name is derived below (build-&lt;CL&gt;)." />
+	<Option Name="CloneVolumeName" DefaultValue="" Description="OPTIONAL explicit name for the per-build FlexClone volume. If empty, a name is derived below (build_&lt;CL&gt;). MUST be hyphen-free: ONTAP volume names allow only underscores and alphanumerics (a hyphen fails the ONTAP REST query with HTTP 400, code 917888)." />
 	<Option Name="SvmName" DefaultValue="workspace" Description="Storage Virtual Machine name" />
 	<Option Name="SvmNfsEndpoint" DefaultValue="" Description="SVM NFS DNS endpoint used to mount the clone over the Windows NFSv3 client (e.g. svm-xxxx.fs-xxxx.fsx.&lt;region&gt;.amazonaws.com). NOT the SVM short name and NOT SMB — this SVM has no CIFS." />
 	<Option Name="FsxAdminIp" DefaultValue="" Description="ONTAP CLUSTER management endpoint (fsxadmin auth works only against cluster mgmt, e.g. management.fs-xxxx... / 10.0.20.104 — NOT the SVM data LIF)" />
@@ -91,8 +91,14 @@
 	       * else hydrate-job-<HordeJobId> fallback (never a bare literal).
 	     EffectiveCloneVolumeName:
 	       * explicit CloneVolumeName override wins;
-	       * else build-<CL> when we have a real changelist;
-	       * else build-job-<HordeJobId> fallback.
+	       * else build_<CL> when we have a real changelist;
+	       * else build_job_<HordeJobId> fallback.
+	     NOTE: ONTAP VOLUME names may contain ONLY underscores and alphanumerics
+	     — NO hyphens (a hyphen makes the ONTAP REST volume query fail with
+	     HTTP 400 "Invalid character '-' in volume name", code 917888). So the
+	     clone volume names use underscores (build_<CL>), unlike the SNAPSHOT
+	     name which tolerates hyphens (hydrate-<CL>). Any -set:CloneVolumeName
+	     override MUST likewise be hyphen-free.
 	     ================================================================ -->
 	<EnvVar Name="UE_HORDE_JOBID" />
 
@@ -100,8 +106,8 @@
 	<Property Name="EffectiveSnapshotName" Value="hydrate-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
 	<Property Name="EffectiveSnapshotName" Value="$(SnapshotName)" If="'$(SnapshotName)' != ''" />
 
-	<Property Name="EffectiveCloneVolumeName" Value="build-job-$(UE_HORDE_JOBID)" />
-	<Property Name="EffectiveCloneVolumeName" Value="build-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
+	<Property Name="EffectiveCloneVolumeName" Value="build_job_$(UE_HORDE_JOBID)" />
+	<Property Name="EffectiveCloneVolumeName" Value="build_$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
 	<Property Name="EffectiveCloneVolumeName" Value="$(CloneVolumeName)" If="'$(CloneVolumeName)' != ''" />
 
 	<!-- BuildAgent maps to the BuildPool Windows agent (globals.json agentTypes
