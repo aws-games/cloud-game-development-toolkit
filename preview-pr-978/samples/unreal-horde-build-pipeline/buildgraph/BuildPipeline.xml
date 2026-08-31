@@ -30,7 +30,7 @@
 	<!-- FlexClone / ONTAP parameters -->
 	<Option Name="SourceVolume" DefaultValue="" Description="Source ONTAP volume that holds the snapshot to clone from" />
 	<Option Name="SnapshotName" DefaultValue="" Description="OPTIONAL explicit snapshot to clone from. If empty, the name is derived below from the built-in $(Change) property (hydrate-&lt;CL&gt;). Set this to point a build at a specific existing snapshot (e.g. hydrate-19 for the first green build)." />
-	<Option Name="CloneVolumeName" DefaultValue="" Description="OPTIONAL explicit name for the per-build FlexClone volume. If empty, a name is derived below (build-&lt;CL&gt;)." />
+	<Option Name="CloneVolumeName" DefaultValue="" Description="OPTIONAL explicit name for the per-build FlexClone volume. If empty, a name is derived below (build_&lt;CL&gt;). MUST be hyphen-free: ONTAP volume names allow only underscores and alphanumerics (a hyphen fails the ONTAP REST query with HTTP 400, code 917888)." />
 	<Option Name="SvmName" DefaultValue="workspace" Description="Storage Virtual Machine name" />
 	<Option Name="SvmNfsEndpoint" DefaultValue="" Description="SVM NFS DNS endpoint used to mount the clone over the Windows NFSv3 client (e.g. svm-xxxx.fs-xxxx.fsx.&lt;region&gt;.amazonaws.com). NOT the SVM short name and NOT SMB — this SVM has no CIFS." />
 	<Option Name="FsxAdminIp" DefaultValue="" Description="ONTAP CLUSTER management endpoint (fsxadmin auth works only against cluster mgmt, e.g. management.fs-xxxx... / 10.0.20.104 — NOT the SVM data LIF)" />
@@ -91,8 +91,14 @@
 	       * else hydrate-job-<HordeJobId> fallback (never a bare literal).
 	     EffectiveCloneVolumeName:
 	       * explicit CloneVolumeName override wins;
-	       * else build-<CL> when we have a real changelist;
-	       * else build-job-<HordeJobId> fallback.
+	       * else build_<CL> when we have a real changelist;
+	       * else build_job_<HordeJobId> fallback.
+	     NOTE: ONTAP VOLUME names may contain ONLY underscores and alphanumerics
+	     — NO hyphens (a hyphen makes the ONTAP REST volume query fail with
+	     HTTP 400 "Invalid character '-' in volume name", code 917888). So the
+	     clone volume names use underscores (build_<CL>), unlike the SNAPSHOT
+	     name which tolerates hyphens (hydrate-<CL>). Any -set:CloneVolumeName
+	     override MUST likewise be hyphen-free.
 	     ================================================================ -->
 	<EnvVar Name="UE_HORDE_JOBID" />
 
@@ -100,8 +106,8 @@
 	<Property Name="EffectiveSnapshotName" Value="hydrate-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
 	<Property Name="EffectiveSnapshotName" Value="$(SnapshotName)" If="'$(SnapshotName)' != ''" />
 
-	<Property Name="EffectiveCloneVolumeName" Value="build-job-$(UE_HORDE_JOBID)" />
-	<Property Name="EffectiveCloneVolumeName" Value="build-$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
+	<Property Name="EffectiveCloneVolumeName" Value="build_job_$(UE_HORDE_JOBID)" />
+	<Property Name="EffectiveCloneVolumeName" Value="build_$(Change)" If="'$(Change)' != '' And '$(Change)' != '0'" />
 	<Property Name="EffectiveCloneVolumeName" Value="$(CloneVolumeName)" If="'$(CloneVolumeName)' != ''" />
 
 	<!-- BuildAgent maps to the BuildPool Windows agent (globals.json agentTypes
@@ -138,6 +144,17 @@
 			     SVM has no CIFS). Windows NFS uses backslashes and the junction
 			     path WITHOUT its leading slash: \\<endpoint>\<CloneVolumeName>.
 			     NFSv3 opts mirror the bootstrap source mount. -->
+
+			<!-- Defensive pre-umount (idempotent): if a PRIOR build left a stale
+			     mount on this drive letter (e.g. its Cleanup node was skipped
+			     because Compile failed and BuildGraph aborts downstream nodes),
+			     a fresh 'mount ... V:' fails with "Network Error - 85"
+			     (ERROR_ALREADY_ASSIGNED). Force-umount first. umount.exe returns
+			     a NON-ZERO exit (39) when nothing is mounted; we swallow ALL exit
+			     codes with a trailing '& exit /b 0' so this never fails the node
+			     (BuildGraph Spawn ErrorLevel does not treat a non-zero exit as
+			     tolerable). -->
+			<Spawn Exe="cmd.exe" Arguments="/C umount.exe -f $(CloneDriveLetter) &amp; exit /b 0" />
 			<Spawn Exe="cmd.exe" Arguments="/C mount.exe -o mtype=hard,nolock,casesensitive=yes \\$(SvmNfsEndpoint)\$(EffectiveCloneVolumeName) $(CloneDriveLetter)" />
 
 			<!-- Ensure the LOCAL intermediate/saved dirs exist (off the NFS mount). -->
@@ -149,10 +166,21 @@
 		     mounted. Node name MUST be "Compile" to match globals.json
 		     -Target=Compile. -->
 		<Node Name="Compile" Requires="Clone And Mount">
-			<!-- Incremental p4 sync into the mounted clone (V:). The
-			     BuildWorkspace is marked incremental in globals.json, so this
-			     only transfers files changed since the snapshot was taken. -->
-			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="$(CloneDriveLetter)/" />
+			<!-- NO incremental p4 sync here.
+			     The per-build FlexClone (mounted at $(CloneDriveLetter), e.g. V:)
+			     is a clone of the hydrate-<CL> SNAPSHOT, which the hydrate
+			     pipeline produced from a FULL p4 sync of the stream. So the clone
+			     ALREADY contains the complete engine + Lyra tree at that CL — the
+			     build reads it directly off V:. The previous incremental
+			     'p4.exe -c $(WorkspaceName) sync $(Stream)/...' step was both
+			     unnecessary AND broken: $(WorkspaceName) ('BuildWorkspace') is
+			     the Horde workspaceType KEY, not a real P4 client — p4 failed
+			     with "Client 'BuildWorkspace' unknown". (The real Horde client is
+			     'Horde+<host>+++Lyra+main+BuildWorkspace', rooted at the agent
+			     sandbox, NOT at the NFS clone V:.) Creating a second client
+			     rooted at V: to re-sync over the clone would also defeat the
+			     whole point of cloning the snapshot. The tracer targets a fixed
+			     snapshot (hydrate-19), so no post-snapshot catch-up is needed. -->
 
 			<!-- B3: Real Unreal compile of the LYRA EDITOR target.
 			     Correct Build.bat argument form: TARGET first, then platform +
@@ -167,15 +195,25 @@
 			<Spawn Exe="cmd.exe" Arguments="/C $(CloneDriveLetter)\Engine\Build\BatchFiles\Build.bat $(UETarget) $(UEPlatform) $(UEConfiguration) -Project=&quot;$(CloneDriveLetter)\$(UEProjectRelative)&quot; -Intermediate=&quot;$(LocalIntermediateDir)&quot; -Saved=&quot;$(LocalSavedDir)&quot; -NoUBA -WaitMutex -FromMsBuild" WorkingDir="$(CloneDriveLetter)/" />
 		</Node>
 
-		<!-- Step 3: cleanup. RunLate="true" on this node, combined with the
-		     Requires on the clone node ("Clone And Mount") rather than on
-		     Compile, ensures BuildGraph schedules it to run at the END of the
-		     agent's work regardless of whether Compile succeeded or failed.
+		<!-- Step 3: cleanup. NOTE: UE 5.5 BuildGraph has NO 'RunLate' Node
+		     attribute (verified against Engine/Build/Graph/Schema.xsd — the
+		     valid Node attributes are Name/Requires/Produces/After/Token/If/
+		     RunEarly/NotifyOnWarnings/Annotations/IgnoreModified). Using an
+		     undeclared 'RunLate' made the BuildGraph export fail with
+		     "The 'RunLate' attribute is not declared." at parse time, before any
+		     node ran. The schema-valid way to order this node at the END of the
+		     agent's work is:
+		       * Requires="Clone And Mount"  -> DATA dependency on the clone
+		         only (NOT on Compile), so cleanup is not gated by Compile's
+		         success and BuildGraph will still schedule it if Compile fails;
+		       * After="Compile"             -> ORDERING so cleanup runs AFTER
+		         the compile attempt (After is an ordering-only edge; it does not
+		         require Compile to succeed).
 		     This is CRITICAL: the per-build FlexClone must always be deleted,
-		     otherwise failed builds would leak FlexClones that accumulate on
-		     the FSxN filesystem. RunLate guarantees the unmount + DeleteVolume
-		     run even on Compile failure. -->
-		<Node Name="Cleanup Clone" Requires="Clone And Mount" RunLate="true">
+		     otherwise failed builds would leak FlexClones on the FSxN filesystem.
+		     The unmount + DeleteVolume therefore run after Compile, pass or
+		     fail. -->
+		<Node Name="Cleanup Clone" Requires="Clone And Mount" After="Compile">
 			<!-- B2: Unmount the NFSv3 clone first (umount, NOT net use /delete)
 			     so the volume is not busy when we delete it. Windows NFS client
 			     provides umount.exe; -f forces even if handles linger. -->
