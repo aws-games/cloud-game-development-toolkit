@@ -75,8 +75,11 @@ locals {
 
   # Dedicated Perforce user that the Horde server authenticates as. The
   # purpose-built Horde P4 credentials secret (JT-06) stores this username; the
-  # operator must align this user's password with the secret post-deploy.
-  horde_p4_username = "svc-horde"
+  # operator must align this user's password with the secret post-deploy. Now
+  # surfaced as a NON-SECRET sample variable so operators can override it to
+  # match their secret's "username" without editing locals. Rendered into
+  # globals.json's perforceClusters "default" cluster as serviceAccount.
+  horde_p4_username = var.horde_p4_service_account_username
 
   ##################################################
   # Tags

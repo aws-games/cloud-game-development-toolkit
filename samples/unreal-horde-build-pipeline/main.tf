@@ -191,6 +191,16 @@ module "horde" {
   image                         = var.horde_server_image
   github_credentials_secret_arn = var.github_credentials_secret_arn
 
+  # - Container sizing -
+  # The Horde 5.5 .NET server OOM-crashes (exit 139, "Out of memory.") on the
+  # module default of 4096 MiB, causing a Fargate crash-loop (runningCount
+  # bounces to 0) which manifests downstream as the recurring transient
+  # "Unable to find any healthy Perforce server in cluster default" (the cluster
+  # cache never stays warm because the task keeps restarting). Bump to the max
+  # valid Fargate memory for 1 vCPU (8192 MiB) to keep the server up.
+  container_cpu    = 1024
+  container_memory = 8192
+
   # - Perforce wiring -
   # p4_port is ssl:<host>:1666 (built in locals.tf). The credentials secret is
   # a pre-created JSON secret ({"username":"...","password":"..."}) passed via
@@ -207,15 +217,43 @@ module "horde" {
   # because config_path = "globals.json" sets configPath in server.json
   # (verified: ecs.tf init container write logic + local.tf server_json.configPath).
   #
-  # globals.json references the Perforce connection by clusterName = "default",
-  # which the module already defines in server.json
-  # (plugins.build.perforce[{ id: "default", ... }]) — so we do NOT redefine
-  # perforceClusters/credentials in globals.json.
+  # globals.json references the Perforce connection by clusterName = "default".
+  # Horde 5.5 resolves that cluster from the loaded GlobalConfig (globals.json),
+  # so we define a TOP-LEVEL perforceClusters entry named "default" in the tpl
+  # with servers[].serverAndPort = local.perforce_endpoint (injected here as the
+  # perforce_endpoint template var). The module's server.json entry
+  # (plugins.build.perforce[{ id: "default", ... }]) is server appsettings and is
+  # NOT used for cluster resolution — omitting the cluster previously caused a
+  # fallback to the perforce:1666 default. The cluster now also sets a NON-SECRET
+  # serviceAccount (local.horde_p4_username) so Horde resolves a real P4 user
+  # instead of null->OS 'root'; the PASSWORD is still NOT rendered here (secret),
+  # auth reuses the module's server.json credentials. If P4 auth still fails with
+  # this user, creds must live in the cluster which requires an init-container
+  # placeholder substitution in the module (a fork) — not done here.
   #
   # NOTE: JT-18's original plan called for an "extra_environment" input; that
   # variable does not exist on this module. config_globals_json + config_path is
   # the supported mechanism.
-  config_globals_json = templatefile("${path.module}/config/horde/globals.json.tpl", { perforce_stream = var.perforce_stream })
+  config_globals_json = templatefile("${path.module}/config/horde/globals.json.tpl", {
+    perforce_stream   = var.perforce_stream
+    perforce_endpoint = local.perforce_endpoint
+    # NON-SECRET P4 username Horde logs in as (rendered as the cluster's
+    # serviceAccount). Password is NOT rendered — delivered via the module's
+    # server.json credentials secret. Username in TF state is not a leak.
+    p4_service_account = local.horde_p4_username
+
+    # BuildGraph -set: option wiring (JT-19/JT-20). These values flow from
+    # Terraform into the Horde template arguments array (-set:<Option>=<value>)
+    # so the SyncAndSnapshot / CloneVolume / DeleteVolume tasks receive the
+    # live FSxN/ONTAP + stream values at job time. The ONTAP admin secret NAME
+    # (an ARN) is non-secret; the fsxadmin PASSWORD is fetched at runtime by
+    # the task from Secrets Manager and is never rendered here.
+    fsx_management_ip          = aws_fsx_ontap_file_system.workspace.endpoints[0].management[0].dns_name
+    ontap_password_secret_name = aws_secretsmanager_secret.fsxn_admin.arn
+    volume_name                = local.fsxn_source_volume_name
+    svm_name                   = local.fsxn_svm_name
+    aws_region                 = var.region
+  })
   config_path         = "globals.json"
 
   # - Agents -

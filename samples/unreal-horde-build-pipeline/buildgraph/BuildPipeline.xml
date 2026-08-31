@@ -28,17 +28,17 @@
 	     ===================================================================== -->
 
 	<!-- FlexClone / ONTAP parameters -->
-	<Option Name="SourceVolume" Description="Source ONTAP volume that holds the snapshot to clone from" />
-	<Option Name="SnapshotName" Description="Snapshot to clone from (produced by the hydrate pipeline)" />
-	<Option Name="CloneVolumeName" Description="Name for the per-build FlexClone volume (scoped to this build)" />
+	<Option Name="SourceVolume" DefaultValue="" Description="Source ONTAP volume that holds the snapshot to clone from" />
+	<Option Name="SnapshotName" DefaultValue="" Description="Snapshot to clone from (produced by the hydrate pipeline)" />
+	<Option Name="CloneVolumeName" DefaultValue="" Description="Name for the per-build FlexClone volume (scoped to this build)" />
 	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
-	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
+	<Option Name="FsxAdminIp" DefaultValue="" Description="FSx ONTAP management IP address" />
 	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
-	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for the ONTAP password" />
+	<Option Name="OntapPasswordSecretName" DefaultValue="" Description="AWS Secrets Manager secret name for the ONTAP password" />
 	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
 
 	<!-- Perforce parameters (incremental sync into the mounted clone) -->
-	<Option Name="Stream" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
@@ -50,11 +50,13 @@
 	<Option Name="UEConfiguration" DefaultValue="Development" Description="Build configuration (Debug, Development, Shipping)" />
 
 	<!-- BuildAgent maps to the BuildPool Windows agent (globals.json agentTypes
-	     key "BuildAgent"). Type AnyAgent lets Horde place it on the pool selected
-	     by the template; the pool condition (OSFamily == 'Windows') is enforced
-	     in globals.json. ADR-004: the Windows build agent uses per-job FlexClones
-	     mounted for the duration of the build. -->
-	<Agent Name="BuildAgent" Type="AnyAgent">
+	     key "BuildAgent"). The Agent Type MUST equal a key in the stream's
+	     agentTypes map — using Type="AnyAgent" makes Horde fail the batch with
+	     UnknownAgentType (see HydratePipeline.xml note). The pool condition
+	     (OSFamily == 'Windows') is enforced in globals.json via the resolved
+	     BuildAgent -> build-pool mapping. ADR-004: the Windows build agent uses
+	     per-job FlexClones mounted for the duration of the build. -->
+	<Agent Name="BuildAgent" Type="BuildAgent">
 
 		<!-- Step 1: create the FlexClone from $(SourceVolume)+$(SnapshotName)
 		     as $(CloneVolumeName), then mount it to drive W: on this Windows

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CGDT.Ontap.Automation.csproj  (Unreal Engine 5.5)
+  ================================================================
+  Custom BuildGraph tasks (CustomTask subclasses) + OntapUtils helper.
+
+  PLACEMENT (verified against a synced UE5/Release-5.5 tree):
+    This csproj MUST be placed at:
+        Engine/Source/Programs/AutomationTool/Ontap/
+    i.e. as a SIBLING of AutomationTool/Scripts/, NOT inside Scripts/.
+    The tasks/ and utils/ subfolders (containing the .cs files) sit
+    directly BESIDE this csproj under Ontap/. So:
+        AutomationTool/Ontap/CGDT.Ontap.Automation.csproj
+        AutomationTool/Ontap/tasks/*.cs
+        AutomationTool/Ontap/utils/OntapUtils.cs
+
+    WHY A SIBLING OF Scripts/ (NOT Scripts/Ontap/):
+      AutomationTool/Scripts/AutomationScripts.Automation.csproj is an
+      SDK-style project that OMITS EnableDefaultCompileItems, so it defaults
+      to true and RECURSIVELY compiles every *.cs under Scripts/ — including
+      anything we place under Scripts/Ontap/. AutomationScripts does NOT
+      reference the BuildGraph assembly, so our task types (CustomTask,
+      TaskElement, TaskParameter, JobContext) fail there with CS0246, and
+      AutomationScripts also sets TreatWarningsAsErrors=true. We cannot edit
+      Epic's AutomationScripts.Automation.csproj. Every OTHER automation
+      module (Android, Apple, Gauntlet, Localization, BuildGraph, ...) lives
+      as a sibling directory directly under AutomationTool/, NOT under
+      Scripts/. Placing Ontap/ as a sibling of Scripts/ follows that exact
+      convention, keeps our .cs files OUT of the AutomationScripts glob, and
+      requires ZERO edits to Epic-owned files. RunUAT still auto-discovers any
+      "*.Automation.csproj" under AutomationTool/ at startup.
+
+    The file name MUST end in ".Automation.csproj" to be auto-discovered
+    and compiled by `RunUAT` at startup.
+
+  HOW REFERENCES RESOLVE (UE 5.5):
+    In-tree *.Automation.csproj files are SDK-style and use RELATIVE paths
+    to import the shared props file and reference the sibling projects
+    (no $(EngineDir), no Exists() condition, no DLL HintPath fallback).
+    Because Ontap/ now sits at the SAME depth as Scripts/ (both directly
+    under AutomationTool/), the relative paths are IDENTICAL to the ones in
+    the sibling AutomationScripts.Automation.csproj / BuildGraph.Automation.csproj:
+        AutomationTool/Ontap -> AutomationTool (..) -> Programs (../..) -> Shared
+    So Shared items use `..\..\Shared\...`, UnrealBuildTool uses
+    `..\..\UnrealBuildTool\...`, and sibling AutomationTool modules
+    (AutomationUtils, BuildGraph) use `..\<Module>\...`.
+
+  TARGET FRAMEWORK:
+    UE 5.5 AutomationTool/UBT target .NET 8 (net8.0). The build agent needs
+    the .NET 8 SDK/runtime.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pulls in the standard UE automation props + settings.
+       Relative path matches the sibling AutomationScripts/BuildGraph csprojs
+       (Ontap/ is a sibling of Scripts/, so `..\..\Shared\...`). -->
+  <Import Project="..\..\Shared\UnrealEngine.csproj.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>disable</Nullable>
+    <!-- UE automation assemblies are not signed and allow unsafe/older lang levels -->
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>CGDT.Ontap.Automation</AssemblyName>
+    <RootNamespace>AutomationTool</RootNamespace>
+    <!-- Keep our sources explicit rather than globbing the whole folder tree -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- NOTE: intentionally NOT setting TreatWarningsAsErrors=true (differs
+         from Epic's projects) so our code's warnings don't break the build. -->
+  </PropertyGroup>
+
+  <!-- The 5 source files (4 tasks + 1 helper). Paths are relative to this
+       csproj; tasks/ and utils/ are submitted beside it under Ontap/. -->
+  <ItemGroup>
+    <Compile Include="tasks/SyncAndSnapshotTask.cs" />
+    <Compile Include="tasks/CloneVolumeTask.cs" />
+    <Compile Include="tasks/DeleteVolumeTask.cs" />
+    <Compile Include="tasks/DeleteSnapshotTask.cs" />
+    <Compile Include="utils/OntapUtils.cs" />
+  </ItemGroup>
+
+  <!-- In-tree relative ProjectReferences (verified against 5.5 siblings).
+       Depths are computed from AutomationTool/Ontap/ (sibling of Scripts/):
+         EpicGames.Core   -> Programs/Shared/EpicGames.Core   => ..\..\Shared\...
+         EpicGames.Build  -> Programs/Shared/EpicGames.Build  => ..\..\Shared\...
+         UnrealBuildTool  -> Programs/UnrealBuildTool         => ..\..\UnrealBuildTool\...
+         AutomationUtils  -> AutomationTool/AutomationUtils    => ..\AutomationUtils\...
+         BuildGraph       -> AutomationTool/BuildGraph         => ..\BuildGraph\...
+
+       BuildGraph.Automation.csproj is REQUIRED: it defines the BuildGraph task
+       API our .cs files subclass/annotate — CustomTask, [TaskElement],
+       [TaskParameter], and JobContext (BuildGraph/Task.cs, BuildGraph/JobContext.cs).
+       AutomationScripts does NOT reference it, which is exactly why our files
+       could not compile there. We reference it directly here so those types
+       resolve.
+
+       EpicGames.Build.csproj is REQUIRED: the `using UnrealBuildBase;` in the
+       task files (for Unreal.MachineName) resolves to the UnrealBuildBase
+       namespace, which in 5.5 is defined in Shared/EpicGames.Build
+       (EpicGames.Build/Automation/CommandLine.cs). There is no
+       UnrealBuildBase.csproj in 5.5. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\EpicGames.Core\EpicGames.Core.csproj" PrivateAssets="All"><Private>false</Private></ProjectReference>
+    <ProjectReference Include="..\..\Shared\EpicGames.Build\EpicGames.Build.csproj" PrivateAssets="All"><Private>false</Private></ProjectReference>
+    <ProjectReference Include="..\..\UnrealBuildTool\UnrealBuildTool.csproj" PrivateAssets="All"><Private>false</Private></ProjectReference>
+    <ProjectReference Include="..\AutomationUtils\AutomationUtils.Automation.csproj" PrivateAssets="All"><Private>false</Private></ProjectReference>
+    <ProjectReference Include="..\BuildGraph\BuildGraph.Automation.csproj" PrivateAssets="All"><Private>false</Private></ProjectReference>
+  </ItemGroup>
+
+  <!-- utils/OntapUtils.cs uses System.Net.Http + System.Text.Json.
+       net8.0 SDK-style projects reference the Microsoft.NETCore.App shared
+       framework IMPLICITLY, and that shared framework already includes
+       System.Net.Http and System.Text.Json. No extra FrameworkReference or
+       PackageReference is needed. -->
+
+</Project>

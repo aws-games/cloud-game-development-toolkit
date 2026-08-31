@@ -20,6 +20,7 @@
  This script ONLY ADDS what the build agent needs for the FSxN workspace:
    * the Windows NFS Client feature (Client for NFS)
    * p4.exe (Helix P4 CLI) and AWS CLI — idempotent, only if missing
+   * .NET 8 SDK (UE 5.5 UAT) — idempotent, only if an 8.x SDK is missing
    * an NFSv3 mount of the FSxN source volume to drive letter W:
    * machine-level P4PORT / P4USER env vars (NON-secret values only)
 
@@ -147,7 +148,51 @@ catch {
 }
 
 # =============================================================================
-# 3. Set P4PORT / P4USER as MACHINE-level env vars (NON-secret values only).
+# 3. Install the .NET 8 SDK (UE 5.5 UAT) via choco, only if an 8.x SDK is
+#    missing. UE 5.5 RunUAT/BuildGraph targets .NET 8 and compiles the
+#    automation csproj on the fly at job time, so the full SDK (not just a
+#    runtime) is required. The base agent-config.ps1 installs dotnet but not
+#    necessarily the .NET 8 SDK, so this guarded install makes the agent
+#    self-sufficient and idempotent.
+# =============================================================================
+function Test-Dotnet8Sdk {
+    # True if `dotnet --list-sdks` reports at least one 8.x SDK.
+    if (-not (Test-Command 'dotnet')) { return $false }
+    try {
+        $sdks = & dotnet --list-sdks 2>$null
+        return [bool]($sdks | Where-Object { $_ -match '^8\.' })
+    }
+    catch {
+        return $false
+    }
+}
+
+try {
+    if (Test-Dotnet8Sdk) {
+        Write-Log '.NET 8 SDK already installed; skipping.'
+    }
+    else {
+        Write-Log '.NET 8 SDK not found; installing dotnet-8.0-sdk via choco...'
+        & choco install dotnet-8.0-sdk -y --no-progress
+        if ($LASTEXITCODE -ne 0) { throw "choco install dotnet-8.0-sdk failed ($LASTEXITCODE)" }
+
+        # Refresh PATH so the freshly installed dotnet is callable in this session.
+        $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                    [System.Environment]::GetEnvironmentVariable('Path', 'User')
+
+        if (-not (Test-Dotnet8Sdk)) {
+            throw 'dotnet-8.0-sdk install reported success but no 8.x SDK is visible via dotnet --list-sdks.'
+        }
+        Write-Log '.NET 8 SDK installed and verified.'
+    }
+}
+catch {
+    Write-Log "Failed installing .NET 8 SDK: $($_.Exception.Message)" 'ERROR'
+    exit 1
+}
+
+# =============================================================================
+# 4. Set P4PORT / P4USER as MACHINE-level env vars (NON-secret values only).
 #    Values injected by Terraform. Never sets or handles the P4 password.
 # =============================================================================
 try {
@@ -173,7 +218,7 @@ catch {
 }
 
 # =============================================================================
-# 4. Mount the FSxN source volume to drive W: via the Windows NFS client (NFSv3).
+# 5. Mount the FSxN source volume to drive W: via the Windows NFS client (NFSv3).
 #    Idempotent: skip if W: is already mapped. Requires the FsxnNfsEndpoint and
 #    P4WorkspaceJunction values; if absent, warn and skip (do not fail the run).
 # =============================================================================
