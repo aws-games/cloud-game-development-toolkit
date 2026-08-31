@@ -1,2 +1,0 @@
-container_image       = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:arm64"
-allowed_ingress_cidrs = ["10.0.0.0/8"]
