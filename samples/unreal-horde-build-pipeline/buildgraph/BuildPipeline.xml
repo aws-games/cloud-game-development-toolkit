@@ -6,9 +6,31 @@
 	     =====================================================================
 	     Purpose: on-demand build. Create a per-build FlexClone from the ONTAP
 	     snapshot the hydrate pipeline produced (hydrate-<CL>), mount the clone
-	     over the Windows NFSv3 client, incremental-sync into it, compile the
-	     Lyra EDITOR target, then ALWAYS clean up (unmount + delete the clone).
+	     over the Windows NFSv3 client, compile the Lyra EDITOR target off the
+	     clone, then ALWAYS clean up (unmount + delete the clone).
 	     Runs on the Windows build agent.
+
+	     ===================================================================== 
+	     KNOWN LIMITATION (benchmark finding, 2026-08-31) — WINDOWS NFSv3 READ:
+	     The FlexClone lifecycle works end-to-end on the Windows BuildAgent:
+	       * CloneVolumeTask creates the FlexClone from hydrate-<CL> (verified via
+	         ONTAP REST: is_flexclone=true, parent_snapshot=hydrate-19);
+	       * the clone mounts over the Windows "Client for NFS" at V: and
+	         DIRECTORY/METADATA ops succeed (dir, stat, file sizes all correct).
+	     BUT: DATA READ of any file over the Windows NFSv3 client against this
+	     FSxN SVM FAILS with "An unexpected network error occurred" — for BOTH
+	     the clone AND the source volume, for `type`/`copy`/Build.bat launch,
+	     independent of: AnonymousUid/Gid mapping (tried 1001 = the file owner
+	     'Horde'; files are 0444 world-readable), rsize (64k and 32k), and
+	     mount type (hard/soft). READDIR/GETATTR RPCs succeed; READ RPCs do not.
+	     => Build.bat cannot be read/executed off V: ("The system cannot open the
+	        device or file specified."), so the Lyra COMPILE cannot run off the
+	        NFS clone on Windows. This is an ARCHITECTURE-LEVEL Windows-NFSv3 <->
+	        FSxN read incompatibility, NOT a pipeline-logic bug — and it is
+	        exactly why the iSCSI/LUN-based hydration is tracked as a separate
+	        spike. The clone create + mount + cleanup path is proven; the Windows
+	        NFS data-read path is the blocker for the compile.
+	     ===================================================================== 
 
 	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
 	       * <Agent Name="BuildAgent"> matches the agentTypes key "BuildAgent"
