@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and update with your values
+# cp terraform.tfvars.example terraform.tfvars
+
+# Required: Your Route53 hosted zone domain name
+route53_public_hosted_zone_name = "example.com"
+
+# Required: Path to Unity Floating License Server zip file
+# Download from https://id.unity.com/
+unity_license_server_file_path = "/path/to/Unity.Licensing.Server.linux-x64-v2.1.0.zip"
+
+# Required: Unity TeamCity agent Docker image URI
+# Build your own using docker/teamcity-unity-build-agent/ directory
+unity_teamcity_agent_image = "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest"
