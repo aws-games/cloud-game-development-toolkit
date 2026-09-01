@@ -57,6 +57,28 @@
     # Local mount point for the persistent FSxN source volume (ADR path).
     p4_workspace_mount: "/mnt/p4-workspace"
 
+    # P4 endpoint components, supplied by the SSM association's ExtraVariables as
+    # `p4_scheme` / `p4_host` / `p4_port_num`. The playbook reassembles these
+    # into P4PORT (<scheme>:<host>:<port>) for the SSL-trust task below.
+    #
+    # WHY SPLIT (not a single p4_port): the AWS-ApplyAnsiblePlaybooks
+    # ExtraVariables parameter validation rejects ':' entirely, so a raw
+    # ssl:<host>:1666 P4PORT cannot be passed through it. Passing the three
+    # colon-free components sidesteps that. All default empty; when empty (no
+    # Perforce endpoint known at apply time) the SSL-trust task is skipped
+    # (see section 8). Do NOT hardcode real values here.
+    p4_scheme: ""
+    p4_host: ""
+    p4_port_num: ""
+
+    # The OS user the Horde agent process runs as. Created and registered by the
+    # BASE module playbook (ADR-005), NOT here — this extension only references
+    # it. Verified on the live agent as uid 1001 / gid 1001. The chown (section
+    # 7) and P4 SSL-trust (section 8) tasks act on behalf of this user so the
+    # agent can write the NFS workspace and trust the SSL P4 server.
+    agent_user: "Horde"
+    agent_home: "/home/Horde"
+
     # NFS mount options. NFSv3 family per ADR-002. `_netdev` + `nofail` keep the
     # boot resilient if the endpoint is briefly unavailable.
     nfs_mount_opts: "nfsvers=3,rw,hard,rsize=65536,wsize=65536,_netdev,nofail"
@@ -281,3 +303,90 @@
           FSxN source volume mounted:
           {{ fsxn_nfs_endpoint }}:{{ p4_workspace_junction }}
           -> {{ p4_workspace_mount }} (NFSv3)
+
+    # -------------------------------------------------------------------------
+    # 7. Make the mounted workspace writable by the Horde agent user.
+    #
+    #    WHY: the FSxN source volume is a UNIX-security-style volume whose export
+    #    root comes up owned root:root 0755. The Horde agent runs as `Horde`
+    #    (uid 1001), so `p4 sync` fails with "Permission denied" when it tries to
+    #    create directories under the workspace. Setting the mount root to the
+    #    agent user + group with mode 0775 lets the agent write while keeping the
+    #    tree group-writable.
+    #
+    #    ORDERING: this MUST run AFTER section 5's `state: mounted` so the chown
+    #    lands on the NFS export root (the live volume), NOT the empty local
+    #    mount-point directory underneath it. Because it is UNIX security style,
+    #    the NFS server honours the chown (verified: the runtime fix took effect
+    #    and persists — the live mount is 1001:1001 0775).
+    #
+    #    IDEMPOTENCY + NON-DESTRUCTIVE: ansible.builtin.file with owner/group/mode
+    #    reports `changed` only when ownership/mode actually differ, so re-runs
+    #    are a no-op once correct. We deliberately do NOT use `recurse: true`:
+    #    a recursive chown of the large (tens of GB) already-synced tree would be
+    #    slow and unnecessary — p4 sync creates new files/dirs as the agent user
+    #    once the writable export root allows it. Existing synced data is left
+    #    untouched (no re-sync, no delete).
+    # -------------------------------------------------------------------------
+    - name: Make the mounted workspace root writable by the Horde agent user (uid 1001)
+      ansible.builtin.file:
+        path: "{{ p4_workspace_mount }}"
+        state: directory
+        owner: "{{ agent_user }}"
+        group: "{{ agent_user }}"
+        mode: "0775"
+
+    # -------------------------------------------------------------------------
+    # 8. Establish P4 SSL trust for the Horde agent user.
+    #
+    #    WHY: the Perforce server is SSL (ssl:<host>:1666). Before the agent user
+    #    can run any `p4` command against it, that user must trust the server's
+    #    SSL fingerprint — otherwise the first `p4` call fails with an SSL trust
+    #    error. Trust is stored per-user in ~/.p4trust; the Horde agent process
+    #    runs as `Horde` with HOME=/home/Horde, so the trust file must live at
+    #    /home/Horde/.p4trust (verified present on the live agent for
+    #    10.0.10.51:1666).
+    #
+    #    P4PORT is reassembled from the colon-free components passed via the SSM
+    #    association's ExtraVariables (p4_scheme:p4_host:p4_port_num). We run
+    #    `p4 trust -y` as the `Horde` user with P4PORT + an explicit P4TRUST
+    #    pointing at that user's home so trust is written to the right file.
+    #
+    #    IDEMPOTENCY: `p4 trust -y` is safe to re-run — it re-affirms the
+    #    fingerprint. We gate the command on the trust file NOT already
+    #    containing an entry for this host:port, so steady-state re-runs report
+    #    `ok` rather than `changed`.
+    #
+    #    SKIP CASE: when the endpoint components are empty (operator wired an
+    #    external endpoint unknown at apply time) we skip trust here — the same
+    #    null-safe behaviour the Windows build-agent script uses for an unknown
+    #    P4PORT.
+    # -------------------------------------------------------------------------
+    - name: Reassemble P4PORT from the colon-free endpoint components
+      ansible.builtin.set_fact:
+        p4_port: "{{ p4_scheme }}:{{ p4_host }}:{{ p4_port_num }}"
+        p4_endpoint_provided: "{{ (p4_scheme | length > 0) and (p4_host | length > 0) and (p4_port_num | length > 0) }}"
+
+    - name: Establish P4 SSL trust for the Horde agent user (writes ~/.p4trust)
+      ansible.builtin.command:
+        cmd: "p4 -p {{ p4_port }} trust -y"
+      environment:
+        # Run "as" the Horde user by pointing P4 at that user's home + trust file
+        # so the fingerprint is written to /home/Horde/.p4trust.
+        HOME: "{{ agent_home }}"
+        P4TRUST: "{{ agent_home }}/.p4trust"
+      become: true
+      become_user: "{{ agent_user }}"
+      register: p4_trust_result
+      changed_when: "'Added trust' in p4_trust_result.stdout or 'trust of this fingerprint' in p4_trust_result.stdout"
+      # Idempotent: skip if the trust file already has an entry for this host:port.
+      when:
+        - p4_endpoint_provided | bool
+        - not lookup('ansible.builtin.file', agent_home ~ '/.p4trust', errors='ignore') is search(p4_host ~ ':' ~ p4_port_num)
+
+    - name: Report P4 SSL trust status
+      ansible.builtin.debug:
+        msg: >-
+          P4 SSL trust for {{ agent_user }} against
+          {{ p4_port if (p4_endpoint_provided | bool) else '(none)' }}:
+          {{ 'established/affirmed' if (p4_endpoint_provided | bool) else 'skipped (no p4 endpoint provided)' }}

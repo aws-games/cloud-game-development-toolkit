@@ -81,6 +81,18 @@ locals {
   # globals.json's perforceClusters "default" cluster as serviceAccount.
   horde_p4_username = var.horde_p4_service_account_username
 
+  # P4PORT split into colon-free components for delivery to the sync-agent
+  # SSM association's ExtraVariables. The AWS-ApplyAnsiblePlaybooks
+  # ExtraVariables parameter rejects ':' entirely (even inside quotes), so we
+  # cannot pass the raw ssl:<host>:1666 P4PORT. Instead we pass scheme/host/port
+  # separately and the playbook reassembles P4PORT for `p4 trust`. When no
+  # Perforce endpoint exists these are empty and the playbook skips SSL trust.
+  #   perforce_endpoint format: "<scheme>:<host>:<port>" e.g. "ssl:10.0.10.51:1666"
+  perforce_endpoint_parts = local.perforce_endpoint == null ? [] : split(":", local.perforce_endpoint)
+  perforce_scheme         = length(local.perforce_endpoint_parts) == 3 ? local.perforce_endpoint_parts[0] : ""
+  perforce_host           = length(local.perforce_endpoint_parts) == 3 ? local.perforce_endpoint_parts[1] : ""
+  perforce_port_num       = length(local.perforce_endpoint_parts) == 3 ? local.perforce_endpoint_parts[2] : ""
+
   ##################################################
   # Tags
   ##################################################

@@ -197,7 +197,17 @@ resource "aws_ssm_association" "configure_sync_agent" {
     })
     InstallDependencies = "True"
     PlaybookFile        = "sync-agent.ansible.yml"
-    ExtraVariables      = "fsxn_nfs_endpoint=${aws_fsx_ontap_storage_virtual_machine.workspace.endpoints[0].nfs[0].dns_name} p4_workspace_junction=${local.fsxn_source_junction_path}"
+    # P4 endpoint delivered as colon-free components so the playbook can
+    # reassemble P4PORT (<scheme>:<host>:<port>) and establish P4 SSL trust for
+    # the Horde agent user (~/.p4trust) at provisioning.
+    #
+    # WHY SPLIT: the AWS-ApplyAnsiblePlaybooks ExtraVariables parameter rejects
+    # ':' entirely (its validation regex bans ':' '(' ')' ';' '&' '|' even
+    # inside quotes), so the raw ssl:<host>:1666 P4PORT cannot be passed. We
+    # pass p4_scheme/p4_host/p4_port_num (all colon-free) and the playbook
+    # rebuilds the endpoint. When no Perforce endpoint exists these are empty
+    # and the playbook skips SSL trust (null-safe, like the Windows agent).
+    ExtraVariables = "fsxn_nfs_endpoint=${aws_fsx_ontap_storage_virtual_machine.workspace.endpoints[0].nfs[0].dns_name} p4_workspace_junction=${local.fsxn_source_junction_path} p4_scheme=${local.perforce_scheme} p4_host=${local.perforce_host} p4_port_num=${local.perforce_port_num}"
   }
 }
 

@@ -30,8 +30,10 @@ override.tf.json
 # Include override files you do wish to add to version control using negated pattern
 # !example_override.tf
 
-# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
-# example: *tfplan*
+# Ignore terraform plan output files (terraform plan -out=...); these can
+# contain resolved variable values / secrets and must never be committed.
+*.tfplan
+*tfplan*
 
 # Ignore CLI configuration files
 .terraformrc
@@ -84,3 +86,7 @@ id_ed25519.pub
 CLAUDE.md
 .claude/
 scratch/
+
+# AI planning / scratch artifacts — local-only, never commit
+.memory/
+.scratch/
