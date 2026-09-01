@@ -1,0 +1,73 @@
+##################################################
+# Unreal Horde Build Pipeline — example tfvars
+#
+# Copy to terraform.tfvars and fill in the REQUIRED values below.
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# NOTE (Epic org access): the default Horde server image
+#   ghcr.io/epicgames/horde-server:latest-bundled
+# requires membership in the Epic Games GitHub organization to pull. Provide
+# github_credentials_secret_arn (below) with credentials that can read it, or
+# override horde_server_image with an image you can pull.
+#
+# NOTE (post-deploy P4 password alignment): this sample creates a purpose-built
+# Secrets Manager secret with a RANDOM placeholder password for the Horde P4
+# user (default "svc-horde"). After the P4 Server is up, align the P4 user's
+# password with the secret value, e.g.:
+#     p4 -u <super> passwd svc-horde   # set to the value stored in the secret
+# Rotating one side without the other breaks Horde's Perforce connection.
+##################################################
+
+##################################################
+# REQUIRED
+##################################################
+
+# Route53 private hosted zone for internal service discovery. Created by this
+# sample and associated with the VPC. e.g. "studio.internal"
+route53_private_zone_name = "studio.internal"
+
+# Your EXISTING Route53 public hosted zone name. Used for the ACM certificate
+# DNS validation and the public Horde record. e.g. "example.com"
+route53_public_hosted_zone_name = "example.com"
+
+# The public FQDN for the Horde HTTPS endpoint (the ACM cert domain). Must sit
+# under the public hosted zone above. e.g. "horde.example.com"
+certificate_domain = "horde.example.com"
+
+# The Perforce stream synced into the FSxN source volume. e.g. "//YourGame/main"
+perforce_stream = "//YourGame/main"
+
+##################################################
+# OPTIONAL (defaults shown; uncomment to override)
+##################################################
+
+# project_prefix = "cgd"
+# region         = "us-east-1"
+# vpc_cidr       = "10.0.0.0/16"
+
+# --- Perforce ---
+# perforce_server_name = "perforce"
+# Set to wire agents to an EXISTING P4 server and skip deploying the bundled
+# Perforce module (e.g. "ssl:perforce.example.com:1666"):
+# existing_perforce_server_endpoint = null
+
+# --- FSx for ONTAP ---
+# fsxn_storage_capacity_gb = 1024
+# Valid SINGLE_AZ_1 throughput values: 128, 256, 512, 1024, 2048, 4096
+# fsxn_throughput_capacity = 128
+
+# --- Horde agents ---
+# sync_agent_instance_type  = "c6i.xlarge"   # network-optimized Linux sync pool
+# build_agent_instance_type = "c6a.8xlarge"  # compute-optimized Windows build pool
+# build_agent_max_count     = 5
+
+# --- Horde server ---
+# horde_server_image = "ghcr.io/epicgames/horde-server:latest-bundled"
+# ARN of a Secrets Manager secret with GitHub creds to pull Epic's private image
+# (set to null if the image does not require authentication):
+# github_credentials_secret_arn = null
+# enable_new_agents_by_default = true
+
+# --- External access ---
+# Additional operator IPs allowed to reach the Horde web UI (each a specific CIDR; never 0.0.0.0/0).
+# additional_allowed_cidrs = ["203.0.113.4/32"]
