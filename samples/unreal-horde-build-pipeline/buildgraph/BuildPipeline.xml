@@ -1,0 +1,147 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- =====================================================================
+	     BuildPipeline.xml
+	     =====================================================================
+	     Per-build pipeline: FlexClone the source volume's snapshot, present the
+	     clone's LUN to this agent over iSCSI as real NTFS, transplant the
+	     Perforce have-list, incremental-sync the delta, compile, then always
+	     clean up. Runs entirely on one Windows build agent.
+
+	     THE DATA PATH IS iSCSI/NTFS, NOT NFS. ADR-002 originally chose NFSv3 and
+	     rejected iSCSI on throughput grounds. Running the pipeline showed that
+	     reasoning was incomplete: throughput was never the binding constraint,
+	     Windows filesystem SEMANTICS were. On a Windows NFSv3 mount, UBA (which
+	     detours file I/O and calls NtQueryInformationFile on every input) gets
+	     0xc000000d from the NFS redirector - measured 628 failures, all on
+	     Engine/Source/* - so UBA cannot be enabled at all. The DDC, the shader
+	     library and the stager's SetFileTime fail too, the last by retrying
+	     forever so the job HANGS rather than errors. A LUN presents real NTFS and
+	     all four work. It also hydrates ~40% faster because block I/O skips
+	     per-file metadata round-trips.
+
+	     CONSEQUENCE TO RESPECT: NTFS is not a shared filesystem, so a LUN has
+	     exactly one legitimate writer. Per-job clone LUNs make that automatic -
+	     one clone, one job, one agent. The SOURCE LUN is different and is mapped
+	     to a single-host igroup by the hydrate pipeline.
+
+	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
+	       * <Agent Name="BuildAgent"> matches the agentTypes key "BuildAgent".
+	       * <Node Name="Compile"> matches the "build" template -Target=Compile.
+	       * Every <Option> without a DefaultValue must be injected as a -set:
+	         argument there, or the job fails at graph-parse time.
+	     ===================================================================== -->
+
+	<!-- FlexClone / ONTAP parameters -->
+	<Option Name="SourceVolume" Description="Source ONTAP volume that holds the snapshot to clone from" />
+	<Option Name="SnapshotName" Description="Snapshot to clone from (cl-{N}, produced by the hydrate pipeline)" />
+	<Option Name="CloneVolumeName" Description="Name for the per-build FlexClone volume. ONTAP names reject hyphens - use build_{jobid}, lowercased." />
+	<Option Name="LunName" DefaultValue="workspace" Description="LUN name inside the clone volume (same name as in the source volume)" />
+	<Option Name="AgentIgroup" Description="iSCSI igroup that per-job clone LUNs are mapped to. Shared across build agents, which is safe: one clone = one job = one agent." />
+	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management endpoint (DNS name or IP) for the REST API" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for the ONTAP password" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+
+	<!-- iSCSI data path. Comma-separated portal addresses; the attach script
+	     connects exactly ONE unless the MPIO feature is installed, because two
+	     portals without MPIO make Windows enumerate one LUN as two disks. -->
+	<Option Name="IscsiPortals" Description="Comma-separated SVM iSCSI portal addresses (Terraform output fsxn_iscsi_portals)" />
+	<Option Name="CloneMountDrive" DefaultValue="W" Description="Drive letter for the per-build clone LUN (no colon)" />
+
+	<!-- Perforce parameters (incremental sync into the attached clone) -->
+	<Option Name="Stream" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
+	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
+	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
+
+	<!-- The changelist the cloned snapshot was synced to. REQUIRED for the
+	     incremental sync to actually be incremental - see the p4 flush step. Per
+	     ADR-003 snapshots are named cl-{N}, so this is the {N} of
+	     $(SnapshotName), and hydrate-source-lun.ps1 prints it. -->
+	<Option Name="SnapshotChangelist" Description="Changelist the cloned snapshot was synced to (the N in cl-N)" />
+
+	<!-- Unreal compile parameters -->
+	<Option Name="UEProject" DefaultValue="" Description="Path to the .uproject relative to the attached clone (e.g. W:/MyGame/MyGame.uproject). Empty = engine-only build." />
+	<Option Name="UETarget" DefaultValue="Editor" Description="Unreal build target to compile (e.g. Editor, Game, Server)" />
+	<Option Name="UEPlatform" DefaultValue="Win64" Description="Target platform for the Unreal compile" />
+	<Option Name="UEConfiguration" DefaultValue="Development" Description="Build configuration (Debug, Development, Shipping)" />
+	<!-- Empty means UBA ON, which is the point of moving to iSCSI. Do not set
+	     -NoUBA here: a build farm without a build accelerator is not the thing
+	     being demonstrated, and any timing taken with UBA off is not comparable. -->
+	<Option Name="ExtraUbtArgs" DefaultValue="" Description="Extra UnrealBuildTool arguments. Leave empty to keep UBA enabled." />
+
+	<Agent Name="BuildAgent" Type="AnyAgent">
+
+		<!-- Step 1: clone the snapshot, present its LUN over iSCSI, bring it
+		     online as $(CloneMountDrive):. attach-clone-lun.ps1 registers the
+		     teardown hook BEFORE creating anything, so a failure at any point
+		     below is still cleaned up. -->
+		<Node Name="Clone And Mount">
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/attach-clone-lun.ps1 -SourceVolume &quot;$(SourceVolume)&quot; -SnapshotName &quot;$(SnapshotName)&quot; -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -MountDrive &quot;$(CloneMountDrive)&quot;" />
+		</Node>
+
+		<!-- Step 2: the Compile node. Name MUST stay "Compile" to match
+		     globals.json -Target=Compile. -->
+		<Node Name="Compile" Requires="Clone And Mount">
+			<!-- STEP 2a: transplant the have-list. THIS IS REQUIRED, and it was
+			     the missing piece that made the whole FlexClone free but
+			     pointless.
+
+			     `p4 sync` is incremental only relative to the CLIENT's
+			     have-list, and $(WorkspaceName) here is a brand-new client that
+			     has never synced anything. The files are already on the drive -
+			     they came from the snapshot - but the server has no record of
+			     that, so a bare `p4 sync` re-transfers the ENTIRE stream. The
+			     clone completes in ~1.2 s and then you pay the full sync anyway.
+
+			     `p4 flush` (alias: sync -k) updates the have-list WITHOUT
+			     transferring file content. Measured on a 49.55 GB /
+			     268,730-file stream: 3 s on Linux, 6 s on Windows, after which
+			     the sync below reports up-to-date with zero re-transfer.
+
+			     flush is metadata-only and therefore TRUSTS its argument. It
+			     MUST target the exact changelist the snapshot was taken at, or
+			     the workspace silently disagrees with the server about what is
+			     on disk. Hence ADR-003's cl-{N} naming. -->
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) flush $(Stream)/...@$(SnapshotChangelist)" WorkingDir="$(CloneMountDrive):/" />
+
+			<!-- STEP 2b: now the sync really is incremental - only the delta
+			     between $(SnapshotChangelist) and head. Keep the hydrate
+			     schedule frequent: at a 10-changelist gap we measured a 26 s
+			     diff-walk, versus ~1 s when the snapshot is at head. -->
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="$(CloneMountDrive):/" />
+
+			<!-- STEP 2c: the Unreal compile, straight off the clone. No local
+			     copy, no redirects, no -NoUBA: on NTFS none of the NFS
+			     workarounds are needed. Verifying the BatchFiles path and target
+			     names against your engine is still a deploy-time item. -->
+			<Spawn Exe="cmd.exe" Arguments="/C $(CloneMountDrive):\Engine\Build\BatchFiles\Build.bat $(UETarget) $(UEPlatform) $(UEConfiguration) $(UEProject) $(ExtraUbtArgs)" WorkingDir="$(CloneMountDrive):/" />
+		</Node>
+
+		<!-- Step 3: cleanup - SUCCESS FAST PATH ONLY.
+		     ===================================================================
+		     This node previously carried RunLate="true". That is not a BuildGraph
+		     <Node> attribute (UE 5.7), and the semantics it reached for do not
+		     exist either: a node ordered after a FAILED node is marked *Skipped*,
+		     not run. So the exact case the old comment defended against ("the
+		     unmount + DeleteVolume run even on Compile failure") is precisely the
+		     case where this node does NOT run - and every failed build then leaks
+		     a FlexClone that PINS its parent snapshot, after which snapshot
+		     rotation starts failing too.
+
+		     Guaranteed teardown is registered as a Horde UE_HORDE_CLEANUP lease
+		     hook by attach-clone-lun.ps1 and runs regardless of outcome. This
+		     node is only the fast path on success; the script is idempotent so
+		     running both is fine.
+
+		     For hard Spot reclaims - where the agent dies without running either
+		     path - an off-agent reaper is also required. See the README.
+		     =================================================================== -->
+		<Node Name="Cleanup Clone" Requires="Compile">
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/teardown-clone-lun.ps1 -Execute -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot;" />
+		</Node>
+	</Agent>
+</BuildGraph>
