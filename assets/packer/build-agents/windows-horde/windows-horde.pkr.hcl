@@ -177,7 +177,33 @@ build {
     script            = "./install_iscsi.ps1"
   }
 
-  # Validation: fail the build if the toolchain / iSCSI / MPIO are not present.
+  # Drop the per-boot unique-IQN LOGIC onto the IMAGE at a fixed path. This file
+  # MUST land on the AMI (not merely run at build time): the ONSTART task below
+  # invokes it on every boot to materialise an instance-id-derived initiator IQN.
+  provisioner "powershell" {
+    elevated_user     = "Administrator"
+    elevated_password = build.Password
+    inline = [
+      "New-Item -ItemType Directory -Path C:\\ProgramData\\horde -Force | Out-Null"
+    ]
+  }
+
+  provisioner "file" {
+    source      = "./set_unique_iqn.ps1"
+    destination = "C:\\ProgramData\\horde\\set_unique_iqn.ps1"
+  }
+
+  # Register the ONSTART Scheduled Task (SYSTEM, RunLevel Highest) that runs the
+  # baked script above on every boot. This is the baked MECHANISM; the IQN VALUE
+  # is derived per-instance at boot time. Input-free: no ONTAP, no Perforce.
+  provisioner "powershell" {
+    elevated_user     = "Administrator"
+    elevated_password = build.Password
+    script            = "./register_iqn_task.ps1"
+  }
+
+  # Validation: fail the build if the toolchain / iSCSI / MPIO / boot-IQN task
+  # are not present.
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
