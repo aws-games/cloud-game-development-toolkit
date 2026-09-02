@@ -47,4 +47,11 @@ catch {
     Write "Failed to install AWS CLI"
 }
 
-RefreshEnv
+# NOTE: Do NOT call Chocolatey's `RefreshEnv` / `RefreshEnv.cmd` as the last
+# statement here. When dot-invoked from this PowerShell process it prints
+# "RefreshEnv.cmd does not work when run from this process" and leaves a
+# non-zero exit code, which Packer's elevated wrapper propagates via
+# `exit $LastExitCode` - failing the build even though every install above
+# succeeded. Each Packer provisioner runs in a fresh shell that re-reads the
+# machine PATH on connect, so an in-session PATH refresh is unnecessary.
+exit 0

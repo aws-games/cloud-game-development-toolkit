@@ -55,4 +55,8 @@ try {
 catch {
     Write "Failed to mount drives"
 }
-RefreshEnv
+
+# Do NOT end on Chocolatey's `RefreshEnv` - it exits non-zero when dot-invoked
+# from this process and would fail the Packer provisioner via `exit $LastExitCode`.
+# The next provisioner runs in a fresh shell that re-reads PATH anyway.
+exit 0
