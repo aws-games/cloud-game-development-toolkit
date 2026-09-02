@@ -114,21 +114,40 @@ resource "aws_acm_certificate_validation" "horde" {
 ##########################################
 
 
-# Windows Server 2022 — used for the compute-optimized Build Agent pool
-# (Unreal Engine from-source compiles run on Windows).
-data "aws_ami" "windows2022" {
+# Horde Windows build/sync agent AMI, built by the Packer template at
+# assets/packer/build-agents/windows-horde (Windows Server 2022 + VS2022 C++
+# Build Tools + .NET 6 runtime + .NET 8 SDK + p4 + awscli + MSiSCSI initiator +
+# MPIO). One shared image serves both the sync (hydrator) and build pools.
+#
+# Lookup is keyed on the Packer template's ami_name prefix
+# (var.build_agent_ami_name_prefix, default "windows-horde-build-agent-*") so
+# this stays GENERIC - no hardcoded ami-xxxx. To pin a specific image instead,
+# set var.build_agent_ami_id and it takes precedence via local.horde_agent_ami.
+data "aws_ami" "horde_build_agent" {
+  count = var.build_agent_ami_id == null ? 1 : 0
+
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["self"]
 
   filter {
     name   = "name"
-    values = ["Windows_Server-2022-English-Full-Base-*"]
+    values = [var.build_agent_ami_name_prefix]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
   }
 
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
+}
+
+locals {
+  # Explicit AMI id wins; otherwise use the Packer-built image found by prefix.
+  horde_agent_ami = var.build_agent_ami_id != null ? var.build_agent_ami_id : data.aws_ami.horde_build_agent[0].id
 }
 
 ##########################################
@@ -249,7 +268,7 @@ module "horde" {
     # hydrate-source-lun.ps1 will refuse rather than let that happen, so a second
     # instance simply fails its lease.
     sync-agent = {
-      ami             = data.aws_ami.windows2022.id
+      ami             = local.horde_agent_ami
       instance_type   = var.sync_agent_instance_type
       min_size        = 1
       max_size        = 1
@@ -271,7 +290,7 @@ module "horde" {
     # engine. Scales from 0 to var.build_agent_max_count. Larger root volume for
     # from-source engine builds.
     build-agent = {
-      ami             = data.aws_ami.windows2022.id
+      ami             = local.horde_agent_ami
       instance_type   = var.build_agent_instance_type
       min_size        = 0
       max_size        = var.build_agent_max_count
