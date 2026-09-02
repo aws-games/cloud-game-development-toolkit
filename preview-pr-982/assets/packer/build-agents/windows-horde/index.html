@@ -12,7 +12,7 @@
         <meta name="author" content="Amazon Web Services">
       
       
-        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-982/samples/unreal-horde-build-pipeline/index.html">
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-982/assets/packer/build-agents/windows-horde/index.html">
       
       
       
@@ -20,19 +20,19 @@
         
       
       
-      <link rel="icon" href="../../docs/media/logos/favicon.ico">
+      <link rel="icon" href="../../../../docs/media/logos/favicon.ico">
       <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
     
     
       
-        <title>Unreal Horde Build Pipeline - Cloud Game Development Toolkit</title>
+        <title>Packer Template — Unreal Engine Horde Windows Build Agent - Cloud Game Development Toolkit</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../stylesheets/palette.ab4e12ef.min.css">
       
       
   
@@ -63,13 +63,13 @@
       
     
     
-      <link rel="stylesheet" href="../../docs/stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/extra.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/themes.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/themes.css">
     
-      <link rel="stylesheet" href="../../docs/stylesheets/hero.css">
+      <link rel="stylesheet" href="../../../../docs/stylesheets/hero.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -103,7 +103,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#unreal-horde-build-pipeline" class="md-skip">
+        <a href="#packer-template-unreal-engine-horde-windows-build-agent" class="md-skip">
           Skip to content
         </a>
       
@@ -119,9 +119,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -138,7 +138,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Unreal Horde Build Pipeline
+              Packer Template — Unreal Engine Horde Windows Build Agent
             
           </span>
         </div>
@@ -260,7 +260,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/index.html" class="md-tabs__link">
+      <a href="../../../../docs/index.html" class="md-tabs__link">
         
   
   
@@ -279,7 +279,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/getting-started.html" class="md-tabs__link">
+      <a href="../../../../docs/getting-started.html" class="md-tabs__link">
         
   
   
@@ -300,7 +300,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../docs/assets/index.html" class="md-tabs__link">
+        <a href="../../../../docs/assets/index.html" class="md-tabs__link">
           
   
   
@@ -322,7 +322,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../modules/index.html" class="md-tabs__link">
+        <a href="../../../../modules/index.html" class="md-tabs__link">
           
   
   
@@ -344,7 +344,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../index.html" class="md-tabs__link">
+        <a href="../../../../samples/index.html" class="md-tabs__link">
           
   
   
@@ -364,7 +364,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/changelog.html" class="md-tabs__link">
+      <a href="../../../../docs/changelog.html" class="md-tabs__link">
         
   
   
@@ -383,7 +383,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/security.html" class="md-tabs__link">
+      <a href="../../../../docs/security.html" class="md-tabs__link">
         
   
   
@@ -402,7 +402,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../docs/contributing.html" class="md-tabs__link">
+      <a href="../../../../docs/contributing.html" class="md-tabs__link">
         
   
   
@@ -462,9 +462,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+    <a href="../../../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
       
-  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+  <img src="../../../../docs/media/logos/aws-logo-white.svg" alt="logo">
 
     </a>
     Cloud Game Development Toolkit
@@ -491,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/index.html" class="md-nav__link">
+      <a href="../../../../docs/index.html" class="md-nav__link">
         
   
   
@@ -518,7 +518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/getting-started.html" class="md-nav__link">
+      <a href="../../../../docs/getting-started.html" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/index.html" class="md-nav__link ">
+            <a href="../../../../docs/assets/index.html" class="md-nav__link ">
               
   
   
@@ -651,7 +651,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../docs/assets/packer/index.html" class="md-nav__link ">
+            <a href="../../../../docs/assets/packer/index.html" class="md-nav__link ">
               
   
   
@@ -776,7 +776,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+            <a href="../linux/index.html" class="md-nav__link ">
               
   
   
@@ -846,7 +846,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+            <a href="../windows/index.html" class="md-nav__link ">
               
   
   
@@ -901,7 +901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../../perforce/p4-server/index.html" class="md-nav__link">
         
   
   
@@ -929,7 +929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+      <a href="../../perforce/p4-code-review/index.html" class="md-nav__link">
         
   
   
@@ -957,7 +957,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+      <a href="../../virtual-workstations/index.html" class="md-nav__link">
         
   
   
@@ -993,7 +993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/jenkins-pipelines/index.html" class="md-nav__link">
+      <a href="../../../jenkins-pipelines/index.html" class="md-nav__link">
         
   
   
@@ -1021,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+      <a href="../../../ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
         
   
   
@@ -1049,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/assets/docker/index.html" class="md-nav__link">
+      <a href="../../../../docs/assets/docker/index.html" class="md-nav__link">
         
   
   
@@ -1121,7 +1121,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/index.html" class="md-nav__link ">
+            <a href="../../../../modules/index.html" class="md-nav__link ">
               
   
   
@@ -1165,7 +1165,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
+      <a href="../../../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
         
   
   
@@ -1330,7 +1330,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/perforce/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/index.html" class="md-nav__link ">
               
   
   
@@ -1460,7 +1460,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
               
   
   
@@ -1530,7 +1530,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
               
   
   
@@ -1600,7 +1600,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+            <a href="../../../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
               
   
   
@@ -1806,7 +1806,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/teamcity/index.html" class="md-nav__link ">
+            <a href="../../../../modules/teamcity/index.html" class="md-nav__link ">
               
   
   
@@ -2004,7 +2004,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/jenkins/index.html" class="md-nav__link ">
+            <a href="../../../../modules/jenkins/index.html" class="md-nav__link ">
               
   
   
@@ -2204,7 +2204,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/unreal/horde/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/horde/index.html" class="md-nav__link ">
               
   
   
@@ -2340,7 +2340,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
               
   
   
@@ -2410,7 +2410,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
               
   
   
@@ -2610,7 +2610,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/unity/accelerator/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unity/accelerator/index.html" class="md-nav__link ">
               
   
   
@@ -2744,7 +2744,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
+            <a href="../../../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
               
   
   
@@ -2942,7 +2942,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../modules/vdi/index.html" class="md-nav__link ">
+            <a href="../../../../modules/vdi/index.html" class="md-nav__link ">
               
   
   
@@ -3039,7 +3039,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../index.html" class="md-nav__link ">
+            <a href="../../../../samples/index.html" class="md-nav__link ">
               
   
   
@@ -3083,7 +3083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../simple-build-pipeline/index.html" class="md-nav__link">
+      <a href="../../../../samples/simple-build-pipeline/index.html" class="md-nav__link">
         
   
   
@@ -3111,7 +3111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+      <a href="../../../../samples/unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
         
   
   
@@ -3146,7 +3146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/changelog.html" class="md-nav__link">
+      <a href="../../../../docs/changelog.html" class="md-nav__link">
         
   
   
@@ -3173,7 +3173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/security.html" class="md-nav__link">
+      <a href="../../../../docs/security.html" class="md-nav__link">
         
   
   
@@ -3200,7 +3200,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docs/contributing.html" class="md-nav__link">
+      <a href="../../../../docs/contributing.html" class="md-nav__link">
         
   
   
@@ -3276,139 +3276,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        Usage
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#build-the-windows-build-agent-ami-manual-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Build the Windows build-agent AMI (manual prerequisite)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Build the Windows build-agent AMI (manual prerequisite)">
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-its-needed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why it's needed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prerequisites-for-the-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites for the build
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#build-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Build command
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-this-sample-consumes-the-ami" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How this sample consumes the AMI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#postdeployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Postdeployment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Postdeployment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#align-the-perforce-svc-horde-password-required" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Align the Perforce svc-horde password (required)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-the-pipelines-from-the-horde-ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run the pipelines from the Horde UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#security" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3418,84 +3297,6 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#operational-requirements-learned-from-running-this-live" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operational requirements learned from running this live
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operational requirements learned from running this live">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-the-incremental-sync-needs-p4-flush-this-is-not-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. The incremental sync needs p4 flush — this is not optional
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-the-data-path-is-iscsintfs-not-nfs-and-that-is-why-uba-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-ntfs-is-not-a-shared-filesystem-hence-two-igroups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. NTFS is not a shared filesystem — hence two igroups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3a-flush-the-ntfs-write-cache-before-every-snapshot" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3a. Flush the NTFS write cache before every snapshot
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Clone teardown must not rely on a BuildGraph node
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-ontap-volume-names-reject-hyphens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. ONTAP volume names reject hyphens
-      
-    </span>
-  </a>
-  
-</li>
         
       </ul>
     </nav>
@@ -3503,10 +3304,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#still-to-confirm-when-you-deploy" class="md-nav__link">
+  <a href="#installed-tooling-what-this-ami-bakes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Still to confirm when you deploy
+        Installed Tooling (what this AMI bakes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diff-vs-the-jenkins-template-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff vs. the Jenkins template (../windows)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#iscsi-baking-the-spike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iSCSI baking — the SPIKE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
       
     </span>
   </a>
@@ -3533,305 +3367,210 @@
   
 
 
-<h1 id="unreal-horde-build-pipeline">Unreal Horde Build Pipeline<a class="headerlink" href="#unreal-horde-build-pipeline" title="Permanent link">&para;</a></h1>
-<p>This sample deploys an <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/horde">Unreal Engine Horde</a> build farm that compiles from a Perforce stream using <a href="https://aws.amazon.com/fsx/netapp-ontap/">Amazon FSx for NetApp ONTAP</a> with a thin-clone workspace pattern. Instead of every build agent running a full <code>p4 sync</code> from scratch, the pipeline keeps one persistent source workspace warm and hands each build an instant, copy-on-write clone of it.</p>
-<p>The core idea has two moving parts. A <strong>Hydrator</strong> (Sync) agent periodically syncs a persistent FSxN <strong>LUN</strong> from a Perforce stream and snapshots it as <code>cl-&lt;changelist&gt;</code>. When a build is requested, a <strong>Build Agent</strong> creates an instant <a href="https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-concept.html">FlexClone</a> of that snapshot, presents the clone's LUN to itself over <strong>iSCSI as real NTFS</strong>, transplants the Perforce have-list with <code>p4 flush</code> (metadata-only), syncs only the delta, compiles, and tears the clone down. The result is per-build workspaces in ~10 s instead of a multi-minute full sync, with UBA enabled.</p>
-<p><strong>The data path is iSCSI/NTFS, not NFS.</strong> Both agent pools are Windows. See <em>Operational requirements</em> below for why — the short version is that Windows NFSv3 cannot run a UBA build at all.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>The sample composes existing CGD Toolkit modules (<code>modules/perforce</code>, <code>modules/unreal/horde</code>) with sample-owned networking, DNS, storage, and security wiring.</p>
-<ul>
-<li><strong>VPC</strong> — a 3-tier layout across 2 AZs: public subnets (ALBs / NAT), private application subnets (Horde ECS tasks, Perforce, agents), and private service subnets (FSxN).</li>
-<li><strong>FSx for NetApp ONTAP</strong> — an iSCSI/SAN SVM (no CIFS/AD) with a persistent source volume <code>p4_workspace</code> acting as a <strong>container for a thin LUN</strong> (<code>/vol/p4_workspace/workspace</code>). Terraform creates the file system, SVM and container volume; the LUN, igroups, LUN maps, snapshots and per-build FlexClones are all runtime operations via the ONTAP REST API, because the AWS provider cannot create them.</li>
-<li><strong>Horde server</strong> — runs on ECS behind an external HTTPS ALB (browser access) and an internal ALB (agent enrollment / in-VPC traffic). Config is rendered from <code>config/horde/globals.json.tpl</code> and passed inline to the module.</li>
-<li><strong>Hydrator (Sync) Agent pool</strong> — <strong>Windows Server 2022</strong> in the Horde pool <code>SyncPool</code>, <code>min = max = 1</code>. Windows because the source LUN carries NTFS, and exactly one because NTFS has exactly one legitimate writer (enforced by a single-host igroup, not merely documented).</li>
-<li><strong>Build Agent pool</strong> — Windows Server 2022 agents in the Horde pool <code>BuildPool</code>. Scales from 0 to <code>build_agent_max_count</code>. Each job gets its own clone LUN, so these agents share one igroup safely.</li>
-<li><strong>Perforce</strong> — the bundled <code>modules/perforce</code> P4 Server (private subnet, commit server) is deployed by default. Set <code>existing_perforce_server_endpoint</code> to wire the agents to a server you already run and skip the bundled module.</li>
-<li><strong>Route53</strong> — a private hosted zone (created by this sample) for internal service discovery, plus records in your existing public hosted zone for the Horde HTTPS endpoint.</li>
-<li><strong>ACM certificate</strong> — DNS-validated against your public hosted zone for the Horde external ALB HTTPS listener.</li>
-</ul>
-<p>Two BuildGraph pipelines drive the workflow, and their agent/node names are coupled to <code>config/horde/globals.json.tpl</code>:</p>
-<ul>
-<li><code>buildgraph/HydratePipeline.xml</code> — agent <code>SyncAgent</code>, node <code>Sync And Snapshot</code>, run by the <code>hydrate</code> template on <code>SyncPool</code>.</li>
-<li><code>buildgraph/BuildPipeline.xml</code> — agent <code>BuildAgent</code>, nodes <code>Clone And Mount</code> / <code>Compile</code> / <code>Cleanup Clone</code>, run by the <code>build</code> template on <code>BuildPool</code>. Guaranteed teardown is a Horde <code>UE_HORDE_CLEANUP</code> lease hook, <strong>not</strong> the cleanup node — see below.</li>
-</ul>
-<div class="highlight"><pre><span></span><code>                         Perforce stream (//YourGame/main)
-                                     |
-                          p4 sync (full, scheduled hourly)
-                                     v
-   Hydrator (Windows, SyncPool) --&gt; source LUN over iSCSI (S:, NTFS)
-   HydratePipeline.xml               /vol/p4_workspace/workspace
-   node "Sync And Snapshot"          igroup: horde_san_hydrator (ONE host)
-                                            |
-                                     flush NTFS cache, then snapshot cl-&lt;N&gt;
-                                            |
-                                   instant FlexClone (per build)
-                                            v
-   Build Agent (Windows, BuildPool) --&gt; map clone LUN -&gt; igroup horde_san_agents
-   BuildPipeline.xml                --&gt; iSCSI attach as W: (real NTFS)
-   "Clone And Mount"                --&gt; p4 flush @&lt;N&gt;   (have-list, no transfer)
-   "Compile"                        --&gt; p4 sync         (delta only)
-   "Cleanup Clone"                  --&gt; compile with UBA ENABLED
-   + UE_HORDE_CLEANUP lease hook    --&gt; offline disk, unmap LUN, delete clone
-
-   Horde server (ECS) -- external HTTPS ALB (deployer /32) --&gt; browser UI
-                      -- internal ALB --------------------&gt; agent enrollment
-</code></pre></div>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="https://developer.hashicorp.com/terraform/install">Terraform</a> and valid AWS credentials for the target account.</li>
-<li>An <strong>existing Route53 public hosted zone</strong> (required). The ACM certificate DNS validation records and the public Horde record are created in this zone. This sample does not create the public zone for you.</li>
-<li><strong>Epic Games GitHub organization access.</strong> The default Horde server image <code>ghcr.io/epicgames/horde-server:latest-bundled</code> is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:</li>
-<li>provide <code>github_credentials_secret_arn</code> — a Secrets Manager secret with GitHub credentials that can read the private image; or</li>
-<li>override <code>horde_server_image</code> with an image you can pull without authentication.</li>
-<li><strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This sample does <strong>not</strong> create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve against an ARN that is only known after apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.)</li>
-<li><strong>No custom BuildGraph task compilation is required.</strong> The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (<code>buildgraph/OntapSan.psm1</code> plus three scripts), so you do <strong>not</strong> need to compile the C# tasks in <code>assets/buildgraph/tasks</code> into your <code>AutomationTool</code>. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.</li>
-<li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files must be submitted to your Perforce depot under <code>Build/</code> so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve against the stream root.</li>
-</ul>
-<h2 id="build-the-windows-build-agent-ami-manual-prerequisite">Build the Windows build-agent AMI (manual prerequisite)<a class="headerlink" href="#build-the-windows-build-agent-ami-manual-prerequisite" title="Permanent link">&para;</a></h2>
-<p>This is a <strong>one-time operator step you run before <code>terraform apply</code>.</strong> It is intentionally <strong>not</strong> automated by this sample — building a Windows image with the full Unreal C++ toolchain takes ~30-45 minutes, and baking it once is far cheaper than re-installing the toolchain on every agent boot.</p>
-<h3 id="why-its-needed">Why it's needed<a class="headerlink" href="#why-its-needed" title="Permanent link">&para;</a></h3>
-<p>The Horde Windows agents compile Unreal Engine from source and mount their workspace over iSCSI. The stock Amazon <code>Windows_Server-2022</code> AMI has <strong>neither</strong> the C++ build toolchain <strong>nor</strong> the iSCSI initiator. The Packer template at <a href="../../assets/packer/build-agents/windows-horde"><code>assets/packer/build-agents/windows-horde</code></a> bakes them in:</p>
-<ul>
-<li><strong>VS2022 Build Tools + MSVC VC 14.38 + WDK/PDBCOPY</strong> (Unreal from-source builds)</li>
-<li><strong>.NET 6 runtime</strong> (matches the Horde module's <code>agent_dotnet_runtime_version</code> default so the module's first-boot install is a no-op) <strong>and .NET 8 SDK</strong> (UE 5.5 <code>AutomationTool</code>)</li>
-<li><strong>p4</strong> (Perforce CLI) and <strong>awscli</strong></li>
-<li><strong>MSiSCSI initiator (Automatic) + MPIO + MSDSM iSCSI claim</strong> for the iSCSI/NTFS thin-clone workspace pipeline</li>
-</ul>
-<p>An in-build <code>validate_image.ps1</code> <strong>fails the build</strong> unless <code>cl.exe</code>/MSVC VC14.38 + <code>vcvars</code>, <code>MSiSCSI</code> (Automatic), and MPIO are all present, so a published AMI is never half-baked.</p>
-<h3 id="prerequisites-for-the-build">Prerequisites for the build<a class="headerlink" href="#prerequisites-for-the-build" title="Permanent link">&para;</a></h3>
-<ul>
-<li><a href="https://developer.hashicorp.com/packer/install">Packer</a> installed on the machine that runs the build.</li>
-<li>AWS credentials for the target account/region.</li>
-<li>A <strong>VPC + subnet with outbound internet</strong> (an Internet Gateway for a public subnet, or a NAT Gateway for a private subnet). The temporary Windows build instance uses Chocolatey to install the toolchain, so it must be able to reach the internet <strong>outbound</strong>.</li>
-<li><strong>A host/network that can reach the temporary build instance over WinRM (5986).</strong> The template is <strong>private by default</strong> (<code>associate_public_ip_address = false</code>, <code>ssh_interface = "private_ip"</code>), which means <strong>Packer must run from a host that can route to the build instance's private IP</strong> — i.e. run Packer from inside the same VPC (a bastion/CI runner in the VPC), or from a network peered/VPN-connected to it.</li>
-</ul>
-<blockquote>
-<p><strong>WinRM reachability caveat.</strong> If you run Packer from a workstation that is <em>not</em> on the build instance's network (e.g. a corporate laptop whose egress blocks WinRM, or any host outside the VPC), the private-IP build cannot connect and will stall at "Waiting for WinRM". In that case either run Packer from inside the VPC, or flip to a public-IP build (<code>associate_public_ip_address = true</code>, <code>ssh_interface = "public_ip"</code>) <strong>and</strong> supply a <code>security_group_id</code> whose WinRM (5986) ingress is scoped to <strong>your own /32</strong> — never <code>0.0.0.0/0</code>.</p>
-</blockquote>
-<h3 id="build-command">Build command<a class="headerlink" href="#build-command" title="Permanent link">&para;</a></h3>
-<p>From the template directory, initialize the plugins and run the build with the required variables:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/packer/build-agents/windows-horde
-
-packer<span class="w"> </span>init<span class="w"> </span>.
-
+<h1 id="packer-template-unreal-engine-horde-windows-build-agent">Packer Template — Unreal Engine Horde Windows Build Agent<a class="headerlink" href="#packer-template-unreal-engine-horde-windows-build-agent" title="Permanent link">&para;</a></h1>
+<p>This template builds a Windows Server 2022 AMI for the <strong>Unreal Engine Horde</strong>
+build/sync agent pools (the <code>samples/unreal-horde-build-pipeline</code> iSCSI/NTFS
+thin-clone pipeline). It is a <strong>fork</strong> of the Jenkins-oriented template in
+<code>../windows</code>, adapted for Horde and iSCSI-backed workspaces.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<p>Build in a <strong>private / ingress-limited</strong> subnet (defaults keep the temporary
+build instance off the public internet):</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>.
 packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="w"> </span><span class="s1">'region=us-east-1'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="w"> </span><span class="s1">'vpc_id=vpc-xxxxxxxx'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="w"> </span><span class="s1">'subnet_id=subnet-xxxxxxxx'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="w"> </span><span class="s1">'public_key=ssh-ed25519 AAAA...your-agent-public-key'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>.
+<span class="w">  </span>-var<span class="w"> </span><span class="s2">"region=us-east-1"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s2">"vpc_id=vpc-xxxxxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s2">"subnet_id=subnet-xxxxxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public ssh key here&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>windows-horde.pkr.hcl
 </code></pre></div>
-<ul>
-<li><code>region</code> — the build region (must match where you deploy this sample).</li>
-<li><code>vpc_id</code> / <code>subnet_id</code> — a VPC and subnet with outbound internet (see prerequisites). Use a <strong>private</strong> subnet with NAT egress to keep the build instance off the public internet (recommended).</li>
-<li><code>public_key</code> — the SSH <strong>public</strong> key that is baked into the AMI's <code>authorized_keys</code> so the Horde orchestration service can reach the agent. Generate a keypair (<code>ssh-keygen -t ed25519 -f horde_agent_key</code>) and pass the contents of <code>horde_agent_key.pub</code>.</li>
-</ul>
-<p>The template defaults to a private-by-default build (<code>associate_public_ip_address = false</code>, <code>ssh_interface = "private_ip"</code>). If you must build over the public internet, add <code>-var 'associate_public_ip_address=true' -var 'ssh_interface=public_ip' -var 'security_group_id=sg-xxxxxxxx'</code> where the SG scopes WinRM (5986) to your <code>/32</code>. See <a href="../../assets/packer/build-agents/windows-horde/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> to drive these from a <code>-var-file</code> instead of <code>-var</code> flags.</p>
-<p>On success Packer prints the new AMI ID and registers it named <code>windows-horde-build-agent-&lt;timestamp&gt;</code>.</p>
-<h3 id="how-this-sample-consumes-the-ami">How this sample consumes the AMI<a class="headerlink" href="#how-this-sample-consumes-the-ami" title="Permanent link">&para;</a></h3>
-<p>The AMI is wired up automatically in <a href="main.tf"><code>main.tf</code></a> via <code>data.aws_ami.horde_build_agent</code>. You have two options:</p>
-<ul>
-<li><strong>Auto-lookup (default, keeps the sample generic).</strong> Leave <code>build_agent_ami_id</code> unset (<code>null</code>). The sample looks up the newest <strong>self-owned</strong> AMI whose name matches <code>build_agent_ami_name_prefix</code> (default <code>windows-horde-build-agent-*</code>, which matches the Packer template's <code>ami_prefix</code>). No hardcoded AMI ID ends up in your config.</li>
-<li><strong>Pin an explicit AMI.</strong> Set <code>build_agent_ami_id = "ami-xxxxxxxx"</code> in <code>terraform.tfvars</code> to pin a specific image; it takes precedence over the name-prefix lookup.</li>
-</ul>
-<p>Because this is a prerequisite, <strong>build the AMI first</strong>, then run <code>terraform apply</code>. If no matching AMI exists and <code>build_agent_ami_id</code> is unset, the <code>data.aws_ami</code> lookup fails at plan time.</p>
-<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Copy the example variables file and fill in the required values:</li>
-</ol>
-<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>terraform.tfvars.example<span class="w"> </span>terraform.tfvars
+<p>Or use the provided <code>example.pkrvars.hcl</code> as a starting point:</p>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">"example.pkrvars.hcl"</span><span class="w"> </span>windows-horde.pkr.hcl
 </code></pre></div>
-<ol>
-<li>
-<p>Set the required variables in <code>terraform.tfvars</code>:</p>
-</li>
-<li>
-<p><code>route53_private_zone_name</code> — private hosted zone for internal service discovery (e.g. <code>studio.internal</code>).</p>
-</li>
-<li><code>route53_public_hosted_zone_name</code> — your existing public hosted zone (e.g. <code>example.com</code>).</li>
-<li><code>certificate_domain</code> — the public FQDN for the Horde HTTPS endpoint, under the public zone (e.g. <code>horde.example.com</code>).</li>
-<li><code>perforce_stream</code> — the Perforce stream to sync into the FSxN source volume (e.g. <code>//YourGame/main</code>).</li>
-<li><code>horde_p4_credentials_secret_arn</code> — ARN of the pre-created Secrets Manager secret (<code>{"username":"svc-horde","password":"..."}</code>) for the Horde P4 user (required when deploying the bundled Perforce; see Prerequisites).</li>
-</ol>
-<p>Optional variables (Perforce endpoint, FSxN sizing, agent instance types and counts, Horde image) are documented with defaults in <code>terraform.tfvars.example</code>.</p>
-<ol>
-<li>Initialize, review, and apply:</li>
-</ol>
-<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
-terraform<span class="w"> </span>plan
-terraform<span class="w"> </span>apply
-</code></pre></div>
-<p>Deployment provisions a VPC, FSxN file system, ECS-based Horde server, Perforce server, and agent launch templates, so allow roughly 20–30 minutes for the first apply (FSxN and the load balancers are the slowest resources).</p>
-<p>The Horde external ALB ingress is locked to the <strong>deployer's public IP as a <code>/32</code></strong> (discovered at plan time via <code>https://checkip.amazonaws.com</code>). There is no public or unauthenticated access, and there are no <code>0.0.0.0/0</code> ingress rules anywhere in this sample.</p>
-<h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
-<p>Terraform emits the following outputs (see <code>outputs.tf</code>):</p>
+<p>The resulting AMI name is prefixed <code>windows-horde-build-agent-&lt;timestamp&gt;</code>. The
+Terraform sample looks it up by that prefix via <code>data.aws_ami</code>, so no AMI ID is
+hardcoded.</p>
+<h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>horde_server_url</code> — the browser URL for the Horde UI (HTTPS, external ALB). Reachable only from the deployer <code>/32</code>.</li>
-<li><code>perforce_endpoint</code> — the <code>P4PORT</code> (<code>ssl:&lt;host&gt;:1666</code>) for P4 client configuration.</li>
-<li><code>fsxn_nfs_endpoint</code> / <code>fsxn_source_volume_junction</code> — mount the source volume as <code>&lt;nfs_endpoint&gt;:&lt;junction&gt;</code>.</li>
-<li><code>fsxn_management_endpoint</code> / <code>fsxn_svm_management_endpoint</code> — ONTAP REST API targets for the BuildGraph tasks.</li>
-<li><code>sync_agent_launch_template_id</code> / <code>build_agent_launch_template_id</code> — launch template IDs for the two agent pools.</li>
-<li><code>agent_instance_role_name</code> — the IAM role attached to agent instances (has the secrets-read policy).</li>
-<li><code>horde_p4_credentials_secret_arn</code> — echoes the pre-created Horde P4 username/password secret ARN you passed in via <code>horde_p4_credentials_secret_arn</code> (JSON, sensitive). This sample does not create the secret.</li>
-<li><code>fsxn_password_secret_arn</code> — the FSxN <code>fsxadmin</code> password secret (sensitive).</li>
-<li><code>agent_config_bucket</code> — the S3 bucket holding agent configuration playbooks and scripts.</li>
+<li><code>associate_public_ip_address</code> defaults to <strong>false</strong> and <code>ssh_interface</code> to
+  <strong><code>private_ip</code></strong> — run Packer from inside the VPC (CodeBuild/bastion).</li>
+<li>The build <strong>never opens WinRM (5986) to <code>0.0.0.0/0</code></strong>. When no
+  <code>security_group_id</code> is supplied, Packer scopes the temporary SG's ingress to
+  the builder's own IP. If you enable a public IP, you must supply a
+  CIDR-scoped <code>security_group_id</code>.</li>
 </ul>
-<h3 id="align-the-perforce-svc-horde-password-required">Align the Perforce <code>svc-horde</code> password (required)<a class="headerlink" href="#align-the-perforce-svc-horde-password-required" title="Permanent link">&para;</a></h3>
-<p>The secret you pre-created (and passed via <code>horde_p4_credentials_secret_arn</code>) holds the <strong>real
-password you chose</strong> for the Horde P4 user (<code>svc-horde</code>). Terraform cannot set that password on
-the P4 user itself. After the P4 server is up, set the <code>svc-horde</code> user's password <strong>on the
-server</strong> to match the value already in the secret, or Horde will not be able to authenticate to
-Perforce:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Confirm the password already stored in your pre-created secret</span>
-aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;horde_p4_credentials_secret_arn&gt;
-
-<span class="c1"># On the P4 server, set the svc-horde user's password to that value</span>
-p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>passwd<span class="w"> </span>svc-horde
-</code></pre></div>
-<p>Rotating one side without the other breaks Horde's Perforce connection.</p>
-<h3 id="run-the-pipelines-from-the-horde-ui">Run the pipelines from the Horde UI<a class="headerlink" href="#run-the-pipelines-from-the-horde-ui" title="Permanent link">&para;</a></h3>
-<p>Open <code>horde_server_url</code> in a browser (from the deployer machine). The <code>globals.json</code> config defines a project (<code>Game Project</code>) with a stream and two templates:</p>
+<h2 id="installed-tooling-what-this-ami-bakes">Installed Tooling (what this AMI bakes)<a class="headerlink" href="#installed-tooling-what-this-ami-bakes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Hydration Pipeline</strong> — runs on a 60-minute schedule (<code>patterns: [{ interval: 60 }]</code>). It syncs the stream onto the source FSxN volume and snapshots it. You can also trigger it manually to seed the first snapshot.</li>
-<li><strong>Build Pipeline</strong> — on-demand. Trigger it from the Horde UI once a snapshot exists; it clones the latest snapshot, syncs incrementally, compiles, and cleans up.</li>
+<li>Chocolatey package manager</li>
+<li>Git</li>
+<li>OpenSSH Server</li>
+<li>Python 3 + botocore + boto3</li>
+<li>Windows Development Kit / Debugging Tools (PDBCOPY)</li>
+<li>Visual Studio 2022 Build Tools</li>
+<li>VCTools workload (include recommended)</li>
+<li>ManagedDesktopBuildTools workload (include recommended)</li>
+<li>MSVC v143 — VC 14.38.17.8 x86/x64 build tools</li>
+<li>Microsoft.Net.Component.4.6.2.TargetingPack</li>
+<li><strong>.NET 6.0 runtime</strong> (matches the Horde module <code>agent_dotnet_runtime_version</code>
+  default = <code>6.0</code>, so the module's first-boot <code>choco install dotnet-6.0-runtime</code>
+  is a no-op)</li>
+<li><strong>.NET 8 SDK</strong> (Unreal Engine 5.5 UnrealAutomationTool)</li>
+<li><strong>Perforce <code>p4</code> client</strong> (matches the module's first-boot install)</li>
+<li><strong>AWS CLI</strong> (used by the iSCSI/SAN pipeline scripts)</li>
+<li><strong>MSiSCSI initiator</strong> service set to <strong>Automatic</strong></li>
+<li><strong>Multipath I/O (MPIO)</strong> feature enabled + <strong>MSDSM</strong> set to auto-claim iSCSI</li>
 </ul>
-<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>No <code>0.0.0.0/0</code> ingress anywhere.</strong> Every ingress rule is scoped to a single-IP <code>/32</code>, a referenced security group, or a private VPC CIDR (enforced as a hard invariant in <code>security.tf</code>).</li>
-<li><strong>External ALB locked to the deployer <code>/32</code>.</strong> Both the HTTPS listener (443) and the HTTP→HTTPS redirect (80) accept traffic only from <code>local.my_ip_cidr</code>.</li>
-<li><strong>No OIDC auth configured yet.</strong> The Horde module's <code>auth_method</code> is intentionally left unset in this sample, so <strong>the <code>/32</code> lock is the only access gate</strong> on the Horde UI. Configure OIDC (or another Horde auth method) before widening ALB access beyond your own IP.</li>
-<li><strong>Internal traffic stays private.</strong> Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts NFS/rpcbind/ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer <code>/32</code>.</li>
-</ul>
-<h2 id="operational-requirements-learned-from-running-this-live">Operational requirements learned from running this live<a class="headerlink" href="#operational-requirements-learned-from-running-this-live" title="Permanent link">&para;</a></h2>
-<p>The FlexClone premise holds up: measured against a <strong>49.55 GB / 268,730-file</strong> UE 5.7
-stream, snapshot took <strong>80 ms</strong>, the FlexClone <strong>1.2 s</strong>, and the mount <strong>31 ms</strong>, with two
-~45 GiB workspace volumes occupying <strong>35.3 GiB</strong> physical. But several things must be
-right or the pipeline either silently loses its benefit or does not work at all.</p>
-<h3 id="1-the-incremental-sync-needs-p4-flush-this-is-not-optional">1. The incremental sync needs <code>p4 flush</code> — this is not optional<a class="headerlink" href="#1-the-incremental-sync-needs-p4-flush-this-is-not-optional" title="Permanent link">&para;</a></h3>
-<p><code>p4 sync</code> is incremental only relative to the <strong>client's have-list</strong>, and the build
-agent's workspace is a fresh client. The files are on the clone, but the server has no
-record of that, so a bare <code>p4 sync</code> <strong>re-transfers the entire stream</strong> — the FlexClone
-completes in a second and then you pay the full sync anyway.</p>
-<p><code>BuildPipeline.xml</code> therefore runs <code>p4 flush &lt;stream&gt;/...@$(SnapshotChangelist)</code> first,
-which writes the have-list <strong>without transferring content</strong> (measured: 3 s on Linux, 6 s
-on Windows). This is why snapshots must be named <code>cl-{N}</code> per ADR-003 and why
-<code>SnapshotChangelist</code> must be passed per job — flush is metadata-only and trusts you, so
-pointing it at the wrong changelist leaves the workspace silently disagreeing with the
-server about what is on disk.</p>
-<p>Keep the hydrate schedule frequent: at a 10-changelist gap the following <code>sync</code> spent
-<strong>26 s</strong> walking the diff, versus ~1 s when the snapshot was at head.</p>
-<h3 id="2-the-data-path-is-iscsintfs-not-nfs-and-that-is-why-uba-works">2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works<a class="headerlink" href="#2-the-data-path-is-iscsintfs-not-nfs-and-that-is-why-uba-works" title="Permanent link">&para;</a></h3>
-<p>ADR-002 chose NFSv3 and rejected iSCSI on throughput grounds. Running the pipeline
-showed that reasoning was incomplete: <strong>throughput was never the binding
-constraint — Windows filesystem semantics were.</strong> On a Windows NFSv3 mount, four
-separate UE subsystems fail:</p>
+<h2 id="diff-vs-the-jenkins-template-windows">Diff vs. the Jenkins template (<code>../windows</code>)<a class="headerlink" href="#diff-vs-the-jenkins-template-windows" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Component</th>
-<th>Failure on Windows NFSv3</th>
+<th>Area</th>
+<th>Jenkins template</th>
+<th>This (Horde) template</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>UBA</strong> (Unreal Build Accelerator)</td>
-<td>Detours file I/O and calls <code>NtQueryInformationFile</code> on every input; the NFS redirector answers <code>0xc000000d</code>. Measured <strong>628 failures, all on <code>Engine/Source/*</code></strong> — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all.</td>
+<td>Jenkins local user</td>
+<td>created (<code>setup_jenkins_agent.ps1</code>)</td>
+<td><strong>dropped</strong></td>
 </tr>
 <tr>
-<td><strong>DDC</strong></td>
-<td>mmap'd cache writes fail or corrupt</td>
+<td>OpenJDK</td>
+<td>installed (Jenkins agent)</td>
+<td><strong>dropped</strong></td>
 </tr>
 <tr>
-<td><strong>Shader library</strong></td>
-<td>write failures during cook</td>
+<td>NFS-Client</td>
+<td><code>Install-WindowsFeature NFS-Client</code></td>
+<td><strong>removed</strong> (iSCSI instead)</td>
 </tr>
 <tr>
-<td><strong>Stager</strong></td>
-<td><code>SafeCopyFile</code> → <code>SetFileTime</code> fails and <strong>retries forever</strong>, so the job <em>hangs</em> instead of erroring</td>
+<td>.NET 6 runtime</td>
+<td>—</td>
+<td><strong>added</strong></td>
+</tr>
+<tr>
+<td>.NET 8 SDK</td>
+<td>—</td>
+<td><strong>added</strong></td>
+</tr>
+<tr>
+<td>p4 client</td>
+<td>—</td>
+<td><strong>added</strong> (baked; module no-op)</td>
+</tr>
+<tr>
+<td>AWS CLI</td>
+<td>—</td>
+<td><strong>added</strong></td>
+</tr>
+<tr>
+<td>MSiSCSI initiator</td>
+<td>—</td>
+<td><strong>added</strong> (Automatic)</td>
+</tr>
+<tr>
+<td>MPIO + MSDSM claim</td>
+<td>—</td>
+<td><strong>added</strong></td>
+</tr>
+<tr>
+<td>VS2022 Build Tools + WDK</td>
+<td>kept</td>
+<td><strong>kept</strong> (identical recipe)</td>
+</tr>
+<tr>
+<td>choco / git / OpenSSH / Python</td>
+<td>kept</td>
+<td><strong>kept</strong></td>
+</tr>
+<tr>
+<td>WinRM userdata bootstrap</td>
+<td>kept</td>
+<td><strong>kept</strong></td>
+</tr>
+<tr>
+<td>Public IP / interface</td>
+<td>public by default</td>
+<td><strong>private by default</strong></td>
+</tr>
+<tr>
+<td>In-build validation</td>
+<td>—</td>
+<td><strong>added</strong> (<code>validate_image.ps1</code>)</td>
 </tr>
 </tbody>
 </table>
-<p>Each was only workaroundable by moving that write to local NTFS, which split the
-project across three locations and still left UBA off — and a build farm without a
-build accelerator is not the thing being demonstrated.</p>
-<p><strong>A LUN presents real NTFS, so all four work and UBA stays enabled.</strong> It is also
-~40% faster to hydrate (measured on a 49.55 GB seed: <strong>9m30s vs 15m33s</strong>) because
-block I/O skips per-file metadata round-trips.</p>
-<p>Note what this does <em>not</em> cost: iSCSI authorises by initiator IQN (igroups), not
-by directory identity, so you get NTFS semantics <strong>without</strong> the AD/CIFS
-dependency that SMB would impose. That is the trade-off ADR-002 assumed it had to
-make, and it does not exist.</p>
-<h3 id="3-ntfs-is-not-a-shared-filesystem-hence-two-igroups">3. NTFS is not a shared filesystem — hence two igroups<a class="headerlink" href="#3-ntfs-is-not-a-shared-filesystem-hence-two-igroups" title="Permanent link">&para;</a></h3>
-<p>This is the one constraint SAN introduces, and it is a correctness boundary rather
-than a style preference. <strong>A LUN has exactly one legitimate writer.</strong></p>
+<h2 id="iscsi-baking-the-spike">iSCSI baking — the SPIKE<a class="headerlink" href="#iscsi-baking-the-spike" title="Permanent link">&para;</a></h2>
+<p><strong>Question:</strong> can MSiSCSI enablement + initiator IQN materialization be fully
+baked into the AMI, or is a per-boot step unavoidable?</p>
+<p><strong>What is baked (image-time, machine-independent):</strong></p>
+<ul>
+<li>MSiSCSI service → <strong>Automatic</strong> start (initiator running on first boot, no
+  per-boot enable).</li>
+<li>MPIO feature enabled.</li>
+<li>MSDSM set to auto-claim iSCSI devices.</li>
+</ul>
+<p><strong>What CANNOT be baked (must be per-instance):</strong></p>
+<ul>
+<li><strong>The initiator IQN.</strong> On Windows the IQN is stored under
+  <code>HKLM\SYSTEM\CurrentControlSet\Control\Class\{iSCSI}\...\NodeName</code> and is
+  derived per install. <strong>Baking a fixed IQN into the AMI would give every agent
+  the same IQN</strong>, which breaks the per-agent igroup model on FSxN/ONTAP: each
+  agent must present a unique IQN so its clone LUN maps to exactly one host. So
+  the IQN must be materialized per-instance (a fresh, unique IQN, or a
+  deterministic per-instance IQN derived from the instance-id), and target
+  portal discovery + LUN login happen at job time (targets are only known then).</li>
+</ul>
+<p><strong>Recommendation → (b): keep a SLIM per-boot iSCSI step.</strong> The bulk (service
+state, MPIO, MSDSM claim) is baked; only the per-instance IQN materialization +
+target login remain per-boot. That is a thin, machine-specific step that cannot
+correctly live in an AMI. Full SSM deletion <strong>(a) is not viable</strong>. A module
+user_data hook <strong>(c) is not required</strong> — the sample-side SSM association can
+carry the slim per-boot step, so no <code>modules/</code> change is needed for Phase 2.</p>
+<h2 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>igroup</th>
-<th>Members</th>
-<th>Holds</th>
+<th>File</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>horde_san_hydrator</code></td>
-<td><strong>exactly one host</strong></td>
-<td>the source LUN</td>
+<td><code>windows-horde.pkr.hcl</code></td>
+<td>Packer template (source + build + provisioners)</td>
 </tr>
 <tr>
-<td><code>horde_san_agents</code></td>
-<td>all build agents</td>
-<td>per-job clone LUNs</td>
+<td><code>userdata.ps1</code></td>
+<td>WinRM bootstrap for the Packer communicator</td>
+</tr>
+<tr>
+<td><code>base_setup.ps1</code></td>
+<td>choco, git, OpenSSH, Python (NFS-Client removed)</td>
+</tr>
+<tr>
+<td><code>install_vs_tools.ps1</code></td>
+<td>VS2022 Build Tools + VC 14.38 + WDK/PDBCOPY</td>
+</tr>
+<tr>
+<td><code>install_horde_agent_tools.ps1</code></td>
+<td>.NET 6 runtime, .NET 8 SDK, p4, awscli</td>
+</tr>
+<tr>
+<td><code>install_iscsi.ps1</code></td>
+<td>MSiSCSI Automatic + MPIO + MSDSM iSCSI claim</td>
+</tr>
+<tr>
+<td><code>validate_image.ps1</code></td>
+<td>in-build assertion of toolchain + iSCSI + MPIO</td>
+</tr>
+<tr>
+<td><code>example.pkrvars.hcl</code></td>
+<td>example variables (generic, no account values)</td>
 </tr>
 </tbody>
 </table>
-<p>The shared igroup is safe because each clone LUN is used by exactly one job on one
-agent, so build agents self-register into it at job time. The source LUN is
-different: <code>hydrate-source-lun.ps1</code> registers its IQN with <code>-SingleHost</code> and
-<strong>fails the run</strong> if that igroup already holds a different initiator, rather than
-quietly becoming a second writer on one filesystem. Mapping the source LUN to the
-shared igroup would let two hosts corrupt one volume.</p>
-<p>Two consequences worth internalising:</p>
-<ul>
-<li><strong>The hydrator is Windows now</strong> (<code>SyncPool</code> condition changed from
-  <code>OSFamily == 'Linux'</code> to <code>'Windows'</code>), because the LUN carries NTFS. The Linux
-  Ansible playbook that fstab-mounted the NFS volume is gone.</li>
-<li><strong>Connect exactly ONE iSCSI portal</strong> unless the Windows MPIO feature is
-  installed. Two portals without MPIO make Windows enumerate a single LUN as two
-  disks — its own corruption trap. <code>Connect-SanPortal</code> enforces this.</li>
-</ul>
-<h3 id="3a-flush-the-ntfs-write-cache-before-every-snapshot">3a. Flush the NTFS write cache before every snapshot<a class="headerlink" href="#3a-flush-the-ntfs-write-cache-before-every-snapshot" title="Permanent link">&para;</a></h3>
-<p>An ONTAP snapshot captures blocks as the array sees them, so anything still in the
-Windows write cache is simply <strong>absent</strong> from the snapshot. You get a
-crash-consistent image that may mount and then fail <code>chkdsk</code>, or silently lose the
-tail of the <code>p4 sync</code>. <code>New-OntapSnapshot -FlushDriveLetter</code> issues the
-<code>Write-VolumeCache</code>; do not remove it.</p>
-<h3 id="4-clone-teardown-must-not-rely-on-a-buildgraph-node">4. Clone teardown must not rely on a BuildGraph node<a class="headerlink" href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node" title="Permanent link">&para;</a></h3>
-<p><code>RunLate="true"</code> is <strong>not</strong> a BuildGraph <code>&lt;Node&gt;</code> attribute, and the semantics it was
-reaching for do not exist: a node ordered after a <strong>failed</strong> node is <em>Skipped</em>. So the
-<code>Cleanup Clone</code> node is a success-only fast path. Guaranteed teardown is registered as a
-<strong>Horde lease-end hook</strong> (<code>UE_HORDE_CLEANUP</code> → <code>buildgraph/teardown-clone.ps1</code>), which
-runs regardless of outcome.</p>
-<p>Neither path survives a <strong>hard Spot reclaim</strong>, since both run <em>on the agent</em>. If you run
-agents on Spot — which is the point of making hydration cheap — add an <strong>off-agent
-reaper</strong> on a schedule that deletes <code>build_*</code> clones whose Horde job is no longer
-running. A leaked clone pins its parent snapshot, which then makes snapshot rotation
-fail too.</p>
-<h3 id="5-ontap-volume-names-reject-hyphens">5. ONTAP volume names reject hyphens<a class="headerlink" href="#5-ontap-volume-names-reject-hyphens" title="Permanent link">&para;</a></h3>
-<p><code>build-{jobId}</code> fails with an opaque HTTP 400. Use <code>build_{jobid}</code>, lowercased. (ONTAP:
-start with a letter or <code>_</code>, then letters/digits/<code>_</code>, ≤203 chars.)</p>
-<h2 id="still-to-confirm-when-you-deploy">Still to confirm when you deploy<a class="headerlink" href="#still-to-confirm-when-you-deploy" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Unreal compile arguments.</strong> The <code>Compile</code> node calls <code>&lt;drive&gt;:\Engine\Build\BatchFiles\Build.bat</code> with <code>UETarget</code>/<code>UEPlatform</code>/<code>UEConfiguration</code>/<code>UEProject</code>. For a real project build set <code>UEProject</code> to the <code>.uproject</code> path on the mounted clone and confirm the BatchFiles path and target names against your engine. Note that Horde invokes BuildGraph via <code>&lt;workspace&gt;/Engine/Build/BatchFiles/RunUAT.bat</code>, so <strong>the engine must be present in the stream</strong>.</li>
-<li><strong>Horde <code>globals.json</code> schema.</strong> The pool conditions (<code>OSFamily == 'Linux'</code> / <code>'Windows'</code>) casing and the legacy top-level (version 1) vs. newer nested schema may need adjustment for your deployed Horde server version.</li>
-<li><strong><code>-Script</code> depot paths.</strong> <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> resolve against the stream root only once the <code>buildgraph/</code> files are submitted to the depot under <code>Build/</code>. Confirm the paths resolve after submitting.</li>
-<li><strong>Narrow the orchestration workspace.</strong> The agent that only parses the BuildGraph XML still syncs the whole stream — 9 minutes of a 20-minute job in our runs. A workspace-level <code>view</code> is <strong>silently ignored</strong> by Horde's Perforce materializer; use a Perforce <strong>virtual stream</strong> containing just the bootstrap slice and point the workspace's <code>stream</code> at it.</li>
-</ol>
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
-<!-- This block is auto-generated by the repo's `terraform-docs` pre-commit hook. Do not edit by hand; run the hook to populate the Requirements / Providers / Modules / Resources / Inputs / Outputs tables. -->
-<!-- END_TF_DOCS -->
-<!-- markdownlint-enable -->
 
 
 
@@ -3954,12 +3693,12 @@ start with a letter or <code>_</code>, then letters/digits/<code>_</code>, ≤20
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../../js/open_in_new_tab.js"></script>
+        <script src="../../../../js/open_in_new_tab.js"></script>
       
     
 <script>

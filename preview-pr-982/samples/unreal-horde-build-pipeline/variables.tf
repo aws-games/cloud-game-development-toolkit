@@ -130,6 +130,23 @@ variable "build_agent_max_count" {
   default     = 5
 }
 
+# Horde build/sync agent AMI. Built by the Packer template at
+# assets/packer/build-agents/windows-horde. Leave build_agent_ami_id null to
+# have the sample look up the most recent AMI matching
+# build_agent_ami_name_prefix in this account (keeps the sample generic - no
+# hardcoded ami-xxxx). Set build_agent_ami_id to pin a specific image.
+variable "build_agent_ami_id" {
+  type        = string
+  description = "Explicit AMI ID for the Horde Windows build/sync agents. When null, the sample looks up the newest self-owned AMI matching build_agent_ami_name_prefix."
+  default     = null
+}
+
+variable "build_agent_ami_name_prefix" {
+  type        = string
+  description = "Name filter (with wildcard) used to look up the Packer-built Horde agent AMI when build_agent_ami_id is null. Must match the Packer template's ami_prefix."
+  default     = "windows-horde-build-agent-*"
+}
+
 ##################################################
 # Horde Server
 ##################################################

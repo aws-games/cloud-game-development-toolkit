@@ -60,6 +60,12 @@ perforce_stream = "//YourGame/main"
 # sync_agent_instance_type  = "c6i.xlarge"   # network-optimized Linux sync pool
 # build_agent_instance_type = "c6a.8xlarge"  # compute-optimized Windows build pool
 # build_agent_max_count     = 5
+#
+# Agent AMI (built by assets/packer/build-agents/windows-horde). By default the
+# sample looks up the newest self-owned AMI matching the name prefix below, so
+# you do NOT hardcode an ami-xxxx. Pin a specific image with build_agent_ami_id.
+# build_agent_ami_name_prefix = "windows-horde-build-agent-*"
+# build_agent_ami_id          = "ami-xxxxxxxxxxxxxxxxx"
 
 # --- Horde server ---
 # horde_server_image = "ghcr.io/epicgames/horde-server:latest-bundled"
