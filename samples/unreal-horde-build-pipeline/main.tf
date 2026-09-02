@@ -207,9 +207,14 @@ module "horde" {
   # (verified: ecs.tf init container write logic + local.tf server_json.configPath).
   #
   # globals.json references the Perforce connection by clusterName = "default",
-  # which the module already defines in server.json
-  # (plugins.build.perforce[{ id: "default", ... }]) — so we do NOT redefine
-  # perforceClusters/credentials in globals.json.
+  # and now DOES define a matching perforceClusters entry. The Horde stream
+  # poller reads cluster credentials from globals.json perforceClusters[], NOT
+  # from server.json — so the cluster MUST be defined there or the poller falls
+  # back to a credential-less ambient Default cluster and fails (PR #981). The P4
+  # password travels as the literal __P4_PASSWORD__ token, which the module's
+  # init container substitutes from var.horde_p4_credentials_secret_arn at
+  # container startup, so it never enters Terraform state, the task definition,
+  # or CloudWatch logs.
   #
   # NOTE: JT-18's original plan called for an "extra_environment" input; that
   # variable does not exist on this module. config_globals_json + config_path is

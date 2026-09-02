@@ -8,9 +8,16 @@
     "SCHEMA: legacy top-level form (version 1) for compatibility.",
     "",
     "COUPLINGS (must stay in sync with other files):",
-    "  - clusterName \"default\" references the Perforce connection the module renders in server.json",
-    "    (local.server_json -> Horde.plugins.build.perforce[{ id: \"default\", serverAndPort, credentials }]).",
-    "    Do NOT redefine perforceClusters/credentials here — the module owns that.",
+    "  - clusterName \"default\" references the perforceClusters entry DEFINED IN THIS FILE (below).",
+    "    The Horde stream POLLER authenticates from globals.json perforceClusters[].credentials — NOT",
+    "    from server.json (whose plugins.build.perforce creds are only for the SERVER reading config",
+    "    files). With no perforceClusters block, the poller falls back to a synthesized ambient Default",
+    "    cluster with NO credentials and fails (the failure PR #981 fixed). So we DO define it here.",
+    "    The password is delivered via the literal __P4_PASSWORD__ token, which the module's init",
+    "    container substitutes from var.horde_p4_credentials_secret_arn at CONTAINER STARTUP (after",
+    "    cat-ing the file to the [INIT] log) — so the real password never lands in Terraform state,",
+    "    the ECS task definition, or CloudWatch logs. The cluster name MUST stay \"default\" so the",
+    "    streams' clusterName resolves to it.",
     "  - agentTypes keys \"SyncAgent\" / \"BuildAgent\" MUST match the <Agent Name=\"...\"> attributes in the",
     "    BuildGraph XML files (Phase 4). The JTBD plan uses SyncAgent (type=SyncPool) and BuildAgent",
     "    (type=BuildPool).",
@@ -47,6 +54,14 @@
     "     names defined in the BuildGraph XML."
   ],
   "version": 1,
+  "perforceClusters": [
+    {
+      "name": "default",
+      "serviceAccount": { "userName": "${p4_user}", "password": "__P4_PASSWORD__" },
+      "servers": [ { "serverAndPort": "${p4_port}" } ],
+      "credentials": [ { "userName": "${p4_user}", "password": "__P4_PASSWORD__" } ]
+    }
+  ],
   "pools": [
     { "id": "sync-pool", "name": "SyncPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true },
     { "id": "build-pool", "name": "BuildPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true }
