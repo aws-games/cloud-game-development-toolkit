@@ -17,7 +17,7 @@
 # (ip_protocol = "-1" to 0.0.0.0/0) to the agent security group. The explicit,
 # narrowly-scoped egress rules below are ADDITIVE and exist to document the
 # exact runtime flows the agents depend on (Secrets Manager + S3 endpoints,
-# NFS to FSxN, and P4 to Perforce). Egress wildcards are acceptable; the
+# iSCSI to FSxN, and P4 to Perforce). Egress wildcards are acceptable; the
 # invariant above applies to INGRESS only.
 ##################################################
 

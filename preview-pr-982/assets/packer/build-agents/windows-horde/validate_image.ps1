@@ -76,7 +76,30 @@ catch {
     $failures += "MPIO check errored: $_"
 }
 
-# --- 4. .NET runtimes (evidence, non-fatal beyond presence of dotnet) ---
+# --- 4. Boot-time unique-IQN mechanism (baked ONSTART task + baked script) ---
+try {
+    $iqnScript = "C:\ProgramData\horde\set_unique_iqn.ps1"
+    if (Test-Path $iqnScript) {
+        Write "FOUND baked unique-IQN script: $iqnScript"
+    }
+    else {
+        $failures += "unique-IQN script not found at $iqnScript"
+    }
+
+    $iqnTask = Get-ScheduledTask -TaskName "Horde-SetUniqueIqn" -ErrorAction SilentlyContinue
+    if ($iqnTask) {
+        $trigger = ($iqnTask.Triggers | Select-Object -First 1).CimClass.CimClassName
+        Write "FOUND ONSTART task 'Horde-SetUniqueIqn': State=$($iqnTask.State) Trigger=$trigger"
+    }
+    else {
+        $failures += "Scheduled Task 'Horde-SetUniqueIqn' not found (boot-time IQN mechanism missing)"
+    }
+}
+catch {
+    $failures += "boot-time unique-IQN mechanism check errored: $_"
+}
+
+# --- 5. .NET runtimes (evidence, non-fatal beyond presence of dotnet) ---
 try {
     $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
     if ($dotnet) {
@@ -97,4 +120,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write "==== VALIDATION PASSED: MSVC toolchain + iSCSI initiator + MPIO present ===="
+Write "==== VALIDATION PASSED: MSVC toolchain + iSCSI initiator + MPIO + boot-time unique-IQN task present ===="

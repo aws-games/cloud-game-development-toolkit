@@ -3326,10 +3326,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#iscsi-baking-the-spike" class="md-nav__link">
+  <a href="#iscsi-baking-the-spike-resolved" class="md-nav__link">
     <span class="md-ellipsis">
       
-        iSCSI baking — the SPIKE
+        iSCSI baking — the SPIKE (RESOLVED)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#in-build-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-build validation
       
     </span>
   </a>
@@ -3418,6 +3429,8 @@ hardcoded.</p>
 <li><strong>AWS CLI</strong> (used by the iSCSI/SAN pipeline scripts)</li>
 <li><strong>MSiSCSI initiator</strong> service set to <strong>Automatic</strong></li>
 <li><strong>Multipath I/O (MPIO)</strong> feature enabled + <strong>MSDSM</strong> set to auto-claim iSCSI</li>
+<li><strong>Baked ONSTART Scheduled Task</strong> (<code>Horde-SetUniqueIqn</code>) that derives a unique,
+  instance-id-based initiator IQN on every boot (input-free)</li>
 </ul>
 <h2 id="diff-vs-the-jenkins-template-windows">Diff vs. the Jenkins template (<code>../windows</code>)<a class="headerlink" href="#diff-vs-the-jenkins-template-windows" title="Permanent link">&para;</a></h2>
 <table>
@@ -3501,33 +3514,61 @@ hardcoded.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="iscsi-baking-the-spike">iSCSI baking — the SPIKE<a class="headerlink" href="#iscsi-baking-the-spike" title="Permanent link">&para;</a></h2>
+<h2 id="iscsi-baking-the-spike-resolved">iSCSI baking — the SPIKE (RESOLVED)<a class="headerlink" href="#iscsi-baking-the-spike-resolved" title="Permanent link">&para;</a></h2>
 <p><strong>Question:</strong> can MSiSCSI enablement + initiator IQN materialization be fully
-baked into the AMI, or is a per-boot step unavoidable?</p>
+baked into the AMI, or is a per-boot SSM step unavoidable?</p>
+<p><strong>Answer: fully baked. No SSM association is needed.</strong> The only true per-boot
+iSCSI need is LOCAL and INPUT-FREE: (1) MSiSCSI running, and (2) a UNIQUE
+initiator IQN per agent. Both are now baked into the AMI — (1) as service state,
+(2) as a baked ONSTART Scheduled Task that derives the IQN from the instance-id
+every boot. All ONTAP contact (discovery, login, igroup add, LUN map, mount) and
+all Perforce work happen JUST-IN-TIME at JOB time in
+<code>buildgraph/attach-clone-lun.ps1</code> + <code>buildgraph/hydrate-source-lun.ps1</code>, so boot
+needs ZERO ONTAP config and ZERO Perforce env.</p>
 <p><strong>What is baked (image-time, machine-independent):</strong></p>
 <ul>
 <li>MSiSCSI service → <strong>Automatic</strong> start (initiator running on first boot, no
   per-boot enable).</li>
 <li>MPIO feature enabled.</li>
 <li>MSDSM set to auto-claim iSCSI devices.</li>
+<li><strong>A baked ONSTART Scheduled Task</strong> (<code>Horde-SetUniqueIqn</code>, SYSTEM, RunLevel
+  Highest) that runs <code>C:\ProgramData\horde\set_unique_iqn.ps1</code> on every boot.</li>
 </ul>
-<p><strong>What CANNOT be baked (must be per-instance):</strong></p>
-<ul>
-<li><strong>The initiator IQN.</strong> On Windows the IQN is stored under
-  <code>HKLM\SYSTEM\CurrentControlSet\Control\Class\{iSCSI}\...\NodeName</code> and is
-  derived per install. <strong>Baking a fixed IQN into the AMI would give every agent
-  the same IQN</strong>, which breaks the per-agent igroup model on FSxN/ONTAP: each
-  agent must present a unique IQN so its clone LUN maps to exactly one host. So
-  the IQN must be materialized per-instance (a fresh, unique IQN, or a
-  deterministic per-instance IQN derived from the instance-id), and target
-  portal discovery + LUN login happen at job time (targets are only known then).</li>
-</ul>
-<p><strong>Recommendation → (b): keep a SLIM per-boot iSCSI step.</strong> The bulk (service
-state, MPIO, MSDSM claim) is baked; only the per-instance IQN materialization +
-target login remain per-boot. That is a thin, machine-specific step that cannot
-correctly live in an AMI. Full SSM deletion <strong>(a) is not viable</strong>. A module
-user_data hook <strong>(c) is not required</strong> — the sample-side SSM association can
-carry the slim per-boot step, so no <code>modules/</code> change is needed for Phase 2.</p>
+<p><strong>The initiator IQN — mechanism baked, value per-instance:</strong></p>
+<p>On Windows the IQN is stored under
+<code>HKLM\SYSTEM\CurrentControlSet\Control\Class\{iSCSI}\...\NodeName</code> and is derived
+per install. <strong>Baking a fixed IQN into the AMI would give every agent the same
+IQN</strong>, which breaks the per-agent igroup model on FSxN/ONTAP: each agent must
+present a unique IQN so its clone LUN maps to exactly one host, and a collision is
+a silent NTFS-corruption trap.</p>
+<p>The resolution bakes the <strong>mechanism</strong> (the ONSTART task + the script) while
+leaving the <strong>value</strong> per-instance. On every boot, <code>set_unique_iqn.ps1</code>:</p>
+<ol>
+<li>reads the EC2 instance-id from <strong>IMDSv2</strong> (PUT token, then GET
+   <code>/latest/meta-data/instance-id</code>), falling back to a stable local
+   identifier and logging it if IMDS is unavailable;</li>
+<li>sets a deterministic, host-unique IQN
+   <code>iqn.1991-05.com.microsoft:&lt;instance-id&gt;</code> via <code>Set-InitiatorPort</code>,
+   idempotently (only if different);</li>
+<li>ensures MSiSCSI is Automatic + running;</li>
+<li>logs the resulting IQN.</li>
+</ol>
+<p>This is <strong>input-free</strong>: no ONTAP, no Perforce, no Terraform values are needed at
+boot. Target portal discovery + LUN login stay at job time (targets are only
+known then).</p>
+<p><strong>Recommendation → (a) full baked boot, NO SSM.</strong> The sample-side SSM
+associations that previously carried a "slim per-boot step" (machine
+P4PORT/P4USER + initiator setup) are <strong>deleted</strong>: the job scripts authenticate to
+Perforce explicitly (<code>hydrate-source-lun.ps1</code> sets its own P4PORT/P4USER from
+mandatory params and mints a ticket from Secrets Manager; <code>BuildPipeline.xml</code>
+passes <code>p4.exe -p/-u/-c</code> explicitly), and the unique-IQN + MSiSCSI needs are now
+baked. Boot is input-free; no <code>modules/</code> change is required.</p>
+<h2 id="in-build-validation">In-build validation<a class="headerlink" href="#in-build-validation" title="Permanent link">&para;</a></h2>
+<p><code>validate_image.ps1</code> fails the Packer build (non-zero exit) if any required
+component is missing. In addition to the MSVC toolchain, MSiSCSI (Automatic), and
+MPIO checks, it asserts the boot-time IQN mechanism: the
+<code>C:\ProgramData\horde\set_unique_iqn.ps1</code> file exists AND the <code>Horde-SetUniqueIqn</code>
+Scheduled Task is registered.</p>
 <h2 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3562,8 +3603,16 @@ carry the slim per-boot step, so no <code>modules/</code> change is needed for P
 <td>MSiSCSI Automatic + MPIO + MSDSM iSCSI claim</td>
 </tr>
 <tr>
+<td><code>set_unique_iqn.ps1</code></td>
+<td>baked per-boot script: derives a unique instance-id IQN (dropped at <code>C:\ProgramData\horde\</code>)</td>
+</tr>
+<tr>
+<td><code>register_iqn_task.ps1</code></td>
+<td>image-time step: registers the ONSTART Scheduled Task that runs <code>set_unique_iqn.ps1</code> every boot</td>
+</tr>
+<tr>
 <td><code>validate_image.ps1</code></td>
-<td>in-build assertion of toolchain + iSCSI + MPIO</td>
+<td>in-build assertion of toolchain + iSCSI + MPIO + boot-IQN task</td>
 </tr>
 <tr>
 <td><code>example.pkrvars.hcl</code></td>

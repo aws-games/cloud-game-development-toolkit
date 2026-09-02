@@ -10,16 +10,25 @@ function Write($message) {
 #   - Multipath I/O (MPIO) Windows feature enabled.
 #   - MSDSM configured to auto-claim iSCSI-attached devices.
 #
-# WHAT IS *NOT* BAKED HERE (must remain per-instance / per-boot):
-#   - The initiator IQN. On Windows the IQN lives in
+# WHAT IS *NOT* BAKED AS A FIXED VALUE HERE (materialized per-instance every boot):
+#   - The initiator IQN VALUE. On Windows the IQN lives in
 #     HKLM\SYSTEM\CurrentControlSet\Control\Class\{iSCSI}\...\NodeName and is
 #     generated from the machine name / a per-install GUID. If we froze a
 #     concrete IQN into the AMI, EVERY agent launched from it would present the
 #     SAME IQN to the FSxN/ONTAP SAN. That breaks the per-agent igroup model
 #     (each agent needs its own igroup membership so clone LUNs map to exactly
-#     one host). So the IQN MUST be materialized per-instance, NOT baked.
+#     one host).
+#
+#     The IQN UNIQUENESS IS handled by a BAKED ONSTART Scheduled Task that runs
+#     set_unique_iqn.ps1 (dropped at C:\ProgramData\horde\set_unique_iqn.ps1)
+#     on every boot. That script derives a deterministic, per-instance IQN from
+#     the EC2 instance-id (iqn.1991-05.com.microsoft:<instance-id>) via IMDSv2,
+#     input-free (no ONTAP, no Perforce, no Terraform values). So the MECHANISM
+#     is baked into the AMI; only the VALUE is per-instance. See
+#     set_unique_iqn.ps1 and register_iqn_task.ps1.
 #   - Target portal discovery + LUN login (target addresses are only known at
-#     job time from Terraform/ONTAP output) - that is pipeline/per-boot work.
+#     job time from Terraform/ONTAP output) - that is pipeline/job-time work
+#     handled by buildgraph/attach-clone-lun.ps1 + hydrate-source-lun.ps1.
 #
 # See validate_image.ps1 and the SPIKE section of the README for the resulting
 # recommendation.

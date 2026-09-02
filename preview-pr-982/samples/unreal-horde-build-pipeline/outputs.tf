@@ -68,8 +68,3 @@ output "fsxn_password_secret_arn" {
   value       = aws_secretsmanager_secret.fsxn_admin.arn
   sensitive   = true
 }
-
-output "agent_config_bucket" {
-  description = "S3 bucket holding agent configuration playbooks/scripts (Phase 2)."
-  value       = aws_s3_bucket.agent_config.id
-}

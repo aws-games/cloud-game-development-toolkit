@@ -3668,13 +3668,13 @@ terraform<span class="w"> </span>apply
 <ul>
 <li><code>horde_server_url</code> — the browser URL for the Horde UI (HTTPS, external ALB). Reachable only from the deployer <code>/32</code>.</li>
 <li><code>perforce_endpoint</code> — the <code>P4PORT</code> (<code>ssl:&lt;host&gt;:1666</code>) for P4 client configuration.</li>
-<li><code>fsxn_nfs_endpoint</code> / <code>fsxn_source_volume_junction</code> — mount the source volume as <code>&lt;nfs_endpoint&gt;:&lt;junction&gt;</code>.</li>
+<li><code>fsxn_iscsi_portals</code> — comma-separated SVM iSCSI portal addresses (pass as <code>-set:IscsiPortals</code>; connect exactly one unless MPIO is installed).</li>
+<li><code>fsxn_workspace_lun_path</code> — ONTAP path of the workspace LUN that hosts attach over iSCSI (the LUN carries NTFS).</li>
 <li><code>fsxn_management_endpoint</code> / <code>fsxn_svm_management_endpoint</code> — ONTAP REST API targets for the BuildGraph tasks.</li>
 <li><code>sync_agent_launch_template_id</code> / <code>build_agent_launch_template_id</code> — launch template IDs for the two agent pools.</li>
 <li><code>agent_instance_role_name</code> — the IAM role attached to agent instances (has the secrets-read policy).</li>
 <li><code>horde_p4_credentials_secret_arn</code> — echoes the pre-created Horde P4 username/password secret ARN you passed in via <code>horde_p4_credentials_secret_arn</code> (JSON, sensitive). This sample does not create the secret.</li>
 <li><code>fsxn_password_secret_arn</code> — the FSxN <code>fsxadmin</code> password secret (sensitive).</li>
-<li><code>agent_config_bucket</code> — the S3 bucket holding agent configuration playbooks and scripts.</li>
 </ul>
 <h3 id="align-the-perforce-svc-horde-password-required">Align the Perforce <code>svc-horde</code> password (required)<a class="headerlink" href="#align-the-perforce-svc-horde-password-required" title="Permanent link">&para;</a></h3>
 <p>The secret you pre-created (and passed via <code>horde_p4_credentials_secret_arn</code>) holds the <strong>real
@@ -3700,7 +3700,7 @@ p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"
 <li><strong>No <code>0.0.0.0/0</code> ingress anywhere.</strong> Every ingress rule is scoped to a single-IP <code>/32</code>, a referenced security group, or a private VPC CIDR (enforced as a hard invariant in <code>security.tf</code>).</li>
 <li><strong>External ALB locked to the deployer <code>/32</code>.</strong> Both the HTTPS listener (443) and the HTTP→HTTPS redirect (80) accept traffic only from <code>local.my_ip_cidr</code>.</li>
 <li><strong>No OIDC auth configured yet.</strong> The Horde module's <code>auth_method</code> is intentionally left unset in this sample, so <strong>the <code>/32</code> lock is the only access gate</strong> on the Horde UI. Configure OIDC (or another Horde auth method) before widening ALB access beyond your own IP.</li>
-<li><strong>Internal traffic stays private.</strong> Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts NFS/rpcbind/ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer <code>/32</code>.</li>
+<li><strong>Internal traffic stays private.</strong> Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts iSCSI (3260) and ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer <code>/32</code>.</li>
 </ul>
 <h2 id="operational-requirements-learned-from-running-this-live">Operational requirements learned from running this live<a class="headerlink" href="#operational-requirements-learned-from-running-this-live" title="Permanent link">&para;</a></h2>
 <p>The FlexClone premise holds up: measured against a <strong>49.55 GB / 268,730-file</strong> UE 5.7
