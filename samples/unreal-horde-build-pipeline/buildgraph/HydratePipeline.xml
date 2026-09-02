@@ -13,7 +13,9 @@
 	     writer must be Windows, and it must be the ONLY writer. The pool
 	     condition in globals.json.tpl changed from OSFamily == 'Linux' to
 	     'Windows' to match, and config/sync-agent.ansible.yml (a Linux NFS fstab
-	     playbook) was replaced by config/sync-agent-setup.ps1.tpl.
+	     playbook) is gone: the source LUN's per-boot needs (MSiSCSI + a unique
+	     initiator IQN) are baked into the build-agent AMI, and all ONTAP/mount
+	     work is job-time (hydrate-source-lun.ps1).
 
 	     WHY SINGLE-WRITER IS ENFORCED, NOT JUST DOCUMENTED: NTFS is not a shared
 	     filesystem. The source LUN is mapped to a single-host igroup, and
