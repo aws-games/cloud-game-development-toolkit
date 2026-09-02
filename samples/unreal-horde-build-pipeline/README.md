@@ -60,6 +60,64 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
 - **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.
 - **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root.
 
+## Build the Windows build-agent AMI (manual prerequisite)
+
+This is a **one-time operator step you run before `terraform apply`.** It is intentionally **not** automated by this sample — building a Windows image with the full Unreal C++ toolchain takes ~30-45 minutes, and baking it once is far cheaper than re-installing the toolchain on every agent boot.
+
+### Why it's needed
+
+The Horde Windows agents compile Unreal Engine from source and mount their workspace over iSCSI. The stock Amazon `Windows_Server-2022` AMI has **neither** the C++ build toolchain **nor** the iSCSI initiator. The Packer template at [`assets/packer/build-agents/windows-horde`](../../assets/packer/build-agents/windows-horde) bakes them in:
+
+- **VS2022 Build Tools + MSVC VC 14.38 + WDK/PDBCOPY** (Unreal from-source builds)
+- **.NET 6 runtime** (matches the Horde module's `agent_dotnet_runtime_version` default so the module's first-boot install is a no-op) **and .NET 8 SDK** (UE 5.5 `AutomationTool`)
+- **p4** (Perforce CLI) and **awscli**
+- **MSiSCSI initiator (Automatic) + MPIO + MSDSM iSCSI claim** for the iSCSI/NTFS thin-clone workspace pipeline
+
+An in-build `validate_image.ps1` **fails the build** unless `cl.exe`/MSVC VC14.38 + `vcvars`, `MSiSCSI` (Automatic), and MPIO are all present, so a published AMI is never half-baked.
+
+### Prerequisites for the build
+
+- [Packer](https://developer.hashicorp.com/packer/install) installed on the machine that runs the build.
+- AWS credentials for the target account/region.
+- A **VPC + subnet with outbound internet** (an Internet Gateway for a public subnet, or a NAT Gateway for a private subnet). The temporary Windows build instance uses Chocolatey to install the toolchain, so it must be able to reach the internet **outbound**.
+- **A host/network that can reach the temporary build instance over WinRM (5986).** The template is **private by default** (`associate_public_ip_address = false`, `ssh_interface = "private_ip"`), which means **Packer must run from a host that can route to the build instance's private IP** — i.e. run Packer from inside the same VPC (a bastion/CI runner in the VPC), or from a network peered/VPN-connected to it.
+
+  > **WinRM reachability caveat.** If you run Packer from a workstation that is *not* on the build instance's network (e.g. a corporate laptop whose egress blocks WinRM, or any host outside the VPC), the private-IP build cannot connect and will stall at "Waiting for WinRM". In that case either run Packer from inside the VPC, or flip to a public-IP build (`associate_public_ip_address = true`, `ssh_interface = "public_ip"`) **and** supply a `security_group_id` whose WinRM (5986) ingress is scoped to **your own /32** — never `0.0.0.0/0`.
+
+### Build command
+
+From the template directory, initialize the plugins and run the build with the required variables:
+
+```bash
+cd assets/packer/build-agents/windows-horde
+
+packer init .
+
+packer build \
+  -var 'region=us-east-1' \
+  -var 'vpc_id=vpc-xxxxxxxx' \
+  -var 'subnet_id=subnet-xxxxxxxx' \
+  -var 'public_key=ssh-ed25519 AAAA...your-agent-public-key' \
+  .
+```
+
+- `region` — the build region (must match where you deploy this sample).
+- `vpc_id` / `subnet_id` — a VPC and subnet with outbound internet (see prerequisites). Use a **private** subnet with NAT egress to keep the build instance off the public internet (recommended).
+- `public_key` — the SSH **public** key that is baked into the AMI's `authorized_keys` so the Horde orchestration service can reach the agent. Generate a keypair (`ssh-keygen -t ed25519 -f horde_agent_key`) and pass the contents of `horde_agent_key.pub`.
+
+The template defaults to a private-by-default build (`associate_public_ip_address = false`, `ssh_interface = "private_ip"`). If you must build over the public internet, add `-var 'associate_public_ip_address=true' -var 'ssh_interface=public_ip' -var 'security_group_id=sg-xxxxxxxx'` where the SG scopes WinRM (5986) to your `/32`. See [`example.pkrvars.hcl`](../../assets/packer/build-agents/windows-horde/example.pkrvars.hcl) to drive these from a `-var-file` instead of `-var` flags.
+
+On success Packer prints the new AMI ID and registers it named `windows-horde-build-agent-<timestamp>`.
+
+### How this sample consumes the AMI
+
+The AMI is wired up automatically in [`main.tf`](main.tf) via `data.aws_ami.horde_build_agent`. You have two options:
+
+- **Auto-lookup (default, keeps the sample generic).** Leave `build_agent_ami_id` unset (`null`). The sample looks up the newest **self-owned** AMI whose name matches `build_agent_ami_name_prefix` (default `windows-horde-build-agent-*`, which matches the Packer template's `ami_prefix`). No hardcoded AMI ID ends up in your config.
+- **Pin an explicit AMI.** Set `build_agent_ami_id = "ami-xxxxxxxx"` in `terraform.tfvars` to pin a specific image; it takes precedence over the name-prefix lookup.
+
+Because this is a prerequisite, **build the AMI first**, then run `terraform apply`. If no matching AMI exists and `build_agent_ami_id` is unset, the `data.aws_ami` lookup fails at plan time.
+
 ## Deployment
 
 1. Copy the example variables file and fill in the required values:
