@@ -154,13 +154,13 @@ Terraform emits the following outputs (see `outputs.tf`):
 
 - `horde_server_url` — the browser URL for the Horde UI (HTTPS, external ALB). Reachable only from the deployer `/32`.
 - `perforce_endpoint` — the `P4PORT` (`ssl:<host>:1666`) for P4 client configuration.
-- `fsxn_nfs_endpoint` / `fsxn_source_volume_junction` — mount the source volume as `<nfs_endpoint>:<junction>`.
+- `fsxn_iscsi_portals` — comma-separated SVM iSCSI portal addresses (pass as `-set:IscsiPortals`; connect exactly one unless MPIO is installed).
+- `fsxn_workspace_lun_path` — ONTAP path of the workspace LUN that hosts attach over iSCSI (the LUN carries NTFS).
 - `fsxn_management_endpoint` / `fsxn_svm_management_endpoint` — ONTAP REST API targets for the BuildGraph tasks.
 - `sync_agent_launch_template_id` / `build_agent_launch_template_id` — launch template IDs for the two agent pools.
 - `agent_instance_role_name` — the IAM role attached to agent instances (has the secrets-read policy).
 - `horde_p4_credentials_secret_arn` — echoes the pre-created Horde P4 username/password secret ARN you passed in via `horde_p4_credentials_secret_arn` (JSON, sensitive). This sample does not create the secret.
 - `fsxn_password_secret_arn` — the FSxN `fsxadmin` password secret (sensitive).
-- `agent_config_bucket` — the S3 bucket holding agent configuration playbooks and scripts.
 
 ### Align the Perforce `svc-horde` password (required)
 
@@ -192,7 +192,7 @@ Open `horde_server_url` in a browser (from the deployer machine). The `globals.j
 - **No `0.0.0.0/0` ingress anywhere.** Every ingress rule is scoped to a single-IP `/32`, a referenced security group, or a private VPC CIDR (enforced as a hard invariant in `security.tf`).
 - **External ALB locked to the deployer `/32`.** Both the HTTPS listener (443) and the HTTP→HTTPS redirect (80) accept traffic only from `local.my_ip_cidr`.
 - **No OIDC auth configured yet.** The Horde module's `auth_method` is intentionally left unset in this sample, so **the `/32` lock is the only access gate** on the Horde UI. Configure OIDC (or another Horde auth method) before widening ALB access beyond your own IP.
-- **Internal traffic stays private.** Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts NFS/rpcbind/ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer `/32`.
+- **Internal traffic stays private.** Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts iSCSI (3260) and ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer `/32`.
 
 ## Operational requirements learned from running this live
 
