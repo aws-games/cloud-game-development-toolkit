@@ -44,6 +44,15 @@ module "perforce" {
     # Compute
     p4_server_type = "p4d_commit"
 
+    # Pinned for the eventual Lyra (~67.7 GiB depot) scale test so we size once
+    # and avoid a future resize. p4d is RAM-bound on its db.* metadata; 32 GiB
+    # is Perforce's guidance for a depot of this scale and comfortably covers
+    # StackOBot + connection bursts. r6i.xlarge = 4 vCPU / 32 GiB, memory-
+    # optimized, x86 — matches the module's default x86_64 p4d AMI. Changing
+    # instance_type is an in-place EC2 attribute change (stop/modify/start), so
+    # the separate depot/metadata/logs EBS volumes are preserved.
+    instance_type = "r6i.xlarge"
+
     # Storage — sized for a sample commit server. Depot holds versioned files,
     # metadata holds the db.* files, logs holds journal/log output.
     storage_type         = "EBS"
@@ -189,6 +198,18 @@ module "horde" {
   # - Server image -
   image                         = var.horde_server_image
   github_credentials_secret_arn = var.github_credentials_secret_arn
+
+  # - Container sizing -
+  #
+  # REQUIRED: the Horde 5.5+ .NET server OOM-crashes (exit 139) on the module's
+  # 4096 MiB default, producing an ECS crash-loop. This override restores the
+  # setting from the NFS-era PR (#978) that was dropped in the iSCSI merge.
+  # 8192 MiB is the maximum valid Fargate memory for a 1 vCPU (1024) task, so we
+  # pair it with an explicit container_cpu = 1024. container_cpu is set
+  # explicitly (matching #978) even though 1024 is the module default, to pin
+  # the CPU/memory pair and prevent future drift that would make 8192 invalid.
+  container_memory = 8192
+  container_cpu    = 1024
 
   # - Perforce wiring -
   # p4_port is ssl:<host>:1666 (built in locals.tf). The credentials secret is
