@@ -30,6 +30,53 @@ The resulting AMI name is prefixed `windows-horde-build-agent-<timestamp>`. The
 Terraform sample looks it up by that prefix via `data.aws_ami`, so no AMI ID is
 hardcoded.
 
+### In-VPC build (WinRM stays private) — the real approach used
+
+Because `associate_public_ip_address = false` and `ssh_interface = "private_ip"`,
+Packer must be able to reach the temporary Windows instance's WinRM (5986) over
+the instance's **private IP**. That means **Packer must run from inside the same
+VPC**. If your workstation's egress blocks outbound WinRM 5986 to public IPs (or
+the build subnet has no public path at all), run Packer from a throwaway Linux
+builder launched in the **same private subnet** (NAT egress for the Windows
+instance's Chocolatey/VS downloads; drive the builder via SSM Run Command).
+
+The `build-agent` AMI in account `968702293218` / `us-east-1` was built this way:
+
+1. Throwaway `t3.medium` Amazon Linux 2023 builder in private subnet
+   `subnet-0385cfd1499c39579` (`vpc-078c7e9b60fb64cef`, `10.0.2.0/24`, us-east-1a),
+   **no public IP**, instance profile = `AmazonSSMManagedInstanceCore` + a
+   scoped inline EC2/S3 policy sufficient for the `amazon-ebs` builder. `packer`
+   + `git` installed via the HashiCorp dnf repo. Template staged builder-side
+   via a throwaway S3 bucket.
+2. On the builder (`export HOME=/home/ec2-user`):
+
+   ```bash
+   packer init .
+   packer build -var-file=build.pkrvars.hcl windows-horde.pkr.hcl
+   ```
+
+   with `build.pkrvars.hcl`:
+
+   ```hcl
+   region                                = "us-east-1"
+   vpc_id                                = "vpc-078c7e9b60fb64cef"
+   subnet_id                             = "subnet-0385cfd1499c39579"  # same private subnet as the builder
+   associate_public_ip_address           = false
+   ssh_interface                         = "private_ip"
+   # Packer creates its own temporary SG; scope WinRM 5986 ingress to the
+   # builder's subnet CIDR. NEVER 0.0.0.0/0.
+   temporary_security_group_source_cidrs = ["10.0.2.0/24"]
+   instance_type                         = "c6a.4xlarge"
+   root_volume_size                      = 256
+   public_key                            = "<ephemeral ssh public key>"
+   ```
+
+   Build time ≈ 40 min (VS2022 Build Tools dominates). The build fails unless
+   `validate_image.ps1` prints `VALIDATION PASSED`.
+
+3. Tear down all scaffolding (builder instance, instance profile + role,
+   ephemeral keypair, staging bucket, builder SG). Keep only the AMI + snapshot.
+
 ### Security
 
 - `associate_public_ip_address` defaults to **false** and `ssh_interface` to
