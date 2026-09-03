@@ -1,0 +1,392 @@
+---
+# =============================================================================
+# Sync Agent (Linux) — Horde Agent EXTENSION playbook  (JT-14)
+# =============================================================================
+#
+# Runs via the AWS-managed SSM document `AWS-ApplyAnsiblePlaybooks`, invoked by
+# `aws_ssm_association.configure_sync_agent` in the sample's iam.tf. That
+# association targets the sync-agent launch template by ID and supplies these
+# extra-vars (ExtraVariables, Ansible `-e`):
+#
+#     fsxn_nfs_endpoint      = <SVM NFS DNS name>
+#     p4_workspace_junction  = /p4-workspace   (local.fsxn_source_junction_path)
+#
+# THIS PLAYBOOK IS ADDITIVE. The base module playbook
+# (modules/unreal/horde/config/agent/horde-agent.ansible.yml) has ALREADY
+# installed, configured, and registered the Horde agent + dotnet on this host
+# via the module's own SSM association (ADR-005). We DO NOT reinstall or
+# re-register the Horde agent here — we only add:
+#   * NFS client (nfs-utils), Perforce p4 CLI (helix-cli), AWS CLI
+#   * .NET 8 SDK (for UE 5.5 UAT on-the-fly compile)
+#   * a boot-time /etc/fstab NFSv3 mount of the FSxN source volume
+#
+# Rationale for the .NET 8 SDK: UE 5.5 AutomationTool (RunUAT BuildGraph)
+# targets .NET 8 and COMPILES the automation csproj on the fly at job time, so
+# the agent needs the full .NET 8 SDK — not just a runtime. The base module
+# playbook only installs the .NET 6 runtime, so we add the SDK here (sample-
+# side) to keep the module generic.
+#
+# ADR notes:
+#   * ADR-001: Sync Agent runs on Amazon Linux 2023.
+#   * ADR-002: NFS ONLY (never SMB/CIFS/AD). The Linux SOURCE volume mounts via
+#              /etc/fstab (fixed, boot-time) using the NFSv3 family.
+#   * ADR-004: autofs/NFSv4 wildcard maps apply ONLY to the Linux-BUILD-agent
+#              extension (per-job FlexClones) — NOT to this sync agent. The
+#              sync agent mounts the single persistent source volume via fstab.
+#   * Security: the mount is unauthenticated at the network layer but locked
+#              down by the FSxN SG (NFSv3 2049/111 from the agent SG only) and
+#              /32 rules already defined in security.tf. This playbook opens
+#              nothing and adds no network access.
+#
+# No secrets are present or referenced in this file. The P4 password is fetched
+# at build time from Secrets Manager by the BuildGraph task, not here.
+# =============================================================================
+
+- name: Sync Agent — NFS + p4 CLI extension (additive to base Horde agent)
+  hosts: all
+  become: true
+
+  vars:
+    # --- Variables supplied by the SSM association's ExtraVariables ----------
+    # `fsxn_nfs_endpoint` and `p4_workspace_junction` are passed via `-e`. The
+    # defaults below are safe fallbacks only; the association always overrides
+    # them. Do NOT hardcode real values here.
+    fsxn_nfs_endpoint: ""
+    p4_workspace_junction: "/p4-workspace"
+
+    # Local mount point for the persistent FSxN source volume (ADR path).
+    p4_workspace_mount: "/mnt/p4-workspace"
+
+    # P4 endpoint components, supplied by the SSM association's ExtraVariables as
+    # `p4_scheme` / `p4_host` / `p4_port_num`. The playbook reassembles these
+    # into P4PORT (<scheme>:<host>:<port>) for the SSL-trust task below.
+    #
+    # WHY SPLIT (not a single p4_port): the AWS-ApplyAnsiblePlaybooks
+    # ExtraVariables parameter validation rejects ':' entirely, so a raw
+    # ssl:<host>:1666 P4PORT cannot be passed through it. Passing the three
+    # colon-free components sidesteps that. All default empty; when empty (no
+    # Perforce endpoint known at apply time) the SSL-trust task is skipped
+    # (see section 8). Do NOT hardcode real values here.
+    p4_scheme: ""
+    p4_host: ""
+    p4_port_num: ""
+
+    # The OS user the Horde agent process runs as. Created and registered by the
+    # BASE module playbook (ADR-005), NOT here — this extension only references
+    # it. Verified on the live agent as uid 1001 / gid 1001. The chown (section
+    # 7) and P4 SSL-trust (section 8) tasks act on behalf of this user so the
+    # agent can write the NFS workspace and trust the SSL P4 server.
+    agent_user: "Horde"
+    agent_home: "/home/Horde"
+
+    # NFS mount options. NFSv3 family per ADR-002. `_netdev` + `nofail` keep the
+    # boot resilient if the endpoint is briefly unavailable.
+    nfs_mount_opts: "nfsvers=3,rw,hard,rsize=65536,wsize=65536,_netdev,nofail"
+
+    # Fixed install location used ONLY if we fall back to Microsoft's
+    # dotnet-install.sh (see task section 3). Kept out of $HOME so the SDK is
+    # available system-wide (Horde agent runs as a service account).
+    dotnet_install_dir: "/usr/local/dotnet"
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # 0. Validate required extra-vars are present (fail fast, clear message).
+    # -------------------------------------------------------------------------
+    - name: Assert fsxn_nfs_endpoint was provided
+      ansible.builtin.assert:
+        that:
+          - fsxn_nfs_endpoint is defined
+          - fsxn_nfs_endpoint | length > 0
+        fail_msg: >-
+          fsxn_nfs_endpoint is empty. The SSM association must pass
+          -e "fsxn_nfs_endpoint=<svm-nfs-dns-name>".
+        success_msg: "fsxn_nfs_endpoint provided: {{ fsxn_nfs_endpoint }}"
+
+    - name: Assert p4_workspace_junction was provided
+      ansible.builtin.assert:
+        that:
+          - p4_workspace_junction is defined
+          - p4_workspace_junction | length > 0
+        fail_msg: >-
+          p4_workspace_junction is empty. The SSM association must pass
+          -e "p4_workspace_junction=/p4-workspace".
+        success_msg: "p4_workspace_junction provided: {{ p4_workspace_junction }}"
+
+    # -------------------------------------------------------------------------
+    # 1. Install packages: NFS client, AWS CLI. (Idempotent — package module.)
+    #    Amazon Linux 2023 provides nfs-utils and awscli(2) in its default repos.
+    # -------------------------------------------------------------------------
+    - name: Install NFS client and AWS CLI
+      ansible.builtin.package:
+        name:
+          - nfs-utils
+          - awscli
+        state: present
+
+    # -------------------------------------------------------------------------
+    # 2. Install the Perforce p4 CLI (helix-cli).
+    #    The Perforce package repo is NOT configured on AL2023 by default, so we
+    #    add the official Perforce yum repo, then install helix-cli. All steps
+    #    are idempotent (creates:/state:present/repo file check).
+    # -------------------------------------------------------------------------
+    - name: Check whether p4 CLI is already installed
+      ansible.builtin.command: which p4
+      register: p4_which
+      changed_when: false
+      failed_when: false
+
+    - name: Add the Perforce package repository (helix-cli)
+      ansible.builtin.yum_repository:
+        name: perforce
+        description: Perforce Helix Core packages
+        # Perforce publishes RHEL/CentOS RPMs; the rhel/9 tree installs cleanly
+        # on Amazon Linux 2023 (both are EL9-family, x86_64).
+        baseurl: "https://package.perforce.com/yum/rhel/9/x86_64/"
+        gpgcheck: true
+        gpgkey: "https://package.perforce.com/perforce.pubkey"
+        enabled: true
+      when: p4_which.rc != 0
+
+    - name: Install the Perforce p4 CLI (helix-cli)
+      ansible.builtin.package:
+        name: helix-cli
+        state: present
+      when: p4_which.rc != 0
+
+    # -------------------------------------------------------------------------
+    # 3. Install the .NET 8 SDK (for UE 5.5 UAT on-the-fly compile).
+    #    UE 5.5 RunUAT/BuildGraph targets .NET 8 and compiles the automation
+    #    csproj at job time, so the full SDK (not just a runtime) is required.
+    #    The base module playbook only provides the .NET 6 runtime.
+    #
+    #    AL2023 note: Microsoft does NOT publish a first-class dnf feed for
+    #    Amazon Linux 2023 (unlike RHEL), so a Microsoft-repo `dnf install
+    #    dotnet-sdk-8.0` is unreliable here. Strategy (most durable, idempotent):
+    #      (a) Try the AL2023 native repo package `dotnet-sdk-8.0` first.
+    #      (b) If .NET 8 SDK is still not present, fall back to Microsoft's
+    #          official dotnet-install.sh pinned to channel 8.0, installing to a
+    #          fixed dir with a PATH/DOTNET_ROOT profile.d entry + symlink.
+    #    Every step is guarded by a `dotnet --list-sdks` check so re-runs are a
+    #    no-op once an 8.x SDK is on the box.
+    # -------------------------------------------------------------------------
+    - name: Check for an existing .NET 8 SDK
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        command -v dotnet >/dev/null 2>&1 && dotnet --list-sdks 2>/dev/null | grep -q '^8\.'
+      args:
+        executable: /bin/bash
+      register: dotnet8_check
+      changed_when: false
+      failed_when: false
+
+    - name: Install the .NET 8 SDK from the AL2023 native repos (preferred)
+      ansible.builtin.package:
+        name: dotnet-sdk-8.0
+        state: present
+      register: dotnet8_dnf
+      when: dotnet8_check.rc != 0
+      failed_when: false
+
+    - name: Re-check for a .NET 8 SDK after the dnf attempt
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        command -v dotnet >/dev/null 2>&1 && dotnet --list-sdks 2>/dev/null | grep -q '^8\.'
+      args:
+        executable: /bin/bash
+      register: dotnet8_recheck
+      changed_when: false
+      failed_when: false
+      when: dotnet8_check.rc != 0
+
+    # --- Fallback: Microsoft dotnet-install.sh (channel 8.0), fixed location ---
+    # Only runs if the box had no 8.x SDK AND the AL2023 dnf package did not
+    # provide one. Idempotent via `creates:` on the SDK dir and the script's own
+    # skip-if-present behaviour.
+    - name: Fetch the official dotnet-install.sh (fallback path)
+      ansible.builtin.get_url:
+        url: "https://dot.net/v1/dotnet-install.sh"
+        dest: "/usr/local/bin/dotnet-install.sh"
+        mode: "0755"
+      when:
+        - dotnet8_check.rc != 0
+        - dotnet8_recheck is defined
+        - dotnet8_recheck.rc is defined
+        - dotnet8_recheck.rc != 0
+
+    - name: Install the .NET 8 SDK via dotnet-install.sh (channel 8.0, fallback)
+      ansible.builtin.command:
+        cmd: "/usr/local/bin/dotnet-install.sh --channel 8.0 --install-dir {{ dotnet_install_dir }}"
+        creates: "{{ dotnet_install_dir }}/sdk"
+      when:
+        - dotnet8_check.rc != 0
+        - dotnet8_recheck is defined
+        - dotnet8_recheck.rc is defined
+        - dotnet8_recheck.rc != 0
+
+    - name: Symlink dotnet into PATH (fallback install)
+      ansible.builtin.file:
+        src: "{{ dotnet_install_dir }}/dotnet"
+        dest: "/usr/local/bin/dotnet"
+        state: link
+      when:
+        - dotnet8_check.rc != 0
+        - dotnet8_recheck is defined
+        - dotnet8_recheck.rc is defined
+        - dotnet8_recheck.rc != 0
+
+    - name: Add DOTNET_ROOT/PATH profile.d entry (fallback install)
+      ansible.builtin.copy:
+        dest: "/etc/profile.d/dotnet.sh"
+        mode: "0644"
+        content: |
+          # Managed by sync-agent.ansible.yml — .NET 8 SDK (dotnet-install.sh fallback)
+          export DOTNET_ROOT={{ dotnet_install_dir }}
+          export PATH="$PATH:{{ dotnet_install_dir }}"
+      when:
+        - dotnet8_check.rc != 0
+        - dotnet8_recheck is defined
+        - dotnet8_recheck.rc is defined
+        - dotnet8_recheck.rc != 0
+
+    - name: Verify a .NET 8 SDK is installed
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        dotnet --list-sdks | grep '^8\.'
+      args:
+        executable: /bin/bash
+      environment:
+        DOTNET_ROOT: "{{ dotnet_install_dir }}"
+        PATH: "{{ ansible_env.PATH }}:{{ dotnet_install_dir }}"
+      register: dotnet8_verify
+      changed_when: false
+
+    - name: Report .NET 8 SDK status
+      ansible.builtin.debug:
+        msg: ".NET 8 SDK present: {{ dotnet8_verify.stdout_lines }}"
+
+    # -------------------------------------------------------------------------
+    # 4. Ensure the mount point directory exists.
+    # -------------------------------------------------------------------------
+    - name: Ensure the FSxN source volume mount point exists
+      ansible.builtin.file:
+        path: "{{ p4_workspace_mount }}"
+        state: directory
+        mode: "0755"
+
+    # -------------------------------------------------------------------------
+    # 5. Add the NFSv3 mount to /etc/fstab (boot-time, fixed) and mount it now.
+    #    ansible.builtin.mount is idempotent: it manages the fstab entry AND
+    #    mounts it (state: mounted). Re-runs are a no-op if already mounted with
+    #    matching options.
+    # -------------------------------------------------------------------------
+    - name: Configure and activate the FSxN source volume NFSv3 mount (fstab)
+      ansible.posix.mount:
+        path: "{{ p4_workspace_mount }}"
+        # export path on the SVM = the volume junction path (e.g. /p4-workspace)
+        src: "{{ fsxn_nfs_endpoint }}:{{ p4_workspace_junction }}"
+        fstype: nfs
+        opts: "{{ nfs_mount_opts }}"
+        state: mounted
+
+    # -------------------------------------------------------------------------
+    # 6. Verify the mount is active (idempotent verification, no side effects).
+    # -------------------------------------------------------------------------
+    - name: Verify the FSxN source volume is mounted
+      ansible.builtin.command: "mountpoint -q {{ p4_workspace_mount }}"
+      register: mount_check
+      changed_when: false
+      failed_when: mount_check.rc != 0
+
+    - name: Report mount status
+      ansible.builtin.debug:
+        msg: >-
+          FSxN source volume mounted:
+          {{ fsxn_nfs_endpoint }}:{{ p4_workspace_junction }}
+          -> {{ p4_workspace_mount }} (NFSv3)
+
+    # -------------------------------------------------------------------------
+    # 7. Make the mounted workspace writable by the Horde agent user.
+    #
+    #    WHY: the FSxN source volume is a UNIX-security-style volume whose export
+    #    root comes up owned root:root 0755. The Horde agent runs as `Horde`
+    #    (uid 1001), so `p4 sync` fails with "Permission denied" when it tries to
+    #    create directories under the workspace. Setting the mount root to the
+    #    agent user + group with mode 0775 lets the agent write while keeping the
+    #    tree group-writable.
+    #
+    #    ORDERING: this MUST run AFTER section 5's `state: mounted` so the chown
+    #    lands on the NFS export root (the live volume), NOT the empty local
+    #    mount-point directory underneath it. Because it is UNIX security style,
+    #    the NFS server honours the chown (verified: the runtime fix took effect
+    #    and persists — the live mount is 1001:1001 0775).
+    #
+    #    IDEMPOTENCY + NON-DESTRUCTIVE: ansible.builtin.file with owner/group/mode
+    #    reports `changed` only when ownership/mode actually differ, so re-runs
+    #    are a no-op once correct. We deliberately do NOT use `recurse: true`:
+    #    a recursive chown of the large (tens of GB) already-synced tree would be
+    #    slow and unnecessary — p4 sync creates new files/dirs as the agent user
+    #    once the writable export root allows it. Existing synced data is left
+    #    untouched (no re-sync, no delete).
+    # -------------------------------------------------------------------------
+    - name: Make the mounted workspace root writable by the Horde agent user (uid 1001)
+      ansible.builtin.file:
+        path: "{{ p4_workspace_mount }}"
+        state: directory
+        owner: "{{ agent_user }}"
+        group: "{{ agent_user }}"
+        mode: "0775"
+
+    # -------------------------------------------------------------------------
+    # 8. Establish P4 SSL trust for the Horde agent user.
+    #
+    #    WHY: the Perforce server is SSL (ssl:<host>:1666). Before the agent user
+    #    can run any `p4` command against it, that user must trust the server's
+    #    SSL fingerprint — otherwise the first `p4` call fails with an SSL trust
+    #    error. Trust is stored per-user in ~/.p4trust; the Horde agent process
+    #    runs as `Horde` with HOME=/home/Horde, so the trust file must live at
+    #    /home/Horde/.p4trust (verified present on the live agent for
+    #    10.0.10.51:1666).
+    #
+    #    P4PORT is reassembled from the colon-free components passed via the SSM
+    #    association's ExtraVariables (p4_scheme:p4_host:p4_port_num). We run
+    #    `p4 trust -y` as the `Horde` user with P4PORT + an explicit P4TRUST
+    #    pointing at that user's home so trust is written to the right file.
+    #
+    #    IDEMPOTENCY: `p4 trust -y` is safe to re-run — it re-affirms the
+    #    fingerprint. We gate the command on the trust file NOT already
+    #    containing an entry for this host:port, so steady-state re-runs report
+    #    `ok` rather than `changed`.
+    #
+    #    SKIP CASE: when the endpoint components are empty (operator wired an
+    #    external endpoint unknown at apply time) we skip trust here — the same
+    #    null-safe behaviour the Windows build-agent script uses for an unknown
+    #    P4PORT.
+    # -------------------------------------------------------------------------
+    - name: Reassemble P4PORT from the colon-free endpoint components
+      ansible.builtin.set_fact:
+        p4_port: "{{ p4_scheme }}:{{ p4_host }}:{{ p4_port_num }}"
+        p4_endpoint_provided: "{{ (p4_scheme | length > 0) and (p4_host | length > 0) and (p4_port_num | length > 0) }}"
+
+    - name: Establish P4 SSL trust for the Horde agent user (writes ~/.p4trust)
+      ansible.builtin.command:
+        cmd: "p4 -p {{ p4_port }} trust -y"
+      environment:
+        # Run "as" the Horde user by pointing P4 at that user's home + trust file
+        # so the fingerprint is written to /home/Horde/.p4trust.
+        HOME: "{{ agent_home }}"
+        P4TRUST: "{{ agent_home }}/.p4trust"
+      become: true
+      become_user: "{{ agent_user }}"
+      register: p4_trust_result
+      changed_when: "'Added trust' in p4_trust_result.stdout or 'trust of this fingerprint' in p4_trust_result.stdout"
+      # Idempotent: skip if the trust file already has an entry for this host:port.
+      when:
+        - p4_endpoint_provided | bool
+        - not lookup('ansible.builtin.file', agent_home ~ '/.p4trust', errors='ignore') is search(p4_host ~ ':' ~ p4_port_num)
+
+    - name: Report P4 SSL trust status
+      ansible.builtin.debug:
+        msg: >-
+          P4 SSL trust for {{ agent_user }} against
+          {{ p4_port if (p4_endpoint_provided | bool) else '(none)' }}:
+          {{ 'established/affirmed' if (p4_endpoint_provided | bool) else 'skipped (no p4 endpoint provided)' }}
