@@ -3288,6 +3288,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#in-vpc-build-winrm-stays-private-the-real-approach-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-VPC build (WinRM stays private) — the real approach used
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#security" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3400,6 +3411,46 @@ packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</s
 <p>The resulting AMI name is prefixed <code>windows-horde-build-agent-&lt;timestamp&gt;</code>. The
 Terraform sample looks it up by that prefix via <code>data.aws_ami</code>, so no AMI ID is
 hardcoded.</p>
+<h3 id="in-vpc-build-winrm-stays-private-the-real-approach-used">In-VPC build (WinRM stays private) — the real approach used<a class="headerlink" href="#in-vpc-build-winrm-stays-private-the-real-approach-used" title="Permanent link">&para;</a></h3>
+<p>Because <code>associate_public_ip_address = false</code> and <code>ssh_interface = "private_ip"</code>,
+Packer must be able to reach the temporary Windows instance's WinRM (5986) over
+the instance's <strong>private IP</strong>. That means <strong>Packer must run from inside the same
+VPC</strong>. If your workstation's egress blocks outbound WinRM 5986 to public IPs (or
+the build subnet has no public path at all), run Packer from a throwaway Linux
+builder launched in the <strong>same private subnet</strong> (NAT egress for the Windows
+instance's Chocolatey/VS downloads; drive the builder via SSM Run Command).</p>
+<p>The <code>build-agent</code> AMI in account <code>968702293218</code> / <code>us-east-1</code> was built this way:</p>
+<ol>
+<li>Throwaway <code>t3.medium</code> Amazon Linux 2023 builder in private subnet
+   <code>subnet-0385cfd1499c39579</code> (<code>vpc-078c7e9b60fb64cef</code>, <code>10.0.2.0/24</code>, us-east-1a),
+   <strong>no public IP</strong>, instance profile = <code>AmazonSSMManagedInstanceCore</code> + a
+   scoped inline EC2/S3 policy sufficient for the <code>amazon-ebs</code> builder. <code>packer</code></li>
+<li><code>git</code> installed via the HashiCorp dnf repo. Template staged builder-side
+   via a throwaway S3 bucket.</li>
+<li>On the builder (<code>export HOME=/home/ec2-user</code>):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>init<span class="w"> </span>.
+packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span>build.pkrvars.hcl<span class="w"> </span>windows-horde.pkr.hcl
+</code></pre></div>
+<p>with <code>build.pkrvars.hcl</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                                </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
+<span class="na">vpc_id</span><span class="w">                                </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-078c7e9b60fb64cef"</span>
+<span class="na">subnet_id</span><span class="w">                             </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-0385cfd1499c39579"</span><span class="c1">  # same private subnet as the builder</span>
+<span class="na">associate_public_ip_address</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+<span class="na">ssh_interface</span><span class="w">                         </span><span class="o">=</span><span class="w"> </span><span class="s2">"private_ip"</span>
+<span class="c1"># Packer creates its own temporary SG; scope WinRM 5986 ingress to the</span>
+<span class="c1"># builder's subnet CIDR. NEVER 0.0.0.0/0.</span>
+<span class="na">temporary_security_group_source_cidrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"10.0.2.0/24"</span><span class="p">]</span>
+<span class="na">instance_type</span><span class="w">                         </span><span class="o">=</span><span class="w"> </span><span class="s2">"c6a.4xlarge"</span>
+<span class="na">root_volume_size</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span><span class="m">256</span>
+<span class="na">public_key</span><span class="w">                            </span><span class="o">=</span><span class="w"> </span><span class="s2">"&lt;ephemeral ssh public key&gt;"</span>
+</code></pre></div>
+<p>Build time ≈ 40 min (VS2022 Build Tools dominates). The build fails unless
+   <code>validate_image.ps1</code> prints <code>VALIDATION PASSED</code>.</p>
+<ol>
+<li>Tear down all scaffolding (builder instance, instance profile + role,
+   ephemeral keypair, staging bucket, builder SG). Keep only the AMI + snapshot.</li>
+</ol>
 <h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>associate_public_ip_address</code> defaults to <strong>false</strong> and <code>ssh_interface</code> to
@@ -3640,7 +3691,7 @@ Scheduled Task is registered.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-02
+    2026-09-03
   </span>
 
     

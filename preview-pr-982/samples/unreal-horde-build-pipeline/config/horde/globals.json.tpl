@@ -57,7 +57,7 @@
   "perforceClusters": [
     {
       "name": "default",
-      "serviceAccount": { "userName": "${p4_user}", "password": "__P4_PASSWORD__" },
+      "serviceAccount": "${p4_user}",
       "servers": [ { "serverAndPort": "${p4_port}" } ],
       "credentials": [ { "userName": "${p4_user}", "password": "__P4_PASSWORD__" } ]
     }
