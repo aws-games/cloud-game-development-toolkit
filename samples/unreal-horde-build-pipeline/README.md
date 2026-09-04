@@ -162,13 +162,33 @@ Terraform emits the following outputs (see `outputs.tf`):
 - `horde_p4_credentials_secret_arn` — echoes the pre-created Horde P4 username/password secret ARN you passed in via `horde_p4_credentials_secret_arn` (JSON, sensitive). This sample does not create the secret.
 - `fsxn_password_secret_arn` — the FSxN `fsxadmin` password secret (sensitive).
 
-### Align the Perforce `svc-horde` password (required)
+### Configure the Perforce `svc-horde` user (required)
+
+Horde authenticates to Perforce as `svc-horde` (the `perforceClusters` credentials in
+`globals.json`, sourced from the pre-created secret), but **Terraform cannot provision that user
+inside p4d**. After the P4 server is up you must complete the following one-time manual steps on
+the server, in order, so the Horde stream poller can log in and read the stream. These commands
+assume a Perforce super user; on the bundled SDP server, run `p4` after sourcing `p4_vars` for the
+instance.
+
+#### 1. Create the `svc-horde` user
+
+`svc-horde` must exist as a Perforce user. It can be a standard user, but a `service`-type user is
+preferred for least privilege. Skip this step if your deployment already auto-created the user.
+
+```bash
+# Idempotent create/edit; set Type: service in the spec for least privilege
+p4 -u <super> user -f -o svc-horde | \
+  sed 's/^Type:.*/Type:\tservice/' | \
+  p4 -u <super> user -f -i
+```
+
+#### 2. Set the password to match the pre-created secret
 
 The secret you pre-created (and passed via `horde_p4_credentials_secret_arn`) holds the **real
-password you chose** for the Horde P4 user (`svc-horde`). Terraform cannot set that password on
-the P4 user itself. After the P4 server is up, set the `svc-horde` user's password **on the
-server** to match the value already in the secret, or Horde will not be able to authenticate to
-Perforce:
+password you chose** for `svc-horde`. Terraform cannot set that password on the P4 user itself.
+Set the user's password **on the server** to match the value already in the secret, or Horde will
+not be able to authenticate to Perforce:
 
 ```bash
 # Confirm the password already stored in your pre-created secret
@@ -179,6 +199,57 @@ p4 -u <super> passwd svc-horde
 ```
 
 Rotating one side without the other breaks Horde's Perforce connection.
+
+#### 3. Grant protections on the stream depot
+
+`svc-horde` must be authorized in the protections table (`p4 protect`) to read/write the stream
+depot the poller monitors. Add a line matching this pattern (using your depot in place of the
+generic `//YourGame/...` placeholder):
+
+```
+write user svc-horde * //YourGame/...
+```
+
+`p4 protect` is **order-sensitive**: later lines override earlier ones for overlapping paths, so
+place this grant where it will not be overridden by a subsequent exclusionary line (e.g.
+`list user * -//YourGame/...`). Without this grant the Horde poller fails and the server logs:
+
+```
+Access for user 'svc-horde' has not been enabled by 'p4 protect'
+```
+
+`super` is **not** required for the poller — the `write ... //YourGame/...` line is exactly what
+grants the stream access it needs. Keep it least-privilege.
+
+#### 4. Add `svc-horde` to service-user groups
+
+Add `svc-horde` to a group with an `unlimited` (or long) `Timeout` so its login ticket does not
+expire and interrupt polling. Perforce service accounts are also commonly added to a dedicated
+service-users group. Use the idempotent `p4 group -o` / `p4 group -i` edit pattern:
+
+```bash
+# Grant an unlimited ticket timeout (create the group if it doesn't exist)
+p4 -u <super> group -o unlimited_timeout | \
+  sed 's/^Timeout:.*/Timeout:\tunlimited/' | \
+  p4 -u <super> group -i
+
+# Add svc-horde to the group's Users list, then re-submit
+p4 -u <super> group -o unlimited_timeout   # add "\tsvc-horde" under Users:, save
+# ...or scripted:
+p4 -u <super> group -o unlimited_timeout | \
+  awk '/^Users:/{print; print "\tsvc-horde"; next} {print}' | \
+  p4 -u <super> group -i
+```
+
+Group membership only affects the ticket timeout — it does **not** grant depot access; the
+protections line from step 3 does that.
+
+#### These are manual, one-time steps
+
+Like the Packer AMI build, these are **manual, one-time** steps — Terraform does not perform them.
+They persist across normal server restarts, and on SDP servers all of these edits (user, protect,
+group specs) are journaled and survive restarts. You only need to redo them if the P4 database is
+ever **rebuilt from scratch** without a checkpoint/journal restore.
 
 ### Run the pipelines from the Horde UI
 
