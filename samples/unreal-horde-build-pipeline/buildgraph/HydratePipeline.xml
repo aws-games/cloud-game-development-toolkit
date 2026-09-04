@@ -1,0 +1,81 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- =====================================================================
+	     HydratePipeline.xml
+	     =====================================================================
+	     Periodic hydration: attach the persistent SOURCE LUN, p4 sync it to
+	     head, then snapshot it as cl-<changelist>. Every per-build FlexClone is
+	     taken from one of those snapshots.
+
+	     THE HYDRATOR IS NOW WINDOWS, NOT LINUX. That is the substantive
+	     consequence of moving the data path to SAN: the LUN carries NTFS, so its
+	     writer must be Windows, and it must be the ONLY writer. The pool
+	     condition in globals.json.tpl changed from OSFamily == 'Linux' to
+	     'Windows' to match, and config/sync-agent.ansible.yml (a Linux NFS fstab
+	     playbook) is gone: the source LUN's per-boot needs (MSiSCSI + a unique
+	     initiator IQN) are baked into the build-agent AMI, and all ONTAP/mount
+	     work is job-time (hydrate-source-lun.ps1).
+
+	     WHY SINGLE-WRITER IS ENFORCED, NOT JUST DOCUMENTED: NTFS is not a shared
+	     filesystem. The source LUN is mapped to a single-host igroup, and
+	     hydrate-source-lun.ps1 passes -SingleHost when registering this host's
+	     IQN, so if the igroup already holds a different initiator the run FAILS
+	     rather than quietly becoming a second writer on one filesystem.
+
+	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
+	       * <Agent Name="SyncAgent"> matches the agentTypes key "SyncAgent"
+	         (SyncPool, now OSFamily == 'Windows').
+	       * <Node Name="Sync And Snapshot"> matches -Target=Sync And Snapshot.
+	       * Every <Option> without a DefaultValue must be injected as a -set:
+	         argument there, or the job fails at graph-parse time.
+	     ===================================================================== -->
+
+	<!-- Perforce -->
+	<Option Name="Stream" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
+	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
+	<Option Name="P4PasswordSecret" DefaultValue="" Description="Optional Secrets Manager secret holding the P4 password. Empty = rely on an existing ticket." />
+	<!-- Host-less on purpose: the build agents p4 flush against THIS client to
+	     inherit its have-list, which is impossible if the client is pinned to a
+	     host. See hydrate-source-lun.ps1. -->
+	<Option Name="WorkspaceName" DefaultValue="fsxn-hydrator" Description="Perforce client for the source LUN. MUST be host-less so build agents can flush against it." />
+
+	<!-- ONTAP / SAN -->
+	<Option Name="VolumeName" Description="ONTAP source volume that contains the workspace LUN" />
+	<Option Name="LunName" DefaultValue="workspace" Description="LUN name inside the source volume" />
+	<Option Name="HydratorIgroup" Description="SINGLE-HOST iSCSI igroup that owns the source LUN. Never share this with build agents - NTFS has exactly one legitimate writer." />
+	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management endpoint (DNS name or IP) for the REST API" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for the ONTAP password" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+	<Option Name="IscsiPortals" Description="Comma-separated SVM iSCSI portal addresses (Terraform output fsxn_iscsi_portals)" />
+	<Option Name="SourceMountDrive" DefaultValue="S" Description="Drive letter for the source LUN on the hydrator (no colon)" />
+	<Option Name="LunSize" DefaultValue="250g" Description="Size for the source LUN when it is first created (thin provisioned)" />
+
+	<!-- FIRST RUN ONLY. A brand-new LUN is RAW and needs initialise+format; an
+	     already-hydrated LUN contains NTFS and formatting it would destroy
+	     exactly the data we care about. Mount-SanLun additionally refuses to
+	     reformat a disk that is not RAW even when this is set, but leave it false
+	     in steady state. -->
+	<Option Name="FormatIfRaw" DefaultValue="false" Description="Set true ONLY to provision a brand-new empty LUN. Never in steady state." />
+
+	<Agent Name="SyncAgent" Type="AnyAgent">
+		<!-- Node name MUST be "Sync And Snapshot" to match globals.json
+		     -Target=Sync And Snapshot. (Do not rename to "Sync From Stream".) -->
+		<Node Name="Sync And Snapshot">
+			<!-- The snapshot name is deliberately NOT a parameter any more.
+			     hydrate-source-lun.ps1 derives it from the changelist it actually
+			     synced and names the snapshot cl-{N}, because the build agent's
+			     `p4 flush @N` is metadata-only and trusts that number - a
+			     caller-supplied name that disagrees with the contents silently
+			     corrupts every clone taken from it. The script also flushes the
+			     NTFS write cache before snapshotting, without which the snapshot
+			     omits whatever was still in the Windows cache. -->
+			<Property Name="FormatArg" Value="" />
+			<Property Name="FormatArg" Value="-FormatIfRaw" If="'$(FormatIfRaw)' == 'true'" />
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/hydrate-source-lun.ps1 -Stream &quot;$(Stream)&quot; -SourceVolume &quot;$(VolumeName)&quot; -LunName &quot;$(LunName)&quot; -HydratorIgroup &quot;$(HydratorIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4PasswordSecret &quot;$(P4PasswordSecret)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -MountDrive &quot;$(SourceMountDrive)&quot; -LunSize &quot;$(LunSize)&quot; $(FormatArg)" />
+		</Node>
+	</Agent>
+</BuildGraph>

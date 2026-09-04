@@ -1,0 +1,17 @@
+# Terraform state, plan, and local var files must never be committed for this sample.
+*.tfstate
+*.tfstate.*
+*.tfplan
+*tfplan*
+terraform.tfvars
+*.auto.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# Keep the example var file tracked.
+!terraform.tfvars.example
+
+# AI/agent scratch and memory docs must never reach this sample.
+.memory/
+.scratch/
+scratch/
