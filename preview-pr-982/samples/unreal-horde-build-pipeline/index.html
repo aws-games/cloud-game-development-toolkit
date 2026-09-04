@@ -3382,10 +3382,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#align-the-perforce-svc-horde-password-required" class="md-nav__link">
+  <a href="#configure-the-perforce-svc-horde-user-required" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Align the Perforce svc-horde password (required)
+        Configure the Perforce svc-horde user (required)
       
     </span>
   </a>
@@ -3676,12 +3676,26 @@ terraform<span class="w"> </span>apply
 <li><code>horde_p4_credentials_secret_arn</code> — echoes the pre-created Horde P4 username/password secret ARN you passed in via <code>horde_p4_credentials_secret_arn</code> (JSON, sensitive). This sample does not create the secret.</li>
 <li><code>fsxn_password_secret_arn</code> — the FSxN <code>fsxadmin</code> password secret (sensitive).</li>
 </ul>
-<h3 id="align-the-perforce-svc-horde-password-required">Align the Perforce <code>svc-horde</code> password (required)<a class="headerlink" href="#align-the-perforce-svc-horde-password-required" title="Permanent link">&para;</a></h3>
+<h3 id="configure-the-perforce-svc-horde-user-required">Configure the Perforce <code>svc-horde</code> user (required)<a class="headerlink" href="#configure-the-perforce-svc-horde-user-required" title="Permanent link">&para;</a></h3>
+<p>Horde authenticates to Perforce as <code>svc-horde</code> (the <code>perforceClusters</code> credentials in
+<code>globals.json</code>, sourced from the pre-created secret), but <strong>Terraform cannot provision that user
+inside p4d</strong>. After the P4 server is up you must complete the following one-time manual steps on
+the server, in order, so the Horde stream poller can log in and read the stream. These commands
+assume a Perforce super user; on the bundled SDP server, run <code>p4</code> after sourcing <code>p4_vars</code> for the
+instance.</p>
+<h4 id="1-create-the-svc-horde-user">1. Create the <code>svc-horde</code> user<a class="headerlink" href="#1-create-the-svc-horde-user" title="Permanent link">&para;</a></h4>
+<p><code>svc-horde</code> must exist as a Perforce user. It can be a standard user, but a <code>service</code>-type user is
+preferred for least privilege. Skip this step if your deployment already auto-created the user.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Idempotent create/edit; set Type: service in the spec for least privilege</span>
+p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>user<span class="w"> </span>-f<span class="w"> </span>-o<span class="w"> </span>svc-horde<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>sed<span class="w"> </span><span class="s1">'s/^Type:.*/Type:\tservice/'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>user<span class="w"> </span>-f<span class="w"> </span>-i
+</code></pre></div>
+<h4 id="2-set-the-password-to-match-the-pre-created-secret">2. Set the password to match the pre-created secret<a class="headerlink" href="#2-set-the-password-to-match-the-pre-created-secret" title="Permanent link">&para;</a></h4>
 <p>The secret you pre-created (and passed via <code>horde_p4_credentials_secret_arn</code>) holds the <strong>real
-password you chose</strong> for the Horde P4 user (<code>svc-horde</code>). Terraform cannot set that password on
-the P4 user itself. After the P4 server is up, set the <code>svc-horde</code> user's password <strong>on the
-server</strong> to match the value already in the secret, or Horde will not be able to authenticate to
-Perforce:</p>
+password you chose</strong> for <code>svc-horde</code>. Terraform cannot set that password on the P4 user itself.
+Set the user's password <strong>on the server</strong> to match the value already in the secret, or Horde will
+not be able to authenticate to Perforce:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Confirm the password already stored in your pre-created secret</span>
 aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;horde_p4_credentials_secret_arn&gt;
 
@@ -3689,6 +3703,42 @@ aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-valu
 p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>passwd<span class="w"> </span>svc-horde
 </code></pre></div>
 <p>Rotating one side without the other breaks Horde's Perforce connection.</p>
+<h4 id="3-grant-protections-on-the-stream-depot">3. Grant protections on the stream depot<a class="headerlink" href="#3-grant-protections-on-the-stream-depot" title="Permanent link">&para;</a></h4>
+<p><code>svc-horde</code> must be authorized in the protections table (<code>p4 protect</code>) to read/write the stream
+depot the poller monitors. Add a line matching this pattern (using your depot in place of the
+generic <code>//YourGame/...</code> placeholder):</p>
+<div class="highlight"><pre><span></span><code>write user svc-horde * //YourGame/...
+</code></pre></div>
+<p><code>p4 protect</code> is <strong>order-sensitive</strong>: later lines override earlier ones for overlapping paths, so
+place this grant where it will not be overridden by a subsequent exclusionary line (e.g.
+<code>list user * -//YourGame/...</code>). Without this grant the Horde poller fails and the server logs:</p>
+<div class="highlight"><pre><span></span><code>Access for user 'svc-horde' has not been enabled by 'p4 protect'
+</code></pre></div>
+<p><code>super</code> is <strong>not</strong> required for the poller — the <code>write ... //YourGame/...</code> line is exactly what
+grants the stream access it needs. Keep it least-privilege.</p>
+<h4 id="4-add-svc-horde-to-service-user-groups">4. Add <code>svc-horde</code> to service-user groups<a class="headerlink" href="#4-add-svc-horde-to-service-user-groups" title="Permanent link">&para;</a></h4>
+<p>Add <code>svc-horde</code> to a group with an <code>unlimited</code> (or long) <code>Timeout</code> so its login ticket does not
+expire and interrupt polling. Perforce service accounts are also commonly added to a dedicated
+service-users group. Use the idempotent <code>p4 group -o</code> / <code>p4 group -i</code> edit pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Grant an unlimited ticket timeout (create the group if it doesn't exist)</span>
+p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>group<span class="w"> </span>-o<span class="w"> </span>unlimited_timeout<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>sed<span class="w"> </span><span class="s1">'s/^Timeout:.*/Timeout:\tunlimited/'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>group<span class="w"> </span>-i
+
+<span class="c1"># Add svc-horde to the group's Users list, then re-submit</span>
+p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>group<span class="w"> </span>-o<span class="w"> </span>unlimited_timeout<span class="w">   </span><span class="c1"># add "\tsvc-horde" under Users:, save</span>
+<span class="c1"># ...or scripted:</span>
+p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>group<span class="w"> </span>-o<span class="w"> </span>unlimited_timeout<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>awk<span class="w"> </span><span class="s1">'/^Users:/{print; print "\tsvc-horde"; next} {print}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"> </span>group<span class="w"> </span>-i
+</code></pre></div>
+<p>Group membership only affects the ticket timeout — it does <strong>not</strong> grant depot access; the
+protections line from step 3 does that.</p>
+<h4 id="these-are-manual-one-time-steps">These are manual, one-time steps<a class="headerlink" href="#these-are-manual-one-time-steps" title="Permanent link">&para;</a></h4>
+<p>Like the Packer AMI build, these are <strong>manual, one-time</strong> steps — Terraform does not perform them.
+They persist across normal server restarts, and on SDP servers all of these edits (user, protect,
+group specs) are journaled and survive restarts. You only need to redo them if the P4 database is
+ever <strong>rebuilt from scratch</strong> without a checkpoint/journal restore.</p>
 <h3 id="run-the-pipelines-from-the-horde-ui">Run the pipelines from the Horde UI<a class="headerlink" href="#run-the-pipelines-from-the-horde-ui" title="Permanent link">&para;</a></h3>
 <p>Open <code>horde_server_url</code> in a browser (from the deployer machine). The <code>globals.json</code> config defines a project (<code>Game Project</code>) with a stream and two templates:</p>
 <ul>
@@ -3852,7 +3902,7 @@ start with a letter or <code>_</code>, then letters/digits/<code>_</code>, ≤20
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-02
+    2026-09-04
   </span>
 
     

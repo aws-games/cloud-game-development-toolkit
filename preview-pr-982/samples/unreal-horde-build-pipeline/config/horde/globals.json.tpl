@@ -62,6 +62,24 @@
       "credentials": [ { "userName": "${p4_user}", "password": "__P4_PASSWORD__" } ]
     }
   ],
+  "_comment_storage": [
+    "Storage config: registers the namespaces Horde needs so agent log-blob uploads succeed.",
+    "Without this, 'horde-logs' is unregistered and agent log uploads fail with HTTP 500",
+    "StorageException ('Namespace horde-logs not found').",
+    "PROOF-ONLY BACKEND: 'Memory' is in-memory/ephemeral — logs & artifacts are LOST on task",
+    "restart. This is fine for validating the log-upload pipeline. PRODUCTION should use an S3",
+    "backend (requires a dedicated bucket + task-role IAM permissions). Tracked as follow-up in",
+    "issue #993."
+  ],
+  "storage": {
+    "backends": [
+      { "id": "default-backend", "type": "Memory" }
+    ],
+    "namespaces": [
+      { "id": "horde-logs",      "backend": "default-backend", "gcDelayHrs": 0 },
+      { "id": "horde-artifacts", "backend": "default-backend", "gcDelayHrs": 0 }
+    ]
+  },
   "pools": [
     { "id": "sync-pool", "name": "SyncPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true },
     { "id": "build-pool", "name": "BuildPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true }
