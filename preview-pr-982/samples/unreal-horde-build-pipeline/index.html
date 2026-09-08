@@ -3590,6 +3590,15 @@ p4<span class="w"> </span>-u<span class="w"> </span>&lt;super&gt;<span class="w"
 <h3 id="4-seed-the-perforce-depot-project-engine">4. Seed the Perforce depot (project + engine)<a class="headerlink" href="#4-seed-the-perforce-depot-project-engine" title="Permanent link">&para;</a></h3>
 <p>The depot must contain a <strong>source-available</strong> UE project <strong>and</strong> the matching engine before a build can compile anything. This is manual — the sample does not seed the depot.</p>
 <p><strong>Run the helper instead of hand-writing P4 commands.</strong> From the in-VPC Windows workstation (see below), run <a href="scripts/seed-depot.ps1"><code>scripts/seed-depot.ps1</code></a> — see the script header for parameters. It creates the stream depot/stream if absent, submits the project under a subfolder, submits the Build scripts, provisions the engine (branch from the depot with <code>p4 populate</code>, or submit a local tree), and verifies the layout. Supports <code>-WhatIf</code>.</p>
+<p><strong>Where to run it + prerequisites.</strong> This sample does <strong>not</strong> deploy a host to run the seed from — run <code>scripts/seed-depot.ps1</code> from <strong>any host you choose</strong>: your local workstation, a CI runner, or an EC2 instance you provision yourself. Wherever you run it, that host must have:</p>
+<ul>
+<li>The Perforce CLI <code>p4</code> on <code>PATH</code>.</li>
+<li>PowerShell (the script is a <code>.ps1</code>).</li>
+<li><strong>Network reachability to the Perforce server's <code>P4PORT</code>.</strong> The bundled P4 server is in a <strong>private subnet</strong>, so the host must be in the VPC or on a VPN/peered network that can reach it (e.g. an in-VPC EC2 instance, or your workstation over VPN).</li>
+<li>The project tree + BuildGraph scripts available locally to submit.</li>
+<li>AWS CLI + credentials <strong>only if</strong> you use <code>-P4PasswordSecret</code> (which reads the P4 password from Secrets Manager). If you pass <code>-P4Password</code> directly, the AWS CLI is <strong>not</strong> required.</li>
+</ul>
+<p><strong>Tearing the depot back down later.</strong> Because <code>seed-depot.ps1</code> creates a <strong>stream depot</strong>, <code>p4 depot -d &lt;depot&gt;</code> will refuse with <code>location of existing streams</code> until the versioned stream spec is obliterated first — after deleting the stream's files/spec, run <code>p4 stream --obliterate -y //&lt;depot&gt;/&lt;stream&gt;</code> (Perforce 2019.1+), then delete the depot.</p>
 <p><strong>Required stream layout.</strong> The stream must be laid out so the project is in a subfolder (the <a href="#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root">drive-root gotcha</a>) and the engine tree is present (<a href="#7-the-engine-must-be-present-in-the-stream--on-the-lun">engine-in-stream</a>):</p>
 <div class="highlight"><pre><span></span><code>//YourGame/main/
 ├── &lt;Project&gt;/            # the .uproject, Source/, Config/, Content/  (NEVER at the stream root)
