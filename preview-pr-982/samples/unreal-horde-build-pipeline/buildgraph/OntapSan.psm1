@@ -411,8 +411,25 @@ function Mount-SanLun {
     $letter = $DriveLetter.TrimEnd(':')
     $disk = Wait-SanDisk -Ctx $Ctx -LunPath $LunPath
 
-    if ($disk.IsOffline)  { Set-Disk -Number $disk.Number -IsOffline $false }
-    if ($disk.IsReadOnly) { Set-Disk -Number $disk.Number -IsReadOnly $false }
+    # A FlexClone LUN of a snapshot attaches READ-ONLY: ONTAP marks the clone's
+    # LUN read-only and Windows surfaces the disk with IsReadOnly=$true. Windows
+    # REFUSES to bring a read-only disk online writable, so the read-only flag
+    # MUST be cleared BEFORE the online call - the previous order (online first)
+    # failed with "The disk is read only" (StorageWMI 41002). Re-query after each
+    # step because the $disk snapshot from Wait-SanDisk goes stale immediately.
+    if ($disk.IsReadOnly) {
+        Set-Disk -Number $disk.Number -IsReadOnly $false -ErrorAction Stop
+        $disk = Get-Disk -Number $disk.Number
+    }
+    if ($disk.IsOffline) {
+        Set-Disk -Number $disk.Number -IsOffline $false -ErrorAction Stop
+        $disk = Get-Disk -Number $disk.Number
+    }
+    # Defensive: clearing IsOffline can re-assert a read-only attribute on some
+    # clone LUNs; clear it once more so the volume is writable for p4 flush.
+    if ($disk.IsReadOnly) {
+        Set-Disk -Number $disk.Number -IsReadOnly $false -ErrorAction SilentlyContinue
+    }
 
     if ($Format) {
         if ($disk.PartitionStyle -ne 'RAW') {
