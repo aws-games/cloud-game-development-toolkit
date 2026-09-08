@@ -97,8 +97,15 @@ New-Item -ItemType Directory -Path $agentJsonDir -Force | Out-Null
 
 # Configure and start the agent
 & "$hordedir\HordeAgent.exe" SetServer -Default -Url="https://${fully_qualified_domain_name}"
-& "$hordedir\HordeAgent.exe" Service Install -Start=false
+& "$hordedir\HordeAgent.exe" Service Install -Start=true
 
-# Schedule a reboot in 5 minutes
+# Belt-and-suspenders: ensure the service is running now, independent of any
+# future reboot. -Start=true above should have started it, but if the service
+# was registered as Automatic and deferred, this catches it.
+Start-Service HordeAgent -ErrorAction SilentlyContinue
+
+# Schedule a reboot in 5 minutes — still needed for Rename-Computer and
+# LongPathsEnabled to take full effect. The agent is already running and
+# enrolling; it will re-register cleanly after the reboot.
 shutdown /r /d p:4:2 /t $(60*5)
 </powershell>
