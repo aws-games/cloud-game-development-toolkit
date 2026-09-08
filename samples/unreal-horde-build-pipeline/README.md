@@ -60,7 +60,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
   - override `horde_server_image` with an image you can pull without authentication.
 - **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.)
 - **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.
-- **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts (`OntapSan.psm1`, `create-build-client.ps1`, `hydrate-source-lun.ps1`, `teardown-clone.ps1`) must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root (confirmed working). See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
+- **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts (`OntapSan.psm1`, `create-build-client.ps1`, `hydrate-source-lun.ps1`, `teardown-clone-lun.ps1`) must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root (confirmed working). See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
 
 ## Build the Windows build-agent AMI (manual prerequisite)
 
@@ -263,7 +263,9 @@ Open `horde_server_url` in a browser (from the deployer machine). The `globals.j
 > **Approve agent enrollment first.** Horde 5.5 does **not** auto-approve agents — newly
 > enrolled Sync and Build agents sit **pending** until an operator approves them (Horde UI or
 > `POST /api/v1/enrollment`). Until you do, the pools have no online agents and jobs never
-> lease. See [step 7 of the runbook](#7-approve-agent-enrollment-in-the-horde-ui).
+> lease. Note that `enable_new_agents_by_default` does **not** auto-approve enrollment — it only
+> controls whether an agent is enabled *once approved*; setting it true does not skip this manual
+> approval step. See [step 7 of the runbook](#7-approve-agent-enrollment-in-the-horde-ui).
 
 For the full deploy-to-first-build sequence — including seeding the depot with a
 source-available project and the matching engine — follow the
@@ -366,7 +368,7 @@ tail of the `p4 sync`. `New-OntapSnapshot -FlushDriveLetter` issues the
 `RunLate="true"` is **not** a BuildGraph `<Node>` attribute, and the semantics it was
 reaching for do not exist: a node ordered after a **failed** node is *Skipped*. So the
 `Cleanup Clone` node is a success-only fast path. Guaranteed teardown is registered as a
-**Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone.ps1`), which
+**Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone-lun.ps1`), which
 runs regardless of outcome.
 
 Neither path survives a **hard Spot reclaim**, since both run *on the agent*. If you run
@@ -486,7 +488,7 @@ Submit all of these to `//YourGame/main/Build/` so the `-Script=Build/...` paths
 - `buildgraph/BuildPipeline.xml`
 - `buildgraph/OntapSan.psm1`
 - the pipeline `*.ps1` scripts (including `buildgraph/create-build-client.ps1`,
-  `hydrate-source-lun.ps1`, and `teardown-clone.ps1`)
+  `hydrate-source-lun.ps1`, and `teardown-clone-lun.ps1`)
 
 ### 6. Make Horde aware of the stream / project
 

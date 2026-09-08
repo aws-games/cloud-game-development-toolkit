@@ -171,7 +171,7 @@ variable "horde_p4_credentials_secret_arn" {
 
 variable "enable_new_agents_by_default" {
   type        = bool
-  description = "Whether newly registered Horde agents are enabled automatically."
+  description = "Whether an agent, ONCE APPROVED/ENROLLED, is enabled by default. This does NOT auto-approve enrollment: on Horde 5.5 newly registered agents sit pending until an operator approves them (Horde UI or POST /api/v1/enrollment) - a separate manual step (see the end-to-end runbook). Leaving this true does not populate empty pools by itself."
   default     = true
 }
 
