@@ -95,11 +95,14 @@
           "clusterName": "default",
           "agentTypes": {
             "SyncAgent": { "pool": "sync-pool", "workspace": "SyncWorkspace" },
-            "BuildAgent": { "pool": "build-pool", "workspace": "BuildWorkspace" }
+            "BuildAgent": { "pool": "build-pool", "workspace": "BuildWorkspace" },
+            "Win64": { "pool": "build-pool", "workspace": "SetupWorkspace" },
+            "AnyAgent": { "pool": "sync-pool", "workspace": "SyncWorkspace" }
           },
           "workspaceTypes": {
             "SyncWorkspace": { "cluster": "default", "incremental": true },
-            "BuildWorkspace": { "cluster": "default", "incremental": true }
+            "BuildWorkspace": { "cluster": "default", "incremental": true },
+            "SetupWorkspace": { "cluster": "default", "incremental": true }
           },
           "templates": [
             {

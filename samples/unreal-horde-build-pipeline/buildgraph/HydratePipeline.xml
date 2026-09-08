@@ -32,7 +32,7 @@
 	     ===================================================================== -->
 
 	<!-- Perforce -->
-	<Option Name="Stream" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="P4PasswordSecret" DefaultValue="" Description="Optional Secrets Manager secret holding the P4 password. Empty = rely on an existing ticket." />
@@ -42,15 +42,15 @@
 	<Option Name="WorkspaceName" DefaultValue="fsxn-hydrator" Description="Perforce client for the source LUN. MUST be host-less so build agents can flush against it." />
 
 	<!-- ONTAP / SAN -->
-	<Option Name="VolumeName" Description="ONTAP source volume that contains the workspace LUN" />
+	<Option Name="VolumeName" DefaultValue="" Description="ONTAP source volume that contains the workspace LUN" />
 	<Option Name="LunName" DefaultValue="workspace" Description="LUN name inside the source volume" />
-	<Option Name="HydratorIgroup" Description="SINGLE-HOST iSCSI igroup that owns the source LUN. Never share this with build agents - NTFS has exactly one legitimate writer." />
+	<Option Name="HydratorIgroup" DefaultValue="" Description="SINGLE-HOST iSCSI igroup that owns the source LUN. Never share this with build agents - NTFS has exactly one legitimate writer." />
 	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
-	<Option Name="FsxAdminIp" Description="FSx ONTAP management endpoint (DNS name or IP) for the REST API" />
+	<Option Name="FsxAdminIp" DefaultValue="" Description="FSx ONTAP management endpoint (DNS name or IP) for the REST API" />
 	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
-	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for the ONTAP password" />
+	<Option Name="OntapPasswordSecretName" DefaultValue="" Description="AWS Secrets Manager secret name for the ONTAP password" />
 	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
-	<Option Name="IscsiPortals" Description="Comma-separated SVM iSCSI portal addresses (Terraform output fsxn_iscsi_portals)" />
+	<Option Name="IscsiPortals" DefaultValue="" Description="Comma-separated SVM iSCSI portal addresses (Terraform output fsxn_iscsi_portals)" />
 	<Option Name="SourceMountDrive" DefaultValue="S" Description="Drive letter for the source LUN on the hydrator (no colon)" />
 	<Option Name="LunSize" DefaultValue="250g" Description="Size for the source LUN when it is first created (thin provisioned)" />
 

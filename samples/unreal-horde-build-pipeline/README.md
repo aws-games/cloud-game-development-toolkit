@@ -4,6 +4,8 @@ This sample deploys an [Unreal Engine Horde](https://dev.epicgames.com/documenta
 
 The core idea has two moving parts. A **Hydrator** (Sync) agent periodically syncs a persistent FSxN **LUN** from a Perforce stream and snapshots it as `cl-<changelist>`. When a build is requested, a **Build Agent** creates an instant [FlexClone](https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-concept.html) of that snapshot, presents the clone's LUN to itself over **iSCSI as real NTFS**, transplants the Perforce have-list with `p4 flush` (metadata-only), syncs only the delta, compiles, and tears the clone down. The result is per-build workspaces in ~10 s instead of a multi-minute full sync, with UBA enabled.
 
+**This pipeline has been proven end-to-end on a live UE 5.5.4 deployment.** Hydrating a Perforce stream → ONTAP snapshot `cl-<N>` → FlexClone → iSCSI mount as `W:` (real NTFS) → `p4 flush` (metadata-only: ~2 s for 209k files, no bulk transfer) → **compile `UnrealEditor` from source off the clone LUN**. Both a UBA-off baseline and a UBA-on run produced `BUILD SUCCESSFUL`; the UBA-on run logged `Using Unreal Build Accelerator executor`, stood up a `UbaServer` listener, and spent ~250 s in the UBA executor. The concrete project validated was Epic's **Lyra** sample (a real C++ project with `Source/` and `Modules[]`). See the [end-to-end runbook](#end-to-end-runbook) for the exact steps and per-job arguments.
+
 **The data path is iSCSI/NTFS, not NFS.** Both agent pools are Windows. See *Operational requirements* below for why — the short version is that Windows NFSv3 cannot run a UBA build at all.
 
 ## Architecture
@@ -22,7 +24,7 @@ The sample composes existing CGD Toolkit modules (`modules/perforce`, `modules/u
 Two BuildGraph pipelines drive the workflow, and their agent/node names are coupled to `config/horde/globals.json.tpl`:
 
 - `buildgraph/HydratePipeline.xml` — agent `SyncAgent`, node `Sync And Snapshot`, run by the `hydrate` template on `SyncPool`.
-- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, nodes `Clone And Mount` / `Compile` / `Cleanup Clone`, run by the `build` template on `BuildPool`. Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook, **not** the cleanup node — see below.
+- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, a single merged `Compile` node (clone → iSCSI mount `W:` → per-build P4 client → `p4 flush` → clear read-only → `Build.bat`), run by the `build` template on `BuildPool`. The clone/mount/flush/compile steps are deliberately **one node** because each BuildGraph node runs as its own process and a drive-letter mount does not persist across processes. Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook — see below.
 
 ```text
                          Perforce stream (//YourGame/main)
@@ -39,9 +41,9 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
                                             v
    Build Agent (Windows, BuildPool) --> map clone LUN -> igroup horde_san_agents
    BuildPipeline.xml                --> iSCSI attach as W: (real NTFS)
-   "Clone And Mount"                --> p4 flush @<N>   (have-list, no transfer)
-   "Compile"                        --> p4 sync         (delta only)
-   "Cleanup Clone"                  --> compile with UBA ENABLED
+   single "Compile" node            --> p4 flush @<N>   (have-list, no transfer)
+   (clone+mount+flush+compile       --> p4 sync         (delta only)
+    in ONE process)                 --> clear read-only, Build.bat with UBA ENABLED
    + UE_HORDE_CLEANUP lease hook    --> offline disk, unmap LUN, delete clone
 
    Horde server (ECS) -- external HTTPS ALB (deployer /32) --> browser UI
@@ -58,7 +60,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
   - override `horde_server_image` with an image you can pull without authentication.
 - **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.)
 - **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.
-- **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root.
+- **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts (`OntapSan.psm1`, `create-build-client.ps1`, `hydrate-source-lun.ps1`, `teardown-clone.ps1`) must be submitted to your Perforce depot under `Build/` so that the `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` paths in `globals.json` resolve against the stream root (confirmed working). See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
 
 ## Build the Windows build-agent AMI (manual prerequisite)
 
@@ -256,7 +258,16 @@ ever **rebuilt from scratch** without a checkpoint/journal restore.
 Open `horde_server_url` in a browser (from the deployer machine). The `globals.json` config defines a project (`Game Project`) with a stream and two templates:
 
 - **Hydration Pipeline** — runs on a 60-minute schedule (`patterns: [{ interval: 60 }]`). It syncs the stream onto the source FSxN volume and snapshots it. You can also trigger it manually to seed the first snapshot.
-- **Build Pipeline** — on-demand. Trigger it from the Horde UI once a snapshot exists; it clones the latest snapshot, syncs incrementally, compiles, and cleans up.
+- **Build Pipeline** — on-demand. Trigger it from the Horde UI once a snapshot exists; it clones the latest snapshot, syncs incrementally, compiles, and cleans up. It requires per-job arguments (`SnapshotName`, `SnapshotChangelist`, `CloneVolumeName`, `UEProject`, `UETarget`, `UEPlatform`, `UEConfiguration`, and `ExtraUbtArgs=-UBA`) — see [step 9 of the runbook](#9-trigger-the-build-pipeline-per-job-arguments).
+
+> **Approve agent enrollment first.** Horde 5.5 does **not** auto-approve agents — newly
+> enrolled Sync and Build agents sit **pending** until an operator approves them (Horde UI or
+> `POST /api/v1/enrollment`). Until you do, the pools have no online agents and jobs never
+> lease. See [step 7 of the runbook](#7-approve-agent-enrollment-in-the-horde-ui).
+
+For the full deploy-to-first-build sequence — including seeding the depot with a
+source-available project and the matching engine — follow the
+[end-to-end runbook](#end-to-end-runbook).
 
 ## Security
 
@@ -367,14 +378,173 @@ fail too.
 ### 5. ONTAP volume names reject hyphens
 
 `build-{jobId}` fails with an opaque HTTP 400. Use `build_{jobid}`, lowercased. (ONTAP:
-start with a letter or `_`, then letters/digits/`_`, ≤203 chars.)
+start with a letter or `_`, then letters/digits/`_`, ≤203 chars.) This is why the per-job
+`CloneVolumeName` argument must be lowercase alphanumeric/underscore with **no hyphens**.
 
-## Still to confirm when you deploy
+### 6. The project must live in a subfolder, not at the drive root
 
-1. **Unreal compile arguments.** The `Compile` node calls `<drive>:\Engine\Build\BatchFiles\Build.bat` with `UETarget`/`UEPlatform`/`UEConfiguration`/`UEProject`. For a real project build set `UEProject` to the `.uproject` path on the mounted clone and confirm the BatchFiles path and target names against your engine. Note that Horde invokes BuildGraph via `<workspace>/Engine/Build/BatchFiles/RunUAT.bat`, so **the engine must be present in the stream**.
-2. **Horde `globals.json` schema.** The pool conditions (`OSFamily == 'Linux'` / `'Windows'`) casing and the legacy top-level (version 1) vs. newer nested schema may need adjustment for your deployed Horde server version.
-3. **`-Script` depot paths.** `-Script=Build/HydratePipeline.xml` and `-Script=Build/BuildPipeline.xml` resolve against the stream root only once the `buildgraph/` files are submitted to the depot under `Build/`. Confirm the paths resolve after submitting.
-4. **Narrow the orchestration workspace.** The agent that only parses the BuildGraph XML still syncs the whole stream — 9 minutes of a 20-minute job in our runs. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer; use a Perforce **virtual stream** containing just the bootstrap slice and point the workspace's `stream` at it.
+A UE project placed at the **drive root** of the clone LUN (e.g. `W:\Project.uproject`)
+crashes UnrealBuildTool with a `NullReferenceException` in `SourceFileWorkingSet`:
+`ProjectDir.ParentDirectory` is `null` at a drive root. The project **must** live in a
+subfolder on the clone LUN (e.g. `W:\<Project>\<Project>.uproject`), so `ProjectDir` has a
+non-null parent. That maps directly to the required depot layout — the project sits under
+`//YourGame/main/<Project>/`, never at the stream root. See the [depot layout](#4-seed-the-perforce-depot-with-a-source-available-ue-project--engine)
+in the runbook.
+
+### 7. The engine must be present in the stream / on the LUN
+
+The `Compile` node resolves `<drive>:\Engine\Build\BatchFiles\Build.bat` off the clone, so
+the UE **engine tree must be on the LUN** — i.e. in the stream under `//YourGame/main/Engine/`.
+This is confirmed required, not optional. Note that an **installed-engine** build (identified
+by the `Engine/Build/InstalledBuild.txt` sentinel) compiles **project modules only** — this is
+correct behavior, but a from-source editor compile like the one validated here needs the full
+engine source tree present.
+
+### 8. `p4 noallwrite` makes synced files read-only — UBT must be able to write
+
+With a `noallwrite` client, synced files are read-only on disk. UnrealBuildTool needs to write
+generated headers into `<drive>:\Engine\Intermediate`, which fails against read-only files.
+`BuildPipeline.xml` therefore clears the read-only attribute (`attrib -R <drive>:\*.* /S /D`)
+before invoking `Build.bat`. If you would rather not clear attributes, use an **`allwrite`**
+client for the per-build workspace instead — but do one or the other, or the compile fails
+writing intermediates.
+
+### 9. Clone + mount + flush + compile must be ONE BuildGraph node
+
+Each BuildGraph node runs as its **own process**, and a Windows drive-letter iSCSI mount does
+**not** persist across processes. `BuildPipeline.xml` therefore merges clone, iSCSI mount of
+`W:`, per-build P4 client creation rooted on `W:`, `p4 flush @SnapshotChangelist`, the
+read-only clear, and `Build.bat` into a **single merged `Compile` node**. Splitting these into
+separate nodes drops the mount between steps.
+
+## End-to-end runbook
+
+This is the exact sequence proven on the live UE 5.5.4 deployment. Steps 1–3 and 5–6 are
+covered in detail above and cross-referenced here; steps 4, 7, 8 and 9 are the manual
+operations the sample does **not** automate. Do them in order.
+
+### 1. Build the Windows build-agent AMI
+
+One-time operator step, **before** `terraform apply`. See
+[Build the Windows build-agent AMI](#build-the-windows-build-agent-ami-manual-prerequisite).
+
+### 2. Deploy with Terraform
+
+See [Deployment](#deployment). Provisions the VPC, FSxN, ECS Horde server, Perforce, and the
+two agent launch templates. The external ALB is locked to the deployer `/32` — no
+`0.0.0.0/0` ingress anywhere.
+
+### 3. Configure the `svc-horde` P4 user
+
+One-time manual P4 setup so the Horde poller can read the stream. See
+[Configure the Perforce `svc-horde` user](#configure-the-perforce-svc-horde-user-required).
+
+### 4. Seed the Perforce depot with a source-available UE project + engine
+
+The depot must contain a **source-available** UE project **and** the matching engine before a
+build can compile anything. This is manual — the sample does not seed the depot.
+
+**Required stream layout.** The stream must be laid out so the project is in a subfolder (the
+[drive-root gotcha](#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root)) and the
+engine tree is present ([engine-in-stream](#7-the-engine-must-be-present-in-the-stream--on-the-lun)):
+
+```text
+//YourGame/main/
+├── <Project>/            # the .uproject, Source/, Config/, Content/  (NEVER at the stream root)
+│   ├── <Project>.uproject
+│   ├── Source/           # C++ source — REQUIRED for a from-source compile
+│   ├── Config/
+│   └── Content/
+├── Build/                # the buildgraph scripts (see step 5)
+└── Engine/               # the full UE engine tree (Build.bat, BatchFiles, Source, ...)
+```
+
+**Use a project with C++ source.** The project **must** have `Source/` and real `Modules[]` in
+its `.uproject`. The concrete project validated here was Epic's **Lyra** (from the entitled
+`EpicGames/UnrealEngine` repo at `Samples/Games/Lyra`, at the tag matching your engine version —
+e.g. `5.5.4-release`). Getting Lyra requires a GitHub account linked to and accepted into the
+Epic Games organization. **Do not** pick a content-only sample: Epic's Stack-O-Bot
+Launcher/Fab sample ships prebuilt DLLs with **no `Source/`** and **cannot be compiled from
+source** — a build against it fails because there is nothing to compile.
+
+**Seeding approach used.** Bring up an in-VPC Windows workstation in a **private** subnet,
+reachable via **SSM / Fleet Manager** with **no public ingress** (a security group with zero
+inbound rules — consistent with the no-`0.0.0.0/0` posture of this sample). Install `p4` on it,
+then submit the project and engine into the stream:
+
+- The **engine** tree is large (~34 GiB). Rather than re-uploading it, branch it from an
+  existing engine path already in the depot with `p4 populate` / `p4 integrate` into
+  `//YourGame/main/Engine/...`.
+- Submit the **project** under `//YourGame/main/<Project>/...` — never at the stream root.
+
+### 5. Submit the BuildGraph scripts to the depot under `Build/`
+
+Submit all of these to `//YourGame/main/Build/` so the `-Script=Build/...` paths in
+`globals.json` resolve against the stream root (confirmed working):
+
+- `buildgraph/HydratePipeline.xml`
+- `buildgraph/BuildPipeline.xml`
+- `buildgraph/OntapSan.psm1`
+- the pipeline `*.ps1` scripts (including `buildgraph/create-build-client.ps1`,
+  `hydrate-source-lun.ps1`, and `teardown-clone.ps1`)
+
+### 6. Make Horde aware of the stream / project
+
+The project, stream, and the two templates are delivered by
+`config/horde/globals.json.tpl`, which points the templates at `Build/HydratePipeline.xml`
+and `Build/BuildPipeline.xml`. Changing streams or templates means editing
+`config/horde/globals.json.tpl` and redeploying (or applying the config to the live server).
+
+Confirmed `globals.json` requirements for the live Horde **5.5** server (a **flat, top-level
+v1** schema):
+
+- `agentTypes` mapping `Win64 → build-pool` and `AnyAgent → sync-pool`, plus `workspaceTypes`.
+- A **`storage` block** (backends + namespaces for `horde-logs` and `horde-artifacts`).
+  Without it, agent log uploads fail with **HTTP 500 `Namespace not found`**.
+
+### 7. Approve agent enrollment in the Horde UI
+
+Horde 5.5 does **not** auto-approve agents. New agents sit **pending** until an operator
+approves them — via the Horde UI, or `POST /api/v1/enrollment`. Until you approve them,
+`SyncPool` and `BuildPool` have **no online agents** and jobs never lease. Approve the Sync
+and Build agents once they enroll.
+
+### 8. Trigger the Hydration Pipeline to create the first snapshot
+
+Run the **Hydration Pipeline** from the Horde UI (or wait for the 60-minute schedule). It
+syncs the stream onto the source FSxN volume and creates the first snapshot named `cl-<N>`.
+Note the `<N>` — it is the changelist you pass to the build.
+
+### 9. Trigger the Build Pipeline (per-job arguments)
+
+Trigger the **Build Pipeline** on-demand. These arguments are **per run** and must be supplied
+each time — they are **not** baked into the config:
+
+| Argument | Value | Notes |
+|---|---|---|
+| `SnapshotName` | `cl-<N>` | the snapshot from step 8 |
+| `SnapshotChangelist` | `<N>` | the changelist number; `p4 flush` trusts this — wrong value silently desyncs the have-list |
+| `CloneVolumeName` | e.g. `build_1234` | lowercase alphanumeric/underscore, **no hyphens** (ONTAP rejects them) |
+| `UEProject` | `<drive>:/<Project>/<Project>.uproject` | path on the mounted clone; **must be in a subfolder**, not the drive root |
+| `UETarget` | the real editor target, e.g. `LyraEditor` | the actual target name — **not** just `Editor` |
+| `UEPlatform` | `Win64` | |
+| `UEConfiguration` | `Development` | |
+| `ExtraUbtArgs` | `-UBA` | enables Unreal Build Accelerator for the accelerated build |
+
+Expect `BUILD SUCCESSFUL` compiling off the clone LUN. With `-UBA` the log shows
+`Using Unreal Build Accelerator executor` and a `UbaServer` listener.
+
+## Forward-looking notes
+
+- **Narrow the orchestration workspace.** The agent that only parses the BuildGraph XML still
+  syncs the whole stream — 9 minutes of a 20-minute job in our runs. A workspace-level `view`
+  is **silently ignored** by Horde's Perforce materializer; a Perforce **virtual stream**
+  containing just the bootstrap slice, with the workspace's `stream` pointed at it, should
+  narrow this. Not yet validated on this deployment.
+- **Off-agent clone reaper for Spot.** On-agent teardown (the `UE_HORDE_CLEANUP` lease hook)
+  does not survive a hard Spot reclaim. If you run agents on Spot, add a scheduled off-agent
+  reaper that deletes `build_*` clones whose Horde job is no longer running (see
+  [§4 of the operational requirements](#4-clone-teardown-must-not-rely-on-a-buildgraph-node)).
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
