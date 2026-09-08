@@ -15,3 +15,7 @@ terraform.tfvars
 .memory/
 .scratch/
 scratch/
+
+# Apply/plan logs and editor backup files must never be committed for this sample.
+*.log
+*.bak
