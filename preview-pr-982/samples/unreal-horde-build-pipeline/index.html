@@ -3746,7 +3746,7 @@
 <li>override <code>horde_server_image</code> with an image you can pull without authentication.</li>
 <li><strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This sample does <strong>not</strong> create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve against an ARN that is only known after apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.)</li>
 <li><strong>No custom BuildGraph task compilation is required.</strong> The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (<code>buildgraph/OntapSan.psm1</code> plus three scripts), so you do <strong>not</strong> need to compile the C# tasks in <code>assets/buildgraph/tasks</code> into your <code>AutomationTool</code>. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.</li>
-<li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files <strong>and</strong> the supporting <code>*.ps1</code> scripts (<code>OntapSan.psm1</code>, <code>create-build-client.ps1</code>, <code>hydrate-source-lun.ps1</code>, <code>teardown-clone.ps1</code>) must be submitted to your Perforce depot under <code>Build/</code> so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve against the stream root (confirmed working). See <a href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build">runbook step 5</a>.</li>
+<li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files <strong>and</strong> the supporting <code>*.ps1</code> scripts (<code>OntapSan.psm1</code>, <code>create-build-client.ps1</code>, <code>hydrate-source-lun.ps1</code>, <code>teardown-clone-lun.ps1</code>) must be submitted to your Perforce depot under <code>Build/</code> so that the <code>-Script=Build/HydratePipeline.xml</code> and <code>-Script=Build/BuildPipeline.xml</code> paths in <code>globals.json</code> resolve against the stream root (confirmed working). See <a href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build">runbook step 5</a>.</li>
 </ul>
 <h2 id="build-the-windows-build-agent-ami-manual-prerequisite">Build the Windows build-agent AMI (manual prerequisite)<a class="headerlink" href="#build-the-windows-build-agent-ami-manual-prerequisite" title="Permanent link">&para;</a></h2>
 <p>This is a <strong>one-time operator step you run before <code>terraform apply</code>.</strong> It is intentionally <strong>not</strong> automated by this sample — building a Windows image with the full Unreal C++ toolchain takes ~30-45 minutes, and baking it once is far cheaper than re-installing the toolchain on every agent boot.</p>
@@ -3910,7 +3910,9 @@ ever <strong>rebuilt from scratch</strong> without a checkpoint/journal restore.
 <p><strong>Approve agent enrollment first.</strong> Horde 5.5 does <strong>not</strong> auto-approve agents — newly
 enrolled Sync and Build agents sit <strong>pending</strong> until an operator approves them (Horde UI or
 <code>POST /api/v1/enrollment</code>). Until you do, the pools have no online agents and jobs never
-lease. See <a href="#7-approve-agent-enrollment-in-the-horde-ui">step 7 of the runbook</a>.</p>
+lease. Note that <code>enable_new_agents_by_default</code> does <strong>not</strong> auto-approve enrollment — it only
+controls whether an agent is enabled <em>once approved</em>; setting it true does not skip this manual
+approval step. See <a href="#7-approve-agent-enrollment-in-the-horde-ui">step 7 of the runbook</a>.</p>
 </blockquote>
 <p>For the full deploy-to-first-build sequence — including seeding the depot with a
 source-available project and the matching engine — follow the
@@ -4030,7 +4032,7 @@ tail of the <code>p4 sync</code>. <code>New-OntapSnapshot -FlushDriveLetter</cod
 <p><code>RunLate="true"</code> is <strong>not</strong> a BuildGraph <code>&lt;Node&gt;</code> attribute, and the semantics it was
 reaching for do not exist: a node ordered after a <strong>failed</strong> node is <em>Skipped</em>. So the
 <code>Cleanup Clone</code> node is a success-only fast path. Guaranteed teardown is registered as a
-<strong>Horde lease-end hook</strong> (<code>UE_HORDE_CLEANUP</code> → <code>buildgraph/teardown-clone.ps1</code>), which
+<strong>Horde lease-end hook</strong> (<code>UE_HORDE_CLEANUP</code> → <code>buildgraph/teardown-clone-lun.ps1</code>), which
 runs regardless of outcome.</p>
 <p>Neither path survives a <strong>hard Spot reclaim</strong>, since both run <em>on the agent</em>. If you run
 agents on Spot — which is the point of making hydration cheap — add an <strong>off-agent
@@ -4123,7 +4125,7 @@ then submit the project and engine into the stream:</p>
 <li><code>buildgraph/BuildPipeline.xml</code></li>
 <li><code>buildgraph/OntapSan.psm1</code></li>
 <li>the pipeline <code>*.ps1</code> scripts (including <code>buildgraph/create-build-client.ps1</code>,
-  <code>hydrate-source-lun.ps1</code>, and <code>teardown-clone.ps1</code>)</li>
+  <code>hydrate-source-lun.ps1</code>, and <code>teardown-clone-lun.ps1</code>)</li>
 </ul>
 <h3 id="6-make-horde-aware-of-the-stream-project">6. Make Horde aware of the stream / project<a class="headerlink" href="#6-make-horde-aware-of-the-stream-project" title="Permanent link">&para;</a></h3>
 <p>The project, stream, and the two templates are delivered by

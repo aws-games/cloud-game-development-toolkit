@@ -10,10 +10,12 @@
 # github_credentials_secret_arn (below) with credentials that can read it, or
 # override horde_server_image with an image you can pull.
 #
-# NOTE (post-deploy P4 password alignment): this sample creates a purpose-built
-# Secrets Manager secret with a RANDOM placeholder password for the Horde P4
-# user (default "svc-horde"). After the P4 Server is up, align the P4 user's
-# password with the secret value, e.g.:
+# NOTE (post-deploy P4 password alignment): this sample does NOT create the P4
+# secret. You pre-create a Secrets Manager secret shaped
+#   {"username":"svc-horde","password":"..."}
+# and pass its ARN via horde_p4_credentials_secret_arn (a REQUIRED input when
+# deploying the bundled Perforce). After the P4 Server is up, set the svc-horde
+# P4 user's password to match the value stored in the secret, e.g.:
 #     p4 -u <super> passwd svc-horde   # set to the value stored in the secret
 # Rotating one side without the other breaks Horde's Perforce connection.
 ##################################################
@@ -57,7 +59,7 @@ perforce_stream = "//YourGame/main"
 # fsxn_throughput_capacity = 128
 
 # --- Horde agents ---
-# sync_agent_instance_type  = "c6i.xlarge"   # network-optimized Linux sync pool
+# sync_agent_instance_type  = "c6i.2xlarge"  # Windows sync/hydrator pool - source LUN is NTFS; see variables.tf
 # build_agent_instance_type = "c6a.8xlarge"  # compute-optimized Windows build pool
 # build_agent_max_count     = 5
 #
