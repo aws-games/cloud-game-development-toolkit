@@ -4,9 +4,9 @@ This sample deploys an [Unreal Engine Horde](https://dev.epicgames.com/documenta
 
 The core idea has two moving parts. A **Hydrator** (Sync) agent periodically syncs a persistent FSxN **LUN** from a Perforce stream and snapshots it as `cl-<changelist>`. When a build is requested, a **Build Agent** creates an instant [FlexClone](https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-concept.html) of that snapshot, presents the clone's LUN to itself over **iSCSI as real NTFS**, transplants the Perforce have-list with `p4 flush` (metadata-only), syncs only the delta, compiles, and tears the clone down. The result is per-build workspaces in ~10 s instead of a multi-minute full sync, with UBA enabled.
 
-**This pipeline has been proven end-to-end on a live UE 5.5.4 deployment.** Hydrating a Perforce stream → ONTAP snapshot `cl-<N>` → FlexClone → iSCSI mount as `W:` (real NTFS) → `p4 flush` (metadata-only) → **compile `UnrealEditor` from source off the clone LUN**. Both a UBA-off baseline and a UBA-on run produced `BUILD SUCCESSFUL`; the UBA-on run logged `Using Unreal Build Accelerator executor`, stood up a `UbaServer` listener, and spent ~250 s in the UBA executor. The concrete project validated was Epic's **Lyra** sample (a real C++ project with `Source/` and `Modules[]`).
+The pipeline compiles `UnrealEditor` from source off the FlexClone LUN with **UBA (Unreal Build Accelerator) enabled**. The end-to-end path is: hydrate a Perforce stream → ONTAP snapshot `cl-<N>` → FlexClone → iSCSI mount as `W:` (real NTFS) → `p4 flush` (metadata-only) → **compile `UnrealEditor` from source off the clone LUN**. It targets a source-available UE project such as Epic's **Lyra** sample (a real C++ project with `Source/` and `Modules[]`).
 
-**The data path is iSCSI/NTFS, not NFS.** Both agent pools are Windows — the short version is that Windows NFSv3 cannot run a UBA build at all. See the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) for the full reasoning.
+**The data path is iSCSI/NTFS, not NFS.** Both agent pools are Windows because Windows NFSv3 cannot run a UBA build; see the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) for the full reasoning.
 
 ## Big picture / what you're signing up for
 
@@ -81,7 +81,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
   - provide `github_credentials_secret_arn` — a Secrets Manager secret with GitHub credentials that can read the private image; or
   - override `horde_server_image` with an image you can pull without authentication.
 - **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.) The password value stored here must match the password set on the P4 user in [runbook step 3](#3-configure-the-svc-horde-p4-user); see [appendix §10](#10-the-svc-horde-password-must-match-on-both-sides).
-- **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build. The C# tasks remain in the repo for the NAS path.
+- **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build.
 - **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts must be submitted to your Perforce depot under `Build/` so the `-Script=Build/...` paths in `globals.json` resolve against the stream root. See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
 
 ---
@@ -174,7 +174,7 @@ Once the stack is up, continue with the [end-to-end runbook](#end-to-end-runbook
 
 ## End-to-end runbook
 
-This is the exact sequence proven on the live UE 5.5.4 deployment, and it is the authoritative "what to do" path. Steps 3, 4, 6, 7, 8 and 9 are manual operations the sample does **not** automate. Do them in order. Each step links into the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) for the "why".
+This is the authoritative "what to do" path. Steps 3, 4, 6, 7, 8 and 9 are manual operations the sample does **not** automate. Do them in order. Each step links into the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) for the "why".
 
 ### 1. Build the Windows build-agent AMI
 
@@ -268,13 +268,13 @@ The depot must contain a **source-available** UE project **and** the matching en
 └── Engine/               # the full UE engine tree (Build.bat, BatchFiles, Source, ...)
 ```
 
-**Use a project with C++ source.** The project **must** have `Source/` and real `Modules[]` in its `.uproject`. The concrete project validated here was Epic's **Lyra** (from the entitled `EpicGames/UnrealEngine` repo at `Samples/Games/Lyra`, at the tag matching your engine version — e.g. `5.5.4-release`). Getting Lyra requires a GitHub account linked to and accepted into the Epic Games organization. **Do not** pick a content-only sample: Epic's Stack-O-Bot Launcher/Fab sample ships prebuilt DLLs with **no `Source/`** and **cannot be compiled from source** — a build against it fails because there is nothing to compile.
+**Use a project with C++ source.** The project **must** have `Source/` and real `Modules[]` in its `.uproject`. A concrete example is Epic's **Lyra** (from the entitled `EpicGames/UnrealEngine` repo at `Samples/Games/Lyra`, at the tag matching your engine version — e.g. `5.5.4-release`). Getting Lyra requires a GitHub account linked to and accepted into the Epic Games organization. **Do not** pick a content-only sample: Epic's Stack-O-Bot Launcher/Fab sample ships prebuilt DLLs with **no `Source/`** and **cannot be compiled from source** — a build against it fails because there is nothing to compile.
 
 **Seeding environment.** Bring up an in-VPC Windows workstation in a **private** subnet, reachable via **SSM / Fleet Manager** with **no public ingress** (a security group with zero inbound rules — consistent with the no-`0.0.0.0/0` posture of this sample). Install `p4` on it, then run `scripts/seed-depot.ps1`. The engine tree is large (~34 GiB), so prefer the script's `-EngineDepotPath` option to branch an engine already in the depot with `p4 populate` (lazy copy, no re-upload) rather than submitting a local copy.
 
 ### 5. Submit the BuildGraph scripts to the depot under `Build/`
 
-Submit all of these to `//YourGame/main/Build/` so the `-Script=Build/...` paths in `globals.json` resolve against the stream root (confirmed working). `scripts/seed-depot.ps1` does this for you via `-BuildScriptsPath`:
+Submit all of these to `//YourGame/main/Build/` so the `-Script=Build/...` paths in `globals.json` resolve against the stream root. `scripts/seed-depot.ps1` does this for you via `-BuildScriptsPath`:
 
 - `buildgraph/HydratePipeline.xml`
 - `buildgraph/BuildPipeline.xml`
@@ -317,7 +317,7 @@ Expect `BUILD SUCCESSFUL` compiling off the clone LUN. With `-UBA` the log shows
 
 ## Troubleshooting
 
-Keyed to the exact error strings encountered while bringing this pipeline up live.
+Keyed to the exact error strings the pipeline can produce.
 
 | Error / symptom | Cause | Fix |
 |---|---|---|
@@ -338,34 +338,34 @@ Keyed to the exact error strings encountered while bringing this pipeline up liv
 
 ## Appendix: operational deep-dive (why the pipeline is built this way)
 
-These are the hard-won requirements from running the pipeline live. Each fact is stated once here and referenced from the runbook, args table, and troubleshooting sections above.
+These are the operational requirements and constraints of the pipeline. Each is stated once here and referenced from the runbook, args table, and troubleshooting sections above.
 
-The FlexClone premise holds up: measured against a **49.55 GB / 268,730-file** UE 5.7 stream, snapshot took **80 ms**, the FlexClone **1.2 s**, and the mount **31 ms**, with two ~45 GiB workspace volumes occupying **35.3 GiB** physical. But several things must be right or the pipeline either silently loses its benefit or does not work at all.
+The FlexClone premise holds up. For a **49.55 GB / 268,730-file** UE 5.7 stream: snapshot ~**80 ms**, FlexClone ~**1.2 s**, mount ~**31 ms**; two ~45 GiB workspace volumes occupy **35.3 GiB** physical. But several things must be right or the pipeline either silently loses its benefit or does not work at all.
 
 ### 1. The incremental sync needs `p4 flush` — this is not optional
 
 `p4 sync` is incremental only relative to the **client's have-list**, and the build agent's workspace is a fresh client. The files are on the clone, but the server has no record of that, so a bare `p4 sync` **re-transfers the entire stream** — the FlexClone completes in a second and then you pay the full sync anyway.
 
-`BuildPipeline.xml` therefore runs `p4 flush <stream>/...@$(SnapshotChangelist)` first, which writes the have-list **without transferring content** (measured: 3 s on Linux, 6 s on Windows; on the validated deployment `p4 flush` took ~2 s for 209k files with no bulk transfer). This is why snapshots must be named `cl-{N}` per ADR-003 and why `SnapshotChangelist` must be passed per job — flush is metadata-only and trusts you, so pointing it at the wrong changelist leaves the workspace silently disagreeing with the server about what is on disk.
+`BuildPipeline.xml` therefore runs `p4 flush <stream>/...@$(SnapshotChangelist)` first, which writes the have-list **without transferring content** (measured: 3 s on Linux, 6 s on Windows; ~2 s for 209k files, metadata-only, no bulk transfer). This is why snapshots must be named `cl-{N}` and why `SnapshotChangelist` must be passed per job — flush is metadata-only and trusts you, so pointing it at the wrong changelist leaves the workspace silently disagreeing with the server about what is on disk.
 
 Keep the hydrate schedule frequent: at a 10-changelist gap the following `sync` spent **26 s** walking the diff, versus ~1 s when the snapshot was at head.
 
 ### 2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works
 
-ADR-002 chose NFSv3 and rejected iSCSI on throughput grounds. Running the pipeline showed that reasoning was incomplete: **throughput was never the binding constraint — Windows filesystem semantics were.** On a Windows NFSv3 mount, four separate UE subsystems fail:
+The binding constraint on the data path is Windows filesystem semantics, not throughput — which is why the data path is iSCSI/NTFS rather than NFS. On a Windows NFSv3 mount, four separate UE subsystems fail:
 
 | Component | Failure on Windows NFSv3 |
 |---|---|
-| **UBA** (Unreal Build Accelerator) | Detours file I/O and calls `NtQueryInformationFile` on every input; the NFS redirector answers `0xc000000d`. Measured **628 failures, all on `Engine/Source/*`** — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all. |
+| **UBA** (Unreal Build Accelerator) | Detours file I/O and calls `NtQueryInformationFile` on every input; the NFS redirector answers `0xc000000d`. **628 failures, all on `Engine/Source/*`** — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all. |
 | **DDC** | mmap'd cache writes fail or corrupt |
 | **Shader library** | write failures during cook |
 | **Stager** | `SafeCopyFile` → `SetFileTime` fails and **retries forever**, so the job *hangs* instead of erroring |
 
-Each was only workaroundable by moving that write to local NTFS, which split the project across three locations and still left UBA off — and a build farm without a build accelerator is not the thing being demonstrated.
+Each is only workaroundable by moving that write to local NTFS, which splits the project across three locations and still leaves UBA off — which defeats the purpose of a build-acceleration pipeline.
 
-**A LUN presents real NTFS, so all four work and UBA stays enabled.** It is also ~40% faster to hydrate (measured on a 49.55 GB seed: **9m30s vs 15m33s**) because block I/O skips per-file metadata round-trips.
+**A LUN presents real NTFS, so all four work and UBA stays enabled.** It is also ~40% faster to hydrate: **9m30s vs 15m33s** on a 49.55 GB seed, because block I/O skips per-file metadata round-trips.
 
-Note what this does *not* cost: iSCSI authorises by initiator IQN (igroups), not by directory identity, so you get NTFS semantics **without** the AD/CIFS dependency that SMB would impose. That is the trade-off ADR-002 assumed it had to make, and it does not exist.
+Note what this does *not* cost: iSCSI authorises by initiator IQN (igroups), not by directory identity, so you get NTFS semantics **without** the AD/CIFS dependency that SMB would impose. No such trade-off is required.
 
 ### 3. NTFS is not a shared filesystem — hence two igroups
 
@@ -378,9 +378,9 @@ This is the one constraint SAN introduces, and it is a correctness boundary rath
 
 The shared igroup is safe because each clone LUN is used by exactly one job on one agent, so build agents self-register into it at job time. The source LUN is different: `hydrate-source-lun.ps1` registers its IQN with `-SingleHost` and **fails the run** if that igroup already holds a different initiator, rather than quietly becoming a second writer on one filesystem. Mapping the source LUN to the shared igroup would let two hosts corrupt one volume.
 
-Two consequences worth internalising:
+Two consequences:
 
-- **The hydrator is Windows now** (`SyncPool` condition changed from `OSFamily == 'Linux'` to `'Windows'`), because the LUN carries NTFS. The Linux Ansible playbook that fstab-mounted the NFS volume is gone.
+- **The hydrator is Windows, because the LUN carries NTFS** (`SyncPool` condition is `OSFamily == 'Windows'`).
 - **Connect exactly ONE iSCSI portal** unless the Windows MPIO feature is installed. Two portals without MPIO make Windows enumerate a single LUN as two disks — its own corruption trap. `Connect-SanPortal` enforces this.
 
 ### 3a. Flush the NTFS write cache before every snapshot
@@ -391,7 +391,7 @@ An ONTAP snapshot captures blocks as the array sees them, so anything still in t
 
 `RunLate="true"` is **not** a BuildGraph `<Node>` attribute, and the semantics it was reaching for do not exist: a node ordered after a **failed** node is *Skipped*. So the `Cleanup Clone` node is a success-only fast path. Guaranteed teardown is registered as a **Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone-lun.ps1`), which runs regardless of outcome.
 
-Neither path survives a **hard Spot reclaim**, since both run *on the agent*. If you run agents on Spot — which is the point of making hydration cheap — add an **off-agent reaper** on a schedule that deletes `build_*` clones whose Horde job is no longer running. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too.
+Neither path survives a **hard Spot reclaim**, since both run *on the agent*. If you run agents on Spot — since agents may be reclaimed — add an **off-agent reaper** on a schedule that deletes `build_*` clones whose Horde job is no longer running. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too.
 
 ### 5. ONTAP volume names reject hyphens
 
@@ -403,7 +403,7 @@ A UE project placed at the **drive root** of the clone LUN (e.g. `W:\Project.upr
 
 ### 7. The engine must be present in the stream / on the LUN
 
-The `Compile` node resolves `<drive>:\Engine\Build\BatchFiles\Build.bat` off the clone, so the UE **engine tree must be on the LUN** — i.e. in the stream under `//YourGame/main/Engine/`. This is confirmed required, not optional. Note that an **installed-engine** build (identified by the `Engine/Build/InstalledBuild.txt` sentinel) compiles **project modules only** — this is correct behavior, but a from-source editor compile like the one validated here needs the full engine source tree present.
+The `Compile` node resolves `<drive>:\Engine\Build\BatchFiles\Build.bat` off the clone, so the UE **engine tree must be on the LUN** — i.e. in the stream under `//YourGame/main/Engine/`. This is required, not optional. Note that an **installed-engine** build (identified by the `Engine/Build/InstalledBuild.txt` sentinel) compiles **project modules only** — this is correct behavior, but a from-source editor compile needs the full engine source tree present.
 
 ### 8. `p4 noallwrite` makes synced files read-only — UBT must be able to write
 
@@ -423,7 +423,7 @@ Newly enrolled Sync and Build agents sit **pending** until an operator approves 
 
 ## Forward-looking notes
 
-- **Narrow the orchestration workspace.** The agent that only parses the BuildGraph XML still syncs the whole stream — 9 minutes of a 20-minute job in our runs. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer; a Perforce **virtual stream** containing just the bootstrap slice, with the workspace's `stream` pointed at it, should narrow this. Not yet validated on this deployment.
+- **Narrow the orchestration workspace.** The agent that only parses the BuildGraph XML still syncs the whole stream — ~9 minutes of a ~20-minute job. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer; a Perforce **virtual stream** containing just the bootstrap slice, with the workspace's `stream` pointed at it, should narrow this. Not yet exercised.
 - **Off-agent clone reaper for Spot.** On-agent teardown (the `UE_HORDE_CLEANUP` lease hook) does not survive a hard Spot reclaim. If you run agents on Spot, add a scheduled off-agent reaper that deletes `build_*` clones whose Horde job is no longer running (see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node)).
 
 <!-- markdownlint-disable -->
