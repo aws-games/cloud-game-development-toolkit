@@ -245,6 +245,16 @@ The depot must contain a **source-available** UE project **and** the matching en
 
 **Run the helper instead of hand-writing P4 commands.** From the in-VPC Windows workstation (see below), run [`scripts/seed-depot.ps1`](scripts/seed-depot.ps1) — see the script header for parameters. It creates the stream depot/stream if absent, submits the project under a subfolder, submits the Build scripts, provisions the engine (branch from the depot with `p4 populate`, or submit a local tree), and verifies the layout. Supports `-WhatIf`.
 
+**Where to run it + prerequisites.** This sample does **not** deploy a host to run the seed from — run `scripts/seed-depot.ps1` from **any host you choose**: your local workstation, a CI runner, or an EC2 instance you provision yourself. Wherever you run it, that host must have:
+
+- The Perforce CLI `p4` on `PATH`.
+- PowerShell (the script is a `.ps1`).
+- **Network reachability to the Perforce server's `P4PORT`.** The bundled P4 server is in a **private subnet**, so the host must be in the VPC or on a VPN/peered network that can reach it (e.g. an in-VPC EC2 instance, or your workstation over VPN).
+- The project tree + BuildGraph scripts available locally to submit.
+- AWS CLI + credentials **only if** you use `-P4PasswordSecret` (which reads the P4 password from Secrets Manager). If you pass `-P4Password` directly, the AWS CLI is **not** required.
+
+**Tearing the depot back down later.** Because `seed-depot.ps1` creates a **stream depot**, `p4 depot -d <depot>` will refuse with `location of existing streams` until the versioned stream spec is obliterated first — after deleting the stream's files/spec, run `p4 stream --obliterate -y //<depot>/<stream>` (Perforce 2019.1+), then delete the depot.
+
 **Required stream layout.** The stream must be laid out so the project is in a subfolder (the [drive-root gotcha](#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root)) and the engine tree is present ([engine-in-stream](#7-the-engine-must-be-present-in-the-stream--on-the-lun)):
 
 ```text

@@ -278,7 +278,15 @@ if ($PSCmdlet.ShouldProcess($P4Port, "p4 login as $P4User")) {
 # 3. Create the stream depot + mainline stream if absent
 # ---------------------------------------------------------------------------
 Write-Step "Ensuring stream depot '$DepotName' exists (p4 depot -t stream)"
-$existingDepots = & p4 -p $P4Port -u $P4User depots 2>$null
+# On a clean first run `p4 depots` can write a benign message to stderr; under
+# $ErrorActionPreference='Stop' that native stderr is promoted to a TERMINATING
+# NativeCommandError (killing the script before we create the depot) despite the
+# 2>$null. Locally lower ErrorActionPreference and reset LASTEXITCODE so a
+# not-yet-existing depot is treated as "absent", not as a fatal error.
+$existingDepots = $null
+$__eaps = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+try { $existingDepots = & p4 -p $P4Port -u $P4User depots 2>$null } catch { $existingDepots = $null }
+$global:LASTEXITCODE = 0; $ErrorActionPreference = $__eaps
 $depotExists = $false
 if ($existingDepots) {
     $depotExists = ($existingDepots | Where-Object { $_ -match "^Depot\s+$([regex]::Escape($DepotName))\s" }) -ne $null
@@ -294,7 +302,16 @@ elseif ($PSCmdlet.ShouldProcess($DepotName, "create stream depot")) {
 
 Write-Step "Ensuring mainline stream '$Stream' exists (p4 stream -t mainline)"
 $streamExists = $false
-$existingStreams = & p4 -p $P4Port -u $P4User streams "//$DepotName/*" 2>$null
+# On a clean first run `p4 streams //<depot>/*` writes a benign 'no such
+# stream'/'must refer to...' message to stderr; under $ErrorActionPreference='Stop'
+# that native stderr is promoted to a TERMINATING NativeCommandError (killing the
+# script before we create the stream) despite the 2>$null. Locally lower
+# ErrorActionPreference and reset LASTEXITCODE so a not-yet-existing stream is
+# treated as "absent", not as a fatal error.
+$existingStreams = $null
+$__eaps = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+try { $existingStreams = & p4 -p $P4Port -u $P4User streams "//$DepotName/*" 2>$null } catch { $existingStreams = $null }
+$global:LASTEXITCODE = 0; $ErrorActionPreference = $__eaps
 if ($existingStreams) {
     $streamExists = ($existingStreams | Where-Object { $_ -match "^Stream\s+$([regex]::Escape($Stream))\s" }) -ne $null
 }
