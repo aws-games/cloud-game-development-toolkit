@@ -2,7 +2,7 @@
 
 This sample deploys an [Unreal Engine Horde](https://dev.epicgames.com/documentation/en-us/unreal-engine/horde) build farm that compiles from a Perforce stream using [Amazon FSx for NetApp ONTAP](https://aws.amazon.com/fsx/netapp-ontap/) with a thin-clone workspace pattern. Instead of every build agent running a full `p4 sync` from scratch, the pipeline keeps one persistent source workspace warm and hands each build an instant, copy-on-write clone of it.
 
-The core idea has two moving parts. A **Hydrator** (Sync) agent periodically syncs a persistent FSxN **LUN** from a Perforce stream and snapshots it as `cl-<changelist>`. When a build is requested, a **Build Agent** creates an instant [FlexClone](https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-concept.html) of that snapshot, presents the clone's LUN to itself over **iSCSI as real NTFS**, transplants the Perforce have-list with `p4 flush` (metadata-only), syncs only the delta, compiles, and tears the clone down. The result is per-build workspaces in ~10 s instead of a multi-minute full sync, with UBA enabled.
+The core idea has two moving parts. A **Hydrator** (Sync) agent periodically syncs a persistent FSxN **LUN** from a Perforce stream and snapshots it as `cl-<changelist>`. When a build is requested, a **Build Agent** creates an instant [FlexClone](https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-files-luns-concept.html) of that snapshot, presents the clone's LUN to itself over **iSCSI as real NTFS**, transplants the Perforce have-list with `p4 flush` (metadata-only), syncs only the delta, compiles, and tears the clone down. The result is per-build workspaces in ~10 s instead of a multi-minute full sync, with UBA enabled.
 
 The pipeline compiles `UnrealEditor` from source off the FlexClone LUN with **UBA (Unreal Build Accelerator) enabled**. The end-to-end path is: hydrate a Perforce stream → ONTAP snapshot `cl-<N>` → FlexClone → iSCSI mount as `W:` (real NTFS) → `p4 flush` (metadata-only) → **compile `UnrealEditor` from source off the clone LUN**. It targets a source-available UE project such as Epic's **Lyra** sample (a real C++ project with `Source/` and `Modules[]`).
 
@@ -217,7 +217,7 @@ p4 -u <super> passwd svc-horde
 
 `svc-horde` must be authorized in the protections table (`p4 protect`) to read/write the stream depot the poller monitors. Add a line matching this pattern (using your depot in place of the generic `//YourGame/...` placeholder):
 
-```
+```text
 write user svc-horde * //YourGame/...
 ```
 

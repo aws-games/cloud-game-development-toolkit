@@ -46,7 +46,7 @@ The `build-agent` AMI in account `968702293218` / `us-east-1` was built this way
    `subnet-0385cfd1499c39579` (`vpc-078c7e9b60fb64cef`, `10.0.2.0/24`, us-east-1a),
    **no public IP**, instance profile = `AmazonSSMManagedInstanceCore` + a
    scoped inline EC2/S3 policy sufficient for the `amazon-ebs` builder. `packer`
-   + `git` installed via the HashiCorp dnf repo. Template staged builder-side
+   - `git` installed via the HashiCorp dnf repo. Template staged builder-side
    via a throwaway S3 bucket.
 2. On the builder (`export HOME=/home/ec2-user`):
 
