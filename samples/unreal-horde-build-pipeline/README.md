@@ -12,6 +12,8 @@ The pipeline compiles `UnrealEditor` from source off the FlexClone LUN with **UB
 
 This is a **Terraform sample plus several manual operator steps** — it is **not** a one-shot `terraform apply`. Terraform stands up the infrastructure, but seeding the depot, configuring the Perforce service user, and approving agent enrollment are manual operations the sample deliberately does not automate. Budget for both phases:
 
+> **Scope: single stream.** This sample hydrates a **single** Perforce stream into one source volume/LUN. Do **not** point a second stream at the same source volume: a subsequent `p4 sync` does not remove the prior stream's files, so they persist on the NTFS volume and get snapshotted and cloned into every build (cross-stream contamination). Multi-stream support is planned as follow-up — see [appendix §12](#12-single-source-stream-per-stream-source-lun).
+
 - **Phase 1 — stand up the infrastructure.** Build the Windows build-agent AMI with Packer, then `terraform apply`.
 - **Phase 2 — seed the depot and run your first build.** Configure the Perforce `svc-horde` user, seed the depot with a source-available project + engine, submit the BuildGraph scripts, approve Horde agent enrollment, then trigger the hydration and build pipelines.
 
@@ -420,6 +422,10 @@ The pre-created secret (passed via `horde_p4_credentials_secret_arn`) holds the 
 ### 11. Horde 5.5 does not auto-approve agent enrollment
 
 Newly enrolled Sync and Build agents sit **pending** until an operator approves them (Horde UI or `POST /api/v1/enrollment`). Until you do, the pools have no online agents and jobs never lease. `enable_new_agents_by_default` does **not** auto-approve enrollment — it only controls whether an agent is enabled *once approved*; setting it true does not skip this manual approval step. This is done in [runbook step 7](#7-approve-agent-enrollment-in-the-horde-ui).
+
+### 12. Single source stream (per-stream source LUN)
+
+The source LUN (`/vol/p4_workspace/workspace`, hydrated by the `fsxn-hydrator` P4 client behind a single-host igroup and a `min = max = 1` `SyncPool`) is a **per-stream** artifact. A subsequent `p4 sync` of a *different* stream onto the same LUN does not delete the prior stream's files — Perforce only manages files in the current client's have-list — so the prior stream's tree persists on the NTFS volume, is captured by the next ONTAP snapshot, and is cloned into every build taken from it (cross-stream contamination). This sample is therefore scoped to one stream. This is **not** a data-path limitation: the single-writer rule (one writer per NTFS LUN, enforced by the single-host igroup and `-SingleHost`) forbids two hosts writing one LUN, but permits multiple sync agents each owning a **separate** volume/LUN. Multi-stream support — on-demand per-stream volume/LUN driven from Horde config rather than Terraform, with a deterministic stream→agent→LUN binding and serialized single-writer enforcement — is planned as follow-up.
 
 ## Forward-looking notes
 
