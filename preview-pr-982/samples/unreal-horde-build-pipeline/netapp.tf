@@ -14,6 +14,7 @@ resource "random_password" "fsxn_admin" {
 }
 
 resource "aws_secretsmanager_secret" "fsxn_admin" {
+  #checkov:skip=CKV_AWS_149: CMK is out of scope.
   name        = "${local.name_prefix}-fsxn-fsxadmin"
   description = "fsxadmin password for the FSx for ONTAP file system used by the Horde build pipeline."
 
@@ -34,6 +35,7 @@ resource "aws_secretsmanager_secret_version" "fsxn_admin" {
 ##################################################
 
 resource "aws_fsx_ontap_file_system" "workspace" {
+  #checkov:skip=CKV_AWS_178: CMK is out of scope.
   storage_capacity    = var.fsxn_storage_capacity_gb
   throughput_capacity = var.fsxn_throughput_capacity
   deployment_type     = "SINGLE_AZ_1"

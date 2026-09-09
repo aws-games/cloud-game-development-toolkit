@@ -34,6 +34,7 @@ resource "aws_route53_zone" "private" {
 
 # Perforce server A record -> private IP (only when this sample deploys P4).
 resource "aws_route53_record" "perforce_internal" {
+  #checkov:skip=CKV2_AWS_23:The attached resource is managed by CGD Toolkit
   count   = local.deploy_perforce ? 1 : 0
   zone_id = aws_route53_zone.private.zone_id
   name    = local.perforce_internal_fqdn
