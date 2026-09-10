@@ -49,7 +49,7 @@ The sample composes existing CGD Toolkit modules (`modules/perforce`, `modules/u
 Two BuildGraph pipelines drive the workflow, and their agent/node names are coupled to `config/horde/globals.json.tpl`:
 
 - `buildgraph/HydratePipeline.xml` — agent `SyncAgent`, node `Sync And Snapshot`, run by the `hydrate` template on `SyncPool`.
-- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, a single merged `Compile` node (clone → iSCSI mount `W:` → per-build P4 client → `p4 flush` → clear read-only → `Build.bat`), run by the `build` template on `BuildPool`. The clone/mount/flush/compile steps are deliberately **one node** — see [appendix §9](#9-clone--mount--flush--compile-must-be-one-buildgraph-node). Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook — see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node).
+- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, a single merged `Compile` node (`p4 login` → clone → iSCSI mount `W:` → per-build P4 client → `p4 flush` → clear read-only → `Build.bat`), run by the `build` template on `BuildPool`. The node logs in to Perforce first: a fresh agent has no ticket, so the login mints one that the later `p4 flush` / `p4 sync` reuse (the operator supplies the password secret name via `p4_password_secret_name`; the pipeline logs in per job). The clone/mount/flush/compile steps are deliberately **one node** — see [appendix §9](#9-clone--mount--flush--compile-must-be-one-buildgraph-node). Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook — see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node).
 
 ```text
                          Perforce stream (//YourGame/main)
@@ -66,9 +66,10 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
                                             v
    Build Agent (Windows, BuildPool) --> map clone LUN -> igroup horde_san_agents
    BuildPipeline.xml                --> iSCSI attach as W: (real NTFS)
-   single "Compile" node            --> p4 flush @<N>   (have-list, no transfer)
-   (clone+mount+flush+compile       --> p4 sync         (delta only)
-    in ONE process)                 --> clear read-only, Build.bat with UBA ENABLED
+   single "Compile" node            --> p4 login        (mint ticket for this job)
+   (clone+mount+flush+compile       --> p4 flush @<N>   (have-list, no transfer)
+    in ONE process)                 --> p4 sync         (delta only)
+                                    --> clear read-only, Build.bat with UBA ENABLED
    + UE_HORDE_CLEANUP lease hook    --> offline disk, unmap LUN, delete clone
 
    Horde server (ECS) -- external HTTPS ALB (deployer /32) --> browser UI
@@ -83,6 +84,7 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
   - provide `github_credentials_secret_arn` — a Secrets Manager secret with GitHub credentials that can read the private image; or
   - override `horde_server_image` with an image you can pull without authentication.
 - **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.) The password value stored here must match the password set on the P4 user in [runbook step 3](#3-configure-the-svc-horde-p4-user); see [appendix §10](#10-the-svc-horde-password-must-match-on-both-sides).
+- **(Optional) A plain-text P4 password secret for agent login tickets.** The sync/build agents mint a Perforce **login ticket** at job time so `p4 flush` / `p4 sync` authenticate on a fresh host. The agents run `p4 login` by piping the **raw** secret value, so this is a **plain-text** password secret (SecretString is the password itself) — distinct from the JSON `horde_p4_credentials_secret_arn`. Create a Secrets Manager secret whose value is the `svc-horde` password, then set `p4_password_secret_name` to its name (or ARN) and `p4_password_secret_arn` to its ARN so the agent role is granted read access. Leave `p4_password_secret_name` empty to rely on an existing ticket already present on the agent host.
 - **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build.
 - **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts must be submitted to your Perforce depot under `Build/` so the `-Script=Build/...` paths in `globals.json` resolve against the stream root. See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
 
@@ -162,6 +164,8 @@ Terraform emits the following outputs (see `outputs.tf`):
 - `perforce_endpoint` — the `P4PORT` (`ssl:<host>:1666`) for P4 client configuration.
 - `fsxn_iscsi_portals` — comma-separated SVM iSCSI portal addresses (pass as `-set:IscsiPortals`; connect exactly one unless MPIO is installed — see [appendix §3](#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups)).
 - `fsxn_workspace_lun_path` — ONTAP path of the workspace LUN that hosts attach over iSCSI (the LUN carries NTFS).
+- `fsxn_hydrator_igroup` — the **single-host** igroup owning the source LUN. Obtain with `terraform output fsxn_hydrator_igroup`; it feeds the hydrate pipeline as `-set:HydratorIgroup` (already wired via `globals.json`). Never add build agents to it — NTFS has exactly one legitimate writer.
+- `fsxn_agent_igroup` — the shared igroup for per-job clone LUNs. Obtain with `terraform output fsxn_agent_igroup`; it feeds the build pipeline as `-set:AgentIgroup` (already wired via `globals.json`). Safe to share because each clone is used by exactly one job on one agent.
 - `fsxn_management_endpoint` / `fsxn_svm_management_endpoint` — ONTAP REST API targets for the BuildGraph tasks.
 - `sync_agent_launch_template_id` / `build_agent_launch_template_id` — launch template IDs for the two agent pools.
 - `agent_instance_role_name` — the IAM role attached to agent instances (has the secrets-read policy).
@@ -281,7 +285,7 @@ Submit all of these to `//YourGame/main/Build/` so the `-Script=Build/...` paths
 - `buildgraph/HydratePipeline.xml`
 - `buildgraph/BuildPipeline.xml`
 - `buildgraph/OntapSan.psm1`
-- the pipeline `*.ps1` scripts (including `buildgraph/create-build-client.ps1`, `hydrate-source-lun.ps1`, and `teardown-clone-lun.ps1`)
+- the pipeline `*.ps1` scripts (including `buildgraph/p4-login.ps1`, `buildgraph/create-build-client.ps1`, `hydrate-source-lun.ps1`, and `teardown-clone-lun.ps1`)
 
 ### 6. Make Horde aware of the stream / project
 
@@ -351,6 +355,8 @@ The FlexClone premise holds up. For a **49.55 GB / 268,730-file** UE 5.7 stream:
 `BuildPipeline.xml` therefore runs `p4 flush <stream>/...@$(SnapshotChangelist)` first, which writes the have-list **without transferring content** (measured: 3 s on Linux, 6 s on Windows; ~2 s for 209k files, metadata-only, no bulk transfer). This is why snapshots must be named `cl-{N}` and why `SnapshotChangelist` must be passed per job — flush is metadata-only and trusts you, so pointing it at the wrong changelist leaves the workspace silently disagreeing with the server about what is on disk.
 
 Keep the hydrate schedule frequent: at a 10-changelist gap the following `sync` spent **26 s** walking the diff, versus ~1 s when the snapshot was at head.
+
+The `flush` and `sync` need Perforce auth, and a fresh build agent has no ticket. The `Compile` node therefore runs `p4 login` as its first step: it reads the plain-text password from the secret named by `p4_password_secret_name`, mints a ticket in the agent user's default ticket file, and every later `p4` command in the node reuses it. The password is used only to mint the ticket; leave `p4_password_secret_name` empty to rely on a ticket already present on the host.
 
 ### 2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works
 

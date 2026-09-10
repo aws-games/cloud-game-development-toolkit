@@ -46,12 +46,13 @@
 	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
+	<Option Name="P4PasswordSecret" DefaultValue="" Description="Optional Secrets Manager secret holding the P4 password. Used ONCE to mint a login ticket the later flush/sync reuse; empty = rely on an existing ticket." />
 	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
 
 	<!-- The changelist the cloned snapshot was synced to. REQUIRED for the
-	     incremental sync to actually be incremental - see the p4 flush step. Per
-	     ADR-003 snapshots are named cl-{N}, so this is the {N} of
-	     $(SnapshotName), and hydrate-source-lun.ps1 prints it. -->
+	     incremental sync to actually be incremental - see the p4 flush step.
+	     Snapshots are named cl-{N}, so this is the {N} of $(SnapshotName), and
+	     hydrate-source-lun.ps1 prints it. -->
 	<Option Name="SnapshotChangelist" DefaultValue="" Description="Changelist the cloned snapshot was synced to (the N in cl-N)" />
 
 	<!-- Unreal compile parameters -->
@@ -73,6 +74,14 @@
 		     and Build.bat - hence the clone+attach+mount is the first action of
 		     this node, not a separate "Clone And Mount" node. -->
 		<Node Name="Compile">
+			<!-- STEP 2.-1: mint a P4 login ticket. A fresh build agent has no
+			     ticket, so the p4 flush/sync below (and the p4 client create in
+			     create-build-client.ps1) would fail auth. The password is used
+			     ONCE here to write a ticket to the default user-profile ticket
+			     file; every later p4 spawn in this node reuses that ticket. Runs
+			     FIRST because create-build-client.ps1 also talks to p4. -->
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/p4-login.ps1 -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4PasswordSecret &quot;$(P4PasswordSecret)&quot; -AwsRegion &quot;$(AwsRegion)&quot;" />
+
 			<!-- STEP 2.0: clone the snapshot, present its LUN over iSCSI, bring
 			     it online as $(CloneMountDrive):. attach-clone-lun.ps1 registers
 			     the teardown hook BEFORE creating anything, so a failure at any

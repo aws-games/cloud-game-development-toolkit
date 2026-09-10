@@ -6,9 +6,9 @@
     NFS mount the sample used to do, because Windows NFSv3 cannot run a UBA
     build at all (see OntapSan.psm1 for the evidence).
 
-    Called from BuildPipeline.xml's "Clone And Mount" node. Emits
-    FLEXCLONE_TIMING lines so each phase is measurable in the Horde step log -
-    that instrumentation is the demo.
+    Called from BuildPipeline.xml's "Compile" node (the clone + mount was merged
+    into that single node). Emits FLEXCLONE_TIMING lines so each phase is
+    measurable in the Horde step log.
 
     Reference timings on a 49.55 GB / 268,730-file UE 5.7 workspace:
         clone_create   ~1.2 s

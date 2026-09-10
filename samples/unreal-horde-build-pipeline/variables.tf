@@ -169,6 +169,18 @@ variable "horde_p4_credentials_secret_arn" {
   default     = null
 }
 
+variable "p4_password_secret_name" {
+  type        = string
+  description = "Optional Secrets Manager secret NAME (or ARN) whose SecretString is the PLAIN-TEXT P4 password for the sync/build agents. The agents use it ONCE per job to run `p4 login` and mint a ticket; every later p4 command reuses the ticket. This is a plain-text secret, distinct from horde_p4_credentials_secret_arn (JSON), because the agent scripts pipe the raw SecretString straight to `p4 login`. Leave empty to rely on an existing ticket on the agent host. When set, provide p4_password_secret_arn as well so the agent role is granted read access."
+  default     = ""
+}
+
+variable "p4_password_secret_arn" {
+  type        = string
+  description = "ARN of the p4_password_secret_name secret, used to scope the agent role's secretsmanager:GetSecretValue grant to the exact secret. Required only when p4_password_secret_name is set. Leave null to skip the grant."
+  default     = null
+}
+
 variable "enable_new_agents_by_default" {
   type        = bool
   description = "Whether an agent, ONCE APPROVED/ENROLLED, is enabled by default. This does NOT auto-approve enrollment: on Horde 5.5 newly registered agents sit pending until an operator approves them (Horde UI or POST /api/v1/enrollment) - a separate manual step (see the end-to-end runbook). Leaving this true does not populate empty pools by itself."

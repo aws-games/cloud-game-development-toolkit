@@ -5,8 +5,8 @@
 
     WHY SAN INSTEAD OF NFS
     ---------------------
-    ADR-002 chose NFSv3 and rejected iSCSI on throughput grounds. Running the
-    pipeline proved that reasoning incomplete: throughput was never the binding
+    An earlier design chose NFSv3 and rejected iSCSI on throughput grounds. That
+    reasoning turned out incomplete: throughput was never the binding
     constraint, Windows filesystem SEMANTICS were. On a Windows NFSv3 mount:
 
       * UBA (Unreal Build Accelerator) detours file I/O and calls

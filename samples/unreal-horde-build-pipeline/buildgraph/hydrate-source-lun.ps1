@@ -17,7 +17,7 @@
        the have-list with `p4 flush @<CL>`, which is metadata-only and simply
        trusts the CL it is given. Name a snapshot after the wrong changelist and
        every clone from it has a workspace that silently disagrees with the server
-       about what is on disk. ADR-003 specifies cl-{N}; this script derives N
+       about what is on disk. The snapshot is named cl-{N}; this script derives N
        itself from the sync rather than accepting a caller-supplied string.
 
     2. THE NTFS WRITE CACHE MUST BE FLUSHED BEFORE THE SNAPSHOT. An ONTAP
