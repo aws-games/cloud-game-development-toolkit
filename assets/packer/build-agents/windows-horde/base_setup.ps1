@@ -1,0 +1,62 @@
+function Write($message) {
+    Write-Output $message
+}
+
+try {
+    # Download Chocolatey
+    Write "Installing Chocolatey"
+    $chocInstall = (New-Object System.Net.WebClient).DownloadString("https://chocolatey.org/install.ps1")
+    Out-File -FilePath ./chocInstall.ps1 -InputObject $chocInstall
+    powershell.exe -File ./chocInstall.ps1
+    $env:path = "$env:path;C:\ProgramData\Chocolatey\bin"
+    Import-Module C:\ProgramData\chocolatey\helpers\chocolateyInstaller.psm1
+}
+catch {
+    Write "Failed to install Chocolatey"
+}
+
+try {
+    Write "Installing Git"
+    choco install -y --no-progress git
+}
+catch {
+    Write "Failed to install Git"
+}
+
+try {
+    # Installing OpenSSH Server (Horde/orchestration access to the agent)
+    Write "Installing OpenSSH and setting service"
+    Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+    Set-Service -Name sshd -StartupType 'Automatic'
+}
+catch {
+    Write "Failed to install OpenSSH"
+}
+
+# NOTE: NFS-Client (Install-WindowsFeature NFS-Client) intentionally REMOVED.
+# The Horde iSCSI/NTFS thin-clone pipeline mounts LUNs via the MSiSCSI
+# initiator (see install_iscsi.ps1), not NFS.
+
+try {
+    # Python
+    Write "Installing Python, botocore, boto3"
+    choco install -y --no-progress python
+    refreshenv
+    pip install botocore boto3
+}
+catch {
+    Write "Failed to install Python, botocore, boto3"
+}
+
+try {
+    Write Get-Disk | Where-Object partitionstyle -EQ 'raw'
+    Get-Disk | Where-Object partitionstyle -EQ \"raw\" | Initialize-Disk -PartitionStyle GPT -PassThru | New-Partition -AssignDriveLetter -UseMaximumSize | Format-Volume -FileSystem NTFS -NewFileSystemLabel \"Data Drive\" -Confirm:$false
+}
+catch {
+    Write "Failed to mount drives"
+}
+
+# Do NOT end on Chocolatey's `RefreshEnv` - it exits non-zero when dot-invoked
+# from this process and would fail the Packer provisioner via `exit $LastExitCode`.
+# The next provisioner runs in a fresh shell that re-reads PATH anyway.
+exit 0
