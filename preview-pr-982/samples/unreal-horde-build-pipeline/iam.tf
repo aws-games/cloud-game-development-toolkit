@@ -3,8 +3,10 @@
 #
 # The Horde module creates the agent instance role but does NOT grant access to
 # the sample's runtime secrets. The BuildGraph tasks running on the agents need:
-#   * the FSxN fsxadmin password (ONTAP REST API: FlexClone / snapshot), and
-#   * the Horde P4 credentials (JSON username/password) to authenticate to P4.
+#   * the FSxN fsxadmin password (ONTAP REST API: FlexClone / snapshot),
+#   * the Horde P4 credentials (JSON username/password) to authenticate to P4, and
+#   * optionally the plain-text P4 password secret the agents use to `p4 login`
+#     and mint a ticket (only when var.p4_password_secret_arn is set).
 #
 # This policy grants secretsmanager:GetSecretValue scoped to the EXACT secret
 # ARNs only — never "*".
@@ -19,10 +21,12 @@ data "aws_iam_policy_document" "agent_secrets_read" {
       "secretsmanager:DescribeSecret",
     ]
     # Exact ARNs only. The Horde P4 credentials secret and the Perforce module's
-    # super/admin secrets are only present when this sample deploys Perforce.
+    # super/admin secrets are only present when this sample deploys Perforce; the
+    # plain-text P4 password secret is only present when the operator supplies it.
     resources = compact([
       aws_secretsmanager_secret.fsxn_admin.arn,
       var.horde_p4_credentials_secret_arn != null ? var.horde_p4_credentials_secret_arn : "",
+      var.p4_password_secret_arn != null ? var.p4_password_secret_arn : "",
       local.deploy_perforce ? module.perforce[0].p4_server_super_password_secret_arn : "",
     ])
   }

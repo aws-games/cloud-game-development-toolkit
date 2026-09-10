@@ -43,7 +43,7 @@ output "fsxn_svm_management_endpoint" {
 }
 
 output "sync_agent_launch_template_id" {
-  description = "Launch template ID for the Sync Agent pool (Linux)."
+  description = "Launch template ID for the Sync Agent (hydrator) pool (Windows). The source LUN carries NTFS, so its single writer is Windows."
   value       = module.horde.agent_launch_template_ids["sync-agent"]
 }
 

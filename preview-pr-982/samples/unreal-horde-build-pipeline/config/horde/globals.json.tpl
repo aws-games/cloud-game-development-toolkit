@@ -126,7 +126,8 @@
                 "-set:SvmName=${fsxn_svm_name}",
                 "-set:AwsRegion=${aws_region}",
                 "-set:P4Port=${p4_port}",
-                "-set:P4User=${p4_user}"
+                "-set:P4User=${p4_user}",
+                "-set:P4PasswordSecret=${p4_password_secret}"
               ],
               "schedule": {
                 "enabled": true,
@@ -150,7 +151,8 @@
                 "-set:OntapPasswordSecretName=${fsxn_admin_secret_name}",
                 "-set:AwsRegion=${aws_region}",
                 "-set:P4Port=${p4_port}",
-                "-set:P4User=${p4_user}"
+                "-set:P4User=${p4_user}",
+                "-set:P4PasswordSecret=${p4_password_secret}"
               ]
             }
           ]

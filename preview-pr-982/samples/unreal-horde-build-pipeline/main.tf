@@ -44,13 +44,14 @@ module "perforce" {
     # Compute
     p4_server_type = "p4d_commit"
 
-    # Pinned for the eventual Lyra (~67.7 GiB depot) scale test so we size once
-    # and avoid a future resize. p4d is RAM-bound on its db.* metadata; 32 GiB
-    # is Perforce's guidance for a depot of this scale and comfortably covers
-    # StackOBot + connection bursts. r6i.xlarge = 4 vCPU / 32 GiB, memory-
-    # optimized, x86 — matches the module's default x86_64 p4d AMI. Changing
-    # instance_type is an in-place EC2 attribute change (stop/modify/start), so
-    # the separate depot/metadata/logs EBS volumes are preserved.
+    # Pinned so the P4 server is sized once for a large from-source depot and
+    # avoids a future resize. p4d is RAM-bound on its db.* metadata; 32 GiB is
+    # Perforce's guidance for a depot of this scale and comfortably covers a
+    # source-available engine + project depot plus connection bursts.
+    # r6i.xlarge = 4 vCPU / 32 GiB, memory-optimized, x86 — matches the module's
+    # default x86_64 p4d AMI. Changing instance_type is an in-place EC2 attribute
+    # change (stop/modify/start), so the separate depot/metadata/logs EBS volumes
+    # are preserved.
     instance_type = "r6i.xlarge"
 
     # Storage — sized for a sample commit server. Depot holds versioned files,
@@ -277,6 +278,12 @@ module "horde" {
 
     p4_port = local.perforce_endpoint == null ? "" : local.perforce_endpoint
     p4_user = local.horde_p4_username
+
+    # Plain-text P4 password secret NAME the agents use to mint a login ticket
+    # (empty = rely on an existing ticket). Distinct from the JSON Horde P4
+    # credentials secret; the agent scripts pipe the raw SecretString to
+    # `p4 login`. IAM read access is granted in iam.tf when the ARN is supplied.
+    p4_password_secret = var.p4_password_secret_name
   })
   config_path = "globals.json"
 

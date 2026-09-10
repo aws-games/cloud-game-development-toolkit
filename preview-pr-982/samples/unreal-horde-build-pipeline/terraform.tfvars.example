@@ -76,6 +76,14 @@ perforce_stream = "//YourGame/main"
 # github_credentials_secret_arn = null
 # enable_new_agents_by_default = true
 
+# --- P4 agent login ticket (optional) ---
+# The sync/build agents mint a Perforce login ticket per job so p4 flush/sync
+# authenticate on a fresh host. This is a PLAIN-TEXT password secret (SecretString
+# is the svc-horde password itself), distinct from the JSON credentials secret.
+# Set both together; leave empty to rely on an existing ticket on the agent host.
+# p4_password_secret_name = "svc-horde-p4-password"
+# p4_password_secret_arn  = "arn:aws:secretsmanager:us-east-1:111122223333:secret:svc-horde-p4-password-xxxxxx"
+
 # --- External access ---
 # Additional operator IPs allowed to reach the Horde web UI (each a specific CIDR; never 0.0.0.0/0).
 # additional_allowed_cidrs = ["203.0.113.4/32"]
