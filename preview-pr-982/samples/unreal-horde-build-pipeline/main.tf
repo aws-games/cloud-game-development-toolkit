@@ -279,11 +279,14 @@ module "horde" {
     p4_port = local.perforce_endpoint == null ? "" : local.perforce_endpoint
     p4_user = local.horde_p4_username
 
-    # Plain-text P4 password secret NAME the agents use to mint a login ticket
-    # (empty = rely on an existing ticket). Distinct from the JSON Horde P4
-    # credentials secret; the agent scripts pipe the raw SecretString to
-    # `p4 login`. IAM read access is granted in iam.tf when the ARN is supplied.
-    p4_password_secret = var.p4_password_secret_name
+    # JSON Horde P4 credentials secret the agents read at job time to mint a
+    # `p4 login` ticket. This is the SAME secret the Horde server uses
+    # (var.horde_p4_credentials_secret_arn) - a single source of truth for the
+    # P4 service account. The agent scripts ConvertFrom-Json it and prefer its
+    # .username so user/password can't mismatch. Passed as the ARN, which
+    # `aws secretsmanager get-secret-value --secret-id` accepts directly. IAM
+    # read access is granted in iam.tf. Empty = rely on an existing ticket.
+    p4_credentials_secret = var.horde_p4_credentials_secret_arn == null ? "" : var.horde_p4_credentials_secret_arn
   })
   config_path = "globals.json"
 

@@ -3,8 +3,11 @@
 
     WHY THIS EXISTS: a fresh build agent runs `p4 flush` / `p4 sync` against the
     server with no ticket on the host, so those commands fail authentication.
-    The P4 password's ONLY job is to run `p4 login` ONCE to mint a TICKET;
+    The P4 credentials' ONLY job here is to run `p4 login` ONCE to mint a TICKET;
     every subsequent p4 command in the node uses that ticket, not the password.
+    The username/password come from the JSON Horde P4 credentials secret
+    ({"username":"...","password":"..."}) - the SAME secret the Horde server
+    uses - so there is a single source of truth for the P4 service account.
 
     WHY IT DOES NOT OVERRIDE P4TICKETS/P4TRUST (contrast with the hydrator):
     hydrate-source-lun.ps1 overrides P4TICKETS/P4TRUST to a temp file because it
@@ -28,9 +31,11 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)] [string] $P4Port,
-    [string] $P4User           = 'perforce',
-    [string] $P4PasswordSecret = '',
-    [string] $AwsRegion        = 'us-east-1'
+    # Fallback username only. When the credentials secret is read successfully
+    # its .username wins, so the user and password can never mismatch.
+    [string] $P4User             = 'perforce',
+    [string] $P4CredentialsSecret = '',
+    [string] $AwsRegion          = 'us-east-1'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -46,19 +51,34 @@ $env:P4USER = $P4User
 # prefix on $P4Port.
 & p4 trust -y *> $null
 
-if ($P4PasswordSecret) {
-    $pw = & aws secretsmanager get-secret-value --secret-id $P4PasswordSecret --region $AwsRegion --query SecretString --output text
-    if ($LASTEXITCODE -eq 0 -and $pw) {
-        # login WITHOUT -p writes a ticket to the default user-profile ticket
-        # file, usable by the later flush/sync spawns as the same OS user.
-        $pw | & p4 login *> $null
-        if ($LASTEXITCODE -eq 0) { Write-Host "[p4-login] ticket minted for $P4User@$P4Port" }
-        else { Write-Warning "p4 login failed (exit $LASTEXITCODE) - relying on an existing ticket" }
+if ($P4CredentialsSecret) {
+    # The secret is the JSON Horde P4 credentials ({"username":"...","password":"..."}).
+    # Read it, parse it, and prefer its username so user/password stay consistent.
+    $secretRaw = & aws secretsmanager get-secret-value --secret-id $P4CredentialsSecret --region $AwsRegion --query SecretString --output text
+    if ($LASTEXITCODE -eq 0 -and $secretRaw) {
+        $pw = $null
+        try {
+            $creds = $secretRaw | ConvertFrom-Json -ErrorAction Stop
+            if ($creds.username) { $env:P4USER = $creds.username }
+            $pw = $creds.password
+        }
+        catch {
+            Write-Warning "could not parse P4 credentials secret '$P4CredentialsSecret' as JSON - relying on an existing ticket"
+        }
+        if ($pw) {
+            # login WITHOUT -p writes a ticket to the default user-profile ticket
+            # file, usable by the later flush/sync spawns as the same OS user.
+            # Pipe the password to stdin - never interpolate it onto a command
+            # line - so special characters are handled safely.
+            $pw | & p4 login *> $null
+            if ($LASTEXITCODE -eq 0) { Write-Host "[p4-login] ticket minted for $($env:P4USER)@$P4Port" }
+            else { Write-Warning "p4 login failed (exit $LASTEXITCODE) - relying on an existing ticket" }
+        }
     }
     else {
-        Write-Warning "could not read P4 password secret '$P4PasswordSecret' - relying on an existing ticket"
+        Write-Warning "could not read P4 credentials secret '$P4CredentialsSecret' - relying on an existing ticket"
     }
 }
 else {
-    Write-Host "[p4-login] no P4PasswordSecret supplied - relying on an existing ticket"
+    Write-Host "[p4-login] no P4CredentialsSecret supplied - relying on an existing ticket"
 }

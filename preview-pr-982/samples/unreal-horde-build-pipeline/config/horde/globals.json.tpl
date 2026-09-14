@@ -84,8 +84,8 @@
     ]
   },
   "pools": [
-    { "id": "sync-pool", "name": "SyncPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true },
-    { "id": "build-pool", "name": "BuildPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true }
+    { "id": "sync-pool", "name": "SyncPool", "condition": "aws-tag == 'Horde_Autoscale_Pool:SyncPool'", "enableAutoscaling": true },
+    { "id": "build-pool", "name": "BuildPool", "condition": "aws-tag == 'Horde_Autoscale_Pool:BuildPool'", "enableAutoscaling": true }
   ],
   "projects": [
     {
@@ -127,7 +127,7 @@
                 "-set:AwsRegion=${aws_region}",
                 "-set:P4Port=${p4_port}",
                 "-set:P4User=${p4_user}",
-                "-set:P4PasswordSecret=${p4_password_secret}"
+                "-set:P4CredentialsSecret=${p4_credentials_secret}"
               ],
               "schedule": {
                 "enabled": true,
@@ -152,7 +152,7 @@
                 "-set:AwsRegion=${aws_region}",
                 "-set:P4Port=${p4_port}",
                 "-set:P4User=${p4_user}",
-                "-set:P4PasswordSecret=${p4_password_secret}"
+                "-set:P4CredentialsSecret=${p4_credentials_secret}"
               ]
             }
           ]

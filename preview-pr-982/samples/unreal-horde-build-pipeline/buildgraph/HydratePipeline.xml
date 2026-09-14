@@ -35,7 +35,7 @@
 	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
-	<Option Name="P4PasswordSecret" DefaultValue="" Description="Optional Secrets Manager secret holding the P4 password. Empty = rely on an existing ticket." />
+	<Option Name="P4CredentialsSecret" DefaultValue="" Description="Optional Secrets Manager secret (JSON {username,password}) holding the P4 credentials. Empty = rely on an existing ticket." />
 	<!-- Host-less on purpose: the build agents p4 flush against THIS client to
 	     inherit its have-list, which is impossible if the client is pinned to a
 	     host. See hydrate-source-lun.ps1. -->
@@ -75,7 +75,7 @@
 			     omits whatever was still in the Windows cache. -->
 			<Property Name="FormatArg" Value="" />
 			<Property Name="FormatArg" Value="-FormatIfRaw" If="'$(FormatIfRaw)' == 'true'" />
-			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/hydrate-source-lun.ps1 -Stream &quot;$(Stream)&quot; -SourceVolume &quot;$(VolumeName)&quot; -LunName &quot;$(LunName)&quot; -HydratorIgroup &quot;$(HydratorIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4PasswordSecret &quot;$(P4PasswordSecret)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -MountDrive &quot;$(SourceMountDrive)&quot; -LunSize &quot;$(LunSize)&quot; $(FormatArg)" />
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/hydrate-source-lun.ps1 -Stream &quot;$(Stream)&quot; -SourceVolume &quot;$(VolumeName)&quot; -LunName &quot;$(LunName)&quot; -HydratorIgroup &quot;$(HydratorIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4CredentialsSecret &quot;$(P4CredentialsSecret)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -MountDrive &quot;$(SourceMountDrive)&quot; -LunSize &quot;$(LunSize)&quot; $(FormatArg)" />
 		</Node>
 	</Agent>
 </BuildGraph>
