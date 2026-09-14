@@ -254,7 +254,7 @@ function Add-OntapIgroupInitiator {
         return
     }
 
-    $current = @($r.records[0].initiator) | Where-Object { $_ }
+    $current = @(@($r.records[0].initiator) | Where-Object { $_ })
     if ($current -contains $Iqn) { Write-Host "  igroup '$Igroup' already contains this host"; return }
 
     if ($SingleHost -and $current.Count -gt 0) {
