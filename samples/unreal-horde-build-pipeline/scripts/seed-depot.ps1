@@ -12,7 +12,7 @@
 
     What it does, idempotently where possible:
       1. p4 trust -y            (accept the SSL fingerprint)
-      2. p4 login               (using -P4Password or -P4PasswordSecret)
+      2. p4 login               (using -P4Password or -P4CredentialsSecret)
       3. Create the stream depot + mainline stream if absent
       4. Create a stream client rooted at a local workspace dir
       5. Place/reconcile the PROJECT under //Stream/<ProjectName>/
@@ -44,7 +44,7 @@
       from-source editor compile needs the full engine source, not an installed build.
 
     * NO HARDCODED SECRETS. Pass the password via -P4Password (interactive/CI var)
-      or -P4PasswordSecret (read from AWS Secrets Manager via aws-cli at runtime).
+      or -P4CredentialsSecret (read from AWS Secrets Manager via aws-cli at runtime).
 
     Resulting depot layout:
 
@@ -60,9 +60,9 @@
     Perforce user to authenticate as (a super/admin user able to create depots).
 
 .PARAMETER P4Password
-    Password for -P4User. Mutually exclusive with -P4PasswordSecret.
+    Password for -P4User. Mutually exclusive with -P4CredentialsSecret.
 
-.PARAMETER P4PasswordSecret
+.PARAMETER P4CredentialsSecret
     AWS Secrets Manager secret id/ARN to read the password from at runtime via
     aws-cli. If the secret is JSON shaped {"username":..,"password":..}, the
     password field is extracted; otherwise the raw SecretString is used.
@@ -115,7 +115,7 @@
 .EXAMPLE
     # Preferred: branch an engine already in the depot (no re-upload)
     .\seed-depot.ps1 -P4Port ssl:perforce.studio.internal:1666 -P4User admin `
-        -P4PasswordSecret arn:aws:secretsmanager:...:secret:p4-admin `
+        -P4CredentialsSecret arn:aws:secretsmanager:...:secret:p4-admin `
         -Stream //YourGame/main -ProjectName Lyra `
         -ProjectSourcePath C:\src\Lyra `
         -EngineDepotPath //UnrealEngine/5.5/Engine `
@@ -134,7 +134,7 @@ param(
     [Parameter(Mandatory = $true)] [string] $P4User,
 
     [Parameter()] [string] $P4Password,
-    [Parameter()] [string] $P4PasswordSecret,
+    [Parameter()] [string] $P4CredentialsSecret,
 
     [Parameter(Mandatory = $true)] [string] $Stream,
     [Parameter(Mandatory = $true)] [string] $ProjectName,
@@ -189,11 +189,11 @@ function Invoke-P4 {
 # ---------------------------------------------------------------------------
 Write-Step "Validating parameters and preconditions"
 
-if ($P4Password -and $P4PasswordSecret) {
-    throw "Specify only one of -P4Password or -P4PasswordSecret, not both."
+if ($P4Password -and $P4CredentialsSecret) {
+    throw "Specify only one of -P4Password or -P4CredentialsSecret, not both."
 }
-if (-not $P4Password -and -not $P4PasswordSecret) {
-    throw "Provide the password via -P4Password or -P4PasswordSecret."
+if (-not $P4Password -and -not $P4CredentialsSecret) {
+    throw "Provide the password via -P4Password or -P4CredentialsSecret."
 }
 if ($EnginePath -and $EngineDepotPath) {
     throw "Specify only one of -EnginePath or -EngineDepotPath, not both."
@@ -262,11 +262,11 @@ if ($PSCmdlet.ShouldProcess($P4Port, "p4 trust -y")) {
 # ---------------------------------------------------------------------------
 Write-Step "Resolving password and logging in (p4 login)"
 $password = $P4Password
-if ($P4PasswordSecret) {
-    Write-Host "    Reading password from Secrets Manager: $P4PasswordSecret"
-    $secretRaw = & aws secretsmanager get-secret-value --secret-id $P4PasswordSecret --query SecretString --output text
+if ($P4CredentialsSecret) {
+    Write-Host "    Reading password from Secrets Manager: $P4CredentialsSecret"
+    $secretRaw = & aws secretsmanager get-secret-value --secret-id $P4CredentialsSecret --query SecretString --output text
     if ($LASTEXITCODE -ne 0 -or -not $secretRaw) {
-        throw "Failed to read secret '$P4PasswordSecret' from Secrets Manager."
+        throw "Failed to read secret '$P4CredentialsSecret' from Secrets Manager."
     }
     # Accept either a JSON {"username":..,"password":..} secret or a raw string.
     try {
