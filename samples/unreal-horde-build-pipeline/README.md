@@ -6,16 +6,16 @@ The core idea has two moving parts. A **Hydrator** (Sync) agent periodically syn
 
 The pipeline compiles `UnrealEditor` from source off the FlexClone LUN with **UBA (Unreal Build Accelerator) enabled**. The end-to-end path is: hydrate a Perforce stream → ONTAP snapshot `cl-<N>` → FlexClone → iSCSI mount as `W:` (real NTFS) → `p4 flush` (metadata-only) → **compile `UnrealEditor` from source off the clone LUN**. It targets a source-available UE project such as Epic's **Lyra** sample (a real C++ project with `Source/` and `Modules[]`).
 
-**The data path is iSCSI/NTFS, not NFS.** Both agent pools are Windows because Windows NFSv3 cannot run a UBA build; see the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) for the full reasoning.
+**Both agent pools are Windows:** the workspace is delivered to agents as an iSCSI LUN formatted NTFS, and Windows is required to read and write it. (For why iSCSI/NTFS was chosen as the data path, see the [operational deep-dive appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way).)
 
 ## Big picture / what you're signing up for
 
-This is a **Terraform sample plus several manual operator steps** — it is **not** a one-shot `terraform apply`. Terraform stands up the infrastructure, but seeding the depot, configuring the Perforce service user, and approving agent enrollment are manual operations the sample deliberately does not automate. Budget for both phases:
+This is a **Terraform sample plus several manual operator steps** — it is **not** a one-shot `terraform apply`. Terraform stands up the infrastructure, but seeding the depot, configuring the Perforce service user, and approving agent enrollment are manual operations the sample does not automate. Budget for both parts:
 
-> **Scope: single stream.** This sample hydrates a **single** Perforce stream into one source volume/LUN. Do **not** point a second stream at the same source volume: a subsequent `p4 sync` does not remove the prior stream's files, so they persist on the NTFS volume and get snapshotted and cloned into every build (cross-stream contamination). Multi-stream support is planned as follow-up — see [appendix §12](#12-single-source-stream-per-stream-source-lun).
+> **Scope: single stream.** This sample hydrates a **single** Perforce stream into one source volume/LUN. Do **not** point a second stream at the same source volume: a subsequent `p4 sync` does not remove the earlier stream's files, so they persist on the NTFS volume and get snapshotted and cloned into every build (cross-stream contamination). Running more than one stream is out of scope for this sample — see [appendix §12](#12-single-source-stream-per-stream-source-lun).
 
-- **Phase 1 — stand up the infrastructure.** Build the Windows build-agent AMI with Packer, then `terraform apply`.
-- **Phase 2 — seed the depot and run your first build.** Configure the Perforce `svc-horde` user, seed the depot with a source-available project + engine, submit the BuildGraph scripts, approve Horde agent enrollment, then trigger the hydration and build pipelines.
+- **Part 1 — stand up the infrastructure.** Build the Windows build-agent AMI with Packer, then `terraform apply`.
+- **Part 2 — seed the depot and run your first build.** Configure the Perforce `svc-horde` user, seed the depot with a source-available project + engine, submit the BuildGraph scripts, approve Horde agent enrollment, then trigger the hydration and build pipelines.
 
 ### Checklist (mirrors the [end-to-end runbook](#end-to-end-runbook))
 
@@ -24,14 +24,15 @@ This is a **Terraform sample plus several manual operator steps** — it is **no
 | 1 | [Build the Windows build-agent AMI](#1-build-the-windows-build-agent-ami) | [Manual] | ~30–45 min (Packer build) |
 | 2 | [Deploy with Terraform](#2-deploy-with-terraform) | [Terraform] | ~20–30 min (first apply; FSxN + ALBs are slowest) |
 | 3 | [Configure the `svc-horde` P4 user](#3-configure-the-svc-horde-p4-user) | [Manual] | minutes |
+| 4a | [Acquire the engine and project](#acquire-the-engine-and-project) | [Manual] | large/slow — clone engine + project, fetch dependencies |
 | 4 | [Seed the Perforce depot (project + engine)](#4-seed-the-perforce-depot-project--engine) | [Manual] | large/slow — depot seed of engine + project |
 | 5 | [Submit the BuildGraph scripts under `Build/`](#5-submit-the-buildgraph-scripts-to-the-depot-under-build) | [Manual] | minutes |
 | 6 | [Make Horde aware of the stream / project](#6-make-horde-aware-of-the-stream--project) | [Manual] | minutes |
-| 7 | [Approve agent enrollment in the Horde UI](#7-approve-agent-enrollment-in-the-horde-ui) | [Manual] | minutes |
+| 7 | [Approve agent enrollment (one pool per agent)](#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool) | [Manual] | minutes |
 | 8 | [Trigger the Hydration Pipeline (first snapshot)](#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot) | [Manual] | one hydrate cycle |
 | 9 | [Trigger the Build Pipeline (per-job arguments)](#9-trigger-the-build-pipeline-per-job-arguments) | [Manual] | one build |
 
-Steps 1–2 are Phase 1; steps 3–9 are Phase 2. The [runbook](#end-to-end-runbook) is the authoritative "what to do" path; the [appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) explains "why the pipeline is built this way".
+Steps 1–2 stand up the infrastructure; steps 3–9 seed the depot and run the first build. The [runbook](#end-to-end-runbook) is the authoritative "what to do" path; the [appendix](#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way) explains "why the pipeline is built this way".
 
 ## Architecture
 
@@ -49,7 +50,7 @@ The sample composes existing CGD Toolkit modules (`modules/perforce`, `modules/u
 Two BuildGraph pipelines drive the workflow, and their agent/node names are coupled to `config/horde/globals.json.tpl`:
 
 - `buildgraph/HydratePipeline.xml` — agent `SyncAgent`, node `Sync And Snapshot`, run by the `hydrate` template on `SyncPool`.
-- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, a single merged `Compile` node (`p4 login` → clone → iSCSI mount `W:` → per-build P4 client → `p4 flush` → clear read-only → `Build.bat`), run by the `build` template on `BuildPool`. The node logs in to Perforce first: a fresh agent has no ticket, so the login mints one that the later `p4 flush` / `p4 sync` reuse (the operator supplies the password secret name via `p4_password_secret_name`; the pipeline logs in per job). The clone/mount/flush/compile steps are deliberately **one node** — see [appendix §9](#9-clone--mount--flush--compile-must-be-one-buildgraph-node). Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook — see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node).
+- `buildgraph/BuildPipeline.xml` — agent `BuildAgent`, a single merged `Compile` node (`p4 login` → clone → iSCSI mount `W:` → per-build P4 client → `p4 flush` → clear read-only → `Build.bat`), run by the `build` template on `BuildPool`. The node logs in to Perforce first: a fresh agent has no ticket, so the login mints one that the later `p4 flush` / `p4 sync` reuse (the agent reads the JSON credentials secret supplied via `horde_p4_credentials_secret_arn` and logs in per job). The clone/mount/flush/compile steps are **one node** — see [appendix §9](#9-clone--mount--flush--compile-must-be-one-buildgraph-node). Guaranteed teardown is a Horde `UE_HORDE_CLEANUP` lease hook — see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node).
 
 ```text
                          Perforce stream (//YourGame/main)
@@ -80,17 +81,14 @@ Two BuildGraph pipelines drive the workflow, and their agent/node names are coup
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) and valid AWS credentials for the target account.
 - An **existing Route53 public hosted zone** (required). The ACM certificate DNS validation records and the public Horde record are created in this zone. This sample does not create the public zone for you.
-- **Epic Games GitHub organization access.** The default Horde server image `ghcr.io/epicgames/horde-server:latest-bundled` is pulled from the GitHub Container Registry and requires membership in the Epic Games GitHub organization. Either:
-  - provide `github_credentials_secret_arn` — a Secrets Manager secret with GitHub credentials that can read the private image; or
-  - override `horde_server_image` with an image you can pull without authentication.
-- **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This sample does **not** create this secret for you. A pre-created secret keeps the ARN a known value at plan time — the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve against an ARN that is only known after apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.) The password value stored here must match the password set on the P4 user in [runbook step 3](#3-configure-the-svc-horde-p4-user); see [appendix §10](#10-the-svc-horde-password-must-match-on-both-sides).
-- **(Optional) A plain-text P4 password secret for agent login tickets.** The sync/build agents mint a Perforce **login ticket** at job time so `p4 flush` / `p4 sync` authenticate on a fresh host. The agents run `p4 login` by piping the **raw** secret value, so this is a **plain-text** password secret (SecretString is the password itself) — distinct from the JSON `horde_p4_credentials_secret_arn`. Create a Secrets Manager secret whose value is the `svc-horde` password, then set `p4_password_secret_name` to its name (or ARN) and `p4_password_secret_arn` to its ARN so the agent role is granted read access. Leave `p4_password_secret_name` empty to rely on an existing ticket already present on the agent host.
+- **Epic Games GitHub access — one PAT, two scopes (required for the defaults).** Your GitHub account must be accepted into the Epic Games organization. Create one Personal Access Token (classic) with `read:packages` (pulls the default Horde server image during `terraform apply`) and `repo` (clones `EpicGames/UnrealEngine` when you seed the depot). Store it in a Secrets Manager secret and pass it via `github_credentials_secret_arn`. The secret must be JSON of the form `{"username": "<github-username>", "password": "<PAT>"}` — the ECS `repositoryCredentials` format; a plain-text token is not accepted for the image pull. If either step fails with a 401/403, check the corresponding scope: missing `read:packages` shows up as an ECS image-pull error at apply time; missing `repo` as a clone failure later, at seed time.
+- **A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).** Create a Secrets Manager secret shaped `{"username":"svc-horde","password":"..."}` and pass its ARN via the `horde_p4_credentials_secret_arn` variable. This **single** secret is used both by the Horde server (to authenticate to Perforce) **and** by the sync/build agents: the agents read it at job time, parse the JSON, and pipe the password to `p4 login` to mint a **login ticket** so `p4 flush` / `p4 sync` authenticate on a fresh host (the pipeline logs in per job; leave the agent host's existing ticket in place to skip this). There is no separate plain-text password secret. This sample does **not** create the secret for you — pre-create it so its ARN is known at plan time, since the Horde module gates its Secrets Manager read policy on a `count` that cannot resolve an ARN created in the same apply. (If you set `existing_perforce_server_endpoint` to use your own Perforce server, provide the secret for that server's Horde service account instead.) The password value stored here must match the password set on the P4 user in [runbook step 3](#3-configure-the-svc-horde-p4-user); see [appendix §10](#10-the-svc-horde-password-must-match-on-both-sides).
 - **No custom BuildGraph task compilation is required.** The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (`buildgraph/OntapSan.psm1` plus three scripts), so you do **not** need to compile the C# tasks in `assets/buildgraph/tasks` into your `AutomationTool`. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build.
 - **BuildGraph scripts submitted to the depot.** The `buildgraph/*.xml` files **and** the supporting `*.ps1` scripts must be submitted to your Perforce depot under `Build/` so the `-Script=Build/...` paths in `globals.json` resolve against the stream root. See [runbook step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build).
 
 ---
 
-# Phase 1 — stand up the infrastructure
+# Part 1 — stand up the infrastructure
 
 ## Build the Windows build-agent AMI (manual prerequisite)
 
@@ -100,22 +98,33 @@ The Packer template at [`assets/packer/build-agents/windows-horde`](../../assets
 
 ### Build command
 
+> **Start from a clean checkout.** Run the Packer build (and the later Terraform steps) from a fresh checkout — a stale working tree can carry leftover `terraform.tfstate`, `terraform.tfvars`, or `.terraform/` that confuses a from-scratch deploy (see [Deployment](#deployment)).
+
+At **Step 1 you do not yet have a VPC** — `terraform apply` (Step 2) is what creates it. So for a first deploy, build the AMI over the **public internet** with ingress locked to your **own workstation `/32`**, which is the default path below. The **private in-VPC build** (below) is the advanced path to switch to *once you already have a VPC with in-VPC routing* (a second AMI rebuild, a peered network, etc.).
+
 ```bash
 cd assets/packer/build-agents/windows-horde
 
 packer init .
 
+# First-deploy default: public IP, WinRM (5986) locked to your workstation /32.
+# Packer creates and deletes its own temporary security group — no pre-created SG needed.
 packer build \
   -var 'region=us-east-1' \
   -var 'vpc_id=vpc-xxxxxxxx' \
   -var 'subnet_id=subnet-xxxxxxxx' \
+  -var 'associate_public_ip_address=true' \
+  -var 'ssh_interface=public_ip' \
+  -var 'temporary_security_group_source_cidrs=["<your-public-ip>/32"]' \
   -var 'public_key=ssh-ed25519 AAAA...your-agent-public-key' \
   .
 ```
 
-`region` must match where you deploy the sample; `vpc_id`/`subnet_id` need outbound internet (a **private** subnet with NAT egress is recommended, since the build uses Chocolatey to install the toolchain); `public_key` is the SSH public key baked into the AMI so the Horde orchestration service can reach the agent. On success Packer prints the new AMI ID, registered as `windows-horde-build-agent-<timestamp>`.
+`region` must match where you deploy the sample; `subnet_id` must be a **public** subnet (with a route to an internet gateway) for the public-IP path, and any subnet you use needs outbound internet, since the build uses Chocolatey to install the toolchain; `public_key` is the SSH public key baked into the AMI so the Horde orchestration service can reach the agent. On success Packer prints the new AMI ID, registered as `windows-horde-build-agent-<timestamp>`.
 
-> **WinRM reachability gotcha.** The template is **private by default** (`associate_public_ip_address = false`, `ssh_interface = "private_ip"`), so **Packer must run from a host that can route to the build instance's private IP** — i.e. from inside the same VPC (a bastion/CI runner), or a peered/VPN-connected network. Run it from a workstation that cannot reach that private IP (e.g. a corporate laptop whose egress blocks WinRM) and the build stalls at "Waiting for WinRM". If you must build over the public internet, add `-var 'associate_public_ip_address=true' -var 'ssh_interface=public_ip' -var 'security_group_id=sg-xxxxxxxx'` where the SG scopes WinRM (5986) to **your own /32** — never `0.0.0.0/0`.
+> **Instance-type availability by AZ.** The build defaults to a large compute instance (e.g. `c6a.4xlarge`), and not every AZ carries it — `c6a.4xlarge` Windows is **not** available in `us-east-1e`, for example. If Packer fails to launch the builder with an unsupported-instance-type error, pick a supported AZ (in `us-east-1`, one of `us-east-1a/b/c/d/f`) via the `subnet_id`, or choose an instance type the AZ offers.
+
+> **Advanced: private in-VPC build.** Once you have a VPC, you can instead build on a **private** subnet with NAT egress (leave `associate_public_ip_address=false`, `ssh_interface="private_ip"` — the template's defaults). In that mode **Packer must run from a host that can route to the build instance's private IP** — i.e. from inside the same VPC (a bastion/CI runner), or a peered/VPN-connected network. Run it from a workstation that cannot reach that private IP and the build stalls at "Waiting for WinRM". The private path can use a pre-created `security_group_id` that scopes WinRM (5986) to the reachable network — never `0.0.0.0/0`.
 
 ### How this sample consumes the AMI
 
@@ -127,6 +136,8 @@ The AMI is wired up automatically in [`main.tf`](main.tf) via `data.aws_ami.hord
 **Build the AMI first**, then `terraform apply` — if no matching AMI exists and `build_agent_ami_id` is unset, the `data.aws_ami` lookup fails at plan time.
 
 ## Deployment
+
+> **Start from a clean checkout.** Deploy from a fresh checkout of this sample. A leftover working tree can carry stale `terraform.tfstate`, `terraform.tfvars`, or `.terraform/` from an earlier run and confuse a from-scratch deploy — wipe or re-clone before you begin.
 
 1. Copy the example variables file and fill in the required values:
 
@@ -141,6 +152,7 @@ The AMI is wired up automatically in [`main.tf`](main.tf) via `data.aws_ami.hord
    - `certificate_domain` — the public FQDN for the Horde HTTPS endpoint, under the public zone (e.g. `horde.example.com`).
    - `perforce_stream` — the Perforce stream to sync into the FSxN source volume (e.g. `//YourGame/main`).
    - `horde_p4_credentials_secret_arn` — ARN of the pre-created Secrets Manager secret (`{"username":"svc-horde","password":"..."}`) for the Horde P4 user (required when deploying the bundled Perforce; see Prerequisites).
+   - `github_credentials_secret_arn` — ARN of the Secrets Manager secret holding your GitHub PAT (see [Prerequisites](#prerequisites)). Required for the default Horde image; omit only if you also override `horde_server_image` with an image you can pull without authentication.
 
    Optional variables (Perforce endpoint, FSxN sizing, agent instance types and counts, Horde image) are documented with defaults in `terraform.tfvars.example`.
 
@@ -156,6 +168,18 @@ Deployment provisions a VPC, FSxN file system, ECS-based Horde server, Perforce 
 
 The Horde external ALB ingress is locked to the **deployer's public IP as a `/32`** (discovered at plan time via `https://checkip.amazonaws.com`). There is no public or unauthenticated access, and there are no `0.0.0.0/0` ingress rules anywhere in this sample.
 
+> **Destroy → redeploy gotcha: the FSxN admin secret is soft-deleted.** When you `terraform destroy` and then re-apply, the re-apply collides with the FSxN `fsxadmin` password secret left over from the earlier deploy: Secrets Manager **soft-deletes** it with a recovery window, so the name is still taken and the new create fails ("scheduled for deletion"). Either force-delete the lingering secret before re-applying:
+>
+> ```bash
+> aws secretsmanager delete-secret \
+>   --secret-id <fsxn-fsxadmin-secret-name> \
+>   --force-delete-without-recovery
+> ```
+>
+> or set `recovery_window_in_days = 0` on the FSxN admin secret so a destroy purges it immediately.
+
+> **Runtime secret reads need IAM grants.** The agent login-ticket chain (in [runbook step 3.2](#32-set-the-password-to-match-the-pre-created-secret) / [appendix §1](#1-the-incremental-sync-needs-p4-flush--this-is-not-optional)) reads the P4 credentials on the host at runtime, so the **agent instance role** (`agent_instance_role_name`) must have `secretsmanager:GetSecretValue` on the Horde P4 credentials secret — `iam.tf` wires this grant from `horde_p4_credentials_secret_arn`, so verify it actually attaches. Likewise, if the P4 server instance reads a secret at runtime, its role needs the same grant. Without it the reads fail `AccessDenied` and the login-ticket chain breaks.
+
 ## Postdeployment
 
 Terraform emits the following outputs (see `outputs.tf`):
@@ -164,19 +188,22 @@ Terraform emits the following outputs (see `outputs.tf`):
 - `perforce_endpoint` — the `P4PORT` (`ssl:<host>:1666`) for P4 client configuration.
 - `fsxn_iscsi_portals` — comma-separated SVM iSCSI portal addresses (pass as `-set:IscsiPortals`; connect exactly one unless MPIO is installed — see [appendix §3](#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups)).
 - `fsxn_workspace_lun_path` — ONTAP path of the workspace LUN that hosts attach over iSCSI (the LUN carries NTFS).
-- `fsxn_hydrator_igroup` — the **single-host** igroup owning the source LUN. Obtain with `terraform output fsxn_hydrator_igroup`; it feeds the hydrate pipeline as `-set:HydratorIgroup` (already wired via `globals.json`). Never add build agents to it — NTFS has exactly one legitimate writer.
-- `fsxn_agent_igroup` — the shared igroup for per-job clone LUNs. Obtain with `terraform output fsxn_agent_igroup`; it feeds the build pipeline as `-set:AgentIgroup` (already wired via `globals.json`). Safe to share because each clone is used by exactly one job on one agent.
+
+Obtain the two igroups with `terraform output <name>`; each feeds its pipeline as a `-set:` value (already wired via `globals.json`):
+
+- `fsxn_hydrator_igroup` — the **single-host** igroup owning the source LUN, fed to the hydrate pipeline as `-set:HydratorIgroup`. Never add build agents to it — NTFS has exactly one legitimate writer.
+- `fsxn_agent_igroup` — the shared igroup for per-job clone LUNs, fed to the build pipeline as `-set:AgentIgroup`. Safe to share because each clone is used by exactly one job on one agent.
 - `fsxn_management_endpoint` / `fsxn_svm_management_endpoint` — ONTAP REST API targets for the BuildGraph tasks.
 - `sync_agent_launch_template_id` / `build_agent_launch_template_id` — launch template IDs for the two agent pools.
 - `agent_instance_role_name` — the IAM role attached to agent instances (has the secrets-read policy).
 - `horde_p4_credentials_secret_arn` — echoes the pre-created Horde P4 username/password secret ARN you passed in (JSON, sensitive). This sample does not create the secret.
 - `fsxn_password_secret_arn` — the FSxN `fsxadmin` password secret (sensitive).
 
-Once the stack is up, continue with the [end-to-end runbook](#end-to-end-runbook) below (Phase 2).
+Once the stack is up, continue with the [end-to-end runbook](#end-to-end-runbook) below.
 
 ---
 
-# Phase 2 — seed the depot and run your first build
+# Part 2 — seed the depot and run your first build
 
 ## End-to-end runbook
 
@@ -192,19 +219,61 @@ See [Deployment](#deployment). Provisions the VPC, FSxN, ECS Horde server, Perfo
 
 ### 3. Configure the `svc-horde` P4 user
 
-Horde authenticates to Perforce as `svc-horde` (the `perforceClusters` credentials in `globals.json`, sourced from the pre-created secret), but **Terraform cannot provision that user inside p4d**. After the P4 server is up, complete these one-time manual steps on the server, in order, so the Horde stream poller can log in and read the stream. These commands assume a Perforce super user; on the bundled SDP server, run `p4` after sourcing `p4_vars` for the instance.
+Horde authenticates to Perforce as `svc-horde` (the `perforceClusters` credentials in `globals.json`, sourced from the pre-created secret), but **Terraform cannot provision that user inside p4d**. After the P4 server is up, complete these one-time manual steps on the server, in order, so the Horde stream poller can log in and read the stream.
 
 These are **manual, one-time** steps — Terraform does not perform them. They persist across normal server restarts (on SDP servers all of these edits are journaled and survive restarts); you only need to redo them if the P4 database is ever **rebuilt from scratch** without a checkpoint/journal restore.
 
-#### 3.1 Create the `svc-horde` user
+#### 3.0 Get a working super-user shell on the P4 server
 
-`svc-horde` must exist as a Perforce user. A `service`-type user is preferred for least privilege. Skip this step if your deployment already auto-created the user.
+Run every `p4` command in this step as a Perforce **super** user. On the bundled SDP server there are two things people get wrong here, so do exactly this:
+
+1. **The super user is `super`, not `perforce`.** `perforce` is only the **OS account** that p4d runs as — it is not the Perforce super user. The `<super>` placeholder in the commands below is the Perforce user named `super`.
+2. **Get the SDP environment and a real login shell.** SDP stores per-instance environment (P4PORT, P4USER, ticket/trust file locations) in `p4_vars`, and its ticket/trust files depend on `$HOME` being the `perforce` account's home. Use a **login shell** (`su -`), not `sudo -u`, or the ticket/trust files land in the wrong `$HOME` and login breaks:
+
+   ```bash
+   # Become the perforce OS account with a full login shell, then load the SDP env for instance 1
+   sudo su - perforce
+   source /p4/common/bin/p4_vars 1
+   ```
+
+3. **Get the `super` password.** The `super` password is **not** the `AdminPassword`/`cgd-p4-server-AdminPassword` secret — that value does **not** match the live super password. On SDP the real super credential is stored on the server in the base64-encoded file:
+
+   ```bash
+   # base64-encoded, no separate key — decode to get the super password
+   base64 -d /p4/common/config/.p4passwd.p4_1.admin.enc
+   ```
+
+4. **Trust the SSL endpoint once.** Connecting to the explicit `ssl:<host>:1666` endpoint (rather than loopback) requires a one-time trust of the server fingerprint, or every `p4` command fails with "The authenticity of ... can't be established":
+
+   ```bash
+   p4 -p "$P4PORT" trust -y
+   ```
+
+5. **Log in as `super`:**
+
+   ```bash
+   p4 -u super login   # paste the password from step 3
+   ```
+
+Now run the sub-steps below as `super`.
+
+#### 3.1 Create the `svc-horde` user (Type: `standard`)
+
+`svc-horde` must exist as a Perforce user of **Type: `standard`**. Do **not** create it as a `service` user: p4d forbids service users from creating clients, opening changes, or submitting, so Horde job creation dies with HTTP 500 `Command not allowed for a service user` at `PerforceService.CreateClientAsync` — this blocks the entire pipeline.
+
+Build the spec with an **explicit `Type:` line**. The tempting `p4 user -o | sed 's/^Type:.*/.../' | p4 user -i` one-liner is a silent trap: a brand-new user's spec has **no** `Type:` line for the `sed` to match, so it yields the default (`standard`) by accident on a new user, and p4d **refuses to change the type of an existing user** in place. So set the type explicitly, and if the user already exists as the wrong type, **delete and recreate** it:
 
 ```bash
-# Idempotent create/edit; set Type: service in the spec for least privilege
-p4 -u <super> user -f -o svc-horde | \
-  sed 's/^Type:.*/Type:\tservice/' | \
-  p4 -u <super> user -f -i
+# If svc-horde already exists as the wrong type, delete it first (p4d cannot convert type in place):
+#   p4 -u super user -d -f svc-horde
+
+# Create svc-horde as Type: standard, injecting an explicit Type: line into the spec:
+p4 -u super user -f -o svc-horde | \
+  awk 'BEGIN{t=0} /^Type:/{print "Type:\tstandard"; t=1; next} {print} END{if(!t) print "Type:\tstandard"}' | \
+  p4 -u super user -f -i
+
+# Verify:
+p4 -u super user -o svc-horde | grep '^Type:'   # -> Type: standard
 ```
 
 #### 3.2 Set the password to match the pre-created secret
@@ -216,8 +285,18 @@ Set the user's password **on the server** to match the value already in the pre-
 aws secretsmanager get-secret-value --secret-id <horde_p4_credentials_secret_arn>
 
 # On the P4 server, set the svc-horde user's password to that value
-p4 -u <super> passwd svc-horde
+p4 -u super passwd svc-horde
 ```
+
+> **Expired-password gotcha (`security=4`).** On a server running `security=4` with `dm.user.resetpassword=1` (the SDP default), an **admin-set** password is treated as **immediately expired**. `svc-horde` cannot authenticate until it changes its own password **once** — even changing it to the same value. Do a one-time self-change as `svc-horde` (old = new = the secret value) so the account can log in:
+>
+> ```bash
+> # As svc-horde, change the password to itself once to clear the "expired" state.
+> # p4 passwd prompts: Old password, then New password (twice) — enter the SAME value for all three.
+> p4 -u svc-horde passwd
+> ```
+>
+> Skip this and Horde's poller keeps failing to authenticate even though the password "matches".
 
 #### 3.3 Grant protections on the stream depot
 
@@ -229,39 +308,61 @@ write user svc-horde * //YourGame/...
 
 `p4 protect` is **order-sensitive**: later lines override earlier ones for overlapping paths, so place this grant where it will not be overridden by a subsequent exclusionary line (e.g. `list user * -//YourGame/...`). Without this grant the Horde poller fails and the server logs `Access for user 'svc-horde' has not been enabled by 'p4 protect'`. `super` is **not** required for the poller — the `write ... //YourGame/...` line is exactly what grants the stream access it needs. Keep it least-privilege.
 
-#### 3.4 Add `svc-horde` to service-user groups
+#### 3.4 Give `svc-horde` a long-lived login ticket
 
 Add `svc-horde` to a group with an `unlimited` (or long) `Timeout` so its login ticket does not expire and interrupt polling. Group membership only affects the ticket timeout — it does **not** grant depot access; the protections line from step 3.3 does that.
 
 ```bash
 # Grant an unlimited ticket timeout (create the group if it doesn't exist)
-p4 -u <super> group -o unlimited_timeout | \
+p4 -u super group -o unlimited_timeout | \
   sed 's/^Timeout:.*/Timeout:\tunlimited/' | \
-  p4 -u <super> group -i
+  p4 -u super group -i
 
 # Add svc-horde to the group's Users list, then re-submit
-p4 -u <super> group -o unlimited_timeout | \
+p4 -u super group -o unlimited_timeout | \
   awk '/^Users:/{print; print "\tsvc-horde"; next} {print}' | \
-  p4 -u <super> group -i
+  p4 -u super group -i
 ```
+
+### Acquire the engine and project
+
+Before you can seed the depot, you need the engine and a source-available project **on a local disk**. This step is entirely manual and independent of this sample's infrastructure — do it on the same host you will seed from (see [seeding environment](#seeding-environment) below).
+
+> **Skip this if you already have your own game and engine in Perforce.** The seed step and its helper are an **optional quick-start** for a demo/eval depot. If you already have your project and engine in Perforce (or your own seeding process), skip straight to [making Horde aware of the stream](#6-make-horde-aware-of-the-stream--project) — just make sure your depot ends in the [required layout](#required-end-state-stream-layout) below.
+
+To assemble a demo/eval project (engine + Lyra):
+
+1. **Clone the engine at your target tag.** Clone `EpicGames/UnrealEngine` at the engine tag you intend to build (e.g. `5.5.4-release`). This requires a GitHub account **accepted into the Epic Games organization** and a PAT with the **`repo`** scope (see [Prerequisites](#prerequisites)); a token missing `repo` (or an account not in the org) fails here with a clone **403**.
+
+   ```bash
+   git clone --branch 5.5.4-release https://github.com/EpicGames/UnrealEngine.git
+   ```
+
+2. **Fetch the engine's binary dependencies.** The Git repo does not carry the large binary dependencies — run the engine's setup script to fetch them via GitDependencies before you seed, or the engine tree is incomplete:
+
+   ```bat
+   cd UnrealEngine
+   Setup.bat
+   ```
+
+3. **Get a project with C++ source.** The project **must** have a `Source/` tree and real `Modules[]` in its `.uproject` — a from-source compile has nothing to build otherwise. Epic's **Lyra** (from `EpicGames/UnrealEngine` at `Samples/Games/Lyra`, at the tag matching your engine) is a good fit. Note that **Lyra at the `5.5.x` tags is code-only** (`Source/` but no `Content/`, 0 `.uasset`) — that is **fine** for the from-source `LyraEditor` compile demo; you do not need Content. **Do not** pick a content-only sample (e.g. a prebuilt-DLL Launcher/Fab sample with no `Source/`): it cannot be compiled from source.
+
+4. **Budget disk.** The engine tree alone is large (~34 GiB), and Setup.bat's dependencies push the checkout to ~64 GiB. Plan for **~512 GiB free** on the acquisition/seed host for the engine + project + working space + NTFS overhead (the stock agent AMI root is 256 GiB — too small; size the seed host up, see [seeding environment](#seeding-environment)).
 
 ### 4. Seed the Perforce depot (project + engine)
 
-The depot must contain a **source-available** UE project **and** the matching engine before a build can compile anything. This is manual — the sample does not seed the depot.
+The depot must contain a **source-available** UE project **and** the matching engine before a build can compile anything. This is manual — the sample does not seed the depot. However you get there, the depot must end in the [required end-state layout](#required-end-state-stream-layout).
 
-**Run the helper instead of hand-writing P4 commands.** From the in-VPC Windows workstation (see below), run [`scripts/seed-depot.ps1`](scripts/seed-depot.ps1) — see the script header for parameters. It creates the stream depot/stream if absent, submits the project under a subfolder, submits the Build scripts, provisions the engine (branch from the depot with `p4 populate`, or submit a local tree), and verifies the layout. Supports `-WhatIf`.
+> **`scripts/seed-depot.ps1` is an OPTIONAL quick-start helper — not required.** It exists to get a demo/eval depot (engine + Lyra) set up fast. If you already have your own game and engine in Perforce, or your own seeding process, you can **skip the helper entirely** — as long as the depot ends up in the [required layout](#required-end-state-stream-layout) below (project in a stream subfolder, engine tree present, the `Build/` scripts submitted). Both paths must converge on that same end state.
 
-**Where to run it + prerequisites.** This sample does **not** deploy a host to run the seed from — run `scripts/seed-depot.ps1` from **any host you choose**: your local workstation, a CI runner, or an EC2 instance you provision yourself. Wherever you run it, that host must have:
+**Using the helper.** From your seed host (see [seeding environment](#seeding-environment)), run [`scripts/seed-depot.ps1`](scripts/seed-depot.ps1) — see the script header for the full parameter reference. It creates the stream depot/stream if absent, submits the project under a subfolder, submits the Build scripts, provisions the engine, and verifies the layout. Supports `-WhatIf`. Key parameters and gotchas:
 
-- The Perforce CLI `p4` on `PATH`.
-- PowerShell (the script is a `.ps1`).
-- **Network reachability to the Perforce server's `P4PORT`.** The bundled P4 server is in a **private subnet**, so the host must be in the VPC or on a VPN/peered network that can reach it (e.g. an in-VPC EC2 instance, or your workstation over VPN).
-- The project tree + BuildGraph scripts available locally to submit.
-- AWS CLI + credentials **only if** you use `-P4PasswordSecret` (which reads the P4 password from Secrets Manager). If you pass `-P4Password` directly, the AWS CLI is **not** required.
+- **First-ever seed must use `-EnginePath` (submit a local tree).** The fast `-EngineDepotPath` option branches an engine that is **already in the depot** via `p4 populate` (lazy copy, no re-upload) — but on a truly fresh depot no engine exists yet, so the **first-ever** seed has to submit your local engine tree with `-EnginePath` (~34 GiB, slow). Use `-EngineDepotPath` only for **subsequent** streams, once an engine is present in the depot.
+- **Run as a P4 user with depot-create rights.** Creating the stream depot/stream requires elevated rights — service/standard users without them cannot create depots. Run the seed as a P4 user that can create depots (e.g. the SDP `super` user), **or** pre-create the depot and stream yourself first and run the seed as a lesser user. (`svc-horde` from step 3 is a poller, not a depot creator.)
+- **Large trees: `-SubmitBatchSize`.** A monolithic reconcile+submit stalls on a first-ever full engine seed (~285k files / ~64 GiB). Use `-SubmitBatchSize` to submit in chunks. The engine tree also contains files with Perforce metacharacters (`@ % # *`); the helper pre-scans and force-adds them (`p4 add -f`) and warns on any it cannot submit.
 
-**Tearing the depot back down later.** Because `seed-depot.ps1` creates a **stream depot**, `p4 depot -d <depot>` will refuse with `location of existing streams` until the versioned stream spec is obliterated first — after deleting the stream's files/spec, run `p4 stream --obliterate -y //<depot>/<stream>` (Perforce 2019.1+), then delete the depot.
-
-**Required stream layout.** The stream must be laid out so the project is in a subfolder (the [drive-root gotcha](#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root)) and the engine tree is present ([engine-in-stream](#7-the-engine-must-be-present-in-the-stream--on-the-lun)):
+<a id="required-end-state-stream-layout"></a>
+**Required end-state stream layout.** Both the helper path and a bring-your-own-depot path must converge on this layout — the project in a **subfolder** (never at the stream root — the [drive-root gotcha](#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root)), the engine tree present ([engine-in-stream](#7-the-engine-must-be-present-in-the-stream--on-the-lun)), and the `Build/` scripts submitted ([step 5](#5-submit-the-buildgraph-scripts-to-the-depot-under-build)):
 
 ```text
 //YourGame/main/
@@ -274,9 +375,20 @@ The depot must contain a **source-available** UE project **and** the matching en
 └── Engine/               # the full UE engine tree (Build.bat, BatchFiles, Source, ...)
 ```
 
-**Use a project with C++ source.** The project **must** have `Source/` and real `Modules[]` in its `.uproject`. A concrete example is Epic's **Lyra** (from the entitled `EpicGames/UnrealEngine` repo at `Samples/Games/Lyra`, at the tag matching your engine version — e.g. `5.5.4-release`). Getting Lyra requires a GitHub account linked to and accepted into the Epic Games organization. **Do not** pick a content-only sample: Epic's Stack-O-Bot Launcher/Fab sample ships prebuilt DLLs with **no `Source/`** and **cannot be compiled from source** — a build against it fails because there is nothing to compile.
+**Use a project with C++ source.** The project **must** have `Source/` and real `Modules[]` in its `.uproject` — see [Acquire the engine and project](#acquire-the-engine-and-project) for how to get one (e.g. Epic's Lyra) and why content-only samples cannot be compiled from source.
 
-**Seeding environment.** Bring up an in-VPC Windows workstation in a **private** subnet, reachable via **SSM / Fleet Manager** with **no public ingress** (a security group with zero inbound rules — consistent with the no-`0.0.0.0/0` posture of this sample). Install `p4` on it, then run `scripts/seed-depot.ps1`. The engine tree is large (~34 GiB), so prefer the script's `-EngineDepotPath` option to branch an engine already in the depot with `p4 populate` (lazy copy, no re-upload) rather than submitting a local copy.
+<a id="seeding-environment"></a>
+**Seeding environment.** This sample does **not** deploy a host to run the seed from — run the acquisition and seed from **any host you choose**: your local workstation, a CI runner, or an EC2 instance you provision yourself. Wherever you run it, that host must have:
+
+- The Perforce CLI `p4` on `PATH`, and PowerShell (the helper is a `.ps1`).
+- **Network reachability to the Perforce server's `P4PORT`.** The bundled P4 server is in a **private subnet**, so the host must be in the VPC or on a VPN/peered network that can reach it (e.g. an in-VPC EC2 instance, or your workstation over VPN).
+- The engine + project tree + BuildGraph scripts available locally to submit.
+- **~512 GiB of free disk** for the engine (~34 GiB) + dependencies + project + working space + NTFS overhead. The stock agent AMI root is 256 GiB — too small; if you reuse that AMI for the seed host, resize the root volume up.
+- AWS CLI + credentials **only if** you pass the P4 credentials by Secrets Manager reference (the helper's `-P4CredentialsSecret`). If you pass the password directly, the AWS CLI is **not** required.
+
+A convenient choice is an **in-VPC Windows workstation** in a **private** subnet, reachable via **SSM / Fleet Manager** with **no public ingress** (a security group with zero inbound rules — consistent with the no-`0.0.0.0/0` posture of this sample).
+
+**Tearing the depot back down later.** If you used the helper (which creates a **stream depot**), `p4 depot -d <depot>` refuses with `location of existing streams` until the versioned stream spec is obliterated first — after deleting the stream's files/spec, run `p4 stream --obliterate -y //<depot>/<stream>` (Perforce 2019.1+), then delete the depot.
 
 ### 5. Submit the BuildGraph scripts to the depot under `Build/`
 
@@ -296,13 +408,30 @@ Confirmed `globals.json` requirements for the live Horde **5.5** server (a **fla
 - `agentTypes` mapping `Win64 → build-pool` and `AnyAgent → sync-pool`, plus `workspaceTypes`.
 - A **`storage` block** (backends + namespaces for `horde-logs` and `horde-artifacts`). Without it, agent log uploads fail with **HTTP 500 `Namespace not found`** (see [Troubleshooting](#troubleshooting)).
 
-### 7. Approve agent enrollment in the Horde UI
+### 7. Approve agent enrollment (assign each agent to exactly one pool)
 
-Horde 5.5 does **not** auto-approve agents. New agents sit **pending** until an operator approves them — via the Horde UI, or `POST /api/v1/enrollment`. Until you approve them, `SyncPool` and `BuildPool` have **no online agents** and jobs never lease. Approve the Sync and Build agents once they enroll. Note that `enable_new_agents_by_default` does **not** auto-approve enrollment — it only controls whether an agent is enabled *once approved*. See [appendix §11](#11-horde-55-does-not-auto-approve-agent-enrollment).
+Horde 5.5 does **not** auto-approve agents. New agents sit **pending** until an operator approves them — via the Horde UI, or `POST /api/v1/enrollment` (a `GET` on the same endpoint lists pending enrollments). Until you approve them, `SyncPool` and `BuildPool` have **no online agents** and jobs never lease. Note that `enable_new_agents_by_default` does **not** auto-approve enrollment — it only controls whether an agent is enabled *once approved*. See [appendix §11](#11-horde-55-does-not-auto-approve-agent-enrollment).
+
+**Approve each agent into exactly its intended pool — do not assign an agent to both pools:**
+
+- **Sync agent → `SyncPool` only.** The sync agent is the **single legitimate writer** of the source LUN (enforced by the single-host `horde_san_hydrator` igroup — see [appendix §3](#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups)). If you also place it in (or the build agent in) the other pool, Horde can schedule a **hydrate on a build agent**, which the single-writer igroup guard refuses.
+- **Build agents → `BuildPool` only.**
+
+> **Manual step — trust the P4 SSL endpoint on each new agent host.** The Horde agent service runs as **LocalSystem**, whose P4 trust store has no fingerprint for the SSL `P4PORT`, so Horde's workspace-executor `p4 login` fails with "The authenticity of ... can't be established" **before** any pipeline script runs (`p4-login.ps1` cannot fix this — it runs too late). Run a one-time `p4 trust` **as the agent service account** on **each** new agent host. Because SSM Run Command executes as **SYSTEM** — the same account the agent runs as — you can push it via SSM Run Command:
+>
+> ```powershell
+> p4 -p ssl:<p4d-host>:1666 trust -y
+> ```
+>
+> Do this once per agent host after it boots and before it needs to run a job.
 
 ### 8. Trigger the Hydration Pipeline to create the first snapshot
 
 Run the **Hydration Pipeline** from the Horde UI (or wait for the 60-minute schedule, `patterns: [{ interval: 60 }]`). It syncs the stream onto the source FSxN volume and creates the first snapshot named `cl-<N>`. Note the `<N>` — it is the changelist you pass to the build. Keep this schedule frequent to keep incremental syncs cheap — see [appendix §1](#1-the-incremental-sync-needs-p4-flush--this-is-not-optional).
+
+> **First-ever hydrate on a raw LUN needs `-set:FormatIfRaw=true`.** The source LUN starts **raw** (no partition/filesystem). The first hydrate must format it, or provisioning fails with `No usable partition on disk ...`. Pass `-set:FormatIfRaw=true` on the **first** hydrate (drop it on subsequent runs so an existing filesystem is never reformatted).
+
+> **Custom job `arguments` REPLACE the template defaults — pass the full list.** If you trigger the hydrate by posting custom `arguments` to `POST /api/v1/jobs`, those arguments **replace** the template's default argument list rather than appending to it, so omitting the defaults breaks the job with errors like `Missing -Script= parameter`. When you pass `-set:FormatIfRaw=true`, include the **entire** argument list the template would otherwise supply (`-Script=Build/HydratePipeline.xml`, the target node, and the `-set:` values) **plus** `-set:FormatIfRaw=true`. Triggering from the Horde UI keeps the defaults intact.
 
 ### 9. Trigger the Build Pipeline (per-job arguments)
 
@@ -321,6 +450,10 @@ Trigger the **Build Pipeline** on-demand once a snapshot exists. These arguments
 
 Expect `BUILD SUCCESSFUL` compiling off the clone LUN. With `-UBA` the log shows `Using Unreal Build Accelerator executor` and a `UbaServer` listener.
 
+> **Posting custom `arguments` replaces the template defaults.** As in the hydrate ([step 8](#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot)): if you trigger the build via `POST /api/v1/jobs` with custom `arguments`, include the **full** template argument list (e.g. `-Script=Build/BuildPipeline.xml` and the target node) **plus** the per-run `-set:` values above, or the job fails with `Missing -Script=`. Triggering from the Horde UI keeps the defaults intact.
+
+> **Single-agent UBA runs local-only (by design).** With only one build agent online, UBA reports `No agents found matching requirements` and runs local-only — this is expected, not an error. Distributed UBA needs more than one eligible agent.
+
 ## Troubleshooting
 
 Keyed to the exact error strings the pipeline can produce.
@@ -331,7 +464,7 @@ Keyed to the exact error strings the pipeline can produce.
 | `NullReferenceException ... SourceFileWorkingSet` (UBT) | The UE project is at the clone-LUN **drive root**; `ProjectDir.ParentDirectory` is `null`. | Put the project in a subfolder (`W:\<Project>\...`). See [appendix §6](#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root). |
 | Opaque **ONTAP HTTP 400** on clone create | The `CloneVolumeName` contains a hyphen, which ONTAP volume names reject. | Use `build_{jobid}`, lowercase, no hyphens. See [appendix §5](#5-ontap-volume-names-reject-hyphens). |
 | `Access for user 'svc-horde' has not been enabled by 'p4 protect'` | `svc-horde` has no protections grant on the stream depot, so the poller can't read it. | Add the `write user svc-horde * //YourGame/...` line. See [runbook step 3.3](#33-grant-protections-on-the-stream-depot). |
-| Agents show online but jobs never lease / pools empty | Agent enrollment is **not approved** (Horde 5.5 does not auto-approve). | Approve enrollment in the Horde UI. See [runbook step 7](#7-approve-agent-enrollment-in-the-horde-ui) / [appendix §11](#11-horde-55-does-not-auto-approve-agent-enrollment). |
+| Agents show online but jobs never lease / pools empty | Agent enrollment is **not approved** (Horde 5.5 does not auto-approve). | Approve enrollment in the Horde UI. See [runbook step 7](#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool) / [appendix §11](#11-horde-55-does-not-auto-approve-agent-enrollment). |
 | UBT `UnauthorizedAccessException` writing `Engine\Intermediate` (e.g. `VVMBytecodeOps.gen.h` denied) | Synced files are read-only because the client is `noallwrite`; UBT can't write generated headers. | Clear read-only (`attrib -R <drive>:\*.* /S /D`) or use an `allwrite` client. See [appendix §8](#8-p4-noallwrite-makes-synced-files-read-only--ubt-must-be-able-to-write). |
 | `Couldn't find target rules file for target 'Editor'` | `UETarget` is set to the generic `Editor` instead of the project's real editor target. | Use the real editor target name, e.g. `LyraEditor`. See the [per-job args table](#9-trigger-the-build-pipeline-per-job-arguments). |
 
@@ -346,34 +479,26 @@ Keyed to the exact error strings the pipeline can produce.
 
 These are the operational requirements and constraints of the pipeline. Each is stated once here and referenced from the runbook, args table, and troubleshooting sections above.
 
-The FlexClone premise holds up. For a **49.55 GB / 268,730-file** UE 5.7 stream: snapshot ~**80 ms**, FlexClone ~**1.2 s**, mount ~**31 ms**; two ~45 GiB workspace volumes occupy **35.3 GiB** physical. But several things must be right or the pipeline either silently loses its benefit or does not work at all.
+The FlexClone premise is what makes per-build workspaces cheap: an ONTAP snapshot and a FlexClone of a multi-tens-of-GiB, hundreds-of-thousands-of-file UE stream each complete in well under a couple of seconds, and the iSCSI mount in tens of milliseconds — so a per-build workspace materializes in seconds instead of a multi-minute full sync. Because clones are copy-on-write, two workspace volumes share the parent's blocks and add only their own deltas, so total physical usage stays close to a single copy. But several things must be right or the pipeline either loses its benefit or does not work at all.
 
 ### 1. The incremental sync needs `p4 flush` — this is not optional
 
-`p4 sync` is incremental only relative to the **client's have-list**, and the build agent's workspace is a fresh client. The files are on the clone, but the server has no record of that, so a bare `p4 sync` **re-transfers the entire stream** — the FlexClone completes in a second and then you pay the full sync anyway.
+`p4 sync` is incremental only relative to the **client's have-list**, and the build agent's workspace is a fresh client. The files are on the clone, but the server has no record of that, so a bare `p4 sync` **re-transfers the entire stream** — the FlexClone completes in a second and then you pay the full sync anyway. `BuildPipeline.xml` therefore runs `p4 flush <stream>/...@$(SnapshotChangelist)` first: a metadata-only operation that writes the have-list without transferring content, completing in seconds even for hundreds of thousands of files. Because flush trusts the changelist you give it, snapshots must be named `cl-{N}` and `SnapshotChangelist` must be passed per job — the wrong value leaves the workspace disagreeing with the server about what is on disk.
 
-`BuildPipeline.xml` therefore runs `p4 flush <stream>/...@$(SnapshotChangelist)` first, which writes the have-list **without transferring content** (measured: 3 s on Linux, 6 s on Windows; ~2 s for 209k files, metadata-only, no bulk transfer). This is why snapshots must be named `cl-{N}` and why `SnapshotChangelist` must be passed per job — flush is metadata-only and trusts you, so pointing it at the wrong changelist leaves the workspace silently disagreeing with the server about what is on disk.
-
-Keep the hydrate schedule frequent: at a 10-changelist gap the following `sync` spent **26 s** walking the diff, versus ~1 s when the snapshot was at head.
-
-The `flush` and `sync` need Perforce auth, and a fresh build agent has no ticket. The `Compile` node therefore runs `p4 login` as its first step: it reads the plain-text password from the secret named by `p4_password_secret_name`, mints a ticket in the agent user's default ticket file, and every later `p4` command in the node reuses it. The password is used only to mint the ticket; leave `p4_password_secret_name` empty to rely on a ticket already present on the host.
+Keep the hydrate schedule frequent: the wider the gap between the snapshot changelist and head, the more the following `sync` must walk the diff — a snapshot at or near head keeps the delta sync to about a second, while a gap of several changelists can add tens of seconds. (`flush` and `sync` need Perforce auth, minted by the node's `p4 login` first step — see the [Architecture](#architecture) pipeline notes.)
 
 ### 2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works
 
-The binding constraint on the data path is Windows filesystem semantics, not throughput — which is why the data path is iSCSI/NTFS rather than NFS. On a Windows NFSv3 mount, four separate UE subsystems fail:
+The binding constraint is Windows filesystem semantics, not throughput. On a Windows NFSv3 mount, four separate UE subsystems fail:
 
 | Component | Failure on Windows NFSv3 |
 |---|---|
-| **UBA** (Unreal Build Accelerator) | Detours file I/O and calls `NtQueryInformationFile` on every input; the NFS redirector answers `0xc000000d`. **628 failures, all on `Engine/Source/*`** — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all. |
+| **UBA** (Unreal Build Accelerator) | Detours file I/O and calls `NtQueryInformationFile` on every input; the NFS redirector answers `0xc000000d` for files under `Engine/Source/*` — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all. |
 | **DDC** | mmap'd cache writes fail or corrupt |
 | **Shader library** | write failures during cook |
 | **Stager** | `SafeCopyFile` → `SetFileTime` fails and **retries forever**, so the job *hangs* instead of erroring |
 
-Each is only workaroundable by moving that write to local NTFS, which splits the project across three locations and still leaves UBA off — which defeats the purpose of a build-acceleration pipeline.
-
-**A LUN presents real NTFS, so all four work and UBA stays enabled.** It is also ~40% faster to hydrate: **9m30s vs 15m33s** on a 49.55 GB seed, because block I/O skips per-file metadata round-trips.
-
-Note what this does *not* cost: iSCSI authorises by initiator IQN (igroups), not by directory identity, so you get NTFS semantics **without** the AD/CIFS dependency that SMB would impose. No such trade-off is required.
+Each is only workaroundable by moving that write to local NTFS, which splits the project across three locations and still leaves UBA off — defeating the purpose of a build-acceleration pipeline. A LUN presents real NTFS, so all four work and UBA stays enabled. Block I/O is also meaningfully faster to hydrate (~40%), skipping the per-file metadata round-trips NFS incurs. And iSCSI authorises by initiator IQN (igroups), not directory identity, so you get NTFS semantics without the AD/CIFS dependency SMB would impose.
 
 ### 3. NTFS is not a shared filesystem — hence two igroups
 
@@ -389,7 +514,7 @@ The shared igroup is safe because each clone LUN is used by exactly one job on o
 Two consequences:
 
 - **The hydrator is Windows, because the LUN carries NTFS** (`SyncPool` condition is `OSFamily == 'Windows'`).
-- **Connect exactly ONE iSCSI portal** unless the Windows MPIO feature is installed. Two portals without MPIO make Windows enumerate a single LUN as two disks — its own corruption trap. `Connect-SanPortal` enforces this.
+- **Connect exactly ONE iSCSI portal** unless the Windows MPIO feature is installed. Two portals without MPIO make Windows enumerate a single LUN as two disks and corrupt it. `Connect-SanPortal` enforces this.
 
 ### 3a. Flush the NTFS write cache before every snapshot
 
@@ -397,7 +522,7 @@ An ONTAP snapshot captures blocks as the array sees them, so anything still in t
 
 ### 4. Clone teardown must not rely on a BuildGraph node
 
-`RunLate="true"` is **not** a BuildGraph `<Node>` attribute, and the semantics it was reaching for do not exist: a node ordered after a **failed** node is *Skipped*. So the `Cleanup Clone` node is a success-only fast path. Guaranteed teardown is registered as a **Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone-lun.ps1`), which runs regardless of outcome.
+`RunLate="true"` is **not** a BuildGraph `<Node>` attribute, and BuildGraph has no equivalent that guarantees a teardown node runs after a failure: a node ordered after a **failed** node is *Skipped*. So the `Cleanup Clone` node is a success-only fast path. Guaranteed teardown is registered as a **Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone-lun.ps1`), which runs regardless of outcome.
 
 Neither path survives a **hard Spot reclaim**, since both run *on the agent*. If you run agents on Spot — since agents may be reclaimed — add an **off-agent reaper** on a schedule that deletes `build_*` clones whose Horde job is no longer running. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too.
 
@@ -427,15 +552,15 @@ The pre-created secret (passed via `horde_p4_credentials_secret_arn`) holds the 
 
 ### 11. Horde 5.5 does not auto-approve agent enrollment
 
-Newly enrolled Sync and Build agents sit **pending** until an operator approves them (Horde UI or `POST /api/v1/enrollment`). Until you do, the pools have no online agents and jobs never lease. `enable_new_agents_by_default` does **not** auto-approve enrollment — it only controls whether an agent is enabled *once approved*; setting it true does not skip this manual approval step. This is done in [runbook step 7](#7-approve-agent-enrollment-in-the-horde-ui).
+Newly enrolled Sync and Build agents sit **pending** until an operator approves them (Horde UI or `POST /api/v1/enrollment`). Until you do, the pools have no online agents and jobs never lease. `enable_new_agents_by_default` does **not** auto-approve enrollment — it only controls whether an agent is enabled *once approved*; setting it true does not skip this manual approval step. This is done in [runbook step 7](#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool), where each agent must be approved into exactly one pool.
 
 ### 12. Single source stream (per-stream source LUN)
 
-The source LUN (`/vol/p4_workspace/workspace`, hydrated by the `fsxn-hydrator` P4 client behind a single-host igroup and a `min = max = 1` `SyncPool`) is a **per-stream** artifact. A subsequent `p4 sync` of a *different* stream onto the same LUN does not delete the prior stream's files — Perforce only manages files in the current client's have-list — so the prior stream's tree persists on the NTFS volume, is captured by the next ONTAP snapshot, and is cloned into every build taken from it (cross-stream contamination). This sample is therefore scoped to one stream. This is **not** a data-path limitation: the single-writer rule (one writer per NTFS LUN, enforced by the single-host igroup and `-SingleHost`) forbids two hosts writing one LUN, but permits multiple sync agents each owning a **separate** volume/LUN. Multi-stream support — on-demand per-stream volume/LUN driven from Horde config rather than Terraform, with a deterministic stream→agent→LUN binding and serialized single-writer enforcement — is planned as follow-up.
+The source LUN (`/vol/p4_workspace/workspace`, hydrated by the `fsxn-hydrator` P4 client behind a single-host igroup and a `min = max = 1` `SyncPool`) is a **per-stream** artifact. A subsequent `p4 sync` of a *different* stream onto the same LUN does not delete the earlier stream's files — Perforce only manages files in the current client's have-list — so the earlier stream's tree persists on the NTFS volume, is captured by the next ONTAP snapshot, and is cloned into every build taken from it (cross-stream contamination). This sample is therefore scoped to one stream. This is **not** a data-path limitation: the single-writer rule (one writer per NTFS LUN, enforced by the single-host igroup and `-SingleHost`) forbids two hosts writing one LUN, but permits multiple sync agents each owning a **separate** volume/LUN. Supporting more than one stream would require a per-stream volume/LUN with a deterministic stream→agent→LUN binding and serialized single-writer enforcement; that is out of scope for this sample.
 
-## Forward-looking notes
+## Scaling notes and known limitations
 
-- **Narrow the orchestration workspace.** The agent that only parses the BuildGraph XML still syncs the whole stream — ~9 minutes of a ~20-minute job. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer; a Perforce **virtual stream** containing just the bootstrap slice, with the workspace's `stream` pointed at it, should narrow this. Not yet exercised.
+- **The orchestration workspace syncs the whole stream.** The agent that only parses the BuildGraph XML still syncs the entire stream, which can be a large share of a job's wall-clock time. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer. To narrow this, use a Perforce **virtual stream** containing just the bootstrap slice and point the workspace's `stream` at it.
 - **Off-agent clone reaper for Spot.** On-agent teardown (the `UE_HORDE_CLEANUP` lease hook) does not survive a hard Spot reclaim. If you run agents on Spot, add a scheduled off-agent reaper that deletes `build_*` clones whose Horde job is no longer running (see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node)).
 
 <!-- markdownlint-disable -->
