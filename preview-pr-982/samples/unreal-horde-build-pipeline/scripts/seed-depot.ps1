@@ -101,6 +101,17 @@
 .PARAMETER ClientName
     Name of the temporary stream client to create. Defaults to seed_<user>_<host>.
 
+.PARAMETER SubmitBatchSize
+    Only used by the local-engine (-EnginePath) path. Number of files to `p4 add`
+    and `p4 submit` per changelist. The engine tree is ~285k files / ~64 GiB; a
+    single monolithic reconcile+submit stalls, so the local-engine tree is added
+    and submitted in fixed-size chunks (one changelist per chunk). Files whose
+    names contain P4 wildcard metacharacters (@ % # *) are handled separately
+    (added with `p4 add -f`, escaped); any that still fail to add/submit are
+    WARNed, skipped, and reported in an end-of-run summary rather than stalling
+    the whole seed. Defaults to 15000. The -EngineDepotPath (p4 populate) path is
+    unaffected.
+
 .EXAMPLE
     # Preferred: branch an engine already in the depot (no re-upload)
     .\seed-depot.ps1 -P4Port ssl:perforce.studio.internal:1666 -P4User admin `
@@ -135,7 +146,9 @@ param(
     [Parameter(Mandatory = $true)] [string] $BuildScriptsPath,
 
     [Parameter()] [string] $WorkspaceRoot,
-    [Parameter()] [string] $ClientName
+    [Parameter()] [string] $ClientName,
+
+    [Parameter()] [ValidateRange(1, [int]::MaxValue)] [int] $SubmitBatchSize = 15000
 )
 
 Set-StrictMode -Version Latest
@@ -348,6 +361,10 @@ if ($PSCmdlet.ShouldProcess($ClientName, "create/update stream client")) {
 # From here on, p4 commands use this client.
 $script:ClientNameResolved = $ClientName
 
+# Collects files skipped during the chunked local-engine submit (metachar or
+# per-chunk failures) so we can report them once at the end instead of dying.
+$script:SkippedFiles = New-Object System.Collections.Generic.List[string]
+
 # Helper to add + submit a set of local files placed under the workspace.
 function Submit-Tree {
     param(
@@ -366,6 +383,178 @@ function Submit-Tree {
         & p4 -p $P4Port -u $P4User -c $ClientName reconcile "$dest\..." 2>$null
         Invoke-P4 -P4Args @('submit', '-d', $Description, "$dest\...")
     }
+}
+
+# Add + submit a LARGE local tree in fixed-size chunks (one changelist per chunk).
+# Used for the local-engine (-EnginePath) path only. A single monolithic
+# reconcile+submit of the ~285k-file / ~64 GiB engine tree stalls; chunking keeps
+# each submit bounded and emits per-chunk progress. Files whose names contain P4
+# wildcard metacharacters (@ % # *) are added separately with `p4 add -f` (escaped);
+# any file that still fails to add/submit is WARNed, skipped, and reported at the
+# end instead of aborting the whole seed. Returns the list of skipped file paths.
+function Submit-TreeChunked {
+    param(
+        [Parameter(Mandatory = $true)] [string] $SourcePath,
+        [Parameter(Mandatory = $true)] [string] $DepotSubfolder,   # relative to stream root, e.g. "Engine"
+        [Parameter(Mandatory = $true)] [string] $Description,
+        [Parameter(Mandatory = $true)] [int]    $BatchSize
+    )
+    $dest = Join-Path $WorkspaceRoot $DepotSubfolder
+    Write-Host "    Staging '$SourcePath' -> '$dest'"
+    if ($PSCmdlet.ShouldProcess($dest, "copy tree into workspace")) {
+        New-Item -ItemType Directory -Path $dest -Force | Out-Null
+        Copy-Item -Path (Join-Path $SourcePath '*') -Destination $dest -Recurse -Force
+    }
+
+    # Enumerate the local files to submit. In -WhatIf the tree may not have been
+    # copied, so fall back to enumerating the SOURCE tree just to size the plan.
+    $enumRoot = if (Test-Path -LiteralPath $dest) { $dest } else { $SourcePath }
+    $allFiles = @(Get-ChildItem -LiteralPath $enumRoot -Recurse -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+    $totalFiles = $allFiles.Count
+
+    # Split into normal vs metachar (@ % # *) buckets. Metachar files break plain
+    # `p4 add` because P4 interprets those characters in path args, so they are
+    # added individually with `p4 add -f`.
+    $metaFiles   = @($allFiles | Where-Object { $_ -match '[@%#*]' })
+    $normalFiles = @($allFiles | Where-Object { $_ -notmatch '[@%#*]' })
+
+    $chunks = [math]::Ceiling($normalFiles.Count / [double]$BatchSize)
+    if ($chunks -lt 1 -and $normalFiles.Count -gt 0) { $chunks = 1 }
+
+    Write-Host "    Files to submit : $totalFiles  (normal: $($normalFiles.Count), metachar @%#*: $($metaFiles.Count))"
+    Write-Host "    Batch size      : $BatchSize  ->  $chunks chunk(s) for normal files"
+
+    $skipped = New-Object System.Collections.Generic.List[string]
+    $done = 0
+
+    # --- Normal files: add + submit in fixed-size chunks ------------------------
+    # p4 emits benign per-file warnings ("can't add existing file", etc.) and
+    # returns a NON-ZERO exit for the whole `p4 add` when ANY single file warns,
+    # even though the rest opened fine. So we do NOT gate on the `p4 add` exit
+    # code. Instead we ask the server what is actually OPEN for this chunk and
+    # submit exactly that (the default changelist, scoped to the engine dest path).
+    # A file that never opens is recorded as skipped rather than aborting the chunk.
+    # The batch is fed to `p4 add` through a temp arg file (-x <file>) to avoid
+    # command-line length limits.
+    for ($i = 0; $i -lt $normalFiles.Count; $i += $BatchSize) {
+        $chunkIndex = [int]($i / $BatchSize) + 1
+        $batch = @($normalFiles[$i..([math]::Min($i + $BatchSize - 1, $normalFiles.Count - 1))])
+        $done += $batch.Count
+        Write-Host ("    [chunk {0}/{1}] adding {2} files ({3}/{4} done)" -f $chunkIndex, $chunks, $batch.Count, $done, $totalFiles) -ForegroundColor Cyan
+        if ($PSCmdlet.ShouldProcess("chunk $chunkIndex/$chunks -> //$DepotName/$StreamLeaf/$DepotSubfolder/...", "p4 add + submit ($($batch.Count) files)")) {
+            $argFile = $null
+            # p4 writes benign notices ("file(s) not opened on this client", per-file
+            # add warnings, etc.) to STDERR with a non-zero exit. Under
+            # $ErrorActionPreference='Stop' + StrictMode those native stderr lines are
+            # promoted to a TERMINATING NativeCommandError that would abort the whole
+            # seed after the first chunk (despite 2>$null). Lower ErrorActionPreference
+            # for the duration of the chunk and restore it in the finally block -- the
+            # same defensive pattern used for `p4 depots`/`p4 streams` above.
+            $__chunkEap = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+            try {
+                # Write the batch to a temp arg file and feed it to `p4 -x <file> add`
+                # so we avoid both command-line length limits and stdin quoting.
+                # NOTE: the file MUST be written WITHOUT a BOM -- a leading UTF-8 BOM
+                # gets prepended to the first path and p4 then treats it as a bad
+                # relative path ("... is not under client's root"). Set-Content -Encoding
+                # UTF8 emits a BOM on Windows PowerShell 5.1, so write bytes directly.
+                $argFile = [System.IO.Path]::GetTempFileName()
+                [System.IO.File]::WriteAllLines($argFile, [string[]]$batch, (New-Object System.Text.UTF8Encoding($false)))
+
+                # Open the batch for add. Ignore the `p4 add` exit code on purpose:
+                # p4 returns non-zero for the whole invocation when ANY single file
+                # emits a benign warning ("can't add existing file", etc.) even though
+                # the rest opened fine. We reconcile truth from `p4 opened` below.
+                & p4 -p $P4Port -u $P4User -c $ClientName -x $argFile add 2>&1 | Out-Null
+                $global:LASTEXITCODE = 0
+
+                # Submit whatever this chunk opened as one changelist, scoped to the
+                # engine dest path (this is the default changelist -- each chunk is
+                # added then immediately submitted, so only this chunk's files are
+                # pending). If nothing opened (e.g. a re-run over already-seeded
+                # files), skip the submit -- treat it as a no-op rather than a failure.
+                $openedNow = @(& p4 -p $P4Port -u $P4User -c $ClientName opened "$dest\..." 2>$null | Where-Object { $_ -match '#\d+ - ' })
+                $global:LASTEXITCODE = 0
+                if ($openedNow.Count -eq 0) {
+                    Write-Host "        (nothing new to submit in this chunk)" -ForegroundColor DarkGray
+                    continue
+                }
+                & p4 -p $P4Port -u $P4User -c $ClientName submit -d "$Description (chunk $chunkIndex/$chunks)" "$dest\..." 2>&1 |
+                    Where-Object { $_ -match 'Submitting change|submitted\.' } | ForEach-Object { Write-Host "        $_" }
+                if ($LASTEXITCODE -ne 0) { throw "p4 submit returned exit code $LASTEXITCODE for chunk $chunkIndex" }
+
+                # Any batch file that is STILL open (never submitted) is skipped.
+                $stillOpen = @(& p4 -p $P4Port -u $P4User -c $ClientName opened "$dest\..." 2>$null | Where-Object { $_ -match '#\d+ - ' })
+                $global:LASTEXITCODE = 0
+                if ($stillOpen.Count -gt 0) {
+                    Write-Warning "chunk $chunkIndex/$chunks left $($stillOpen.Count) file(s) unsubmitted -- skipping them."
+                    foreach ($f in $stillOpen) { $skipped.Add($f) }
+                    & p4 -p $P4Port -u $P4User -c $ClientName revert "$dest\..." 2>$null
+                    $global:LASTEXITCODE = 0
+                }
+            }
+            catch {
+                # Don't abort the whole seed on one bad chunk -- warn, record the
+                # files, and continue. (A subsequent re-run reconciles the rest.)
+                Write-Warning "chunk $chunkIndex/$chunks failed: $($_.Exception.Message). Skipping these $($batch.Count) file(s)."
+                foreach ($f in $batch) { $skipped.Add($f) }
+                # Revert whatever opened in this failed chunk so the next chunk is clean.
+                & p4 -p $P4Port -u $P4User -c $ClientName revert "$dest\..." 2>$null
+                $global:LASTEXITCODE = 0
+            }
+            finally {
+                $ErrorActionPreference = $__chunkEap
+                if ($argFile -and (Test-Path -LiteralPath $argFile)) { Remove-Item -LiteralPath $argFile -Force -ErrorAction SilentlyContinue }
+            }
+        }
+    }
+
+    # --- Metachar files: add -f (escaped), one at a time ------------------------
+    if ($metaFiles.Count -gt 0) {
+        Write-Host "    [metachar] handling $($metaFiles.Count) file(s) with names containing @ % # * (p4 add -f)" -ForegroundColor Cyan
+        $mDone = 0
+        foreach ($mf in $metaFiles) {
+            $mDone++
+            Write-Host ("    [metachar {0}/{1}] {2}" -f $mDone, $metaFiles.Count, $mf) -ForegroundColor DarkCyan
+            if ($PSCmdlet.ShouldProcess($mf, "p4 add -f + submit (metachar)")) {
+                # Same native-stderr guard as the chunk path (see comment above).
+                $__metaEap = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+                try {
+                    # -f forces literal handling of wildcards in the filename so @%#*
+                    # are stored escaped (%40 %25 %23 %2A) rather than interpreted.
+                    # As with the chunk path, `p4 add -f` can return non-zero on a
+                    # benign warning, so we confirm via `p4 opened` rather than the
+                    # exit code before submitting. The metachar pass runs AFTER all
+                    # chunks, so the default changelist is otherwise empty and holds
+                    # only this file. (We can't path-filter `p4 opened <path>` here
+                    # because the @/#/% in the local path would be parsed as revision
+                    # specifiers, so we inspect the whole default changelist.)
+                    & p4 -p $P4Port -u $P4User -c $ClientName revert "$dest\..." 2>$null
+                    $global:LASTEXITCODE = 0
+                    & p4 -p $P4Port -u $P4User -c $ClientName add -f $mf 2>&1 | ForEach-Object { Write-Host "        $_" }
+                    $global:LASTEXITCODE = 0
+                    $opened = @(& p4 -p $P4Port -u $P4User -c $ClientName opened -c default 2>$null | Where-Object { $_ -match '#\d+ - ' })
+                    $global:LASTEXITCODE = 0
+                    if ($opened.Count -eq 0) {
+                        throw "file did not open for add (p4 add -f produced no pending file)"
+                    }
+                    & p4 -p $P4Port -u $P4User -c $ClientName submit -d "$Description (metachar)" 2>&1 | ForEach-Object { Write-Host "        $_" }
+                    if ($LASTEXITCODE -ne 0) { throw "p4 submit returned exit code $LASTEXITCODE" }
+                }
+                catch {
+                    Write-Warning "metachar file failed, skipping: $mf -- $($_.Exception.Message)"
+                    $skipped.Add($mf)
+                    & p4 -p $P4Port -u $P4User -c $ClientName revert "$dest\..." 2>$null
+                    $global:LASTEXITCODE = 0
+                }
+                finally {
+                    $ErrorActionPreference = $__metaEap
+                }
+            }
+        }
+    }
+
+    return $skipped
 }
 
 # ---------------------------------------------------------------------------
@@ -398,9 +587,9 @@ if ($EngineDepotPath) {
     }
 }
 else {
-    Write-Step "Submitting local engine tree under //$DepotName/$StreamLeaf/Engine/ (large/slow)"
+    Write-Step "Submitting local engine tree under //$DepotName/$StreamLeaf/Engine/ in chunks of $SubmitBatchSize (large/slow)"
     Write-Host "    NOTE: prefer -EngineDepotPath to branch an existing engine and avoid re-uploading ~34 GiB." -ForegroundColor Yellow
-    Submit-Tree -SourcePath $EnginePath -DepotSubfolder 'Engine' -Description "Seed UE engine tree"
+    $script:SkippedFiles = Submit-TreeChunked -SourcePath $EnginePath -DepotSubfolder 'Engine' -Description "Seed UE engine tree" -BatchSize $SubmitBatchSize
 }
 
 # ---------------------------------------------------------------------------
@@ -426,6 +615,15 @@ foreach ($path in $checks.Keys) {
         Write-Host "    [MISS] $($checks[$path]) : $path" -ForegroundColor Red
         $allOk = $false
     }
+}
+
+Write-Host ""
+if ($script:SkippedFiles -and $script:SkippedFiles.Count -gt 0) {
+    Write-Host "==> Skipped files summary ($($script:SkippedFiles.Count) file(s) not submitted)" -ForegroundColor Yellow
+    foreach ($sf in $script:SkippedFiles) {
+        Write-Host "    [SKIP] $sf" -ForegroundColor Yellow
+    }
+    Write-Host "    Review the [SKIP] lines above. Re-running the seed will reconcile any missed files." -ForegroundColor Yellow
 }
 
 Write-Host ""

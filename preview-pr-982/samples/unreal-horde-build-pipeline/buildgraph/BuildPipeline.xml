@@ -65,7 +65,7 @@
 	     being demonstrated, and any timing taken with UBA off is not comparable. -->
 	<Option Name="ExtraUbtArgs" DefaultValue="" Description="Extra UnrealBuildTool arguments. Leave empty to keep UBA enabled." />
 
-	<Agent Name="BuildAgent" Type="AnyAgent">
+	<Agent Name="BuildAgent" Type="Win64">
 
 		<!-- Step 1+2 MERGED into ONE node. The Compile node now self-mounts W:.
 		     Name MUST stay "Compile" to match globals.json -Target=Compile.
