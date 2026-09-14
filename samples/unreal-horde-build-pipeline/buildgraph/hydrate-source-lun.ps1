@@ -45,7 +45,7 @@ param(
     [Parameter(Mandatory)] [string] $IscsiPortals,           # comma-separated
     [Parameter(Mandatory)] [string] $P4Port,
     [string] $P4User            = 'perforce',
-    [string] $P4PasswordSecret  = '',
+    [string] $P4CredentialsSecret = '',
     [string] $WorkspaceName     = 'fsxn-hydrator',
     [string] $OntapUser         = 'fsxadmin',
     [string] $MountDrive        = 'S',
@@ -97,16 +97,30 @@ $env:P4TRUST  = Join-Path $env:TEMP 'hydrator.p4trust'
 $env:P4TICKETS = Join-Path $env:TEMP 'hydrator.p4tickets'
 & p4 trust -y *> $null
 
-if ($P4PasswordSecret) {
-    $pw = & aws secretsmanager get-secret-value --secret-id $P4PasswordSecret --region $AwsRegion --query SecretString --output text
-    if ($LASTEXITCODE -eq 0 -and $pw) { $pw | & p4 login *> $null }
-    else { Write-Warning "could not read P4 password secret '$P4PasswordSecret' - relying on an existing ticket" }
+if ($P4CredentialsSecret) {
+    # JSON Horde P4 credentials ({"username":"...","password":"..."}). Prefer the
+    # secret's username so user/password can't mismatch; pipe the password to
+    # stdin (never onto a command line) so special characters are handled safely.
+    $secretRaw = & aws secretsmanager get-secret-value --secret-id $P4CredentialsSecret --region $AwsRegion --query SecretString --output text
+    if ($LASTEXITCODE -eq 0 -and $secretRaw) {
+        $pw = $null
+        try {
+            $creds = $secretRaw | ConvertFrom-Json -ErrorAction Stop
+            if ($creds.username) { $env:P4USER = $creds.username }
+            $pw = $creds.password
+        }
+        catch {
+            Write-Warning "could not parse P4 credentials secret '$P4CredentialsSecret' as JSON - relying on an existing ticket"
+        }
+        if ($pw) { $pw | & p4 login *> $null }
+    }
+    else { Write-Warning "could not read P4 credentials secret '$P4CredentialsSecret' - relying on an existing ticket" }
 }
 
 # Host-less, LineEnd=win. See the header for why both matter.
 $spec = @"
 Client: $WorkspaceName
-Owner: $P4User
+Owner: $($env:P4USER)
 Root: $drive\
 Options: noallwrite noclobber nocompress unlocked nomodtime normdir
 SubmitOptions: submitunchanged

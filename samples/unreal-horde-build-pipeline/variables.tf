@@ -165,19 +165,7 @@ variable "github_credentials_secret_arn" {
 
 variable "horde_p4_credentials_secret_arn" {
   type        = string
-  description = "ARN of a pre-created Secrets Manager secret holding the Horde P4 credentials as JSON {\"username\":\"...\",\"password\":\"...\"}. Passing a pre-created secret keeps its ARN known at plan time. Required when deploying the bundled Perforce server (existing_perforce_server_endpoint = null); may be null only if wiring an existing Perforce with its own credentials handling."
-  default     = null
-}
-
-variable "p4_password_secret_name" {
-  type        = string
-  description = "Optional Secrets Manager secret NAME (or ARN) whose SecretString is the PLAIN-TEXT P4 password for the sync/build agents. The agents use it ONCE per job to run `p4 login` and mint a ticket; every later p4 command reuses the ticket. This is a plain-text secret, distinct from horde_p4_credentials_secret_arn (JSON), because the agent scripts pipe the raw SecretString straight to `p4 login`. Leave empty to rely on an existing ticket on the agent host. When set, provide p4_password_secret_arn as well so the agent role is granted read access."
-  default     = ""
-}
-
-variable "p4_password_secret_arn" {
-  type        = string
-  description = "ARN of the p4_password_secret_name secret, used to scope the agent role's secretsmanager:GetSecretValue grant to the exact secret. Required only when p4_password_secret_name is set. Leave null to skip the grant."
+  description = "ARN of a pre-created Secrets Manager secret holding the Horde P4 credentials as JSON {\"username\":\"...\",\"password\":\"...\"}. This single secret is used both by the Horde server (to authenticate to Perforce) AND by the sync/build agents (which ConvertFrom-Json it to mint a `p4 login` ticket per job). Passing a pre-created secret keeps its ARN known at plan time. Required when deploying the bundled Perforce server (existing_perforce_server_endpoint = null); may be null only if wiring an existing Perforce with its own credentials handling."
   default     = null
 }
 
