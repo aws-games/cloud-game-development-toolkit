@@ -111,6 +111,15 @@
             name: helix-cli
             state: present
           when: ansible_distribution == "Ubuntu"
+      rescue:
+        # The Perforce CLI is a hard prerequisite for the SSL trust bootstrap that follows.
+        # Fail the play loudly rather than recover and continue with an agent that cannot
+        # establish P4 trust.
+        - name: Fail if the Perforce CLI could not be installed
+          ansible.builtin.fail:
+            msg: >-
+              Failed to install the Perforce CLI required for the SSL trust bootstrap.
+              Aborting so the Horde agent is not provisioned without P4 trust.
     - name: Establish Perforce SSL trust as the Horde user
       # The Horde agent service runs as User=Horde (see horde-agent.service). p4 resolves
       # P4TRUST from the invoking user's HOME (~/.p4trust) by default, so running trust as
