@@ -84,8 +84,8 @@
     ]
   },
   "pools": [
-    { "id": "sync-pool", "name": "SyncPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true },
-    { "id": "build-pool", "name": "BuildPool", "condition": "OSFamily == 'Windows'", "enableAutoscaling": true }
+    { "id": "sync-pool", "name": "SyncPool", "condition": "aws-tag == 'Horde_Autoscale_Pool:SyncPool'", "enableAutoscaling": true },
+    { "id": "build-pool", "name": "BuildPool", "condition": "aws-tag == 'Horde_Autoscale_Pool:BuildPool'", "enableAutoscaling": true }
   ],
   "projects": [
     {
