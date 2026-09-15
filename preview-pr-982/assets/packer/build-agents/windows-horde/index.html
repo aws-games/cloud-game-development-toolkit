@@ -3419,10 +3419,10 @@ VPC</strong>. If your workstation's egress blocks outbound WinRM 5986 to public 
 the build subnet has no public path at all), run Packer from a throwaway Linux
 builder launched in the <strong>same private subnet</strong> (NAT egress for the Windows
 instance's Chocolatey/VS downloads; drive the builder via SSM Run Command).</p>
-<p>The <code>build-agent</code> AMI in account <code>968702293218</code> / <code>us-east-1</code> was built this way:</p>
+<p>A reference AMI was built this way (the identifiers below are placeholders — substitute your own):</p>
 <ol>
-<li>Throwaway <code>t3.medium</code> Amazon Linux 2023 builder in private subnet
-   <code>subnet-0385cfd1499c39579</code> (<code>vpc-078c7e9b60fb64cef</code>, <code>10.0.2.0/24</code>, us-east-1a),
+<li>Throwaway <code>t3.medium</code> Amazon Linux 2023 builder in a private subnet
+   (<code>subnet-xxxxxxxx</code> in <code>vpc-xxxxxxxx</code>, e.g. <code>10.0.2.0/24</code>, a single AZ),
    <strong>no public IP</strong>, instance profile = <code>AmazonSSMManagedInstanceCore</code> + a
    scoped inline EC2/S3 policy sufficient for the <code>amazon-ebs</code> builder. <code>packer</code></li>
 <li><code>git</code> installed via the HashiCorp dnf repo. Template staged builder-side
@@ -3434,8 +3434,8 @@ packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class=
 </code></pre></div>
 <p>with <code>build.pkrvars.hcl</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                                </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
-<span class="na">vpc_id</span><span class="w">                                </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-078c7e9b60fb64cef"</span>
-<span class="na">subnet_id</span><span class="w">                             </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-0385cfd1499c39579"</span><span class="c1">  # same private subnet as the builder</span>
+<span class="na">vpc_id</span><span class="w">                                </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-xxxxxxxx"</span>
+<span class="na">subnet_id</span><span class="w">                             </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-xxxxxxxx"</span><span class="c1">  # same private subnet as the builder</span>
 <span class="na">associate_public_ip_address</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
 <span class="na">ssh_interface</span><span class="w">                         </span><span class="o">=</span><span class="w"> </span><span class="s2">"private_ip"</span>
 <span class="c1"># Packer creates its own temporary SG; scope WinRM 5986 ingress to the</span>
@@ -3691,7 +3691,7 @@ Scheduled Task is registered.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-09
+    2026-09-15
   </span>
 
     

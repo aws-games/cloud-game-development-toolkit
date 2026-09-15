@@ -1,7 +1,7 @@
 ##################################################
-# Cross-Module Security Group Rules — JT-08
+# Cross-Module Security Group Rules
 #
-# SECURITY INVARIANT (user hard requirement — NO AWS security tickets):
+# SECURITY INVARIANT:
 #   Every INGRESS rule in this sample MUST be scoped to one of:
 #     * a single-IP /32 CIDR (local.my_ip_cidr), or
 #     * a referenced security group (referenced_security_group_id), or

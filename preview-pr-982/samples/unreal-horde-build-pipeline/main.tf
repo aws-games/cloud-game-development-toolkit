@@ -1,5 +1,5 @@
 ##########################################
-# Perforce (Helix Core / P4 Server) — JT-06
+# Perforce (Helix Core / P4 Server)
 #
 # Deployed only when the user has NOT supplied an existing Perforce endpoint.
 #
@@ -8,8 +8,8 @@
 # the server's private IP in locals.tf.
 #
 # The P4 Server is placed in a PRIVATE application subnet. External P4 access is
-# handled via cross-module security-group rules locked to local.my_ip_cidr in a
-# later stage (JT-08) — this sample never opens 0.0.0.0/0 ingress.
+# handled via cross-module security-group rules locked to local.my_ip_cidr in
+# security.tf — this sample never opens 0.0.0.0/0 ingress.
 #
 # The module creates its own super/admin secrets (exposed as ARNs). We do NOT
 # recreate them here. See the "Horde P4 credentials secret" block below for why
@@ -25,7 +25,7 @@ module "perforce" {
   project_prefix = var.project_prefix
   vpc_id         = aws_vpc.horde_pipeline_vpc.id
 
-  # This sample owns its DNS (dns.tf, JT-11); do NOT let the module create a
+  # This sample owns its DNS (dns.tf); do NOT let the module create a
   # conflicting private hosted zone.
   create_route53_private_hosted_zone = false
 
@@ -68,13 +68,13 @@ module "perforce" {
 }
 
 ##########################################
-# ACM Certificate for the Horde HTTPS endpoint — JT-07 (partial)
+# ACM Certificate for the Horde HTTPS endpoint
 #
 # The Horde module requires a `certificate_arn` for its external ALB HTTPS
 # listener. We create a DNS-validated certificate for the public Horde FQDN
 # against the existing public hosted zone.
 #
-# DEFERRED to JT-11 (dns.tf): the public A/ALIAS record pointing the Horde FQDN
+# In dns.tf: the public A/ALIAS record pointing the Horde FQDN
 # at the external ALB. The certificate's DNS *validation* records are created
 # here so the cert can validate independently of the ALB record.
 ##########################################
@@ -120,7 +120,7 @@ resource "aws_acm_certificate_validation" "horde" {
 }
 
 ##########################################
-# Horde Agent AMIs — JT-07
+# Horde Agent AMIs
 ##########################################
 
 
@@ -161,19 +161,19 @@ locals {
 }
 
 ##########################################
-# Unreal Engine Horde — JT-07
+# Unreal Engine Horde
 #
 # - Service tasks run in the PRIVATE application subnets.
 # - External ALB (browser access to the Horde UI) is placed in the PUBLIC
 #   subnets. Its ingress is locked to local.my_ip_cidr via cross-module SG
-#   rules in JT-08 — this sample never opens 0.0.0.0/0.
+#   rules in security.tf — this sample never opens 0.0.0.0/0.
 # - Internal ALB (agent enrollment / in-VPC traffic) is placed in the PRIVATE
 #   application subnets.
 #
 # SECURITY NOTE (auth): auth_method is intentionally left unset here. The Horde
 # module does not require it for `terraform validate`, and we must NOT expose a
 # public unauthenticated Horde. Authentication (OIDC/Okta/Horde accounts) is
-# configured in a later phase. TODO(JT-later): configure auth_method + OIDC vars
+# configured in a later phase. TODO: configure auth_method + OIDC vars
 # before this internet-reachable ALB is opened to real users.
 ##########################################
 
@@ -220,7 +220,7 @@ module "horde" {
   p4_port                   = local.perforce_endpoint
   p4_credentials_secret_arn = var.horde_p4_credentials_secret_arn
 
-  # - Horde configuration (globals.json) — JT-18 -
+  # - Horde configuration (globals.json) -
   #
   # We render config/horde/globals.json.tpl (injecting var.perforce_stream) and
   # pass the JSON INLINE via config_globals_json. The module's init container
@@ -238,7 +238,7 @@ module "horde" {
   # container startup, so it never enters Terraform state, the task definition,
   # or CloudWatch logs.
   #
-  # NOTE: JT-18's original plan called for an "extra_environment" input; that
+  # NOTE: an earlier plan called for an "extra_environment" input; that
   # variable does not exist on this module. config_globals_json + config_path is
   # the supported mechanism.
   # The BuildGraph <Option>s in buildgraph/*.xml have no DefaultValue, so every

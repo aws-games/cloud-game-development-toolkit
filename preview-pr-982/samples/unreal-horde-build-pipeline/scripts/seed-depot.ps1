@@ -379,8 +379,25 @@ function Submit-Tree {
         Copy-Item -Path (Join-Path $SourcePath '*') -Destination $dest -Recurse -Force
     }
     if ($PSCmdlet.ShouldProcess("//$DepotName/$StreamLeaf/$DepotSubfolder/...", "p4 reconcile + submit")) {
-        # reconcile picks up adds/edits/deletes idempotently across re-runs
-        & p4 -p $P4Port -u $P4User -c $ClientName reconcile "$dest\..." 2>$null
+        # reconcile picks up adds/edits/deletes idempotently across re-runs. On a
+        # re-run with nothing changed it writes 'no file(s) to reconcile' to
+        # stderr, and `p4 submit` with nothing opened fails outright -- both
+        # routine. Under $ErrorActionPreference='Stop' that native stderr is
+        # promoted to a TERMINATING NativeCommandError despite the 2>$null, the
+        # same trap the depot/stream probes above guard against. Locally lower
+        # ErrorActionPreference and reset LASTEXITCODE, then submit only if
+        # reconcile actually opened something.
+        $__eaps = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+        try {
+            & p4 -p $P4Port -u $P4User -c $ClientName reconcile "$dest\..." 2>$null | Out-Null
+            $opened = @(& p4 -p $P4Port -u $P4User -c $ClientName opened "$dest\..." 2>$null | Where-Object { $_ -match '#\d+ - ' })
+        }
+        catch { $opened = @() }
+        $global:LASTEXITCODE = 0; $ErrorActionPreference = $__eaps
+        if ($opened.Count -eq 0) {
+            Write-Host "    Nothing to submit under $DepotSubfolder/ (already up to date)." -ForegroundColor DarkGray
+            return
+        }
         Invoke-P4 -P4Args @('submit', '-d', $Description, "$dest\...")
     }
 }
@@ -607,7 +624,14 @@ $checks = @{
 }
 $allOk = $true
 foreach ($path in $checks.Keys) {
-    $hit = & p4 -p $P4Port -u $P4User -c $ClientName files -e $path 2>$null
+    # `p4 files -e` writes 'no such file(s)' to stderr for a missing path; under
+    # $ErrorActionPreference='Stop' that native stderr is promoted to a
+    # TERMINATING NativeCommandError (despite the 2>$null), so a genuine [MISS]
+    # would throw instead of printing. Locally lower ErrorActionPreference and
+    # reset LASTEXITCODE, the same way the depot/stream probes above do.
+    $__eaps = $ErrorActionPreference; $ErrorActionPreference = 'SilentlyContinue'
+    try { $hit = & p4 -p $P4Port -u $P4User -c $ClientName files -e $path 2>$null } catch { $hit = $null }
+    $global:LASTEXITCODE = 0; $ErrorActionPreference = $__eaps
     if ($hit) {
         Write-Host "    [OK]   $($checks[$path]) : $path" -ForegroundColor Green
     }
