@@ -10,9 +10,10 @@
 
 	     THE HYDRATOR IS NOW WINDOWS, NOT LINUX. That is the substantive
 	     consequence of moving the data path to SAN: the LUN carries NTFS, so its
-	     writer must be Windows, and it must be the ONLY writer. The pool
-	     condition in globals.json.tpl changed from OSFamily == 'Linux' to
-	     'Windows' to match, and config/sync-agent.ansible.yml (a Linux NFS fstab
+	     writer must be Windows, and it must be the ONLY writer. Pool membership
+	     in globals.json.tpl is now selected by the Horde_Autoscale_Pool instance
+	     tag (condition "aws-tag == 'Horde_Autoscale_Pool:SyncPool'"), and both
+	     pools are Windows; config/sync-agent.ansible.yml (a Linux NFS fstab
 	     playbook) is gone: the source LUN's per-boot needs (MSiSCSI + a unique
 	     initiator IQN) are baked into the build-agent AMI, and all ONTAP/mount
 	     work is job-time (hydrate-source-lun.ps1).
@@ -25,7 +26,7 @@
 
 	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
 	       * <Agent Name="SyncAgent"> matches the agentTypes key "SyncAgent"
-	         (SyncPool, now OSFamily == 'Windows').
+	         (SyncPool; pool membership is by the Horde_Autoscale_Pool tag).
 	       * <Node Name="Sync And Snapshot"> matches -Target=Sync And Snapshot.
 	       * Every <Option> without a DefaultValue must be injected as a -set:
 	         argument there, or the job fails at graph-parse time.
@@ -36,10 +37,12 @@
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="P4CredentialsSecret" DefaultValue="" Description="Optional Secrets Manager secret (JSON {username,password}) holding the P4 credentials. Empty = rely on an existing ticket." />
-	<!-- Host-less on purpose: the build agents p4 flush against THIS client to
-	     inherit its have-list, which is impossible if the client is pinned to a
-	     host. See hydrate-source-lun.ps1. -->
-	<Option Name="WorkspaceName" DefaultValue="fsxn-hydrator" Description="Perforce client for the source LUN. MUST be host-less so build agents can flush against it." />
+	<!-- Host-less so a replacement hydrator instance can keep using this client
+	     (a client with Host: set is usable from that one machine only, and the
+	     SyncPool instance holding the lease changes over time). Build agents do
+	     NOT flush against this client: each build creates its own per-job client
+	     rooted on its clone (see create-build-client.ps1 / BuildPipeline.xml). -->
+	<Option Name="WorkspaceName" DefaultValue="fsxn-hydrator" Description="Perforce client for the source LUN. Host-less so a replacement hydrator can keep using it." />
 
 	<!-- ONTAP / SAN -->
 	<Option Name="VolumeName" DefaultValue="" Description="ONTAP source volume that contains the workspace LUN" />

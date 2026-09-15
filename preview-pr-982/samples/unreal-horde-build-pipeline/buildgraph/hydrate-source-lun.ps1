@@ -25,11 +25,12 @@
        Windows cache is absent from it. New-OntapSnapshot -FlushDriveLetter does
        the Write-VolumeCache; do not remove it.
 
-    THE CLIENT MUST BE HOST-LESS. The build agents `p4 flush` against this same
-    client to inherit its have-list. A client with Host: set can only be used from
-    that machine, which makes the whole hand-off impossible. LineEnd is pinned to
-    'win' rather than 'local' for the same reason - the consuming agents are
-    Windows, and a mismatch makes every text file look stale and re-transfer.
+    THE CLIENT IS HOST-LESS so a replacement hydrator instance can keep using it
+    (a client with Host: set is usable from that one machine only). Build agents
+    do NOT flush against this client - each build creates its own per-job client
+    rooted on its clone (see create-build-client.ps1 / BuildPipeline.xml). LineEnd
+    is pinned to 'win' rather than 'local' because the clones are consumed by
+    Windows agents, and a mismatch makes every text file look stale and re-transfer.
 #>
 
 [CmdletBinding()]
