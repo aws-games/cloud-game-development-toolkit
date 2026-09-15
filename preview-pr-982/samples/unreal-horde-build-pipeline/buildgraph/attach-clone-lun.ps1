@@ -31,7 +31,13 @@ param(
     [Parameter(Mandatory)] [string] $AwsRegion,
     [Parameter(Mandatory)] [string] $IscsiPortals,      # comma-separated
     [string] $OntapUser  = 'fsxadmin',
-    [string] $MountDrive = 'W'
+    [string] $MountDrive = 'W',
+    # Per-job Perforce client, forwarded into the GUARANTEED teardown hook so it
+    # can `p4 client -d` on build FAILURE (the success-only Cleanup node cannot).
+    # Optional: empty leaves the client for the on-agent success path / reaper.
+    [string] $P4Port   = '',
+    [string] $P4User   = '',
+    [string] $P4Client = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,7 +63,8 @@ $lunPath = "/vol/$CloneVolumeName/$LunName"
 & (Join-Path $PSScriptRoot 'teardown-clone-lun.ps1') -Register `
     -CloneVolumeName $CloneVolumeName -LunName $LunName -AgentIgroup $AgentIgroup `
     -SvmName $SvmName -FsxAdminIp $FsxAdminIp -OntapUser $OntapUser `
-    -OntapPasswordSecretName $OntapPasswordSecretName -AwsRegion $AwsRegion
+    -OntapPasswordSecretName $OntapPasswordSecretName -AwsRegion $AwsRegion `
+    -P4Port $P4Port -P4User $P4User -P4Client $P4Client
 
 Write-Host "=== hydrating $CloneVolumeName from ${SourceVolume}@${SnapshotName} ==="
 

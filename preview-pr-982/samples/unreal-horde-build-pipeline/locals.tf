@@ -111,6 +111,19 @@ locals {
   # operator must align this user's password with the secret post-deploy.
   horde_p4_username = "svc-horde"
 
+  # Stream, sanitized for use inside the per-job Perforce client NAME
+  # (hordeclone_<StreamSafe>_<CloneVolumeName>). Done in Terraform - NOT with a
+  # BuildGraph inline string expression - because BuildGraph's C# string methods
+  # (.Replace etc.) are not reliably available across UE versions, whereas the
+  # char-class replacement is trivial and unambiguous in HCL. Lowercased and
+  # reduced to [a-z0-9_] so the resulting client name is greppable
+  # (^hordeclone_ is the reaper's name-gate) and multi-stream-safe. Leading
+  # "//" and any punctuation collapse to underscores, e.g.
+  # //YourGame/main -> yourgame_main.
+  fsxn_client_stream_safe = trim(
+    replace(lower(var.perforce_stream), "/[^a-z0-9]+/", "_"),
+  "_")
+
   ##################################################
   # Tags
   ##################################################

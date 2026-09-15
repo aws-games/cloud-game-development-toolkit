@@ -252,6 +252,12 @@ module "horde" {
     perforce_stream = var.perforce_stream
     aws_region      = var.region
 
+    # Stream sanitized to [a-z0-9_] for the per-job Perforce client name
+    # (hordeclone_<StreamSafe>_<CloneVolumeName>). Computed in HCL (locals.tf) so
+    # BuildGraph never has to run a fragile inline string expression; the build
+    # AND reaper pipelines both consume this via -set:StreamSafe.
+    fsxn_client_stream_safe = local.fsxn_client_stream_safe
+
     fsxn_source_volume_name = local.fsxn_source_volume_name
     fsxn_svm_name           = local.fsxn_svm_name
 
@@ -278,6 +284,13 @@ module "horde" {
 
     p4_port = local.perforce_endpoint == null ? "" : local.perforce_endpoint
     p4_user = local.horde_p4_username
+
+    # Base URL the OFF-AGENT reaper (reap-orphans.ps1) queries for Horde job
+    # liveness (GATE 3). Agents run in-VPC, so use the INTERNAL FQDN (internal
+    # ALB), not the public one - the public ALB ingress is locked to the
+    # deployer /32 and would not be reachable from an agent. Empty makes the
+    # reaper fail-safe (it deletes nothing when it cannot prove a job is done).
+    horde_server_url = "https://${local.horde_internal_fqdn}"
 
     # JSON Horde P4 credentials secret the agents read at job time to mint a
     # `p4 login` ticket. This is the SAME secret the Horde server uses
