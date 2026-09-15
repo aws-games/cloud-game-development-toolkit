@@ -141,6 +141,7 @@
                 "-Script=Build/BuildPipeline.xml",
                 "-Target=Compile",
                 "-set:Stream=${perforce_stream}",
+                "-set:StreamSafe=${fsxn_client_stream_safe}",
                 "-set:SourceVolume=${fsxn_source_volume_name}",
                 "-set:LunName=${fsxn_lun_name}",
                 "-set:AgentIgroup=${fsxn_agent_igroup}",
@@ -154,6 +155,38 @@
                 "-set:P4User=${p4_user}",
                 "-set:P4CredentialsSecret=${p4_credentials_secret}"
               ]
+            },
+            {
+              "id": "reap",
+              "name": "Orphan Reaper",
+              "_comment": [
+                "OFF-AGENT reaper for per-job clone volumes + their Perforce clients that the",
+                "on-agent teardown never ran for (hard Spot reclaim). Runs on the idle SyncPool",
+                "(AnyAgent -> sync-pool), OUT of the hot build path. reap-orphans.ps1 deletes a",
+                "client only when name-gate AND backing-clone-gone AND Horde-job-not-live ALL pass;",
+                "any uncertainty keeps the object. Execute defaults to false (DRY RUN) so the first",
+                "scheduled runs only LOG what they would reap - flip -set:Execute=true once trusted.",
+                "HordeServerUrl is the job-liveness gate; empty makes the reaper delete nothing."
+              ],
+              "arguments": [
+                "-Script=Build/ReaperPipeline.xml",
+                "-Target=Reap Orphans",
+                "-set:StreamSafe=${fsxn_client_stream_safe}",
+                "-set:SvmName=${fsxn_svm_name}",
+                "-set:LunName=${fsxn_lun_name}",
+                "-set:FsxAdminIp=${fsxn_management_ip}",
+                "-set:OntapPasswordSecretName=${fsxn_admin_secret_name}",
+                "-set:AwsRegion=${aws_region}",
+                "-set:HordeServerUrl=${horde_server_url}",
+                "-set:Execute=false",
+                "-set:P4Port=${p4_port}",
+                "-set:P4User=${p4_user}",
+                "-set:P4CredentialsSecret=${p4_credentials_secret}"
+              ],
+              "schedule": {
+                "enabled": true,
+                "patterns": [{ "interval": 60 }]
+              }
             }
           ]
         }

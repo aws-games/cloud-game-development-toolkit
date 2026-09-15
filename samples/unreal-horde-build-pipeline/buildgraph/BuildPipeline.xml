@@ -44,10 +44,11 @@
 
 	<!-- Perforce parameters (incremental sync into the attached clone) -->
 	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
+	<Option Name="StreamSafe" DefaultValue="" Description="Stream sanitized to [a-z0-9_] (Terraform local fsxn_client_stream_safe). Used to build the per-job client name hordeclone_{StreamSafe}_{CloneVolumeName}. Derived in Terraform, NOT via a BuildGraph string expression (those are unreliable across UE versions)." />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="P4CredentialsSecret" DefaultValue="" Description="Optional Secrets Manager secret (JSON {username,password}) holding the P4 credentials. Used ONCE to mint a login ticket the later flush/sync reuse; empty = rely on an existing ticket." />
-	<Option Name="WorkspaceName" DefaultValue="BuildWorkspace" Description="Perforce workspace name (matches globals.json BuildWorkspace)" />
+	<Option Name="WorkspaceName" DefaultValue="" Description="Perforce workspace name. Leave EMPTY to derive a per-job client hordeclone_{StreamSafe}_{CloneVolumeName} (required for concurrent same-stream builds - a shared client corrupts the have-list). Set only to force a fixed client name." />
 
 	<!-- The changelist the cloned snapshot was synced to. REQUIRED for the
 	     incremental sync to actually be incremental - see the p4 flush step.
@@ -74,6 +75,20 @@
 		     and Build.bat - hence the clone+attach+mount is the first action of
 		     this node, not a separate "Clone And Mount" node. -->
 		<Node Name="Compile">
+			<!-- Per-job Perforce client name. A p4 client IS have-list state, so
+			     it must be unique per job or two concurrent same-stream builds
+			     corrupt each other's flush/sync (one silently compiles stale and
+			     still exits 0). CloneVolumeName (build_{jobid}) is already unique
+			     per execution; StreamSafe prefixes it for greppability and the
+			     ^hordeclone_ name-gate the reaper keys on. Built by literal
+			     concatenation + an equality If (both confirmed working in this
+			     tree) - NOT a C# .Replace(), which is the flagged BuildGraph
+			     risk. Setting WorkspaceName forces a fixed name (single-build
+			     compatibility). -->
+			<Property Name="ClientName" Value="hordeclone_$(StreamSafe)_$(CloneVolumeName)" />
+			<!-- Empty WorkspaceName default => per-job client hordeclone_$(StreamSafe)_$(CloneVolumeName); setting WorkspaceName explicitly pins a fixed single-build client name. -->
+			<Property Name="ClientName" Value="$(WorkspaceName)" If="'$(WorkspaceName)' != ''" />
+
 			<!-- STEP 2.-1: mint a P4 login ticket. A fresh build agent has no
 			     ticket, so the p4 flush/sync below (and the p4 client create in
 			     create-build-client.ps1) would fail auth. The password is used
@@ -85,29 +100,31 @@
 			<!-- STEP 2.0: clone the snapshot, present its LUN over iSCSI, bring
 			     it online as $(CloneMountDrive):. attach-clone-lun.ps1 registers
 			     the teardown hook BEFORE creating anything, so a failure at any
-			     point below is still cleaned up. This runs in THIS node's process
-			     so W: is live for the flush + sync + compile that follow. -->
-			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/attach-clone-lun.ps1 -SourceVolume &quot;$(SourceVolume)&quot; -SnapshotName &quot;$(SnapshotName)&quot; -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -MountDrive &quot;$(CloneMountDrive)&quot;" />
+			     point below is still cleaned up. The per-job P4 client is
+			     forwarded (-P4Port/-P4User/-P4Client) so the GUARANTEED lease
+			     hook can `p4 client -d` it even when the build FAILS - the
+			     success-only Cleanup node cannot. This runs in THIS node's
+			     process so W: is live for the flush + sync + compile that
+			     follow. -->
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/attach-clone-lun.ps1 -SourceVolume &quot;$(SourceVolume)&quot; -SnapshotName &quot;$(SnapshotName)&quot; -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -MountDrive &quot;$(CloneMountDrive)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4Client &quot;$(ClientName)&quot;" />
 
-			<!-- STEP 2a-pre: create/refresh the per-build p4 client rooted on the
-			     clone LUN. The prior split assumed a pre-existing client named
-			     $(WorkspaceName), but no such client exists on the server (the
-			     Horde-managed clients are named Horde+HOST+++...+BuildWorkspace
-			     and rooted in the agent sandbox, NOT on W:). flush is
+			<!-- STEP 2a-pre: create/refresh the per-JOB p4 client rooted on the
+			     clone LUN. Passing WorkspaceName=$(ClientName) makes the script
+			     use exactly the name the flush/sync below reference. flush is
 			     metadata-only and needs a client whose Root is the clone drive so
 			     the have-list it stamps lines up with the files physically
 			     present on W:. Invoked via -File so BuildGraph/cmd quoting cannot
 			     corrupt the client spec. -->
-			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/create-build-client.ps1 -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -Stream &quot;$(Stream)&quot; -MountDrive &quot;$(CloneMountDrive)&quot;" />
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/create-build-client.ps1 -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -WorkspaceName &quot;$(ClientName)&quot; -CloneVolumeName &quot;$(CloneVolumeName)&quot; -Stream &quot;$(Stream)&quot; -MountDrive &quot;$(CloneMountDrive)&quot;" />
 
 			<!-- STEP 2a: transplant the have-list. `p4 flush` (alias: sync -k)
 			     updates the have-list WITHOUT transferring file content. It MUST
 			     target the exact changelist the snapshot was taken at. -->
-			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) flush $(Stream)/...@$(SnapshotChangelist)" WorkingDir="$(CloneMountDrive):/" />
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(ClientName) flush $(Stream)/...@$(SnapshotChangelist)" WorkingDir="$(CloneMountDrive):/" />
 
 			<!-- STEP 2b: now the sync really is incremental - only the delta
 			     between $(SnapshotChangelist) and head. -->
-			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(WorkspaceName) sync $(Stream)/..." WorkingDir="$(CloneMountDrive):/" />
+			<Spawn Exe="p4.exe" Arguments="-p $(P4Port) -u $(P4User) -c $(ClientName) sync $(Stream)/..." WorkingDir="$(CloneMountDrive):/" />
 
 			<!-- STEP 2b-clr: clear the read-only attribute across the clone.
 			     Perforce syncs files with the "noallwrite" client option, which
@@ -132,7 +149,7 @@
 		     only the fast path on success; the script is idempotent so running
 		     both is fine. -->
 		<Node Name="Cleanup Clone" Requires="Compile">
-			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/teardown-clone-lun.ps1 -Execute -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot;" />
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/teardown-clone-lun.ps1 -Execute -CloneVolumeName &quot;$(CloneVolumeName)&quot; -LunName &quot;$(LunName)&quot; -AgentIgroup &quot;$(AgentIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4Client &quot;$(ClientName)&quot;" />
 		</Node>
 	</Agent>
 </BuildGraph>

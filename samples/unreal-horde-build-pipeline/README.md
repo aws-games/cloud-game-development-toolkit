@@ -524,7 +524,7 @@ An ONTAP snapshot captures blocks as the array sees them, so anything still in t
 
 `RunLate="true"` is **not** a BuildGraph `<Node>` attribute, and BuildGraph has no equivalent that guarantees a teardown node runs after a failure: a node ordered after a **failed** node is *Skipped*. So the `Cleanup Clone` node is a success-only fast path. Guaranteed teardown is registered as a **Horde lease-end hook** (`UE_HORDE_CLEANUP` → `buildgraph/teardown-clone-lun.ps1`), which runs regardless of outcome.
 
-Neither path survives a **hard Spot reclaim**, since both run *on the agent*. If you run agents on Spot — since agents may be reclaimed — add an **off-agent reaper** on a schedule that deletes `build_*` clones whose Horde job is no longer running. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too.
+Neither path survives a **hard Spot reclaim**, since both run *on the agent*. For that, this sample now ships an **off-agent reaper** — `buildgraph/reap-orphans.ps1`, driven by `buildgraph/ReaperPipeline.xml` on a schedule on the idle single-writer `SyncPool` (`reap` template in `globals.json.tpl`). It deletes a per-job `hordeclone_*` Perforce client only when **all three** gates pass — the name matches `^hordeclone_`, its backing `build_*` clone volume no longer exists in ONTAP, and the owning Horde job is not live — and likewise reaps orphaned `build_*` clone volumes whose job is dead. Any uncertainty (ONTAP unreachable, Horde API ambiguous, a name it does not understand) means it deletes nothing. It defaults to a **dry run**; set `-set:Execute=true` on the template once you trust it. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too — the reaper is what keeps that from happening on Spot.
 
 ### 5. ONTAP volume names reject hyphens
 
@@ -561,7 +561,7 @@ The source LUN (`/vol/p4_workspace/workspace`, hydrated by the `fsxn-hydrator` P
 ## Scaling notes and known limitations
 
 - **The orchestration workspace syncs the whole stream.** The agent that only parses the BuildGraph XML still syncs the entire stream, which can be a large share of a job's wall-clock time. A workspace-level `view` is **silently ignored** by Horde's Perforce materializer. To narrow this, use a Perforce **virtual stream** containing just the bootstrap slice and point the workspace's `stream` at it.
-- **Off-agent clone reaper for Spot.** On-agent teardown (the `UE_HORDE_CLEANUP` lease hook) does not survive a hard Spot reclaim. If you run agents on Spot, add a scheduled off-agent reaper that deletes `build_*` clones whose Horde job is no longer running (see [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node)).
+- **Off-agent clone reaper for Spot.** On-agent teardown (the `UE_HORDE_CLEANUP` lease hook) does not survive a hard Spot reclaim. This sample ships a scheduled **off-agent reaper** (`buildgraph/reap-orphans.ps1` via `ReaperPipeline.xml`, the `reap` template on `SyncPool`) that deletes `build_*` clone volumes and their `hordeclone_*` Perforce clients whose Horde job is no longer running — behind three fail-safe gates (name, backing-clone-gone, job-not-live). It defaults to a dry run; flip `-set:Execute=true` once trusted. See [appendix §4](#4-clone-teardown-must-not-rely-on-a-buildgraph-node).
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
