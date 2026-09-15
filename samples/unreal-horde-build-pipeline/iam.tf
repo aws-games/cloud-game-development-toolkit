@@ -1,5 +1,5 @@
 ##################################################
-# Horde Agent — Additional IAM (JT-09)
+# Horde Agent — Additional IAM
 #
 # The Horde module creates the agent instance role but does NOT grant access to
 # the sample's runtime secrets. The BuildGraph tasks running on the agents need:
@@ -19,13 +19,13 @@ data "aws_iam_policy_document" "agent_secrets_read" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
     ]
-    # Exact ARNs only. The Horde P4 credentials secret (the SAME secret the
-    # agents read to mint a login ticket) and the Perforce module's super/admin
-    # secrets are only present when this sample deploys Perforce.
+    # Exact ARNs only. Agents read the FSxN fsxadmin secret (ONTAP REST API) and
+    # the Horde P4 credentials secret (the SAME secret the agents read to mint a
+    # login ticket). The Perforce super/admin password is NOT an agent-side
+    # secret and is intentionally excluded.
     resources = compact([
       aws_secretsmanager_secret.fsxn_admin.arn,
       var.horde_p4_credentials_secret_arn != null ? var.horde_p4_credentials_secret_arn : "",
-      local.deploy_perforce ? module.perforce[0].p4_server_super_password_secret_arn : "",
     ])
   }
 }
