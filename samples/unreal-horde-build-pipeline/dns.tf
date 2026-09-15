@@ -1,5 +1,5 @@
 ##################################################
-# DNS — JT-11
+# DNS
 #
 # This sample OWNS its DNS. The perforce module is deployed with
 # create_route53_private_hosted_zone = false, so we create the private hosted
@@ -8,7 +8,7 @@
 #   * private: horde.{private_zone}    -> Horde internal ALB (ALIAS A)
 #   * public:  {horde_public_fqdn}     -> Horde external ALB (ALIAS A)
 #
-# The public record completes the browser-facing endpoint deferred from JT-07
+# The public record completes the browser-facing endpoint begun in main.tf
 # (the ACM cert + validation records were created there; the ALB alias lives
 # here now that the Horde module's external ALB outputs exist).
 ##################################################
@@ -57,10 +57,10 @@ resource "aws_route53_record" "horde_internal" {
 }
 
 ##################################################
-# Public record — Horde external ALB (completes JT-07)
+# Public record — Horde external ALB
 #
 # The ACM certificate and its DNS validation records were created in main.tf
-# (JT-07) against data.aws_route53_zone.public. This ALIAS points the public
+# against data.aws_route53_zone.public. This ALIAS points the public
 # Horde FQDN at the external ALB. Browser ingress is still locked to the
 # deployer /32 by the external ALB SG (security.tf).
 ##################################################
@@ -78,31 +78,35 @@ resource "aws_route53_record" "horde_public" {
 }
 
 ##################################################
-# Split-Horizon Private Override of the Public Zone (JT-11 / Phase 6)
+# Split-Horizon Private Override of the Horde FQDN
 #
 # Private-subnet Horde agents must enroll against the *public* FQDN
-# (horde.gabeaws.people.aws.dev = local.horde_public_fqdn = var.certificate_domain)
-# because that is the name embedded in the agent's server config and in the ACM
-# certificate. The real public hosted zone points that FQDN at the EXTERNAL ALB,
-# whose SG is locked to the deployer /32 — so in-VPC agents cannot reach it.
+# (local.horde_public_fqdn = var.certificate_domain) because that is the name
+# embedded in the agent's server config and in the ACM certificate. The real
+# public hosted zone points that FQDN at the EXTERNAL ALB, whose SG is locked to
+# the deployer /32 — so in-VPC agents cannot reach it.
 #
-# To fix this WITHOUT relaxing any SG or changing the cert, we create a SECOND
-# hosted zone for the SAME apex domain (var.route53_public_hosted_zone_name) but
-# make it PRIVATE and associate it ONLY with this sample's VPC. Route 53 resolves
-# the most specific/associated private zone first for queries originating inside
-# the VPC, so:
-#   * INSIDE the VPC  -> this private-split zone answers horde.<domain> with the
-#                        INTERNAL ALB (agents enroll over 10.0.x.x, TLS still
-#                        valid because the internal ALB serves the same ACM cert
-#                        with SAN horde.gabeaws.people.aws.dev).
+# To fix this WITHOUT relaxing any SG or changing the cert, we create a PRIVATE
+# hosted zone associated ONLY with this sample's VPC and put the override at its
+# apex. Route 53 answers in-VPC queries from the most specific matching private
+# zone, so:
+#   * INSIDE the VPC  -> this zone answers horde.<domain> with the INTERNAL ALB
+#                        (agents enroll over 10.0.x.x; TLS is still valid because
+#                        the internal ALB serves the same ACM cert).
 #   * OUTSIDE the VPC -> the real public zone still answers with the EXTERNAL ALB
 #                        (browser traffic, /32-locked), completely unchanged.
 #
-# This is a classic split-horizon DNS override. No SG, cert, or module change.
+# THE ZONE IS NAMED AFTER THE FQDN, NOT THE APEX DOMAIN, ON PURPOSE. A private
+# zone named after the whole apex domain would shadow the ENTIRE public domain
+# inside the VPC: Route 53 never falls back to the public zone for a name under
+# a matching private zone — it returns NXDOMAIN — so every other record the
+# operator owns under that domain (perforce.<domain>, artifacts.<domain>, ...)
+# would stop resolving for the agents and the Horde server. Scoping the zone to
+# the single name we override leaves the rest of the domain untouched.
 ##################################################
 
 resource "aws_route53_zone" "public_split" {
-  name = var.route53_public_hosted_zone_name
+  name = local.horde_public_fqdn
 
   vpc {
     vpc_id = aws_vpc.horde_pipeline_vpc.id
