@@ -40,10 +40,10 @@ the build subnet has no public path at all), run Packer from a throwaway Linux
 builder launched in the **same private subnet** (NAT egress for the Windows
 instance's Chocolatey/VS downloads; drive the builder via SSM Run Command).
 
-The `build-agent` AMI in account `968702293218` / `us-east-1` was built this way:
+A reference AMI was built this way (the identifiers below are placeholders — substitute your own):
 
-1. Throwaway `t3.medium` Amazon Linux 2023 builder in private subnet
-   `subnet-0385cfd1499c39579` (`vpc-078c7e9b60fb64cef`, `10.0.2.0/24`, us-east-1a),
+1. Throwaway `t3.medium` Amazon Linux 2023 builder in a private subnet
+   (`subnet-xxxxxxxx` in `vpc-xxxxxxxx`, e.g. `10.0.2.0/24`, a single AZ),
    **no public IP**, instance profile = `AmazonSSMManagedInstanceCore` + a
    scoped inline EC2/S3 policy sufficient for the `amazon-ebs` builder. `packer`
    - `git` installed via the HashiCorp dnf repo. Template staged builder-side
@@ -59,8 +59,8 @@ The `build-agent` AMI in account `968702293218` / `us-east-1` was built this way
 
    ```hcl
    region                                = "us-east-1"
-   vpc_id                                = "vpc-078c7e9b60fb64cef"
-   subnet_id                             = "subnet-0385cfd1499c39579"  # same private subnet as the builder
+   vpc_id                                = "vpc-xxxxxxxx"
+   subnet_id                             = "subnet-xxxxxxxx"  # same private subnet as the builder
    associate_public_ip_address           = false
    ssh_interface                         = "private_ip"
    # Packer creates its own temporary SG; scope WinRM 5986 ingress to the

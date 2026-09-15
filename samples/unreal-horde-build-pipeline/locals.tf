@@ -107,7 +107,7 @@ locals {
   )
 
   # Dedicated Perforce user that the Horde server authenticates as. The
-  # purpose-built Horde P4 credentials secret (JT-06) stores this username; the
+  # purpose-built Horde P4 credentials secret stores this username; the
   # operator must align this user's password with the secret post-deploy.
   horde_p4_username = "svc-horde"
 
