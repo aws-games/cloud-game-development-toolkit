@@ -28,6 +28,32 @@ data "aws_iam_policy_document" "agent_secrets_read" {
       var.horde_p4_credentials_secret_arn != null ? var.horde_p4_credentials_secret_arn : "",
     ])
   }
+
+  # Igroup self-heal (finding #0004). The hydrator refuses to add itself to a
+  # single-host SOURCE-LUN igroup that already contains a foreign initiator, to
+  # avoid two NTFS writers. To safely auto-remove a STALE initiator left by a
+  # TERMINATED previous hydrator, OntapSan.psm1's Get-TerminatedInitiators parses
+  # the instance-id from the iqn.1991-05.com.microsoft:i-<id> initiator and calls
+  # ec2:DescribeInstances to confirm the instance is 'terminated' (the ONLY state
+  # it will remove on; alive/unattributable/inconclusive all REFUSE).
+  #
+  # This is a SEPARATE statement ON PURPOSE (its own SID, its own actions/
+  # resources) rather than being merged into ReadPipelineSecrets above. Merging
+  # unrelated grants into one statement is the #998-class coupling we are
+  # avoiding: it entangles the tightly-scoped secret ARNs with an action that
+  # cannot be resource-scoped, making the whole statement harder to reason about
+  # and to tighten later. ec2:DescribeInstances is a read-only, account-wide
+  # describe with no ARN-level resource scoping, so resources must be ["*"].
+  statement {
+    sid    = "DescribeInstancesForIgroupSelfHeal"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+    ]
+    # ec2:DescribeInstances does not support resource-level permissions; "*" is
+    # the only valid scoping. It is a read-only describe (no mutation).
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_policy" "agent_secrets_read" {
