@@ -76,6 +76,56 @@ catch {
     $failures += "MPIO check errored: $_"
 }
 
+# --- 3b. MSDSM automatic claim of iSCSI devices IS IN EFFECT ---
+# The MPIO feature being installed (section 3) is NOT enough: a two-portal LUN
+# only collapses to a single disk if MSDSM is actually claiming iSCSI devices.
+# configure_mpio_claim.ps1 enables + verifies this post-reboot; assert it here
+# too so a regression fails the bake. Read Get-MSDSMAutomaticClaimSettings
+# handling BOTH the hashtable and the list-of-rows output shapes.
+try {
+    $claim = Get-MSDSMAutomaticClaimSettings -ErrorAction Stop
+    $iscsiClaimed = $false
+
+    if ($null -eq $claim) {
+        $iscsiClaimed = $false
+    }
+    elseif ($claim -is [System.Collections.IDictionary]) {
+        # Shape A: hashtable keyed by bus type.
+        foreach ($key in $claim.Keys) {
+            if ("$key" -match 'iSCSI') { $iscsiClaimed = [bool]$claim[$key] }
+        }
+    }
+    else {
+        # Shape B: single object with an iSCSI property.
+        $prop = $claim.PSObject.Properties | Where-Object { $_.Name -match 'iSCSI' } | Select-Object -First 1
+        if ($prop) {
+            $iscsiClaimed = [bool]$prop.Value
+        }
+        else {
+            # Shape C: list of rows, one per bus type.
+            foreach ($row in @($claim)) {
+                $busProp = $row.PSObject.Properties | Where-Object { $_.Name -match 'BusType|Bus' } | Select-Object -First 1
+                if ($busProp -and "$($busProp.Value)" -match 'iSCSI') {
+                    $valProp = $row.PSObject.Properties |
+                        Where-Object { $_.Name -match 'Enabled|Value|Claim|AutomaticClaim' } |
+                        Select-Object -First 1
+                    $iscsiClaimed = if ($valProp) { [bool]$valProp.Value } else { $true }
+                }
+            }
+        }
+    }
+
+    if ($iscsiClaimed) {
+        Write "FOUND MSDSM automatic claim for iSCSI: IN EFFECT"
+    }
+    else {
+        $failures += "MSDSM automatic claim for iSCSI is NOT in effect (two-portal LUN would enumerate as two disks)"
+    }
+}
+catch {
+    $failures += "MSDSM iSCSI claim check errored: $_"
+}
+
 # --- 4. Boot-time unique-IQN mechanism (baked ONSTART task + baked script) ---
 try {
     $iqnScript = "C:\ProgramData\horde\set_unique_iqn.ps1"
@@ -160,4 +210,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write "==== VALIDATION PASSED: MSVC toolchain + iSCSI initiator + MPIO + boot-time unique-IQN task present ===="
+Write "==== VALIDATION PASSED: MSVC toolchain + iSCSI initiator + MPIO + MSDSM iSCSI claim + boot-time unique-IQN task present ===="
