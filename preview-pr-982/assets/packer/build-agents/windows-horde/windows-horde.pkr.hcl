@@ -170,11 +170,30 @@ build {
     script            = "./install_horde_agent_tools.ps1"
   }
 
-  # iSCSI initiator (MSiSCSI, Automatic) + MPIO feature + MSDSM iSCSI claim.
+  # iSCSI initiator (MSiSCSI, Automatic) + MPIO feature. The MSDSM iSCSI claim
+  # is configured AFTER the reboot below (the MPIO filter driver is not fully
+  # effective until the machine restarts).
   provisioner "powershell" {
     elevated_user     = "Administrator"
     elevated_password = build.Password
     script            = "./install_iscsi.ps1"
+  }
+
+  # Reboot so the MPIO filter driver is loaded before we enable/verify the MSDSM
+  # automatic claim. Without this restart, Enable-MSDSMAutomaticClaim can appear
+  # to succeed while the claim is NOT actually in effect.
+  provisioner "windows-restart" {
+    restart_timeout = "15m"
+  }
+
+  # Enable AND VERIFY the MSDSM automatic claim of iSCSI devices. Fails the bake
+  # (non-zero exit) if the claim is not in effect after the reboot, so the AMI
+  # is never published with a broken MPIO claim (a two-portal LUN would then
+  # enumerate as two disks).
+  provisioner "powershell" {
+    elevated_user     = "Administrator"
+    elevated_password = build.Password
+    script            = "./configure_mpio_claim.ps1"
   }
 
   # Drop the per-boot unique-IQN LOGIC onto the IMAGE at a fixed path. This file

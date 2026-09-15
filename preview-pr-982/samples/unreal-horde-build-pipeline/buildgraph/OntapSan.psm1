@@ -84,6 +84,10 @@ function Connect-Ontap {
     return [pscustomobject]@{
         Api     = "https://$ManagementEndpoint/api"
         Svm     = $Svm
+        # Region is carried on the context so the igroup self-heal
+        # (Get-TerminatedInitiators) can call ec2:DescribeInstances in the same
+        # region as the pipeline without threading an extra parameter everywhere.
+        Region  = $AwsRegion
         Headers = @{ Authorization = 'Basic ' + [Convert]::ToBase64String(
                         [Text.Encoding]::ASCII.GetBytes("${User}:${pw}")) }
     }
@@ -225,6 +229,108 @@ function Get-LocalIqn {
     throw 'Could not determine this host iSCSI IQN. Is the MSiSCSI service running?'
 }
 
+function Get-TerminatedInitiators {
+    <#  Igroup self-heal, FAIL-SAFE by construction.
+
+        Given a list of initiator IQNs, return ONLY the subset that provably
+        belong to a TERMINATED EC2 instance and are therefore safe to remove
+        from a single-host igroup. Everything else is left in place.
+
+        Windows agents present iqn.1991-05.com.microsoft:i-<instance-id> (the
+        baked set_unique_iqn.ps1 derives the IQN from the EC2 instance-id). We
+        parse that instance-id and ask EC2 for the instance state.
+
+        CLASSIFICATION TABLE - 'terminated' is the ONLY removable state:
+          terminated                        -> REMOVE  (the host is gone for good)
+          running / pending / stopping /
+            stopped / shutting-down          -> REFUSE  (host may still write; and
+                                                shutting-down can still flush)
+          instance-id not found by EC2       -> REFUSE  (inconclusive: wrong region,
+                                                eventual consistency, or an IQN we
+                                                did not mint)
+          IQN does not parse to an i-<id>    -> REFUSE  (unattributable)
+          DescribeInstances error / no creds -> REFUSE  (inconclusive)
+
+        The bias is deliberate: a false REFUSE only blocks a fresh attach with a
+        loud, actionable error; a false REMOVE could evict a LIVE writer and
+        corrupt NTFS. So anything we cannot prove terminated is kept. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [AllowEmptyCollection()] [string[]] $Initiators
+    )
+
+    $region = $Ctx.Region
+    $removable = @()
+
+    foreach ($iqn in $Initiators) {
+        if ([string]::IsNullOrWhiteSpace($iqn)) { continue }
+
+        # Anchored: the instance-id is the WHOLE suffix after the last colon.
+        # A partial/embedded match could misattribute an unrelated IQN.
+        $m = [regex]::Match($iqn, ':(i-[0-9a-f]{8,17})$')
+        if (-not $m.Success) {
+            Write-Host "  self-heal: '$iqn' is not an instance-id-derived IQN - UNATTRIBUTABLE, refusing to remove"
+            continue
+        }
+        $instanceId = $m.Groups[1].Value
+
+        $state = $null
+        try {
+            $raw = & aws ec2 describe-instances --instance-ids $instanceId `
+                --region $region `
+                --query 'Reservations[].Instances[].State.Name' `
+                --output text 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $state = ($raw | Out-String).Trim()
+            }
+            else {
+                # Non-zero rc. A genuinely GONE instance-id returns
+                # InvalidInstanceID.NotFound here; treat as INCONCLUSIVE, not
+                # terminated, because it is also what a wrong-region or
+                # permissions error looks like.
+                Write-Host "  self-heal: describe-instances for $instanceId was inconclusive (rc=$LASTEXITCODE): $(($raw | Out-String).Trim()) - refusing to remove"
+                continue
+            }
+        }
+        catch {
+            Write-Host "  self-heal: describe-instances for $instanceId errored ($_) - INCONCLUSIVE, refusing to remove"
+            continue
+        }
+
+        if ($state -eq 'terminated') {
+            Write-Host "  self-heal: $instanceId is TERMINATED - $iqn is safe to remove"
+            $removable += $iqn
+        }
+        elseif ([string]::IsNullOrWhiteSpace($state)) {
+            # Empty result set: EC2 knows of no such id right now. Inconclusive.
+            Write-Host "  self-heal: $instanceId not found by EC2 (empty state) - INCONCLUSIVE, refusing to remove"
+        }
+        else {
+            # running / pending / stopping / stopped / shutting-down: NEVER remove.
+            Write-Host "  self-heal: $instanceId is '$state' (ALIVE / not terminated) - refusing to remove"
+        }
+    }
+
+    return @($removable)
+}
+
+function Remove-OntapIgroupInitiator {
+    <#  Remove a single stale initiator from an igroup via the private CLI.
+        Only ever called with an IQN that Get-TerminatedInitiators has proven
+        belongs to a terminated instance. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $Igroup,
+        [Parameter(Mandatory)] [string] $Iqn
+    )
+    Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/igroup/remove' -Method Post -Body @{
+        vserver   = $Ctx.Svm
+        igroup    = $Igroup
+        initiator = @($Iqn)
+    } | Out-Null
+    Write-Host "  self-heal: removed stale initiator $Iqn from igroup '$Igroup'"
+}
+
 function Add-OntapIgroupInitiator {
     <#  Create-if-absent igroup, then add this initiator if missing.
 
@@ -258,14 +364,29 @@ function Add-OntapIgroupInitiator {
     if ($current -contains $Iqn) { Write-Host "  igroup '$Igroup' already contains this host"; return }
 
     if ($SingleHost -and $current.Count -gt 0) {
-        throw @"
+        # SELF-HEAL before refusing: a common, benign cause of a "foreign"
+        # initiator here is a PREVIOUS hydrator instance that was terminated
+        # without cleaning up its igroup membership. Remove ONLY initiators we
+        # can PROVE belong to a terminated EC2 instance (Get-TerminatedInitiators
+        # is fail-safe: anything alive or unattributable is kept). Then re-evaluate.
+        $stale = Get-TerminatedInitiators -Ctx $Ctx -Initiators $current
+        foreach ($s in $stale) {
+            Remove-OntapIgroupInitiator -Ctx $Ctx -Igroup $Igroup -Iqn $s
+        }
+        $current = @($current | Where-Object { $stale -notcontains $_ })
+
+        if ($current.Count -gt 0) {
+            throw @"
 REFUSING to add this host to igroup '$Igroup'.
 It already contains: $($current -join ', ')
 That igroup owns a SOURCE LUN, which carries NTFS - a filesystem with exactly one
 legitimate writer. Adding a second initiator invites silent corruption.
-If the listed initiator belongs to a terminated host, remove it explicitly first:
+The initiator(s) above are either ALIVE or could not be proven terminated, so
+self-heal left them in place. If one belongs to a terminated host, remove it
+explicitly first:
   lun igroup remove -vserver $($Ctx.Svm) -igroup $Igroup -initiator <stale-iqn>
 "@
+        }
     }
 
     Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/igroup/add' -Method Post -Body @{
@@ -315,7 +436,12 @@ function Remove-OntapLunMap {
 function New-OntapLun {
     <#  Create-if-absent thin LUN. space-allocation lets ONTAP report
         thin-provision exhaustion to Windows over SCSI, instead of the LUN
-        silently going read-only when the containing volume fills. #>
+        silently going read-only when the containing volume fills.
+
+        RETURNS $true if THIS call created the LUN (a brand-new, RAW LUN that is
+        safe to auto-format), $false if the LUN already existed (it may carry a
+        filesystem we must not touch). Callers use this to decide whether to
+        auto-format - see hydrate-source-lun.ps1. #>
     param(
         [Parameter(Mandatory)] $Ctx,
         [Parameter(Mandatory)] [string] $LunPath,
@@ -323,7 +449,7 @@ function New-OntapLun {
         [string] $OsType = 'windows_2008'
     )
     $r = Invoke-Ontap -Ctx $Ctx -Path "/private/cli/lun?vserver=$($Ctx.Svm)&path=$LunPath"
-    if ($r.num_records -gt 0) { Write-Host "  LUN $LunPath already exists"; return }
+    if ($r.num_records -gt 0) { Write-Host "  LUN $LunPath already exists"; return $false }
 
     Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun' -Method Post -Body @{
         vserver            = $Ctx.Svm
@@ -334,23 +460,73 @@ function New-OntapLun {
         'space-allocation' = 'enabled'
     } | Out-Null
     Write-Host "  created LUN $LunPath ($Size, thin, space-allocation on)"
+    return $true
+}
+
+function Test-MSDSMiScsiClaim {
+    <#  Return $true iff MSDSM is ACTIVELY claiming iSCSI devices right now.
+
+        Feature-installed is NOT the same as claim-active: MPIO can be present
+        while the MSDSM automatic claim is not in effect, in which case a
+        second portal makes Windows see one LUN as two disks. Connect-SanPortal
+        gates its multi-portal connect on THIS, not merely the feature.
+
+        Get-MSDSMAutomaticClaimSettings returns different shapes across Windows
+        builds (a hashtable keyed by bus type, a single object with an iSCSI
+        property, or a list of per-bus rows). Handle all three. Any failure to
+        read is treated as NOT-claimed (fail-safe: stay single-portal). #>
+    try {
+        $settings = Get-MSDSMAutomaticClaimSettings -ErrorAction Stop
+    } catch {
+        return $false
+    }
+    if ($null -eq $settings) { return $false }
+
+    if ($settings -is [System.Collections.IDictionary]) {
+        foreach ($key in $settings.Keys) {
+            if ("$key" -match 'iSCSI') { return [bool]$settings[$key] }
+        }
+        return $false
+    }
+
+    $prop = $settings.PSObject.Properties | Where-Object { $_.Name -match 'iSCSI' } | Select-Object -First 1
+    if ($prop) { return [bool]$prop.Value }
+
+    foreach ($row in @($settings)) {
+        $busProp = $row.PSObject.Properties | Where-Object { $_.Name -match 'BusType|Bus' } | Select-Object -First 1
+        if ($busProp -and "$($busProp.Value)" -match 'iSCSI') {
+            $valProp = $row.PSObject.Properties |
+                Where-Object { $_.Name -match 'Enabled|Value|Claim|AutomaticClaim' } |
+                Select-Object -First 1
+            if ($valProp) { return [bool]$valProp.Value }
+            return $true
+        }
+    }
+    return $false
 }
 
 function Connect-SanPortal {
-    <#  Connect exactly ONE portal unless MPIO is installed. With two portals and
-        no MPIO, Windows enumerates the same LUN twice as two disks; mounting
-        both is a corruption trap. #>
+    <#  Connect exactly ONE portal unless MPIO is installed AND the MSDSM iSCSI
+        automatic claim is ACTIVE. With two portals but no active claim, Windows
+        enumerates the same LUN twice as two disks; mounting both is a corruption
+        trap. Feature-installed alone is NOT sufficient - the claim must be in
+        effect - so we test the claim state, not just the feature. #>
     param([Parameter(Mandatory)] [string[]] $PortalAddresses)
 
     Set-Service -Name MSiSCSI -StartupType Automatic -ErrorAction SilentlyContinue
     Start-Service -Name MSiSCSI -ErrorAction SilentlyContinue
 
-    $mpio = $false
-    try { $mpio = (Get-WindowsFeature -Name 'Multipath-IO' -ErrorAction SilentlyContinue).Installed } catch { }
+    $mpioFeature = $false
+    try { $mpioFeature = (Get-WindowsFeature -Name 'Multipath-IO' -ErrorAction SilentlyContinue).Installed } catch { }
+
+    # Multipath is only safe to USE when the feature is installed AND MSDSM is
+    # actively claiming iSCSI devices (so the two paths collapse to one disk).
+    $mpio = $mpioFeature -and (Test-MSDSMiScsiClaim)
 
     $use = if ($mpio) { $PortalAddresses } else { @($PortalAddresses[0]) }
     if (-not $mpio -and $PortalAddresses.Count -gt 1) {
-        Write-Host "  MPIO not installed - connecting ONE portal ($($use[0])) of $($PortalAddresses.Count) on purpose"
+        $why = if ($mpioFeature) { 'MPIO feature installed but MSDSM iSCSI claim NOT active' } else { 'MPIO not installed' }
+        Write-Host "  $why - connecting ONE portal ($($use[0])) of $($PortalAddresses.Count) on purpose"
     }
 
     foreach ($p in $use) {
@@ -475,6 +651,7 @@ function Dismount-SanLun {
 
 Export-ModuleMember -Function Enable-OntapCertBypass, Connect-Ontap, Invoke-Ontap, `
     New-OntapCloneName, Get-OntapVolume, New-OntapSnapshot, New-OntapFlexClone, `
-    Remove-OntapVolume, Get-LocalIqn, Add-OntapIgroupInitiator, New-OntapLunMap, `
-    Remove-OntapLunMap, New-OntapLun, Connect-SanPortal, Wait-SanDisk, `
-    Mount-SanLun, Dismount-SanLun
+    Remove-OntapVolume, Get-LocalIqn, Get-TerminatedInitiators, `
+    Remove-OntapIgroupInitiator, Add-OntapIgroupInitiator, New-OntapLunMap, `
+    Remove-OntapLunMap, New-OntapLun, Connect-SanPortal, Test-MSDSMiScsiClaim, `
+    Wait-SanDisk, Mount-SanLun, Dismount-SanLun

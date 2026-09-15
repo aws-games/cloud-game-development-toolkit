@@ -8,7 +8,9 @@ function Write($message) {
 #   - MSiSCSI service set to Automatic start (so the initiator is running on
 #     first boot without a per-boot enable step).
 #   - Multipath I/O (MPIO) Windows feature enabled.
-#   - MSDSM configured to auto-claim iSCSI-attached devices.
+#   - MSDSM auto-claim of iSCSI devices is configured AFTER a reboot by
+#     configure_mpio_claim.ps1 (the MPIO driver is not fully effective until the
+#     machine restarts), not here.
 #
 # WHAT IS *NOT* BAKED AS A FIXED VALUE HERE (materialized per-instance every boot):
 #   - The initiator IQN VALUE. On Windows the IQN lives in
@@ -57,16 +59,11 @@ catch {
     Write "Failed to enable MPIO feature"
 }
 
-try {
-    Write "Configuring MSDSM to claim iSCSI devices"
-    # Auto-claim all iSCSI-attached devices for MPIO. This is a machine-level
-    # policy and is safe to bake. Requires the MPIO feature (above) to be present.
-    Enable-MSDSMAutomaticClaim -BusType iSCSI -ErrorAction SilentlyContinue
-    # Set a sensible default load-balance policy for claimed devices.
-    Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR -ErrorAction SilentlyContinue
-}
-catch {
-    Write "Failed to configure MSDSM iSCSI claim (MPIO may require a reboot before MSDSM cmdlets are available)"
-}
+# NOTE: the MSDSM iSCSI automatic claim is deliberately NOT configured here.
+# The MPIO filter driver installed above is not fully effective until a reboot,
+# so Enable-MSDSMAutomaticClaim can appear to succeed yet leave the claim NOT in
+# effect. The Packer template therefore reboots (windows-restart) AFTER this
+# step and then runs configure_mpio_claim.ps1, which enables AND VERIFIES the
+# claim and fails the bake if it is not in effect.
 
-Write "iSCSI / MPIO baking step complete."
+Write "iSCSI / MPIO feature baking step complete (MSDSM claim configured post-reboot)."

@@ -73,7 +73,13 @@ $ctx     = Connect-Ontap -ManagementEndpoint $FsxAdminIp -PasswordSecretName $On
 $lunPath = "/vol/$SourceVolume/$LunName"
 
 Write-Host '=== 1. provision (create-if-absent) and attach the source LUN ==='
-New-OntapLun -Ctx $ctx -LunPath $lunPath -Size $LunSize
+# Capture whether THIS run created the LUN. A brand-new LUN is RAW and must be
+# formatted before it can hold a workspace; a pre-existing LUN may already carry
+# NTFS we must not destroy. So we auto-format ONLY run-created LUNs, while still
+# honouring an explicit -FormatIfRaw for the external/first-provisioning case.
+# Mount-SanLun's RAW guard is the last line of defence either way: it refuses to
+# reformat a disk that is already initialised.
+$lunCreated = New-OntapLun -Ctx $ctx -LunPath $lunPath -Size $LunSize
 
 $iqn = Get-LocalIqn
 Write-Host "  hydrator IQN: $iqn"
@@ -86,8 +92,10 @@ New-OntapLunMap -Ctx $ctx -LunPath $lunPath -Igroup $HydratorIgroup
 Connect-SanPortal -PortalAddresses ($IscsiPortals -split '\s*,\s*' | Where-Object { $_ })
 
 $drive = Phase 'attach' {
-    if ($FormatIfRaw) { Mount-SanLun -Ctx $ctx -LunPath $lunPath -DriveLetter $MountDrive -Format }
-    else              { Mount-SanLun -Ctx $ctx -LunPath $lunPath -DriveLetter $MountDrive }
+    # Auto-format run-created (RAW) LUNs; also honour an explicit -FormatIfRaw.
+    # The RAW guard inside Mount-SanLun still prevents reformatting an
+    # already-initialised disk, so a pre-existing NTFS volume is never destroyed.
+    Mount-SanLun -Ctx $ctx -LunPath $lunPath -DriveLetter $MountDrive -Format:($FormatIfRaw -or $lunCreated)
 }
 Write-Host "  source workspace at $drive"
 

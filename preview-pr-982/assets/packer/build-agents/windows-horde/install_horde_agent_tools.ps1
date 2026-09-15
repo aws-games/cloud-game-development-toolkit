@@ -2,6 +2,22 @@ function Write($message) {
     Write-Output $message
 }
 
+# Fail loud: any unhandled cmdlet error is terminating so a broken bake stops
+# at THIS provisioner instead of limping onward to validate_image.
+$ErrorActionPreference = 'Stop'
+
+# Invoke-Choco: run a Chocolatey install and THROW (naming the package) if it
+# returns a non-zero exit code. choco does not throw on failure by itself, so we
+# must inspect $LASTEXITCODE explicitly or a failed install would pass silently.
+function Invoke-Choco {
+    param([Parameter(Mandatory = $true)][string] $Package)
+    Write "Installing $Package"
+    choco install -y --no-progress $Package
+    if ($LASTEXITCODE -ne 0) {
+        throw "install_horde_agent_tools: choco install '$Package' failed with exit code $LASTEXITCODE"
+    }
+}
+
 # Horde build-agent runtimes and tooling.
 #
 # The Horde module's own first-boot user_data (config/agent/agent-config.ps1)
@@ -11,41 +27,17 @@ function Write($message) {
 # per-boot network dependency. The .NET version baked here matches the module's
 # agent_dotnet_runtime_version default (6.0).
 
-try {
-    # .NET 6 runtime - matches Horde module agent_dotnet_runtime_version default.
-    Write "Installing .NET 6.0 runtime"
-    choco install -y --no-progress dotnet-6.0-runtime
-}
-catch {
-    Write "Failed to install .NET 6.0 runtime"
-}
+# .NET 6 runtime - matches Horde module agent_dotnet_runtime_version default.
+Invoke-Choco -Package dotnet-6.0-runtime
 
-try {
-    # .NET 8 SDK - required by Unreal Engine 5.5 UnrealAutomationTool (UAT).
-    Write "Installing .NET 8 SDK"
-    choco install -y --no-progress dotnet-8.0-sdk
-}
-catch {
-    Write "Failed to install .NET 8 SDK"
-}
+# .NET 8 SDK - required by Unreal Engine 5.5 UnrealAutomationTool (UAT).
+Invoke-Choco -Package dotnet-8.0-sdk
 
-try {
-    # Perforce command-line client (p4.exe) - matches the module's boot install.
-    Write "Installing Perforce p4 client"
-    choco install -y --no-progress p4
-}
-catch {
-    Write "Failed to install Perforce p4 client"
-}
+# Perforce command-line client (p4.exe) - matches the module's boot install.
+Invoke-Choco -Package p4
 
-try {
-    # AWS CLI - used by the iSCSI/SAN pipeline scripts (secrets, S3 p4 trust, etc.)
-    Write "Installing AWS CLI"
-    choco install -y --no-progress awscli
-}
-catch {
-    Write "Failed to install AWS CLI"
-}
+# AWS CLI - used by the iSCSI/SAN pipeline scripts (secrets, S3 p4 trust, etc.)
+Invoke-Choco -Package awscli
 
 # NOTE: Do NOT call Chocolatey's `RefreshEnv` / `RefreshEnv.cmd` as the last
 # statement here. When dot-invoked from this PowerShell process it prints
