@@ -24,9 +24,12 @@
 
     WHAT IT DOES
     ------------
-      1. Reads the EC2 instance-id from IMDSv2 (token then metadata GET). On IMDS
-         failure it falls back to a stable local identifier (machine SID-based
-         GUID, else hostname) and LOGS the fallback.
+      1. Reads the EC2 instance-id from IMDSv2 (token then metadata GET), with a
+         BOUNDED retry to ride out transient boot-time IMDS blips. The instance-id
+         is MANDATORY: if it cannot be obtained the script THROWS and exits
+         non-zero rather than materialise a non-attributable IQN. This guarantees
+         the IQN always embeds the instance-id (iqn.1991-05.com.microsoft:i-<id>),
+         which downstream instance-id-keyed stale-IQN cleanup relies on.
       2. Computes the desired IQN and sets it via Set-InitiatorPort, but only if
          it differs from the current NodeAddress (idempotent).
       3. Ensures MSiSCSI is Automatic + running.
@@ -36,7 +39,11 @@
     work handled by buildgraph/attach-clone-lun.ps1 + hydrate-source-lun.ps1.
 #>
 
-$ErrorActionPreference = 'Continue'   # a partial config must not abort the boot
+$ErrorActionPreference = 'Continue'   # per-step: let recoverable/log-only steps
+                                      # continue, but a FAILURE TO SET THE IQN is
+                                      # fatal (we throw explicitly below) so the
+                                      # collision this script prevents is never
+                                      # shipped silently.
 $ProgressPreference    = 'SilentlyContinue'
 
 $LogDir = 'C:\ProgramData\horde'
@@ -53,61 +60,51 @@ function Write-Log {
 Write-Log 'starting per-boot unique-IQN materialisation'
 
 # =============================================================================
-# 1. Derive a stable, unique identifier for this host.
-#    Preferred: EC2 instance-id via IMDSv2. Fallback: local machine GUID/hostname.
+# 1. Derive the host identity from the EC2 instance-id via IMDSv2 (MANDATORY).
+#    A bounded retry rides out transient boot-time IMDS blips; on genuine IMDS
+#    absence we THROW rather than emit a non-attributable IQN.
 # =============================================================================
 function Get-InstanceIdViaImds {
-    $imds = 'http://169.254.169.254'
-    try {
-        $token = Invoke-RestMethod -Method Put -Uri "$imds/latest/api/token" `
-            -Headers @{ 'X-aws-ec2-metadata-token-ttl-seconds' = '21600' } `
-            -TimeoutSec 5 -ErrorAction Stop
-        if ([string]::IsNullOrWhiteSpace($token)) { throw 'empty IMDSv2 token' }
+    # Bounded retry: ride out a transient boot-time IMDS blip without ever
+    # waiting unbounded. 5 attempts x (up to 5s HTTP timeout + 2s sleep) is a
+    # hard ceiling of ~33s worst case - well under the ONSTART boot task's
+    # tolerance - after which the caller treats IMDS as genuinely absent.
+    $imds        = 'http://169.254.169.254'
+    $maxAttempts = 5
+    $sleepSec    = 2
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        try {
+            $token = Invoke-RestMethod -Method Put -Uri "$imds/latest/api/token" `
+                -Headers @{ 'X-aws-ec2-metadata-token-ttl-seconds' = '21600' } `
+                -TimeoutSec 5 -ErrorAction Stop
+            if ([string]::IsNullOrWhiteSpace($token)) { throw 'empty IMDSv2 token' }
 
-        $instanceId = Invoke-RestMethod -Method Get -Uri "$imds/latest/meta-data/instance-id" `
-            -Headers @{ 'X-aws-ec2-metadata-token' = $token } `
-            -TimeoutSec 5 -ErrorAction Stop
-        if ([string]::IsNullOrWhiteSpace($instanceId)) { throw 'empty instance-id' }
+            $instanceId = Invoke-RestMethod -Method Get -Uri "$imds/latest/meta-data/instance-id" `
+                -Headers @{ 'X-aws-ec2-metadata-token' = $token } `
+                -TimeoutSec 5 -ErrorAction Stop
+            if ([string]::IsNullOrWhiteSpace($instanceId)) { throw 'empty instance-id' }
 
-        return $instanceId.Trim()
-    } catch {
-        Write-Log "IMDSv2 lookup failed: $($_.Exception.Message)" 'WARN'
-        return $null
-    }
-}
-
-function Get-StableLocalId {
-    # Fallback identifier when IMDS is unavailable (e.g. running off-EC2). Must be
-    # stable across reboots of the same host so the IQN does not churn.
-    try {
-        $sid = (Get-CimInstance Win32_UserAccount -Filter "SID like 'S-1-5-21-%'" -ErrorAction Stop |
-            Select-Object -First 1).SID
-        if ($sid) {
-            # Hash the machine SID prefix into a compact deterministic GUID-like tag.
-            $domainSid = ($sid -split '-')[0..6] -join '-'
-            $md5 = [System.Security.Cryptography.MD5]::Create()
-            $bytes = $md5.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($domainSid))
-            $hex = -join ($bytes | ForEach-Object { $_.ToString('x2') })
-            return "local-$hex"
+            return $instanceId.Trim()
+        } catch {
+            Write-Log "IMDSv2 lookup attempt $attempt/$maxAttempts failed: $($_.Exception.Message)" 'WARN'
+            if ($attempt -lt $maxAttempts) { Start-Sleep -Seconds $sleepSec }
         }
-    } catch {
-        Write-Log "SID-based fallback failed: $($_.Exception.Message)" 'WARN'
     }
-    # Last resort: hostname (lowercased). Still stable per host.
-    return ('local-{0}' -f $env:COMPUTERNAME.ToLower())
+    return $null
 }
 
 $instanceId = Get-InstanceIdViaImds
-if ($instanceId) {
-    Write-Log "instance-id from IMDSv2: $instanceId"
-    $idSuffix = $instanceId
-} else {
-    $idSuffix = Get-StableLocalId
-    Write-Log "falling back to stable local identifier: $idSuffix" 'WARN'
+if ([string]::IsNullOrWhiteSpace($instanceId)) {
+    # FAIL LOUD: the instance-id is mandatory. A local-* / hostname fallback would
+    # emit a non-attributable IQN and break instance-id-keyed stale-IQN cleanup,
+    # so refuse rather than ship a misleading identity.
+    Write-Log 'could not obtain EC2 instance-id from IMDS after bounded retry; refusing to set a non-attributable IQN' 'ERROR'
+    throw 'set_unique_iqn: could not obtain EC2 instance-id from IMDS; refusing to set a non-attributable IQN'
 }
+Write-Log "instance-id from IMDSv2: $instanceId"
 
-# ONTAP/MS-documented Microsoft initiator IQN authority + date, host-unique suffix.
-$desiredIqn = "iqn.1991-05.com.microsoft:$idSuffix"
+# ONTAP/MS-documented Microsoft initiator IQN authority + date, instance-id suffix.
+$desiredIqn = "iqn.1991-05.com.microsoft:$instanceId"
 
 # =============================================================================
 # 2. Ensure MSiSCSI is Automatic + running (baked Automatic in install_iscsi.ps1,
@@ -142,23 +139,50 @@ try {
         Write-Log "initiator IQN already correct: $currentIqn (no change)"
     } else {
         Write-Log "setting initiator IQN: '$currentIqn' -> '$desiredIqn'"
-        Set-InitiatorPort -NodeAddress $desiredIqn -ErrorAction Stop
+        # Set-InitiatorPort semantics (MS Storage module): -NodeAddress selects
+        # the CURRENT port to modify; -NewNodeAddress is the value to write and is
+        # MANDATORY in every parameter set. Passing only -NodeAddress $desiredIqn
+        # (as an earlier revision did) throws 'missing mandatory parameters', so
+        # the IQN never changed and every agent kept its hostname-derived default
+        # - the exact IQN collision this script exists to prevent.
+        if ($currentIqn) {
+            Set-InitiatorPort -NodeAddress $currentIqn -NewNodeAddress $desiredIqn -ErrorAction Stop
+        } else {
+            # No current iqn.* port could be read individually; pipe the port
+            # object straight into Set-InitiatorPort so -NodeAddress is bound
+            # from the pipeline and -NewNodeAddress supplies the target value.
+            Get-InitiatorPort -ErrorAction Stop |
+                Where-Object { $_.NodeAddress -like 'iqn.*' } |
+                Select-Object -First 1 |
+                Set-InitiatorPort -NewNodeAddress $desiredIqn -ErrorAction Stop
+        }
         Write-Log "initiator IQN set to $desiredIqn"
     }
 } catch {
+    # FAIL LOUD: a swallowed error here is what let the broken call ship silently.
+    # Re-throw so the ONSTART task records a failure and, at bake time, the
+    # validation step (which runs this script) surfaces a non-zero exit.
     Write-Log "failed to set initiator IQN to '$desiredIqn': $($_.Exception.Message)" 'ERROR'
+    throw "set_unique_iqn: failed to set initiator IQN to '$desiredIqn': $($_.Exception.Message)"
 }
 
 # =============================================================================
-# 4. Log the resulting IQN for evidence.
+# 4. Verify and log the resulting IQN. FAIL LOUD if it is not what we intended:
+#    a mismatch means igroup registration would bind the WRONG identity.
 # =============================================================================
 try {
     $finalIqn = (Get-InitiatorPort -ErrorAction Stop |
         Where-Object { $_.NodeAddress -like 'iqn.*' } |
         Select-Object -First 1).NodeAddress
-    Write-Log "resulting initiator IQN: $finalIqn"
+    if ($finalIqn -eq $desiredIqn) {
+        Write-Log "resulting initiator IQN: $finalIqn"
+    } else {
+        Write-Log "resulting initiator IQN is '$finalIqn' but '$desiredIqn' was intended - igroup registration would use the WRONG identity" 'ERROR'
+        throw "set_unique_iqn: resulting initiator IQN '$finalIqn' does not match intended '$desiredIqn'"
+    }
 } catch {
-    Write-Log "could not read resulting initiator IQN: $($_.Exception.Message)" 'WARN'
+    Write-Log "failed to verify resulting initiator IQN: $($_.Exception.Message)" 'ERROR'
+    throw
 }
 
 Write-Log 'complete'

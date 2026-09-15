@@ -99,6 +99,46 @@ catch {
     $failures += "boot-time unique-IQN mechanism check errored: $_"
 }
 
+# --- 4b. EXERCISE the baked script and PROVE the IQN actually changed ---
+# Presence of the task/script is NOT proof it works: a prior revision called
+# Set-InitiatorPort without the mandatory -NewNodeAddress, threw on every boot,
+# and left every agent on its hostname-derived DEFAULT IQN - undetected, because
+# this validator only checked that the task existed. Run the script here on the
+# build instance (which has IMDS), then assert the initiator comes back as the
+# instance-id-derived IQN. The bake FAILS otherwise.
+try {
+    $iqnScript = "C:\ProgramData\horde\set_unique_iqn.ps1"
+    if (Test-Path $iqnScript) {
+        # The script now throws (fail-loud) if it cannot set the IQN; capture a
+        # non-zero exit as a validation failure.
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $iqnScript | Out-Null
+        $iqnExit = $LASTEXITCODE
+
+        $iqnNow = (Get-InitiatorPort -ErrorAction Stop |
+            Where-Object { $_.NodeAddress -like 'iqn.*' } |
+            Select-Object -First 1).NodeAddress
+
+        # On the build instance IMDS is available, so the IQN MUST be the
+        # instance-id form iqn.1991-05.com.microsoft:i-<id>. A hostname/default
+        # IQN (WinServer-style) or the local-* fallback here means the set failed.
+        if ($iqnExit -ne 0) {
+            $failures += "set_unique_iqn.ps1 exited $iqnExit (fail-loud) - IQN was NOT set; see C:\ProgramData\horde\set_unique_iqn.log"
+        }
+        elseif ($iqnNow -match '^iqn\.1991-05\.com\.microsoft:i-[0-9a-f]+$') {
+            Write "VERIFIED instance-id-derived initiator IQN after running set_unique_iqn.ps1: $iqnNow"
+        }
+        else {
+            $failures += "set_unique_iqn.ps1 ran but the initiator IQN is '$iqnNow' (expected iqn.1991-05.com.microsoft:i-<instance-id>) - the boot-time IQN change did not take effect; see C:\ProgramData\horde\set_unique_iqn.log"
+        }
+    }
+    else {
+        $failures += "cannot exercise unique-IQN: script not found at $iqnScript"
+    }
+}
+catch {
+    $failures += "unique-IQN exercise errored (script likely threw / IQN not set): $_"
+}
+
 # --- 5. .NET runtimes (evidence, non-fatal beyond presence of dotnet) ---
 try {
     $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
