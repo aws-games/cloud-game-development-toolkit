@@ -1,5 +1,7 @@
 terraform {
-  required_version = ">= 1.0"
+  # main.tf uses a check {} block ("horde_p4_credentials_secret_required"),
+  # which requires Terraform 1.5+. On 1.0-1.4 that block is a parse error.
+  required_version = ">= 1.5"
 
   required_providers {
     aws = {
