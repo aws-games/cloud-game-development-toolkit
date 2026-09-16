@@ -3511,6 +3511,9 @@ packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</s
 <p><code>region</code> must match where you deploy the sample; <code>subnet_id</code> must be a <strong>public</strong> subnet (with a route to an internet gateway) for the public-IP path, and any subnet you use needs outbound internet, since the build uses Chocolatey to install the toolchain; <code>public_key</code> is the SSH public key baked into the AMI so the Horde orchestration service can reach the agent. On success Packer prints the new AMI ID, registered as <code>windows-horde-build-agent-&lt;timestamp&gt;</code>.</p>
 <blockquote>
 <p><strong>Instance-type availability by AZ.</strong> The build defaults to a large compute instance (e.g. <code>c6a.4xlarge</code>), and not every AZ carries it — <code>c6a.4xlarge</code> Windows is <strong>not</strong> available in <code>us-east-1e</code>, for example. If Packer fails to launch the builder with an unsupported-instance-type error, pick a supported AZ (in <code>us-east-1</code>, one of <code>us-east-1a/b/c/d/f</code>) via the <code>subnet_id</code>, or choose an instance type the AZ offers.</p>
+</blockquote>
+<!-- -->
+<blockquote>
 <p><strong>Advanced: private in-VPC build.</strong> Once you have a VPC, you can instead build on a <strong>private</strong> subnet with NAT egress (leave <code>associate_public_ip_address=false</code>, <code>ssh_interface="private_ip"</code> — the template's defaults). In that mode <strong>Packer must run from a host that can route to the build instance's private IP</strong> — i.e. from inside the same VPC (a bastion/CI runner), or a peered/VPN-connected network. Run it from a workstation that cannot reach that private IP and the build stalls at "Waiting for WinRM". The private path can use a pre-created <code>security_group_id</code> that scopes WinRM (5986) to the reachable network — never <code>0.0.0.0/0</code>.</p>
 </blockquote>
 <h3 id="how-this-sample-consumes-the-ami">How this sample consumes the AMI<a class="headerlink" href="#how-this-sample-consumes-the-ami" title="Permanent link">&para;</a></h3>
@@ -3559,6 +3562,9 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span>--force-delete-without-recovery
 </code></pre></div>
 <p>or set <code>recovery_window_in_days = 0</code> on the FSxN admin secret so a destroy purges it immediately.</p>
+</blockquote>
+<!-- -->
+<blockquote>
 <p><strong>Runtime secret reads need IAM grants.</strong> The agent login-ticket chain (in <a href="#32-set-the-password-to-match-the-pre-created-secret">runbook step 3.2</a> / <a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>) reads the P4 credentials on the host at runtime, so the <strong>agent instance role</strong> (<code>agent_instance_role_name</code>) must have <code>secretsmanager:GetSecretValue</code> on the Horde P4 credentials secret — <code>iam.tf</code> wires this grant from <code>horde_p4_credentials_secret_arn</code>, so verify it actually attaches. Likewise, if the P4 server instance reads a secret at runtime, its role needs the same grant. Without it the reads fail <code>AccessDenied</code> and the login-ticket chain breaks.</p>
 </blockquote>
 <h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
@@ -3756,6 +3762,9 @@ Setup.bat
 <p>Run the <strong>Hydration Pipeline</strong> from the Horde UI (or wait for the 60-minute schedule, <code>patterns: [{ interval: 60 }]</code>). It syncs the stream onto the source FSxN volume and creates the first snapshot named <code>cl-&lt;N&gt;</code>. Note the <code>&lt;N&gt;</code> — it is the changelist you pass to the build. Keep this schedule frequent to keep incremental syncs cheap — see <a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>.</p>
 <blockquote>
 <p><strong>First-ever hydrate on a raw LUN needs <code>-set:FormatIfRaw=true</code>.</strong> The source LUN starts <strong>raw</strong> (no partition/filesystem). The first hydrate must format it, or provisioning fails with <code>No usable partition on disk ...</code>. Pass <code>-set:FormatIfRaw=true</code> on the <strong>first</strong> hydrate (drop it on subsequent runs so an existing filesystem is never reformatted).</p>
+</blockquote>
+<!-- -->
+<blockquote>
 <p><strong>Custom job <code>arguments</code> REPLACE the template defaults — pass the full list.</strong> If you trigger the hydrate by posting custom <code>arguments</code> to <code>POST /api/v1/jobs</code>, those arguments <strong>replace</strong> the template's default argument list rather than appending to it, so omitting the defaults breaks the job with errors like <code>Missing -Script= parameter</code>. When you pass <code>-set:FormatIfRaw=true</code>, include the <strong>entire</strong> argument list the template would otherwise supply (<code>-Script=Build/HydratePipeline.xml</code>, the target node, and the <code>-set:</code> values) <strong>plus</strong> <code>-set:FormatIfRaw=true</code>. Triggering from the Horde UI keeps the defaults intact.</p>
 </blockquote>
 <h3 id="9-trigger-the-build-pipeline-per-job-arguments">9. Trigger the Build Pipeline (per-job arguments)<a class="headerlink" href="#9-trigger-the-build-pipeline-per-job-arguments" title="Permanent link">&para;</a></h3>
@@ -3814,6 +3823,9 @@ Setup.bat
 <p>Expect <code>BUILD SUCCESSFUL</code> compiling off the clone LUN. With <code>-UBA</code> the log shows <code>Using Unreal Build Accelerator executor</code> and a <code>UbaServer</code> listener.</p>
 <blockquote>
 <p><strong>Posting custom <code>arguments</code> replaces the template defaults.</strong> As in the hydrate (<a href="#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot">step 8</a>): if you trigger the build via <code>POST /api/v1/jobs</code> with custom <code>arguments</code>, include the <strong>full</strong> template argument list (e.g. <code>-Script=Build/BuildPipeline.xml</code> and the target node) <strong>plus</strong> the per-run <code>-set:</code> values above, or the job fails with <code>Missing -Script=</code>. Triggering from the Horde UI keeps the defaults intact.</p>
+</blockquote>
+<!-- -->
+<blockquote>
 <p><strong>Single-agent UBA runs local-only (by design).</strong> With only one build agent online, UBA reports <code>No agents found matching requirements</code> and runs local-only — this is expected, not an error. Distributed UBA needs more than one eligible agent.</p>
 </blockquote>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
@@ -3986,7 +3998,7 @@ Setup.bat
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-15
+    2026-09-16
   </span>
 
     
