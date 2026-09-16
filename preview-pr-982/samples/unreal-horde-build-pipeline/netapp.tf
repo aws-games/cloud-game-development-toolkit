@@ -108,6 +108,16 @@ resource "aws_fsx_ontap_volume" "source" {
   size_in_megabytes          = var.fsxn_san_volume_size_gb * 1024
   storage_efficiency_enabled = true
 
+  # No SCHEDULED snapshots on this volume. The only snapshots we want are the
+  # explicit cl-<changelist> ones the hydrator takes (and prunes) via the ONTAP
+  # REST API - each is a deliberate per-build point-in-time a FlexClone forks
+  # from. A snapshot POLICY here would layer periodic snapshots on top of those
+  # and compound the volume fill that fsxn_snapshot_retention exists to bound.
+  # TRADEOFF: no automatic point-in-time protection for this volume, which is
+  # acceptable because the workspace is fully RE-HYDRATABLE from the Perforce
+  # depot (re-run the hydrate pipeline), so the volume holds no unique state.
+  snapshot_policy = "none"
+
   tags = merge(local.tags, {
     Name = "${local.name_prefix}-source-volume"
   })

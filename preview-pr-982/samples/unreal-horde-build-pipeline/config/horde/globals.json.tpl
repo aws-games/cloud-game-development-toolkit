@@ -119,6 +119,7 @@
                 "-set:VolumeName=${fsxn_source_volume_name}",
                 "-set:LunName=${fsxn_lun_name}",
                 "-set:LunSize=${fsxn_lun_size}",
+                "-set:SnapshotRetention=${fsxn_snapshot_retention}",
                 "-set:HydratorIgroup=${fsxn_hydrator_igroup}",
                 "-set:IscsiPortals=${fsxn_iscsi_portals}",
                 "-set:SourceMountDrive=${fsxn_source_drive_letter}",

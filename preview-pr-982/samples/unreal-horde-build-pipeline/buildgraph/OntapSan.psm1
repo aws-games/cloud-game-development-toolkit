@@ -129,6 +129,105 @@ function Get-OntapVolume {
     return $r.records[0]
 }
 
+function Remove-OntapSnapshotsBeyond {
+    <#  Prune cl-<changelist> source snapshots down to the newest $Keep, so the
+        source volume does not fill up with per-build point-in-time snapshots
+        forever (each cl-N is the parent a build's FlexClone forks from).
+
+        $Keep is a COUNT of snapshots, NOT a number of days: we age out by build
+        cadence, not wall-clock, because that is what actually consumes volume
+        space. $Keep = 0 disables pruning entirely (keep everything).
+
+        SELECTION is by the changelist number embedded in the name, not by
+        create time: we keep ONLY names matching ^cl-\d+$ and sort by that
+        integer DESCENDING. Changelists are monotonic, so this is immune to
+        clock skew and to any snapshot ONTAP created out of order; anything that
+        does not match the cl-<digits> shape is left completely alone (never a
+        candidate for deletion).
+
+        SKIP-BUSY SAFETY (the whole point of doing this carefully): a cl-N
+        snapshot that still has a dependent FlexClone MUST NOT be deleted, even
+        when it falls outside the newest-$Keep window - deleting it would pull
+        the parent out from under a live per-build clone. We detect the
+        dependency from the ONTAP snapshot's `owners` field: a FlexClone parent
+        reports an owner of type "volume_clone" (FSx private-CLI fallback:
+        `busy` / owner "volume clone"). Any such snapshot is SKIPPED and left for
+        a later prune once its clones are gone.
+
+        REAPER-NONCOLLISION CONTRACT (with finding 0001's reap-orphans.ps1):
+        the reaper deletes only the FlexClone CHILD volume (and its p4 client).
+        This function deletes only the PARENT snapshot, and only once it has zero
+        clone dependents. Because ONTAP's own dependency semantics refuse to
+        delete an in-use snapshot, even a simultaneous run is safe: worst case
+        this function observes the child still attached, SKIPS, and leaves the
+        parent for a later prune. The try/catch on DELETE below is the backstop
+        for that TOCTOU window (ONTAP itself refuses with "Snapshot copy is in
+        use").
+
+        CONVERGENCE IS NOT IMMEDIATE - do not assume "on the next hydrate".
+        Deleting a FlexClone does NOT synchronously release the parent. ONTAP
+        moves the deleted clone into its RECOVERY QUEUE as a DEL volume, and the
+        parent's has_flexclone stays TRUE until that queue entry is PURGED
+        (observed >4 min in live testing). So the SKIP guard keeps behaving
+        correctly (it keeps skipping the still-busy parent, which is safe), but
+        prune convergence can lag by the recovery-queue retention window rather
+        than clearing on the next hydrate. The parent becomes prunable only after
+        the recovery-queue purge drops has_flexclone, at which point a subsequent
+        prune succeeds. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $VolumeName,
+        [Parameter(Mandatory)] [int]    $Keep
+    )
+    if ($Keep -le 0) {
+        Write-Host "  snapshot retention disabled (Keep=$Keep) - keeping all cl-* snapshots"
+        return
+    }
+
+    $vol = Get-OntapVolume -Ctx $Ctx -Name $VolumeName
+    if (-not $vol) { throw "Volume '$VolumeName' not found on SVM '$($Ctx.Svm)'." }
+
+    # `owners` tells us whether a FlexClone still depends on the snapshot. A
+    # clone-backed snapshot reports an owner type of "volume_clone".
+    $r = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots?fields=name,uuid,owners"
+    if (-not $r -or $r.num_records -eq 0) { Write-Host '  no snapshots to prune'; return }
+
+    # Keep ONLY cl-<digits>; sort by the changelist integer, newest first.
+    $cl = @($r.records | Where-Object { $_.name -match '^cl-\d+$' })
+    $sorted = @($cl | Sort-Object -Property @{ Expression = { [long]($_.name -replace '^cl-', '') } } -Descending)
+
+    Write-Host "  found $($sorted.Count) cl-* snapshot(s); keeping newest $Keep"
+    if ($sorted.Count -le $Keep) { Write-Host '  nothing beyond the retention window'; return }
+
+    $candidates = @($sorted | Select-Object -Skip $Keep)
+    foreach ($snap in $candidates) {
+        # SKIP-BUSY: never delete a snapshot a FlexClone still forks from, even
+        # though it is outside the newest-$Keep window.
+        #
+        # GUARD the `owners` access: on real FSxN the `owners` property is ABSENT
+        # from non-clone snapshots, and under Set-StrictMode reading a missing
+        # property THROWS (PropertyNotFoundStrict) - which would abort the whole
+        # prune before deleting anything (retention silently becomes a no-op).
+        # Absent => empty => not busy => prunable; present with 'volume_clone' =>
+        # SKIP. Only read the property when it exists.
+        $owners = if ($snap.PSObject.Properties.Name -contains 'owners') { @($snap.owners) } else { @() }
+        if ($owners -contains 'volume_clone' -or ($owners | Where-Object { "$_" -match 'clone' })) {
+            Write-Host "  SKIP '$($snap.name)' - still has a dependent FlexClone (owners: $($owners -join ', '))"
+            continue
+        }
+        try {
+            Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots/$($snap.uuid)" -Method Delete | Out-Null
+            Write-Host "  pruned old snapshot '$($snap.name)'"
+        }
+        catch {
+            # Backstop for the TOCTOU window: a clone may have been created
+            # between the owners read and this DELETE. ONTAP refuses an in-use
+            # snapshot; treat that as SKIP, not failure - the next prune retries.
+            Write-Host "  SKIP '$($snap.name)' - ONTAP refused delete (likely in use by a clone): $($_.Exception.Message)"
+        }
+    }
+}
+
 function New-OntapSnapshot {
     <#  Snapshot a SAN volume. THE Write-VolumeCache CALL IS NOT OPTIONAL: an
         ONTAP snapshot captures blocks as the array sees them, so anything still
@@ -146,7 +245,7 @@ function New-OntapSnapshot {
 
     if ($FlushDriveLetter) {
         Write-Host "  flushing NTFS write cache on $FlushDriveLetter`: before snapshot"
-        Write-VolumeCache -DriveLetter $FlushDriveLetter.TrimEnd(':') -ErrorAction SilentlyContinue
+        Write-VolumeCache -DriveLetter $FlushDriveLetter.TrimEnd(':') -ErrorAction Stop
     }
 
     $existing = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots?name=$SnapshotName"
@@ -639,19 +738,43 @@ function Dismount-SanLun {
     try {
         $disk = Wait-SanDisk -Ctx $Ctx -LunPath $LunPath -TimeoutSec 10
         if ($disk) {
-            Write-VolumeCache -DriveLetter (Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue |
-                Where-Object { $_.DriveLetter } | Select-Object -First 1).DriveLetter -ErrorAction SilentlyContinue
+            # Capture the drive letter FIRST. A LUN can legitimately have no
+            # letter here (never assigned, or already partially torn down), and
+            # under -ErrorAction Stop a null letter would turn into a spurious
+            # hard failure. So: skip the flush when there is no letter, and only
+            # flush-with-Stop when there is - that way a REAL flush error is
+            # still made visible instead of silently swallowed.
+            # Capture the partition OBJECT first, then read DriveLetter only if a
+            # partition was actually returned. Dereferencing .DriveLetter off the
+            # pipeline directly throws under StrictMode when the pipeline is EMPTY
+            # (property deref on $null) - which would send us straight into the
+            # catch below with a misleading "already detached" message and skip
+            # the intended "no drive letter" branch entirely.
+            $p = Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue |
+                Where-Object { $_.DriveLetter } | Select-Object -First 1
+            $flushLetter = if ($p) { $p.DriveLetter } else { $null }
+            if (-not $flushLetter) {
+                Write-Host "  disk $($disk.Number) has no drive letter - skipping cache flush"
+            }
+            else {
+                Write-VolumeCache -DriveLetter $flushLetter -ErrorAction Stop
+            }
             Set-Disk -Number $disk.Number -IsOffline $true -ErrorAction SilentlyContinue
             Write-Host "  disk $($disk.Number) offlined"
         }
     } catch {
-        Write-Host "  no live disk for $LunPath (already detached) - continuing"
+        # A missing disk (already detached) is the normal, benign case. But now
+        # that the flush runs with -ErrorAction Stop, a genuine flush failure
+        # also lands here - surface the actual error so it is not mistaken for a
+        # clean teardown, while still staying idempotent (caller proceeds to
+        # offline + unmap regardless).
+        Write-Host "  Dismount-SanLun: $LunPath - $($_.Exception.Message) (continuing teardown)"
     }
 }
 
 Export-ModuleMember -Function Enable-OntapCertBypass, Connect-Ontap, Invoke-Ontap, `
     New-OntapCloneName, Get-OntapVolume, New-OntapSnapshot, New-OntapFlexClone, `
-    Remove-OntapVolume, Get-LocalIqn, Get-TerminatedInitiators, `
+    Remove-OntapVolume, Remove-OntapSnapshotsBeyond, Get-LocalIqn, Get-TerminatedInitiators, `
     Remove-OntapIgroupInitiator, Add-OntapIgroupInitiator, New-OntapLunMap, `
     Remove-OntapLunMap, New-OntapLun, Connect-SanPortal, Test-MSDSMiScsiClaim, `
     Wait-SanDisk, Mount-SanLun, Dismount-SanLun
