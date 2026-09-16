@@ -23,16 +23,50 @@ Expand-Archive -LiteralPath C:\HordeAgent.zip -DestinationPath $hordedir -Force
     };
 } | ConvertTo-Json -depth 100 | Out-File "$hordedir\appsettings.User.json"
 
-# If necessary, fetch the p4trust file
-%{if p4_trust_bucket != null}
-Read-S3Object -BucketName ${p4_trust_bucket} -Key agent/.p4trust -File $hordedir\p4trust.txt
-[Environment]::SetEnvironmentVariable("P4TRUST", "$hordedir\p4trust.txt", "Machine")
-%{endif}
-
 %{if p4_port != null}
 # Install the Perforce command-line client. Unreal Engine build steps (BuildGraph,
 # BuildCookRun) shell out to p4.exe, which is not present on a stock VDI/agent AMI.
 choco install -y --no-progress p4
+%{endif}
+
+%{if need_p4_trust}
+# Establish SSL trust with the p4d endpoint at boot so the Horde agent service
+# (running as LocalSystem) can talk to Perforce without a manual `p4 trust -y`.
+#
+# The trust fingerprint is persisted to C:\Horde\p4trust.txt and P4TRUST is set as a
+# MACHINE environment variable so the LocalSystem service resolves it. We run p4 with
+# P4TRUST pointed at that same path in-process (choco puts p4.exe on the machine PATH,
+# but this user-data session's PATH predates the install, so we invoke it by full path
+# and refresh PATH first).
+#
+# This step fails LOUDLY into the user-data log if p4 is missing or the endpoint is
+# unreachable rather than continuing silently (the previous S3-fetch behavior), because
+# an agent without trust cannot run any Perforce build step.
+$p4TrustFile = "$hordedir\p4trust.txt"
+[Environment]::SetEnvironmentVariable("P4TRUST", $p4TrustFile, "Machine")
+$env:P4TRUST = $p4TrustFile
+
+# Refresh this session's PATH so the freshly choco-installed p4.exe is discoverable.
+$env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+$p4Exe = (Get-Command p4.exe -ErrorAction SilentlyContinue).Source
+if (-not $p4Exe) {
+    foreach ($candidate in @("C:\Program Files\Perforce\p4.exe", "C:\ProgramData\chocolatey\bin\p4.exe")) {
+        if (Test-Path $candidate) { $p4Exe = $candidate; break }
+    }
+}
+if (-not $p4Exe) {
+    throw "p4 trust bootstrap FAILED: p4.exe not found after choco install. Cannot establish SSL trust for ${p4_port}."
+}
+
+Write-Output "Establishing Perforce SSL trust: & '$p4Exe' -p ${p4_port} trust -y"
+& $p4Exe -p "${p4_port}" trust -y
+if ($LASTEXITCODE -ne 0) {
+    throw "p4 trust bootstrap FAILED: 'p4 -p ${p4_port} trust -y' exited with code $LASTEXITCODE. Endpoint may be unreachable."
+}
+if (-not (Test-Path $p4TrustFile)) {
+    throw "p4 trust bootstrap FAILED: '$p4TrustFile' was not created after a successful 'p4 trust -y'."
+}
+Write-Output "Perforce SSL trust established at $p4TrustFile"
 %{endif}
 
 %{if enable_long_paths}

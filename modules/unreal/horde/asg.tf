@@ -1,6 +1,6 @@
 locals {
   unreal_horde_agent_userdata_windows = base64encode(templatefile("${path.module}/config/agent/agent-config.ps1", {
-    p4_trust_bucket             = local.need_p4_trust && length(var.agents) > 0 ? aws_s3_bucket.ansible_playbooks[0].id : null
+    need_p4_trust               = local.need_p4_trust
     fully_qualified_domain_name = var.fully_qualified_domain_name
     dotnet_runtime_version      = var.agent_dotnet_runtime_version
     p4_port                     = var.p4_port
@@ -279,7 +279,7 @@ resource "aws_ssm_association" "configure_unreal_horde_agent" {
   parameters = {
     SourceInfo     = "{\"path\":\"https://${aws_s3_bucket.ansible_playbooks[0].bucket_domain_name}/agent/\"}"
     PlaybookFile   = "horde-agent.ansible.yml"
-    ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name} dotnet_runtime_version=${var.agent_dotnet_runtime_version}"
+    ExtraVariables = "horde_server_url=${var.fully_qualified_domain_name} dotnet_runtime_version=${var.agent_dotnet_runtime_version} p4_port=${var.p4_port != null ? var.p4_port : ""}"
   }
 
   output_location {
