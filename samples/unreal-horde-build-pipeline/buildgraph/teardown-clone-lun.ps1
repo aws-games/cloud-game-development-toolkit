@@ -4,7 +4,8 @@
     ORDER MATTERS AND IS NOT ARBITRARY:
         1. offline the Windows disk   (flush + release the NTFS volume)
         2. remove the LUN map          (ONTAP refuses to delete a mapped LUN)
-        3. delete the clone volume     (releases the parent snapshot)
+        3. delete the clone volume     (recovery-queued; parent released only
+                                        after ONTAP purges the DEL volume)
         4. delete the per-job p4 client (AFTER its data is gone; idempotent)
     Skip step 1 and you yank a mapped LUN from under a live filesystem. Skip
     step 2 and step 3 fails, leaving the clone alive and PINNING its parent
@@ -102,7 +103,12 @@ catch { Write-Step "offline step: $($_.Exception.Message) - continuing" }
 try { Remove-OntapLunMap -Ctx $ctx -LunPath $lunPath -Igroup $AgentIgroup }
 catch { Write-Warning "[teardown-clone-lun] could not remove LUN map: $($_.Exception.Message)"; $failed = $true }
 
-# 3. Finally the clone volume, which releases the parent snapshot.
+# 3. Finally the clone volume. NOTE: this does NOT synchronously release the
+#    parent snapshot - ONTAP moves the deleted clone into its recovery queue as a
+#    DEL volume and the parent's has_flexclone stays TRUE until that queue entry
+#    is purged (observed >4 min). Snapshot pruning (finding 0005) stays SAFE
+#    regardless - it skips a still-busy parent - but convergence lags by the
+#    recovery-queue retention window, not the next hydrate.
 try { Remove-OntapVolume -Ctx $ctx -Name $CloneVolumeName }
 catch { Write-Warning "[teardown-clone-lun] could not delete clone: $($_.Exception.Message)"; $failed = $true }
 

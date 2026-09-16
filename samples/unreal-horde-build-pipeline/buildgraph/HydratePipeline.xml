@@ -56,6 +56,7 @@
 	<Option Name="IscsiPortals" DefaultValue="" Description="Comma-separated SVM iSCSI portal addresses (Terraform output fsxn_iscsi_portals)" />
 	<Option Name="SourceMountDrive" DefaultValue="S" Description="Drive letter for the source LUN on the hydrator (no colon)" />
 	<Option Name="LunSize" DefaultValue="250g" Description="Size for the source LUN when it is first created (thin provisioned)" />
+	<Option Name="SnapshotRetention" DefaultValue="24" Description="COUNT (not days) of newest cl-&lt;changelist&gt; source snapshots to keep after each hydrate. 0 disables pruning. Each cl-N is the per-build point-in-time a FlexClone forks from; pruning stops the source volume filling with them forever." />
 
 	<!-- FIRST RUN ONLY. A brand-new LUN is RAW and needs initialise+format; an
 	     already-hydrated LUN contains NTFS and formatting it would destroy
@@ -78,7 +79,7 @@
 			     omits whatever was still in the Windows cache. -->
 			<Property Name="FormatArg" Value="" />
 			<Property Name="FormatArg" Value="-FormatIfRaw" If="'$(FormatIfRaw)' == 'true'" />
-			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/hydrate-source-lun.ps1 -Stream &quot;$(Stream)&quot; -SourceVolume &quot;$(VolumeName)&quot; -LunName &quot;$(LunName)&quot; -HydratorIgroup &quot;$(HydratorIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4CredentialsSecret &quot;$(P4CredentialsSecret)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -MountDrive &quot;$(SourceMountDrive)&quot; -LunSize &quot;$(LunSize)&quot; $(FormatArg)" />
+			<Spawn Exe="powershell.exe" Arguments="-NoProfile -ExecutionPolicy Bypass -File Build/hydrate-source-lun.ps1 -Stream &quot;$(Stream)&quot; -SourceVolume &quot;$(VolumeName)&quot; -LunName &quot;$(LunName)&quot; -HydratorIgroup &quot;$(HydratorIgroup)&quot; -SvmName &quot;$(SvmName)&quot; -FsxAdminIp &quot;$(FsxAdminIp)&quot; -OntapUser &quot;$(OntapUser)&quot; -OntapPasswordSecretName &quot;$(OntapPasswordSecretName)&quot; -AwsRegion &quot;$(AwsRegion)&quot; -IscsiPortals &quot;$(IscsiPortals)&quot; -P4Port &quot;$(P4Port)&quot; -P4User &quot;$(P4User)&quot; -P4CredentialsSecret &quot;$(P4CredentialsSecret)&quot; -WorkspaceName &quot;$(WorkspaceName)&quot; -MountDrive &quot;$(SourceMountDrive)&quot; -LunSize &quot;$(LunSize)&quot; -KeepSnapshots &quot;$(SnapshotRetention)&quot; $(FormatArg)" />
 		</Node>
 	</Agent>
 </BuildGraph>

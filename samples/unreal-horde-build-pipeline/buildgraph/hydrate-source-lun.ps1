@@ -51,6 +51,9 @@ param(
     [string] $OntapUser         = 'fsxadmin',
     [string] $MountDrive        = 'S',
     [string] $LunSize           = '250g',
+    # COUNT (not days) of newest cl-<changelist> source snapshots to keep after
+    # this hydrate. 0 disables pruning. See Remove-OntapSnapshotsBeyond.
+    [int]    $KeepSnapshots     = 24,
     # Only for first-ever provisioning of a brand-new RAW LUN. Refuses to touch
     # an already-initialised disk even when passed.
     [switch] $FormatIfRaw
@@ -164,6 +167,18 @@ Write-Host '=== 3. snapshot as cl-<changelist> ==='
 New-OntapSnapshot -Ctx $ctx -VolumeName $SourceVolume -SnapshotName "cl-$cl" -FlushDriveLetter $MountDrive
 
 Write-Host "HYDRATE_OK volume=$SourceVolume snapshot=cl-$cl changelist=$cl"
+
+Write-Host '=== 4. prune old cl-<changelist> snapshots ==='
+# Runs at END-OF-HYDRATE on purpose: the hydrator is already the single writer,
+# already holds the ONTAP context, and runs on the pipeline cadence. Pruning at
+# build-start would race the per-build clone; a separate maintenance node would
+# duplicate a second snapshot owner. Remove-OntapSnapshotsBeyond SKIPS any
+# snapshot a FlexClone still forks from (owners=volume_clone), so it never pulls
+# a parent out from under a live build.
+Phase 'prune_snapshots' {
+    Remove-OntapSnapshotsBeyond -Ctx $ctx -VolumeName $SourceVolume -Keep $KeepSnapshots
+} | Out-Null
+
 Write-Host ''
 Write-Host "Build agents cloning this snapshot MUST run: p4 flush $Stream/...@$cl"
 Write-Host 'Pass that changelist to BuildPipeline.xml as -set:SnapshotChangelist=<N>.'

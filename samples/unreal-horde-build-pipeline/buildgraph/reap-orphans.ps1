@@ -34,8 +34,12 @@
     COORDINATION (findings 0004/0005): this reaper deletes ONLY clone volumes and
     the p4 clients rooted on them. It does NOT touch cl-N SOURCE snapshots
     (finding 0005's territory) nor igroup membership (finding 0004's territory).
-    Deleting a clone volume releases its hold on the parent snapshot; the actual
-    snapshot pruning stays with 0005 so the two do not race.
+    Deleting a clone volume does NOT synchronously release its hold on the parent
+    snapshot: ONTAP recovery-queues the deleted clone as a DEL volume and the
+    parent's has_flexclone stays TRUE until that entry is purged (observed
+    >4 min). The actual snapshot pruning stays with 0005 so the two do not race;
+    0005's guard stays safe (it skips a still-busy parent) but prune convergence
+    lags by the recovery-queue retention window, not the next hydrate.
 
     NO EXECUTION SIDE EFFECTS WITHOUT -Execute: default is a DRY RUN that logs
     what it WOULD reap. Pass -Execute to actually delete.

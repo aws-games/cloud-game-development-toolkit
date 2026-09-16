@@ -108,6 +108,12 @@ variable "fsxn_lun_size" {
   default     = "250g"
 }
 
+variable "fsxn_snapshot_retention" {
+  type        = number
+  description = "COUNT (not days) of the newest cl-<changelist> source snapshots the hydrator keeps after each run. UNIT: a number of snapshots, NOT a time window - RATIONALE: each cl-N is a per-build point-in-time that a FlexClone forks from, so retention is bounded by build cadence and volume space, not wall-clock. The prune SKIPS any snapshot a clone still depends on (never deletes a busy parent). 0 disables pruning (keep everything)."
+  default     = 24
+}
+
 ##################################################
 # Horde Agents
 ##################################################

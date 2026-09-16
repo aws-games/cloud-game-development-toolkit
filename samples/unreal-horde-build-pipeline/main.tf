@@ -267,6 +267,11 @@ module "horde" {
     fsxn_hydrator_igroup = local.fsxn_hydrator_igroup
     fsxn_agent_igroup    = local.fsxn_agent_igroup
 
+    # COUNT (not days) of newest cl-<changelist> source snapshots the hydrator
+    # keeps after each run; 0 disables pruning. Threaded into HydratePipeline.xml
+    # as -set:SnapshotRetention.
+    fsxn_snapshot_retention = var.fsxn_snapshot_retention
+
     # iSCSI portal addresses, comma-separated. The scripts connect exactly ONE
     # unless MPIO is installed - two without MPIO make Windows see one LUN as two
     # disks.
