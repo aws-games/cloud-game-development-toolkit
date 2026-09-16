@@ -106,6 +106,7 @@ A reference AMI was built this way (the identifiers below are placeholders — s
 - **AWS CLI** (used by the iSCSI/SAN pipeline scripts)
 - **MSiSCSI initiator** service set to **Automatic**
 - **Multipath I/O (MPIO)** feature enabled + **MSDSM** set to auto-claim iSCSI
+  (configured after a reboot and **verified**, or the bake fails)
 - **Baked ONSTART Scheduled Task** (`Horde-SetUniqueIqn`) that derives a unique,
   instance-id-based initiator IQN on every boot (input-free)
 
@@ -147,7 +148,10 @@ needs ZERO ONTAP config and ZERO Perforce env.
 - MSiSCSI service → **Automatic** start (initiator running on first boot, no
   per-boot enable).
 - MPIO feature enabled.
-- MSDSM set to auto-claim iSCSI devices.
+- MSDSM set to auto-claim iSCSI devices — **after a reboot**, in a separate
+  provisioner (`configure_mpio_claim.ps1`) that verifies the claim and fails the
+  build if it did not stick. The job-time scripts only connect a second iSCSI
+  portal when this claim is active.
 - **A baked ONSTART Scheduled Task** (`Horde-SetUniqueIqn`, SYSTEM, RunLevel
   Highest) that runs `C:\ProgramData\horde\set_unique_iqn.ps1` on every boot.
 
@@ -164,13 +168,17 @@ The resolution bakes the **mechanism** (the ONSTART task + the script) while
 leaving the **value** per-instance. On every boot, `set_unique_iqn.ps1`:
 
 1. reads the EC2 instance-id from **IMDSv2** (PUT token, then GET
-   `/latest/meta-data/instance-id`), falling back to a stable local
-   identifier and logging it if IMDS is unavailable;
+   `/latest/meta-data/instance-id`) with a bounded retry. The instance-id is
+   **mandatory**: if IMDS is unavailable the script fails loudly instead of
+   emitting a non-attributable IQN, because the pipeline's igroup self-heal
+   keys on the instance id embedded in the IQN;
 2. sets a deterministic, host-unique IQN
-   `iqn.1991-05.com.microsoft:<instance-id>` via `Set-InitiatorPort`,
+   `iqn.1991-05.com.microsoft:<instance-id>` via
+   `Set-InitiatorPort -NodeAddress <current> -NewNodeAddress <desired>`,
    idempotently (only if different);
 3. ensures MSiSCSI is Automatic + running;
-4. logs the resulting IQN.
+4. reads the IQN back, logs it to `C:\ProgramData\horde\set_unique_iqn.log`,
+   and fails if it does not match the intended value.
 
 This is **input-free**: no ONTAP, no Perforce, no Terraform values are needed at
 boot. Target portal discovery + LUN login stay at job time (targets are only
@@ -188,9 +196,14 @@ baked. Boot is input-free; no `modules/` change is required.
 
 `validate_image.ps1` fails the Packer build (non-zero exit) if any required
 component is missing. In addition to the MSVC toolchain, MSiSCSI (Automatic), and
-MPIO checks, it asserts the boot-time IQN mechanism: the
-`C:\ProgramData\horde\set_unique_iqn.ps1` file exists AND the `Horde-SetUniqueIqn`
-Scheduled Task is registered.
+MPIO checks (feature present **and** MSDSM claiming iSCSI devices), it asserts the
+boot-time IQN mechanism: the `C:\ProgramData\horde\set_unique_iqn.ps1` file exists
+AND the `Horde-SetUniqueIqn` Scheduled Task is registered — and then **runs the
+script once** and requires the initiator IQN to come back instance-id-derived
+(`iqn.1991-05.com.microsoft:i-...`). Presence of the task is not proof it works:
+an earlier revision called `Set-InitiatorPort` without the mandatory
+`-NewNodeAddress`, threw on every boot, and left each agent on its
+hostname-derived default IQN.
 
 ## Files
 
@@ -201,8 +214,9 @@ Scheduled Task is registered.
 | `base_setup.ps1` | choco, git, OpenSSH, Python (NFS-Client removed) |
 | `install_vs_tools.ps1` | VS2022 Build Tools + VC 14.38 + WDK/PDBCOPY |
 | `install_horde_agent_tools.ps1` | .NET 6 runtime, .NET 8 SDK, p4, awscli |
-| `install_iscsi.ps1` | MSiSCSI Automatic + MPIO + MSDSM iSCSI claim |
+| `install_iscsi.ps1` | MSiSCSI Automatic + MPIO feature (the MSDSM claim comes after the reboot) |
+| `configure_mpio_claim.ps1` | post-reboot: MSDSM iSCSI auto-claim + RR policy, **verified** (fails the build otherwise) |
 | `set_unique_iqn.ps1` | baked per-boot script: derives a unique instance-id IQN (dropped at `C:\ProgramData\horde\`) |
 | `register_iqn_task.ps1` | image-time step: registers the ONSTART Scheduled Task that runs `set_unique_iqn.ps1` every boot |
-| `validate_image.ps1` | in-build assertion of toolchain + iSCSI + MPIO + boot-IQN task |
+| `validate_image.ps1` | in-build assertion of toolchain + iSCSI + MPIO + MSDSM claim + boot-IQN task (exercised, not just present) |
 | `example.pkrvars.hcl` | example variables (generic, no account values) |
