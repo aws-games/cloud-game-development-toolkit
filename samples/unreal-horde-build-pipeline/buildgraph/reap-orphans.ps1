@@ -61,7 +61,7 @@ param(
     # Horde server for the job-liveness gate. Base URL, e.g.
     # https://horde.example.com . If empty or unreachable, GATE 3 cannot be
     # satisfied and NOTHING is deleted (fail-safe).
-    [Parameter(Mandatory)] [string] $HordeServerUrl,
+    [Parameter(Mandatory)] [AllowEmptyString()] [string] $HordeServerUrl,
     [string] $OntapUser  = 'fsxadmin',
     [string] $ClonePrefix = 'build_',   # per-job clone volume name prefix
     # LUN leaf inside each clone volume, i.e. the {LunName} in
@@ -96,6 +96,11 @@ $clientPrefix = "hordeclone_${StreamSafe}_"
 try {
     $ctx = Connect-Ontap -ManagementEndpoint $FsxAdminIp -PasswordSecretName $OntapPasswordSecretName `
                          -AwsRegion $AwsRegion -User $OntapUser -Svm $SvmName
+    # Connect-Ontap only reads the secret and builds a context - it does NOT touch
+    # the cluster, so a bad/unreachable FsxAdminIp would slip through and let the
+    # sweep proceed. Probe with one cheap authenticated REST GET so an unreachable
+    # ONTAP aborts HERE (deleting nothing) as the safety contract promises.
+    $null = Invoke-Ontap -Ctx $ctx -Path '/cluster?fields=name'
 } catch {
     Write-Reap "ONTAP unreachable ($($_.Exception.Message)) - GATE 2 unprovable, deleting NOTHING this run."
     exit 0
@@ -159,7 +164,10 @@ $reapedVolumes = 0
 # ==========================================================================
 $clientList = @()
 try {
-    $raw = & p4.exe -p $P4Port -u $P4User -F "%client%" clients -e "hordeclone_${StreamSafe}_*" 2>&1
+    # -ztag is REQUIRED for -F to emit rows on p4 2025.1+ (the production windows-horde
+    # AMI): plain 'clients -e' returns rows, but '-F "%client%"' WITHOUT -ztag returns
+    # ZERO rows with exit 0 (silent no-op). Global flags precede the command.
+    $raw = & p4.exe -p $P4Port -u $P4User -ztag -F "%client%" clients -e "hordeclone_${StreamSafe}_*" 2>&1
     if ($LASTEXITCODE -eq 0) {
         $clientList = @($raw | Where-Object { $_ -and ($_ -is [string]) -and $_.Trim() })
     } else {
