@@ -123,7 +123,7 @@ packer build \
 `region` must match where you deploy the sample; `subnet_id` must be a **public** subnet (with a route to an internet gateway) for the public-IP path, and any subnet you use needs outbound internet, since the build uses Chocolatey to install the toolchain; `public_key` is the SSH public key baked into the AMI so the Horde orchestration service can reach the agent. On success Packer prints the new AMI ID, registered as `windows-horde-build-agent-<timestamp>`.
 
 > **Instance-type availability by AZ.** The build defaults to a large compute instance (e.g. `c6a.4xlarge`), and not every AZ carries it — `c6a.4xlarge` Windows is **not** available in `us-east-1e`, for example. If Packer fails to launch the builder with an unsupported-instance-type error, pick a supported AZ (in `us-east-1`, one of `us-east-1a/b/c/d/f`) via the `subnet_id`, or choose an instance type the AZ offers.
-
+<!-- -->
 > **Advanced: private in-VPC build.** Once you have a VPC, you can instead build on a **private** subnet with NAT egress (leave `associate_public_ip_address=false`, `ssh_interface="private_ip"` — the template's defaults). In that mode **Packer must run from a host that can route to the build instance's private IP** — i.e. from inside the same VPC (a bastion/CI runner), or a peered/VPN-connected network. Run it from a workstation that cannot reach that private IP and the build stalls at "Waiting for WinRM". The private path can use a pre-created `security_group_id` that scopes WinRM (5986) to the reachable network — never `0.0.0.0/0`.
 
 ### How this sample consumes the AMI
@@ -177,7 +177,7 @@ The Horde external ALB ingress is locked to the **deployer's public IP as a `/32
 > ```
 >
 > or set `recovery_window_in_days = 0` on the FSxN admin secret so a destroy purges it immediately.
-
+<!-- -->
 > **Runtime secret reads need IAM grants.** The agent login-ticket chain (in [runbook step 3.2](#32-set-the-password-to-match-the-pre-created-secret) / [appendix §1](#1-the-incremental-sync-needs-p4-flush--this-is-not-optional)) reads the P4 credentials on the host at runtime, so the **agent instance role** (`agent_instance_role_name`) must have `secretsmanager:GetSecretValue` on the Horde P4 credentials secret — `iam.tf` wires this grant from `horde_p4_credentials_secret_arn`, so verify it actually attaches. Likewise, if the P4 server instance reads a secret at runtime, its role needs the same grant. Without it the reads fail `AccessDenied` and the login-ticket chain breaks.
 
 ## Postdeployment
@@ -430,7 +430,7 @@ Horde 5.5 does **not** auto-approve agents. New agents sit **pending** until an 
 Run the **Hydration Pipeline** from the Horde UI (or wait for the 60-minute schedule, `patterns: [{ interval: 60 }]`). It syncs the stream onto the source FSxN volume and creates the first snapshot named `cl-<N>`. Note the `<N>` — it is the changelist you pass to the build. Keep this schedule frequent to keep incremental syncs cheap — see [appendix §1](#1-the-incremental-sync-needs-p4-flush--this-is-not-optional).
 
 > **First-ever hydrate on a raw LUN needs `-set:FormatIfRaw=true`.** The source LUN starts **raw** (no partition/filesystem). The first hydrate must format it, or provisioning fails with `No usable partition on disk ...`. Pass `-set:FormatIfRaw=true` on the **first** hydrate (drop it on subsequent runs so an existing filesystem is never reformatted).
-
+<!-- -->
 > **Custom job `arguments` REPLACE the template defaults — pass the full list.** If you trigger the hydrate by posting custom `arguments` to `POST /api/v1/jobs`, those arguments **replace** the template's default argument list rather than appending to it, so omitting the defaults breaks the job with errors like `Missing -Script= parameter`. When you pass `-set:FormatIfRaw=true`, include the **entire** argument list the template would otherwise supply (`-Script=Build/HydratePipeline.xml`, the target node, and the `-set:` values) **plus** `-set:FormatIfRaw=true`. Triggering from the Horde UI keeps the defaults intact.
 
 ### 9. Trigger the Build Pipeline (per-job arguments)
@@ -451,7 +451,7 @@ Trigger the **Build Pipeline** on-demand once a snapshot exists. These arguments
 Expect `BUILD SUCCESSFUL` compiling off the clone LUN. With `-UBA` the log shows `Using Unreal Build Accelerator executor` and a `UbaServer` listener.
 
 > **Posting custom `arguments` replaces the template defaults.** As in the hydrate ([step 8](#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot)): if you trigger the build via `POST /api/v1/jobs` with custom `arguments`, include the **full** template argument list (e.g. `-Script=Build/BuildPipeline.xml` and the target node) **plus** the per-run `-set:` values above, or the job fails with `Missing -Script=`. Triggering from the Horde UI keeps the defaults intact.
-
+<!-- -->
 > **Single-agent UBA runs local-only (by design).** With only one build agent online, UBA reports `No agents found matching requirements` and runs local-only — this is expected, not an error. Distributed UBA needs more than one eligible agent.
 
 ## Troubleshooting
