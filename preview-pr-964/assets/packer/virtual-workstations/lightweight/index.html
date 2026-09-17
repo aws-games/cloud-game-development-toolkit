@@ -3437,7 +3437,7 @@
 <p><strong>Build AMI:</strong></p>
 </li>
 </ol>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">&quot;variables.pkrvars.hcl&quot;</span><span class="w"> </span>windows-server-2025-lightweight.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">"variables.pkrvars.hcl"</span><span class="w"> </span>windows-server-2025-lightweight.pkr.hcl
 </code></pre></div>
 <h2 id="build-time">Build Time<a class="headerlink" href="#build-time" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3471,28 +3471,28 @@
 <li>Manual installers: Download and install directly</li>
 </ol>
 <h3 id="option-2-terraform-infrastructure-as-code">Option 2: Terraform (Infrastructure as Code)<a class="headerlink" href="#option-2-terraform-infrastructure-as-code" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_instance&quot;</span><span class="w"> </span><span class="nv">&quot;workstation&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ami-0123456789abcdef0&quot;</span><span class="c1">  # Your AMI ID</span>
-<span class="w">  </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.xlarge&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_instance"</span><span class="w"> </span><span class="nv">"workstation"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">"ami-0123456789abcdef0"</span><span class="c1">  # Your AMI ID</span>
+<span class="w">  </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.xlarge"</span>
 <span class="w">  </span><span class="na">subnet_id</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nv">var.subnet_id</span>
 
 <span class="w">  </span><span class="na">vpc_security_group_ids</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">aws_security_group.workstation.id</span><span class="p">]</span>
 
 <span class="w">  </span><span class="nb">tags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Developer Workstation&quot;</span>
+<span class="w">    </span><span class="na">Name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Developer Workstation"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="option-3-vdi-module-advanced-automation">Option 3: VDI Module (Advanced Automation)<a class="headerlink" href="#option-3-vdi-module-advanced-automation" title="Permanent link">&para;</a></h3>
 <p>For multi-user environments with automated user management:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vdi&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;path/to/vdi/module&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"vdi"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"path/to/vdi/module"</span>
 
 <span class="w">  </span><span class="nb">presets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;developer&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ami-0123456789abcdef0&quot;</span><span class="c1">  # Your AMI ID</span>
-<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.xlarge&quot;</span>
-<span class="w">      </span><span class="na">software_packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;vscode&quot;, &quot;git&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="s2">"developer"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">ami</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">"ami-0123456789abcdef0"</span><span class="c1">  # Your AMI ID</span>
+<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.xlarge"</span>
+<span class="w">      </span><span class="na">software_packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"vscode", "git"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>

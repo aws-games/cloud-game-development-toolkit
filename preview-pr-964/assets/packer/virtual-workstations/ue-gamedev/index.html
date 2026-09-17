@@ -3424,7 +3424,7 @@
 <li><strong>Optional - Custom variables:</strong></li>
 </ol>
 <div class="highlight"><pre><span></span><code><span class="c1"># Override instance type or other settings</span>
-packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s1">&#39;instance_type=g4dn.4xlarge&#39;</span><span class="w"> </span>windows-server-2025-ue-gamedev.pkr.hcl
+packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s1">'instance_type=g4dn.4xlarge'</span><span class="w"> </span>windows-server-2025-ue-gamedev.pkr.hcl
 </code></pre></div>
 <h2 id="build-time-requirements">Build Time &amp; Requirements<a class="headerlink" href="#build-time-requirements" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3453,22 +3453,22 @@ packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> 
 </ul>
 <h2 id="usage-with-vdi-module">Usage with VDI Module<a class="headerlink" href="#usage-with-vdi-module" title="Permanent link">&para;</a></h2>
 <p>Use the resulting AMI with the VDI Terraform module:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vdi&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/vdi&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"vdi"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/vdi"</span>
 
 <span class="w">  </span><span class="nb">templates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;ue-developer&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;g4dn.xlarge&quot;</span>
-<span class="w">      </span><span class="na">ami</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ami-0123456789abcdef0&quot;</span><span class="c1">  # Your built AMI ID</span>
+<span class="w">    </span><span class="s2">"ue-developer"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"g4dn.xlarge"</span>
+<span class="w">      </span><span class="na">ami</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ami-0123456789abcdef0"</span><span class="c1">  # Your built AMI ID</span>
 <span class="c1">      # No need for software_packages - already installed</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nb">users</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s2">&quot;game-dev&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">given_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Game&quot;</span>
-<span class="w">      </span><span class="na">family_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Developer&quot;</span>
-<span class="w">      </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;user&quot;</span>
+<span class="w">    </span><span class="s2">"game-dev"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="na">given_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Game"</span>
+<span class="w">      </span><span class="na">family_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Developer"</span>
+<span class="w">      </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"user"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>

@@ -4674,60 +4674,60 @@
 <h3 id="when-to-use-submodules"><strong>When to Use Submodules</strong><a class="headerlink" href="#when-to-use-submodules" title="Permanent link">&para;</a></h3>
 <p><strong>Why Split</strong>: Provider separation or complexity management.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ GOOD - Different providers</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;infra&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/infra&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"infra"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/infra"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">aws</span><span class="w"> </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;services&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/services&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"services"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/services"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">kubernetes</span><span class="p">,</span><span class="w"> </span><span class="na">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">helm</span><span class="w"> </span><span class="p">}</span>
 <span class="w">  </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">module.infra</span><span class="p">]</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Same provider, no clear benefit</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;s3_bucket&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/s3&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"s3_bucket"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/s3"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="submodule-variable-alignment-pattern"><strong>Submodule Variable Alignment Pattern</strong><a class="headerlink" href="#submodule-variable-alignment-pattern" title="Permanent link">&para;</a></h3>
 <p><strong>When using submodules, align parent variables directly to submodules for clarity:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ GOOD - Clear submodule alignment</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;infra_config&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"infra_config"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="c1">    # All infrastructure settings grouped together</span>
-<span class="w">    </span><span class="na">kubernetes_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;1.33&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="na">kubernetes_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="s2">"1.33"</span><span class="p">)</span>
 <span class="w">    </span><span class="na">database_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({...})</span>
 <span class="w">    </span><span class="na">networking_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({...})</span>
 <span class="w">  </span><span class="p">})</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;services_config&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"services_config"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="c1">    # All service settings grouped together</span>
-<span class="w">    </span><span class="na">app_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;latest&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="na">app_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="s2">"latest"</span><span class="p">)</span>
 <span class="w">    </span><span class="na">credentials_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
 <span class="w">  </span><span class="p">})</span>
 <span class="p">}</span>
 
 <span class="c1"># Parent module orchestration</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;infra&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/infra&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"infra"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/infra"</span>
 <span class="w">  </span><span class="na">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.infra_config</span><span class="c1">  # Direct alignment</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;services&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/services&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"services"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/services"</span>
 <span class="w">  </span><span class="na">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.services_config</span><span class="c1">  # Direct alignment</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Scattered variables requiring manual mapping</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;kubernetes_version&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;database_instance_type&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;app_version&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;credentials_arn&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"kubernetes_version"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"database_instance_type"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"app_version"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"credentials_arn"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;infra&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"infra"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">kubernetes_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.kubernetes_version</span>
 <span class="w">  </span><span class="na">database_instance_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.database_instance_type</span>
 <span class="c1">  # Manual mapping of many variables</span>
@@ -4788,20 +4788,20 @@
 <h3 id="general-naming-conventions"><strong>General Naming Conventions</strong><a class="headerlink" href="#general-naming-conventions" title="Permanent link">&para;</a></h3>
 <p><strong>Why Descriptive Names</strong>: We avoid generic names like <code>this</code> because they don't scale and become confusing when you need multiple resources.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ GOOD - Descriptive, purpose-driven names</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Network Load Balancer</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;alb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Application Load Balancer</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Primary EKS cluster</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # NLB security group</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;internal&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">   # Internal communication</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;artifacts&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">       # Artifacts storage</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;logs&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">            # Logs storage</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;private&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">      # Private DNS zone</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Network Load Balancer</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"alb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">                    # Application Load Balancer</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Primary EKS cluster</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">        # NLB security group</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"internal"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">   # Internal communication</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"artifacts"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">       # Artifacts storage</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"logs"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">            # Logs storage</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"private"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">      # Private DNS zone</span>
 
-<span class="c1"># ❌ BAD - Generic names that don&#39;t scale</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;this&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">           # What kind of load balancer?</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;this2&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Now you need a second one...</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;bucket&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # What&#39;s it for?</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">    # Still not descriptive</span>
+<span class="c1"># ❌ BAD - Generic names that don't scale</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"this"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">           # What kind of load balancer?</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"this2"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">          # Now you need a second one...</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"bucket"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">  # What's it for?</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="c1">    # Still not descriptive</span>
 </code></pre></div>
 <p><strong>The Problem with Generic Names</strong>:</p>
 <ul>
@@ -4822,18 +4822,18 @@
 </ul>
 <h3 id="3-tier-architecture"><strong>3-Tier Architecture</strong><a class="headerlink" href="#3-tier-architecture" title="Permanent link">&para;</a></h3>
 <p><strong>Why</strong>: Users consistently need to separate applications, supporting services, and load balancers.</p>
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;application_subnets&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">"application_subnets"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Subnets for primary business applications&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Subnets for primary business applications"</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;service_subnets&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"service_subnets"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Subnets for supporting services (databases, caches)&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Subnets for supporting services (databases, caches)"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="c1">  # Uses application_subnets if not specified</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;load_balancer_config&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"load_balancer_config"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="w">    </span><span class="na">nlb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="w">      </span><span class="na">enabled</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="no">true</span><span class="p">)</span>
@@ -4850,18 +4850,18 @@
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="security-group-strategy"><strong>Security Group Strategy</strong><a class="headerlink" href="#security-group-strategy" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">"security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Security group IDs for external access&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Security group IDs for external access"</span>
 <span class="w">  </span><span class="na">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
 <span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;additional_security_groups&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"additional_security_groups"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="w">    </span><span class="na">load_balancer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span><span class="w"> </span><span class="p">[])</span>
 <span class="w">    </span><span class="na">eks_cluster</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="nf">list</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span><span class="w"> </span><span class="p">[])</span>
 <span class="w">  </span><span class="p">})</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Component-specific security groups&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Component-specific security groups"</span>
 <span class="w">  </span><span class="nb">default</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4871,7 +4871,7 @@
 <h4 id="default-approach-direct-resources"><strong>Default Approach: Direct Resources</strong><a class="headerlink" href="#default-approach-direct-resources" title="Permanent link">&para;</a></h4>
 <p><strong>Start with direct AWS resources unless there's a compelling reason for a module:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ PREFERRED - Direct resource creation</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nv">local.cluster_name</span>
 <span class="w">  </span><span class="na">role_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_iam_role.cluster.arn</span>
 <span class="w">  </span><span class="na">version</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">var.kubernetes_version</span>
@@ -4887,8 +4887,8 @@
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Remote module dependency</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;eks&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;registry.terraform.io/example/eks/aws&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"eks"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"registry.terraform.io/example/eks/aws"</span>
 <span class="c1">  # Adds complexity, version dependencies, limited customization</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4905,9 +4905,9 @@
 <h4 id="acceptable-remote-module-usage"><strong>Acceptable Remote Module Usage</strong><a class="headerlink" href="#acceptable-remote-module-usage" title="Permanent link">&para;</a></h4>
 <p><strong>Use remote modules only when there's clear benefit:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ ACCEPTABLE - Well-established, stable modules with clear benefits</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;eks_addons&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;registry.terraform.io/example/eks-addons/aws&quot;</span>
-<span class="w">  </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;~&gt; 2.0&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"eks_addons"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"registry.terraform.io/example/eks-addons/aws"</span>
+<span class="w">  </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"~&gt; 2.0"</span>
 
 <span class="c1">  # Only when:</span>
 <span class="c1">  # 1. Module is extremely stable and well-maintained</span>
@@ -4927,8 +4927,8 @@
 <h4 id="fork-first-strategy"><strong>Fork-First Strategy</strong><a class="headerlink" href="#fork-first-strategy" title="Permanent link">&para;</a></h4>
 <p><strong>When you need a remote module, fork it first:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ RECOMMENDED - Fork and customize</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;custom_component&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/forked-module&quot;</span><span class="c1">  # Local fork</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"custom_component"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/forked-module"</span><span class="c1">  # Local fork</span>
 
 <span class="c1">  # Benefits:</span>
 <span class="c1">  # - Full control over changes</span>
@@ -4938,8 +4938,8 @@
 <span class="p">}</span>
 
 <span class="c1"># ❌ AVOID - Direct remote dependency</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;component&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;github.com/example/external-module&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"component"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"github.com/example/external-module"</span>
 <span class="c1">  # Creates external dependency and limits our control</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4979,21 +4979,21 @@
 <h4 id="examples-of-our-approach"><strong>Examples of Our Approach</strong><a class="headerlink" href="#examples-of-our-approach" title="Permanent link">&para;</a></h4>
 <h5 id="eks-cluster-creation"><strong>EKS Cluster Creation</strong><a class="headerlink" href="#eks-cluster-creation" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># We use direct resources instead of remote EKS modules</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">  # Direct control over all EKS configuration</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_node_group&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_node_group"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">  # Direct control over node group settings</span>
 <span class="p">}</span>
 
-<span class="c1"># Why: Remote EKS modules often don&#39;t expose the exact configuration we need</span>
+<span class="c1"># Why: Remote EKS modules often don't expose the exact configuration we need</span>
 <span class="c1"># for game development workloads</span>
 </code></pre></div>
 <h5 id="acceptable-remote-module-usage-in-core-modules"><strong>Acceptable Remote Module Usage in Core Modules</strong><a class="headerlink" href="#acceptable-remote-module-usage-in-core-modules" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># Example: EKS add-ons where complexity reduction justifies remote module</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;eks_addons&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;registry.terraform.io/example/eks-addons/aws&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"eks_addons"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"registry.terraform.io/example/eks-addons/aws"</span>
 
 <span class="c1">  # Why acceptable:</span>
 <span class="c1">  # - Handles complex EKS add-on lifecycle management</span>
@@ -5003,14 +5003,14 @@
 <span class="p">}</span>
 
 <span class="c1"># We still prefer direct resources for core EKS cluster</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">  # Direct control for primary resources</span>
 <span class="p">}</span>
 </code></pre></div>
 <h5 id="vpc-usage-in-examples"><strong>VPC Usage in Examples</strong><a class="headerlink" href="#vpc-usage-in-examples" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># In examples, we may use well-established modules for convenience</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;vpc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;registry.terraform.io/example/vpc/aws&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"vpc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"registry.terraform.io/example/vpc/aws"</span>
 <span class="c1">  # Acceptable in examples for user convenience</span>
 <span class="c1">  # Users can replace with their own VPC implementation</span>
 <span class="p">}</span>
@@ -5051,10 +5051,10 @@
 <p><strong>AWS managed services and infrastructure components:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Infrastructure category maps to AWS services</span>
 <span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;nlb&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # Network Load Balancer access logs</span>
-<span class="w">  </span><span class="s2">&quot;alb&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # Application Load Balancer access logs</span>
-<span class="w">  </span><span class="s2">&quot;eks&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # EKS control plane logs</span>
-<span class="w">  </span><span class="s2">&quot;rds&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # RDS database logs (when applicable)</span>
+<span class="w">  </span><span class="s2">"nlb"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # Network Load Balancer access logs</span>
+<span class="w">  </span><span class="s2">"alb"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # Application Load Balancer access logs</span>
+<span class="w">  </span><span class="s2">"eks"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # EKS control plane logs</span>
+<span class="w">  </span><span class="s2">"rds"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">     # RDS database logs (when applicable)</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Examples by module:</strong></p>
@@ -5067,9 +5067,9 @@
 <p><strong>Core business logic of the primary application:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Application category maps to primary service</span>
 <span class="nb">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;ddc&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">       # DDC service logs (DDC module)</span>
-<span class="w">  </span><span class="s2">&quot;perforce&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">  # Perforce server logs (Perforce module)</span>
-<span class="w">  </span><span class="s2">&quot;jenkins&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">   # Jenkins controller logs (Jenkins module)</span>
+<span class="w">  </span><span class="s2">"ddc"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">       # DDC service logs (DDC module)</span>
+<span class="w">  </span><span class="s2">"perforce"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">  # Perforce server logs (Perforce module)</span>
+<span class="w">  </span><span class="s2">"jenkins"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">   # Jenkins controller logs (Jenkins module)</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Examples:</strong></p>
@@ -5082,9 +5082,9 @@
 <p><strong>Supporting services that enable the primary application:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Service category maps to supporting components</span>
 <span class="nb">service</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;scylla&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">    # ScyllaDB database logs (DDC module)</span>
-<span class="w">  </span><span class="s2">&quot;p4-auth&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">   # Perforce authentication service (Perforce module)</span>
-<span class="w">  </span><span class="s2">&quot;p4-review&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1"> # Perforce code review service (Perforce module)</span>
+<span class="w">  </span><span class="s2">"scylla"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">    # ScyllaDB database logs (DDC module)</span>
+<span class="w">  </span><span class="s2">"p4-auth"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1">   # Perforce authentication service (Perforce module)</span>
+<span class="w">  </span><span class="s2">"p4-review"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="c1"> # Perforce code review service (Perforce module)</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Examples:</strong></p>
@@ -5095,7 +5095,7 @@
 </ul>
 <h4 id="standard-logging-variable-pattern"><strong>Standard Logging Variable Pattern</strong><a class="headerlink" href="#standard-logging-variable-pattern" title="Permanent link">&para;</a></h4>
 <p><strong>All modules implement consistent logging configuration:</strong></p>
-<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;centralized_logging&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">variable</span><span class="w"> </span><span class="nv">"centralized_logging"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">object</span><span class="p">({</span>
 <span class="w">    </span><span class="na">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="nf">map</span><span class="p">(</span><span class="kt">object</span><span class="p">({</span>
 <span class="w">      </span><span class="na">enabled</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">bool</span><span class="p">,</span><span class="w"> </span><span class="no">true</span><span class="p">)</span>
@@ -5112,14 +5112,14 @@
 <span class="w">    </span><span class="na">log_group_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">optional</span><span class="p">(</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">null</span><span class="p">)</span>
 <span class="w">  </span><span class="p">})</span>
 
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Centralized logging configuration by category&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Centralized logging configuration by category"</span>
 <span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">null</span>
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="log-group-naming-convention"><strong>Log Group Naming Convention</strong><a class="headerlink" href="#log-group-naming-convention" title="Permanent link">&para;</a></h4>
 <p><strong>Consistent naming across all modules:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Pattern: {log_group_prefix}/{category}/{component}</span>
-<span class="c1"># Default prefix: &quot;{project_prefix}-{service_name}-{region}&quot;</span>
+<span class="c1"># Default prefix: "{project_prefix}-{service_name}-{region}"</span>
 
 <span class="c1"># Examples:</span>
 <span class="c1"># cgd-unreal-cloud-ddc-us-east-1/infrastructure/nlb</span>
@@ -5132,7 +5132,7 @@
 </code></pre></div>
 <h4 id="usage-examples"><strong>Usage Examples</strong><a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h4>
 <h5 id="enable-all-logging-with-defaults"><strong>Enable All Logging with Defaults</strong><a class="headerlink" href="#enable-all-logging-with-defaults" title="Permanent link">&para;</a></h5>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">centralized_logging</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">nlb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nb">eks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="nb">application</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">ddc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
@@ -5141,7 +5141,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <h5 id="custom-retention-and-prefix"><strong>Custom Retention and Prefix</strong><a class="headerlink" href="#custom-retention-and-prefix" title="Permanent link">&para;</a></h5>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;perforce&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"perforce"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">centralized_logging</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="nb">nlb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">365</span><span class="w"> </span><span class="p">}</span>
@@ -5152,15 +5152,15 @@
 <span class="w">      </span><span class="nb">perforce</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="nb">service</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;p4-auth&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="p">}</span>
-<span class="w">      </span><span class="s2">&quot;p4-review&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="p">}</span>
+<span class="w">      </span><span class="s2">"p4-auth"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="p">}</span>
+<span class="w">      </span><span class="s2">"p4-review"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="na">log_group_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;mycompany-perforce-prod&quot;</span>
+<span class="w">    </span><span class="na">log_group_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"mycompany-perforce-prod"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h5 id="selective-logging"><strong>Selective Logging</strong><a class="headerlink" href="#selective-logging" title="Permanent link">&para;</a></h5>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;jenkins&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"jenkins"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">centralized_logging</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="nb">alb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Disable ALB logging</span>
@@ -5183,8 +5183,8 @@
 <h5 id="single-category-pattern-vdi-module-example"><strong>Single Category Pattern (VDI Module Example)</strong><a class="headerlink" href="#single-category-pattern-vdi-module-example" title="Permanent link">&para;</a></h5>
 <p><strong>When modules have simple architectures where everything happens in one place:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># VDI Module - Single log group for all activities</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_cloudwatch_log_group&quot;</span><span class="w"> </span><span class="nv">&quot;vdi_logs&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/${var.project_prefix}/vdi/logs&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_cloudwatch_log_group"</span><span class="w"> </span><span class="nv">"vdi_logs"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/${var.project_prefix}/vdi/logs"</span>
 <span class="c1">  # All VDI activity: SSM execution, user creation, DCV sessions, software installation</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5198,9 +5198,9 @@
 <h5 id="standard-3-tier-pattern-ddcperforce-module-example"><strong>Standard 3-Tier Pattern (DDC/Perforce Module Example)</strong><a class="headerlink" href="#standard-3-tier-pattern-ddcperforce-module-example" title="Permanent link">&para;</a></h5>
 <p><strong>When modules have distinct infrastructure, application, and service components:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Standard pattern for complex modules</span>
-<span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;nlb&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="s2">&quot;eks&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
-<span class="nb">application</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;ddc&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
-<span class="nb">service</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;scylla&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
+<span class="nb">infrastructure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"nlb"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="s2">"eks"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
+<span class="nb">application</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"ddc"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
+<span class="nb">service</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">"scylla"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <p><strong>Principle</strong>: Match logging structure to module architecture, not arbitrary standards.</p>
 <h4 id="implementation-requirements"><strong>Implementation Requirements</strong><a class="headerlink" href="#implementation-requirements" title="Permanent link">&para;</a></h4>
@@ -5221,20 +5221,20 @@
 <span class="c1">    # Infrastructure: only components this module actually creates</span>
 <span class="w">    </span><span class="nf">alltrue</span><span class="p">([</span>
 <span class="w">      </span><span class="err">for</span><span class="w"> </span><span class="err">component</span><span class="w"> </span><span class="err">in</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="nv">var.centralized_logging.infrastructure</span><span class="p">)</span><span class="w"> </span><span class="p">:</span>
-<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">&quot;nlb&quot;, &quot;eks&quot;</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
+<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">"nlb", "eks"</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
 <span class="w">    </span><span class="p">]),</span>
 <span class="c1">    # Application: only the primary service</span>
 <span class="w">    </span><span class="nf">alltrue</span><span class="p">([</span>
 <span class="w">      </span><span class="err">for</span><span class="w"> </span><span class="err">component</span><span class="w"> </span><span class="err">in</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="nv">var.centralized_logging.application</span><span class="p">)</span><span class="w"> </span><span class="p">:</span>
-<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">&quot;ddc&quot;</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
+<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">"ddc"</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
 <span class="w">    </span><span class="p">]),</span>
 <span class="c1">    # Service: only supporting services this module deploys</span>
 <span class="w">    </span><span class="nf">alltrue</span><span class="p">([</span>
 <span class="w">      </span><span class="err">for</span><span class="w"> </span><span class="err">component</span><span class="w"> </span><span class="err">in</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="nv">var.centralized_logging.service</span><span class="p">)</span><span class="w"> </span><span class="p">:</span>
-<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">&quot;scylla&quot;</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
+<span class="w">      </span><span class="nf">contains</span><span class="p">([</span><span class="s2">"scylla"</span><span class="p">],</span><span class="w"> </span><span class="err">component</span><span class="p">)</span><span class="c1">  # DDC module example</span>
 <span class="w">    </span><span class="p">])</span>
 <span class="w">  </span><span class="p">])</span>
-<span class="w">  </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Unsupported logging component specified for this module.&quot;</span>
+<span class="w">  </span><span class="na">error_message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Unsupported logging component specified for this module."</span>
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="cost-considerations"><strong>Cost Considerations</strong><a class="headerlink" href="#cost-considerations" title="Permanent link">&para;</a></h4>
@@ -5276,7 +5276,7 @@
 </ul>
 <h3 id="naming-strategy"><strong>Naming Strategy</strong><a class="headerlink" href="#naming-strategy" title="Permanent link">&para;</a></h3>
 <p><strong>Why</strong>: AWS services have different naming patterns when using prefixes. Our approach provides predictable, referenceable names.</p>
-<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;random_id&quot;</span><span class="w"> </span><span class="nv">&quot;suffix&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">"random_id"</span><span class="w"> </span><span class="nv">"suffix"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">byte_length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span>
 <span class="w">  </span><span class="nb">keepers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">project_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.project_prefix</span>
@@ -5285,12 +5285,12 @@
 <span class="p">}</span>
 
 <span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.project_prefix}-${local.name}&quot;</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${var.project_prefix}-${local.name}"</span>
 <span class="w">  </span><span class="na">name_suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">random_id.suffix.hex</span>
 
 <span class="c1">  # Predictable names across all resources</span>
-<span class="w">  </span><span class="na">nlb_name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-nlb-${local.name_suffix}&quot;</span>
-<span class="w">  </span><span class="na">bucket_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-logs-${local.name_suffix}&quot;</span>
+<span class="w">  </span><span class="na">nlb_name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-nlb-${local.name_suffix}"</span>
+<span class="w">  </span><span class="na">bucket_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-logs-${local.name_suffix}"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="load-balancer-philosophy"><strong>Load Balancer Philosophy</strong><a class="headerlink" href="#load-balancer-philosophy" title="Permanent link">&para;</a></h3>
@@ -5313,8 +5313,8 @@
 <h4 id="ingress-incoming-avoid-00000"><strong>Ingress (Incoming) - Avoid 0.0.0.0/0</strong><a class="headerlink" href="#ingress-incoming-avoid-00000" title="Permanent link">&para;</a></h4>
 <p><strong>Risk</strong>: 🔴 <strong>HIGH</strong> - Direct attack surface</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ❌ DANGEROUS</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_security_group_ingress_rule&quot;</span><span class="w"> </span><span class="nv">&quot;bad&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.0.0.0/0&quot;</span><span class="c1">  # Opens to entire internet</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_security_group_ingress_rule"</span><span class="w"> </span><span class="nv">"bad"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.0.0.0/0"</span><span class="c1">  # Opens to entire internet</span>
 <span class="p">}</span>
 
 <span class="c1"># ✅ USER CONTROLLED</span>
@@ -5323,20 +5323,20 @@
 <h4 id="egress-outgoing-often-necessary"><strong>Egress (Outgoing) - Often Necessary</strong><a class="headerlink" href="#egress-outgoing-often-necessary" title="Permanent link">&para;</a></h4>
 <p><strong>Risk</strong>: 🟡 <strong>MEDIUM</strong> - Controlled by application</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ NECESSARY for AWS APIs, updates, container registries</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_security_group_egress_rule&quot;</span><span class="w"> </span><span class="nv">&quot;aws_apis&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;0.0.0.0/0&quot;</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;AWS APIs, ECR, OS updates&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_security_group_egress_rule"</span><span class="w"> </span><span class="nv">"aws_apis"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.0.0.0/0"</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"AWS APIs, ECR, OS updates"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="implementation-pattern"><strong>Implementation Pattern</strong><a class="headerlink" href="#implementation-pattern" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># We create internal security groups</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;internal&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-internal-&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"internal"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-internal-"</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.vpc_id</span>
 <span class="p">}</span>
 
 <span class="c1"># Users control external access</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_lb&quot;</span><span class="w"> </span><span class="nv">&quot;nlb&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_lb"</span><span class="w"> </span><span class="nv">"nlb"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span>
 <span class="w">    </span><span class="nv">var.security_groups</span><span class="p">,</span><span class="c1">                           # User-controlled</span>
 <span class="w">    </span><span class="nv">var.additional_security_groups.load_balancer</span><span class="p">,</span><span class="c1"> # Component-specific</span>
@@ -5353,20 +5353,20 @@
 <div class="highlight"><pre><span></span><code><span class="c1"># examples/single-region-basic/versions.tf</span>
 <span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">required_providers</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nb">aws</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/aws&quot;, version = &quot;&gt;= 6.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">    </span><span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/kubernetes&quot;, version = &quot;&gt;= 2.33.0&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">    </span><span class="nb">helm</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hashicorp/helm&quot;, version = &quot;&gt;= 2.16.0, &lt; 3.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">aws</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/aws", version = "&gt;= 6.0.0"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/kubernetes", version = "&gt;= 2.33.0"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">helm</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"hashicorp/helm", version = "&gt;= 2.16.0, &lt; 3.0.0"</span><span class="w"> </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># examples/single-region-basic/providers.tf (when needed)</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc.cluster_endpoint</span>
 <span class="w">  </span><span class="na">cluster_ca_certificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">base64decode</span><span class="p">(</span><span class="nv">module.ddc.cluster_ca_data</span><span class="p">)</span>
 <span class="w">  </span><span class="nb">exec</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;client.authentication.k8s.io/v1beta1&quot;</span>
-<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aws&quot;</span>
-<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;eks&quot;, &quot;get-token&quot;, &quot;--cluster-name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">module.ddc.cluster_name</span><span class="p">]</span>
+<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"client.authentication.k8s.io/v1beta1"</span>
+<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"aws"</span>
+<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"eks", "get-token", "--cluster-name"</span><span class="p">,</span><span class="w"> </span><span class="nv">module.ddc.cluster_name</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5378,8 +5378,8 @@
 <span class="c1"># Parent module receives providers from root module</span>
 
 <span class="c1"># Direct resource creation</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;private&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${var.project_prefix}.internal&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"private"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${var.project_prefix}.internal"</span>
 <span class="w">  </span><span class="nb">vpc</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.vpc_id</span>
 <span class="w">  </span><span class="p">}</span>
@@ -5387,13 +5387,13 @@
 
 <span class="c1"># Submodule orchestration</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;infra&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/infra&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"infra"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/infra"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">aws</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Pass from root (uses default or v6 region)</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;services&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/services&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"services"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/services"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">kubernetes</span><span class="p">,</span><span class="w"> </span><span class="na">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">helm</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Pass from root</span>
 <span class="w">  </span><span class="na">depends_on</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">module.infra</span><span class="p">]</span>
 <span class="p">}</span>
@@ -5403,9 +5403,9 @@
 <span class="c1"># User must handle multi-region complexity at root level</span>
 
 <span class="c1"># AWS Provider v6 - No aliases needed!</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="c1">  # AWS Provider v6 handles this automatically</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_east_1"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span><span class="c1">  # AWS Provider v6 handles this automatically</span>
 
 <span class="c1">  # Non-enhanced providers need explicit aliases</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -5414,9 +5414,9 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_west_2&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="c1">  # AWS Provider v6 handles this automatically</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_west_2"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"git::https://github.com/aws-games/cloud-game-development-toolkit.git//modules/unreal/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span><span class="c1">  # AWS Provider v6 handles this automatically</span>
 
 <span class="c1">  # Non-enhanced providers need explicit aliases</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -5426,14 +5426,14 @@
 <span class="p">}</span>
 
 <span class="c1"># Root module must define all provider aliases</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_us_east_1.cluster_endpoint</span>
 <span class="c1">  # ... configuration</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_us_west_2.cluster_endpoint</span>
 <span class="c1">  # ... configuration</span>
 <span class="p">}</span>
@@ -5442,26 +5442,26 @@
 <p><strong>Scenario</strong>: Receive providers from parent, use specific provider family</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># modules/unreal-cloud-ddc/modules/infra/main.tf</span>
 <span class="c1"># Uses AWS provider passed from parent</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
 
 <span class="c1"># modules/unreal-cloud-ddc/modules/services/main.tf</span>
 <span class="c1"># Uses Kubernetes/Helm providers passed from parent</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;helm_release&quot;</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"helm_release"</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
 </code></pre></div>
 <h3 id="provider-value-sourcing-strategies"><strong>Provider Value Sourcing Strategies</strong><a class="headerlink" href="#provider-value-sourcing-strategies" title="Permanent link">&para;</a></h3>
 <p><strong>Why This Matters</strong>: Providers need configuration values, but the source depends on timing and dependencies.</p>
 <h4 id="option-1-data-sources-independent-resources"><strong>Option 1: Data Sources (Independent Resources)</strong><a class="headerlink" href="#option-1-data-sources-independent-resources" title="Permanent link">&para;</a></h4>
 <p><strong>When</strong>: Referencing existing, independent infrastructure</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module: examples/existing-cluster/providers.tf</span>
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;existing&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"existing"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_cluster_name</span>
 <span class="p">}</span>
 
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster_auth&quot;</span><span class="w"> </span><span class="nv">&quot;existing&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_eks_cluster_auth"</span><span class="w"> </span><span class="nv">"existing"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_cluster_name</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_eks_cluster.existing.endpoint</span>
 <span class="w">  </span><span class="na">cluster_ca_certificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">base64decode</span><span class="p">(</span><span class="nv">data.aws_eks_cluster.existing.certificate_authority[0].data</span><span class="p">)</span>
 <span class="w">  </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_eks_cluster_auth.existing.token</span>
@@ -5470,21 +5470,21 @@
 <h4 id="option-2-module-outputs-dependent-resources"><strong>Option 2: Module Outputs (Dependent Resources)</strong><a class="headerlink" href="#option-2-module-outputs-dependent-resources" title="Permanent link">&para;</a></h4>
 <p><strong>When</strong>: Module creates the infrastructure that providers need</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module: examples/single-region-basic/providers.tf</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc.cluster_endpoint</span>
 <span class="w">  </span><span class="na">cluster_ca_certificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">base64decode</span><span class="p">(</span><span class="nv">module.ddc.cluster_ca_data</span><span class="p">)</span>
 <span class="w">  </span><span class="nb">exec</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;client.authentication.k8s.io/v1beta1&quot;</span>
-<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aws&quot;</span>
-<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;eks&quot;, &quot;get-token&quot;, &quot;--cluster-name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">module.ddc.cluster_name</span><span class="p">]</span>
+<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"client.authentication.k8s.io/v1beta1"</span>
+<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"aws"</span>
+<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"eks", "get-token", "--cluster-name"</span><span class="p">,</span><span class="w"> </span><span class="nv">module.ddc.cluster_name</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="option-3-statichardcoded-values"><strong>Option 3: Static/Hardcoded Values</strong><a class="headerlink" href="#option-3-statichardcoded-values" title="Permanent link">&para;</a></h4>
 <p><strong>When</strong>: Known, unchanging values (rare, mostly for testing)</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module: tests/setup/providers.tf</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://test-cluster.example.com&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://test-cluster.example.com"</span>
 <span class="w">  </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.test_cluster_token</span><span class="c1">  # From CI secrets</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5493,12 +5493,12 @@
 <h4 id="use-try-for-data-sources"><strong>Use <code>try()</code> for Data Sources</strong><a class="headerlink" href="#use-try-for-data-sources" title="Permanent link">&para;</a></h4>
 <p><strong>Why</strong>: Prevents plan failures when resources don't exist yet.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ RECOMMENDED - Graceful handling of missing resources</span>
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;existing&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"existing"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.cluster_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">0</span>
 <span class="w">  </span><span class="na">name</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">var.cluster_name</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">  # try() handles both missing data source AND missing attributes</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">try</span><span class="p">(</span><span class="nv">data.aws_eks_cluster.existing[0].endpoint</span><span class="p">,</span><span class="w"> </span><span class="kt">null</span><span class="p">)</span>
 <span class="w">  </span><span class="na">cluster_ca_certificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">try</span><span class="p">(</span>
@@ -5510,16 +5510,16 @@
 <h4 id="use-explicit-null-checks-for-module-outputs-cgd-toolkit-pattern"><strong>Use Explicit Null Checks for Module Outputs (CGD Toolkit Pattern)</strong><a class="headerlink" href="#use-explicit-null-checks-for-module-outputs-cgd-toolkit-pattern" title="Permanent link">&para;</a></h4>
 <p><strong>Why</strong>: Clearer dependency logic and better debugging.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ RECOMMENDED - Clear dependency logic</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.infra.cluster_endpoint</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
 <span class="w">    </span><span class="nv">module.infra.cluster_endpoint</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">null</span>
 <span class="w">  </span><span class="na">cluster_ca_certificate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.infra.cluster_ca_data</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
 <span class="w">    </span><span class="nf">base64decode</span><span class="p">(</span><span class="nv">module.infra.cluster_ca_data</span><span class="p">)</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">null</span>
 
 <span class="w">  </span><span class="nb">exec</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;client.authentication.k8s.io/v1beta1&quot;</span>
-<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;aws&quot;</span>
-<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;eks&quot;, &quot;get-token&quot;, &quot;--cluster-name&quot;</span><span class="p">,</span><span class="w"> </span><span class="nv">module.infra.cluster_name</span><span class="p">]</span>
+<span class="w">    </span><span class="na">api_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"client.authentication.k8s.io/v1beta1"</span>
+<span class="w">    </span><span class="na">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"aws"</span>
+<span class="w">    </span><span class="na">args</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"eks", "get-token", "--cluster-name"</span><span class="p">,</span><span class="w"> </span><span class="nv">module.infra.cluster_name</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5620,14 +5620,14 @@ terraform<span class="w"> </span>apply
 <h4 id="terraform-multi-region-fundamentals"><strong>Terraform Multi-Region Fundamentals</strong><a class="headerlink" href="#terraform-multi-region-fundamentals" title="Permanent link">&para;</a></h4>
 <h5 id="each-module-instance-exactly-one-region"><strong>Each Module Instance = Exactly One Region</strong><a class="headerlink" href="#each-module-instance-exactly-one-region" title="Permanent link">&para;</a></h5>
 <div class="highlight"><pre><span></span><code><span class="c1"># This is the fundamental pattern - each module does ONE region only</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="c1">  # This instance ONLY handles us-east-1</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_east_1"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span><span class="c1">  # This instance ONLY handles us-east-1</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_west_2&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="c1">  # This instance ONLY handles us-west-2</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_west_2"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span><span class="c1">  # This instance ONLY handles us-west-2</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><strong>Key Principle</strong>: Users instantiate the module once per region they want.</p>
@@ -5635,26 +5635,26 @@ terraform<span class="w"> </span>apply
 <h4 id="before-aws-provider-v6-traditional"><strong>Before AWS Provider v6 (Traditional)</strong><a class="headerlink" href="#before-aws-provider-v6-traditional" title="Permanent link">&para;</a></h4>
 <p><strong>Problem</strong>: Every region needed explicit AWS provider aliases</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module - OLD WAY (still needed for non-AWS providers)</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;aws&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"aws"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;aws&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"aws"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_east_1"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/unreal-cloud-ddc"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">aws</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nv">aws.us_east_1</span><span class="c1">     # Explicit AWS alias required</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kubernetes.us_east_1</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_west_2&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_west_2"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/unreal-cloud-ddc"</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">aws</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="nv">aws.us_west_2</span><span class="c1">     # Explicit AWS alias required</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kubernetes.us_west_2</span>
@@ -5666,9 +5666,9 @@ terraform<span class="w"> </span>apply
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module - NEW WAY</span>
 <span class="c1"># NO AWS provider aliases needed!</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_east_1&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="c1">  # AWS Provider v6 magic - auto-inherits region</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_east_1"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span><span class="c1">  # AWS Provider v6 magic - auto-inherits region</span>
 
 <span class="c1">  # Only non-enhanced providers need aliases</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -5677,9 +5677,9 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_us_west_2&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="c1">  # AWS Provider v6 magic - auto-inherits region</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_us_west_2"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span><span class="c1">  # AWS Provider v6 magic - auto-inherits region</span>
 
 <span class="c1">  # Only non-enhanced providers need aliases</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
@@ -5689,13 +5689,13 @@ terraform<span class="w"> </span>apply
 <span class="p">}</span>
 
 <span class="c1"># Still need aliases for non-enhanced providers</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_us_east_1.cluster_endpoint</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
 <span class="w">  </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_us_west_2.cluster_endpoint</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -5716,21 +5716,21 @@ terraform<span class="w"> </span>apply
 <h4 id="inside-cgd-toolkit-modules"><strong>Inside CGD Toolkit Modules</strong><a class="headerlink" href="#inside-cgd-toolkit-modules" title="Permanent link">&para;</a></h4>
 <p><strong>How modules handle the region variable</strong>:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># modules/unreal-cloud-ddc/variables.tf</span>
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;region&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"region"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;AWS region for deployment&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"AWS region for deployment"</span>
 <span class="p">}</span>
 
 <span class="c1"># modules/unreal-cloud-ddc/main.tf</span>
 <span class="c1"># AWS resources automatically use the region from variable</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_eks_cluster&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.name_prefix}-cluster-${var.region}&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_eks_cluster"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.name_prefix}-cluster-${var.region}"</span>
 <span class="c1">  # AWS Provider v6 automatically uses var.region</span>
 <span class="p">}</span>
 
 <span class="c1"># Pass region to submodules</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;infra&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;./modules/infra&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"infra"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"./modules/infra"</span>
 <span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.region</span><span class="c1">  # Propagate region down</span>
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">aws</span><span class="w"> </span><span class="p">}</span><span class="c1">  # AWS provider inherits region automatically</span>
 <span class="p">}</span>
@@ -5748,9 +5748,9 @@ terraform<span class="w"> </span>apply
 <span class="c1"># Clear, explicit, easy to understand</span>
 
 <span class="c1"># Primary Region - Creates shared resources</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_primary&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_primary"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
 
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kubernetes.primary</span>
@@ -5759,7 +5759,7 @@ terraform<span class="w"> </span>apply
 
 <span class="w">  </span><span class="nb">scylla_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">current_region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">datacenter_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east&quot;</span>
+<span class="w">      </span><span class="na">datacenter_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east"</span>
 <span class="w">      </span><span class="na">replication_factor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span>
 <span class="w">      </span><span class="na">node_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3</span>
 <span class="w">    </span><span class="p">}</span>
@@ -5767,13 +5767,13 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="p">}</span>
 
 <span class="c1">  # Primary creates bearer token for replication</span>
-<span class="w">  </span><span class="na">bearer_token_replica_regions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;us-west-2&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="na">bearer_token_replica_regions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"us-west-2"</span><span class="p">]</span>
 <span class="p">}</span>
 
 <span class="c1"># Secondary Region - Uses shared resources</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_secondary&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
-<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_secondary"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
+<span class="w">  </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
 
 <span class="w">  </span><span class="nb">providers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kubernetes.secondary</span>
@@ -5782,14 +5782,14 @@ terraform<span class="w"> </span>apply
 
 <span class="w">  </span><span class="nb">scylla_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nb">current_region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">datacenter_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west&quot;</span>
+<span class="w">      </span><span class="na">datacenter_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west"</span>
 <span class="w">      </span><span class="na">replication_factor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
 <span class="w">      </span><span class="na">node_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="na">enable_cross_region_replication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
 <span class="w">  </span><span class="p">}</span>
 
-<span class="c1">  # Secondary uses primary&#39;s bearer token</span>
+<span class="c1">  # Secondary uses primary's bearer token</span>
 <span class="w">  </span><span class="na">create_bearer_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
 <span class="w">  </span><span class="na">bearer_token_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.ddc_primary.bearer_token_secret_arn</span>
 
@@ -5807,10 +5807,10 @@ terraform<span class="w"> </span>apply
 <h5 id="private-dns-zones-always-created"><strong>Private DNS Zones (Always Created)</strong><a class="headerlink" href="#private-dns-zones-always-created" title="Permanent link">&para;</a></h5>
 <p><strong>All CGD Toolkit modules automatically create private DNS zones for internal service discovery:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Always create private zone for internal routing</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;private&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"private"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
-<span class="w">    </span><span class="s2">&quot;${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}&quot;</span><span class="w"> </span><span class="o">:</span>
-<span class="w">    </span><span class="s2">&quot;${var.project_prefix}.internal&quot;</span>
+<span class="w">    </span><span class="s2">"${var.project_prefix}.${var.existing_route53_public_hosted_zone_name}"</span><span class="w"> </span><span class="o">:</span>
+<span class="w">    </span><span class="s2">"${var.project_prefix}.internal"</span>
 
 <span class="w">  </span><span class="nb">vpc</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_vpc_id</span>
@@ -5818,10 +5818,10 @@ terraform<span class="w"> </span>apply
 <span class="p">}</span>
 
 <span class="c1"># Internal service discovery records</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_record&quot;</span><span class="w"> </span><span class="nv">&quot;service_internal&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_record"</span><span class="w"> </span><span class="nv">"service_internal"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">zone_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_route53_zone.private.zone_id</span>
-<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;service&quot;</span>
-<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;A&quot;</span>
+<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"service"</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"A"</span>
 <span class="w">  </span><span class="na">ttl</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="m">300</span>
 <span class="w">  </span><span class="na">records</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">aws_lb.nlb.dns_name</span><span class="p">]</span>
 <span class="p">}</span>
@@ -5831,10 +5831,10 @@ terraform<span class="w"> </span>apply
 <div class="highlight"><pre><span></span><code><span class="c1"># Regional DNS pattern (our default)</span>
 <span class="nb">locals</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">regional_dns_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span>
-<span class="w">    </span><span class="s2">&quot;${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}&quot;</span><span class="w"> </span><span class="o">:</span>
+<span class="w">    </span><span class="s2">"${var.region}.${local.service_name}.${var.existing_route53_public_hosted_zone_name}"</span><span class="w"> </span><span class="o">:</span>
 <span class="w">    </span><span class="kt">null</span>
 
-<span class="w">  </span><span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ddc&quot;  # or &quot;perforce&quot;, &quot;jenkins&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">etc</span><span class="p">.</span>
+<span class="w">  </span><span class="na">service_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ddc"  # or "perforce", "jenkins"</span><span class="p">,</span><span class="w"> </span><span class="err">etc</span><span class="p">.</span>
 <span class="p">}</span>
 
 <span class="c1"># Examples of regional endpoints:</span>
@@ -5852,14 +5852,14 @@ terraform<span class="w"> </span>apply
 <h5 id="global-endpoint-flexibility"><strong>Global Endpoint Flexibility</strong><a class="headerlink" href="#global-endpoint-flexibility" title="Permanent link">&para;</a></h5>
 <p><strong>Users can optionally create global endpoints with routing policies:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Optional: Global endpoint with latency-based routing</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_record&quot;</span><span class="w"> </span><span class="nv">&quot;global_latency&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_record"</span><span class="w"> </span><span class="nv">"global_latency"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">zone_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_id</span>
-<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ddc&quot;</span><span class="c1">  # Global endpoint: ddc.company.com</span>
-<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;A&quot;</span>
+<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"ddc"</span><span class="c1">  # Global endpoint: ddc.company.com</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"A"</span>
 
-<span class="w">  </span><span class="na">set_identifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span>
+<span class="w">  </span><span class="na">set_identifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
 <span class="w">  </span><span class="nb">latency_routing_policy</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span>
+<span class="w">    </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nb">alias</span><span class="w"> </span><span class="p">{</span>
@@ -5868,14 +5868,14 @@ terraform<span class="w"> </span>apply
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_route53_record&quot;</span><span class="w"> </span><span class="nv">&quot;global_latency_secondary&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_route53_record"</span><span class="w"> </span><span class="nv">"global_latency_secondary"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">zone_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.existing_route53_public_hosted_zone_id</span>
-<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ddc&quot;</span><span class="c1">  # Same global endpoint</span>
-<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;A&quot;</span>
+<span class="w">  </span><span class="na">name</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"ddc"</span><span class="c1">  # Same global endpoint</span>
+<span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="s2">"A"</span>
 
-<span class="w">  </span><span class="na">set_identifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="w">  </span><span class="na">set_identifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
 <span class="w">  </span><span class="nb">latency_routing_policy</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="w">    </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nb">alias</span><span class="w"> </span><span class="p">{</span>
@@ -5894,13 +5894,13 @@ terraform<span class="w"> </span>apply
 <h5 id="dns-output-strategy"><strong>DNS Output Strategy</strong><a class="headerlink" href="#dns-output-strategy" title="Permanent link">&para;</a></h5>
 <p><strong>Modules provide both regional and global DNS flexibility:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Module outputs for DNS flexibility</span>
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;dns_endpoints&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;DNS endpoints for service access&quot;</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"dns_endpoints"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"DNS endpoints for service access"</span>
 <span class="w">  </span><span class="nb">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="c1">    # Regional endpoints (always available)</span>
 <span class="w">    </span><span class="nb">regional</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="na">public_dns</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">local.regional_dns_name</span>
-<span class="w">      </span><span class="na">private_dns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;${local.service_name}.${aws_route53_zone.private.name}&quot;</span>
+<span class="w">      </span><span class="na">private_dns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"${local.service_name}.${aws_route53_zone.private.name}"</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="c1">    # Load balancer details for global routing</span>
@@ -5940,14 +5940,14 @@ terraform<span class="w"> </span>apply
 <h5 id="ssltls-certificate-integration"><strong>SSL/TLS Certificate Integration</strong><a class="headerlink" href="#ssltls-certificate-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules integrate with existing certificates, don't create them:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User creates certificate outside module</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_acm_certificate&quot;</span><span class="w"> </span><span class="nv">&quot;service_cert&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">domain_name</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*.ddc.company.com&quot;</span>
-<span class="w">  </span><span class="na">validation_method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;DNS&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_acm_certificate"</span><span class="w"> </span><span class="nv">"service_cert"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">domain_name</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"*.ddc.company.com"</span>
+<span class="w">  </span><span class="na">validation_method</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"DNS"</span>
 
 <span class="w">  </span><span class="na">subject_alternative_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;ddc.company.com&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;*.us-east-1.ddc.company.com&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;*.us-west-2.ddc.company.com&quot;</span>
+<span class="w">    </span><span class="s2">"ddc.company.com"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"*.us-east-1.ddc.company.com"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"*.us-west-2.ddc.company.com"</span>
 <span class="w">  </span><span class="p">]</span>
 
 <span class="w">  </span><span class="nb">lifecycle</span><span class="w"> </span><span class="p">{</span>
@@ -5956,8 +5956,8 @@ terraform<span class="w"> </span>apply
 <span class="p">}</span>
 
 <span class="c1"># Module accepts certificate reference</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
 
 <span class="c1">  # Pass existing certificate ARN</span>
 <span class="w">  </span><span class="na">existing_certificate_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_acm_certificate.service_cert.arn</span>
@@ -5976,21 +5976,21 @@ terraform<span class="w"> </span>apply
 <h5 id="vpc-and-subnet-integration"><strong>VPC and Subnet Integration</strong><a class="headerlink" href="#vpc-and-subnet-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules work within existing network infrastructure:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User provides existing network infrastructure</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
 
 <span class="c1">  # Existing VPC (user-created)</span>
-<span class="w">  </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vpc-12345678&quot;</span>
+<span class="w">  </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-12345678"</span>
 
 <span class="c1">  # Existing subnets (user-created)</span>
 <span class="w">  </span><span class="na">existing_load_balancer_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;subnet-12345678&quot;</span><span class="p">,</span><span class="c1">  # Public subnet for internet-facing LB</span>
-<span class="w">    </span><span class="s2">&quot;subnet-87654321&quot;</span><span class="c1">   # Public subnet for HA</span>
+<span class="w">    </span><span class="s2">"subnet-12345678"</span><span class="p">,</span><span class="c1">  # Public subnet for internet-facing LB</span>
+<span class="w">    </span><span class="s2">"subnet-87654321"</span><span class="c1">   # Public subnet for HA</span>
 <span class="w">  </span><span class="p">]</span>
 
 <span class="w">  </span><span class="na">existing_service_subnets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;subnet-abcdef12&quot;</span><span class="p">,</span><span class="c1">  # Private subnet for EKS/services</span>
-<span class="w">    </span><span class="s2">&quot;subnet-21fedcba&quot;</span><span class="c1">   # Private subnet for HA</span>
+<span class="w">    </span><span class="s2">"subnet-abcdef12"</span><span class="p">,</span><span class="c1">  # Private subnet for EKS/services</span>
+<span class="w">    </span><span class="s2">"subnet-21fedcba"</span><span class="c1">   # Private subnet for HA</span>
 <span class="w">  </span><span class="p">]</span>
 
 <span class="c1">  # Module creates resources within provided network</span>
@@ -6007,23 +6007,23 @@ terraform<span class="w"> </span>apply
 <h5 id="security-group-strategy_1"><strong>Security Group Strategy</strong><a class="headerlink" href="#security-group-strategy_1" title="Permanent link">&para;</a></h5>
 <p><strong>Modules create service-specific security groups, users control external access:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Users create external access security groups</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;office_access&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;office-access-&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"office_access"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name_prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"office-access-"</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.vpc_id</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_security_group_ingress_rule&quot;</span><span class="w"> </span><span class="nv">&quot;office_https&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_security_group_ingress_rule"</span><span class="w"> </span><span class="nv">"office_https"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_group_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_security_group.office_access.id</span>
-<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;HTTPS from office network&quot;</span>
-<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"HTTPS from office network"</span>
+<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"tcp"</span>
 <span class="w">  </span><span class="na">from_port</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
 <span class="w">  </span><span class="na">to_port</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="m">443</span>
-<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;203.0.113.0/24&quot;</span><span class="c1">  # Office CIDR</span>
+<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">"203.0.113.0/24"</span><span class="c1">  # Office CIDR</span>
 <span class="p">}</span>
 
 <span class="c1"># Module accepts user-controlled security groups</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
 
 <span class="c1">  # User-controlled external access</span>
 <span class="w">  </span><span class="na">existing_security_groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
@@ -6042,16 +6042,16 @@ terraform<span class="w"> </span>apply
 <h5 id="public-hosted-zone-integration"><strong>Public Hosted Zone Integration</strong><a class="headerlink" href="#public-hosted-zone-integration" title="Permanent link">&para;</a></h5>
 <p><strong>Modules use existing public zones, don't create them:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># User owns and manages public hosted zone</span>
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_route53_zone&quot;</span><span class="w"> </span><span class="nv">&quot;company&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;company.com&quot;</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_route53_zone"</span><span class="w"> </span><span class="nv">"company"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"company.com"</span>
 <span class="p">}</span>
 
 <span class="c1"># Module uses existing zone for public DNS records</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
 
 <span class="c1">  # Reference existing public zone</span>
-<span class="w">  </span><span class="na">existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;company.com&quot;</span>
+<span class="w">  </span><span class="na">existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"company.com"</span>
 
 <span class="c1">  # Module creates records like: us-east-1.ddc.company.com</span>
 <span class="c1">  # Module does NOT create the company.com zone</span>
@@ -6066,20 +6066,20 @@ terraform<span class="w"> </span>apply
 <h5 id="multi-region-network-considerations"><strong>Multi-Region Network Considerations</strong><a class="headerlink" href="#multi-region-network-considerations" title="Permanent link">&para;</a></h5>
 <p><strong>For multi-region deployments, users handle cross-region connectivity:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Users create VPC peering or Transit Gateway (outside modules)</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_peering_connection&quot;</span><span class="w"> </span><span class="nv">&quot;cross_region&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_peering_connection"</span><span class="w"> </span><span class="nv">"cross_region"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.primary_vpc_id</span><span class="c1">    # us-east-1</span>
 <span class="w">  </span><span class="na">peer_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.secondary_vpc_id</span><span class="c1">  # us-west-2</span>
-<span class="w">  </span><span class="na">peer_region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
+<span class="w">  </span><span class="na">peer_region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
 
 <span class="c1">  # Users manage cross-region network connectivity</span>
 <span class="p">}</span>
 
-<span class="c1"># Modules work within each region&#39;s VPC independently</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_primary&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="c1"># Modules work within each region's VPC independently</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_primary"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.primary_vpc_id</span><span class="c1">    # us-east-1 VPC</span>
 <span class="p">}</span>
 
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc_secondary&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc_secondary"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">existing_vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">var.secondary_vpc_id</span><span class="c1">  # us-west-2 VPC</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -6093,31 +6093,31 @@ terraform<span class="w"> </span>apply
 <p><strong>Complete example showing user vs. module responsibilities:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># USER RESPONSIBILITIES (outside module)</span>
 <span class="c1"># 1. VPC and networking</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">cidr_block</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;10.0.0.0/16&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc"</span><span class="w"> </span><span class="nv">"main"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">cidr_block</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="s2">"10.0.0.0/16"</span>
 <span class="w">  </span><span class="na">enable_dns_hostnames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
 <span class="w">  </span><span class="na">enable_dns_support</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
 <span class="p">}</span>
 
 <span class="c1"># 2. SSL certificate</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_acm_certificate&quot;</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">domain_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;*.ddc.company.com&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_acm_certificate"</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">domain_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"*.ddc.company.com"</span>
 <span class="p">}</span>
 
 <span class="c1"># 3. External access security group</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;external_access&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"external_access"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">vpc_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_vpc.main.id</span>
 <span class="p">}</span>
 
 <span class="c1"># MODULE RESPONSIBILITIES (inside module)</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;ddc&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unreal-cloud-ddc&quot;</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"ddc"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unreal-cloud-ddc"</span>
 
 <span class="c1">  # Use existing infrastructure</span>
 <span class="w">  </span><span class="na">existing_vpc_id</span><span class="w">                          </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_vpc.main.id</span>
 <span class="w">  </span><span class="na">existing_certificate_arn</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_acm_certificate.ddc.arn</span>
 <span class="w">  </span><span class="na">existing_security_groups</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nv">aws_security_group.external_access.id</span><span class="p">]</span>
-<span class="w">  </span><span class="na">existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;company.com&quot;</span>
+<span class="w">  </span><span class="na">existing_route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"company.com"</span>
 
 <span class="c1">  # Module creates: EKS, NLB, private DNS, internal security groups</span>
 <span class="p">}</span>
@@ -6184,9 +6184,9 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 </ul>
 <h4 id="summary-multi-region-best-practices"><strong>Summary: Multi-Region Best Practices</strong><a class="headerlink" href="#summary-multi-region-best-practices" title="Permanent link">&para;</a></h4>
 <p><strong>Recommended Approach</strong>: Use explicit module blocks - MAX 2 regions</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service_primary&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-east-1&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="kr">module</span><span class="w"> </span><span class="nv">&quot;service_secondary&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span><span class="w"> </span><span class="p">}</span>
-<span class="c1"># ❌ DON&#39;T ADD MORE - Use separate Terraform deployments instead</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"service_primary"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-east-1"</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">module</span><span class="w"> </span><span class="nv">"service_secondary"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span><span class="w"> </span><span class="p">}</span>
+<span class="c1"># ❌ DON'T ADD MORE - Use separate Terraform deployments instead</span>
 </code></pre></div>
 <p><strong>🎯 For Most Applications</strong>: Deploy each region as separate Terraform root modules</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Recommended pattern for most applications (follows Pattern B above)</span>
@@ -6236,13 +6236,13 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <p><strong>Common Problem</strong>: Different modules require different provider versions</p>
 <h4 id="conflict-scenario"><strong>Conflict Scenario</strong><a class="headerlink" href="#conflict-scenario" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># Module A requires</span>
-<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 2.30.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 2.30.0"</span><span class="w"> </span><span class="p">}</span>
 
 <span class="c1"># Module B requires</span>
-<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 2.33.0, &lt; 2.35.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 2.33.0, &lt; 2.35.0"</span><span class="w"> </span><span class="p">}</span>
 
 <span class="c1"># Root module must satisfy BOTH</span>
-<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 2.33.0, &lt; 2.35.0&quot;</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Intersection</span>
+<span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 2.33.0, &lt; 2.35.0"</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Intersection</span>
 </code></pre></div>
 <h4 id="resolution-strategy"><strong>Resolution Strategy</strong><a class="headerlink" href="#resolution-strategy" title="Permanent link">&para;</a></h4>
 <ol>
@@ -6255,20 +6255,20 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <div class="highlight"><pre><span></span><code><span class="c1"># Root module must declare ALL provider versions for ALL regions</span>
 <span class="nb">terraform</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">required_providers</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nb">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 6.0.0&quot;</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Enhanced region support</span>
-<span class="w">    </span><span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 2.33.0&quot;</span><span class="w"> </span><span class="p">}</span><span class="c1">  # All regions use same version</span>
-<span class="w">    </span><span class="nb">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&gt;= 2.16.0, &lt; 3.0.0&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="nb">aws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 6.0.0"</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Enhanced region support</span>
+<span class="w">    </span><span class="nb">kubernetes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 2.33.0"</span><span class="w"> </span><span class="p">}</span><span class="c1">  # All regions use same version</span>
+<span class="w">    </span><span class="nb">helm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="na">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"&gt;= 2.16.0, &lt; 3.0.0"</span><span class="w"> </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># Each region gets same provider versions</span>
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_east_1&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_east_1"</span>
 <span class="c1">  # Same version as declared above</span>
 <span class="p">}</span>
 
-<span class="kr">provider</span><span class="w"> </span><span class="nv">&quot;kubernetes&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us_west_2&quot;</span>
+<span class="kr">provider</span><span class="w"> </span><span class="nv">"kubernetes"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">alias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"us_west_2"</span>
 <span class="c1">  # Same version as declared above</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -6288,55 +6288,55 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <h2 id="aws-provider-best-practices">AWS Provider Best Practices<a class="headerlink" href="#aws-provider-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="security-group-rules"><strong>Security Group Rules</strong><a class="headerlink" href="#security-group-rules" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ Use dedicated rule resources (AWS Provider v6 requirement)</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_vpc_security_group_ingress_rule&quot;</span><span class="w"> </span><span class="nv">&quot;example&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_vpc_security_group_ingress_rule"</span><span class="w"> </span><span class="nv">"example"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">security_group_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_security_group.example.id</span>
-<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;HTTP access from office network&quot;</span>
-<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tcp&quot;</span>
+<span class="w">  </span><span class="na">description</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"HTTP access from office network"</span>
+<span class="w">  </span><span class="na">ip_protocol</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="s2">"tcp"</span>
 <span class="w">  </span><span class="na">from_port</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="m">80</span>
 <span class="w">  </span><span class="na">to_port</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="m">80</span>
-<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;203.0.113.0/24&quot;</span>
+<span class="w">  </span><span class="na">cidr_ipv4</span><span class="w">         </span><span class="o">=</span><span class="w"> </span><span class="s2">"203.0.113.0/24"</span>
 <span class="p">}</span>
 
-<span class="c1"># ❌ Don&#39;t use inline rules or aws_security_group_rule</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_security_group&quot;</span><span class="w"> </span><span class="nv">&quot;bad&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="c1"># ❌ Don't use inline rules or aws_security_group_rule</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_security_group"</span><span class="w"> </span><span class="nv">"bad"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">ingress</span><span class="w"> </span><span class="p">{</span><span class="cm"> /* ... */</span><span class="w"> </span><span class="p">}</span><span class="c1">  # Deprecated pattern</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="iam-policies"><strong>IAM Policies</strong><a class="headerlink" href="#iam-policies" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ Use policy documents</span>
-<span class="kr">data</span><span class="w"> </span><span class="nc">&quot;aws_iam_policy_document&quot;</span><span class="w"> </span><span class="nv">&quot;example&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">data</span><span class="w"> </span><span class="nc">"aws_iam_policy_document"</span><span class="w"> </span><span class="nv">"example"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nb">statement</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">effect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span>
-<span class="w">    </span><span class="na">actions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;s3:GetObject&quot;, &quot;s3:PutObject&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="na">resources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;${aws_s3_bucket.example.arn}/*&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="na">effect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Allow"</span>
+<span class="w">    </span><span class="na">actions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"s3:GetObject", "s3:PutObject"</span><span class="p">]</span>
+<span class="w">    </span><span class="na">resources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"${aws_s3_bucket.example.arn}/*"</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_iam_policy&quot;</span><span class="w"> </span><span class="nv">&quot;example&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;example-policy&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_iam_policy"</span><span class="w"> </span><span class="nv">"example"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="s2">"example-policy"</span>
 <span class="w">  </span><span class="na">policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_iam_policy_document.example.json</span>
 <span class="p">}</span>
 
 <span class="c1"># ❌ Avoid jsonencode unless absolutely necessary</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_iam_policy&quot;</span><span class="w"> </span><span class="nv">&quot;bad&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_iam_policy"</span><span class="w"> </span><span class="nv">"bad"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span><span class="cm"> /* ... */</span><span class="w"> </span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="iam-role-attachments"><strong>IAM Role Attachments</strong><a class="headerlink" href="#iam-role-attachments" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ Use attachment resources</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_iam_role&quot;</span><span class="w"> </span><span class="nv">&quot;example&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;example-role&quot;</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_iam_role"</span><span class="w"> </span><span class="nv">"example"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"example-role"</span>
 <span class="w">  </span><span class="na">assume_role_policy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_iam_policy_document.assume_role.json</span>
 <span class="p">}</span>
 
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_iam_role_policy_attachment&quot;</span><span class="w"> </span><span class="nv">&quot;example&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_iam_role_policy_attachment"</span><span class="w"> </span><span class="nv">"example"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">role</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_iam_role.example.name</span>
-<span class="w">  </span><span class="na">policy_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:iam::aws:policy/ReadOnlyAccess&quot;</span>
+<span class="w">  </span><span class="na">policy_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:iam::aws:policy/ReadOnlyAccess"</span>
 <span class="p">}</span>
 
-<span class="c1"># ❌ Don&#39;t use deprecated arguments</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_iam_role&quot;</span><span class="w"> </span><span class="nv">&quot;bad&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">managed_policy_arns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;...&quot;</span><span class="p">]</span><span class="c1">  # Deprecated</span>
+<span class="c1"># ❌ Don't use deprecated arguments</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_iam_role"</span><span class="w"> </span><span class="nv">"bad"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">managed_policy_arns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">]</span><span class="c1">  # Deprecated</span>
 <span class="w">  </span><span class="nb">inline_policy</span><span class="w"> </span><span class="p">{</span><span class="cm"> /* ... */</span><span class="w"> </span><span class="p">}</span><span class="c1">    # Deprecated</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -6344,17 +6344,17 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <h3 id="what-to-include"><strong>What to Include</strong><a class="headerlink" href="#what-to-include" title="Permanent link">&para;</a></h3>
 <p><strong>Philosophy</strong>: Expose what users commonly need, expand based on requests.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Connection information</span>
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;service_endpoints&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Service connection endpoints&quot;</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"service_endpoints"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Service connection endpoints"</span>
 <span class="w">  </span><span class="nb">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">nlb_dns</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_lb.nlb.dns_name</span>
-<span class="w">    </span><span class="na">https_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">local.public_dns_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="s2">&quot;https://${local.public_dns_name}&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">null</span>
+<span class="w">    </span><span class="na">https_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">local.public_dns_name</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="s2">"https://${local.public_dns_name}"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">null</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="c1"># Integration points</span>
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;cluster_info&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;EKS cluster information for kubectl&quot;</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"cluster_info"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"EKS cluster information for kubectl"</span>
 <span class="w">  </span><span class="nb">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">cluster_name</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_eks_cluster.main.name</span>
 <span class="w">    </span><span class="na">cluster_endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_eks_cluster.main.endpoint</span>
@@ -6363,8 +6363,8 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 <span class="p">}</span>
 
 <span class="c1"># Automation helpers</span>
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;security_group_ids&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Security group IDs for additional rules&quot;</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"security_group_ids"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Security group IDs for additional rules"</span>
 <span class="w">  </span><span class="nb">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="na">nlb</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_security_group.nlb.id</span>
 <span class="w">    </span><span class="na">internal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_security_group.internal.id</span>
@@ -6384,14 +6384,14 @@ terraform<span class="w"> </span>apply<span class="w">  </span><span class="c1">
 </ul>
 <h3 id="safe-patterns"><strong>Safe Patterns</strong><a class="headerlink" href="#safe-patterns" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># ✅ SAFE - Adding resources, optional variables with defaults, new outputs</span>
-<span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;aws_s3_bucket&quot;</span><span class="w"> </span><span class="nv">&quot;new_feature&quot;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kr">resource</span><span class="w"> </span><span class="nc">"aws_s3_bucket"</span><span class="w"> </span><span class="nv">"new_feature"</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
 
-<span class="kr">variable</span><span class="w"> </span><span class="nv">&quot;new_option&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">variable</span><span class="w"> </span><span class="nv">"new_option"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">type</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="kt">bool</span>
 <span class="w">  </span><span class="na">default</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span><span class="c1">  # Required default</span>
 <span class="p">}</span>
 
-<span class="kr">output</span><span class="w"> </span><span class="nv">&quot;new_info&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="kr">output</span><span class="w"> </span><span class="nv">"new_info"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">aws_s3_bucket.new_feature.id</span>
 <span class="p">}</span>
 </code></pre></div>

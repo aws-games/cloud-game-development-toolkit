@@ -3511,14 +3511,14 @@
 <p>Should you need to manually create the super user password secret, the following AWS CLI command may prove useful:</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>P4SuperUserPassword<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;P4 Server Super User Password&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;EXAMPLE-PASSWORD&quot;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"P4 Server Super User Password"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"EXAMPLE-PASSWORD"</span>
 </code></pre></div>
 <p>You can then provide this credential as a variable when you define the P4 Code Review module in your Terraform configurations (the parent Perforce module does this for you):</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_code_review"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-code-review"</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4SuperUserPassword-a1b2c3&quot;</span>
+<span class="w">    </span><span class="na">super_user_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:&lt;your-aws-region&gt;:&lt;your-aws-account-id&gt;:secret:P4SuperUserPassword-a1b2c3"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="debugging">Debugging<a class="headerlink" href="#debugging" title="Permanent link">&para;</a></h2>
@@ -3551,70 +3551,70 @@
 <p><strong><code>saml</code></strong> - The SAML technical configuration (IdP/SP settings, certificates)</p>
 </li>
 </ol>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_code_review"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-code-review"</span>
 <span class="c1">  # ... other required variables ...</span>
 
 <span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
 <span class="c1">    # Enable SSO login option</span>
 <span class="w">    </span><span class="nb">p4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">sso</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;optional&quot;</span>
+<span class="w">      </span><span class="na">sso</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"optional"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="c1">    # SAML configuration</span>
 <span class="w">    </span><span class="nb">saml</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;Log in with SSO&quot;</span>
+<span class="w">      </span><span class="na">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Log in with SSO"</span>
 <span class="w">      </span><span class="nb">sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">entityId</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com&quot;</span>
+<span class="w">        </span><span class="na">entityId</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://swarm.example.com"</span>
 <span class="w">        </span><span class="nb">assertionConsumerService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com/saml/acs&quot;</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://swarm.example.com/saml/acs"</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">        </span><span class="nb">singleLogoutService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://swarm.example.com/saml/sls&quot;</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://swarm.example.com/saml/sls"</span>
 <span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="na">NameIDFormat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress&quot;</span>
+<span class="w">        </span><span class="na">NameIDFormat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">      </span><span class="nb">idp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">entityId</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;urn:your-auth0-domain&quot;</span>
+<span class="w">        </span><span class="na">entityId</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="s2">"urn:your-auth0-domain"</span>
 <span class="w">        </span><span class="nb">singleSignOnService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-auth0-domain/samlp/YOUR_CLIENT_ID&quot;</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://your-auth0-domain/samlp/YOUR_CLIENT_ID"</span>
 <span class="w">        </span><span class="p">}</span>
 <span class="w">        </span><span class="nb">singleLogoutService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-auth0-domain/samlp/YOUR_CLIENT_ID/logout&quot;</span>
+<span class="w">          </span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://your-auth0-domain/samlp/YOUR_CLIENT_ID/logout"</span>
 <span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="na">x509cert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;YOUR_IDP_CERTIFICATE_HERE&quot;</span>
+<span class="w">        </span><span class="na">x509cert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"YOUR_IDP_CERTIFICATE_HERE"</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="example-email-notifications">Example: Email Notifications<a class="headerlink" href="#example-email-notifications" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_code_review"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-code-review"</span>
 <span class="c1">  # ... other required variables ...</span>
 
 <span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
 <span class="w">    </span><span class="nb">mail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="nb">transport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;smtp.example.com&quot;</span>
+<span class="w">        </span><span class="na">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"smtp.example.com"</span>
 <span class="w">        </span><span class="na">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">587</span>
-<span class="w">        </span><span class="na">security</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;tls&quot;</span>
+<span class="w">        </span><span class="na">security</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"tls"</span>
 <span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="na">sender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;swarm@example.com&quot;</span>
+<span class="w">      </span><span class="na">sender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"swarm@example.com"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">})</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="example-jira-integration">Example: Jira Integration<a class="headerlink" href="#example-jira-integration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_code_review&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-code-review&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_code_review"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-code-review"</span>
 <span class="c1">  # ... other required variables ...</span>
 
 <span class="w">  </span><span class="na">custom_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">jsonencode</span><span class="p">({</span>
 <span class="w">    </span><span class="nb">jira</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="na">host</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://your-company.atlassian.net&quot;</span>
-<span class="w">      </span><span class="na">user</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;jira-user@example.com&quot;</span>
-<span class="w">      </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your-api-token&quot;</span>
-<span class="w">      </span><span class="na">job_field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;customfield_10001&quot;</span>
+<span class="w">      </span><span class="na">host</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://your-company.atlassian.net"</span>
+<span class="w">      </span><span class="na">user</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s2">"jira-user@example.com"</span>
+<span class="w">      </span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"your-api-token"</span>
+<span class="w">      </span><span class="na">job_field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"customfield_10001"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">})</span>
 <span class="p">}</span>

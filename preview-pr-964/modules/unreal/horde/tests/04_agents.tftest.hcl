@@ -135,6 +135,29 @@ run "unit_test_single_agent_pool" {
     condition     = length(aws_iam_instance_profile.unreal_horde_agent_instance_profile) == 1
     error_message = "Agent instance profile should be created"
   }
+
+  # agent_launch_template_ids is a map keyed by agent pool name; assert the
+  # backing launch template exists for the "default" pool so the output key is
+  # populated (attribute is plan-known, unlike the apply-time template id).
+  assert {
+    condition     = aws_launch_template.unreal_horde_agent_template["default"].name_prefix == "unreal_horde_agent-default"
+    error_message = "agent_launch_template_ids should be backed by a launch template for the configured agent pool"
+  }
+
+  # agent_instance_role_name resolves to this IAM role's name; assert the
+  # plan-known role name to prove the output is wired to the real role.
+  assert {
+    condition     = aws_iam_role.unreal_horde_agent_default_role[0].name == "unreal-horde-agent-default-instance-role"
+    error_message = "agent_instance_role_name should be backed by the agent IAM role's name"
+  }
+
+  # agent_instance_role_arn resolves from the same IAM role, which is attached
+  # to instances via the instance profile; assert the profile references that
+  # role (plan-known) to cover the role/profile wiring.
+  assert {
+    condition     = aws_iam_instance_profile.unreal_horde_agent_instance_profile[0].role == "unreal-horde-agent-default-instance-role"
+    error_message = "agent_instance_role_arn should be backed by the agent IAM role attached to the instance profile"
+  }
 }
 
 # Test: Multiple agent pools with different configurations

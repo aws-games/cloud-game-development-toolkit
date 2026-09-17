@@ -3456,26 +3456,26 @@
 </ol>
 <h4 id="configuring-the-admin-account">Configuring the Admin Account<a class="headerlink" href="#configuring-the-admin-account" title="Permanent link">&para;</a></h4>
 <p>By default, an admin user named <code>perforce</code> is created:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_server"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-server"</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="c1">    # Uses default admin_username = &quot;perforce&quot;</span>
+<span class="c1">    # Uses default admin_username = "perforce"</span>
 <span class="c1">    # Password auto-generated and stored in Secrets Manager</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>To customize the admin username:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_server"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-server"</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">admin_username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;myadmin&quot;</span>
+<span class="w">    </span><span class="na">admin_username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"myadmin"</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>To use an existing password secret:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;p4_server&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;modules/perforce/modules/p4-server&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"p4_server"</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"modules/perforce/modules/p4-server"</span>
 <span class="w">    </span><span class="p">...</span>
-<span class="w">    </span><span class="na">admin_username</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;myadmin&quot;</span>
-<span class="w">    </span><span class="na">admin_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;arn:aws:secretsmanager:us-west-2:123456789012:secret:MyAdminPassword-a1b2c3&quot;</span>
+<span class="w">    </span><span class="na">admin_username</span><span class="w">            </span><span class="o">=</span><span class="w"> </span><span class="s2">"myadmin"</span>
+<span class="w">    </span><span class="na">admin_password_secret_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:us-west-2:123456789012:secret:MyAdminPassword-a1b2c3"</span>
 <span class="p">}</span>
 </code></pre></div>
 <!-- markdownlint-disable -->

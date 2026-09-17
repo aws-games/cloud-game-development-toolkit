@@ -3343,7 +3343,7 @@
 <p>This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes#platform-sdk-upgrades">the release notes for Unreal Engine 5.7</a> for details on what tools are used for compiling this version of the engine.</p>
 <p>The only required variable for building this Amazon Machine Image is a public SSH key.</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>windows.pkr.hcl<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public ssh key here&gt;&quot;</span>
+<span class="w">    </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public ssh key here&gt;"</span>
 </code></pre></div>
 <details class="note" open="open">
 <summary>Note</summary>
@@ -3352,9 +3352,9 @@
 <p>You will then want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>JenkinsPrivateSSHKey<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;Private SSH key for Jenkins build agent access.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;&lt;insert private SSH key here&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tags<span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:type,Value=sshUserPrivateKey&#39;</span><span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:username,Value=jenkins&#39;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"Private SSH key for Jenkins build agent access."</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"&lt;insert private SSH key here&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tags<span class="w"> </span><span class="s1">'Key=jenkins:credentials:type,Value=sshUserPrivateKey'</span><span class="w"> </span><span class="s1">'Key=jenkins:credentials:username,Value=jenkins'</span>
 </code></pre></div>
 <p>Take note of the output of this CLI command. You will need the ARN later.</p>
 <p>Currently this AMI is designed to work with our Jenkins module. This is why it creates a <code>jenkins</code> user and the associated SSH username for the key you upload is that same <code>jenkins</code> user. <a href="https://github.com/orgs/aws-games/projects/1/views/1?pane=issue&amp;itemId=74515666">Expanded customization of this AMI is currently on the Cloud Game Development Toolkit roadmap.</a></p>

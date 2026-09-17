@@ -3485,20 +3485,40 @@
 <ol>
 <li>
 <p>Create a Secrets Manager secret containing a JSON object with the Perforce username and password Horde should connect as:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;horde-service-user&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;example-password&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"horde-service-user"</span><span class="p">,</span><span class="w"> </span><span class="nt">"password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"example-password"</span><span class="p">}</span>
 </code></pre></div>
 </li>
 <li>
 <p>Pass the secret's ARN to the module via <code>p4_credentials_secret_arn</code>.</p>
 </li>
 </ol>
-<p>The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted <code>secretsmanager:GetSecretValue</code> on the secret automatically). The init container substitutes them into <code>server.json</code> under <code>plugins.build.perforce</code> in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.</p>
+<p>The credentials are injected into the init container at startup using ECS-native Secrets Manager integration (the task execution role is granted <code>secretsmanager:GetSecretValue</code> on the secret automatically). The init container substitutes them in-memory — they never appear in the ECS task definition, CloudTrail, container logs, or Terraform state.</p>
+<p>The init container substitutes the credentials into two places, using the <code>__P4_USERNAME__</code> / <code>__P4_PASSWORD__</code> placeholder tokens:</p>
+<ul>
+<li><strong><code>server.json</code></strong> (rendered by the module) under <code>plugins.build.perforce</code> — the Horde server's Perforce connection.</li>
+<li><strong><code>globals.json</code></strong> (supplied by you via <code>config_globals_json</code>) — see below.</li>
+</ul>
 <h3 id="horde-configuration-globalsjson">Horde configuration (globals.json)<a class="headerlink" href="#horde-configuration-globalsjson" title="Permanent link">&para;</a></h3>
 <p>The <code>config_path</code> variable controls the Horde server's <code>configPath</code> setting:</p>
 <ul>
 <li>Set <code>config_path = "globals.json"</code> together with <code>config_globals_json</code> (a JSON string) to have the init container write your Horde configuration to <code>/app/Data/globals.json</code>.</li>
 <li>Set <code>config_path</code> to a Perforce depot path (e.g. <code>"//UE/Main/Config/globals.json"</code>) to have Horde load its configuration from your depot instead.</li>
 </ul>
+<h4 id="perforce-cluster-credentials-in-globalsjson">Perforce cluster credentials in globals.json<a class="headerlink" href="#perforce-cluster-credentials-in-globalsjson" title="Permanent link">&para;</a></h4>
+<p>Horde 5.5 resolves the Perforce cluster used for <strong>stream polling</strong> from the top-level <code>perforceClusters</code> array in <code>globals.json</code>, and it does <strong>not</strong> fall back to <code>server.json</code> for that path. If your <code>perforceClusters</code> entry omits credentials, stream polling authenticates as the wrong user (or the OS default) and fails.</p>
+<p>To deliver the Perforce credentials to a cluster without ever placing the password in your config string or Terraform state, put the same placeholder tokens inside a cluster's <code>credentials</code> entry. The init container substitutes them from <code>p4_credentials_secret_arn</code> at startup:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">"perforceClusters"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"default"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"serviceAccount"</span><span class="p">:</span><span class="w"> </span><span class="s2">"svc-horde"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"serverAndPort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ssl:perforce.example.com:1666"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"credentials"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"userName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"__P4_USERNAME__"</span><span class="p">,</span><span class="w"> </span><span class="nt">"password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"__P4_PASSWORD__"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<p>The <code>credentials</code> substitution is a no-op when the placeholders are absent, so existing <code>config_globals_json</code> values are unaffected. For deploy diagnostics the init container prints <code>globals.json</code> to the <code>[INIT]</code> CloudWatch log <strong>before</strong> substituting the password, so <code>__P4_PASSWORD__</code> appears as a literal placeholder in the log and the injected secret is never written to CloudWatch.</p>
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
 
@@ -4050,7 +4070,7 @@
 </tr>
 <tr>
 <td><a name="input_config_globals_json"></a> <a href="#input_config_globals_json">config_globals_json</a></td>
-<td>JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = "globals.json". Leave empty to manage config another way (e.g. a Perforce config_path).</td>
+<td>JSON string content for the Horde globals.json configuration file. When non-empty it is written to /app/Data/globals.json by the init container; pair it with config_path = "globals.json". The init container substitutes the __P4_USERNAME__ / __P4_PASSWORD__ placeholder tokens (from p4_credentials_secret_arn) into this content at startup, so you can place them inside a perforceClusters[].credentials entry without the password ever landing in Terraform state or the task definition. Substitution is a no-op when the placeholders are absent. Leave empty to manage config another way (e.g. a Perforce config_path).</td>
 <td><code>string</code></td>
 <td><code>""</code></td>
 <td style="text-align: center;">no</td>
@@ -4386,7 +4406,7 @@
 </tr>
 <tr>
 <td><a name="input_p4_credentials_secret_arn"></a> <a href="#input_p4_credentials_secret_arn">p4_credentials_secret_arn</a></td>
-<td>ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce - they never appear in the ECS task definition or Terraform state. Required when p4_port is set.</td>
+<td>ARN of an AWS Secrets Manager secret containing the Perforce credentials the Horde server connects with, as a JSON object: {"username": "...", "password": "..."}. The credentials are fetched at container startup and injected into /app/Data/server.json under plugins.build.perforce (and into any __P4_USERNAME__/__P4_PASSWORD__ placeholders in config_globals_json) - they never appear in the ECS task definition or Terraform state. Required when p4_port is set.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -4514,7 +4534,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-07-10
+    2026-08-31
   </span>
 
     

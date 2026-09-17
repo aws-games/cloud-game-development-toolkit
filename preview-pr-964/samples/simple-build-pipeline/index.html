@@ -3784,10 +3784,10 @@ The Build Agent templates will default to the user's CLI configured region, if a
 <p>This variable can be passed to Packer using the <code>-var-file</code> or <code>-var</code> command line flag. If you are using a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> for overridable fields. You can also pass the SSH key directly at the command line:</p>
 <h4 id="there-are-separate-arm-and-x86-based-packer-scripts-available-for-amazon-linux-2023">There are separate ARM and x86 based Packer scripts available for Amazon Linux 2023<a class="headerlink" href="#there-are-separate-arm-and-x86-based-packer-scripts-available-for-amazon-linux-2023" title="Permanent link">&para;</a></h4>
 <h4 id="arm-based-image">ARM Based Image<a class="headerlink" href="#arm-based-image" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>amazon-linux-2023-arm64.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public key here&gt;"</span><span class="w"> </span>amazon-linux-2023-arm64.pkr.hcl
 </code></pre></div>
 <h4 id="x86-based-image">x86 Based Image<a class="headerlink" href="#x86-based-image" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>amazon-linux-2023-x86_64.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public key here&gt;"</span><span class="w"> </span>amazon-linux-2023-x86_64.pkr.hcl
 </code></pre></div>
 <blockquote>
 <p><strong>Note:</strong>
@@ -3796,19 +3796,19 @@ The above commands assume you are running <code>packer</code> from the <code>/as
 <p>Then securely store the private key value as a secret in AWS Secrets Manager.</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>JenkinsPrivateSSHKey<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;Private SSH key for Jenkins build agent access.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;&lt;insert private SSH key here&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tags<span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:type,Value=sshUserPrivateKey&#39;</span><span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:username,Value=ec2-user&#39;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"Private SSH key for Jenkins build agent access."</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"&lt;insert private SSH key here&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tags<span class="w"> </span><span class="s1">'Key=jenkins:credentials:type,Value=sshUserPrivateKey'</span><span class="w"> </span><span class="s1">'Key=jenkins:credentials:username,Value=ec2-user'</span>
 </code></pre></div>
 <p>Take note of the output of this CLI command. You will need the ARN later.</p>
 <h4 id="ubuntu-jammy-2204-amazon-machine-images">Ubuntu Jammy 22.04 Amazon Machine Images<a class="headerlink" href="#ubuntu-jammy-2204-amazon-machine-images" title="Permanent link">&para;</a></h4>
 <p>These Amazon Machine Images are provisioned using the Ubuntu Jammy 22.04 base operating system. Just like the Amazon Linux 2023 AMI above, the only required variable is a public SSH key. All Linux Packer templates use the same variables file, so if you would like to share a public key across all build nodes we recommend using a variables file. In the case you do choose to use a variable file, please consult the <a href="https://github.com/aws-games/cloud-game-development-toolkit/blob/main/assets/packer/build-agents/linux/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> for overridable fields.</p>
 <h4 id="there-are-separate-amd64-and-arm-based-packer-scripts-available-for-ubuntu-jammy-2204">There are separate AMD64 and ARM based Packer scripts available for Ubuntu Jammy 22.04<a class="headerlink" href="#there-are-separate-amd64-and-arm-based-packer-scripts-available-for-ubuntu-jammy-2204" title="Permanent link">&para;</a></h4>
 <h4 id="amd64-based-image">AMD64 Based Image<a class="headerlink" href="#amd64-based-image" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>ubuntu-jammy-22.04-amd64-server.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public key here&gt;"</span><span class="w"> </span>ubuntu-jammy-22.04-amd64-server.pkr.hcl
 </code></pre></div>
 <h4 id="arm-based-ubuntu-image">ARM Based Ubuntu Image<a class="headerlink" href="#arm-based-ubuntu-image" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public key here&gt;&quot;</span><span class="w"> </span>ubuntu-jammy-22.04-arm64-server.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public key here&gt;"</span><span class="w"> </span>ubuntu-jammy-22.04-arm64-server.pkr.hcl
 </code></pre></div>
 <blockquote>
 <p><strong>Note:</strong>
@@ -3817,9 +3817,9 @@ The above commands assume you are running <code>packer</code> from the <code>/as
 <p>Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>JenkinsPrivateSSHKey<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;Private SSH key for Jenkins build agent access.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;&lt;insert private SSH key here&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tags<span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:type,Value=sshUserPrivateKey&#39;</span><span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:username,Value=ubuntu&#39;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"Private SSH key for Jenkins build agent access."</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"&lt;insert private SSH key here&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tags<span class="w"> </span><span class="s1">'Key=jenkins:credentials:type,Value=sshUserPrivateKey'</span><span class="w"> </span><span class="s1">'Key=jenkins:credentials:username,Value=ubuntu'</span>
 </code></pre></div>
 <blockquote>
 <p><strong>Note:</strong>
@@ -3829,7 +3829,7 @@ If you have already created a secret for any of the previous Amazon Linux images
 <h4 id="windows-2022-x86-based-amazon-machine-image">Windows 2022 X86 based Amazon Machine Image<a class="headerlink" href="#windows-2022-x86-based-amazon-machine-image" title="Permanent link">&para;</a></h4>
 <p>This Amazon Machine Image is provisioned using the Windows Server 2022 base operating system. It installs all required tooling for Unreal Engine 5 compilation by default. Please consult <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.4-release-notes#platformsdkupgrades">the release notes for Unreal Engine 5.4</a> for details on what tools are used for compiling this version of the engine.</p>
 <p>Again, the only required variable for building this Amazon Machine Image is a public SSH key.</p>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;public_key=&lt;include public ssh key here&gt;&quot;</span><span class="w"> </span>windows.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var<span class="w"> </span><span class="s2">"public_key=&lt;include public ssh key here&gt;"</span><span class="w"> </span>windows.pkr.hcl
 </code></pre></div>
 <blockquote>
 <p><strong>Note:</strong>
@@ -3838,9 +3838,9 @@ The above command assumes you are running <code>packer</code> from the <code>/as
 <p>Finally, you'll want to upload the private SSH key to AWS Secrets Manager so that the Jenkins orchestration service can use it to connect to this build agent.</p>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--name<span class="w"> </span>JenkinsPrivateSSHKey<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--description<span class="w"> </span><span class="s2">&quot;Private SSH key for Jenkins build agent access.&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">&quot;&lt;insert private SSH key here&gt;&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tags<span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:type,Value=sshUserPrivateKey&#39;</span><span class="w"> </span><span class="s1">&#39;Key=jenkins:credentials:username,Value=jenkins&#39;</span>
+<span class="w">    </span>--description<span class="w"> </span><span class="s2">"Private SSH key for Jenkins build agent access."</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span><span class="s2">"&lt;insert private SSH key here&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tags<span class="w"> </span><span class="s1">'Key=jenkins:credentials:type,Value=sshUserPrivateKey'</span><span class="w"> </span><span class="s1">'Key=jenkins:credentials:username,Value=jenkins'</span>
 </code></pre></div>
 <blockquote>
 <p><strong>Note:</strong>
@@ -3886,7 +3886,7 @@ Pipeline</em> please consult the documentation for <a href="https://docs.aws.ama
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 </code></pre></div>
 <p>This will install the modules and required Terraform providers.</p>
-<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span>-var<span class="w"> </span><span class="s2">&quot;route53_public_hosted_zone_name=&lt;insert your root domain&gt;&quot;</span>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span>-var<span class="w"> </span><span class="s2">"route53_public_hosted_zone_name=&lt;insert your root domain&gt;"</span>
 </code></pre></div>
 <p>This will create a Terraform plan, and wait for manual approval to deploy the proposed resources. Once approval is given the entire deployment process takes roughly 10 minutes.</p>
 <h3 id="step-7-configure-jenkins">Step 7. Configure Jenkins<a class="headerlink" href="#step-7-configure-jenkins" title="Permanent link">&para;</a></h3>

@@ -3950,8 +3950,8 @@ packer<span class="w"> </span>build<span class="w"> </span>perforce_x86.pkr.hcl
 <div class="highlight"><pre><span></span><code><span class="c1"># Verify the AMI is available in your account</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_al2023*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[0].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">"Name=name,Values=p4_al2023*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'Images[0].[ImageId,Name,CreationDate]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
 <p>The Terraform configuration will automatically discover this AMI by searching for images with the name pattern <code>p4_al2023*</code> owned by your account.</p>
@@ -4021,7 +4021,7 @@ docker<span class="w"> </span>tag<span class="w"> </span>unity-teamcity-agent:la
 docker<span class="w"> </span>push<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest
 
 <span class="c1"># Step 5: Get your image URI for terraform.tfvars</span>
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>aws<span class="w"> </span>sts<span class="w"> </span>get-caller-identity<span class="w"> </span>--query<span class="w"> </span>Account<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest"</span>
 </code></pre></div>
 <p>Copy the image URI from the output - you'll need it for your <code>terraform.tfvars</code> file in the next phase.</p>
 <blockquote>
@@ -4035,13 +4035,13 @@ cp<span class="w"> </span>terraform.tfvars.example<span class="w"> </span>terraf
 </code></pre></div>
 <p>Edit <code>terraform.tfvars</code> with your values:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Your Route53 hosted zone domain name</span>
-<span class="na">route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;yourdomain.com&quot;</span>
+<span class="na">route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"yourdomain.com"</span>
 
 <span class="c1"># Path to Unity License Server zip file (from Phase 1, Step 3)</span>
-<span class="na">unity_license_server_file_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/path/to/Unity.Licensing.Server.linux-x64-v2.1.0.zip&quot;</span>
+<span class="na">unity_license_server_file_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/path/to/Unity.Licensing.Server.linux-x64-v2.1.0.zip"</span>
 
 <span class="c1"># Unity TeamCity agent Docker image URI (from Phase 1, Step 4)</span>
-<span class="na">unity_teamcity_agent_image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;123456789012.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest&quot;</span>
+<span class="na">unity_teamcity_agent_image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"123456789012.dkr.ecr.us-east-1.amazonaws.com/unity-teamcity-agent:latest"</span>
 </code></pre></div>
 <h4 id="step-2-review-and-customize-localstf-optional">Step 2: Review and Customize locals.tf (optional)<a class="headerlink" href="#step-2-review-and-customize-localstf-optional" title="Permanent link">&para;</a></h4>
 <p>Note that the values in <code>locals.tf</code> are sensible defaults and will work without changes. The option to change them is there for those who want to further customize the deployment.</p>
@@ -4083,8 +4083,8 @@ aws<span class="w"> </span>ecs<span class="w"> </span>list-services<span class="
 <span class="c1"># Verify ECS service health</span>
 aws<span class="w"> </span>ecs<span class="w"> </span>describe-services<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--services<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>ecs<span class="w"> </span>list-services<span class="w"> </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span>--query<span class="w"> </span><span class="s1">&#39;serviceArns[*]&#39;</span><span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;services[*].[serviceName,status,runningCount,desiredCount]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--services<span class="w"> </span><span class="k">$(</span>aws<span class="w"> </span>ecs<span class="w"> </span>list-services<span class="w"> </span>--cluster<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>ecs_cluster_name<span class="k">)</span><span class="w"> </span>--query<span class="w"> </span><span class="s1">'serviceArns[*]'</span><span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'services[*].[serviceName,status,runningCount,desiredCount]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 
 <span class="c1"># Test DNS resolution for your services</span>
@@ -4143,7 +4143,7 @@ p4<span class="w"> </span>info
 </code></pre></div>
 <h5 id="step-13-create-a-stream-depot">Step 1.3: Create a Stream Depot<a class="headerlink" href="#step-13-create-a-stream-depot" title="Permanent link">&para;</a></h5>
 <p>Stream depots are recommended for modern Perforce workflows and work well with Unity projects.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Create a new stream depot named &quot;game&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a new stream depot named "game"</span>
 p4<span class="w"> </span>depot<span class="w"> </span>-t<span class="w"> </span>stream<span class="w"> </span>-o<span class="w"> </span>game<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>depot<span class="w"> </span>-i
 
 <span class="c1"># Verify the depot was created</span>
@@ -4161,7 +4161,7 @@ p4<span class="w"> </span>streams<span class="w"> </span>//game/...
 p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span>-S<span class="w"> </span>//game/main<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>client<span class="w"> </span>-i
 
 <span class="c1"># Get the workspace name (usually &lt;username&gt;_&lt;hostname&gt;)</span>
-p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;^Client:&#39;</span>
+p4<span class="w"> </span>client<span class="w"> </span>-o<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">'^Client:'</span>
 
 <span class="c1"># Sync the workspace (will be empty initially)</span>
 p4<span class="w"> </span>sync
@@ -4170,19 +4170,19 @@ p4<span class="w"> </span>sync
 <span class="nb">cd</span><span class="w"> </span>~/perforce/&lt;workspace-name&gt;/
 
 <span class="c1"># Create a README file</span>
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;# Unity Game Project&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>README.md
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"# Unity Game Project"</span><span class="w"> </span>&gt;<span class="w"> </span>README.md
 
 <span class="c1"># Add the file to Perforce</span>
 p4<span class="w"> </span>add<span class="w"> </span>README.md
 
 <span class="c1"># Submit the changelist</span>
-p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;Initial commit: Add README&quot;</span>
+p4<span class="w"> </span>submit<span class="w"> </span>-d<span class="w"> </span><span class="s2">"Initial commit: Add README"</span>
 
 <span class="c1"># Verify the file was submitted</span>
 p4<span class="w"> </span>files<span class="w"> </span>//game/main/...
 </code></pre></div>
 <h5 id="step-16-create-additional-users">Step 1.6: Create Additional Users<a class="headerlink" href="#step-16-create-additional-users" title="Permanent link">&para;</a></h5>
-<div class="highlight"><pre><span></span><code><span class="c1"># Create a new user (replace &#39;developer1&#39;)</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a new user (replace 'developer1')</span>
 p4<span class="w"> </span>user<span class="w"> </span>-o<span class="w"> </span>developer1<span class="w"> </span><span class="p">|</span><span class="w"> </span>p4<span class="w"> </span>user<span class="w"> </span>-i<span class="w"> </span>-f
 
 <span class="c1"># Set a password for the new user</span>
@@ -4366,9 +4366,9 @@ wget<span class="w"> </span><span class="k">$(</span>terraform<span class="w"> <
 </blockquote>
 <p><strong>Terraform does not respect EC2 termination protection.</strong> Even though the module enables instance termination protection by default, running <code>terraform destroy</code> will still destroy the instance. You must add a Terraform lifecycle block to prevent deletion.</p>
 <p>Edit <code>main.tf</code> and add the lifecycle block to the Unity License Server module:</p>
-<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">&quot;unity_license_server&quot;</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kr">module</span><span class="w"> </span><span class="nv">"unity_license_server"</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">count</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">var.unity_license_server_file_path</span><span class="w"> </span><span class="p">!=</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">0</span>
-<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;../../modules/unity/floating-license-server&quot;</span>
+<span class="w">  </span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"../../modules/unity/floating-license-server"</span>
 
 <span class="c1">  # ... existing configuration ...</span>
 

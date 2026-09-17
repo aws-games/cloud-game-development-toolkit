@@ -4132,11 +4132,11 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 <h3 id="option-2-using-custom-vpc">Option 2: Using Custom VPC<a class="headerlink" href="#option-2-using-custom-vpc" title="Permanent link">&para;</a></h3>
 <p>If you don't have a default VPC, specify your own:</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;region=us-west-2&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;associate_public_ip_address=true&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;ssh_interface=public_ip&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"region=us-west-2"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"vpc_id=vpc-xxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"subnet_id=subnet-xxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"associate_public_ip_address=true"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"ssh_interface=public_ip"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>p4_code_review_x86.pkr.hcl
 </code></pre></div>
 <p><strong>Requirements for custom VPC</strong>:</p>
@@ -4147,14 +4147,14 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 </ul>
 <h3 id="option-3-using-variables-file">Option 3: Using Variables File<a class="headerlink" href="#option-3-using-variables-file" title="Permanent link">&para;</a></h3>
 <p>Create a <code>my-vars.pkrvars.hcl</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;us-west-2&quot;</span>
-<span class="na">vpc_id</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;vpc-xxxxx&quot;</span>
-<span class="na">subnet_id</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;subnet-xxxxx&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="na">region</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">"us-west-2"</span>
+<span class="na">vpc_id</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="s2">"vpc-xxxxx"</span>
+<span class="na">subnet_id</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="s2">"subnet-xxxxx"</span>
 <span class="na">associate_public_ip_address</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
-<span class="na">ssh_interface</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;public_ip&quot;</span>
+<span class="na">ssh_interface</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="s2">"public_ip"</span>
 </code></pre></div>
 <p>Then build:</p>
-<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">&quot;my-vars.pkrvars.hcl&quot;</span><span class="w"> </span>p4_code_review_x86.pkr.hcl
+<div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span>-var-file<span class="o">=</span><span class="s2">"my-vars.pkrvars.hcl"</span><span class="w"> </span>p4_code_review_x86.pkr.hcl
 </code></pre></div>
 <h3 id="build-output">Build Output<a class="headerlink" href="#build-output" title="Permanent link">&para;</a></h3>
 <p>Successful build output looks like:</p>
@@ -4164,7 +4164,7 @@ packer<span class="w"> </span>build<span class="w"> </span>p4_code_review_x86.pk
 ==&gt; amazon-ebs.ubuntu2404: AMI: ami-0abc123def456789
 ==&gt; amazon-ebs.ubuntu2404: Waiting for AMI to become ready...
 ==&gt; amazon-ebs.ubuntu2404: Terminating the source AWS instance...
-Build &#39;amazon-ebs.ubuntu2404&#39; finished after 12 minutes 34 seconds.
+Build 'amazon-ebs.ubuntu2404' finished after 12 minutes 34 seconds.
 
 ==&gt; Wait completed after 12 minutes 34 seconds
 
@@ -4177,8 +4177,8 @@ us-west-2: ami-0abc123def456789
 <h3 id="list-all-p4-code-review-amis">List All P4 Code Review AMIs<a class="headerlink" href="#list-all-p4-code-review-amis" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images[*].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">"Name=name,Values=p4_code_review_ubuntu-*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'Images[*].[ImageId,Name,CreationDate]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
 <p>Output:</p>
@@ -4192,8 +4192,8 @@ us-west-2: ami-0abc123def456789
 <h3 id="get-the-latest-ami">Get the Latest AMI<a class="headerlink" href="#get-the-latest-ami" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;Images | sort_by(@, &amp;CreationDate) | [-1].[ImageId,Name,CreationDate]&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">"Name=name,Values=p4_code_review_ubuntu-*"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'Images | sort_by(@, &amp;CreationDate) | [-1].[ImageId,Name,CreationDate]'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--output<span class="w"> </span>table
 </code></pre></div>
 <h3 id="get-details-about-a-specific-ami">Get Details About a Specific AMI<a class="headerlink" href="#get-details-about-a-specific-ami" title="Permanent link">&para;</a></h3>
@@ -4218,8 +4218,8 @@ us-west-2: ami-0abc123def456789
 <p><strong>Error</strong>: Packer fails with "No default VPC for this user"</p>
 <p><strong>Solution</strong>: Use Option 2 or 3 above to specify your VPC and subnet:</p>
 <div class="highlight"><pre><span></span><code>packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;vpc_id=vpc-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="o">=</span><span class="s2">&quot;subnet_id=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"vpc_id=vpc-xxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="o">=</span><span class="s2">"subnet_id=subnet-xxxxx"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>p4_code_review_x86.pkr.hcl
 </code></pre></div>
 <h3 id="unable-to-connect-to-instance">"Unable to connect to instance"<a class="headerlink" href="#unable-to-connect-to-instance" title="Permanent link">&para;</a></h3>
@@ -4233,8 +4233,8 @@ us-west-2: ami-0abc123def456789
 <p><strong>Solution</strong>: Verify your subnet has:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check if subnet has route to IGW</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=association.subnet-id,Values=subnet-xxxxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--query<span class="w"> </span><span class="s1">&#39;RouteTables[*].Routes[?GatewayId!=`local`]&#39;</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">"Name=association.subnet-id,Values=subnet-xxxxx"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'RouteTables[*].Routes[?GatewayId!=`local`]'</span>
 </code></pre></div>
 <h3 id="package-installation-failed">"Package installation failed"<a class="headerlink" href="#package-installation-failed" title="Permanent link">&para;</a></h3>
 <p><strong>Error</strong>: APT/DEB errors during build</p>
@@ -4255,7 +4255,7 @@ aws<span class="w"> </span>ec2<span class="w"> </span>describe-route-tables<span
 <p><strong>This shouldn't happen</strong> (timestamp should be unique), but if it does:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># List your AMIs</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>describe-images<span class="w"> </span>--owners<span class="w"> </span>self<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--filters<span class="w"> </span><span class="s2">&quot;Name=name,Values=p4_code_review_ubuntu-*&quot;</span>
+<span class="w">  </span>--filters<span class="w"> </span><span class="s2">"Name=name,Values=p4_code_review_ubuntu-*"</span>
 
 <span class="c1"># Deregister old AMI if no longer needed</span>
 aws<span class="w"> </span>ec2<span class="w"> </span>deregister-image<span class="w"> </span>--image-id<span class="w"> </span>ami-xxxxx
