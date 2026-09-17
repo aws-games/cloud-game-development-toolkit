@@ -356,6 +356,10 @@ namespace AutomationTool
 						name = sourceVolumeName
 					}
 				},
+				nas = new
+				{
+					path = $"/{cloneVolumeName}"
+				},
 				comment = $"FlexClone from snapshot {snapshotName}"
 			};
 
@@ -375,6 +379,7 @@ namespace AutomationTool
 				}
 
 				_logger.LogInformation("FlexClone volume '{CloneVolumeName}' created successfully", cloneVolumeName);
+				_logger.LogInformation("FlexClone volume '{CloneVolumeName}' will be accessible at NFS junction path '/{CloneVolumeName}'", cloneVolumeName, cloneVolumeName);
 
 				// Wait for volume to be ready
 				await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);

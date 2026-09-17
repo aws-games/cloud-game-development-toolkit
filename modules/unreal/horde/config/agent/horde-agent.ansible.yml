@@ -26,15 +26,16 @@
       register: result_i386_check
       changed_when: result_i386_check.rc == 1
       failed_when: result_i386_check.rc > 1
+      when: ansible_distribution == "Ubuntu"
     - name: Enable Multiarch
       ansible.builtin.command:
         cmd: dpkg --add-architecture i386
-      when: result_i386_check.rc == 1
+      when: ansible_distribution == "Ubuntu" and result_i386_check.rc == 1
       changed_when: result_i386_check.rc == 1
     - name: Update Cache
       ansible.builtin.apt:
         update_cache: true
-      when: result_i386_check.rc == 1
+      when: ansible_distribution == "Ubuntu" and result_i386_check.rc == 1
     - name: Install Wine on Ubuntu machines
       ansible.builtin.package:
         name: "{{ item }}"
@@ -87,6 +88,48 @@
       environment:
         HORDE_AGENT_DIR: "{{ horde_agent_dir }}"
         HORDE_SERVER_URL: https://{{ horde_server_url }}
+      changed_when: true
+    - name: Install the Perforce CLI (helix-p4d apt repo) for SSL trust bootstrap
+      when: p4_port is defined and p4_port is string and p4_port.startswith('ssl:')
+      block:
+        - name: Add Perforce package signing key
+          ansible.builtin.get_url:
+            url: https://package.perforce.com/perforce.pubkey
+            dest: /usr/share/keyrings/perforce.pubkey
+            mode: "0644"
+        - name: Dearmor Perforce signing key
+          ansible.builtin.command:
+            cmd: gpg --batch --yes --dearmor -o /usr/share/keyrings/perforce.gpg /usr/share/keyrings/perforce.pubkey
+            creates: /usr/share/keyrings/perforce.gpg
+        - name: Add Perforce apt repository
+          ansible.builtin.apt_repository:
+            repo: "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu {{ ansible_distribution_release }} release"
+            state: present
+          when: ansible_distribution == "Ubuntu"
+        - name: Install Perforce CLI
+          ansible.builtin.package:
+            name: helix-cli
+            state: present
+          when: ansible_distribution == "Ubuntu"
+      rescue:
+        # The Perforce CLI is a hard prerequisite for the SSL trust bootstrap that follows.
+        # Fail the play loudly rather than recover and continue with an agent that cannot
+        # establish P4 trust.
+        - name: Fail if the Perforce CLI could not be installed
+          ansible.builtin.fail:
+            msg: >-
+              Failed to install the Perforce CLI required for the SSL trust bootstrap.
+              Aborting so the Horde agent is not provisioned without P4 trust.
+    - name: Establish Perforce SSL trust as the Horde user
+      # The Horde agent service runs as User=Horde (see horde-agent.service). p4 resolves
+      # P4TRUST from the invoking user's HOME (~/.p4trust) by default, so running trust as
+      # the Horde user persists the fingerprint where the service will read it. Fails loudly
+      # (no changed_when swallow) if the endpoint is unreachable instead of continuing silently.
+      when: p4_port is defined and p4_port is string and p4_port.startswith('ssl:')
+      ansible.builtin.command:
+        cmd: p4 -p {{ p4_port }} trust -y
+      become: true
+      become_user: "{{ horde_user_name }}"
       changed_when: true
     - name: Create Horde Agent Service
       ansible.builtin.copy:

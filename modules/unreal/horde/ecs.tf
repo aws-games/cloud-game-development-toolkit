@@ -148,7 +148,36 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
         # defaults to "" (not null), so guarding on `!= null` alone is always true and would
         # write an EMPTY /app/Data/globals.json — worse than writing nothing, since Horde then
         # loads a blank config. Require a non-empty string before writing.
-        var.config_globals_json != null && var.config_globals_json != "" ? "printf '%s' '${replace(var.config_globals_json, "'", "'\\''")}' > /app/Data/globals.json && cat /app/Data/globals.json" : "echo 'No globals.json to write'"
+        #
+        # Horde 5.5 resolves the Perforce cluster for stream polling from globals.json
+        # perforceClusters[].credentials and does NOT fall back to server.json for that path.
+        # So the same __P4_USERNAME__/__P4_PASSWORD__ placeholder substitution applied to
+        # server.json above is applied here too: a consumer places those placeholders inside a
+        # perforceClusters[].credentials entry and the init container fills them in from the
+        # p4_credentials_secret_arn-derived env vars. The credentials therefore never appear in
+        # the passed-in config_globals_json, the task definition JSON, or the Terraform state.
+        #
+        # ORDERING IS DELIBERATE (cat-before-substitute): the globals.json file is written with
+        # the placeholders intact, then `cat` prints it to the [INIT] log for deploy diagnostics
+        # (showing __P4_PASSWORD__ as a literal placeholder — never the real secret), and ONLY
+        # AFTER that are the credentials substituted in place. This keeps the diagnostic truthful
+        # about structure without leaking the injected password to CloudWatch.
+        #
+        # BACKWARD COMPATIBLE: if config_globals_json contains no __P4_PASSWORD__/__P4_USERNAME__
+        # placeholder the substitution is a harmless no-op, so existing consumers are unaffected.
+        var.config_globals_json != null && var.config_globals_json != "" ? "printf '%s' '${replace(var.config_globals_json, "'", "'\\''")}' > /app/Data/globals.json" : "echo 'No globals.json to write'",
+        var.config_globals_json != null && var.config_globals_json != "" ? "cat /app/Data/globals.json" : null,
+        (var.config_globals_json != null && var.config_globals_json != "" && var.p4_credentials_secret_arn != null) ? <<-EOT
+          bs='\' qt='"'
+          gu=$${P4_USERNAME//"$bs"/"$bs$bs"}; gu=$${gu//"$qt"/"$bs$qt"}
+          gp=$${P4_PASSWORD//"$bs"/"$bs$bs"}; gp=$${gp//"$qt"/"$bs$qt"}
+          globals_json="$(cat /app/Data/globals.json)"
+          globals_json=$${globals_json//__P4_USERNAME__/"$gu"}
+          globals_json=$${globals_json//__P4_PASSWORD__/"$gp"}
+          printf '%s' "$globals_json" > /app/Data/globals.json
+          echo 'Substituted Perforce credentials into /app/Data/globals.json'
+        EOT
+        : null
       ]))]
       secrets                  = local.horde_init_secrets
       readonly_root_filesystem = false

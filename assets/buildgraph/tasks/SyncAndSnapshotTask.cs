@@ -78,6 +78,20 @@ namespace AutomationTool.Tasks
 		/// </summary>
 		[TaskParameter(Optional = true)]
 		public string VolumeName { get; set; }
+
+		/// <summary>
+		/// AWS Secrets Manager secret name or ARN containing the Perforce password.
+		/// If provided, the password is retrieved at runtime and never written to disk.
+		/// </summary>
+		[TaskParameter(Optional = true)]
+		public string P4PasswordSecretName { get; set; }
+
+		/// <summary>
+		/// AWS region where the Perforce password secret is stored.
+		/// Required if P4PasswordSecretName is provided.
+		/// </summary>
+		[TaskParameter(Optional = true)]
+		public string P4PasswordAwsRegion { get; set; }
 	}
 
 	/// <summary>
@@ -124,6 +138,18 @@ namespace AutomationTool.Tasks
 					Logger.LogInformation("Creating sync directory: {SyncDir}", syncDir);
 					Directory.CreateDirectory(syncDir);
 				}
+
+			// Retrieve Perforce password from AWS Secrets Manager if configured.
+			// The secret is set as a process-scoped environment variable so it is only
+			// visible to this process and its children — never written to disk or exposed
+			// at machine/user scope.
+			if (!String.IsNullOrEmpty(_parameters.P4PasswordSecretName))
+			{
+				string awsRegion = _parameters.P4PasswordAwsRegion ?? "us-east-1";
+				string p4Password = GetAwsSecretAsync(_parameters.P4PasswordSecretName, awsRegion, Logger).GetAwaiter().GetResult();
+				Environment.SetEnvironmentVariable("P4PASSWD", p4Password, EnvironmentVariableTarget.Process);
+				Logger.LogInformation("Perforce password retrieved from Secrets Manager and set for this process");
+			}
 
 			// Create P4Connection with specified server/user or use defaults from P4Environment
 			string p4User = _parameters.P4User ?? CommandUtils.P4Env.User;
@@ -264,6 +290,51 @@ namespace AutomationTool.Tasks
 		public override IEnumerable<string> FindProducedTagNames()
 		{
 			return Enumerable.Empty<string>();
+		}
+
+		/// <summary>
+		/// Retrieves a secret value from AWS Secrets Manager using the AWS CLI.
+		/// The returned value must never be logged.
+		/// </summary>
+		/// <param name="secretName">Secret name or ARN</param>
+		/// <param name="region">AWS region where the secret is stored</param>
+		/// <param name="logger">Logger for status messages (secret value is never logged)</param>
+		/// <param name="cancellationToken">Cancellation token</param>
+		/// <returns>The plain-text secret value</returns>
+		private static async Task<string> GetAwsSecretAsync(string secretName, string region, ILogger logger, CancellationToken cancellationToken = default)
+		{
+			return await Task.Run(() =>
+			{
+				try
+				{
+					// Use AWS CLI to get the secret value. --output text returns the raw string,
+					// so the value is never written to disk or stored in a temp file.
+					string arguments = $"secretsmanager get-secret-value --secret-id \"{secretName}\" --region {region} --query SecretString --output text";
+
+					IProcessResult result = CommandUtils.Run("aws", arguments, Options: CommandUtils.ERunOptions.Default);
+
+					if (result.ExitCode != 0)
+					{
+						throw new AutomationException($"AWS CLI failed with exit code {result.ExitCode}: {result.Output}");
+					}
+
+					string secretValue = result.Output.Trim();
+
+					if (string.IsNullOrEmpty(secretValue))
+					{
+						throw new AutomationException($"AWS secret '{secretName}' returned an empty value");
+					}
+
+					// Log success without printing the secret value.
+					logger.LogInformation("Successfully retrieved secret '{SecretName}'", secretName);
+					return secretValue;
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Failed to get AWS secret '{SecretName}'", secretName);
+					throw new AutomationException(ex, $"Failed to get AWS secret '{secretName}'");
+				}
+			}, cancellationToken);
 		}
 	}
 }
