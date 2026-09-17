@@ -77,9 +77,13 @@ id_ed25519.pub
 *.drawio.bkp
 *.drawio.dtmp
 
+# Editor/backup files
+*.bak
+
 # Kiro user specific settings
 .kiro/settings/
 
 # Claude Code configuration
 CLAUDE.md
 .claude/
+scratch/
