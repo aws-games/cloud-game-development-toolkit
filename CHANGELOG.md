@@ -2,8 +2,36 @@
 ## [Unreleased]
 
 
+<a name="v1.1.7"></a>
+## [v1.1.7] - 2026-09-17
+### Bug Fixes
+- **ci:** use BOT_PAT for release publish and fix docs-deploy permissions ([#957](https://github.com/aws-games/cloud-game-development-toolkit/issues/957))
+- **horde:** inject P4 creds into globals.json perforceClusters ([#981](https://github.com/aws-games/cloud-game-development-toolkit/issues/981))
+- **horde:** guard i386/multiarch tasks to Ubuntu for AL2023 agents ([#980](https://github.com/aws-games/cloud-game-development-toolkit/issues/980))
+- **unreal:** relax Lore module AWS provider constraint to >= 5.0 ([#963](https://github.com/aws-games/cloud-game-development-toolkit/issues/963))
+- **unreal-horde:** start Windows Horde agent in-band ([#994](https://github.com/aws-games/cloud-game-development-toolkit/issues/994)) ([#995](https://github.com/aws-games/cloud-game-development-toolkit/issues/995))
+
+### Chore
+- reduce dependabot frequency from daily to monthly ([#959](https://github.com/aws-games/cloud-game-development-toolkit/issues/959))
+- **deps:** bump squidfunk/mkdocs-material from 9.7.6 to 9.7.7 in /docs ([#965](https://github.com/aws-games/cloud-game-development-toolkit/issues/965))
+- **deps:** bump actions/setup-python from 6 to 7 ([#968](https://github.com/aws-games/cloud-game-development-toolkit/issues/968))
+- **deps:** bump actions/setup-node from 6.4.0 to 7.0.0 ([#969](https://github.com/aws-games/cloud-game-development-toolkit/issues/969))
+- **deps:** bump actions/checkout from 6.0.2 to 7.0.1 ([#970](https://github.com/aws-games/cloud-game-development-toolkit/issues/970))
+- **deps:** bump the docs-dependencies group across 1 directory with 2 updates ([#983](https://github.com/aws-games/cloud-game-development-toolkit/issues/983))
+- **deps:** bump the actions-minor-patch group across 1 directory with 6 updates ([#984](https://github.com/aws-games/cloud-game-development-toolkit/issues/984))
+- **deps:** bump actions/dependency-review-action from 4.9.0 to 5.0.0 ([#962](https://github.com/aws-games/cloud-game-development-toolkit/issues/962))
+- **deps:** bump the actions-minor-patch group with 8 updates ([#960](https://github.com/aws-games/cloud-game-development-toolkit/issues/960))
+- **deps:** update pymdown-extensions requirement from >=10.21.3 to >=11.0.1 in /docs ([#958](https://github.com/aws-games/cloud-game-development-toolkit/issues/958))
+
+### Features
+- **unreal-horde:** iSCSI thin-clone build pipeline sample ([#982](https://github.com/aws-games/cloud-game-development-toolkit/issues/982))
+
+
 <a name="v1.1.6"></a>
 ## [v1.1.6] - 2026-07-02
+
+<a name="latest"></a>
+## [latest] - 2026-07-02
 ### Bug Fixes
 - resolve warning about iam policy type deprecation
 - link updates for documentation ([#841](https://github.com/aws-games/cloud-game-development-toolkit/issues/841))
@@ -37,6 +65,7 @@
 - **workflows:** prevent script injection in docs-cleanup workflow ([#896](https://github.com/aws-games/cloud-game-development-toolkit/issues/896))
 
 ### Chore
+- regenerate changelog for v1.1.6 [skip ci]
 - **all:** Updates provider versions to use '~>' and updates READMEs to reflect that change.
 - **deps:** update mkdocs requirement from >=1.4.0 to >=1.6.1 in /docs ([#931](https://github.com/aws-games/cloud-game-development-toolkit/issues/931))
 - **deps:** bump actions/github-script from 8.0.0 to 9.0.0 ([#934](https://github.com/aws-games/cloud-game-development-toolkit/issues/934))
@@ -158,9 +187,6 @@
 - **unity:** deploy floating licensing server ([#429](https://github.com/aws-games/cloud-game-development-toolkit/issues/429)) ([#745](https://github.com/aws-games/cloud-game-development-toolkit/issues/745))
 - **unreal:** add Lore VCS module ([#944](https://github.com/aws-games/cloud-game-development-toolkit/issues/944))
 
-
-<a name="latest"></a>
-## [latest] - 2025-07-29
 
 <a name="v1.1.5"></a>
 ## [v1.1.5] - 2025-07-29
@@ -540,7 +566,8 @@
 - **packer:** switch AMI from Rocky Linux to Amazon Linux 2023 and up… ([#141](https://github.com/aws-games/cloud-game-development-toolkit/issues/141))
 
 
-[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.6...HEAD
+[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.7...HEAD
+[v1.1.7]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.6...v1.1.7
 [v1.1.6]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.1.6
 [latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...latest
 [v1.1.5]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...v1.1.5
