@@ -1,0 +1,4163 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cloud Game Development Toolkit | Docs">
+      
+      
+        <meta name="author" content="Amazon Web Services">
+      
+      
+        <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/latest/samples/unreal-horde-build-pipeline/index.html">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../docs/media/logos/favicon.ico">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Unreal Horde Build Pipeline - Cloud Game Development Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22M0%208a8%208%200%201%201%2016%200A8%208%200%200%201%200%208m8-6.5a6.5%206.5%200%201%200%200%2013%206.5%206.5%200%200%200%200-13M6.5%207.75A.75.75%200%200%201%207.25%207h1a.75.75%200%200%201%20.75.75v2.75h.25a.75.75%200%200%201%200%201.5h-2a.75.75%200%200%201%200-1.5h.25v-2h-.25a.75.75%200%200%201-.75-.75M8%206a1%201%200%201%201%200-2%201%201%200%200%201%200%202%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/themes.css">
+    
+      <link rel="stylesheet" href="../../docs/stylesheets/hero.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+
+<!-- Determine title -->
+
+<!-- prettier-ignore -->
+
+
+
+
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#unreal-horde-build-pipeline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-header__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Cloud Game Development Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Unreal Horde Build Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2C5.13 2 2 5.13 2 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7M6 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H6zm13-8h-2l-3.2 9h1.9l.7-2h3.2l.7 2h1.9zm-2.15 5.65L18 15l1.15 3.65z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/index.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/getting-started.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../docs/assets/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Assets
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../modules/index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../index.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Samples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/changelog.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/security.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../docs/contributing.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Cloud Game Development Toolkit" class="md-nav__button md-logo" aria-label="Cloud Game Development Toolkit" data-md-component="logo">
+      
+  <img src="../../docs/media/logos/aws-logo-white.svg" alt="logo">
+
+    </a>
+    Cloud Game Development Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aws-games/cloud-game-development-toolkit" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws-games/cloud-game-development-toolkit
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/getting-started.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../docs/assets/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assets
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Assets
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../docs/assets/packer/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Packer Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Packer Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_2" id="__nav_3_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../assets/packer/build-agents/linux/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Linux Build Agents
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Linux Build Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../assets/packer/build-agents/windows/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows Build Agent
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Windows Build Agent
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/perforce/p4-code-review/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/packer/virtual-workstations/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Virtual Workstations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/jenkins-pipelines/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../assets/ansible-playbooks/perforce/p4-server/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ansible Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/assets/docker/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dockerfiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../modules/DESIGN_STANDARDS.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1" id="__nav_4_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perforce
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Perforce
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_1_2" id="__nav_4_3_1_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submodules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Submodules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Server
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-auth/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4Auth
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4Auth
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_1_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/perforce/modules/p4-code-review/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    P4 Code Review
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_4_3_1_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_1_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    P4 Code Review
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_1" id="__nav_4_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TeamCity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    TeamCity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/teamcity/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5_1" id="__nav_4_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jenkins
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Jenkins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/jenkins/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_5_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_1" id="__nav_4_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Engine Horde
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Engine Horde
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/horde/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2" id="__nav_4_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unreal Cloud DDC
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6_2_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDC Intra-Cluster
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DDC Intra-Cluster
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unity
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Unity
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_1" id="__nav_4_7_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accelerator
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accelerator
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unity/accelerator/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7_2" id="__nav_4_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licensing Server
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Licensing Server
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7_2_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/unity/floating-license-server/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation and Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_7_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation and Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8_1" id="__nav_4_8_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VDI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_8_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    VDI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../modules/vdi/index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation & Usage
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_8_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation & Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../index.html" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Samples
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Samples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../simple-build-pipeline/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Simple Build Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../unreal-cloud-ddc-single-region/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Single Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/changelog.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/security.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../docs/contributing.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/orgs/aws-games/projects/1/views/1" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#big-picture-what-youre-signing-up-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Big picture / what you're signing up for
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Big picture / what you&#39;re signing up for">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checklist-mirrors-the-end-to-end-runbook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checklist (mirrors the end-to-end runbook)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="unreal-horde-build-pipeline">Unreal Horde Build Pipeline<a class="headerlink" href="#unreal-horde-build-pipeline" title="Permanent link">&para;</a></h1>
+<p>This sample deploys an <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/horde">Unreal Engine Horde</a> build farm that compiles from a Perforce stream using <a href="https://aws.amazon.com/fsx/netapp-ontap/">Amazon FSx for NetApp ONTAP</a> with a thin-clone workspace pattern. Instead of every build agent running a full <code>p4 sync</code> from scratch, the pipeline keeps one persistent source workspace warm and hands each build an instant, copy-on-write clone of it.</p>
+<p>The core idea has two moving parts. A <strong>Hydrator</strong> (Sync) agent periodically syncs a persistent FSxN <strong>LUN</strong> from a Perforce stream and snapshots it as <code>cl-&lt;changelist&gt;</code>. When a build is requested, a <strong>Build Agent</strong> creates an instant <a href="https://docs.netapp.com/us-en/ontap/concepts/flexclone-volumes-files-luns-concept.html">FlexClone</a> of that snapshot, presents the clone's LUN to itself over <strong>iSCSI as real NTFS</strong>, transplants the Perforce have-list with <code>p4 flush</code> (metadata-only), syncs only the delta, compiles, and tears the clone down. The clone + LUN map + iSCSI attach + <code>p4 flush</code> step is fast because it moves no file data — on the author's reference workspace (a ~49.55 GB / 268,730-file UE 5.7 stream) the attach script measured a ~9.7 s total versus ~8m23s for a cold <code>p4 sync</code> (see <code>attach-clone-lun.ps1</code>). Treat that as one measured example, not a guaranteed figure: it scales with workspace size, instance type, and how far the snapshot lags head. What it replaces is the per-build <em>workspace</em> hydration — the sample then <strong>compiles <code>UnrealEditor</code> from source</strong> off the clone (no cook, package, or upload), with UBA enabled, so any end-to-end wall-clock or cost you see quoted elsewhere reflects the author's rig and stream, not a promise of the shipped sample.</p>
+<p>The pipeline compiles <code>UnrealEditor</code> from source off the FlexClone LUN with <strong>UBA (Unreal Build Accelerator) enabled</strong>. The end-to-end path is: hydrate a Perforce stream → ONTAP snapshot <code>cl-&lt;N&gt;</code> → FlexClone → iSCSI mount as <code>W:</code> (real NTFS) → <code>p4 flush</code> (metadata-only) → <strong>compile <code>UnrealEditor</code> from source off the clone LUN</strong>. It targets a source-available UE project such as Epic's <strong>Lyra</strong> sample (a real C++ project with <code>Source/</code> and <code>Modules[]</code>).</p>
+<p><strong>Both agent pools are Windows:</strong> the workspace is delivered to agents as an iSCSI LUN formatted NTFS, and Windows is required to read and write it. (For why iSCSI/NTFS was chosen as the data path, see the <a href="#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way">operational deep-dive appendix</a>.)</p>
+<h2 id="big-picture-what-youre-signing-up-for">Big picture / what you're signing up for<a class="headerlink" href="#big-picture-what-youre-signing-up-for" title="Permanent link">&para;</a></h2>
+<p>This is a <strong>Terraform sample plus several manual operator steps</strong> — it is <strong>not</strong> a one-shot <code>terraform apply</code>. Terraform stands up the infrastructure, but seeding the depot, configuring the Perforce service user, and approving agent enrollment are manual operations the sample does not automate. Budget for both parts:</p>
+<blockquote>
+<p><strong>Scope: single stream.</strong> This sample hydrates a <strong>single</strong> Perforce stream into one source volume/LUN. Do <strong>not</strong> point a second stream at the same source volume: a subsequent <code>p4 sync</code> does not remove the earlier stream's files, so they persist on the NTFS volume and get snapshotted and cloned into every build (cross-stream contamination). Running more than one stream is out of scope for this sample — see <a href="#12-single-source-stream-per-stream-source-lun">appendix §12</a>.</p>
+</blockquote>
+<ul>
+<li><strong>Part 1 — stand up the infrastructure.</strong> Build the Windows build-agent AMI with Packer, then <code>terraform apply</code>.</li>
+<li><strong>Part 2 — seed the depot and run your first build.</strong> Configure the Perforce <code>svc-horde</code> user, seed the depot with a source-available project + engine, submit the BuildGraph scripts, approve Horde agent enrollment, then trigger the hydration and build pipelines.</li>
+</ul>
+<h3 id="checklist-mirrors-the-end-to-end-runbook">Checklist (mirrors the <a href="#end-to-end-runbook">end-to-end runbook</a>)<a class="headerlink" href="#checklist-mirrors-the-end-to-end-runbook" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>Type</th>
+<th>Time hint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="#1-build-the-windows-build-agent-ami">Build the Windows build-agent AMI</a></td>
+<td>[Manual]</td>
+<td>~30–45 min (Packer build)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="#2-deploy-with-terraform">Deploy with Terraform</a></td>
+<td>[Terraform]</td>
+<td>~20–30 min (first apply; FSxN + ALBs are slowest)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="#3-configure-the-svc-horde-p4-user">Configure the <code>svc-horde</code> P4 user</a></td>
+<td>[Manual]</td>
+<td>minutes</td>
+</tr>
+<tr>
+<td>4a</td>
+<td><a href="#acquire-the-engine-and-project">Acquire the engine and project</a></td>
+<td>[Manual]</td>
+<td>large/slow — clone engine + project, fetch dependencies</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="#4-seed-the-perforce-depot-project--engine">Seed the Perforce depot (project + engine)</a></td>
+<td>[Manual]</td>
+<td>large/slow — depot seed of engine + project</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build">Submit the BuildGraph scripts under <code>Build/</code></a></td>
+<td>[Manual]</td>
+<td>minutes</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="#6-make-horde-aware-of-the-stream--project">Make Horde aware of the stream / project</a></td>
+<td>[Manual]</td>
+<td>minutes</td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool">Approve agent enrollment (one pool per agent)</a></td>
+<td>[Manual]</td>
+<td>minutes</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot">Trigger the Hydration Pipeline (first snapshot)</a></td>
+<td>[Manual]</td>
+<td>one hydrate cycle</td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="#9-trigger-the-build-pipeline-per-job-arguments">Trigger the Build Pipeline (per-job arguments)</a></td>
+<td>[Manual]</td>
+<td>one build</td>
+</tr>
+</tbody>
+</table>
+<p>Steps 1–2 stand up the infrastructure; steps 3–9 seed the depot and run the first build. The <a href="#end-to-end-runbook">runbook</a> is the authoritative "what to do" path; the <a href="#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way">appendix</a> explains "why the pipeline is built this way".</p>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p>The sample composes existing CGD Toolkit modules (<code>modules/perforce</code>, <code>modules/unreal/horde</code>) with sample-owned networking, DNS, storage, and security wiring.</p>
+<ul>
+<li><strong>VPC</strong> — a 3-tier layout across 2 AZs: public subnets (ALBs / NAT), private application subnets (Horde ECS tasks, Perforce, agents), and private service subnets (FSxN).</li>
+<li><strong>FSx for NetApp ONTAP</strong> — an iSCSI/SAN SVM (no CIFS/AD) with a persistent source volume <code>p4_workspace</code> acting as a <strong>container for a thin LUN</strong> (<code>/vol/p4_workspace/workspace</code>). Terraform creates the file system, SVM and container volume; the LUN, igroups, LUN maps, snapshots and per-build FlexClones are all runtime operations via the ONTAP REST API, because the AWS provider cannot create them.</li>
+<li><strong>Horde server</strong> — runs on ECS behind an external HTTPS ALB (browser access) and an internal ALB (agent enrollment / in-VPC traffic). Config is rendered from <code>config/horde/globals.json.tpl</code> and passed inline to the module.</li>
+<li><strong>Hydrator (Sync) Agent pool</strong> — <strong>Windows Server 2022</strong> in the Horde pool <code>SyncPool</code>, <code>min = max = 1</code>. Windows because the source LUN carries NTFS, and exactly one because NTFS has exactly one legitimate writer (enforced by a single-host igroup, not merely documented — see <a href="#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups">appendix §3</a>).</li>
+<li><strong>Build Agent pool</strong> — Windows Server 2022 agents in the Horde pool <code>BuildPool</code>. Scales from 0 to <code>build_agent_max_count</code>. Each job gets its own clone LUN, so these agents share one igroup safely.</li>
+<li><strong>Perforce</strong> — the bundled <code>modules/perforce</code> P4 Server (private subnet, commit server) is deployed by default. Set <code>existing_perforce_server_endpoint</code> to wire the agents to a server you already run and skip the bundled module.</li>
+<li><strong>Route53</strong> — a private hosted zone (created by this sample) for internal service discovery, plus records in your existing public hosted zone for the Horde HTTPS endpoint.</li>
+<li><strong>ACM certificate</strong> — DNS-validated against your public hosted zone for the Horde external ALB HTTPS listener.</li>
+</ul>
+<p>Three BuildGraph pipelines drive the workflow, and their agent/node names are coupled to <code>config/horde/globals.json.tpl</code>:</p>
+<ul>
+<li><code>buildgraph/HydratePipeline.xml</code> — agent <code>SyncAgent</code>, node <code>Sync And Snapshot</code>, run by the <code>hydrate</code> template on <code>SyncPool</code>. After each snapshot it prunes <code>cl-&lt;N&gt;</code> snapshots beyond <code>fsxn_snapshot_retention</code> — see <a href="#3b-pipeline-snapshots-are-pruned-and-fsxs-default-snapshot-policy-is-off">appendix §3b</a>.</li>
+<li><code>buildgraph/ReaperPipeline.xml</code> — agent <code>SyncAgent</code>, node <code>Reap Orphans</code>, run by the scheduled <code>reap</code> template on <code>SyncPool</code>; collects clone volumes and per-job Perforce clients that a hard Spot reclaim left behind (dry run by default) — see <a href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node">appendix §4</a>.</li>
+<li><code>buildgraph/BuildPipeline.xml</code> — agent <code>BuildAgent</code>, a single merged <code>Compile</code> node (<code>p4 login</code> → clone → iSCSI mount <code>W:</code> → per-build P4 client → <code>p4 flush</code> → clear read-only → <code>Build.bat</code>), run by the <code>build</code> template on <code>BuildPool</code>. The node logs in to Perforce first: a fresh agent has no ticket, so the login mints one that the later <code>p4 flush</code> / <code>p4 sync</code> reuse (the agent reads the JSON credentials secret supplied via <code>horde_p4_credentials_secret_arn</code> and logs in per job). The clone/mount/flush/compile steps are <strong>one node</strong> — see <a href="#9-clone--mount--flush--compile-must-be-one-buildgraph-node">appendix §9</a>. Guaranteed teardown is a Horde <code>UE_HORDE_CLEANUP</code> lease hook — see <a href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node">appendix §4</a>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>                         Perforce stream (//YourGame/main)
+                                     |
+                          p4 sync (full, scheduled hourly)
+                                     v
+   Hydrator (Windows, SyncPool) --&gt; source LUN over iSCSI (S:, NTFS)
+   HydratePipeline.xml               /vol/p4_workspace/workspace
+   node "Sync And Snapshot"          igroup: horde_san_hydrator (ONE host)
+                                            |
+                                     flush NTFS cache, then snapshot cl-&lt;N&gt;
+                                            |
+                                   instant FlexClone (per build)
+                                            v
+   Build Agent (Windows, BuildPool) --&gt; map clone LUN -&gt; igroup horde_san_agents
+   BuildPipeline.xml                --&gt; iSCSI attach as W: (real NTFS)
+   single "Compile" node            --&gt; p4 login        (mint ticket for this job)
+   (clone+mount+flush+compile       --&gt; p4 flush @&lt;N&gt;   (have-list, no transfer)
+    in ONE process)                 --&gt; p4 sync         (delta only)
+                                    --&gt; clear read-only, Build.bat with UBA ENABLED
+   + UE_HORDE_CLEANUP lease hook    --&gt; offline disk, unmap LUN, delete clone
+
+   Horde server (ECS) -- external HTTPS ALB (deployer /32) --&gt; browser UI
+                      -- internal ALB --------------------&gt; agent enrollment
+</code></pre></div>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://developer.hashicorp.com/terraform/install">Terraform</a> and valid AWS credentials for the target account.</li>
+<li>An <strong>existing Route53 public hosted zone</strong> (required). The ACM certificate DNS validation records and the public Horde record are created in this zone. This sample does not create the public zone for you.</li>
+<li><strong>Epic Games GitHub access — one PAT, two scopes (required for the defaults).</strong> Your GitHub account must be accepted into the Epic Games organization. Create one Personal Access Token (classic) with <code>read:packages</code> (pulls the default Horde server image during <code>terraform apply</code>) and <code>repo</code> (clones <code>EpicGames/UnrealEngine</code> when you seed the depot). Store it in a Secrets Manager secret and pass it via <code>github_credentials_secret_arn</code>. The secret must be JSON of the form <code>{"username": "&lt;github-username&gt;", "password": "&lt;PAT&gt;"}</code> — the ECS <code>repositoryCredentials</code> format; a plain-text token is not accepted for the image pull. If either step fails with a 401/403, check the corresponding scope: missing <code>read:packages</code> shows up as an ECS image-pull error at apply time; missing <code>repo</code> as a clone failure later, at seed time.</li>
+<li><strong>A pre-created Secrets Manager secret for the Horde P4 user (required when deploying the bundled Perforce).</strong> Create a Secrets Manager secret shaped <code>{"username":"svc-horde","password":"..."}</code> and pass its ARN via the <code>horde_p4_credentials_secret_arn</code> variable. This <strong>single</strong> secret is used both by the Horde server (to authenticate to Perforce) <strong>and</strong> by the sync/build agents: the agents read it at job time, parse the JSON, and pipe the password to <code>p4 login</code> to mint a <strong>login ticket</strong> so <code>p4 flush</code> / <code>p4 sync</code> authenticate on a fresh host (the pipeline logs in per job; leave the agent host's existing ticket in place to skip this). There is no separate plain-text password secret. This sample does <strong>not</strong> create the secret for you — pre-create it so its ARN is known at plan time, since the Horde module gates its Secrets Manager read policy on a <code>count</code> that cannot resolve an ARN created in the same apply. (If you set <code>existing_perforce_server_endpoint</code> to use your own Perforce server, provide the secret for that server's Horde service account instead.) The password value stored here must match the password set on the P4 user in <a href="#3-configure-the-svc-horde-p4-user">runbook step 3</a>; see <a href="#10-the-svc-horde-password-must-match-on-both-sides">appendix §10</a>.</li>
+<li><strong>No custom BuildGraph task compilation is required.</strong> The SAN pipelines drive ONTAP and the Windows iSCSI initiator from PowerShell (<code>buildgraph/OntapSan.psm1</code> plus the <code>buildgraph/*.ps1</code> scripts), so you do <strong>not</strong> need to compile the C# tasks in <code>assets/buildgraph/tasks</code> into your <code>AutomationTool</code>. This is deliberate: LUN mapping/unmapping does not exist in those tasks, and teardown ordering (offline disk → unmap → delete volume) is a correctness requirement they cannot express. It also means the pipeline can be tested without a UAT build.</li>
+<li><strong>BuildGraph scripts submitted to the depot.</strong> The <code>buildgraph/*.xml</code> files <strong>and</strong> the supporting <code>*.ps1</code> scripts must be submitted to your Perforce depot under <code>Build/</code> so the <code>-Script=Build/...</code> paths in <code>globals.json</code> resolve against the stream root. See <a href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build">runbook step 5</a>.</li>
+</ul>
+<hr />
+<h1 id="part-1-stand-up-the-infrastructure">Part 1 — stand up the infrastructure<a class="headerlink" href="#part-1-stand-up-the-infrastructure" title="Permanent link">&para;</a></h1>
+<h2 id="build-the-windows-build-agent-ami-manual-prerequisite">Build the Windows build-agent AMI (manual prerequisite)<a class="headerlink" href="#build-the-windows-build-agent-ami-manual-prerequisite" title="Permanent link">&para;</a></h2>
+<p>This is a <strong>one-time operator step you run before <code>terraform apply</code>.</strong> The Horde Windows agents compile Unreal Engine from source and mount their workspace over iSCSI, and the stock Amazon <code>Windows_Server-2022</code> AMI has <strong>neither</strong> the C++ build toolchain <strong>nor</strong> the iSCSI initiator. Baking them into an image once (~30–45 minutes) is far cheaper than re-installing on every agent boot, so the sample does not automate it.</p>
+<p>The Packer template at <a href="../../assets/packer/build-agents/windows-horde"><code>assets/packer/build-agents/windows-horde</code></a> bakes in the VS2022/MSVC toolchain, the .NET runtimes, <code>p4</code>/<code>awscli</code>, and the MSiSCSI initiator + MPIO, and an in-build <code>validate_image.ps1</code> <strong>fails the build</strong> if the toolchain, iSCSI initiator or MPIO are missing, if MSDSM is not actually claiming iSCSI devices, or if the boot-time unique-IQN script does not produce an instance-id-derived IQN — so a published AMI is never half-baked. See that template's README and <a href="../../assets/packer/build-agents/windows-horde/example.pkrvars.hcl"><code>example.pkrvars.hcl</code></a> for the exhaustive component list and variable reference.</p>
+<h3 id="build-command">Build command<a class="headerlink" href="#build-command" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Start from a clean checkout.</strong> Run the Packer build (and the later Terraform steps) from a fresh checkout — a stale working tree can carry leftover <code>terraform.tfstate</code>, <code>terraform.tfvars</code>, or <code>.terraform/</code> that confuses a from-scratch deploy (see <a href="#deployment">Deployment</a>).</p>
+</blockquote>
+<p>At <strong>Step 1 you do not yet have a VPC</strong> — <code>terraform apply</code> (Step 2) is what creates it. So for a first deploy, build the AMI over the <strong>public internet</strong> with ingress locked to your <strong>own workstation <code>/32</code></strong>, which is the default path below. The <strong>private in-VPC build</strong> (below) is the advanced path to switch to <em>once you already have a VPC with in-VPC routing</em> (a second AMI rebuild, a peered network, etc.).</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>assets/packer/build-agents/windows-horde
+
+packer<span class="w"> </span>init<span class="w"> </span>.
+
+<span class="c1"># First-deploy default: public IP, WinRM (5986) locked to your workstation /32.</span>
+<span class="c1"># Packer creates and deletes its own temporary security group — no pre-created SG needed.</span>
+packer<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'region=us-east-1'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'vpc_id=vpc-xxxxxxxx'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'subnet_id=subnet-xxxxxxxx'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'associate_public_ip_address=true'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'ssh_interface=public_ip'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'temporary_security_group_source_cidrs=["&lt;your-public-ip&gt;/32"]'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'public_key=ssh-ed25519 AAAA...your-agent-public-key'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+</code></pre></div>
+<p><code>region</code> must match where you deploy the sample; <code>subnet_id</code> must be a <strong>public</strong> subnet (with a route to an internet gateway) for the public-IP path, and any subnet you use needs outbound internet, since the build uses Chocolatey to install the toolchain; <code>public_key</code> is the SSH public key baked into the AMI so the Horde orchestration service can reach the agent. On success Packer prints the new AMI ID, registered as <code>windows-horde-build-agent-&lt;timestamp&gt;</code>.</p>
+<blockquote>
+<p><strong>Instance-type availability by AZ.</strong> The build defaults to a large compute instance (e.g. <code>c6a.4xlarge</code>), and not every AZ carries it — <code>c6a.4xlarge</code> Windows is <strong>not</strong> available in <code>us-east-1e</code>, for example. If Packer fails to launch the builder with an unsupported-instance-type error, pick a supported AZ (in <code>us-east-1</code>, one of <code>us-east-1a/b/c/d/f</code>) via the <code>subnet_id</code>, or choose an instance type the AZ offers.</p>
+</blockquote>
+<!-- -->
+<blockquote>
+<p><strong>Advanced: private in-VPC build.</strong> Once you have a VPC, you can instead build on a <strong>private</strong> subnet with NAT egress (leave <code>associate_public_ip_address=false</code>, <code>ssh_interface="private_ip"</code> — the template's defaults). In that mode <strong>Packer must run from a host that can route to the build instance's private IP</strong> — i.e. from inside the same VPC (a bastion/CI runner), or a peered/VPN-connected network. Run it from a workstation that cannot reach that private IP and the build stalls at "Waiting for WinRM". The private path can use a pre-created <code>security_group_id</code> that scopes WinRM (5986) to the reachable network — never <code>0.0.0.0/0</code>.</p>
+</blockquote>
+<h3 id="how-this-sample-consumes-the-ami">How this sample consumes the AMI<a class="headerlink" href="#how-this-sample-consumes-the-ami" title="Permanent link">&para;</a></h3>
+<p>The AMI is wired up automatically in <a href="main.tf"><code>main.tf</code></a> via <code>data.aws_ami.horde_build_agent</code>:</p>
+<ul>
+<li><strong>Auto-lookup (default, keeps the sample generic).</strong> Leave <code>build_agent_ami_id</code> unset (<code>null</code>). The sample looks up the newest <strong>self-owned</strong> AMI whose name matches <code>build_agent_ami_name_prefix</code> (default <code>windows-horde-build-agent-*</code>, which matches the Packer template's <code>ami_prefix</code>). No hardcoded AMI ID ends up in your config.</li>
+<li><strong>Pin an explicit AMI.</strong> Set <code>build_agent_ami_id = "ami-xxxxxxxx"</code> in <code>terraform.tfvars</code> to pin a specific image; it takes precedence over the name-prefix lookup.</li>
+</ul>
+<p><strong>Build the AMI first</strong>, then <code>terraform apply</code> — if no matching AMI exists and <code>build_agent_ami_id</code> is unset, the <code>data.aws_ami</code> lookup fails at plan time.</p>
+<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Start from a clean checkout.</strong> Deploy from a fresh checkout of this sample. A leftover working tree can carry stale <code>terraform.tfstate</code>, <code>terraform.tfvars</code>, or <code>.terraform/</code> from an earlier run and confuse a from-scratch deploy — wipe or re-clone before you begin.</p>
+</blockquote>
+<ol>
+<li>Copy the example variables file and fill in the required values:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>terraform.tfvars.example<span class="w"> </span>terraform.tfvars
+</code></pre></div>
+<ol>
+<li>
+<p>Set the required variables in <code>terraform.tfvars</code>:</p>
+</li>
+<li>
+<p><code>route53_private_zone_name</code> — private hosted zone for internal service discovery (e.g. <code>studio.internal</code>).</p>
+</li>
+<li><code>route53_public_hosted_zone_name</code> — your existing public hosted zone (e.g. <code>example.com</code>).</li>
+<li><code>certificate_domain</code> — the public FQDN for the Horde HTTPS endpoint, under the public zone (e.g. <code>horde.example.com</code>).</li>
+<li><code>perforce_stream</code> — the Perforce stream to sync into the FSxN source volume (e.g. <code>//YourGame/main</code>).</li>
+<li><code>horde_p4_credentials_secret_arn</code> — ARN of the pre-created Secrets Manager secret (<code>{"username":"svc-horde","password":"..."}</code>) for the Horde P4 user (required when deploying the bundled Perforce; see Prerequisites).</li>
+<li><code>github_credentials_secret_arn</code> — ARN of the Secrets Manager secret holding your GitHub PAT (see <a href="#prerequisites">Prerequisites</a>). Required for the default Horde image; omit only if you also override <code>horde_server_image</code> with an image you can pull without authentication.</li>
+</ol>
+<p>Optional variables (Perforce endpoint, FSxN sizing, agent instance types and counts, Horde image) are documented with defaults in <code>terraform.tfvars.example</code>.</p>
+<ol>
+<li>Initialize, review, and apply:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
+terraform<span class="w"> </span>plan
+terraform<span class="w"> </span>apply
+</code></pre></div>
+<p>Deployment provisions a VPC, FSxN file system, ECS-based Horde server, Perforce server, and agent launch templates, so allow roughly 20–30 minutes for the first apply (FSxN and the load balancers are the slowest resources).</p>
+<p>The Horde external ALB ingress is locked to the <strong>deployer's public IP as a <code>/32</code></strong> (discovered at plan time via <code>https://checkip.amazonaws.com</code>). There is no public or unauthenticated access, and there are no <code>0.0.0.0/0</code> ingress rules anywhere in this sample.</p>
+<blockquote>
+<p><strong>Destroy → redeploy gotcha: the FSxN admin secret is soft-deleted.</strong> When you <code>terraform destroy</code> and then re-apply, the re-apply collides with the FSxN <code>fsxadmin</code> password secret left over from the earlier deploy: Secrets Manager <strong>soft-deletes</strong> it with a recovery window, so the name is still taken and the new create fails ("scheduled for deletion"). Either force-delete the lingering secret before re-applying:</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>delete-secret<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-id<span class="w"> </span>&lt;fsxn-fsxadmin-secret-name&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--force-delete-without-recovery
+</code></pre></div>
+<p>or set <code>recovery_window_in_days = 0</code> on the FSxN admin secret so a destroy purges it immediately.</p>
+</blockquote>
+<!-- -->
+<blockquote>
+<p><strong>Runtime secret reads need IAM grants.</strong> The agent login-ticket chain (in <a href="#32-set-the-password-to-match-the-pre-created-secret">runbook step 3.2</a> / <a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>) reads the P4 credentials on the host at runtime, so the <strong>agent instance role</strong> (<code>agent_instance_role_name</code>) must have <code>secretsmanager:GetSecretValue</code> on the Horde P4 credentials secret — <code>iam.tf</code> wires this grant from <code>horde_p4_credentials_secret_arn</code>, so verify it actually attaches. Likewise, if the P4 server instance reads a secret at runtime, its role needs the same grant. Without it the reads fail <code>AccessDenied</code> and the login-ticket chain breaks.</p>
+</blockquote>
+<h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
+<p>Terraform emits the following outputs (see <code>outputs.tf</code>):</p>
+<ul>
+<li><code>horde_server_url</code> — the browser URL for the Horde UI (HTTPS, external ALB). Reachable only from the deployer <code>/32</code>.</li>
+<li><code>perforce_endpoint</code> — the <code>P4PORT</code> (<code>ssl:&lt;host&gt;:1666</code>) for P4 client configuration.</li>
+<li><code>fsxn_iscsi_portals</code> — comma-separated SVM iSCSI portal addresses (pass as <code>-set:IscsiPortals</code>; the scripts connect exactly one unless MPIO is installed <strong>and</strong> MSDSM is claiming iSCSI devices — see <a href="#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups">appendix §3</a>).</li>
+<li><code>fsxn_workspace_lun_path</code> — ONTAP path of the workspace LUN that hosts attach over iSCSI (the LUN carries NTFS).</li>
+</ul>
+<p>Obtain the two igroups with <code>terraform output &lt;name&gt;</code>; each feeds its pipeline as a <code>-set:</code> value (already wired via <code>globals.json</code>):</p>
+<ul>
+<li><code>fsxn_hydrator_igroup</code> — the <strong>single-host</strong> igroup owning the source LUN, fed to the hydrate pipeline as <code>-set:HydratorIgroup</code>. Never add build agents to it — NTFS has exactly one legitimate writer.</li>
+<li><code>fsxn_agent_igroup</code> — the shared igroup for per-job clone LUNs, fed to the build pipeline as <code>-set:AgentIgroup</code>. Safe to share because each clone is used by exactly one job on one agent.</li>
+<li><code>fsxn_management_endpoint</code> / <code>fsxn_svm_management_endpoint</code> — ONTAP REST API targets for the BuildGraph tasks.</li>
+<li><code>sync_agent_launch_template_id</code> / <code>build_agent_launch_template_id</code> — launch template IDs for the two agent pools.</li>
+<li><code>agent_instance_role_name</code> — the IAM role attached to agent instances (has the secrets-read policy).</li>
+<li><code>horde_p4_credentials_secret_arn</code> — echoes the pre-created Horde P4 username/password secret ARN you passed in (JSON, sensitive). This sample does not create the secret.</li>
+<li><code>fsxn_password_secret_arn</code> — the FSxN <code>fsxadmin</code> password secret (sensitive).</li>
+</ul>
+<p>Once the stack is up, continue with the <a href="#end-to-end-runbook">end-to-end runbook</a> below.</p>
+<hr />
+<h1 id="part-2-seed-the-depot-and-run-your-first-build">Part 2 — seed the depot and run your first build<a class="headerlink" href="#part-2-seed-the-depot-and-run-your-first-build" title="Permanent link">&para;</a></h1>
+<h2 id="end-to-end-runbook">End-to-end runbook<a class="headerlink" href="#end-to-end-runbook" title="Permanent link">&para;</a></h2>
+<p>This is the authoritative "what to do" path. Steps 3, 4, 6, 7, 8 and 9 are manual operations the sample does <strong>not</strong> automate. Do them in order. Each step links into the <a href="#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way">operational deep-dive appendix</a> for the "why".</p>
+<h3 id="1-build-the-windows-build-agent-ami">1. Build the Windows build-agent AMI<a class="headerlink" href="#1-build-the-windows-build-agent-ami" title="Permanent link">&para;</a></h3>
+<p>One-time operator step, <strong>before</strong> <code>terraform apply</code>. See <a href="#build-the-windows-build-agent-ami-manual-prerequisite">Build the Windows build-agent AMI</a>.</p>
+<h3 id="2-deploy-with-terraform">2. Deploy with Terraform<a class="headerlink" href="#2-deploy-with-terraform" title="Permanent link">&para;</a></h3>
+<p>See <a href="#deployment">Deployment</a>. Provisions the VPC, FSxN, ECS Horde server, Perforce, and the two agent launch templates. The external ALB is locked to the deployer <code>/32</code> — no <code>0.0.0.0/0</code> ingress anywhere.</p>
+<h3 id="3-configure-the-svc-horde-p4-user">3. Configure the <code>svc-horde</code> P4 user<a class="headerlink" href="#3-configure-the-svc-horde-p4-user" title="Permanent link">&para;</a></h3>
+<p>Horde authenticates to Perforce as <code>svc-horde</code> (the <code>perforceClusters</code> credentials in <code>globals.json</code>, sourced from the pre-created secret), but <strong>Terraform cannot provision that user inside p4d</strong>. After the P4 server is up, complete these one-time manual steps on the server, in order, so the Horde stream poller can log in and read the stream.</p>
+<p>These are <strong>manual, one-time</strong> steps — Terraform does not perform them. They persist across normal server restarts (on SDP servers all of these edits are journaled and survive restarts); you only need to redo them if the P4 database is ever <strong>rebuilt from scratch</strong> without a checkpoint/journal restore.</p>
+<h4 id="30-get-a-working-super-user-shell-on-the-p4-server">3.0 Get a working super-user shell on the P4 server<a class="headerlink" href="#30-get-a-working-super-user-shell-on-the-p4-server" title="Permanent link">&para;</a></h4>
+<p>Run every <code>p4</code> command in this step as a Perforce <strong>super</strong> user. On the bundled SDP server there are two things people get wrong here, so do exactly this:</p>
+<ol>
+<li><strong>The super user is <code>super</code>, not <code>perforce</code>.</strong> <code>perforce</code> is only the <strong>OS account</strong> that p4d runs as — it is not the Perforce super user. The <code>&lt;super&gt;</code> placeholder in the commands below is the Perforce user named <code>super</code>.</li>
+<li><strong>Get the SDP environment and a real login shell.</strong> SDP stores per-instance environment (P4PORT, P4USER, ticket/trust file locations) in <code>p4_vars</code>, and its ticket/trust files depend on <code>$HOME</code> being the <code>perforce</code> account's home. Use a <strong>login shell</strong> (<code>su -</code>), not <code>sudo -u</code>, or the ticket/trust files land in the wrong <code>$HOME</code> and login breaks:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Become the perforce OS account with a full login shell, then load the SDP env for instance 1</span>
+sudo<span class="w"> </span>su<span class="w"> </span>-<span class="w"> </span>perforce
+<span class="nb">source</span><span class="w"> </span>/p4/common/bin/p4_vars<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<ol>
+<li><strong>Get the <code>super</code> password.</strong> The <code>super</code> password is <strong>not</strong> the <code>AdminPassword</code>/<code>cgd-p4-server-AdminPassword</code> secret — that value does <strong>not</strong> match the live super password. On SDP the real super credential is stored on the server in the base64-encoded file:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># base64-encoded, no separate key — decode to get the super password</span>
+base64<span class="w"> </span>-d<span class="w"> </span>/p4/common/config/.p4passwd.p4_1.admin.enc
+</code></pre></div>
+<ol>
+<li><strong>Trust the SSL endpoint once.</strong> Connecting to the explicit <code>ssl:&lt;host&gt;:1666</code> endpoint (rather than loopback) requires a one-time trust of the server fingerprint, or every <code>p4</code> command fails with "The authenticity of ... can't be established":</li>
+</ol>
+<div class="highlight"><pre><span></span><code>p4<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$P4PORT</span><span class="s2">"</span><span class="w"> </span>trust<span class="w"> </span>-y
+</code></pre></div>
+<ol>
+<li><strong>Log in as <code>super</code>:</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>login<span class="w">   </span><span class="c1"># paste the password from step 3</span>
+</code></pre></div>
+<p>Now run the sub-steps below as <code>super</code>.</p>
+<h4 id="31-create-the-svc-horde-user-type-standard">3.1 Create the <code>svc-horde</code> user (Type: <code>standard</code>)<a class="headerlink" href="#31-create-the-svc-horde-user-type-standard" title="Permanent link">&para;</a></h4>
+<p><code>svc-horde</code> must exist as a Perforce user of <strong>Type: <code>standard</code></strong>. Do <strong>not</strong> create it as a <code>service</code> user: p4d forbids service users from creating clients, opening changes, or submitting, so Horde job creation dies with HTTP 500 <code>Command not allowed for a service user</code> at <code>PerforceService.CreateClientAsync</code> — this blocks the entire pipeline.</p>
+<p>Build the spec with an <strong>explicit <code>Type:</code> line</strong>. The tempting <code>p4 user -o | sed 's/^Type:.*/.../' | p4 user -i</code> one-liner is a silent trap: a brand-new user's spec has <strong>no</strong> <code>Type:</code> line for the <code>sed</code> to match, so it yields the default (<code>standard</code>) by accident on a new user, and p4d <strong>refuses to change the type of an existing user</strong> in place. So set the type explicitly, and if the user already exists as the wrong type, <strong>delete and recreate</strong> it:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># If svc-horde already exists as the wrong type, delete it first (p4d cannot convert type in place):</span>
+<span class="c1">#   p4 -u super user -d -f svc-horde</span>
+
+<span class="c1"># Create svc-horde as Type: standard, injecting an explicit Type: line into the spec:</span>
+p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>user<span class="w"> </span>-f<span class="w"> </span>-o<span class="w"> </span>svc-horde<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>awk<span class="w"> </span><span class="s1">'BEGIN{t=0} /^Type:/{print "Type:\tstandard"; t=1; next} {print} END{if(!t) print "Type:\tstandard"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>user<span class="w"> </span>-f<span class="w"> </span>-i
+
+<span class="c1"># Verify:</span>
+p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>user<span class="w"> </span>-o<span class="w"> </span>svc-horde<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">'^Type:'</span><span class="w">   </span><span class="c1"># -&gt; Type: standard</span>
+</code></pre></div>
+<h4 id="32-set-the-password-to-match-the-pre-created-secret">3.2 Set the password to match the pre-created secret<a class="headerlink" href="#32-set-the-password-to-match-the-pre-created-secret" title="Permanent link">&para;</a></h4>
+<p>Set the user's password <strong>on the server</strong> to match the value already in the pre-created secret. Rotating one side without the other breaks Horde's Perforce connection — see <a href="#10-the-svc-horde-password-must-match-on-both-sides">appendix §10</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Confirm the password already stored in your pre-created secret</span>
+aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;horde_p4_credentials_secret_arn&gt;
+
+<span class="c1"># On the P4 server, set the svc-horde user's password to that value</span>
+p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>passwd<span class="w"> </span>svc-horde
+</code></pre></div>
+<blockquote>
+<p><strong>Expired-password gotcha (<code>security=4</code>).</strong> On a server running <code>security=4</code> with <code>dm.user.resetpassword=1</code> (the SDP default), an <strong>admin-set</strong> password is treated as <strong>immediately expired</strong>. <code>svc-horde</code> cannot authenticate until it changes its own password <strong>once</strong> — even changing it to the same value. Do a one-time self-change as <code>svc-horde</code> (old = new = the secret value) so the account can log in:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># As svc-horde, change the password to itself once to clear the "expired" state.</span>
+<span class="c1"># p4 passwd prompts: Old password, then New password (twice) — enter the SAME value for all three.</span>
+p4<span class="w"> </span>-u<span class="w"> </span>svc-horde<span class="w"> </span>passwd
+</code></pre></div>
+<p>Skip this and Horde's poller keeps failing to authenticate even though the password "matches".</p>
+</blockquote>
+<h4 id="33-grant-protections-on-the-stream-depot">3.3 Grant protections on the stream depot<a class="headerlink" href="#33-grant-protections-on-the-stream-depot" title="Permanent link">&para;</a></h4>
+<p><code>svc-horde</code> must be authorized in the protections table (<code>p4 protect</code>) to read/write the stream depot the poller monitors. Add a line matching this pattern (using your depot in place of the generic <code>//YourGame/...</code> placeholder):</p>
+<div class="highlight"><pre><span></span><code>write user svc-horde * //YourGame/...
+</code></pre></div>
+<p><code>p4 protect</code> is <strong>order-sensitive</strong>: later lines override earlier ones for overlapping paths, so place this grant where it will not be overridden by a subsequent exclusionary line (e.g. <code>list user * -//YourGame/...</code>). Without this grant the Horde poller fails and the server logs <code>Access for user 'svc-horde' has not been enabled by 'p4 protect'</code>. <code>super</code> is <strong>not</strong> required for the poller — the <code>write ... //YourGame/...</code> line is exactly what grants the stream access it needs. Keep it least-privilege.</p>
+<h4 id="34-give-svc-horde-a-long-lived-login-ticket">3.4 Give <code>svc-horde</code> a long-lived login ticket<a class="headerlink" href="#34-give-svc-horde-a-long-lived-login-ticket" title="Permanent link">&para;</a></h4>
+<p>Add <code>svc-horde</code> to a group with an <code>unlimited</code> (or long) <code>Timeout</code> so its login ticket does not expire and interrupt polling. Group membership only affects the ticket timeout — it does <strong>not</strong> grant depot access; the protections line from step 3.3 does that.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Grant an unlimited ticket timeout (create the group if it doesn't exist)</span>
+p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>group<span class="w"> </span>-o<span class="w"> </span>unlimited_timeout<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>sed<span class="w"> </span><span class="s1">'s/^Timeout:.*/Timeout:\tunlimited/'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>group<span class="w"> </span>-i
+
+<span class="c1"># Add svc-horde to the group's Users list, then re-submit</span>
+p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>group<span class="w"> </span>-o<span class="w"> </span>unlimited_timeout<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>awk<span class="w"> </span><span class="s1">'/^Users:/{print; print "\tsvc-horde"; next} {print}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>p4<span class="w"> </span>-u<span class="w"> </span>super<span class="w"> </span>group<span class="w"> </span>-i
+</code></pre></div>
+<h3 id="acquire-the-engine-and-project">Acquire the engine and project<a class="headerlink" href="#acquire-the-engine-and-project" title="Permanent link">&para;</a></h3>
+<p>Before you can seed the depot, you need the engine and a source-available project <strong>on a local disk</strong>. This step is entirely manual and independent of this sample's infrastructure — do it on the same host you will seed from (see <a href="#seeding-environment">seeding environment</a> below).</p>
+<blockquote>
+<p><strong>Skip this if you already have your own game and engine in Perforce.</strong> The seed step and its helper are an <strong>optional quick-start</strong> for a demo/eval depot. If you already have your project and engine in Perforce (or your own seeding process), skip straight to <a href="#6-make-horde-aware-of-the-stream--project">making Horde aware of the stream</a> — just make sure your depot ends in the <a href="#required-end-state-stream-layout">required layout</a> below.</p>
+</blockquote>
+<p>To assemble a demo/eval project (engine + Lyra):</p>
+<ol>
+<li><strong>Clone the engine at your target tag.</strong> Clone <code>EpicGames/UnrealEngine</code> at the engine tag you intend to build (e.g. <code>5.5.4-release</code>). This requires a GitHub account <strong>accepted into the Epic Games organization</strong> and a PAT with the <strong><code>repo</code></strong> scope (see <a href="#prerequisites">Prerequisites</a>); a token missing <code>repo</code> (or an account not in the org) fails here with a clone <strong>403</strong>.</li>
+</ol>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>--branch<span class="w"> </span><span class="m">5</span>.5.4-release<span class="w"> </span>https://github.com/EpicGames/UnrealEngine.git
+</code></pre></div>
+<ol>
+<li><strong>Fetch the engine's binary dependencies.</strong> The Git repo does not carry the large binary dependencies — run the engine's setup script to fetch them via GitDependencies before you seed, or the engine tree is incomplete:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="k">cd</span> UnrealEngine
+Setup.bat
+</code></pre></div>
+<ol>
+<li>
+<p><strong>Get a project with C++ source.</strong> The project <strong>must</strong> have a <code>Source/</code> tree and real <code>Modules[]</code> in its <code>.uproject</code> — a from-source compile has nothing to build otherwise. Epic's <strong>Lyra</strong> (from <code>EpicGames/UnrealEngine</code> at <code>Samples/Games/Lyra</code>, at the tag matching your engine) is a good fit. Note that <strong>Lyra at the <code>5.5.x</code> tags is code-only</strong> (<code>Source/</code> but no <code>Content/</code>, 0 <code>.uasset</code>) — that is <strong>fine</strong> for the from-source <code>LyraEditor</code> compile demo; you do not need Content. <strong>Do not</strong> pick a content-only sample (e.g. a prebuilt-DLL Launcher/Fab sample with no <code>Source/</code>): it cannot be compiled from source.</p>
+</li>
+<li>
+<p><strong>Budget disk.</strong> The engine tree alone is large (~34 GiB), and Setup.bat's dependencies push the checkout to ~64 GiB. Plan for <strong>~512 GiB free</strong> on the acquisition/seed host for the engine + project + working space + NTFS overhead (the stock agent AMI root is 256 GiB — too small; size the seed host up, see <a href="#seeding-environment">seeding environment</a>).</p>
+</li>
+</ol>
+<h3 id="4-seed-the-perforce-depot-project-engine">4. Seed the Perforce depot (project + engine)<a class="headerlink" href="#4-seed-the-perforce-depot-project-engine" title="Permanent link">&para;</a></h3>
+<p>The depot must contain a <strong>source-available</strong> UE project <strong>and</strong> the matching engine before a build can compile anything. This is manual — the sample does not seed the depot. However you get there, the depot must end in the <a href="#required-end-state-stream-layout">required end-state layout</a>.</p>
+<blockquote>
+<p><strong><code>scripts/seed-depot.ps1</code> is an OPTIONAL quick-start helper — not required.</strong> It exists to get a demo/eval depot (engine + Lyra) set up fast. If you already have your own game and engine in Perforce, or your own seeding process, you can <strong>skip the helper entirely</strong> — as long as the depot ends up in the <a href="#required-end-state-stream-layout">required layout</a> below (project in a stream subfolder, engine tree present, the <code>Build/</code> scripts submitted). Both paths must converge on that same end state.</p>
+</blockquote>
+<p><strong>Using the helper.</strong> From your seed host (see <a href="#seeding-environment">seeding environment</a>), run <a href="scripts/seed-depot.ps1"><code>scripts/seed-depot.ps1</code></a> — see the script header for the full parameter reference. It creates the stream depot/stream if absent, submits the project under a subfolder, submits the Build scripts, provisions the engine, and verifies the layout. Supports <code>-WhatIf</code>. Key parameters and gotchas:</p>
+<ul>
+<li><strong>First-ever seed must use <code>-EnginePath</code> (submit a local tree).</strong> The fast <code>-EngineDepotPath</code> option branches an engine that is <strong>already in the depot</strong> via <code>p4 populate</code> (lazy copy, no re-upload) — but on a truly fresh depot no engine exists yet, so the <strong>first-ever</strong> seed has to submit your local engine tree with <code>-EnginePath</code> (~34 GiB, slow). Use <code>-EngineDepotPath</code> only for <strong>subsequent</strong> streams, once an engine is present in the depot.</li>
+<li><strong>Run as a P4 user with depot-create rights.</strong> Creating the stream depot/stream requires elevated rights — service/standard users without them cannot create depots. Run the seed as a P4 user that can create depots (e.g. the SDP <code>super</code> user), <strong>or</strong> pre-create the depot and stream yourself first and run the seed as a lesser user. (<code>svc-horde</code> from step 3 is a poller, not a depot creator.)</li>
+<li><strong>Large trees: <code>-SubmitBatchSize</code>.</strong> A monolithic reconcile+submit stalls on a first-ever full engine seed (~285k files / ~64 GiB). Use <code>-SubmitBatchSize</code> to submit in chunks. The engine tree also contains files with Perforce metacharacters (<code>@ % # *</code>); the helper pre-scans and force-adds them (<code>p4 add -f</code>) and warns on any it cannot submit.</li>
+</ul>
+<p><a id="required-end-state-stream-layout"></a>
+<strong>Required end-state stream layout.</strong> Both the helper path and a bring-your-own-depot path must converge on this layout — the project in a <strong>subfolder</strong> (never at the stream root — the <a href="#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root">drive-root gotcha</a>), the engine tree present (<a href="#7-the-engine-must-be-present-in-the-stream--on-the-lun">engine-in-stream</a>), and the <code>Build/</code> scripts submitted (<a href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build">step 5</a>):</p>
+<div class="highlight"><pre><span></span><code>//YourGame/main/
+├── &lt;Project&gt;/            # the .uproject, Source/, Config/, Content/  (NEVER at the stream root)
+│   ├── &lt;Project&gt;.uproject
+│   ├── Source/           # C++ source — REQUIRED for a from-source compile
+│   ├── Config/
+│   └── Content/
+├── Build/                # the buildgraph scripts (see step 5)
+└── Engine/               # the full UE engine tree (Build.bat, BatchFiles, Source, ...)
+</code></pre></div>
+<p><strong>Use a project with C++ source.</strong> The project <strong>must</strong> have <code>Source/</code> and real <code>Modules[]</code> in its <code>.uproject</code> — see <a href="#acquire-the-engine-and-project">Acquire the engine and project</a> for how to get one (e.g. Epic's Lyra) and why content-only samples cannot be compiled from source.</p>
+<p><a id="seeding-environment"></a>
+<strong>Seeding environment.</strong> This sample does <strong>not</strong> deploy a host to run the seed from — run the acquisition and seed from <strong>any host you choose</strong>: your local workstation, a CI runner, or an EC2 instance you provision yourself. Wherever you run it, that host must have:</p>
+<ul>
+<li>The Perforce CLI <code>p4</code> on <code>PATH</code>, and PowerShell (the helper is a <code>.ps1</code>).</li>
+<li><strong>Network reachability to the Perforce server's <code>P4PORT</code>.</strong> The bundled P4 server is in a <strong>private subnet</strong>, so the host must be in the VPC or on a VPN/peered network that can reach it (e.g. an in-VPC EC2 instance, or your workstation over VPN).</li>
+<li>The engine + project tree + BuildGraph scripts available locally to submit.</li>
+<li><strong>~512 GiB of free disk</strong> for the engine (~34 GiB) + dependencies + project + working space + NTFS overhead. The stock agent AMI root is 256 GiB — too small; if you reuse that AMI for the seed host, resize the root volume up.</li>
+<li>AWS CLI + credentials <strong>only if</strong> you pass the P4 credentials by Secrets Manager reference (the helper's <code>-P4CredentialsSecret</code>). If you pass the password directly, the AWS CLI is <strong>not</strong> required.</li>
+</ul>
+<p>A convenient choice is an <strong>in-VPC Windows workstation</strong> in a <strong>private</strong> subnet, reachable via <strong>SSM / Fleet Manager</strong> with <strong>no public ingress</strong> (a security group with zero inbound rules — consistent with the no-<code>0.0.0.0/0</code> posture of this sample).</p>
+<p><strong>Tearing the depot back down later.</strong> If you used the helper (which creates a <strong>stream depot</strong>), <code>p4 depot -d &lt;depot&gt;</code> refuses with <code>location of existing streams</code> until the versioned stream spec is obliterated first — after deleting the stream's files/spec, run <code>p4 stream --obliterate -y //&lt;depot&gt;/&lt;stream&gt;</code> (Perforce 2019.1+), then delete the depot.</p>
+<h3 id="5-submit-the-buildgraph-scripts-to-the-depot-under-build">5. Submit the BuildGraph scripts to the depot under <code>Build/</code><a class="headerlink" href="#5-submit-the-buildgraph-scripts-to-the-depot-under-build" title="Permanent link">&para;</a></h3>
+<p>Submit all of these to <code>//YourGame/main/Build/</code> so the <code>-Script=Build/...</code> paths in <code>globals.json</code> resolve against the stream root. <code>scripts/seed-depot.ps1</code> does this for you via <code>-BuildScriptsPath</code>:</p>
+<ul>
+<li><code>buildgraph/HydratePipeline.xml</code></li>
+<li><code>buildgraph/BuildPipeline.xml</code></li>
+<li><code>buildgraph/ReaperPipeline.xml</code></li>
+<li><code>buildgraph/OntapSan.psm1</code></li>
+<li>the pipeline <code>*.ps1</code> scripts (<code>p4-login.ps1</code>, <code>create-build-client.ps1</code>, <code>attach-clone-lun.ps1</code>, <code>hydrate-source-lun.ps1</code>, <code>teardown-clone-lun.ps1</code> and <code>reap-orphans.ps1</code>)</li>
+</ul>
+<p>The simplest way to stay complete is to submit the whole <code>buildgraph/</code> directory as <code>Build/</code>, which is what the helper does.</p>
+<h3 id="6-make-horde-aware-of-the-stream-project">6. Make Horde aware of the stream / project<a class="headerlink" href="#6-make-horde-aware-of-the-stream-project" title="Permanent link">&para;</a></h3>
+<p>The project, stream, and the three templates (<code>hydrate</code>, <code>build</code>, <code>reap</code>) are delivered by <code>config/horde/globals.json.tpl</code>, which points them at <code>Build/HydratePipeline.xml</code>, <code>Build/BuildPipeline.xml</code> and <code>Build/ReaperPipeline.xml</code>. Changing streams or templates means editing <code>config/horde/globals.json.tpl</code> and redeploying (or applying the config to the live server).</p>
+<p>Confirmed <code>globals.json</code> requirements for the live Horde <strong>5.5</strong> server (a <strong>flat, top-level v1</strong> schema):</p>
+<ul>
+<li><code>agentTypes</code> mapping <code>Win64 → build-pool</code> and <code>AnyAgent → sync-pool</code>, plus <code>workspaceTypes</code>.</li>
+<li>A <strong><code>storage</code> block</strong> (backends + namespaces for <code>horde-logs</code> and <code>horde-artifacts</code>). Without it, agent log uploads fail with <strong>HTTP 500 <code>Namespace not found</code></strong> (see <a href="#troubleshooting">Troubleshooting</a>).</li>
+</ul>
+<h3 id="7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool">7. Approve agent enrollment (assign each agent to exactly one pool)<a class="headerlink" href="#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool" title="Permanent link">&para;</a></h3>
+<p>Horde 5.5 does <strong>not</strong> auto-approve agents. New agents sit <strong>pending</strong> until an operator approves them — via the Horde UI, or <code>POST /api/v1/enrollment</code> (a <code>GET</code> on the same endpoint lists pending enrollments). Until you approve them, <code>SyncPool</code> and <code>BuildPool</code> have <strong>no online agents</strong> and jobs never lease. Note that <code>enable_new_agents_by_default</code> does <strong>not</strong> auto-approve enrollment — it only controls whether an agent is enabled <em>once approved</em>. See <a href="#11-horde-55-does-not-auto-approve-agent-enrollment">appendix §11</a>.</p>
+<p><strong>Approve each agent into exactly its intended pool — do not assign an agent to both pools:</strong></p>
+<ul>
+<li><strong>Sync agent → <code>SyncPool</code> only.</strong> The sync agent is the <strong>single legitimate writer</strong> of the source LUN (enforced by the single-host <code>horde_san_hydrator</code> igroup — see <a href="#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups">appendix §3</a>). If you also place it in (or the build agent in) the other pool, Horde can schedule a <strong>hydrate on a build agent</strong>, which the single-writer igroup guard refuses.</li>
+<li><strong>Build agents → <code>BuildPool</code> only.</strong></li>
+</ul>
+<blockquote>
+<p><strong>Manual step — trust the P4 SSL endpoint on each new agent host.</strong> The Horde agent service runs as <strong>LocalSystem</strong>, whose P4 trust store has no fingerprint for the SSL <code>P4PORT</code>, so Horde's workspace-executor <code>p4 login</code> fails with "The authenticity of ... can't be established" <strong>before</strong> any pipeline script runs (<code>p4-login.ps1</code> cannot fix this — it runs too late). Run a one-time <code>p4 trust</code> <strong>as the agent service account</strong> on <strong>each</strong> new agent host. Because SSM Run Command executes as <strong>SYSTEM</strong> — the same account the agent runs as — you can push it via SSM Run Command:</p>
+<div class="highlight"><pre><span></span><code><span class="n">p4</span> <span class="n">-p</span> <span class="n">ssl</span><span class="p">:&lt;</span><span class="n">p4d-host</span><span class="p">&gt;:</span><span class="n">1666</span> <span class="n">trust</span> <span class="n">-y</span>
+</code></pre></div>
+<p>Do this once per agent host after it boots and before it needs to run a job.</p>
+</blockquote>
+<h3 id="8-trigger-the-hydration-pipeline-to-create-the-first-snapshot">8. Trigger the Hydration Pipeline to create the first snapshot<a class="headerlink" href="#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot" title="Permanent link">&para;</a></h3>
+<p>Run the <strong>Hydration Pipeline</strong> from the Horde UI (or wait for the 60-minute schedule, <code>patterns: [{ interval: 60 }]</code>). It syncs the stream onto the source FSxN volume and creates the first snapshot named <code>cl-&lt;N&gt;</code>. Note the <code>&lt;N&gt;</code> — it is the changelist you pass to the build. Keep this schedule frequent to keep incremental syncs cheap — see <a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>.</p>
+<blockquote>
+<p><strong>The first hydrate formats the LUN it creates.</strong> <code>hydrate-source-lun.ps1</code> creates the source LUN if it does not exist and, on that same run, initialises and formats it NTFS — a LUN that did not exist a moment ago cannot hold data, so this is safe and needs no flag. <code>-set:FormatIfRaw=true</code> exists only for a <strong>raw</strong> LUN that was provisioned <strong>outside</strong> the pipeline (symptom: <code>No usable partition on disk ...</code>). Never pass it in steady state; <code>Mount-SanLun</code> refuses to reformat a disk that is not RAW even if you do.</p>
+</blockquote>
+<!-- -->
+<blockquote>
+<p><strong>Custom job <code>arguments</code> REPLACE the template defaults — pass the full list.</strong> If you trigger the hydrate by posting custom <code>arguments</code> to <code>POST /api/v1/jobs</code>, those arguments <strong>replace</strong> the template's default argument list rather than appending to it, so omitting the defaults breaks the job with errors like <code>Missing -Script= parameter</code>. If you do pass an extra value such as <code>-set:FormatIfRaw=true</code>, include the <strong>entire</strong> argument list the template would otherwise supply (<code>-Script=Build/HydratePipeline.xml</code>, the target node, and the <code>-set:</code> values) <strong>plus</strong> your extra value. Triggering from the Horde UI keeps the defaults intact.</p>
+</blockquote>
+<h3 id="9-trigger-the-build-pipeline-per-job-arguments">9. Trigger the Build Pipeline (per-job arguments)<a class="headerlink" href="#9-trigger-the-build-pipeline-per-job-arguments" title="Permanent link">&para;</a></h3>
+<p>Trigger the <strong>Build Pipeline</strong> on-demand once a snapshot exists. These arguments are <strong>per run</strong> and must be supplied each time — they are <strong>not</strong> baked into the config:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SnapshotName</code></td>
+<td><code>cl-&lt;N&gt;</code></td>
+<td>the snapshot from step 8</td>
+</tr>
+<tr>
+<td><code>SnapshotChangelist</code></td>
+<td><code>&lt;N&gt;</code></td>
+<td>the changelist number; <code>p4 flush</code> trusts this — wrong value silently desyncs the have-list (<a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>)</td>
+</tr>
+<tr>
+<td><code>CloneVolumeName</code></td>
+<td>e.g. <code>build_1234</code></td>
+<td>lowercase alphanumeric/underscore, <strong>no hyphens</strong> (<a href="#5-ontap-volume-names-reject-hyphens">appendix §5</a>)</td>
+</tr>
+<tr>
+<td><code>UEProject</code></td>
+<td><code>&lt;drive&gt;:/&lt;Project&gt;/&lt;Project&gt;.uproject</code></td>
+<td>path on the mounted clone; <strong>must be in a subfolder</strong> (<a href="#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root">appendix §6</a>)</td>
+</tr>
+<tr>
+<td><code>UETarget</code></td>
+<td>the real editor target, e.g. <code>LyraEditor</code></td>
+<td>the actual target name — <strong>not</strong> just <code>Editor</code> (see <a href="#troubleshooting">Troubleshooting</a>)</td>
+</tr>
+<tr>
+<td><code>UEPlatform</code></td>
+<td><code>Win64</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>UEConfiguration</code></td>
+<td><code>Development</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ExtraUbtArgs</code></td>
+<td><code>-UBA</code></td>
+<td>enables Unreal Build Accelerator (<a href="#2-the-data-path-is-iscsintfs-not-nfs--and-that-is-why-uba-works">appendix §2</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>Expect <code>BUILD SUCCESSFUL</code> compiling off the clone LUN. With <code>-UBA</code> the log shows <code>Using Unreal Build Accelerator executor</code> and a <code>UbaServer</code> listener.</p>
+<blockquote>
+<p><strong>Posting custom <code>arguments</code> replaces the template defaults.</strong> As in the hydrate (<a href="#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot">step 8</a>): if you trigger the build via <code>POST /api/v1/jobs</code> with custom <code>arguments</code>, include the <strong>full</strong> template argument list (e.g. <code>-Script=Build/BuildPipeline.xml</code> and the target node) <strong>plus</strong> the per-run <code>-set:</code> values above, or the job fails with <code>Missing -Script=</code>. Triggering from the Horde UI keeps the defaults intact.</p>
+</blockquote>
+<!-- -->
+<blockquote>
+<p><strong>Single-agent UBA runs local-only (by design).</strong> With only one build agent online, UBA reports <code>No agents found matching requirements</code> and runs local-only — this is expected, not an error. Distributed UBA needs more than one eligible agent.</p>
+</blockquote>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<p>Keyed to the exact error strings the pipeline can produce.</p>
+<table>
+<thead>
+<tr>
+<th>Error / symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Namespace 'horde-logs' not found</code> / HTTP 500 <code>StorageException</code></td>
+<td>The <code>storage</code> block is missing from <code>globals.json</code>, so agent log uploads have nowhere to go.</td>
+<td>Add the <code>storage</code> block (backends + namespaces for <code>horde-logs</code> and <code>horde-artifacts</code>). See <a href="#6-make-horde-aware-of-the-stream--project">runbook step 6</a>.</td>
+</tr>
+<tr>
+<td><code>NullReferenceException ... SourceFileWorkingSet</code> (UBT)</td>
+<td>The UE project is at the clone-LUN <strong>drive root</strong>; <code>ProjectDir.ParentDirectory</code> is <code>null</code>.</td>
+<td>Put the project in a subfolder (<code>W:\&lt;Project&gt;\...</code>). See <a href="#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root">appendix §6</a>.</td>
+</tr>
+<tr>
+<td>Opaque <strong>ONTAP HTTP 400</strong> on clone create</td>
+<td>The <code>CloneVolumeName</code> contains a hyphen, which ONTAP volume names reject.</td>
+<td>Use <code>build_{jobid}</code>, lowercase, no hyphens. See <a href="#5-ontap-volume-names-reject-hyphens">appendix §5</a>.</td>
+</tr>
+<tr>
+<td><code>Access for user 'svc-horde' has not been enabled by 'p4 protect'</code></td>
+<td><code>svc-horde</code> has no protections grant on the stream depot, so the poller can't read it.</td>
+<td>Add the <code>write user svc-horde * //YourGame/...</code> line. See <a href="#33-grant-protections-on-the-stream-depot">runbook step 3.3</a>.</td>
+</tr>
+<tr>
+<td>Agents show online but jobs never lease / pools empty</td>
+<td>Agent enrollment is <strong>not approved</strong> (Horde 5.5 does not auto-approve).</td>
+<td>Approve enrollment in the Horde UI. See <a href="#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool">runbook step 7</a> / <a href="#11-horde-55-does-not-auto-approve-agent-enrollment">appendix §11</a>.</td>
+</tr>
+<tr>
+<td>UBT <code>UnauthorizedAccessException</code> writing <code>Engine\Intermediate</code> (e.g. <code>VVMBytecodeOps.gen.h</code> denied)</td>
+<td>Synced files are read-only because the client is <code>noallwrite</code>; UBT can't write generated headers.</td>
+<td>Clear read-only (<code>attrib -R &lt;drive&gt;:\*.* /S /D</code>) or use an <code>allwrite</code> client. See <a href="#8-p4-noallwrite-makes-synced-files-read-only--ubt-must-be-able-to-write">appendix §8</a>.</td>
+</tr>
+<tr>
+<td><code>Couldn't find target rules file for target 'Editor'</code></td>
+<td><code>UETarget</code> is set to the generic <code>Editor</code> instead of the project's real editor target.</td>
+<td>Use the real editor target name, e.g. <code>LyraEditor</code>. See the <a href="#9-trigger-the-build-pipeline-per-job-arguments">per-job args table</a>.</td>
+</tr>
+<tr>
+<td><code>REFUSING to add this host to igroup 'horde_san_hydrator'</code></td>
+<td>The hydrator instance was replaced (ASG, or stop/re-create) and the single-host igroup still holds the old host's IQN.</td>
+<td>If EC2 still reports the old instance as <strong>terminated</strong>, the hydrate removes the stale IQN itself and proceeds. Otherwise remove it by hand: <code>lun igroup remove -vserver &lt;svm&gt; -igroup horde_san_hydrator -initiator &lt;stale-iqn&gt;</code>. Never add a second live host. See <a href="#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups">appendix §3</a>.</td>
+</tr>
+<tr>
+<td><code>No usable partition on disk ... provision it with -Format</code></td>
+<td>The source LUN exists but is RAW: it was created outside the pipeline, so the hydrate did not format it.</td>
+<td>Run the hydrate once with <code>-set:FormatIfRaw=true</code> (see <a href="#8-trigger-the-hydration-pipeline-to-create-the-first-snapshot">runbook step 8</a>).</td>
+</tr>
+<tr>
+<td><code>iSCSI disk for LUN ... did not appear within 120s</code></td>
+<td>The LUN is mapped to an igroup this host's IQN is not in — usually the agent's IQN is not the one the scripts registered (e.g. the boot task did not run).</td>
+<td>Compare <code>Get-InitiatorPort</code> on the agent with the igroup members (<code>lun igroup show</code>). The AMI's boot task sets <code>iqn.1991-05.com.microsoft:&lt;instance-id&gt;</code>; <code>C:\ProgramData\horde\set_unique_iqn.log</code> records what it did.</td>
+</tr>
+<tr>
+<td>A build compiled sources older than the delta sync should have brought in</td>
+<td>Two concurrent jobs shared one Perforce client for <code>p4 flush</code> / <code>p4 sync</code>, so one job's flush overwrote the other's have-list.</td>
+<td>Leave <code>WorkspaceName</code> empty so each job gets its own <code>hordeclone_&lt;stream&gt;_&lt;CloneVolumeName&gt;</code> client (see <a href="#1-the-incremental-sync-needs-p4-flush--this-is-not-optional">appendix §1</a>).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>No <code>0.0.0.0/0</code> ingress anywhere.</strong> Every ingress rule is scoped to a single-IP <code>/32</code>, a referenced security group, or a private VPC CIDR (enforced as a hard invariant in <code>security.tf</code>).</li>
+<li><strong>External ALB locked to the deployer <code>/32</code>.</strong> Both the HTTPS listener (443) and the HTTP→HTTPS redirect (80) accept traffic only from <code>local.my_ip_cidr</code>.</li>
+<li><strong>No OIDC auth configured yet.</strong> The Horde module's <code>auth_method</code> is intentionally left unset in this sample, so <strong>the <code>/32</code> lock is the only access gate</strong> on the Horde UI. Configure OIDC (or another Horde auth method) before widening ALB access beyond your own IP.</li>
+<li><strong>Internal traffic stays private.</strong> Horde ECS tasks, Perforce, and agents run in private subnets; FSxN accepts iSCSI (3260) and ONTAP-REST only from the agent security group; P4 (1666) is reachable only from the agent SG and the deployer <code>/32</code>.</li>
+<li><strong>The agent role reads exactly two secrets.</strong> The agent instance role can read the FSxN <code>fsxadmin</code> secret and the Horde P4 credentials secret — not the Perforce super password. Build agents execute code from the depot, so treat every grant on that role as reachable from a build. A sensible follow-up is to replace <code>fsxadmin</code> (file-system-wide admin) with an SVM-scoped ONTAP user that can only clone, snapshot and map LUNs on the workspace SVM.</li>
+<li><strong><code>ec2:DescribeInstances</code> is the only non-secret action the sample grants the agents.</strong> It lets the hydrate prove that a stale igroup member belongs to a terminated instance before removing it (<a href="#3-ntfs-is-not-a-shared-filesystem--hence-two-igroups">appendix §3</a>); it is read-only and cannot be resource-scoped, hence <code>"*"</code>.</li>
+<li><strong>The split-horizon zone covers one name.</strong> In-VPC agents resolve the Horde FQDN to the internal ALB through a private hosted zone named after that FQDN, not after your apex domain — a private zone for the apex would make every other record under your domain return NXDOMAIN inside the VPC.</li>
+</ul>
+<h2 id="appendix-operational-deep-dive-why-the-pipeline-is-built-this-way">Appendix: operational deep-dive (why the pipeline is built this way)<a class="headerlink" href="#appendix-operational-deep-dive-why-the-pipeline-is-built-this-way" title="Permanent link">&para;</a></h2>
+<p>These are the operational requirements and constraints of the pipeline. Each is stated once here and referenced from the runbook, args table, and troubleshooting sections above.</p>
+<p>The FlexClone premise is what makes per-build workspaces cheap: an ONTAP snapshot and a FlexClone of a multi-tens-of-GiB, hundreds-of-thousands-of-file UE stream each complete in well under a couple of seconds, and the iSCSI mount in tens of milliseconds — so a per-build workspace materializes in seconds instead of the cold full sync it replaces. On the author's reference workspace (a ~49.55 GB / 268,730-file UE 5.7 stream) <code>attach-clone-lun.ps1</code> measured a ~9.7 s total for clone + LUN map + iSCSI attach + disk online, versus ~8m23s for a cold <code>p4 sync</code>; that is one measured example rather than a universal guarantee, since it tracks workspace size, instance type, and how far the snapshot lags head. Because clones are copy-on-write, two workspace volumes share the parent's blocks and add only their own deltas, so total physical usage stays close to a single copy. But several things must be right or the pipeline either loses its benefit or does not work at all.</p>
+<h3 id="1-the-incremental-sync-needs-p4-flush-this-is-not-optional">1. The incremental sync needs <code>p4 flush</code> — this is not optional<a class="headerlink" href="#1-the-incremental-sync-needs-p4-flush-this-is-not-optional" title="Permanent link">&para;</a></h3>
+<p><code>p4 sync</code> is incremental only relative to the <strong>client's have-list</strong>, and the build agent's workspace is a fresh client. The files are on the clone, but the server has no record of that, so a bare <code>p4 sync</code> <strong>re-transfers the entire stream</strong> — the FlexClone completes in a second and then you pay the full sync anyway. <code>BuildPipeline.xml</code> therefore runs <code>p4 flush &lt;stream&gt;/...@$(SnapshotChangelist)</code> first: a metadata-only operation that writes the have-list without transferring content, completing in seconds even for hundreds of thousands of files. Because flush trusts the changelist you give it, snapshots must be named <code>cl-{N}</code> and <code>SnapshotChangelist</code> must be passed per job — the wrong value leaves the workspace disagreeing with the server about what is on disk.</p>
+<p>Keep the hydrate schedule frequent: the wider the gap between the snapshot changelist and head, the more the following <code>sync</code> must walk the diff — a snapshot at or near head keeps the delta sync to about a second, while a gap of several changelists can add tens of seconds. (<code>flush</code> and <code>sync</code> need Perforce auth, minted by the node's <code>p4 login</code> first step — see the <a href="#architecture">Architecture</a> pipeline notes.)</p>
+<p>The client the flush and sync run against is <strong>created per job</strong> — <code>hordeclone_&lt;stream&gt;_&lt;CloneVolumeName&gt;</code>, where <code>&lt;stream&gt;</code> is the stream name reduced to <code>[a-z0-9_]</code> (Terraform local <code>fsxn_client_stream_safe</code>; <code>//YourGame/main</code> becomes <code>yourgame_main</code>) — host-less, rooted on the clone drive, and deleted by the teardown lease hook. Perforce keeps the have-list on the server per client, so a name shared by concurrent builds races: job A flushes @100, job B flushes @105, and A's <code>sync</code> then believes it already has 101–105 and compiles stale sources with no error. Leave <code>WorkspaceName</code> empty; set it only to force a fixed client name for a single build agent. A client leaked by a hard Spot reclaim is collected by the off-agent reaper (<a href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node">§4</a>).</p>
+<h3 id="2-the-data-path-is-iscsintfs-not-nfs-and-that-is-why-uba-works">2. The data path is iSCSI/NTFS, not NFS — and that is why UBA works<a class="headerlink" href="#2-the-data-path-is-iscsintfs-not-nfs-and-that-is-why-uba-works" title="Permanent link">&para;</a></h3>
+<p>The binding constraint is Windows filesystem semantics, not throughput. On a Windows NFSv3 mount, four separate UE subsystems fail:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Failure on Windows NFSv3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UBA</strong> (Unreal Build Accelerator)</td>
+<td>Detours file I/O and calls <code>NtQueryInformationFile</code> on every input; the NFS redirector answers <code>0xc000000d</code> for files under <code>Engine/Source/*</code> — i.e. exactly the files that must live on the clone. UBA cannot be enabled at all.</td>
+</tr>
+<tr>
+<td><strong>DDC</strong></td>
+<td>mmap'd cache writes fail or corrupt</td>
+</tr>
+<tr>
+<td><strong>Shader library</strong></td>
+<td>write failures during cook</td>
+</tr>
+<tr>
+<td><strong>Stager</strong></td>
+<td><code>SafeCopyFile</code> → <code>SetFileTime</code> fails and <strong>retries forever</strong>, so the job <em>hangs</em> instead of erroring</td>
+</tr>
+</tbody>
+</table>
+<p>Each is only workaroundable by moving that write to local NTFS, which splits the project across three locations and still leaves UBA off — defeating the purpose of a build-acceleration pipeline. A LUN presents real NTFS, so all four work and UBA stays enabled. Block I/O is also meaningfully faster to hydrate (~40%), skipping the per-file metadata round-trips NFS incurs. And iSCSI authorises by initiator IQN (igroups), not directory identity, so you get NTFS semantics without the AD/CIFS dependency SMB would impose.</p>
+<h3 id="3-ntfs-is-not-a-shared-filesystem-hence-two-igroups">3. NTFS is not a shared filesystem — hence two igroups<a class="headerlink" href="#3-ntfs-is-not-a-shared-filesystem-hence-two-igroups" title="Permanent link">&para;</a></h3>
+<p>This is the one constraint SAN introduces, and it is a correctness boundary rather than a style preference. <strong>A LUN has exactly one legitimate writer.</strong></p>
+<table>
+<thead>
+<tr>
+<th>igroup</th>
+<th>Members</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>horde_san_hydrator</code></td>
+<td><strong>exactly one host</strong></td>
+<td>the source LUN</td>
+</tr>
+<tr>
+<td><code>horde_san_agents</code></td>
+<td>all build agents</td>
+<td>per-job clone LUNs</td>
+</tr>
+</tbody>
+</table>
+<p>The shared igroup is safe because each clone LUN is used by exactly one job on one agent, so build agents self-register into it at job time. The source LUN is different: <code>hydrate-source-lun.ps1</code> registers its IQN with <code>-SingleHost</code> and <strong>fails the run</strong> if that igroup already holds a different initiator, rather than quietly becoming a second writer on one filesystem. Mapping the source LUN to the shared igroup would let two hosts corrupt one volume.</p>
+<p>When the hydrator instance is replaced (an ASG replacement, or a stop and re-create), its igroup still holds the old host's IQN. Because the AMI derives every IQN from the EC2 instance id, the hydrate checks that instance with <code>ec2:DescribeInstances</code> before refusing: if EC2 reports it <strong>terminated</strong>, the stale IQN is removed automatically and the run proceeds. Anything else still refuses — the instance is running, EC2 no longer lists the id (terminated instances stay visible only for a short while), or the IQN does not embed an instance id — and the run fails with <code>REFUSING to add this host to igroup</code>; remove the stale initiator by hand with <code>lun igroup remove -vserver &lt;svm&gt; -igroup horde_san_hydrator -initiator &lt;stale-iqn&gt;</code>. This is why the sample's agent policy also grants <code>ec2:DescribeInstances</code> — see <a href="#security">Security</a>.</p>
+<p>Two consequences:</p>
+<ul>
+<li><strong>The hydrator is Windows, because the LUN carries NTFS.</strong> Pool membership is by the <code>Horde_Autoscale_Pool</code> instance tag (<code>aws-tag == 'Horde_Autoscale_Pool:SyncPool'</code> in <code>globals.json.tpl</code>); both pools are Windows.</li>
+<li><strong>Connect exactly ONE iSCSI portal</strong> unless MPIO is installed <strong>and</strong> MSDSM is actively claiming iSCSI devices. The AMI bake enables that claim after the reboot the MPIO install needs and fails if it did not stick. Two portals without an active claim make Windows enumerate a single LUN as two disks and corrupt it. <code>Connect-SanPortal</code> tests the claim state, not just the feature.</li>
+</ul>
+<h3 id="3a-flush-the-ntfs-write-cache-before-every-snapshot">3a. Flush the NTFS write cache before every snapshot<a class="headerlink" href="#3a-flush-the-ntfs-write-cache-before-every-snapshot" title="Permanent link">&para;</a></h3>
+<p>An ONTAP snapshot captures blocks as the array sees them, so anything still in the Windows write cache is simply <strong>absent</strong> from the snapshot. You get a crash-consistent image that may mount and then fail <code>chkdsk</code>, or silently lose the tail of the <code>p4 sync</code>. <code>New-OntapSnapshot -FlushDriveLetter</code> issues the <code>Write-VolumeCache</code> with <code>-ErrorAction Stop</code>, so a failed flush fails the hydrate instead of shipping a crash-consistent snapshot; do not remove it.</p>
+<h3 id="3b-pipeline-snapshots-are-pruned-and-fsxs-default-snapshot-policy-is-off">3b. Pipeline snapshots are pruned, and FSx's default snapshot policy is off<a class="headerlink" href="#3b-pipeline-snapshots-are-pruned-and-fsxs-default-snapshot-policy-is-off" title="Permanent link">&para;</a></h3>
+<p>Every <code>cl-&lt;N&gt;</code> snapshot costs the blocks changed since the previous one, and on an hourly hydrate they accumulate until the container volume fills — at which point the thin LUN goes offline and the hydrator itself stops working. At the end of each hydrate the hydrator deletes <code>cl-&lt;N&gt;</code> snapshots beyond the newest <code>fsxn_snapshot_retention</code> (a <strong>count</strong>, default 24, passed as <code>-set:SnapshotRetention</code>; <code>0</code> disables pruning), skipping any snapshot that still backs a live FlexClone. The source volume is also created with <code>snapshot_policy = "none"</code> so ONTAP's default hourly/daily/weekly snapshots do not consume the same headroom. Size <code>fsxn_san_volume_size_gb</code> for the retained count. Deleting a clone does not free its parent immediately: ONTAP parks the deleted clone in its recovery queue and the parent stays busy until that entry is purged (several minutes), so a snapshot can be skipped by one prune and removed by a later one.</p>
+<h3 id="4-clone-teardown-must-not-rely-on-a-buildgraph-node">4. Clone teardown must not rely on a BuildGraph node<a class="headerlink" href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node" title="Permanent link">&para;</a></h3>
+<p><code>RunLate="true"</code> is <strong>not</strong> a BuildGraph <code>&lt;Node&gt;</code> attribute, and BuildGraph has no equivalent that guarantees a teardown node runs after a failure: a node ordered after a <strong>failed</strong> node is <em>Skipped</em>. So the <code>Cleanup Clone</code> node is a success-only fast path. Guaranteed teardown is registered as a <strong>Horde lease-end hook</strong> (<code>UE_HORDE_CLEANUP</code> → <code>buildgraph/teardown-clone-lun.ps1</code>), which runs regardless of outcome.</p>
+<p>Neither path survives a <strong>hard Spot reclaim</strong>, since both run <em>on the agent</em>. For that, this sample now ships an <strong>off-agent reaper</strong> — <code>buildgraph/reap-orphans.ps1</code>, driven by <code>buildgraph/ReaperPipeline.xml</code> on a schedule on the idle single-writer <code>SyncPool</code> (<code>reap</code> template in <code>globals.json.tpl</code>). It deletes a per-job <code>hordeclone_*</code> Perforce client only when <strong>all three</strong> gates pass — the name matches <code>^hordeclone_</code>, its backing <code>build_*</code> clone volume no longer exists in ONTAP, and the owning Horde job is not live — and likewise reaps orphaned <code>build_*</code> clone volumes whose job is dead. Any uncertainty (ONTAP unreachable, Horde API ambiguous, a name it does not understand) means it deletes nothing. It defaults to a <strong>dry run</strong>; set <code>-set:Execute=true</code> on the template once you trust it. A leaked clone pins its parent snapshot, which then makes snapshot rotation fail too — the reaper is what keeps that from happening on Spot.</p>
+<h3 id="5-ontap-volume-names-reject-hyphens">5. ONTAP volume names reject hyphens<a class="headerlink" href="#5-ontap-volume-names-reject-hyphens" title="Permanent link">&para;</a></h3>
+<p><code>build-{jobId}</code> fails with an opaque HTTP 400. Use <code>build_{jobid}</code>, lowercased. (ONTAP: start with a letter or <code>_</code>, then letters/digits/<code>_</code>, ≤203 chars.) This is why the per-job <code>CloneVolumeName</code> argument must be lowercase alphanumeric/underscore with <strong>no hyphens</strong>.</p>
+<h3 id="6-the-project-must-live-in-a-subfolder-not-at-the-drive-root">6. The project must live in a subfolder, not at the drive root<a class="headerlink" href="#6-the-project-must-live-in-a-subfolder-not-at-the-drive-root" title="Permanent link">&para;</a></h3>
+<p>A UE project placed at the <strong>drive root</strong> of the clone LUN (e.g. <code>W:\Project.uproject</code>) crashes UnrealBuildTool with a <code>NullReferenceException</code> in <code>SourceFileWorkingSet</code>: <code>ProjectDir.ParentDirectory</code> is <code>null</code> at a drive root. The project <strong>must</strong> live in a subfolder on the clone LUN (e.g. <code>W:\&lt;Project&gt;\&lt;Project&gt;.uproject</code>), so <code>ProjectDir</code> has a non-null parent. That maps directly to the required depot layout — the project sits under <code>//YourGame/main/&lt;Project&gt;/</code>, never at the stream root. See the <a href="#4-seed-the-perforce-depot-project--engine">depot layout</a> in the runbook.</p>
+<h3 id="7-the-engine-must-be-present-in-the-stream-on-the-lun">7. The engine must be present in the stream / on the LUN<a class="headerlink" href="#7-the-engine-must-be-present-in-the-stream-on-the-lun" title="Permanent link">&para;</a></h3>
+<p>The <code>Compile</code> node resolves <code>&lt;drive&gt;:\Engine\Build\BatchFiles\Build.bat</code> off the clone, so the UE <strong>engine tree must be on the LUN</strong> — i.e. in the stream under <code>//YourGame/main/Engine/</code>. This is required, not optional. Note that an <strong>installed-engine</strong> build (identified by the <code>Engine/Build/InstalledBuild.txt</code> sentinel) compiles <strong>project modules only</strong> — this is correct behavior, but a from-source editor compile needs the full engine source tree present.</p>
+<h3 id="8-p4-noallwrite-makes-synced-files-read-only-ubt-must-be-able-to-write">8. <code>p4 noallwrite</code> makes synced files read-only — UBT must be able to write<a class="headerlink" href="#8-p4-noallwrite-makes-synced-files-read-only-ubt-must-be-able-to-write" title="Permanent link">&para;</a></h3>
+<p>With a <code>noallwrite</code> client, synced files are read-only on disk. UnrealBuildTool needs to write generated headers into <code>&lt;drive&gt;:\Engine\Intermediate</code>, which fails against read-only files (e.g. <code>UnauthorizedAccessException</code> on <code>VVMBytecodeOps.gen.h</code>). <code>BuildPipeline.xml</code> therefore clears the read-only attribute (<code>attrib -R &lt;drive&gt;:\*.* /S /D</code>) before invoking <code>Build.bat</code>. If you would rather not clear attributes, use an <strong><code>allwrite</code></strong> client for the per-build workspace instead — but do one or the other, or the compile fails writing intermediates.</p>
+<h3 id="9-clone-mount-flush-compile-must-be-one-buildgraph-node">9. Clone + mount + flush + compile must be ONE BuildGraph node<a class="headerlink" href="#9-clone-mount-flush-compile-must-be-one-buildgraph-node" title="Permanent link">&para;</a></h3>
+<p>Each BuildGraph node runs as its <strong>own process</strong>, and a Windows drive-letter iSCSI mount does <strong>not</strong> persist across processes. <code>BuildPipeline.xml</code> therefore merges clone, iSCSI mount of <code>W:</code>, per-build P4 client creation rooted on <code>W:</code>, <code>p4 flush @SnapshotChangelist</code>, the read-only clear, and <code>Build.bat</code> into a <strong>single merged <code>Compile</code> node</strong>. Splitting these into separate nodes drops the mount between steps.</p>
+<h3 id="10-the-svc-horde-password-must-match-on-both-sides">10. The <code>svc-horde</code> password must match on both sides<a class="headerlink" href="#10-the-svc-horde-password-must-match-on-both-sides" title="Permanent link">&para;</a></h3>
+<p>The pre-created secret (passed via <code>horde_p4_credentials_secret_arn</code>) holds the <strong>real password you chose</strong> for <code>svc-horde</code>. Terraform cannot set that password on the P4 user itself, so you set it on the server in <a href="#32-set-the-password-to-match-the-pre-created-secret">runbook step 3.2</a>. Rotating one side without the other breaks Horde's Perforce connection — Horde will not be able to authenticate to Perforce.</p>
+<h3 id="11-horde-55-does-not-auto-approve-agent-enrollment">11. Horde 5.5 does not auto-approve agent enrollment<a class="headerlink" href="#11-horde-55-does-not-auto-approve-agent-enrollment" title="Permanent link">&para;</a></h3>
+<p>Newly enrolled Sync and Build agents sit <strong>pending</strong> until an operator approves them (Horde UI or <code>POST /api/v1/enrollment</code>). Until you do, the pools have no online agents and jobs never lease. <code>enable_new_agents_by_default</code> does <strong>not</strong> auto-approve enrollment — it only controls whether an agent is enabled <em>once approved</em>; setting it true does not skip this manual approval step. This is done in <a href="#7-approve-agent-enrollment-assign-each-agent-to-exactly-one-pool">runbook step 7</a>, where each agent must be approved into exactly one pool.</p>
+<h3 id="12-single-source-stream-per-stream-source-lun">12. Single source stream (per-stream source LUN)<a class="headerlink" href="#12-single-source-stream-per-stream-source-lun" title="Permanent link">&para;</a></h3>
+<p>The source LUN (<code>/vol/p4_workspace/workspace</code>, hydrated by the <code>fsxn-hydrator</code> P4 client behind a single-host igroup and a <code>min = max = 1</code> <code>SyncPool</code>) is a <strong>per-stream</strong> artifact. A subsequent <code>p4 sync</code> of a <em>different</em> stream onto the same LUN does not delete the earlier stream's files — Perforce only manages files in the current client's have-list — so the earlier stream's tree persists on the NTFS volume, is captured by the next ONTAP snapshot, and is cloned into every build taken from it (cross-stream contamination). This sample is therefore scoped to one stream. This is <strong>not</strong> a data-path limitation: the single-writer rule (one writer per NTFS LUN, enforced by the single-host igroup and <code>-SingleHost</code>) forbids two hosts writing one LUN, but permits multiple sync agents each owning a <strong>separate</strong> volume/LUN. Supporting more than one stream would require a per-stream volume/LUN with a deterministic stream→agent→LUN binding and serialized single-writer enforcement; that is out of scope for this sample.</p>
+<h2 id="scaling-notes-and-known-limitations">Scaling notes and known limitations<a class="headerlink" href="#scaling-notes-and-known-limitations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Horde's own workspaces sync the whole stream.</strong> Both the graph-parse ("Setup Build") step and the Compile step get a Horde-managed sandbox workspace (the <code>workspaceTypes</code> in <code>globals.json.tpl</code>), and Horde syncs the <strong>entire stream</strong> into it before the node runs — on a cold agent that is a full engine sync, which dwarfs the ten-second clone. A workspace-level <code>view</code> is <strong>silently ignored</strong> by Horde's Perforce materializer (the partitioned clients still get the full stream view). What works is a Perforce <strong>virtual stream</strong> whose share-paths hold only what <code>RunUAT</code>/BuildGraph need to start, with the <code>workspaceTypes</code> entries pointing their <code>stream</code> at it. On an installed-engine stream the slice was <code>Engine/Build</code>, <code>Engine/Binaries/DotNET</code>, <code>Engine/Binaries/ThirdParty/DotNet</code>, <code>Engine/Config</code>, <code>Engine/Intermediate/ScriptModules</code>, <code>Engine/Programs</code>, <code>Engine/Platforms</code> plus the <code>Build/</code> scripts — about 4 GB of a 50 GB stream, a ~30 s sync. A from-source engine also needs whatever <code>RunUAT.bat</code> compiles on first run (AutomationTool and UnrealBuildTool sources under <code>Engine/Source/Programs</code>), so measure the slice rather than copying that list.</li>
+<li><strong>One build job per agent at a time.</strong> The clone drive letter is fixed (<code>CloneMountDrive</code>, default <code>W</code>), so if Horde schedules a second lease on an agent that is still running a build, the second job's attach fails when it cannot take <code>W:</code> (it does not corrupt anything). Keep one lease per agent, or derive the drive letter per job as well.</li>
+<li><strong>Off-agent clone reaper for Spot.</strong> On-agent teardown (the <code>UE_HORDE_CLEANUP</code> lease hook) does not survive a hard Spot reclaim. This sample ships a scheduled <strong>off-agent reaper</strong> (<code>buildgraph/reap-orphans.ps1</code> via <code>ReaperPipeline.xml</code>, the <code>reap</code> template on <code>SyncPool</code>) that deletes <code>build_*</code> clone volumes and their <code>hordeclone_*</code> Perforce clients whose Horde job is no longer running — behind three fail-safe gates (name, backing-clone-gone, job-not-live). It defaults to a dry run; flip <code>-set:Execute=true</code> once trusted. See <a href="#4-clone-teardown-must-not-rely-on-a-buildgraph-node">appendix §4</a>.</li>
+</ul>
+<!-- markdownlint-disable -->
+<!-- BEGIN_TF_DOCS -->
+<!-- This block is auto-generated by the repo's `terraform-docs` pre-commit hook. Do not edit by hand; run the hook to populate the Requirements / Providers / Modules / Resources / Inputs / Outputs tables. -->
+<!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    2026-09-17
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Amazon Web Services
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/aws-games/cloud-game-development-toolkit" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://x.com/AWSGameTech" target="_blank" rel="noopener" title="x.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M357.2 48h70.6L273.6 224.2 455 464H313L201.7 318.6 74.5 464H3.8l164.9-188.5L-5.2 48h145.6l100.5 132.9zm-24.8 373.8h39.1L119.1 88h-42z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/awsgametech" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+     
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../js/open_in_new_tab.js"></script>
+      
+    
+<script>
+    // Hide preview versions from version selector
+    document.addEventListener("DOMContentLoaded", function () {
+        // Find all version links in the selector
+        const versionLinks = document.querySelectorAll(".md-version__link");
+
+        versionLinks.forEach(function (link) {
+            const versionText = link.textContent.trim();
+
+            // Hide preview versions (format: preview-pr-123)
+            if (versionText.startsWith("preview-pr-")) {
+                const listItem = link.closest("li");
+                if (listItem) {
+                    listItem.style.display = "none";
+                }
+            }
+        });
+    });
+</script>
+
+  </body>
+</html>

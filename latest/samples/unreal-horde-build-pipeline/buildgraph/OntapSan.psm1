@@ -1,0 +1,780 @@
+<#
+    OntapSan.psm1 - shared ONTAP + Windows iSCSI helpers for the FSxN hydration
+    pipeline. Imported by hydrate-source-lun.ps1, attach-clone-lun.ps1 and
+    teardown-clone-lun.ps1.
+
+    WHY SAN INSTEAD OF NFS
+    ---------------------
+    An earlier design chose NFSv3 and rejected iSCSI on throughput grounds. That
+    reasoning turned out incomplete: throughput was never the binding
+    constraint, Windows filesystem SEMANTICS were. On a Windows NFSv3 mount:
+
+      * UBA (Unreal Build Accelerator) detours file I/O and calls
+        NtQueryInformationFile on every input; the Windows NFS redirector answers
+        0xc000000d (STATUS_INVALID_PARAMETER). Measured 628 failures, all on
+        Engine/Source/*. UBA therefore cannot be used at all.
+      * The DDC and the shader library fail or corrupt on write.
+      * The stager's SafeCopyFile -> SetFileTime fails and retries FOREVER, so
+        the job HANGS instead of erroring.
+
+    A LUN presents real NTFS, so all four work and UBA can stay enabled. It also
+    hydrates faster (measured ~40% on a 49.55 GB seed: 9m30s vs 15m33s) because
+    block I/O skips per-file metadata round-trips.
+
+    THE CONSTRAINT THIS INTRODUCES - READ IT
+    ----------------------------------------
+    NTFS IS NOT A SHARED FILESYSTEM. A LUN has exactly one legitimate writer.
+    Hence two igroups, deliberately:
+
+      * source LUN  -> a SINGLE-HOST igroup (the hydrator). Mapping it to a
+        shared igroup would let two hosts mount one NTFS volume read-write and
+        corrupt it.
+      * clone LUNs  -> a shared igroup is fine, because each clone is used by
+        exactly one job on one agent.
+
+    Also: connect exactly ONE iSCSI portal unless the MPIO feature is installed.
+    Two portals without MPIO make Windows enumerate one LUN as two separate
+    disks, which is its own corruption trap.
+
+    ONTAP REST NOTES learned the hard way
+    -------------------------------------
+      * LUNs, igroups and NFS/SAN options are not all in the documented REST
+        surface. The private-CLI passthrough POST /api/private/cli/<cmd> covers
+        the rest.
+      * On the private CLI, "initiator" must be a JSON ARRAY even for a single
+        value, or you get error 262254.
+      * DELETE on private/cli/lun/mapping by query string matches NOTHING. Use
+        the documented /api/protocols/san/lun-maps/{lun.uuid}/{igroup.uuid}.
+      * ONTAP volume names reject hyphens: build-{jobId} fails with an opaque
+        HTTP 400. Use build_{jobid}, lowercased. New-OntapCloneName enforces it.
+#>
+
+Set-StrictMode -Version Latest
+
+# FSxN's management endpoint presents a self-signed certificate.
+# -SkipCertificateCheck is PowerShell 7+; Windows Server ships PS 5.1, so use a
+# compiled callback.
+function Enable-OntapCertBypass {
+    if (-not ('OntapCertBypass' -as [type])) {
+        Add-Type 'using System.Net;public static class OntapCertBypass{public static void Enable(){ServicePointManager.ServerCertificateValidationCallback=(s,c,ch,e)=>true;}}'
+    }
+    [OntapCertBypass]::Enable()
+    [Net.ServicePointManager]::SecurityProtocol = `
+        [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+}
+
+function Connect-Ontap {
+    <#  Builds a connection context. The password comes from Secrets Manager at
+        runtime and is never written to disk or logged. #>
+    param(
+        [Parameter(Mandatory)] [string] $ManagementEndpoint,
+        [Parameter(Mandatory)] [string] $PasswordSecretName,
+        [Parameter(Mandatory)] [string] $AwsRegion,
+        [string] $User = 'fsxadmin',
+        [Parameter(Mandatory)] [string] $Svm
+    )
+    Enable-OntapCertBypass
+
+    $pw = & aws secretsmanager get-secret-value --secret-id $PasswordSecretName `
+        --region $AwsRegion --query SecretString --output text
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($pw)) {
+        throw "Could not read ONTAP password from Secrets Manager secret '$PasswordSecretName' in $AwsRegion."
+    }
+
+    return [pscustomobject]@{
+        Api     = "https://$ManagementEndpoint/api"
+        Svm     = $Svm
+        # Region is carried on the context so the igroup self-heal
+        # (Get-TerminatedInitiators) can call ec2:DescribeInstances in the same
+        # region as the pipeline without threading an extra parameter everywhere.
+        Region  = $AwsRegion
+        Headers = @{ Authorization = 'Basic ' + [Convert]::ToBase64String(
+                        [Text.Encoding]::ASCII.GetBytes("${User}:${pw}")) }
+    }
+}
+
+function Invoke-Ontap {
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $Path,
+        [string] $Method = 'Get',
+        $Body = $null,
+        [int] $TimeoutSec = 120
+    )
+    $uri = "$($Ctx.Api)$Path"
+    if ($null -ne $Body) {
+        return Invoke-RestMethod -Uri $uri -Method $Method -Headers $Ctx.Headers `
+            -Body ($Body | ConvertTo-Json -Depth 8 -Compress) `
+            -ContentType 'application/json' -TimeoutSec $TimeoutSec
+    }
+    return Invoke-RestMethod -Uri $uri -Method $Method -Headers $Ctx.Headers -TimeoutSec $TimeoutSec
+}
+
+function New-OntapCloneName {
+    <#  ONTAP volume names: must start with a letter or underscore, then only
+        letters/digits/underscore, max 203 chars. NO HYPHENS - a Horde job id is
+        hex so it is safe, but a branch or template name is not, and the failure
+        is an opaque 400. Normalise rather than trust the caller. #>
+    param([Parameter(Mandatory)] [string] $JobId, [string] $Prefix = 'build')
+    $safe = ($JobId -replace '[^A-Za-z0-9_]', '_').ToLowerInvariant()
+    $name = "${Prefix}_${safe}"
+    if ($name.Length -gt 203) { $name = $name.Substring(0, 203) }
+    return $name
+}
+
+function Get-OntapVolume {
+    param([Parameter(Mandatory)] $Ctx, [Parameter(Mandatory)] [string] $Name)
+    $r = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes?name=$Name&svm.name=$($Ctx.Svm)&fields=uuid,name,state"
+    if ($r.num_records -eq 0) { return $null }
+    return $r.records[0]
+}
+
+function Remove-OntapSnapshotsBeyond {
+    <#  Prune cl-<changelist> source snapshots down to the newest $Keep, so the
+        source volume does not fill up with per-build point-in-time snapshots
+        forever (each cl-N is the parent a build's FlexClone forks from).
+
+        $Keep is a COUNT of snapshots, NOT a number of days: we age out by build
+        cadence, not wall-clock, because that is what actually consumes volume
+        space. $Keep = 0 disables pruning entirely (keep everything).
+
+        SELECTION is by the changelist number embedded in the name, not by
+        create time: we keep ONLY names matching ^cl-\d+$ and sort by that
+        integer DESCENDING. Changelists are monotonic, so this is immune to
+        clock skew and to any snapshot ONTAP created out of order; anything that
+        does not match the cl-<digits> shape is left completely alone (never a
+        candidate for deletion).
+
+        SKIP-BUSY SAFETY (the whole point of doing this carefully): a cl-N
+        snapshot that still has a dependent FlexClone MUST NOT be deleted, even
+        when it falls outside the newest-$Keep window - deleting it would pull
+        the parent out from under a live per-build clone. We detect the
+        dependency from the ONTAP snapshot's `owners` field: a FlexClone parent
+        reports an owner of type "volume_clone" (FSx private-CLI fallback:
+        `busy` / owner "volume clone"). Any such snapshot is SKIPPED and left for
+        a later prune once its clones are gone.
+
+        REAPER-NONCOLLISION CONTRACT (with finding 0001's reap-orphans.ps1):
+        the reaper deletes only the FlexClone CHILD volume (and its p4 client).
+        This function deletes only the PARENT snapshot, and only once it has zero
+        clone dependents. Because ONTAP's own dependency semantics refuse to
+        delete an in-use snapshot, even a simultaneous run is safe: worst case
+        this function observes the child still attached, SKIPS, and leaves the
+        parent for a later prune. The try/catch on DELETE below is the backstop
+        for that TOCTOU window (ONTAP itself refuses with "Snapshot copy is in
+        use").
+
+        CONVERGENCE IS NOT IMMEDIATE - do not assume "on the next hydrate".
+        Deleting a FlexClone does NOT synchronously release the parent. ONTAP
+        moves the deleted clone into its RECOVERY QUEUE as a DEL volume, and the
+        parent's has_flexclone stays TRUE until that queue entry is PURGED
+        (observed >4 min in live testing). So the SKIP guard keeps behaving
+        correctly (it keeps skipping the still-busy parent, which is safe), but
+        prune convergence can lag by the recovery-queue retention window rather
+        than clearing on the next hydrate. The parent becomes prunable only after
+        the recovery-queue purge drops has_flexclone, at which point a subsequent
+        prune succeeds. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $VolumeName,
+        [Parameter(Mandatory)] [int]    $Keep
+    )
+    if ($Keep -le 0) {
+        Write-Host "  snapshot retention disabled (Keep=$Keep) - keeping all cl-* snapshots"
+        return
+    }
+
+    $vol = Get-OntapVolume -Ctx $Ctx -Name $VolumeName
+    if (-not $vol) { throw "Volume '$VolumeName' not found on SVM '$($Ctx.Svm)'." }
+
+    # `owners` tells us whether a FlexClone still depends on the snapshot. A
+    # clone-backed snapshot reports an owner type of "volume_clone".
+    $r = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots?fields=name,uuid,owners"
+    if (-not $r -or $r.num_records -eq 0) { Write-Host '  no snapshots to prune'; return }
+
+    # Keep ONLY cl-<digits>; sort by the changelist integer, newest first.
+    $cl = @($r.records | Where-Object { $_.name -match '^cl-\d+$' })
+    $sorted = @($cl | Sort-Object -Property @{ Expression = { [long]($_.name -replace '^cl-', '') } } -Descending)
+
+    Write-Host "  found $($sorted.Count) cl-* snapshot(s); keeping newest $Keep"
+    if ($sorted.Count -le $Keep) { Write-Host '  nothing beyond the retention window'; return }
+
+    $candidates = @($sorted | Select-Object -Skip $Keep)
+    foreach ($snap in $candidates) {
+        # SKIP-BUSY: never delete a snapshot a FlexClone still forks from, even
+        # though it is outside the newest-$Keep window.
+        #
+        # GUARD the `owners` access: on real FSxN the `owners` property is ABSENT
+        # from non-clone snapshots, and under Set-StrictMode reading a missing
+        # property THROWS (PropertyNotFoundStrict) - which would abort the whole
+        # prune before deleting anything (retention silently becomes a no-op).
+        # Absent => empty => not busy => prunable; present with 'volume_clone' =>
+        # SKIP. Only read the property when it exists.
+        $owners = if ($snap.PSObject.Properties.Name -contains 'owners') { @($snap.owners) } else { @() }
+        if ($owners -contains 'volume_clone' -or ($owners | Where-Object { "$_" -match 'clone' })) {
+            Write-Host "  SKIP '$($snap.name)' - still has a dependent FlexClone (owners: $($owners -join ', '))"
+            continue
+        }
+        try {
+            Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots/$($snap.uuid)" -Method Delete | Out-Null
+            Write-Host "  pruned old snapshot '$($snap.name)'"
+        }
+        catch {
+            # Backstop for the TOCTOU window: a clone may have been created
+            # between the owners read and this DELETE. ONTAP refuses an in-use
+            # snapshot; treat that as SKIP, not failure - the next prune retries.
+            Write-Host "  SKIP '$($snap.name)' - ONTAP refused delete (likely in use by a clone): $($_.Exception.Message)"
+        }
+    }
+}
+
+function New-OntapSnapshot {
+    <#  Snapshot a SAN volume. THE Write-VolumeCache CALL IS NOT OPTIONAL: an
+        ONTAP snapshot captures blocks as the array sees them, so anything still
+        sitting in the Windows write cache is simply absent from the snapshot.
+        Without the flush you get a crash-consistent image of NTFS - which may
+        mount, then fail chkdsk or lose the tail of the p4 sync. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $VolumeName,
+        [Parameter(Mandatory)] [string] $SnapshotName,
+        [string] $FlushDriveLetter
+    )
+    $vol = Get-OntapVolume -Ctx $Ctx -Name $VolumeName
+    if (-not $vol) { throw "Volume '$VolumeName' not found on SVM '$($Ctx.Svm)'." }
+
+    if ($FlushDriveLetter) {
+        Write-Host "  flushing NTFS write cache on $FlushDriveLetter`: before snapshot"
+        Write-VolumeCache -DriveLetter $FlushDriveLetter.TrimEnd(':') -ErrorAction Stop
+    }
+
+    $existing = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots?name=$SnapshotName"
+    if ($existing.num_records -gt 0) {
+        Write-Host "  snapshot '$SnapshotName' already exists - leaving it alone"
+        return
+    }
+
+    Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots" -Method Post `
+        -Body @{ name = $SnapshotName } | Out-Null
+
+    for ($i = 0; $i -lt 60; $i++) {
+        $r = Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($vol.uuid)/snapshots?name=$SnapshotName"
+        if ($r.num_records -ge 1) { Write-Host "  created snapshot '$SnapshotName'"; return }
+        Start-Sleep -Seconds 1
+    }
+    throw "Snapshot '$SnapshotName' did not appear within 60s."
+}
+
+function New-OntapFlexClone {
+    <#  Create a FlexClone of a snapshot.
+
+        NOTE the absence of a `nas` block. For NAS you junction the clone so a
+        client can mount it; a SAN clone must NOT be junctioned - the LUN inside
+        it is reached through a LUN map, and junctioning it would additionally
+        expose the filesystem over NAS. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $ParentVolume,
+        [Parameter(Mandatory)] [string] $SnapshotName,
+        [Parameter(Mandatory)] [string] $CloneName
+    )
+    if (Get-OntapVolume -Ctx $Ctx -Name $CloneName) {
+        throw "Clone volume '$CloneName' already exists. Delete it first, or use a unique name."
+    }
+
+    Invoke-Ontap -Ctx $Ctx -Path '/storage/volumes' -Method Post -Body @{
+        name = $CloneName
+        svm  = @{ name = $Ctx.Svm }
+        clone = @{
+            is_flexclone    = $true
+            parent_volume   = @{ name = $ParentVolume }
+            parent_snapshot = @{ name = $SnapshotName }
+        }
+        comment = "FlexClone of $ParentVolume@$SnapshotName"
+    } | Out-Null
+
+    # Poll rather than sleep. A FlexClone is a metadata operation; measured at
+    # ~1.2 s on a 45 GiB volume, so a fixed 10 s sleep would be ~8x the work.
+    for ($i = 0; $i -lt 60; $i++) {
+        $v = Get-OntapVolume -Ctx $Ctx -Name $CloneName
+        if ($v) { return $v }
+        Start-Sleep -Milliseconds 500
+    }
+    throw "Clone '$CloneName' was not visible within 30s."
+}
+
+function Remove-OntapVolume {
+    param([Parameter(Mandatory)] $Ctx, [Parameter(Mandatory)] [string] $Name)
+    $v = Get-OntapVolume -Ctx $Ctx -Name $Name
+    if (-not $v) { Write-Host "  volume '$Name' already gone"; return }
+    Invoke-Ontap -Ctx $Ctx -Path "/storage/volumes/$($v.uuid)" -Method Delete | Out-Null
+    Write-Host "  delete requested for volume '$Name'"
+}
+
+function Get-LocalIqn {
+    <#  Windows derives its IQN from the hostname
+        (iqn.1991-05.com.microsoft:<fqdn>), so it CHANGES when the machine is
+        renamed - which EC2 does on first boot. Starting the initiator service is
+        what materialises it, so do that first. #>
+    Set-Service -Name MSiSCSI -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service -Name MSiSCSI -ErrorAction SilentlyContinue
+    for ($i = 0; $i -lt 30; $i++) {
+        $iqn = (Get-InitiatorPort -ErrorAction SilentlyContinue |
+                 Where-Object { $_.NodeAddress -like 'iqn.*' } |
+                 Select-Object -First 1).NodeAddress
+        if ($iqn) { return $iqn }
+        Start-Sleep -Seconds 2
+    }
+    throw 'Could not determine this host iSCSI IQN. Is the MSiSCSI service running?'
+}
+
+function Get-TerminatedInitiators {
+    <#  Igroup self-heal, FAIL-SAFE by construction.
+
+        Given a list of initiator IQNs, return ONLY the subset that provably
+        belong to a TERMINATED EC2 instance and are therefore safe to remove
+        from a single-host igroup. Everything else is left in place.
+
+        Windows agents present iqn.1991-05.com.microsoft:i-<instance-id> (the
+        baked set_unique_iqn.ps1 derives the IQN from the EC2 instance-id). We
+        parse that instance-id and ask EC2 for the instance state.
+
+        CLASSIFICATION TABLE - 'terminated' is the ONLY removable state:
+          terminated                        -> REMOVE  (the host is gone for good)
+          running / pending / stopping /
+            stopped / shutting-down          -> REFUSE  (host may still write; and
+                                                shutting-down can still flush)
+          instance-id not found by EC2       -> REFUSE  (inconclusive: wrong region,
+                                                eventual consistency, or an IQN we
+                                                did not mint)
+          IQN does not parse to an i-<id>    -> REFUSE  (unattributable)
+          DescribeInstances error / no creds -> REFUSE  (inconclusive)
+
+        The bias is deliberate: a false REFUSE only blocks a fresh attach with a
+        loud, actionable error; a false REMOVE could evict a LIVE writer and
+        corrupt NTFS. So anything we cannot prove terminated is kept. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [AllowEmptyCollection()] [string[]] $Initiators
+    )
+
+    $region = $Ctx.Region
+    $removable = @()
+
+    foreach ($iqn in $Initiators) {
+        if ([string]::IsNullOrWhiteSpace($iqn)) { continue }
+
+        # Anchored: the instance-id is the WHOLE suffix after the last colon.
+        # A partial/embedded match could misattribute an unrelated IQN.
+        $m = [regex]::Match($iqn, ':(i-[0-9a-f]{8,17})$')
+        if (-not $m.Success) {
+            Write-Host "  self-heal: '$iqn' is not an instance-id-derived IQN - UNATTRIBUTABLE, refusing to remove"
+            continue
+        }
+        $instanceId = $m.Groups[1].Value
+
+        $state = $null
+        try {
+            $raw = & aws ec2 describe-instances --instance-ids $instanceId `
+                --region $region `
+                --query 'Reservations[].Instances[].State.Name' `
+                --output text 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $state = ($raw | Out-String).Trim()
+            }
+            else {
+                # Non-zero rc. A genuinely GONE instance-id returns
+                # InvalidInstanceID.NotFound here; treat as INCONCLUSIVE, not
+                # terminated, because it is also what a wrong-region or
+                # permissions error looks like.
+                Write-Host "  self-heal: describe-instances for $instanceId was inconclusive (rc=$LASTEXITCODE): $(($raw | Out-String).Trim()) - refusing to remove"
+                continue
+            }
+        }
+        catch {
+            Write-Host "  self-heal: describe-instances for $instanceId errored ($_) - INCONCLUSIVE, refusing to remove"
+            continue
+        }
+
+        if ($state -eq 'terminated') {
+            Write-Host "  self-heal: $instanceId is TERMINATED - $iqn is safe to remove"
+            $removable += $iqn
+        }
+        elseif ([string]::IsNullOrWhiteSpace($state)) {
+            # Empty result set: EC2 knows of no such id right now. Inconclusive.
+            Write-Host "  self-heal: $instanceId not found by EC2 (empty state) - INCONCLUSIVE, refusing to remove"
+        }
+        else {
+            # running / pending / stopping / stopped / shutting-down: NEVER remove.
+            Write-Host "  self-heal: $instanceId is '$state' (ALIVE / not terminated) - refusing to remove"
+        }
+    }
+
+    return @($removable)
+}
+
+function Remove-OntapIgroupInitiator {
+    <#  Remove a single stale initiator from an igroup via the private CLI.
+        Only ever called with an IQN that Get-TerminatedInitiators has proven
+        belongs to a terminated instance. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $Igroup,
+        [Parameter(Mandatory)] [string] $Iqn
+    )
+    Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/igroup/remove' -Method Post -Body @{
+        vserver   = $Ctx.Svm
+        igroup    = $Igroup
+        initiator = @($Iqn)
+    } | Out-Null
+    Write-Host "  self-heal: removed stale initiator $Iqn from igroup '$Igroup'"
+}
+
+function Add-OntapIgroupInitiator {
+    <#  Create-if-absent igroup, then add this initiator if missing.
+
+        $SingleHost is the safety switch. For the SOURCE LUN's igroup it MUST be
+        $true: if the igroup already contains a different initiator, that means
+        another host believes it owns the LUN, and adding ourselves would put two
+        writers on one NTFS volume. Fail loudly instead. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $Igroup,
+        [Parameter(Mandatory)] [string] $Iqn,
+        [switch] $SingleHost
+    )
+    $r = Invoke-Ontap -Ctx $Ctx -Path "/private/cli/lun/igroup?vserver=$($Ctx.Svm)&igroup=$Igroup&fields=initiator"
+
+    if ($r.num_records -eq 0) {
+        # "initiator" must be an ARRAY even for one value (private CLI error
+        # 262254 otherwise).
+        Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/igroup' -Method Post -Body @{
+            vserver   = $Ctx.Svm
+            igroup    = $Igroup
+            protocol  = 'iscsi'
+            ostype    = 'windows'
+            initiator = @($Iqn)
+        } | Out-Null
+        Write-Host "  created igroup '$Igroup' with $Iqn"
+        return
+    }
+
+    $current = @(@($r.records[0].initiator) | Where-Object { $_ })
+    if ($current -contains $Iqn) { Write-Host "  igroup '$Igroup' already contains this host"; return }
+
+    if ($SingleHost -and $current.Count -gt 0) {
+        # SELF-HEAL before refusing: a common, benign cause of a "foreign"
+        # initiator here is a PREVIOUS hydrator instance that was terminated
+        # without cleaning up its igroup membership. Remove ONLY initiators we
+        # can PROVE belong to a terminated EC2 instance (Get-TerminatedInitiators
+        # is fail-safe: anything alive or unattributable is kept). Then re-evaluate.
+        $stale = Get-TerminatedInitiators -Ctx $Ctx -Initiators $current
+        foreach ($s in $stale) {
+            Remove-OntapIgroupInitiator -Ctx $Ctx -Igroup $Igroup -Iqn $s
+        }
+        $current = @($current | Where-Object { $stale -notcontains $_ })
+
+        if ($current.Count -gt 0) {
+            throw @"
+REFUSING to add this host to igroup '$Igroup'.
+It already contains: $($current -join ', ')
+That igroup owns a SOURCE LUN, which carries NTFS - a filesystem with exactly one
+legitimate writer. Adding a second initiator invites silent corruption.
+The initiator(s) above are either ALIVE or could not be proven terminated, so
+self-heal left them in place. If one belongs to a terminated host, remove it
+explicitly first:
+  lun igroup remove -vserver $($Ctx.Svm) -igroup $Igroup -initiator <stale-iqn>
+"@
+        }
+    }
+
+    Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/igroup/add' -Method Post -Body @{
+        vserver   = $Ctx.Svm
+        igroup    = $Igroup
+        initiator = @($Iqn)
+    } | Out-Null
+    Write-Host "  added $Iqn to igroup '$Igroup'"
+}
+
+function New-OntapLunMap {
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $LunPath,
+        [Parameter(Mandatory)] [string] $Igroup
+    )
+    $existing = Invoke-Ontap -Ctx $Ctx -Path "/private/cli/lun/mapping?vserver=$($Ctx.Svm)&path=$LunPath&igroup=$Igroup"
+    if ($existing.num_records -gt 0) { Write-Host "  LUN already mapped to '$Igroup'"; return }
+
+    Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun/mapping' -Method Post -Body @{
+        vserver = $Ctx.Svm
+        path    = $LunPath
+        igroup  = $Igroup
+    } | Out-Null
+    Write-Host "  mapped $LunPath -> $Igroup"
+}
+
+function Remove-OntapLunMap {
+    <#  Use the DOCUMENTED lun-maps endpoint. DELETE on
+        private/cli/lun/mapping?path=...&igroup=... returns success and deletes
+        NOTHING, which leaves the clone undeletable and the snapshot pinned. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $LunPath,
+        [string] $Igroup
+    )
+    $q = "/protocols/san/lun-maps?lun.name=$LunPath&fields=lun.uuid,igroup.uuid,igroup.name"
+    if ($Igroup) { $q += "&igroup.name=$Igroup" }
+    $maps = Invoke-Ontap -Ctx $Ctx -Path $q
+    if ($maps.num_records -eq 0) { Write-Host "  no LUN map to remove for $LunPath"; return }
+    foreach ($m in $maps.records) {
+        Invoke-Ontap -Ctx $Ctx -Path "/protocols/san/lun-maps/$($m.lun.uuid)/$($m.igroup.uuid)" -Method Delete | Out-Null
+        Write-Host "  unmapped $LunPath from $($m.igroup.name)"
+    }
+}
+
+function New-OntapLun {
+    <#  Create-if-absent thin LUN. space-allocation lets ONTAP report
+        thin-provision exhaustion to Windows over SCSI, instead of the LUN
+        silently going read-only when the containing volume fills.
+
+        RETURNS $true if THIS call created the LUN (a brand-new, RAW LUN that is
+        safe to auto-format), $false if the LUN already existed (it may carry a
+        filesystem we must not touch). Callers use this to decide whether to
+        auto-format - see hydrate-source-lun.ps1. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $LunPath,
+        [Parameter(Mandatory)] [string] $Size,
+        [string] $OsType = 'windows_2008'
+    )
+    $r = Invoke-Ontap -Ctx $Ctx -Path "/private/cli/lun?vserver=$($Ctx.Svm)&path=$LunPath"
+    if ($r.num_records -gt 0) { Write-Host "  LUN $LunPath already exists"; return $false }
+
+    Invoke-Ontap -Ctx $Ctx -Path '/private/cli/lun' -Method Post -Body @{
+        vserver            = $Ctx.Svm
+        path               = $LunPath
+        size               = $Size
+        ostype             = $OsType
+        'space-reserve'    = 'disabled'
+        'space-allocation' = 'enabled'
+    } | Out-Null
+    Write-Host "  created LUN $LunPath ($Size, thin, space-allocation on)"
+    return $true
+}
+
+function Test-MSDSMiScsiClaim {
+    <#  Return $true iff MSDSM is ACTIVELY claiming iSCSI devices right now.
+
+        Feature-installed is NOT the same as claim-active: MPIO can be present
+        while the MSDSM automatic claim is not in effect, in which case a
+        second portal makes Windows see one LUN as two disks. Connect-SanPortal
+        gates its multi-portal connect on THIS, not merely the feature.
+
+        Get-MSDSMAutomaticClaimSettings returns different shapes across Windows
+        builds (a hashtable keyed by bus type, a single object with an iSCSI
+        property, or a list of per-bus rows). Handle all three. Any failure to
+        read is treated as NOT-claimed (fail-safe: stay single-portal). #>
+    try {
+        $settings = Get-MSDSMAutomaticClaimSettings -ErrorAction Stop
+    } catch {
+        return $false
+    }
+    if ($null -eq $settings) { return $false }
+
+    if ($settings -is [System.Collections.IDictionary]) {
+        foreach ($key in $settings.Keys) {
+            if ("$key" -match 'iSCSI') { return [bool]$settings[$key] }
+        }
+        return $false
+    }
+
+    $prop = $settings.PSObject.Properties | Where-Object { $_.Name -match 'iSCSI' } | Select-Object -First 1
+    if ($prop) { return [bool]$prop.Value }
+
+    foreach ($row in @($settings)) {
+        $busProp = $row.PSObject.Properties | Where-Object { $_.Name -match 'BusType|Bus' } | Select-Object -First 1
+        if ($busProp -and "$($busProp.Value)" -match 'iSCSI') {
+            $valProp = $row.PSObject.Properties |
+                Where-Object { $_.Name -match 'Enabled|Value|Claim|AutomaticClaim' } |
+                Select-Object -First 1
+            if ($valProp) { return [bool]$valProp.Value }
+            return $true
+        }
+    }
+    return $false
+}
+
+function Connect-SanPortal {
+    <#  Connect exactly ONE portal unless MPIO is installed AND the MSDSM iSCSI
+        automatic claim is ACTIVE. With two portals but no active claim, Windows
+        enumerates the same LUN twice as two disks; mounting both is a corruption
+        trap. Feature-installed alone is NOT sufficient - the claim must be in
+        effect - so we test the claim state, not just the feature. #>
+    param([Parameter(Mandatory)] [string[]] $PortalAddresses)
+
+    Set-Service -Name MSiSCSI -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service -Name MSiSCSI -ErrorAction SilentlyContinue
+
+    $mpioFeature = $false
+    try { $mpioFeature = (Get-WindowsFeature -Name 'Multipath-IO' -ErrorAction SilentlyContinue).Installed } catch { }
+
+    # Multipath is only safe to USE when the feature is installed AND MSDSM is
+    # actively claiming iSCSI devices (so the two paths collapse to one disk).
+    $mpio = $mpioFeature -and (Test-MSDSMiScsiClaim)
+
+    $use = if ($mpio) { $PortalAddresses } else { @($PortalAddresses[0]) }
+    if (-not $mpio -and $PortalAddresses.Count -gt 1) {
+        $why = if ($mpioFeature) { 'MPIO feature installed but MSDSM iSCSI claim NOT active' } else { 'MPIO not installed' }
+        Write-Host "  $why - connecting ONE portal ($($use[0])) of $($PortalAddresses.Count) on purpose"
+    }
+
+    foreach ($p in $use) {
+        if (-not (Get-IscsiTargetPortal -ErrorAction SilentlyContinue | Where-Object { $_.TargetPortalAddress -eq $p })) {
+            New-IscsiTargetPortal -TargetPortalAddress $p | Out-Null
+            Write-Host "  added iSCSI portal $p"
+        }
+    }
+    Get-IscsiTargetPortal -ErrorAction SilentlyContinue | Update-IscsiTargetPortal -ErrorAction SilentlyContinue
+
+    foreach ($t in @(Get-IscsiTarget -ErrorAction SilentlyContinue)) {
+        if (-not $t.IsConnected) {
+            Connect-IscsiTarget -NodeAddress $t.NodeAddress -IsPersistent $true -ErrorAction SilentlyContinue | Out-Null
+            Write-Host "  connected target $($t.NodeAddress)"
+        }
+    }
+}
+
+function Wait-SanDisk {
+    <#  Find the iSCSI disk for a LUN by its SERIAL, not by "the only iSCSI
+        disk": an agent may legitimately see more than one (e.g. a previous
+        job's LUN still detaching), and picking the wrong one formats live data.
+        ONTAP reports the serial; Windows exposes it as Disk.SerialNumber. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $LunPath,
+        [int] $TimeoutSec = 120
+    )
+    $info = Invoke-Ontap -Ctx $Ctx -Path "/private/cli/lun?vserver=$($Ctx.Svm)&path=$LunPath&fields=serial-hex,serial"
+    if ($info.num_records -eq 0) { throw "LUN $LunPath not found." }
+    $serial = $info.records[0].serial
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        Update-HostStorageCache -ErrorAction SilentlyContinue
+        $disk = Get-Disk -ErrorAction SilentlyContinue |
+                Where-Object { $_.BusType -eq 'iSCSI' -and $_.SerialNumber -and $serial -and $_.SerialNumber.Trim() -like "*$($serial.Trim())*" } |
+                Select-Object -First 1
+        if ($disk) { return $disk }
+        Start-Sleep -Seconds 2
+    }
+    throw "iSCSI disk for LUN $LunPath (serial '$serial') did not appear within ${TimeoutSec}s. Is the LUN mapped to THIS host's igroup?"
+}
+
+function Mount-SanLun {
+    <#  Bring the LUN's disk online and give it $DriveLetter.
+
+        -Format is a SEPARATE, EXPLICIT switch and defaults off. A clone already
+        contains NTFS; formatting it destroys exactly the data we cloned. Only
+        the initial source-LUN provisioning should ever pass it. #>
+    param(
+        [Parameter(Mandatory)] $Ctx,
+        [Parameter(Mandatory)] [string] $LunPath,
+        [Parameter(Mandatory)] [string] $DriveLetter,
+        [switch] $Format,
+        [string] $FileSystemLabel = 'p4workspace'
+    )
+    $letter = $DriveLetter.TrimEnd(':')
+    $disk = Wait-SanDisk -Ctx $Ctx -LunPath $LunPath
+
+    # A FlexClone LUN of a snapshot attaches READ-ONLY: ONTAP marks the clone's
+    # LUN read-only and Windows surfaces the disk with IsReadOnly=$true. Windows
+    # REFUSES to bring a read-only disk online writable, so the read-only flag
+    # MUST be cleared BEFORE the online call - the previous order (online first)
+    # failed with "The disk is read only" (StorageWMI 41002). Re-query after each
+    # step because the $disk snapshot from Wait-SanDisk goes stale immediately.
+    if ($disk.IsReadOnly) {
+        Set-Disk -Number $disk.Number -IsReadOnly $false -ErrorAction Stop
+        $disk = Get-Disk -Number $disk.Number
+    }
+    if ($disk.IsOffline) {
+        Set-Disk -Number $disk.Number -IsOffline $false -ErrorAction Stop
+        $disk = Get-Disk -Number $disk.Number
+    }
+    # Defensive: clearing IsOffline can re-assert a read-only attribute on some
+    # clone LUNs; clear it once more so the volume is writable for p4 flush.
+    if ($disk.IsReadOnly) {
+        Set-Disk -Number $disk.Number -IsReadOnly $false -ErrorAction SilentlyContinue
+    }
+
+    if ($Format) {
+        if ($disk.PartitionStyle -ne 'RAW') {
+            Write-Host "  disk $($disk.Number) already initialised - NOT reformatting (pass a RAW disk to -Format)"
+        } else {
+            Write-Host "  initialising + formatting disk $($disk.Number) (explicitly requested)"
+            Initialize-Disk -Number $disk.Number -PartitionStyle GPT -Confirm:$false
+            $p = New-Partition -DiskNumber $disk.Number -UseMaximumSize -DriveLetter $letter
+            Format-Volume -Partition $p -FileSystem NTFS -NewFileSystemLabel $FileSystemLabel -Confirm:$false | Out-Null
+            return "${letter}:"
+        }
+    }
+
+    Update-HostStorageCache -ErrorAction SilentlyContinue
+    $part = Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue |
+            Where-Object { $_.Size -gt 64MB } | Sort-Object -Property Size -Descending | Select-Object -First 1
+    if (-not $part) { throw "No usable partition on disk $($disk.Number) for LUN $LunPath. If this is a fresh LUN, provision it with -Format." }
+
+    if ($part.DriveLetter -ne $letter) {
+        Set-Partition -DiskNumber $disk.Number -PartitionNumber $part.PartitionNumber -NewDriveLetter $letter
+    }
+    Write-Host "  LUN $LunPath online as ${letter}: (disk $($disk.Number))"
+    return "${letter}:"
+}
+
+function Dismount-SanLun {
+    <#  Offline the disk BEFORE the LUN map is removed. Yanking a mapped LUN out
+        from under a live NTFS volume is how you get dirty-bit surprises on the
+        parent snapshot. Tolerates the disk already being gone. #>
+    param([Parameter(Mandatory)] $Ctx, [Parameter(Mandatory)] [string] $LunPath)
+    try {
+        $disk = Wait-SanDisk -Ctx $Ctx -LunPath $LunPath -TimeoutSec 10
+        if ($disk) {
+            # Capture the drive letter FIRST. A LUN can legitimately have no
+            # letter here (never assigned, or already partially torn down), and
+            # under -ErrorAction Stop a null letter would turn into a spurious
+            # hard failure. So: skip the flush when there is no letter, and only
+            # flush-with-Stop when there is - that way a REAL flush error is
+            # still made visible instead of silently swallowed.
+            # Capture the partition OBJECT first, then read DriveLetter only if a
+            # partition was actually returned. Dereferencing .DriveLetter off the
+            # pipeline directly throws under StrictMode when the pipeline is EMPTY
+            # (property deref on $null) - which would send us straight into the
+            # catch below with a misleading "already detached" message and skip
+            # the intended "no drive letter" branch entirely.
+            $p = Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue |
+                Where-Object { $_.DriveLetter } | Select-Object -First 1
+            $flushLetter = if ($p) { $p.DriveLetter } else { $null }
+            if (-not $flushLetter) {
+                Write-Host "  disk $($disk.Number) has no drive letter - skipping cache flush"
+            }
+            else {
+                Write-VolumeCache -DriveLetter $flushLetter -ErrorAction Stop
+            }
+            Set-Disk -Number $disk.Number -IsOffline $true -ErrorAction SilentlyContinue
+            Write-Host "  disk $($disk.Number) offlined"
+        }
+    } catch {
+        # A missing disk (already detached) is the normal, benign case. But now
+        # that the flush runs with -ErrorAction Stop, a genuine flush failure
+        # also lands here - surface the actual error so it is not mistaken for a
+        # clean teardown, while still staying idempotent (caller proceeds to
+        # offline + unmap regardless).
+        Write-Host "  Dismount-SanLun: $LunPath - $($_.Exception.Message) (continuing teardown)"
+    }
+}
+
+Export-ModuleMember -Function Enable-OntapCertBypass, Connect-Ontap, Invoke-Ontap, `
+    New-OntapCloneName, Get-OntapVolume, New-OntapSnapshot, New-OntapFlexClone, `
+    Remove-OntapVolume, Remove-OntapSnapshotsBeyond, Get-LocalIqn, Get-TerminatedInitiators, `
+    Remove-OntapIgroupInitiator, Add-OntapIgroupInitiator, New-OntapLunMap, `
+    Remove-OntapLunMap, New-OntapLun, Connect-SanPortal, Test-MSDSMiScsiClaim, `
+    Wait-SanDisk, Mount-SanLun, Dismount-SanLun
