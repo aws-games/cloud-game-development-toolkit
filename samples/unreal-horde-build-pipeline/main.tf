@@ -238,8 +238,7 @@ module "horde" {
   # container startup, so it never enters Terraform state, the task definition,
   # or CloudWatch logs.
   #
-  # NOTE: an earlier plan called for an "extra_environment" input; that
-  # variable does not exist on this module. config_globals_json + config_path is
+  # config_globals_json + config_path is
   # the supported mechanism.
   # The BuildGraph <Option>s in buildgraph/*.xml have no DefaultValue, so every
   # one of them must be injected here as a -set: argument in the template. A
