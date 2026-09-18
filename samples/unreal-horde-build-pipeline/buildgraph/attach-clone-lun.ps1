@@ -2,12 +2,13 @@
     attach-clone-lun.ps1 - per-build hydration over iSCSI.
 
     Clone the source volume's snapshot, map the clone's LUN to this agent, bring
-    it online as a drive letter, and register the teardown hook. Replaces the
-    NFS mount the sample used to do, because Windows NFSv3 cannot run a UBA
-    build at all (see OntapSan.psm1 for the evidence).
+    it online as a drive letter, and register the teardown hook. Uses an iSCSI
+    LUN (real NTFS) rather than NFS, because Windows NFSv3 cannot run a UBA
+    build (see OntapSan.psm1).
 
-    Called from BuildPipeline.xml's "Compile" node (the clone + mount was merged
-    into that single node). Emits FLEXCLONE_TIMING lines so each phase is
+    Called from BuildPipeline.xml's "Compile" node. Runs inside that node
+    because a drive-letter mount does not persist across BuildGraph node
+    processes. Emits FLEXCLONE_TIMING lines so each phase is
     measurable in the Horde step log.
 
     Reference timings on a 49.55 GB / 268,730-file UE 5.7 workspace:

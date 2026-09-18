@@ -6,13 +6,12 @@
     needs a client whose Root is the clone drive; the Horde-managed workspace
     clients are rooted in the agent sandbox, not on the LUN.
 
-    PER-JOB, NOT SHARED. Earlier this created a single fixed client named
-    $WorkspaceName (default "BuildWorkspace") shared by every build. Two builds
-    of the same stream running concurrently then took turns owning ONE client
-    whose Root is a drive letter, so one job's `p4 flush @N` stamped the
-    have-list the OTHER job's `p4 sync` then trusted - the loser silently
-    compiled a stale tree and still exited 0. A p4 client is have-list state, so
-    it MUST be per-job, exactly like the clone volume it is rooted on.
+    PER-JOB, NOT SHARED. A p4 client is have-list state, so each job must own
+    its own client. A single shared client rooted on a drive letter lets two
+    concurrent same-stream builds corrupt each other's have-list: one job's
+    `p4 flush @N` stamps the have-list the other's `p4 sync` then trusts, so a
+    build can compile a stale tree and still exit 0. The client is per-job,
+    exactly like the clone volume it is rooted on.
 
     NAME: hordeclone_<StreamSafe>_<CloneVolumeName>. The clone volume name is
     already unique per job (build_<jobid>), so it carries the per-execution id;

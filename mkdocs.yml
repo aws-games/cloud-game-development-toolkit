@@ -152,6 +152,8 @@ nav:
   - Samples:
       - Overview: samples/README.md
       - Simple Build Pipeline: samples/simple-build-pipeline/README.md
+      - Unreal Horde Build Pipeline: samples/unreal-horde-build-pipeline/README.md
+      - Unity Build Pipeline: samples/unity-build-pipeline/README.md
       - Unreal Cloud DDC Single Region: samples/unreal-cloud-ddc-single-region/README.md
   - Changelog: docs/changelog.md
   - Security: docs/security.md
