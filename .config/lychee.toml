@@ -51,6 +51,9 @@ exclude = [
     # Unity support pages (blocks automated requests with 403)
     "https://support\\.unity\\.com/.*",
 
+    # Unity ID/login (307 redirect to automated requests)
+    "https://id\\.unity\\.com/.*",
+
     # Localhost URLs
     "http://localhost.*",
     "https://localhost.*",
