@@ -5,12 +5,11 @@
     cl-<changelist>. Every per-build FlexClone is taken from one of those
     snapshots. Called from HydratePipeline.xml.
 
-    THE HYDRATOR IS NOW WINDOWS, NOT LINUX. That is the substantive consequence
-    of moving to SAN: the LUN carries NTFS, so the host that writes it must be
-    Windows and must be the ONLY writer. A Linux host cannot safely mount it, and
+    THE HYDRATOR RUNS ON WINDOWS: the source LUN carries NTFS, so its writer
+    must be Windows and the only writer. A Linux host cannot safely mount it, and
     two Windows hosts cannot mount it at once.
 
-    TWO NON-OBVIOUS REQUIREMENTS, both of which silently corrupt the demo if
+    TWO NON-OBVIOUS REQUIREMENTS, each of which silently corrupts every clone if
     skipped:
 
     1. THE SNAPSHOT NAME MUST ENCODE THE CHANGELIST. The build agent transplants

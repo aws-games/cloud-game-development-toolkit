@@ -62,8 +62,7 @@ resource "aws_fsx_ontap_file_system" "workspace" {
 # No active_directory_configuration block, so no CIFS/AD is provisioned. That is
 # still correct on the SAN path: iSCSI authorises by initiator IQN (igroups), not
 # by a directory identity, so NTFS-on-a-LUN needs no AD at all. This is why iSCSI
-# gives real NTFS semantics WITHOUT the AD dependency that SMB would impose - the
-# trade-off ADR-002 assumed it had to make.
+# gives real NTFS semantics WITHOUT the AD dependency SMB would impose.
 ##################################################
 
 resource "aws_fsx_ontap_storage_virtual_machine" "workspace" {
