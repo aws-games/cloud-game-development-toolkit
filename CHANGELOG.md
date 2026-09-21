@@ -2,6 +2,15 @@
 ## [Unreleased]
 
 
+<a name="v1.1.8"></a>
+## [v1.1.8] - 2026-09-21
+### Docs
+- reframe sample comments as intent + fix docs-deploy ([#1004](https://github.com/aws-games/cloud-game-development-toolkit/issues/1004))
+
+
+<a name="latest"></a>
+## [latest] - 2026-09-17
+
 <a name="v1.1.7"></a>
 ## [v1.1.7] - 2026-09-17
 ### Bug Fixes
@@ -12,6 +21,7 @@
 - **unreal-horde:** start Windows Horde agent in-band ([#994](https://github.com/aws-games/cloud-game-development-toolkit/issues/994)) ([#995](https://github.com/aws-games/cloud-game-development-toolkit/issues/995))
 
 ### Chore
+- regenerate changelog for v1.1.7 [skip ci]
 - reduce dependabot frequency from daily to monthly ([#959](https://github.com/aws-games/cloud-game-development-toolkit/issues/959))
 - **deps:** bump squidfunk/mkdocs-material from 9.7.6 to 9.7.7 in /docs ([#965](https://github.com/aws-games/cloud-game-development-toolkit/issues/965))
 - **deps:** bump actions/setup-python from 6 to 7 ([#968](https://github.com/aws-games/cloud-game-development-toolkit/issues/968))
@@ -29,9 +39,6 @@
 
 <a name="v1.1.6"></a>
 ## [v1.1.6] - 2026-07-02
-
-<a name="latest"></a>
-## [latest] - 2026-07-02
 ### Bug Fixes
 - resolve warning about iam policy type deprecation
 - link updates for documentation ([#841](https://github.com/aws-games/cloud-game-development-toolkit/issues/841))
@@ -493,11 +500,11 @@
 - Windows Build AMI README ([#187](https://github.com/aws-games/cloud-game-development-toolkit/issues/187))
 
 
-<a name="v1.0.0-alpha"></a>
-## [v1.0.0-alpha] - 2024-08-07
-
 <a name="staging"></a>
-## staging - 2024-08-07
+## [staging] - 2024-08-07
+
+<a name="v1.0.0-alpha"></a>
+## v1.0.0-alpha - 2024-08-07
 ### Bug Fixes
 - fix issue where SSH public key was not baked into the Windows Jenkins build agent AMI ([#150](https://github.com/aws-games/cloud-game-development-toolkit/issues/150))
 - bug fixes for FSxZ storage in build farm ([#152](https://github.com/aws-games/cloud-game-development-toolkit/issues/152))
@@ -566,15 +573,16 @@
 - **packer:** switch AMI from Rocky Linux to Amazon Linux 2023 and up… ([#141](https://github.com/aws-games/cloud-game-development-toolkit/issues/141))
 
 
-[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.7...HEAD
+[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.8...HEAD
+[v1.1.8]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.1.8
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.7...latest
 [v1.1.7]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.6...v1.1.7
-[v1.1.6]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.1.6
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...latest
+[v1.1.6]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...v1.1.6
 [v1.1.5]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...v1.1.5
 [v1.1.4]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.3-alpha...v1.1.4
 [v1.1.3-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.2-alpha...v1.1.3-alpha
 [v1.1.2-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.1-alpha...v1.1.2-alpha
 [v1.1.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.0-alpha...v1.1.1-alpha
 [v1.1.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.1-alpha...v1.1.0-alpha
-[v1.0.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...v1.0.1-alpha
-[v1.0.0-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/staging...v1.0.0-alpha
+[v1.0.1-alpha]: https://github.com/aws-games/cloud-game-development-toolkit/compare/staging...v1.0.1-alpha
+[staging]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.0.0-alpha...staging
