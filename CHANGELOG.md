@@ -4,12 +4,18 @@
 
 <a name="v1.1.8"></a>
 ## [v1.1.8] - 2026-09-21
-### Docs
-- reframe sample comments as intent + fix docs-deploy ([#1004](https://github.com/aws-games/cloud-game-development-toolkit/issues/1004))
+### Bug Fixes
+- **docs:** exclude id.unity.com from lychee link check (307 redirect) ([#1005](https://github.com/aws-games/cloud-game-development-toolkit/issues/1005))
 
 
 <a name="latest"></a>
-## [latest] - 2026-09-17
+## [latest] - 2026-09-21
+### Chore
+- regenerate changelog for v1.1.8 [skip ci]
+
+### Docs
+- reframe sample comments as intent + fix docs-deploy ([#1004](https://github.com/aws-games/cloud-game-development-toolkit/issues/1004))
+
 
 <a name="v1.1.7"></a>
 ## [v1.1.7] - 2026-09-17
