@@ -46,14 +46,13 @@ resource "aws_security_group" "fsxn" {
 
 # iSCSI (3260) from the Horde agent SG — referenced SG (SG-to-SG).
 #
-# THIS REPLACES THE ENTIRE NFSv3 PORT FAMILY (2049, 111, 635, 4045, 4046, each
-# tcp+udp = ten rules). The data path is now iSCSI/NTFS, so none of those are
-# needed, and leaving them open would grant NAS access to a volume that is only
-# supposed to be reachable as a LUN.
+# The data path is iSCSI/NTFS on a single TCP port 3260, so no NFSv3 ports are
+# opened (the NFSv3 family - 2049, 111, 635, 4045, 4046, each tcp+udp - would
+# grant NAS access to a volume that is only supposed to be reachable as a LUN).
 #
-# One TCP port is the whole SAN data path — a genuine operational simplification
-# over NFSv3, whose auxiliary RPC services (mountd/nlockmgr/status) are the reason
-# the NFS ruleset needed ten entries and still hung mounts when any was missed.
+# One TCP port is the whole SAN data path — simpler
+# than NFSv3, whose auxiliary RPC services (mountd/nlockmgr/status) need
+# many rules and still hang mounts when any is missed.
 #
 # Authorisation is by initiator IQN (igroups), NOT by network reachability: this
 # rule lets an agent *reach* the target, while the igroup decides which LUNs it
@@ -210,11 +209,12 @@ resource "aws_vpc_security_group_egress_rule" "agents_egress_https_to_endpoints"
 
 # 3260 to the FSxN SG (iSCSI data path).
 #
-# REPLACES the ten NFSv3 egress rules (2049, 111, 635, 4045, 4046, each tcp+udp).
-# The SAN data path is a single TCP port, which is a real operational
-# simplification: NFSv3's auxiliary RPC services (mountd/nlockmgr/status) are why
-# the old ruleset needed ten entries, and missing any one of them produced a mount
-# that hung rather than an error.
+# No NFSv3 egress rules are opened: the data path is iSCSI/NTFS on a single TCP
+# port 3260, so no NFSv3 ports (2049, 111, 635, 4045, 4046, each tcp+udp) are
+# opened. A single TCP port is simpler than
+# NFSv3, whose auxiliary RPC services (mountd/nlockmgr/status) need many
+# rules, and missing any one of them produces a mount
+# that hangs rather than an error.
 resource "aws_vpc_security_group_egress_rule" "agents_egress_iscsi_to_fsxn" {
   security_group_id            = module.horde.agent_security_group_id
   description                  = "Allow iSCSI (3260/tcp) from agents to FSxN."

@@ -111,4 +111,4 @@ cache = true
 require_https = false
 
 # Check fragments/anchors in links
-include_fragments = true
+include_fragments = "full"

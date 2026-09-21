@@ -5,15 +5,18 @@ Custom BuildGraph tasks for integrating Perforce syncing with NetApp ONTAP FlexC
 ## Files
 
 **Tasks/** - C# BuildGraph task implementations
+
 - `SyncAndSnapshotTask.cs` - Sync from Perforce and create ONTAP snapshot
 - `CloneVolumeTask.cs` - Create FlexClone volume from snapshot
 - `DeleteVolumeTask.cs` - Delete ONTAP volume
 - `DeleteSnapshotTask.cs` - Delete ONTAP snapshot
 
 **Utils/** - Helper utilities
+
 - `OntapUtils.cs` - ONTAP REST API operations and AWS Secrets Manager integration
 
 **Examples/** - BuildGraph XML workflows
+
 - `SyncAndSnapshotExample.xml` - Sync from Perforce and snapshot
 - `CloneVolumeExample.xml` - Create FlexClone from snapshot
 - `DeleteVolumeExample.xml` - Delete clone and snapshot

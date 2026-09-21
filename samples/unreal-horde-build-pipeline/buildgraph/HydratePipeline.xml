@@ -8,13 +8,11 @@
 	     head, then snapshot it as cl-<changelist>. Every per-build FlexClone is
 	     taken from one of those snapshots.
 
-	     THE HYDRATOR IS NOW WINDOWS, NOT LINUX. That is the substantive
-	     consequence of moving the data path to SAN: the LUN carries NTFS, so its
+	     THE HYDRATOR RUNS ON WINDOWS: the LUN carries NTFS, so its
 	     writer must be Windows, and it must be the ONLY writer. Pool membership
-	     in globals.json.tpl is now selected by the Horde_Autoscale_Pool instance
+	     in globals.json.tpl is selected by the Horde_Autoscale_Pool instance
 	     tag (condition "aws-tag == 'Horde_Autoscale_Pool:SyncPool'"), and both
-	     pools are Windows; config/sync-agent.ansible.yml (a Linux NFS fstab
-	     playbook) is gone: the source LUN's per-boot needs (MSiSCSI + a unique
+	     pools are Windows. The source LUN's per-boot needs (MSiSCSI + a unique
 	     initiator IQN) are baked into the build-agent AMI, and all ONTAP/mount
 	     work is job-time (hydrate-source-lun.ps1).
 

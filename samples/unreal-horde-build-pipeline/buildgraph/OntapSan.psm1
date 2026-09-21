@@ -5,9 +5,8 @@
 
     WHY SAN INSTEAD OF NFS
     ---------------------
-    An earlier design chose NFSv3 and rejected iSCSI on throughput grounds. That
-    reasoning turned out incomplete: throughput was never the binding
-    constraint, Windows filesystem SEMANTICS were. On a Windows NFSv3 mount:
+    SAN (iSCSI/NTFS) is used instead of NFS because the binding constraint is
+    Windows filesystem SEMANTICS, not throughput. On a Windows NFSv3 mount:
 
       * UBA (Unreal Build Accelerator) detours file I/O and calls
         NtQueryInformationFile on every input; the Windows NFS redirector answers
@@ -36,7 +35,7 @@
     Two portals without MPIO make Windows enumerate one LUN as two separate
     disks, which is its own corruption trap.
 
-    ONTAP REST NOTES learned the hard way
+    ONTAP REST quirks
     -------------------------------------
       * LUNs, igroups and NFS/SAN options are not all in the documented REST
         surface. The private-CLI passthrough POST /api/private/cli/<cmd> covers
@@ -686,11 +685,11 @@ function Mount-SanLun {
     $letter = $DriveLetter.TrimEnd(':')
     $disk = Wait-SanDisk -Ctx $Ctx -LunPath $LunPath
 
-    # A FlexClone LUN of a snapshot attaches READ-ONLY: ONTAP marks the clone's
-    # LUN read-only and Windows surfaces the disk with IsReadOnly=$true. Windows
-    # REFUSES to bring a read-only disk online writable, so the read-only flag
-    # MUST be cleared BEFORE the online call - the previous order (online first)
-    # failed with "The disk is read only" (StorageWMI 41002). Re-query after each
+    # A FlexClone LUN attaches READ-ONLY: ONTAP marks the clone's LUN read-only
+    # and Windows surfaces the disk with IsReadOnly=$true. Windows REFUSES to
+    # bring a read-only disk online writable, so the read-only flag MUST be
+    # cleared BEFORE onlining or Windows fails with "The disk is read only"
+    # (StorageWMI 41002). Re-query after each
     # step because the $disk snapshot from Wait-SanDisk goes stale immediately.
     if ($disk.IsReadOnly) {
         Set-Disk -Number $disk.Number -IsReadOnly $false -ErrorAction Stop

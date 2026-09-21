@@ -9,12 +9,10 @@
 	     Perforce have-list, incremental-sync the delta, compile, then always
 	     clean up. Runs entirely on one Windows build agent.
 
-	     SINGLE-NODE COMPILE (Option 1 merge): BuildGraph runs each <Node> as its
+	     SINGLE-NODE COMPILE: BuildGraph runs each <Node> as its
 	     own RunUAT -SingleNode process. A LUN mounted in one node's process does
-	     NOT persist into another node's process, so a prior split of "Clone And
-	     Mount" (node A) and "Compile" (node B) failed: W: mounted in A was gone
-	     in B and p4 flush ran against an invalid working dir. Fix: the clone +
-	     attach + mount now happens at the TOP of the Compile node, so a SINGLE
+	     NOT persist into another node's process, so clone+attach+mount is the
+	     first action of the Compile node: a SINGLE
 	     process does clone -> mount W: -> p4 flush -> p4 sync -> Build.bat.
 
 	     COUPLING to config/horde/globals.json.tpl (must stay in sync):
@@ -44,7 +42,7 @@
 
 	<!-- Perforce parameters (incremental sync into the attached clone) -->
 	<Option Name="Stream" DefaultValue="" Description="Perforce stream to sync from (e.g. //depot/main)" />
-	<Option Name="StreamSafe" DefaultValue="" Description="Stream sanitized to [a-z0-9_] (Terraform local fsxn_client_stream_safe). Used to build the per-job client name hordeclone_{StreamSafe}_{CloneVolumeName}. Derived in Terraform, NOT via a BuildGraph string expression (those are unreliable across UE versions)." />
+	<Option Name="StreamSafe" DefaultValue="" Description="Stream sanitized to [a-z0-9_] (Terraform local fsxn_client_stream_safe). Used to build the per-job client name hordeclone_{StreamSafe}_{CloneVolumeName}. Derived in Terraform rather than a BuildGraph string expression, which is not reliably supported across UE versions." />
 	<Option Name="P4Port" DefaultValue="perforce:1666" Description="Perforce server address" />
 	<Option Name="P4User" DefaultValue="perforce" Description="Perforce username" />
 	<Option Name="P4CredentialsSecret" DefaultValue="" Description="Optional Secrets Manager secret (JSON {username,password}) holding the P4 credentials. Used ONCE to mint a login ticket the later flush/sync reuse; empty = rely on an existing ticket." />
@@ -81,10 +79,9 @@
 			     still exits 0). CloneVolumeName (build_{jobid}) is already unique
 			     per execution; StreamSafe prefixes it for greppability and the
 			     ^hordeclone_ name-gate the reaper keys on. Built by literal
-			     concatenation + an equality If (both confirmed working in this
-			     tree) - NOT a C# .Replace(), which is the flagged BuildGraph
-			     risk. Setting WorkspaceName forces a fixed name (single-build
-			     compatibility). -->
+			     concatenation + an equality-If, not a C# .Replace()
+			     (unreliable in BuildGraph). Setting WorkspaceName forces a fixed
+			     name (single-build compatibility). -->
 			<Property Name="ClientName" Value="hordeclone_$(StreamSafe)_$(CloneVolumeName)" />
 			<!-- Empty WorkspaceName default => per-job client hordeclone_$(StreamSafe)_$(CloneVolumeName); setting WorkspaceName explicitly pins a fixed single-build client name. -->
 			<Property Name="ClientName" Value="$(WorkspaceName)" If="'$(WorkspaceName)' != ''" />

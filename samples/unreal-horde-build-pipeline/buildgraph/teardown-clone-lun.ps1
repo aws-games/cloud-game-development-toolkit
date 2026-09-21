@@ -14,13 +14,13 @@
     have-list metadata) never outlives its backing clone in the wrong direction;
     a missing client is treated as success.
 
-    WHY A LEASE HOOK, NOT A GRAPH NODE: BuildPipeline.xml used to rely on
-    RunLate="true", which is not a BuildGraph <Node> attribute (UE 5.7), and the
-    semantics it wanted do not exist either - a node ordered after a FAILED node
-    is *Skipped*, not run. So cleanup did not happen on precisely the path it was
-    written for. Horde runs the script named by %UE_HORDE_CLEANUP% when the lease
-    ends regardless of outcome; that is the correct hook. This script both
-    REGISTERS itself into it (-Register) and performs the work (-Execute).
+    WHY A LEASE HOOK, NOT A GRAPH NODE: a node ordered after a FAILED node is
+    *Skipped*, not run, so a cleanup graph node cannot guarantee it runs on the
+    failure path it exists for. RunLate="true" is not a valid BuildGraph <Node>
+    attribute (UE 5.7) either. Horde runs the script named by %UE_HORDE_CLEANUP%
+    when the lease ends regardless of outcome; that is the correct hook. This
+    script both REGISTERS itself into it (-Register) and performs the work
+    (-Execute).
 
     IDEMPOTENT BY REQUIREMENT: on success the graph's own cleanup node has usually
     already run, so this executes second and must tolerate everything being gone -
@@ -106,7 +106,7 @@ catch { Write-Warning "[teardown-clone-lun] could not remove LUN map: $($_.Excep
 # 3. Finally the clone volume. NOTE: this does NOT synchronously release the
 #    parent snapshot - ONTAP moves the deleted clone into its recovery queue as a
 #    DEL volume and the parent's has_flexclone stays TRUE until that queue entry
-#    is purged (observed >4 min). Snapshot pruning (finding 0005) stays SAFE
+#    is purged (observed >4 min). Snapshot pruning stays SAFE
 #    regardless - it skips a still-busy parent - but convergence lags by the
 #    recovery-queue retention window, not the next hydrate.
 try { Remove-OntapVolume -Ctx $ctx -Name $CloneVolumeName }
