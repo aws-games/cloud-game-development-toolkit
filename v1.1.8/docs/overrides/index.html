@@ -1,0 +1,50 @@
+{% extends "main.html" %}
+<!--  -->
+{% block hero %}
+<section class="hero-container">
+  <div class="md-grid md-typeset">
+    <div class="mdx-hero">
+      <div class="mdx-hero__image">
+        <img
+          src=""
+          alt=""
+          width="50%"
+          draggable="false"
+        />
+      </div>
+      <div class="mdx-hero__content">
+        <h1>{{ page.meta.hero.title }}</h1>
+        <p>{{ page.meta.hero.subtitle }}</p>
+        <a
+          href="{{ './getting-started.html' }}"
+          title="{{ page.next_page.title | e }}"
+          class="md-button md-button--primary"
+        >
+          {{ page.meta.hero.getting_started_button }}
+        </a>
+        <a
+          href="{{ '//github.com/aws-games/cloud-game-development-toolkit' | url }}"
+          title="Source code on GitHub"
+          class="md-button"
+          >{{ page.meta.hero.source_button }}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+<!-- Content -->
+{% block content %}
+<div class="mdx-features">
+  {% for feature in page.meta.features %}
+  <div>
+    <a href="{{ feature.link }}">
+      <!-- <img src="{{ feature.image }}" /> -->
+      <h2>{{ feature.title }}</h2>
+    </a>
+    <p>{{ feature.description }}</p>
+  </div>
+  {% endfor %}
+</div>
+{{ super() }}
+{% endblock %}

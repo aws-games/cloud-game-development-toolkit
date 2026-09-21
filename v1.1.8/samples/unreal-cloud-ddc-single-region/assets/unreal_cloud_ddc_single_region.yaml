@@ -1,0 +1,149 @@
+# This is the base settings of your deployment, most things should go into here except for anything that is unique to a single region
+config:
+  S3: &s3-connection-info
+    BucketName: ${bucket_name}
+  Scylla: &scylla-connection-info
+    ConnectionString: Contact Points=${scylla_ips};Default Keyspace=jupiter;
+    KeyspaceReplicationStrategy:
+        class : "NetworkTopologyStrategy"
+        ${region} : 2
+    LocalDatacenterName: ${region}
+    LocalKeyspaceSuffix: "ddc"
+  # if you have a locally attached filesystem for caching (we recommend you do) then this configures it
+  #Filesystem:
+  #  MaxSizeBytes: 800000000000 # 800 Gb - the amount of storage we can use on the storage
+  ServiceAccounts:
+    Accounts:
+    - Token: ${token}
+      Claims:
+      - groups:app-cloud-ddc-project
+      - groups:cloud-ddc-admin
+
+global:
+   #AWS specific configuration
+   cloudProvider: "AWS"
+   awsRegion: ${aws_region}
+   siteName: ${aws_region}
+   awsRole: AssumeRoleWebIdentity # service accounts are IAM mapped
+
+   auth:
+    defaultScheme: ServiceAccount # this should match the name under schemes
+    schemes:
+      ServiceAccount:
+        implementation: ServiceAccount
+
+
+    acls:
+    # This is an example of how to setup a claim to grant special privileges
+    # In this case we expect a group called app-ddc-storage-admin to indicate admins which are granted full access to everything
+    - claims:
+      - groups=cloud-ddc-admin
+      actions:
+      - ReadObject
+      - WriteObject
+      - DeleteObject
+      - DeleteBucket
+      - DeleteNamespace
+      - AdminAction
+
+   namespaces:
+    Policies:
+      ddc:
+        acls:
+        - actions:
+          - ReadObject
+          - WriteObject
+          claims:
+          - groups=app-cloud-ddc-project
+
+replicaCount: 2
+
+## Docker image configuration
+image:
+  repository: "ghcr.io/epicgames/unreal-cloud-ddc"
+  pullPolicy: IfNotPresent
+
+tolerations:
+  - key: role
+    operator: Equal
+    value: unreal-cloud-ddc
+    effect: NoSchedule
+
+# default label for nvme node group
+nodeSelector:
+  "unreal-cloud-ddc/node-type": "nvme"
+
+serviceAccount:
+  create: false
+  name: unreal-cloud-ddc-sa #based off of default variable in inter-cluster module
+
+persistence:
+  enabled: false
+  volume:
+    hostPath:
+      path: /data
+      type: Directory
+
+  ## Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  #storageClass: "gp2"
+
+
+  ## Persistent Volume Claim annotations
+  ##
+  annotations: {}
+nginx:
+  enabled: true
+  useDomainSockets: true
+
+## Service properties
+
+service:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-name: "cgd-unreal-cloud-ddc"
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-security-groups: ${security_group_ids}
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health/live"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: application=unreal-cloud-ddc
+
+  type: LoadBalancer
+  portName: http
+  port: 80
+  targetPort: nginx-http
+  extraPort:
+  - name: http2
+    port: 8080
+    targetPort: nginx-h2
+
+worker:
+  enabled: true
+  config:
+    GC:
+      CleanOldRefRecords: true
+      CleanOldBlobs: true
+      Replication:
+        Enabled: false
+
+    Scylla: *scylla-connection-info
+    S3: *s3-connection-info
+
+  tolerations:
+      - key: role
+        operator: Equal
+        value: unreal-cloud-ddc
+        effect: NoSchedule
+
+# default label for worker node group
+  nodeSelector:
+    "unreal-cloud-ddc/node-type": "worker"
