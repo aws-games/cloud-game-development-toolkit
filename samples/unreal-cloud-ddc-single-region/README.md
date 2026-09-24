@@ -25,6 +25,31 @@ terraform apply
 
 The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.
 
+### EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+
+The EBS CSI driver needs AWS credentials to manage EBS volumes for the cluster.
+This sample supports two mechanisms, selected by the `ebs_csi_use_pod_identity`
+variable on the intra-cluster module:
+
+- **EKS Pod Identity (recommended, the sample default).** Uses the
+  `pods.eks.amazonaws.com` service principal and
+  `eks-auth:AssumeRoleForPodIdentity`. This is AWS's current recommended
+  mechanism, needs no cluster OIDC provider for the driver, and installs the
+  `eks-pod-identity-agent` add-on automatically. It also works in accounts whose
+  AWS Organization applies an SCP/RCP that denies
+  `sts:AssumeRoleWithWebIdentity` (a common central-governance guardrail) —
+  under IRSA that guardrail leaves the `ebs-csi-controller` pods in
+  `CrashLoopBackOff` with `AccessDenied`, and the add-on never becomes `ACTIVE`.
+- **IRSA (legacy).** Set `ebs_csi_use_pod_identity = false` to use the classic
+  IAM Roles for Service Accounts path (`sts:AssumeRoleWithWebIdentity` via the
+  cluster OIDC provider). Appropriate when Pod Identity is unavailable (for
+  example Fargate or Windows node groups).
+
+```hcl
+# terraform.tfvars — override if you need the legacy IRSA path
+ebs_csi_use_pod_identity = false
+```
+
 ### EKS API endpoint access
 
 Terraform installs Helm charts and EKS add-ons over the cluster's Kubernetes
