@@ -185,7 +185,7 @@ No modules.
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
 | <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
-| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.31"` | no |
+| <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.36"` | no |
 | <a name="input_monitoring_application_load_balancer_subnets"></a> [monitoring\_application\_load\_balancer\_subnets](#input\_monitoring\_application\_load\_balancer\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
