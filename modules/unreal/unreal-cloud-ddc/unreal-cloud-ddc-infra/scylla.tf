@@ -43,6 +43,15 @@ resource "aws_instance" "scylla_ec2_instance_seed" {
       Name = "${local.name_prefix}-scylla-db"
     }
   )
+
+  lifecycle {
+    # The ScyllaDB AMI (var.scylla_ami_name) is only used to launch these nodes.
+    # ScyllaDB deregisters older published AMIs over time, which changes the
+    # resolved AMI id and would otherwise force-replace running database nodes
+    # (destroying their data) on an unrelated apply. Ignore ami drift so an AMI
+    # name/version bump does not destroy existing data-bearing instances.
+    ignore_changes = [ami]
+  }
 }
 
 resource "aws_instance" "scylla_ec2_instance_other_nodes" {
@@ -79,4 +88,10 @@ resource "aws_instance" "scylla_ec2_instance_other_nodes" {
       Name = "${local.name_prefix}-scylla-db"
     }
   )
+
+  lifecycle {
+    # See seed node above: ignore AMI drift so an AMI name/version change does
+    # not force-replace running data-bearing ScyllaDB nodes.
+    ignore_changes = [ami]
+  }
 }
