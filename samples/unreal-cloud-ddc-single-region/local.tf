@@ -15,4 +15,8 @@ locals {
     Environment = "cgd"
     Application = "unreal-cloud-ddc"
   }
+
+  eks_endpoint_host   = replace(module.unreal_cloud_ddc_infra.cluster_endpoint, "https://", "")
+  eks_provider_host   = var.eks_api_local_port == null ? module.unreal_cloud_ddc_infra.cluster_endpoint : "https://127.0.0.1:${var.eks_api_local_port}"
+  eks_tls_server_name = var.eks_api_local_port == null ? null : local.eks_endpoint_host
 }
