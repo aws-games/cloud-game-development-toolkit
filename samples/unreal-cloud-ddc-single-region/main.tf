@@ -87,14 +87,18 @@ module "unreal_cloud_ddc_infra" {
   region     = data.aws_region.current.name
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
-  eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = ["${chomp(data.http.public_ip.response_body)}/32"]
+  eks_node_group_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  # If eks_public_access_cidrs is set, use it verbatim. Otherwise fall back to
+  # auto-detecting the caller's single public IP. The auto-detect path only
+  # works reliably for single, stable public IPs; NAT pools, VPNs and CI
+  # runners should set eks_public_access_cidrs explicitly (see README).
+  eks_cluster_public_endpoint_access_cidr = length(var.eks_public_access_cidrs) > 0 ? var.eks_public_access_cidrs : ["${chomp(data.http.public_ip.response_body)}/32"]
   eks_cluster_private_access              = true
   eks_cluster_public_access               = true
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group.id]
 
   scylla_subnets       = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_ami_name      = "ScyllaDB 6.2.1"
+  scylla_ami_name      = "ScyllaDB 2026.3.1"
   scylla_architecture  = "x86_64"
   scylla_instance_type = "i4i.xlarge"
 
@@ -124,6 +128,12 @@ module "unreal_cloud_ddc_intra_cluster" {
   cluster_name                        = module.unreal_cloud_ddc_infra.cluster_name
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn
+
+  # Use EKS Pod Identity (not IRSA) for the EBS CSI driver. This account's
+  # Organization RCP denies sts:AssumeRoleWithWebIdentity, which breaks IRSA;
+  # Pod Identity uses eks-auth:AssumeRoleForPodIdentity instead and is the
+  # current AWS-recommended mechanism.
+  ebs_csi_use_pod_identity = true
 
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
