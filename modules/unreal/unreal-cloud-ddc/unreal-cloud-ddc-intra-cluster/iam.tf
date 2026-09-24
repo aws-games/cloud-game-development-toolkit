@@ -2,10 +2,9 @@
 # IAM Roles & Policies
 ################################################################################
 
-resource "aws_iam_role" "ebs_csi_iam_role" {
-  name_prefix = "${local.name_prefix}-ebs-csi-sa-role-"
-
-  assume_role_policy = jsonencode({
+locals {
+  # OIDC (IRSA) web-identity trust for the EBS CSI controller service account.
+  ebs_csi_oidc_assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
       Sid    = ""
@@ -22,6 +21,33 @@ resource "aws_iam_role" "ebs_csi_iam_role" {
       }
     }]
   })
+
+  # EKS Pod Identity trust for the EBS CSI controller. Uses the
+  # pods.eks.amazonaws.com service principal, which relies on
+  # eks-auth:AssumeRoleForPodIdentity instead of sts:AssumeRoleWithWebIdentity
+  # and therefore bypasses Org RCP/SCP denies on web-identity assume calls.
+  ebs_csi_pod_identity_assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Sid    = ""
+      Effect = "Allow",
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      },
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }]
+  })
+
+  ebs_csi_assume_role_policy = var.ebs_csi_use_pod_identity ? local.ebs_csi_pod_identity_assume_role_policy : local.ebs_csi_oidc_assume_role_policy
+}
+
+resource "aws_iam_role" "ebs_csi_iam_role" {
+  name_prefix = "${local.name_prefix}-ebs-csi-sa-role-"
+
+  assume_role_policy = local.ebs_csi_assume_role_policy
   tags = merge(var.tags,
     {
       Name = "${local.name_prefix}-ebs-csi-sa-role"

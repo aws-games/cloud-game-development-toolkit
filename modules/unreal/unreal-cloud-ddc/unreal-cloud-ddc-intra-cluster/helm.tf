@@ -1,10 +1,6 @@
-module "eks_blueprints_all_other_addons" {
-  #checkov:skip=CKV_TF_1:Upstream commit hash not being checked. This will be broken out in the future.
-  #checkov:skip=CKV_AWS_356:Upstream requirement for Load Balancer Controller
-  #checkov:skip=CKV_AWS_111:Upstream requirement for Load Balancer Controller
-  source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
-
-  eks_addons = {
+locals {
+  # Addons always managed by the blueprints module.
+  eks_base_addons = {
     coredns = {
       most_recent = true
     }
@@ -14,11 +10,38 @@ module "eks_blueprints_all_other_addons" {
     vpc-cni = {
       most_recent = true
     }
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
-    }
   }
+
+  # When Pod Identity is enabled, the EBS CSI driver is managed natively (see
+  # aws_eks_addon.ebs_csi) so it is removed from the blueprints map, and the
+  # eks-pod-identity-agent addon is installed so the association can resolve.
+  # When disabled, keep the legacy IRSA-based EBS CSI driver in the blueprints
+  # map with its service account role ARN.
+  eks_addons = var.ebs_csi_use_pod_identity ? merge(
+    local.eks_base_addons,
+    {
+      eks-pod-identity-agent = {
+        most_recent = true
+      }
+    }
+    ) : merge(
+    local.eks_base_addons,
+    {
+      aws-ebs-csi-driver = {
+        most_recent              = true
+        service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
+      }
+    }
+  )
+}
+
+module "eks_blueprints_all_other_addons" {
+  #checkov:skip=CKV_TF_1:Upstream commit hash not being checked. This will be broken out in the future.
+  #checkov:skip=CKV_AWS_356:Upstream requirement for Load Balancer Controller
+  #checkov:skip=CKV_AWS_111:Upstream requirement for Load Balancer Controller
+  source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
+
+  eks_addons = local.eks_addons
 
 
   cluster_name      = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name

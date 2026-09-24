@@ -96,3 +96,9 @@ variable "enable_certificate_manager" {
     error_message = "Certificate Manager hosted zone ARN is required."
   }
 }
+
+variable "ebs_csi_use_pod_identity" {
+  type        = bool
+  default     = false
+  description = "Use EKS Pod Identity instead of IRSA for the EBS CSI driver controller. Required in accounts where an Organization RCP/SCP denies sts:AssumeRoleWithWebIdentity. When true, the EBS CSI driver addon is managed natively with a Pod Identity association and the eks-pod-identity-agent addon is installed; when false, the legacy IRSA path is used."
+}
