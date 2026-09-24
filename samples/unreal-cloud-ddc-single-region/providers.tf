@@ -32,7 +32,8 @@ terraform {
 }
 
 provider "kubernetes" {
-  host                   = module.unreal_cloud_ddc_infra.cluster_endpoint
+  host                   = local.eks_provider_host
+  tls_server_name        = local.eks_tls_server_name
   cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
@@ -43,7 +44,8 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = module.unreal_cloud_ddc_infra.cluster_endpoint
+    host                   = local.eks_provider_host
+    tls_server_name        = local.eks_tls_server_name
     cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra.cluster_certificate_authority_data)
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
