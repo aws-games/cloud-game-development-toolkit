@@ -1,0 +1,105 @@
+.md-grid {
+  max-width: 90vw
+}
+
+.md-typeset table td:first-child {
+  white-space: nowrap;
+}
+
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* AWS Labs MCP-style improvements */
+
+/* Better spacing for main content */
+.md-main__inner {
+  margin-top: 0;
+}
+
+/* Improved TOC styling */
+.md-nav--secondary {
+  border-left: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-nav--secondary .md-nav__title {
+  font-weight: 600;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Clean TOC links */
+.md-nav--secondary .md-nav__link {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.md-nav--secondary .md-nav__link:hover {
+  background-color: var(--md-accent-fg-color--transparent);
+}
+
+.md-nav--secondary .md-nav__link--active {
+  background-color: var(--md-accent-fg-color--transparent);
+  color: var(--md-accent-fg-color);
+  font-weight: 500;
+}
+
+/* Better typography */
+.md-typeset h1 {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.md-typeset h2 {
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  padding-bottom: 0.5rem;
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Code blocks styling */
+.md-typeset pre {
+  border-radius: 0.5rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Table improvements */
+.md-typeset table:not([class]) {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-default-fg-color--lightest);
+  font-weight: 600;
+}
+
+/* Admonition improvements */
+.md-typeset .admonition {
+  border-radius: 0.5rem;
+  border-left-width: 4px;
+}

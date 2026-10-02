@@ -1,0 +1,12 @@
+[Unit]
+Description=Run fsx_automounter script at boot
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/fsx_automounter.py
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
