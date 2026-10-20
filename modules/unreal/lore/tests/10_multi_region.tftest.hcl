@@ -58,6 +58,10 @@ run "single_region_has_no_cross_region_resources" {
     error_message = "loreserver >= v0.9.0 requires the fragment state table"
   }
   assert {
+    condition     = length([for e in module.compute.store_env_vars : e if e.name == "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_REGION"]) == 0
+    error_message = "Write tier uses its own region's table; no region override"
+  }
+  assert {
     condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE_CONFIG_PATH"]) == "/etc/lore/overlay"
     error_message = "Server must read the overlay directory where the topology file is written"
   }
@@ -67,7 +71,7 @@ run "single_region_has_no_cross_region_resources" {
 # CIDR ingress/egress for tiers across inter-region peering
 # =============================================================================
 
-run "replication_cidrs_open_three_ports_each_way" {
+run "replication_cidrs_open_four_rules_each_way" {
   command = plan
 
   variables {
@@ -75,8 +79,8 @@ run "replication_cidrs_open_three_ports_each_way" {
   }
 
   assert {
-    condition     = length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_tcp) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_udp) == 2
-    error_message = "One ingress rule per CIDR for 41337/tcp, 41340/tcp and 41340/udp"
+    condition     = length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_quic) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_tcp) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_udp) == 2
+    error_message = "One ingress rule per CIDR for 41337/tcp, 41337/udp, 41340/tcp and 41340/udp"
   }
   assert {
     condition     = length(aws_vpc_security_group_egress_rule.replication_cidr_grpc) == 2 && length(aws_vpc_security_group_egress_rule.replication_cidr_tcp) == 2 && length(aws_vpc_security_group_egress_rule.replication_cidr_udp) == 2
@@ -114,8 +118,8 @@ run "replication_peers_render_fixed_topology_overlay" {
   }
 
   assert {
-    condition     = strcontains(module.compute.topology_toml, "provider = \"fixed\"")
-    error_message = "Overlay must select the fixed topology provider"
+    condition     = strcontains(module.compute.topology_toml, "provider = \"rotating_id_fixed\"") && strcontains(module.compute.topology_toml, "rotation_interval_seconds = 300")
+    error_message = "Overlay must select the rotating fixed topology so peer DNS is re-resolved"
   }
   assert {
     condition     = strcontains(module.compute.topology_toml, "{ address = \"regional-tier.lore-dev-replica.internal\", port = 41340, locality = \"OtherRegion\" }")

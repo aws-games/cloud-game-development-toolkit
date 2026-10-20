@@ -96,6 +96,7 @@ Open an issue with your Terraform version, error output, and what you've already
 | [aws_vpc_endpoint.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_security_group_egress_rule.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.replication_cidr_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.replication_cidr_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.replication_cidr_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.replication_cidr_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.replication_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -104,6 +105,7 @@ Open an issue with your Terraform version, error output, and what you've already
 | [aws_vpc_security_group_ingress_rule.quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.replication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.replication_cidr_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.replication_cidr_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.replication_cidr_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.replication_cidr_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.replication_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -148,6 +150,7 @@ Open an issue with your Terraform version, error output, and what you've already
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | Prefix for all resource names (e.g., 'lore', 'mystudio-lore'). Max 12 chars to fit AWS resource name limits. | `string` | `"lore"` | no |
 | <a name="input_public_subnet_ids"></a> [public\_subnet\_ids](#input\_public\_subnet\_ids) | Existing public subnet IDs. Required when vpc\_id is set. | `list(string)` | `null` | no |
 | <a name="input_replication_ingress_cidrs"></a> [replication\_ingress\_cidrs](#input\_replication\_ingress\_cidrs) | CIDR blocks of Lore tiers in other VPCs or regions allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication). Needed across inter-region VPC peering, where security-group references do not work. Give the peered VPC's CIDR, never 0.0.0.0/0. | `list(string)` | `[]` | no |
+| <a name="input_replication_peer_refresh_seconds"></a> [replication\_peer\_refresh\_seconds](#input\_replication\_peer\_refresh\_seconds) | How often replication peers are re-created and their DNS names re-resolved. Lets a peer tier that was not up yet, or that has moved to a new task IP, be picked up without a restart. | `number` | `300` | no |
 | <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Other Lore servers this write tier replicates fragments to (Lore fixed topology). A tier in another region is locality = "OtherRegion": every put is forwarded to it so its region is warm before anyone asks. Address is a DNS name or IP reachable from the write tier's VPC. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_require_instance_store"></a> [require\_instance\_store](#input\_require\_instance\_store) | Validate that instance\_type has NVMe instance store. Set false for dev/test on cheaper instances. | `bool` | `true` | no |
 | <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated. | `string` | `null` | no |
@@ -180,6 +183,8 @@ Open an issue with your Terraform version, error output, and what you've already
 | <a name="output_fragments_table_name"></a> [fragments\_table\_name](#output\_fragments\_table\_name) | DynamoDB fragments table name (a regional tier reads its Global Table replica by this name) |
 | <a name="output_locks_table_arn"></a> [locks\_table\_arn](#output\_locks\_table\_arn) | DynamoDB locks table ARN, for a regional tier's IAM policy |
 | <a name="output_locks_table_name"></a> [locks\_table\_name](#output\_locks\_table\_name) | DynamoDB locks table name. A regional tier uses this table so exclusive checkouts are shared across offices. |
+| <a name="output_mutable_store_table_arn"></a> [mutable\_store\_table\_arn](#output\_mutable\_store\_table\_arn) | DynamoDB mutable-store table ARN, for a regional tier's IAM policy |
+| <a name="output_mutable_store_table_name"></a> [mutable\_store\_table\_name](#output\_mutable\_store\_table\_name) | DynamoDB mutable-store table (branch pointers). A regional tier uses this table cross-region. |
 | <a name="output_private_route_table_id"></a> [private\_route\_table\_id](#output\_private\_route\_table\_id) | Private route table of the module-created VPC, for peering routes (null when an existing VPC is supplied) |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | Private subnet IDs for placing edge pods |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | Public subnet IDs |

@@ -156,6 +156,15 @@ resource "aws_vpc_security_group_ingress_rule" "write_region_grpc" {
   description       = "gRPC from the write region"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "write_region_quic" {
+  security_group_id = aws_security_group.tier.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = var.write_region_vpc_cidr
+  description       = "QUIC from the write region"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "write_region_replication_tcp" {
   security_group_id = aws_security_group.tier.id
   from_port         = 41340
@@ -209,6 +218,15 @@ resource "aws_vpc_security_group_egress_rule" "write_region_grpc" {
   ip_protocol       = "tcp"
   cidr_ipv4         = var.write_region_vpc_cidr
   description       = "Mutable store forwarding to the write tier"
+}
+
+resource "aws_vpc_security_group_egress_rule" "write_region_quic" {
+  security_group_id = aws_security_group.tier.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = var.write_region_vpc_cidr
+  description       = "Remote mutable store over QUIC (lores://) to the write tier"
 }
 
 resource "aws_vpc_security_group_egress_rule" "write_region_replication_tcp" {
@@ -282,6 +300,7 @@ module "compute" {
   dynamodb_table_arns = [
     local.fragments_table_arn,
     local.fragment_metadata_table_arn,
+    var.mutable_store_table_arn,
     var.locks_table_arn,
   ]
   locks_table_arn              = var.locks_table_arn
@@ -300,19 +319,23 @@ module "compute" {
   fragment_bucket_name         = module.data.fragment_bucket_name
   fragments_table_name         = local.fragments_table_name
   fragment_metadata_table_name = local.fragment_metadata_table_name
-  mutable_store_table_name     = "unused-mutable-store-is-remote"
+  mutable_store_table_name     = var.mutable_store_table_name
   locks_table_name             = var.locks_table_name
 
-  # The two things that make this a regional tier rather than a second write tier
-  mutable_store_mode       = "remote"
-  mutable_store_remote_url = "lores://${var.write_tier_dns_name}:41337"
-  lock_store_mode          = "aws"
-  lock_store_region        = var.write_region
-  trusted_ca_pem           = var.write_tier_ca_certificate_pem
+  # What makes this a regional tier rather than a second write tier: branch pointers and locks
+  # are the write region's DynamoDB tables, used cross-region (one round trip per call). Lore's
+  # `remote` mutable store would forward through the write tier instead, but at v0.10.1 it does
+  # not implement list(), so repositories cannot be resolved by name through it.
+  mutable_store_mode   = "aws"
+  mutable_store_region = var.write_region
+  lock_store_mode      = "aws"
+  lock_store_region    = var.write_region
+  trusted_ca_pem       = var.write_tier_ca_certificate_pem
 
-  enable_replication       = true
-  replication_peers        = var.replication_peers
-  enable_same_region_write = var.enable_same_region_write
+  enable_replication               = true
+  replication_peers                = var.replication_peers
+  replication_peer_refresh_seconds = var.replication_peer_refresh_seconds
+  enable_same_region_write         = var.enable_same_region_write
 
   tls_certificate_secret_arn         = var.tls_certificate_secret_arn
   tls_private_key_secret_arn         = var.tls_private_key_secret_arn

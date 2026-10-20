@@ -86,6 +86,8 @@ module "regional_tier" {
   write_region_vpc_cidr         = local.write_vpc_cidr
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
+  mutable_store_table_name      = module.lore.mutable_store_table_name
+  mutable_store_table_arn       = module.lore.mutable_store_table_arn
   locks_table_name              = module.lore.locks_table_name
   locks_table_arn               = module.lore.locks_table_arn
 

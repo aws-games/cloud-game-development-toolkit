@@ -9,7 +9,7 @@ travel to the write region.
 | | Write tier (root module) | Regional tier (this module) |
 |---|---|---|
 | Fragments (file content, trees) | own S3 bucket + DynamoDB index | **own S3 bucket + DynamoDB index** in this region |
-| Branch pointers (mutable store) | DynamoDB here | **forwarded to the write tier** (`mutable_store = remote`) |
+| Branch pointers (mutable store) | DynamoDB here | **the write region's DynamoDB table**, used cross-region |
 | Locks | DynamoDB here | **the write region's locks table**, cross-region, so an exclusive checkout taken in one office is seen in the other |
 | Replication endpoint (41340) | on | on |
 
@@ -36,6 +36,8 @@ module "regional_tier" {
   write_region_vpc_cidr         = "10.10.0.0/16"
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
+  mutable_store_table_name      = module.lore.mutable_store_table_name
+  mutable_store_table_arn       = module.lore.mutable_store_table_arn
   locks_table_name              = module.lore.locks_table_name
   locks_table_arn               = module.lore.locks_table_arn
 
@@ -70,6 +72,14 @@ Do not also make the immutable DynamoDB tables Global Tables unless you are meas
 then arrive about a second after a commit while the S3 object can take minutes, and Lore reads
 "row present, object missing" as lost content. `immutable_tables.mode = "global_table"` exists
 for that experiment.
+
+## Why not forward through the write tier?
+
+Lore has a `remote` mutable store mode that proxies branch-pointer operations through another
+Lore server, which is what the edge pod uses. At v0.10.1 it does not implement `list`, which
+repository-by-name resolution needs, so a tier built on it cannot `clone lores://tier/<name>`.
+Using the write region's DynamoDB tables directly costs one round trip per DynamoDB call rather
+than one per Lore operation; the difference is measured in the multi-region post.
 
 ## Choosing the write region
 
@@ -118,6 +128,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | [aws_vpc_security_group_egress_rule.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.peers](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.write_region_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_replication_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.client_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -126,6 +137,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | [aws_vpc_security_group_ingress_rule.peer_replication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.peer_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.write_region_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_replication_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
@@ -142,6 +154,8 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod), passed to the compute submodule for sizing defaults | `string` | n/a | yes |
 | <a name="input_locks_table_arn"></a> [locks\_table\_arn](#input\_locks\_table\_arn) | Write region's DynamoDB locks table ARN, for this tier's IAM policy | `string` | n/a | yes |
 | <a name="input_locks_table_name"></a> [locks\_table\_name](#input\_locks\_table\_name) | Write region's DynamoDB locks table name (root output). Shared so exclusive checkouts taken in one office are seen in the other. | `string` | n/a | yes |
+| <a name="input_mutable_store_table_arn"></a> [mutable\_store\_table\_arn](#input\_mutable\_store\_table\_arn) | Write region's mutable-store table ARN, for this tier's IAM policy | `string` | n/a | yes |
+| <a name="input_mutable_store_table_name"></a> [mutable\_store\_table\_name](#input\_mutable\_store\_table\_name) | Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the tier talks to the write region's table directly. | `string` | n/a | yes |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for all resource names in this region (e.g. 'lore-dev-west'). Must differ from the write region's prefix. | `string` | n/a | yes |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR for this region's VPC. Must not overlap the write region's VPC (peering). | `string` | n/a | yes |
 | <a name="input_write_region"></a> [write\_region](#input\_write\_region) | AWS region of the write tier (e.g. us-east-2). Used to reach its DynamoDB locks table. | `string` | n/a | yes |
@@ -178,6 +192,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | n/a | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
 | <a name="input_replication_destination_bucket_arn"></a> [replication\_destination\_bucket\_arn](#input\_replication\_destination\_bucket\_arn) | Write region's fragments bucket ARN. Required when enable\_replication is true. | `string` | `null` | no |
 | <a name="input_replication_destination_ready"></a> [replication\_destination\_ready](#input\_replication\_destination\_ready) | The write region's fragment\_bucket\_versioning\_id, so the reverse rule waits for its destination to be versioned | `string` | `null` | no |
+| <a name="input_replication_peer_refresh_seconds"></a> [replication\_peer\_refresh\_seconds](#input\_replication\_peer\_refresh\_seconds) | How often replication peers are re-created and their DNS names re-resolved | `number` | `300` | no |
 | <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Lore servers this tier forwards every put to. Normally the write tier as locality = "OtherRegion". Use SameRegion with enable\_same\_region\_write = false to use the write tier as a read-only fallback for content that has not replicated yet. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_replication_time_control"></a> [replication\_time\_control](#input\_replication\_time\_control) | Enable S3 Replication Time Control on the reverse replication rule | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource | `map(string)` | `{}` | no |

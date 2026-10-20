@@ -133,6 +133,16 @@ resource "aws_vpc_security_group_ingress_rule" "replication_cidr_grpc" {
   description       = "gRPC/QUIC from a peered Lore tier in ${each.value}"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_quic" {
+  for_each          = setsubtract(toset(var.replication_ingress_cidrs), toset(var.allowed_ingress_cidrs))
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "QUIC (remote mutable store, lores://) from a peered Lore tier in ${each.value}"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "replication_cidr_tcp" {
   for_each          = toset(var.replication_ingress_cidrs)
   security_group_id = aws_security_group.server.id
@@ -170,6 +180,16 @@ resource "aws_vpc_security_group_egress_rule" "replication_cidr_grpc" {
   ip_protocol       = "tcp"
   cidr_ipv4         = each.value
   description       = "gRPC/QUIC to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_quic" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "QUIC to a peered Lore tier in ${each.value}"
 }
 
 resource "aws_vpc_security_group_egress_rule" "replication_cidr_tcp" {
@@ -291,9 +311,10 @@ module "compute" {
   service_discovery_registry_arn     = aws_service_discovery_service.write_tier.arn
 
   # Multi-region: peers in other regions receive every put
-  replication_peers        = var.replication_peers
-  enable_same_region_write = var.enable_same_region_write
-  trusted_ca_pem           = var.trusted_ca_pem
+  replication_peers                = var.replication_peers
+  replication_peer_refresh_seconds = var.replication_peer_refresh_seconds
+  enable_same_region_write         = var.enable_same_region_write
+  trusted_ca_pem                   = var.trusted_ca_pem
 }
 
 # =============================================================================

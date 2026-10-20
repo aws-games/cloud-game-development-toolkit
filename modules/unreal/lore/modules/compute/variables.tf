@@ -316,3 +316,15 @@ variable "trusted_ca_pem" {
   type        = string
   default     = null
 }
+
+variable "replication_peer_refresh_seconds" {
+  description = "How often replication peers are re-created and their DNS names re-resolved (Lore rotating_id_fixed topology). Connections to peers are re-established at each interval."
+  type        = number
+  default     = 300
+}
+
+variable "mutable_store_region" {
+  description = "Region of the DynamoDB mutable-store table when mutable_store_mode = \"aws\" and the table lives in another region (a regional tier using the write region's branch pointers). Null uses the task's own region."
+  type        = string
+  default     = null
+}

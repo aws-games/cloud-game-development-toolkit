@@ -24,8 +24,12 @@ locals {
   # vars, so the init container writes this into /etc/lore/overlay/local.toml and
   # LORE_CONFIG_PATH points there. default.toml is compiled into the binary, so moving the
   # config directory off the image loses nothing.
+  # rotating_id_fixed rather than fixed: peers are re-created every rotation interval, which
+  # re-resolves their DNS names. A plain fixed topology resolves once at startup, so a peer whose
+  # record does not exist yet (both tiers booting together) or whose task has been replaced is
+  # lost until the server restarts.
   topology_toml = length(var.replication_peers) > 0 ? join("\n", concat(
-    ["[topology]", "provider = \"fixed\"", "", "[topology.fixed]", "peers = ["],
+    ["[topology]", "provider = \"rotating_id_fixed\"", "", "[topology.rotating_id_fixed]", format("rotation_interval_seconds = %d", var.replication_peer_refresh_seconds), "peers = ["],
     [for p in var.replication_peers : format("  { address = \"%s\", port = %d, locality = \"%s\" },", p.address, p.port, p.locality)],
     # The replica factory block is what makes the composite store act on the peer list; without
     # it Lore logs the peers and ignores them. client_message_buffer matches Lore's
@@ -38,10 +42,12 @@ locals {
   mutable_store_env_vars = var.mutable_store_mode == "remote" ? [
     { name = "LORE__MUTABLE_STORE__MODE", value = "remote" },
     { name = "LORE__MUTABLE_STORE__REMOTE__REMOTE_URL", value = var.mutable_store_remote_url },
-    ] : [
-    { name = "LORE__MUTABLE_STORE__MODE", value = "aws" },
-    { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_TABLE", value = var.mutable_store_table_name },
-  ]
+    ] : concat([
+      { name = "LORE__MUTABLE_STORE__MODE", value = "aws" },
+      { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_TABLE", value = var.mutable_store_table_name },
+      ], var.mutable_store_region != null ? [
+      { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_REGION", value = var.mutable_store_region },
+  ] : [])
 
   lock_store_env_vars = var.lock_store_mode == "aws" ? concat([
     { name = "LORE__LOCK_STORE__MODE", value = "aws" },

@@ -302,6 +302,13 @@ variable "replication_peers" {
   }
 }
 
+variable "replication_peer_refresh_seconds" {
+  description = "How often replication peers are re-created and their DNS names re-resolved. Lets a peer tier that was not up yet, or that has moved to a new task IP, be picked up without a restart."
+  type        = number
+  default     = 300
+  nullable    = false
+}
+
 variable "enable_same_region_write" {
   description = "Whether SameRegion replication peers also receive writes (Lore default). false turns them into read-only replicas."
   type        = bool

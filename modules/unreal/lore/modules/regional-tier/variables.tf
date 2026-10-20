@@ -52,6 +52,16 @@ variable "write_tier_ca_certificate_pem" {
   type        = string
 }
 
+variable "mutable_store_table_name" {
+  description = "Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the tier talks to the write region's table directly."
+  type        = string
+}
+
+variable "mutable_store_table_arn" {
+  description = "Write region's mutable-store table ARN, for this tier's IAM policy"
+  type        = string
+}
+
 variable "locks_table_name" {
   description = "Write region's DynamoDB locks table name (root output). Shared so exclusive checkouts taken in one office are seen in the other."
   type        = string
@@ -128,6 +138,12 @@ variable "replication_peers" {
     condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
     error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\"."
   }
+}
+
+variable "replication_peer_refresh_seconds" {
+  description = "How often replication peers are re-created and their DNS names re-resolved"
+  type        = number
+  default     = 300
 }
 
 variable "enable_same_region_write" {
