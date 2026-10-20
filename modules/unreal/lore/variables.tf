@@ -53,6 +53,15 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "vpc_peering_routes" {
+  description = "Routes to peered VPCs (e.g. a regional tier in another region) for the module-created private route table. Only used when vpc_id is null. Do not add these with separate aws_route resources: the route table's inline routes remove them on the next apply."
+  type = list(object({
+    cidr_block                = string
+    vpc_peering_connection_id = string
+  }))
+  default = []
+}
+
 variable "availability_zones" {
   description = "List of availability zones (only used when vpc_id is null). If null, uses first 2 AZs in the current region."
   type        = list(string)

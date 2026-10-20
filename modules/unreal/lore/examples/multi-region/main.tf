@@ -43,6 +43,10 @@ module "lore" {
   # Let the regional tier's VPC reach the write tier (security-group references do not cross
   # inter-region peering, so this is by CIDR).
   replication_ingress_cidrs = [local.replica_vpc_cidr]
+  vpc_peering_routes = [{
+    cidr_block                = local.replica_vpc_cidr
+    vpc_peering_connection_id = aws_vpc_peering_connection.regions.id
+  }]
 
   # Forward every put to the regional tier so the other office is warm before anyone asks.
   replication_peers = [{
@@ -85,8 +89,12 @@ module "regional_tier" {
   auth_mode                  = "none"
 
   # The write region it belongs to
-  write_region                  = var.write_region
-  write_region_vpc_cidr         = local.write_vpc_cidr
+  write_region          = var.write_region
+  write_region_vpc_cidr = local.write_vpc_cidr
+  vpc_peering_routes = [{
+    cidr_block                = local.write_vpc_cidr
+    vpc_peering_connection_id = aws_vpc_peering_connection_accepter.regions.id
+  }]
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
   mutable_store_table_name      = module.lore.mutable_store_table_name
@@ -131,23 +139,6 @@ resource "aws_vpc_peering_connection_accepter" "regions" {
 
   tags = { Name = "lore-dev-regions" }
 }
-
-resource "aws_route" "write_to_replica" {
-  route_table_id            = module.lore.private_route_table_id
-  destination_cidr_block    = local.replica_vpc_cidr
-  vpc_peering_connection_id = aws_vpc_peering_connection.regions.id
-}
-
-resource "aws_route" "replica_to_write" {
-  provider                  = aws.replica
-  route_table_id            = module.regional_tier.private_route_table_id
-  destination_cidr_block    = local.write_vpc_cidr
-  vpc_peering_connection_id = aws_vpc_peering_connection_accepter.regions.id
-}
-
-# =============================================================================
-# DNS — each tier's Cloud Map zone resolves in the other VPC
-# =============================================================================
 
 resource "aws_route53_zone_association" "write_zone_in_replica_vpc" {
   zone_id    = module.lore.service_discovery_hosted_zone_id

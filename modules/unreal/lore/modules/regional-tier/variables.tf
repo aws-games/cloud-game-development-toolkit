@@ -162,6 +162,15 @@ variable "vpc_cidr" {
   type        = string
 }
 
+variable "vpc_peering_routes" {
+  description = "Routes to peered VPCs (the write region) for this tier's private route table. Use this rather than aws_route resources, which the route table's inline routes remove on the next apply."
+  type = list(object({
+    cidr_block                = string
+    vpc_peering_connection_id = string
+  }))
+  default = []
+}
+
 variable "availability_zones" {
   description = "Availability zones for the VPC. Null uses the first two in the region."
   type        = list(string)

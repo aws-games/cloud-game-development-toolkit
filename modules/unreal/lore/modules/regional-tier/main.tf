@@ -40,6 +40,7 @@ module "vpc" {
   availability_zones = local.availability_zones
   tags               = local.tags
   enable_flow_logs   = var.enable_vpc_flow_logs
+  peering_routes     = var.vpc_peering_routes
 }
 
 resource "aws_vpc_endpoint" "s3" {

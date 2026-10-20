@@ -215,6 +215,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | n/a | `string` | `null` | no |
 | <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | n/a | `string` | `null` | no |
 | <a name="input_tls_san_dns_names"></a> [tls\_san\_dns\_names](#input\_tls\_san\_dns\_names) | n/a | `list(string)` | `[]` | no |
+| <a name="input_vpc_peering_routes"></a> [vpc\_peering\_routes](#input\_vpc\_peering\_routes) | Routes to peered VPCs (the write region) for this tier's private route table. Use this rather than aws\_route resources, which the route table's inline routes remove on the next apply. | <pre>list(object({<br/>    cidr_block                = string<br/>    vpc_peering_connection_id = string<br/>  }))</pre> | `[]` | no |
 
 ## Outputs
 

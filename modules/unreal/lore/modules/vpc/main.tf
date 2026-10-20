@@ -71,6 +71,16 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.this.id
   }
 
+  # Inline, like the default route: a route table with inline routes removes any route it does
+  # not declare, so peering routes must be declared here rather than as aws_route resources.
+  dynamic "route" {
+    for_each = var.peering_routes
+    content {
+      cidr_block                = route.value.cidr_block
+      vpc_peering_connection_id = route.value.vpc_peering_connection_id
+    }
+  }
+
   tags = merge(var.tags, { Name = "${var.name_prefix}-private-rt" })
 }
 

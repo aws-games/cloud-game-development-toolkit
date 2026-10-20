@@ -160,6 +160,7 @@ Open an issue with your Terraform version, error output, and what you've already
 | <a name="input_trusted_ca_pem"></a> [trusted\_ca\_pem](#input\_trusted\_ca\_pem) | CA certificate (PEM) of a regional tier in another region, so this write tier can replicate to it over TLS. Null for single-region deployments. | `string` | `null` | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR block for the VPC (only used when vpc\_id is null) | `string` | `"10.0.0.0/16"` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | Existing VPC ID. If null, a new VPC is created. | `string` | `null` | no |
+| <a name="input_vpc_peering_routes"></a> [vpc\_peering\_routes](#input\_vpc\_peering\_routes) | Routes to peered VPCs (e.g. a regional tier in another region) for the module-created private route table. Only used when vpc\_id is null. Do not add these with separate aws\_route resources: the route table's inline routes remove them on the next apply. | <pre>list(object({<br/>    cidr_block                = string<br/>    vpc_peering_connection_id = string<br/>  }))</pre> | `[]` | no |
 
 ## Outputs
 
