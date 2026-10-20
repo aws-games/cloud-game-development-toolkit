@@ -5,7 +5,7 @@ data "aws_ssm_parameter" "ecs_ami" {
 locals {
   # Detect ARM64 (Graviton) instances by family prefix
   instance_family = split(".", var.instance_type)[0]
-  is_arm64        = contains(["c8gd", "c8g", "c7gd", "c7g", "c7gn", "m7g", "m7gd", "m8g", "r7g", "r7gd", "r8g", "t4g", "im4gn", "is4gen", "x2gd", "hpc7g"], local.instance_family)
+  is_arm64        = contains(["c9gd", "c9g", "c8gd", "c8g", "c7gd", "c7g", "c7gn", "m7g", "m7gd", "m8g", "m8gd", "r7g", "r7gd", "r8g", "r8gd", "t4g", "im4gn", "is4gen", "x2gd", "hpc7g"], local.instance_family)
 
   ami_id = var.ami_id != null ? var.ami_id : data.aws_ssm_parameter.ecs_ami.value
   asg_min_size = var.asg_min_size != null ? var.asg_min_size : (
