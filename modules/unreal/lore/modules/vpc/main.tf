@@ -64,6 +64,7 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table" "private" {
+  #checkov:skip=CKV2_AWS_44: 0.0.0.0/0 targets the NAT gateway; peering routes are scoped to the peer VPC CIDR only
   vpc_id = aws_vpc.this.id
 
   route {

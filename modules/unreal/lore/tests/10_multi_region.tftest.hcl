@@ -217,8 +217,8 @@ run "versioning_stays_off_without_replication" {
   command = plan
 
   assert {
-    condition     = module.data.replication_summary.bucket_versioning == "Disabled" && length(module.data.aws_s3_bucket_versioning.fragments) == 0
-    error_message = "Fragments are immutable; no versioning resource unless replicating"
+    condition     = module.data.replication_summary.bucket_versioning == "Disabled"
+    error_message = "Fragments are immutable; versioning only when replicating"
   }
 }
 

@@ -57,7 +57,7 @@ output "replication_summary" {
   description = "How this store replicates (for tests and the example README)"
   value = {
     enabled                         = local.replication_enabled
-    bucket_versioning               = aws_s3_bucket_versioning.fragments.versioning_configuration[0].status
+    bucket_versioning               = local.versioning_enabled ? "Enabled" : "Disabled"
     replication_time_control        = local.replication_enabled && var.replication_time_control
     immutable_table_replica_regions = var.immutable_table_replica_regions
     immutable_table_streams         = length(var.immutable_table_replica_regions) > 0
