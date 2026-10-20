@@ -3,6 +3,7 @@
 # =============================================================================
 
 data "aws_availability_zones" "available" {
+  #checkov:skip=CKV_AWS_394: Dynamic lookup is the default; pin with var.availability_zones
   state = "available"
 }
 
@@ -48,6 +49,11 @@ module "data" {
   enable_deletion_protection            = var.enable_deletion_protection
   intelligent_tiering_archive_days      = var.intelligent_tiering_archive_days
   intelligent_tiering_deep_archive_days = var.intelligent_tiering_deep_archive_days
+
+  # Multi-region: fragments only
+  replication_destination_bucket_arn = var.fragment_replication != null ? var.fragment_replication.destination_bucket_arn : null
+  replication_time_control           = var.fragment_replication != null ? var.fragment_replication.replication_time_control : false
+  immutable_table_replica_regions    = var.fragment_replication != null && var.fragment_replication.global_tables_region != null ? [var.fragment_replication.global_tables_region] : []
 }
 
 # =============================================================================
@@ -55,6 +61,7 @@ module "data" {
 # =============================================================================
 
 resource "aws_security_group" "server" {
+  #checkov:skip=CKV2_AWS_5: Attached by the ECS service in modules/compute (network_configuration)
   name_prefix = "${local.name_prefix}-server-"
   vpc_id      = local.vpc_id
   description = "Lore server access"
@@ -112,6 +119,37 @@ resource "aws_vpc_security_group_ingress_rule" "replication_quic" {
   description                  = "Replication QUIC from peer Lore servers"
 }
 
+# Tiers in peered VPCs (other regions) cannot be referenced by security group; they are allowed by CIDR.
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_grpc" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "gRPC/QUIC from a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_tcp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "Replication gRPC from a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_udp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "Replication QUIC from a peered Lore tier in ${each.value}"
+}
+
 resource "aws_vpc_security_group_egress_rule" "https" {
   security_group_id = aws_security_group.server.id
   from_port         = 443
@@ -119,6 +157,36 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
   description       = "HTTPS to AWS services via NAT"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_grpc" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "gRPC/QUIC to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_tcp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "Replication to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_udp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "Replication QUIC to a peered Lore tier in ${each.value}"
 }
 
 resource "aws_vpc_security_group_egress_rule" "replication_egress" {
@@ -218,6 +286,11 @@ module "compute" {
   enable_xray_smoke_test             = var.enable_xray_smoke_test
   enable_replication                 = true
   service_discovery_registry_arn     = aws_service_discovery_service.write_tier.arn
+
+  # Multi-region: peers in other regions receive every put
+  replication_peers        = var.replication_peers
+  enable_same_region_write = var.enable_same_region_write
+  trusted_ca_pem           = var.trusted_ca_pem
 }
 
 # =============================================================================

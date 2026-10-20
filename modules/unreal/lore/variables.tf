@@ -273,6 +273,66 @@ variable "intelligent_tiering_deep_archive_days" {
 }
 
 # =============================================================================
+# Multi-region
+# =============================================================================
+
+variable "replication_ingress_cidrs" {
+  description = "CIDR blocks of Lore tiers in other VPCs or regions allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication). Needed across inter-region VPC peering, where security-group references do not work. Give the peered VPC's CIDR, never 0.0.0.0/0."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = !contains(var.replication_ingress_cidrs, "0.0.0.0/0")
+    error_message = "replication_ingress_cidrs must list specific VPC CIDRs, not 0.0.0.0/0."
+  }
+}
+
+variable "replication_peers" {
+  description = "Other Lore servers this write tier replicates fragments to (Lore fixed topology). A tier in another region is locality = \"OtherRegion\": every put is forwarded to it so its region is warm before anyone asks. Address is a DNS name or IP reachable from the write tier's VPC."
+  type = list(object({
+    address  = string
+    port     = optional(number, 41340)
+    locality = string
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
+    error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\"."
+  }
+}
+
+variable "enable_same_region_write" {
+  description = "Whether SameRegion replication peers also receive writes (Lore default). false turns them into read-only replicas."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "trusted_ca_pem" {
+  description = "CA certificate (PEM) of a regional tier in another region, so this write tier can replicate to it over TLS. Null for single-region deployments."
+  type        = string
+  default     = null
+}
+
+variable "fragment_replication" {
+  description = <<-EOT
+    Replicate the fragments bucket to a second region with S3 Cross-Region Replication. Only
+    fragments (immutable, content-addressed) are ever replicated; the branch-pointer and lock
+    tables stay in this region because their compare-and-swap writes do not survive
+    multi-region replication. global_tables_region additionally makes the two immutable
+    DynamoDB tables Global Tables; it exists for measurement and is off by default because rows
+    can arrive before their S3 objects, which Lore reports as lost data (see README).
+  EOT
+  type = object({
+    destination_bucket_arn   = string
+    replication_time_control = optional(bool, false)
+    global_tables_region     = optional(string)
+  })
+  default = null
+}
+
+# =============================================================================
 # Safety
 # =============================================================================
 

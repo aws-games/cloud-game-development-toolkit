@@ -91,6 +91,8 @@ resource "aws_route_table_association" "private" {
 # =============================================================================
 
 resource "aws_cloudwatch_log_group" "flow_logs" {
+  #checkov:skip=CKV_AWS_158: KMS encryption optional — flow logs are opt-in diagnostics
+  #checkov:skip=CKV_AWS_338: 30-day retention is deliberate for opt-in flow logs
   count             = var.enable_flow_logs ? 1 : 0
   name              = "/vpc/${var.name_prefix}-flow-logs"
   retention_in_days = 30

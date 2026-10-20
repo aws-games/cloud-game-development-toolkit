@@ -10,6 +10,12 @@ locals {
   ecr_region      = data.aws_region.current.region
   ecr_registry    = split("/", var.container_image)[0]
   hmac_key        = var.hmac_key != null ? var.hmac_key : random_id.hmac[0].hex
+
+  # Cross-region tuning for the replicated store client (BBR is already Lore's default there)
+  replication_tuning_env = join(" ", compact([
+    var.replication_expected_rtt_ms != null ? "-e LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__EXPECTED_RTT_MS=${var.replication_expected_rtt_ms}" : "",
+    var.replication_max_bandwidth_bytes_per_second != null ? "-e LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__MAX_BANDWIDTH_BYTES_PER_SECOND=${var.replication_max_bandwidth_bytes_per_second}" : "",
+  ]))
 }
 
 # =============================================================================
@@ -107,6 +113,7 @@ resource "aws_vpc_security_group_egress_rule" "all" {
 
 # Allow edge pod to reach write tier's security group on replication + gRPC ports
 resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge" {
+  count                        = var.server_security_group_id != null ? 1 : 0
   security_group_id            = var.server_security_group_id
   description                  = "Edge pod replication + gRPC"
   referenced_security_group_id = aws_security_group.edge.id
@@ -116,6 +123,7 @@ resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge_udp" {
+  count                        = var.server_security_group_id != null ? 1 : 0
   security_group_id            = var.server_security_group_id
   description                  = "Edge pod QUIC replication (UDP)"
   referenced_security_group_id = aws_security_group.edge.id
@@ -193,6 +201,7 @@ resource "aws_instance" "edge" {
     container_image = var.container_image
     write_tier_dns  = var.write_tier_dns
     hmac_key        = local.hmac_key
+    extra_env       = local.replication_tuning_env
   }))
 
   metadata_options {

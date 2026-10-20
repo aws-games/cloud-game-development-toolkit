@@ -122,3 +122,52 @@ output "effective_config" {
     enable_deletion_protection = var.enable_deletion_protection
   }
 }
+
+# =============================================================================
+# Multi-region — what a tier in another region needs
+# =============================================================================
+
+output "write_tier_dns_name" {
+  description = "Cloud Map DNS name of the write tier, for a regional tier's mutable_store_remote_url and replication peers"
+  value       = "write-tier.${local.name_prefix}.internal"
+}
+
+output "service_discovery_hosted_zone_id" {
+  description = "Route 53 private hosted zone behind the Cloud Map namespace. Associate it with a peered VPC (aws_route53_zone_association) so the write tier name resolves there."
+  value       = aws_service_discovery_private_dns_namespace.lore.hosted_zone
+}
+
+output "vpc_cidr" {
+  description = "CIDR of the VPC the write tier runs in (null when an existing VPC is supplied)"
+  value       = var.vpc_id == null ? var.vpc_cidr : null
+}
+
+output "private_route_table_id" {
+  description = "Private route table of the module-created VPC, for peering routes (null when an existing VPC is supplied)"
+  value       = var.vpc_id == null ? module.vpc[0].private_route_table_id : null
+}
+
+output "fragments_table_name" {
+  description = "DynamoDB fragments table name (a regional tier reads its Global Table replica by this name)"
+  value       = module.data.fragments_table_name
+}
+
+output "fragment_metadata_table_name" {
+  description = "DynamoDB fragment-metadata table name"
+  value       = module.data.fragment_metadata_table_name
+}
+
+output "fragment_replication_role_arn" {
+  description = "IAM role S3 uses for fragment replication (null when fragment_replication is not set)"
+  value       = module.data.replication_role_arn
+}
+
+output "locks_table_name" {
+  description = "DynamoDB locks table name. A regional tier uses this table so exclusive checkouts are shared across offices."
+  value       = module.data.locks_table_name
+}
+
+output "locks_table_arn" {
+  description = "DynamoDB locks table ARN, for a regional tier's IAM policy"
+  value       = module.data.locks_table_arn
+}

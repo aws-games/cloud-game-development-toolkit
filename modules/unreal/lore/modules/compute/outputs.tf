@@ -60,3 +60,13 @@ output "cache_max_size_bytes" {
   description = "Auto-calculated NVMe cache size in bytes (80% of instance store)"
   value       = local.cache_max_size
 }
+
+output "topology_toml" {
+  description = "Rendered Lore topology overlay (empty when no replication peers)"
+  value       = local.topology_toml
+}
+
+output "store_env_vars" {
+  description = "Store-wiring environment variables handed to loreserver (immutable, mutable, lock). For tests and debugging."
+  value       = concat(local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars)
+}

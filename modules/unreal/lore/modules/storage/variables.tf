@@ -39,3 +39,33 @@ variable "intelligent_tiering_deep_archive_days" {
   type        = number
   default     = 180
 }
+
+variable "replication_destination_bucket_arn" {
+  description = "ARN of a fragments bucket in another region to replicate objects to (S3 Cross-Region Replication). Null disables replication. Turns on bucket versioning, which CRR requires."
+  type        = string
+  default     = null
+}
+
+variable "replication_time_control" {
+  description = "Enable S3 Replication Time Control (15-minute SLA, extra per-GB fee) on the replication rule."
+  type        = bool
+  default     = false
+}
+
+variable "immutable_table_replica_regions" {
+  description = "Regions to add as DynamoDB Global Table replicas of the two immutable-store tables (fragments, fragment-metadata). Never applied to the mutable store or locks tables, whose compare-and-swap semantics do not survive multi-region replication."
+  type        = list(string)
+  default     = []
+}
+
+variable "create_immutable_tables" {
+  description = "Create the fragments and fragment-metadata tables. Set false when they already exist in this region as Global Table replicas created by the write region."
+  type        = bool
+  default     = true
+}
+
+variable "create_mutable_tables" {
+  description = "Create the mutable-typed-store and locks tables. Only the write region holds these; a regional tier sets false."
+  type        = bool
+  default     = true
+}

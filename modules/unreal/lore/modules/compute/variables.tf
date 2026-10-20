@@ -240,13 +240,79 @@ variable "enable_replication" {
 }
 
 variable "replication_peers" {
-  description = "List of peer addresses for fixed topology replication. Each entry is a host:port string (e.g., '10.0.1.50:41340')."
-  type        = list(string)
-  default     = []
+  description = <<-EOT
+    Peer Lore servers for Lore's fixed topology ([topology.fixed] in the server config).
+    locality is relative to this server: "SameRegion" peers are read + write replicas tuned for
+    in-region links; "OtherRegion" peers receive every put over QUIC (BBR) and are how a tier in
+    another region is kept warm. Rendered into a TOML overlay because Lore cannot take arrays
+    from environment variables.
+  EOT
+  type = list(object({
+    address  = string
+    port     = optional(number, 41340)
+    locality = string
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
+    error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\" (Lore's exact variant names)."
+  }
+}
+
+variable "enable_same_region_write" {
+  description = "Whether SameRegion peers also receive writes (Lore default true). Set false to use a SameRegion peer as a read-only replica, e.g. the other region's tier as a fallback for content that has not replicated yet."
+  type        = bool
+  default     = true
+}
+
+variable "mutable_store_mode" {
+  description = "Lore mutable store backend. \"aws\" uses the DynamoDB tables (the write region). \"remote\" forwards branch pointers and tree state to another Lore server (a regional tier in a second region, whose mutable_store_remote_url points at the write region)."
+  type        = string
+  default     = "aws"
+
+  validation {
+    condition     = contains(["aws", "remote"], var.mutable_store_mode)
+    error_message = "mutable_store_mode must be \"aws\" or \"remote\"."
+  }
+}
+
+variable "mutable_store_remote_url" {
+  description = "Lore server URL for the remote mutable store (e.g. lores://write-tier.lore-dev.internal:41337). Required when mutable_store_mode = \"remote\"."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.mutable_store_mode != "remote" || var.mutable_store_remote_url != null
+    error_message = "mutable_store_remote_url is required when mutable_store_mode = \"remote\"."
+  }
+}
+
+variable "lock_store_mode" {
+  description = "Lore lock store backend: \"aws\" (DynamoDB locks table, the write region), \"local\" (in-process, advisory only), or \"none\"."
+  type        = string
+  default     = "aws"
+
+  validation {
+    condition     = contains(["aws", "local", "none"], var.lock_store_mode)
+    error_message = "lock_store_mode must be \"aws\", \"local\", or \"none\"."
+  }
 }
 
 variable "service_discovery_registry_arn" {
   description = "Cloud Map service ARN for ECS service registration. Null when service discovery is disabled."
+  type        = string
+  default     = null
+}
+
+variable "lock_store_region" {
+  description = "Region of the DynamoDB locks table when lock_store_mode = \"aws\" and the table lives in another region (a regional tier sharing the write region's locks so that exclusive checkouts are seen by both offices). Null uses the task's own region."
+  type        = string
+  default     = null
+}
+
+variable "trusted_ca_pem" {
+  description = "PEM of another Lore tier's CA that this server must trust as a client (remote mutable store, replication reads). Appended to the system CA bundle at container start. Null when every upstream is in this deployment."
   type        = string
   default     = null
 }
