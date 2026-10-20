@@ -41,6 +41,7 @@ module "regional_tier" {
 
   # Forward every local put to the write tier; S3 copies anything that was missed.
   replication_peers                  = [{ address = module.lore.write_tier_dns_name, locality = "OtherRegion" }]
+  enable_replication                 = true
   replication_destination_bucket_arn = module.lore.fragment_bucket_arn
 }
 ```
@@ -60,7 +61,7 @@ Two mechanisms run together; either alone works, with trade-offs.
   DynamoDB as a normal put. Object and index rows arrive together, so the far region never sees
   a half-written fragment. It is best-effort: a put forwarded while the far tier is down is not
   retried.
-- **S3 Cross-Region Replication** (`replication_destination_bucket_arn`): copies every object
+- **S3 Cross-Region Replication** (`enable_replication` + `replication_destination_bucket_arn`): copies every object
   durably. Lore writes the DynamoDB rows when the fragment is next referenced. Use it as the
   backstop, with Replication Time Control if you want a 15-minute SLA.
 
@@ -163,6 +164,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_enable_deletion_protection"></a> [enable\_deletion\_protection](#input\_enable\_deletion\_protection) | n/a | `bool` | `true` | no |
 | <a name="input_enable_force_destroy"></a> [enable\_force\_destroy](#input\_enable\_force\_destroy) | n/a | `bool` | `false` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | n/a | `bool` | `true` | no |
+| <a name="input_enable_replication"></a> [enable\_replication](#input\_enable\_replication) | Replicate this region's commits back to the write region's bucket (S3 Cross-Region Replication). false for one-way replication. | `bool` | `false` | no |
 | <a name="input_enable_same_region_write"></a> [enable\_same\_region\_write](#input\_enable\_same\_region\_write) | Whether SameRegion peers also receive writes (Lore default true) | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable VPC flow logs to CloudWatch | `bool` | `false` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | n/a | `bool` | `false` | no |
@@ -173,7 +175,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_intelligent_tiering_deep_archive_days"></a> [intelligent\_tiering\_deep\_archive\_days](#input\_intelligent\_tiering\_deep\_archive\_days) | n/a | `number` | `180` | no |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | n/a | `number` | `30` | no |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | n/a | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
-| <a name="input_replication_destination_bucket_arn"></a> [replication\_destination\_bucket\_arn](#input\_replication\_destination\_bucket\_arn) | Write region's fragments bucket ARN. When set, this region's commits replicate back to it (S3 Cross-Region Replication). Null for one-way replication. | `string` | `null` | no |
+| <a name="input_replication_destination_bucket_arn"></a> [replication\_destination\_bucket\_arn](#input\_replication\_destination\_bucket\_arn) | Write region's fragments bucket ARN. Required when enable\_replication is true. | `string` | `null` | no |
 | <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Lore servers this tier forwards every put to. Normally the write tier as locality = "OtherRegion". Use SameRegion with enable\_same\_region\_write = false to use the write tier as a read-only fallback for content that has not replicated yet. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_replication_time_control"></a> [replication\_time\_control](#input\_replication\_time\_control) | Enable S3 Replication Time Control on the reverse replication rule | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource | `map(string)` | `{}` | no |

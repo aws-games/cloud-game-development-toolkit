@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "fragments" {
 }
 
 locals {
-  replication_enabled = var.replication_destination_bucket_arn != null
+  replication_enabled = var.enable_replication
 }
 
 # Versioning is off by default: fragments are immutable, content-addressed blobs. Cross-Region

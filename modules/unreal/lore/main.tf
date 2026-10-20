@@ -51,6 +51,7 @@ module "data" {
   intelligent_tiering_deep_archive_days = var.intelligent_tiering_deep_archive_days
 
   # Multi-region: fragments only
+  enable_replication                 = var.fragment_replication != null
   replication_destination_bucket_arn = var.fragment_replication != null ? var.fragment_replication.destination_bucket_arn : null
   replication_time_control           = var.fragment_replication != null ? var.fragment_replication.replication_time_control : false
   immutable_table_replica_regions    = var.fragment_replication != null && var.fragment_replication.global_tables_region != null ? [var.fragment_replication.global_tables_region] : []

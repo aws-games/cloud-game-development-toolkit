@@ -91,8 +91,14 @@ variable "immutable_tables" {
 # Fragment replication back to the write region
 # =============================================================================
 
+variable "enable_replication" {
+  description = "Replicate this region's commits back to the write region's bucket (S3 Cross-Region Replication). false for one-way replication."
+  type        = bool
+  default     = false
+}
+
 variable "replication_destination_bucket_arn" {
-  description = "Write region's fragments bucket ARN. When set, this region's commits replicate back to it (S3 Cross-Region Replication). Null for one-way replication."
+  description = "Write region's fragments bucket ARN. Required when enable_replication is true."
   type        = string
   default     = null
 }

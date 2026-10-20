@@ -75,6 +75,7 @@ module "data" {
   create_immutable_tables = var.immutable_tables.mode == "create"
   create_mutable_tables   = false
 
+  enable_replication                 = var.enable_replication
   replication_destination_bucket_arn = var.replication_destination_bucket_arn
   replication_time_control           = var.replication_time_control
 }

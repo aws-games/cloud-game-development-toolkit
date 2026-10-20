@@ -40,8 +40,14 @@ variable "intelligent_tiering_deep_archive_days" {
   default     = 180
 }
 
+variable "enable_replication" {
+  description = "Replicate fragments to another region's bucket (S3 Cross-Region Replication). Turns on bucket versioning, which CRR requires. A separate flag from the ARN because the destination bucket is usually created in the same apply and its ARN is unknown at plan time."
+  type        = bool
+  default     = false
+}
+
 variable "replication_destination_bucket_arn" {
-  description = "ARN of a fragments bucket in another region to replicate objects to (S3 Cross-Region Replication). Null disables replication. Turns on bucket versioning, which CRR requires."
+  description = "ARN of the fragments bucket in the other region. Required when enable_replication is true."
   type        = string
   default     = null
 }

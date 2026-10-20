@@ -93,6 +93,7 @@ module "regional_tier" {
     address  = module.lore.write_tier_dns_name
     locality = "OtherRegion"
   }]
+  enable_replication                 = true
   replication_destination_bucket_arn = module.lore.fragment_bucket_arn
   replication_time_control           = var.replication_time_control
 }
