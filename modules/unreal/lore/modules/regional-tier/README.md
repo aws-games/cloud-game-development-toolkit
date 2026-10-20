@@ -82,6 +82,14 @@ far read that misses the NVMe cache fails and Lore logs the payload as lost. The
 what keeps that window from being hit in practice. Measurements of all three, alone and
 together, are in the multi-region post.
 
+## First apply
+
+Adding Global Table replicas to the write region's tables sometimes fails on the first apply
+with `UnrecognizedClientException` right after streams are enabled, and the replica's
+point-in-time-recovery update can race its creation. Re-run `terraform apply`; the second pass
+converges. Both tiers also need their peer's DNS record to exist, which it does not when both
+boot at once; peers are retried every `replication_peer_refresh_seconds`.
+
 ## Why not forward through the write tier?
 
 Lore has a `remote` mutable store mode that proxies branch-pointer operations through another
