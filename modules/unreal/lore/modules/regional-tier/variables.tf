@@ -103,6 +103,12 @@ variable "replication_destination_bucket_arn" {
   default     = null
 }
 
+variable "replication_destination_ready" {
+  description = "The write region's fragment_bucket_versioning_id, so the reverse rule waits for its destination to be versioned"
+  type        = string
+  default     = null
+}
+
 variable "replication_time_control" {
   description = "Enable S3 Replication Time Control on the reverse replication rule"
   type        = bool

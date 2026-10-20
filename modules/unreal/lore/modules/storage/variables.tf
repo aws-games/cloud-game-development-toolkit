@@ -75,3 +75,9 @@ variable "create_mutable_tables" {
   type        = bool
   default     = true
 }
+
+variable "replication_destination_ready" {
+  description = "Any value that becomes known only once the destination bucket has versioning enabled (e.g. the other module's fragment_bucket_versioning_id). S3 rejects a replication rule whose destination is not yet versioned, and the two buckets usually belong to different modules in the same apply."
+  type        = string
+  default     = null
+}

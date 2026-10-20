@@ -43,6 +43,7 @@ module "regional_tier" {
   replication_peers                  = [{ address = module.lore.write_tier_dns_name, locality = "OtherRegion" }]
   enable_replication                 = true
   replication_destination_bucket_arn = module.lore.fragment_bucket_arn
+  replication_destination_ready      = module.lore.fragment_bucket_versioning_id
 }
 ```
 
@@ -176,6 +177,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | n/a | `number` | `30` | no |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | n/a | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
 | <a name="input_replication_destination_bucket_arn"></a> [replication\_destination\_bucket\_arn](#input\_replication\_destination\_bucket\_arn) | Write region's fragments bucket ARN. Required when enable\_replication is true. | `string` | `null` | no |
+| <a name="input_replication_destination_ready"></a> [replication\_destination\_ready](#input\_replication\_destination\_ready) | The write region's fragment\_bucket\_versioning\_id, so the reverse rule waits for its destination to be versioned | `string` | `null` | no |
 | <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Lore servers this tier forwards every put to. Normally the write tier as locality = "OtherRegion". Use SameRegion with enable\_same\_region\_write = false to use the write tier as a read-only fallback for content that has not replicated yet. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_replication_time_control"></a> [replication\_time\_control](#input\_replication\_time\_control) | Enable S3 Replication Time Control on the reverse replication rule | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource | `map(string)` | `{}` | no |
@@ -191,6 +193,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="output_ecs_cluster_name"></a> [ecs\_cluster\_name](#output\_ecs\_cluster\_name) | ECS cluster name |
 | <a name="output_fragment_bucket_arn"></a> [fragment\_bucket\_arn](#output\_fragment\_bucket\_arn) | This region's fragments bucket ARN, for the write region's fragment\_replication.destination\_bucket\_arn |
 | <a name="output_fragment_bucket_name"></a> [fragment\_bucket\_name](#output\_fragment\_bucket\_name) | This region's fragments bucket |
+| <a name="output_fragment_bucket_versioning_id"></a> [fragment\_bucket\_versioning\_id](#output\_fragment\_bucket\_versioning\_id) | Known once this bucket is versioned; give it to the write region as fragment\_replication.destination\_ready |
 | <a name="output_private_route_table_id"></a> [private\_route\_table\_id](#output\_private\_route\_table\_id) | Private route table, for the peering route to the write region |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | Private subnet IDs |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | Public subnet IDs |

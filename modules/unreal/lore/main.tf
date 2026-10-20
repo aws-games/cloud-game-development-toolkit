@@ -53,6 +53,7 @@ module "data" {
   # Multi-region: fragments only
   enable_replication                 = var.fragment_replication != null
   replication_destination_bucket_arn = var.fragment_replication != null ? var.fragment_replication.destination_bucket_arn : null
+  replication_destination_ready      = var.fragment_replication != null ? var.fragment_replication.destination_ready : null
   replication_time_control           = var.fragment_replication != null ? var.fragment_replication.replication_time_control : false
   immutable_table_replica_regions    = var.fragment_replication != null && var.fragment_replication.global_tables_region != null ? [var.fragment_replication.global_tables_region] : []
 }
@@ -121,8 +122,9 @@ resource "aws_vpc_security_group_ingress_rule" "replication_quic" {
 }
 
 # Tiers in peered VPCs (other regions) cannot be referenced by security group; they are allowed by CIDR.
+# 41337 is skipped for CIDRs already allowed as clients (AWS rejects duplicate rules).
 resource "aws_vpc_security_group_ingress_rule" "replication_cidr_grpc" {
-  for_each          = toset(var.replication_ingress_cidrs)
+  for_each          = setsubtract(toset(var.replication_ingress_cidrs), toset(var.allowed_ingress_cidrs))
   security_group_id = aws_security_group.server.id
   from_port         = 41337
   to_port           = 41337

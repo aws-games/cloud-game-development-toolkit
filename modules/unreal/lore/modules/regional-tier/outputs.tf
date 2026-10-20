@@ -62,3 +62,8 @@ output "task_role_arn" {
   description = "ECS task role ARN"
   value       = module.compute.task_role_arn
 }
+
+output "fragment_bucket_versioning_id" {
+  description = "Known once this bucket is versioned; give it to the write region as fragment_replication.destination_ready"
+  value       = module.data.fragment_bucket_versioning_id
+}

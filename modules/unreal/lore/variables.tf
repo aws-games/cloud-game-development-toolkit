@@ -323,9 +323,12 @@ variable "fragment_replication" {
     multi-region replication. global_tables_region additionally makes the two immutable
     DynamoDB tables Global Tables; it exists for measurement and is off by default because rows
     can arrive before their S3 objects, which Lore reports as lost data (see README).
+    destination_ready takes the other region's fragment_bucket_versioning_id so the rule is
+    created after the destination bucket is versioned.
   EOT
   type = object({
     destination_bucket_arn   = string
+    destination_ready        = optional(string)
     replication_time_control = optional(bool, false)
     global_tables_region     = optional(string)
   })

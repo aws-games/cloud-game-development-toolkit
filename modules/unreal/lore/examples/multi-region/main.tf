@@ -54,6 +54,7 @@ module "lore" {
   # Durable backstop: S3 copies anything the peer push missed (peer down, task restart).
   fragment_replication = {
     destination_bucket_arn   = module.regional_tier.fragment_bucket_arn
+    destination_ready        = module.regional_tier.fragment_bucket_versioning_id
     replication_time_control = var.replication_time_control
   }
 }
@@ -95,6 +96,7 @@ module "regional_tier" {
   }]
   enable_replication                 = true
   replication_destination_bucket_arn = module.lore.fragment_bucket_arn
+  replication_destination_ready      = module.lore.fragment_bucket_versioning_id
   replication_time_control           = var.replication_time_control
 }
 

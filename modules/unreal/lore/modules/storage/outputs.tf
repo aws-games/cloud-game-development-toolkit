@@ -64,3 +64,8 @@ output "replication_summary" {
     mutable_table_replica_regions   = length(try(aws_dynamodb_table.mutable_store[0].replica, [])) + length(try(aws_dynamodb_table.locks[0].replica, []))
   }
 }
+
+output "fragment_bucket_versioning_id" {
+  description = "ID of the bucket versioning resource; known once versioning is applied. Hand it to the other region as replication_destination_ready."
+  value       = aws_s3_bucket_versioning.fragments.id
+}

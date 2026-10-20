@@ -171,3 +171,8 @@ output "locks_table_arn" {
   description = "DynamoDB locks table ARN, for a regional tier's IAM policy"
   value       = module.data.locks_table_arn
 }
+
+output "fragment_bucket_versioning_id" {
+  description = "Known once the fragments bucket is versioned; give it to a regional tier as replication_destination_ready"
+  value       = module.data.fragment_bucket_versioning_id
+}

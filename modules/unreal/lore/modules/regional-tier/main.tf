@@ -17,6 +17,8 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
+  # The write region's CIDR gets its own rules below; drop it from the client list to avoid duplicates.
+  client_cidrs = setsubtract(toset(var.allowed_ingress_cidrs), toset([var.write_region_vpc_cidr]))
   availability_zones = var.availability_zones != null ? var.availability_zones : (
     length(data.aws_availability_zones.available.names) >= 2
     ? slice(data.aws_availability_zones.available.names, 0, 2)
@@ -77,6 +79,7 @@ module "data" {
 
   enable_replication                 = var.enable_replication
   replication_destination_bucket_arn = var.replication_destination_bucket_arn
+  replication_destination_ready      = var.replication_destination_ready
   replication_time_control           = var.replication_time_control
 }
 
@@ -114,7 +117,7 @@ resource "aws_security_group" "tier" {
 
 # Office clients
 resource "aws_vpc_security_group_ingress_rule" "client_tcp" {
-  for_each          = toset(var.allowed_ingress_cidrs)
+  for_each          = local.client_cidrs
   security_group_id = aws_security_group.tier.id
   from_port         = 41337
   to_port           = 41337
@@ -124,7 +127,7 @@ resource "aws_vpc_security_group_ingress_rule" "client_tcp" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "client_udp" {
-  for_each          = toset(var.allowed_ingress_cidrs)
+  for_each          = local.client_cidrs
   security_group_id = aws_security_group.tier.id
   from_port         = 41337
   to_port           = 41337
@@ -196,7 +199,7 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   to_port           = 443
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
-  description       = "HTTPS to AWS services (incl. the write region's DynamoDB) via NAT"
+  description       = "HTTPS to AWS services including the write region DynamoDB via NAT"
 }
 
 resource "aws_vpc_security_group_egress_rule" "write_region_grpc" {

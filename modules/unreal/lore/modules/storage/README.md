@@ -78,6 +78,7 @@ No modules.
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 
 ## Modules
 
@@ -100,6 +101,7 @@ No modules.
 | [aws_s3_bucket_replication_configuration.fragments](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_replication_configuration) | resource |
 | [aws_s3_bucket_server_side_encryption_configuration.fragments](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
 | [aws_s3_bucket_versioning.fragments](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning) | resource |
+| [terraform_data.replication_destination_ready](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_iam_policy_document.replication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.replication_assume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
@@ -118,6 +120,7 @@ No modules.
 | <a name="input_intelligent_tiering_archive_days"></a> [intelligent\_tiering\_archive\_days](#input\_intelligent\_tiering\_archive\_days) | Days before fragments move to Archive Access tier. 0 disables Intelligent-Tiering. | `number` | `90` | no |
 | <a name="input_intelligent_tiering_deep_archive_days"></a> [intelligent\_tiering\_deep\_archive\_days](#input\_intelligent\_tiering\_deep\_archive\_days) | Days before fragments move to Deep Archive Access tier. | `number` | `180` | no |
 | <a name="input_replication_destination_bucket_arn"></a> [replication\_destination\_bucket\_arn](#input\_replication\_destination\_bucket\_arn) | ARN of the fragments bucket in the other region. Required when enable\_replication is true. | `string` | `null` | no |
+| <a name="input_replication_destination_ready"></a> [replication\_destination\_ready](#input\_replication\_destination\_ready) | Any value that becomes known only once the destination bucket has versioning enabled (e.g. the other module's fragment\_bucket\_versioning\_id). S3 rejects a replication rule whose destination is not yet versioned, and the two buckets usually belong to different modules in the same apply. | `string` | `null` | no |
 | <a name="input_replication_time_control"></a> [replication\_time\_control](#input\_replication\_time\_control) | Enable S3 Replication Time Control (15-minute SLA, extra per-GB fee) on the replication rule. | `bool` | `false` | no |
 
 ## Outputs
@@ -126,6 +129,7 @@ No modules.
 | ---- | ----------- |
 | <a name="output_fragment_bucket_arn"></a> [fragment\_bucket\_arn](#output\_fragment\_bucket\_arn) | S3 bucket ARN |
 | <a name="output_fragment_bucket_name"></a> [fragment\_bucket\_name](#output\_fragment\_bucket\_name) | S3 bucket name |
+| <a name="output_fragment_bucket_versioning_id"></a> [fragment\_bucket\_versioning\_id](#output\_fragment\_bucket\_versioning\_id) | ID of the bucket versioning resource; known once versioning is applied. Hand it to the other region as replication\_destination\_ready. |
 | <a name="output_fragment_metadata_table_arn"></a> [fragment\_metadata\_table\_arn](#output\_fragment\_metadata\_table\_arn) | DynamoDB fragment metadata table ARN |
 | <a name="output_fragment_metadata_table_name"></a> [fragment\_metadata\_table\_name](#output\_fragment\_metadata\_table\_name) | DynamoDB fragment metadata table name |
 | <a name="output_fragments_table_arn"></a> [fragments\_table\_arn](#output\_fragments\_table\_arn) | DynamoDB fragments table ARN |

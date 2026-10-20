@@ -141,6 +141,12 @@ resource "aws_iam_role_policy" "replication" {
   policy = data.aws_iam_policy_document.replication[0].json
 }
 
+# Ordering handle: the destination's versioning lives in another module instance.
+resource "terraform_data" "replication_destination_ready" {
+  count = local.replication_enabled ? 1 : 0
+  input = var.replication_destination_ready
+}
+
 resource "aws_s3_bucket_replication_configuration" "fragments" {
   count  = local.replication_enabled ? 1 : 0
   bucket = aws_s3_bucket.fragments.id
@@ -174,5 +180,5 @@ resource "aws_s3_bucket_replication_configuration" "fragments" {
     }
   }
 
-  depends_on = [aws_s3_bucket_versioning.fragments]
+  depends_on = [aws_s3_bucket_versioning.fragments, terraform_data.replication_destination_ready]
 }
