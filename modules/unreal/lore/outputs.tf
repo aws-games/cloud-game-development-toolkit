@@ -186,3 +186,13 @@ output "mutable_store_table_arn" {
   description = "DynamoDB mutable-store table ARN, for a regional tier's IAM policy"
   value       = module.data.mutable_store_table_arn
 }
+
+output "fragments_table_arn" {
+  description = "DynamoDB fragments table ARN (a regional tier derives its Global Table replica from it)"
+  value       = module.data.fragments_table_arn
+}
+
+output "fragment_metadata_table_arn" {
+  description = "DynamoDB fragment-metadata table ARN"
+  value       = module.data.fragment_metadata_table_arn
+}

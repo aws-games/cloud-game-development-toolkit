@@ -51,11 +51,14 @@ module "lore" {
   }]
   trusted_ca_pem = module.regional_tier.ca_certificate_pem
 
-  # Durable backstop: S3 copies anything the peer push missed (peer down, task restart).
+  # Durable copy: S3 replicates the objects, Global Tables replicate the index rows. The peer
+  # push above only warms the far cache; without these the other region cannot find content
+  # once its cache evicts it.
   fragment_replication = {
     destination_bucket_arn   = module.regional_tier.fragment_bucket_arn
     destination_ready        = module.regional_tier.fragment_bucket_versioning_id
     replication_time_control = var.replication_time_control
+    global_tables_region     = var.replica_region
   }
 }
 
@@ -90,6 +93,12 @@ module "regional_tier" {
   mutable_store_table_arn       = module.lore.mutable_store_table_arn
   locks_table_name              = module.lore.locks_table_name
   locks_table_arn               = module.lore.locks_table_arn
+
+  immutable_tables = {
+    mode                        = "global_table"
+    fragments_table_arn         = module.lore.fragments_table_arn
+    fragment_metadata_table_arn = module.lore.fragment_metadata_table_arn
+  }
 
   # This office's commits are forwarded to the write tier and replicated back by S3.
   replication_peers = [{

@@ -176,7 +176,7 @@ run "fragment_replication_creates_crr_without_global_tables" {
   }
   assert {
     condition     = length(module.data.replication_summary.immutable_table_replica_regions) == 0
-    error_message = "Global Tables are opt-in (rows can arrive before objects)"
+    error_message = "Global Tables only when global_tables_region is set"
   }
   assert {
     condition     = module.data.replication_summary.mutable_table_replica_regions == 0

@@ -41,7 +41,12 @@ module "regional_tier" {
   locks_table_name              = module.lore.locks_table_name
   locks_table_arn               = module.lore.locks_table_arn
 
-  # Forward every local put to the write tier; S3 copies anything that was missed.
+  immutable_tables = {
+    fragments_table_arn         = module.lore.fragments_table_arn
+    fragment_metadata_table_arn = module.lore.fragment_metadata_table_arn
+  }
+
+  # Forward every local put to the write tier's cache; S3 + Global Tables make it durable.
   replication_peers                  = [{ address = module.lore.write_tier_dns_name, locality = "OtherRegion" }]
   enable_replication                 = true
   replication_destination_bucket_arn = module.lore.fragment_bucket_arn
@@ -51,27 +56,31 @@ module "regional_tier" {
 
 The root module needs the mirror of this: `replication_ingress_cidrs = ["10.20.0.0/16"]`,
 `replication_peers` pointing at `module.regional_tier.tier_dns_name`, `trusted_ca_pem`, and
-`fragment_replication.destination_bucket_arn = module.regional_tier.fragment_bucket_arn`.
+`fragment_replication = { destination_bucket_arn = module.regional_tier.fragment_bucket_arn,
+global_tables_region = "<replica region>" }`.
 The two VPCs must be peered and each tier's Cloud Map hosted zone associated with the other
 VPC. `examples/multi-region` wires all of it.
 
 ## How fragments get to the other region
 
-Two mechanisms run together; either alone works, with trade-offs.
+Three things run together; each covers a gap the others leave.
 
 - **Lore peer replication** (`replication_peers`, `OtherRegion`): the server that accepts a
-  commit forwards every fragment to the other tier over QUIC, which writes it to its own S3 and
-  DynamoDB as a normal put. Object and index rows arrive together, so the far region never sees
-  a half-written fragment. It is best-effort: a put forwarded while the far tier is down is not
-  retried.
-- **S3 Cross-Region Replication** (`enable_replication` + `replication_destination_bucket_arn`): copies every object
-  durably. Lore writes the DynamoDB rows when the fragment is next referenced. Use it as the
-  backstop, with Replication Time Control if you want a 15-minute SLA.
+  commit forwards every fragment to the other tier over QUIC, which stores it in its **NVMe
+  cache**. Content is readable in the other office within a second. It is a cache only: the far
+  region's S3 and DynamoDB are not written, and a put forwarded while the far tier is down is
+  not retried.
+- **S3 Cross-Region Replication** (`enable_replication`): copies every object into the far
+  region's bucket, durably, in seconds to minutes.
+- **DynamoDB Global Tables** on the two immutable tables (write region's
+  `fragment_replication.global_tables_region`, this module's `immutable_tables.mode =
+  "global_table"`): copies the index rows. Without them the far region cannot find an object
+  that S3 delivered.
 
-Do not also make the immutable DynamoDB tables Global Tables unless you are measuring: rows
-then arrive about a second after a commit while the S3 object can take minutes, and Lore reads
-"row present, object missing" as lost content. `immutable_tables.mode = "global_table"` exists
-for that experiment.
+Rows arrive about a second after a commit and objects can take longer; during that window a
+far read that misses the NVMe cache fails and Lore logs the payload as lost. The peer push is
+what keeps that window from being hit in practice. Measurements of all three, alone and
+together, are in the multi-region post.
 
 ## Why not forward through the write tier?
 
@@ -141,8 +150,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | [aws_vpc_security_group_ingress_rule.write_region_replication_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
-| [aws_dynamodb_table.fragment_metadata_replica](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/dynamodb_table) | data source |
-| [aws_dynamodb_table.fragments_replica](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/dynamodb_table) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -184,7 +192,7 @@ and `lock` most. Every one of those operations from the other office costs one r
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable VPC flow logs to CloudWatch | `bool` | `false` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | n/a | `bool` | `false` | no |
 | <a name="input_hmac_key_secret_arn"></a> [hmac\_key\_secret\_arn](#input\_hmac\_key\_secret\_arn) | n/a | `string` | `null` | no |
-| <a name="input_immutable_tables"></a> [immutable\_tables](#input\_immutable\_tables) | How this region gets its two immutable DynamoDB tables (fragments, fragment-metadata).<br/>"create" makes its own (Lore writes the rows when fragments arrive by replication or local<br/>commit). "global\_table" expects them to already exist in this region as replicas created by<br/>the write region's fragment\_replication.global\_tables\_region, and looks them up by the names<br/>given. | <pre>object({<br/>    mode                         = optional(string, "create")<br/>    fragments_table_name         = optional(string)<br/>    fragment_metadata_table_name = optional(string)<br/>  })</pre> | `{}` | no |
+| <a name="input_immutable_tables"></a> [immutable\_tables](#input\_immutable\_tables) | How this region gets its two immutable DynamoDB tables (fragments, fragment-metadata).<br/>"global\_table" (recommended) expects the write region to create them as Global Table<br/>replicas here (fragment\_replication.global\_tables\_region) and takes the write region's<br/>table ARNs; names are derived, and the ARNs being unknown until apply orders the two<br/>modules correctly. "create" makes this region its own tables: fragments then only become<br/>visible here when Lore writes rows for them, so content replicated by S3 alone is invisible. | <pre>object({<br/>    mode                        = optional(string, "global_table")<br/>    fragments_table_arn         = optional(string)<br/>    fragment_metadata_table_arn = optional(string)<br/>  })</pre> | `{}` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | EC2 instance type with NVMe instance store | `string` | `"c8gd.large"` | no |
 | <a name="input_intelligent_tiering_archive_days"></a> [intelligent\_tiering\_archive\_days](#input\_intelligent\_tiering\_archive\_days) | n/a | `number` | `90` | no |
 | <a name="input_intelligent_tiering_deep_archive_days"></a> [intelligent\_tiering\_deep\_archive\_days](#input\_intelligent\_tiering\_deep\_archive\_days) | n/a | `number` | `180` | no |

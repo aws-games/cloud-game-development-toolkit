@@ -83,21 +83,17 @@ module "data" {
   replication_time_control           = var.replication_time_control
 }
 
-data "aws_dynamodb_table" "fragments_replica" {
-  count = var.immutable_tables.mode == "global_table" ? 1 : 0
-  name  = var.immutable_tables.fragments_table_name
-}
-
-data "aws_dynamodb_table" "fragment_metadata_replica" {
-  count = var.immutable_tables.mode == "global_table" ? 1 : 0
-  name  = var.immutable_tables.fragment_metadata_table_name
-}
+data "aws_caller_identity" "current" {}
 
 locals {
-  fragments_table_name         = var.immutable_tables.mode == "create" ? module.data.fragments_table_name : data.aws_dynamodb_table.fragments_replica[0].name
-  fragments_table_arn          = var.immutable_tables.mode == "create" ? module.data.fragments_table_arn : data.aws_dynamodb_table.fragments_replica[0].arn
-  fragment_metadata_table_name = var.immutable_tables.mode == "create" ? module.data.fragment_metadata_table_name : data.aws_dynamodb_table.fragment_metadata_replica[0].name
-  fragment_metadata_table_arn  = var.immutable_tables.mode == "create" ? module.data.fragment_metadata_table_arn : data.aws_dynamodb_table.fragment_metadata_replica[0].arn
+  gt = var.immutable_tables.mode == "global_table"
+  # Global Table replicas carry the write region's table names; their ARNs are this region's.
+  gt_fragments_name            = local.gt ? element(split("/", var.immutable_tables.fragments_table_arn), 1) : null
+  gt_fragment_metadata_name    = local.gt ? element(split("/", var.immutable_tables.fragment_metadata_table_arn), 1) : null
+  fragments_table_name         = local.gt ? local.gt_fragments_name : module.data.fragments_table_name
+  fragment_metadata_table_name = local.gt ? local.gt_fragment_metadata_name : module.data.fragment_metadata_table_name
+  fragments_table_arn          = local.gt ? "arn:aws:dynamodb:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:table/${local.gt_fragments_name}" : module.data.fragments_table_arn
+  fragment_metadata_table_arn  = local.gt ? "arn:aws:dynamodb:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:table/${local.gt_fragment_metadata_name}" : module.data.fragment_metadata_table_arn
 }
 
 # =============================================================================

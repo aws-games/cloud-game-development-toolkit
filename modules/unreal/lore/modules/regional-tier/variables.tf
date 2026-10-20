@@ -75,15 +75,16 @@ variable "locks_table_arn" {
 variable "immutable_tables" {
   description = <<-EOT
     How this region gets its two immutable DynamoDB tables (fragments, fragment-metadata).
-    "create" makes its own (Lore writes the rows when fragments arrive by replication or local
-    commit). "global_table" expects them to already exist in this region as replicas created by
-    the write region's fragment_replication.global_tables_region, and looks them up by the names
-    given.
+    "global_table" (recommended) expects the write region to create them as Global Table
+    replicas here (fragment_replication.global_tables_region) and takes the write region's
+    table ARNs; names are derived, and the ARNs being unknown until apply orders the two
+    modules correctly. "create" makes this region its own tables: fragments then only become
+    visible here when Lore writes rows for them, so content replicated by S3 alone is invisible.
   EOT
   type = object({
-    mode                         = optional(string, "create")
-    fragments_table_name         = optional(string)
-    fragment_metadata_table_name = optional(string)
+    mode                        = optional(string, "global_table")
+    fragments_table_arn         = optional(string)
+    fragment_metadata_table_arn = optional(string)
   })
   default = {}
 
@@ -92,8 +93,8 @@ variable "immutable_tables" {
     error_message = "immutable_tables.mode must be \"create\" or \"global_table\"."
   }
   validation {
-    condition     = var.immutable_tables.mode != "global_table" || (var.immutable_tables.fragments_table_name != null && var.immutable_tables.fragment_metadata_table_name != null)
-    error_message = "immutable_tables.mode = \"global_table\" requires both table names."
+    condition     = var.immutable_tables.mode != "global_table" || (var.immutable_tables.fragments_table_arn != null && var.immutable_tables.fragment_metadata_table_arn != null)
+    error_message = "immutable_tables.mode = \"global_table\" requires both write-region table ARNs."
   }
 }
 

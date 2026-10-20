@@ -324,12 +324,12 @@ variable "trusted_ca_pem" {
 
 variable "fragment_replication" {
   description = <<-EOT
-    Replicate the fragments bucket to a second region with S3 Cross-Region Replication. Only
-    fragments (immutable, content-addressed) are ever replicated; the branch-pointer and lock
-    tables stay in this region because their compare-and-swap writes do not survive
-    multi-region replication. global_tables_region additionally makes the two immutable
-    DynamoDB tables Global Tables; it exists for measurement and is off by default because rows
-    can arrive before their S3 objects, which Lore reports as lost data (see README).
+    Replicate fragments to a second region. S3 Cross-Region Replication copies the objects;
+    global_tables_region makes the two immutable DynamoDB tables (fragments,
+    fragment-metadata) Global Tables so the index rows follow. Both are needed for a regional
+    tier to see content durably: Lore's own peer replication only warms the far NVMe cache.
+    Only fragments are ever replicated. The branch-pointer and lock tables stay in this region
+    because their compare-and-swap writes do not survive multi-region replication.
     destination_ready takes the other region's fragment_bucket_versioning_id so the rule is
     created after the destination bucket is versioned.
   EOT

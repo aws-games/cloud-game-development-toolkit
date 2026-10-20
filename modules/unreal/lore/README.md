@@ -37,8 +37,9 @@ lore clone lores://<edge_pod_ip>:41337/my-repo
 
 For a studio with offices in two places, run the write tier in one region and a
 [regional tier](modules/regional-tier/) in the other. Each office reads and uploads to its own
-tier at local speed; fragments replicate between the two regions (Lore peer replication plus
-S3 Cross-Region Replication as the backstop).
+tier at local speed; fragments replicate between the two regions three ways at once: Lore peer
+replication warms the far cache within a second, S3 Cross-Region Replication copies the objects,
+and DynamoDB Global Tables on the two immutable tables copy the index rows.
 
 One rule: **branch pointers and locks live in exactly one region.** Fragments are immutable and
 content-addressed, so copies never conflict. Advancing a branch pointer is a compare-and-swap,
@@ -139,7 +140,7 @@ Open an issue with your Terraform version, error output, and what you've already
 | <a name="input_enable_same_region_write"></a> [enable\_same\_region\_write](#input\_enable\_same\_region\_write) | Whether SameRegion replication peers also receive writes (Lore default). false turns them into read-only replicas. | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable VPC flow logs to CloudWatch. Adds IAM role and log group. | `bool` | `false` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | Deploy X-Ray pipeline smoke test Lambda (validates trace delivery + IAM permissions) | `bool` | `true` | no |
-| <a name="input_fragment_replication"></a> [fragment\_replication](#input\_fragment\_replication) | Replicate the fragments bucket to a second region with S3 Cross-Region Replication. Only<br/>fragments (immutable, content-addressed) are ever replicated; the branch-pointer and lock<br/>tables stay in this region because their compare-and-swap writes do not survive<br/>multi-region replication. global\_tables\_region additionally makes the two immutable<br/>DynamoDB tables Global Tables; it exists for measurement and is off by default because rows<br/>can arrive before their S3 objects, which Lore reports as lost data (see README).<br/>destination\_ready takes the other region's fragment\_bucket\_versioning\_id so the rule is<br/>created after the destination bucket is versioned. | <pre>object({<br/>    destination_bucket_arn   = string<br/>    destination_ready        = optional(string)<br/>    replication_time_control = optional(bool, false)<br/>    global_tables_region     = optional(string)<br/>  })</pre> | `null` | no |
+| <a name="input_fragment_replication"></a> [fragment\_replication](#input\_fragment\_replication) | Replicate fragments to a second region. S3 Cross-Region Replication copies the objects;<br/>global\_tables\_region makes the two immutable DynamoDB tables (fragments,<br/>fragment-metadata) Global Tables so the index rows follow. Both are needed for a regional<br/>tier to see content durably: Lore's own peer replication only warms the far NVMe cache.<br/>Only fragments are ever replicated. The branch-pointer and lock tables stay in this region<br/>because their compare-and-swap writes do not survive multi-region replication.<br/>destination\_ready takes the other region's fragment\_bucket\_versioning\_id so the rule is<br/>created after the destination bucket is versioned. | <pre>object({<br/>    destination_bucket_arn   = string<br/>    destination_ready        = optional(string)<br/>    replication_time_control = optional(bool, false)<br/>    global_tables_region     = optional(string)<br/>  })</pre> | `null` | no |
 | <a name="input_hmac_key_secret_arn"></a> [hmac\_key\_secret\_arn](#input\_hmac\_key\_secret\_arn) | Secrets Manager ARN for HMAC signing key. If null, a random key is generated. | `string` | `null` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | EC2 instance type for ECS capacity provider | `string` | `"i4i.xlarge"` | no |
 | <a name="input_intelligent_tiering_archive_days"></a> [intelligent\_tiering\_archive\_days](#input\_intelligent\_tiering\_archive\_days) | Days before fragments move to Archive Access tier. 0 disables Intelligent-Tiering entirely. | `number` | `90` | no |
@@ -178,8 +179,10 @@ Open an issue with your Terraform version, error output, and what you've already
 | <a name="output_fragment_bucket_arn"></a> [fragment\_bucket\_arn](#output\_fragment\_bucket\_arn) | S3 bucket ARN for fragment storage |
 | <a name="output_fragment_bucket_name"></a> [fragment\_bucket\_name](#output\_fragment\_bucket\_name) | S3 bucket name for fragment storage |
 | <a name="output_fragment_bucket_versioning_id"></a> [fragment\_bucket\_versioning\_id](#output\_fragment\_bucket\_versioning\_id) | Known once the fragments bucket is versioned; give it to a regional tier as replication\_destination\_ready |
+| <a name="output_fragment_metadata_table_arn"></a> [fragment\_metadata\_table\_arn](#output\_fragment\_metadata\_table\_arn) | DynamoDB fragment-metadata table ARN |
 | <a name="output_fragment_metadata_table_name"></a> [fragment\_metadata\_table\_name](#output\_fragment\_metadata\_table\_name) | DynamoDB fragment-metadata table name |
 | <a name="output_fragment_replication_role_arn"></a> [fragment\_replication\_role\_arn](#output\_fragment\_replication\_role\_arn) | IAM role S3 uses for fragment replication (null when fragment\_replication is not set) |
+| <a name="output_fragments_table_arn"></a> [fragments\_table\_arn](#output\_fragments\_table\_arn) | DynamoDB fragments table ARN (a regional tier derives its Global Table replica from it) |
 | <a name="output_fragments_table_name"></a> [fragments\_table\_name](#output\_fragments\_table\_name) | DynamoDB fragments table name (a regional tier reads its Global Table replica by this name) |
 | <a name="output_locks_table_arn"></a> [locks\_table\_arn](#output\_locks\_table\_arn) | DynamoDB locks table ARN, for a regional tier's IAM policy |
 | <a name="output_locks_table_name"></a> [locks\_table\_name](#output\_locks\_table\_name) | DynamoDB locks table name. A regional tier uses this table so exclusive checkouts are shared across offices. |
