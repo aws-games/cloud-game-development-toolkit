@@ -67,5 +67,5 @@ output "replication_summary" {
 
 output "fragment_bucket_versioning_id" {
   description = "ID of the bucket versioning resource; known once versioning is applied. Hand it to the other region as replication_destination_ready."
-  value       = aws_s3_bucket_versioning.fragments.id
+  value       = try(aws_s3_bucket_versioning.fragments[0].id, null)
 }

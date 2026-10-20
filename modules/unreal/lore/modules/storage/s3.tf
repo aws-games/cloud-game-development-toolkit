@@ -16,15 +16,26 @@ resource "aws_s3_bucket" "fragments" {
 
 locals {
   replication_enabled = var.enable_replication
+  versioning_enabled  = var.enable_replication || var.enable_versioning
 }
 
-# Versioning is off by default: fragments are immutable, content-addressed blobs. Cross-Region
-# Replication requires it, so it is enabled only when a replication destination is set. A
+# Versioning only when replicating in either direction: fragments are immutable,
+# content-addressed blobs, and Cross-Region Replication requires both ends versioned. A
 # noncurrent version can then only arise when the same key is written twice with the same bytes
 # (replication racing a local put), and the lifecycle rule below expires those after a day.
+#
+# The resource exists only while versioning is wanted. S3 cannot take a bucket from Enabled back
+# to Disabled; removing this resource suspends versioning instead, which is what turning
+# replication off should do.
 resource "aws_s3_bucket_versioning" "fragments" {
+  count  = local.versioning_enabled ? 1 : 0
   bucket = aws_s3_bucket.fragments.id
-  versioning_configuration { status = local.replication_enabled ? "Enabled" : "Disabled" }
+  versioning_configuration { status = "Enabled" }
+}
+
+moved {
+  from = aws_s3_bucket_versioning.fragments
+  to   = aws_s3_bucket_versioning.fragments[0]
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "fragments" {
@@ -75,7 +86,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "fragments" {
   }
 
   dynamic "rule" {
-    for_each = local.replication_enabled ? [1] : []
+    for_each = local.versioning_enabled ? [1] : []
     content {
       id     = "expire-duplicate-versions"
       status = "Enabled"

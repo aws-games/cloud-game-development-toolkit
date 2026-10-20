@@ -81,3 +81,9 @@ variable "replication_destination_ready" {
   type        = string
   default     = null
 }
+
+variable "enable_versioning" {
+  description = "Version the fragments bucket even when this store does not replicate out, because it is the destination of another region's replication (S3 requires both ends versioned)."
+  type        = bool
+  default     = false
+}
