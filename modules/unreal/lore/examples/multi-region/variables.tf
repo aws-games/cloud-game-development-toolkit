@@ -5,7 +5,7 @@ variable "write_region" {
 }
 
 variable "replica_region" {
-  description = "Region of the second office. Gets a regional tier with its own fragment store."
+  description = "Region of the second office. Gets a regional cache (NVMe only, no storage of its own)."
   type        = string
   default     = "us-west-2"
 }
@@ -38,10 +38,4 @@ variable "write_office_cidrs" {
 variable "replica_office_cidrs" {
   description = "CIDR blocks of clients in the replica region's office"
   type        = list(string)
-}
-
-variable "replication_time_control" {
-  description = "Enable S3 Replication Time Control (15-minute SLA, extra per-GB fee) on fragment replication"
-  type        = bool
-  default     = false
 }

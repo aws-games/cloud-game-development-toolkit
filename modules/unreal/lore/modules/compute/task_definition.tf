@@ -59,8 +59,7 @@ locals {
   ]
 
   # Store wiring that does not depend on the TLS secrets (so tests can see it at plan time)
-  immutable_store_env_vars = [
-
+  common_env_vars = [
     { name = "LORE_ENV", value = "docker" },
     { name = "LORE_CONFIG_PATH", value = "/etc/lore/overlay" },
     { name = "LORE__SERVER__QUIC__CERTIFICATE__CERT_FILE", value = "/certs/fullchain.crt" },
@@ -68,12 +67,19 @@ locals {
     { name = "LORE__SERVER__GRPC__CERTIFICATE__CERT_FILE", value = "/certs/fullchain.crt" },
     { name = "LORE__SERVER__GRPC__CERTIFICATE__PKEY_FILE", value = "/certs/server.key" },
     { name = "LORE__SERVER__GRPC__VERIFY_CLIENT_CERTS", value = "false" },
+  ]
+
+  # NVMe cache over a durable tier: this node's own S3 + DynamoDB (write tier), or another Lore
+  # server (regional cache). Lore requires the regenerate_retry and refresh settings for
+  # replicated mode; the values match the edge-pod submodule.
+  immutable_store_env_vars = concat([
     { name = "LORE__IMMUTABLE_STORE__MODE", value = "composite" },
     { name = "LORE__IMMUTABLE_STORE__COMPOSITE__LOCAL__MODE", value = "local" },
     { name = "LORE__IMMUTABLE_STORE__COMPOSITE__LOCAL__LOCAL__PATH", value = "/srv/urc" },
     { name = "LORE__IMMUTABLE_STORE__COMPOSITE__LOCAL__LOCAL__MAX_SIZE", value = tostring(local.cache_max_size) },
     { name = "LORE__IMMUTABLE_STORE__COMPOSITE__LOCAL__LOCAL__FLUSH_DELAY_SECONDS", value = "10" },
-    { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__MODE", value = "aws" },
+    { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__MODE", value = var.durable_store_mode },
+    ], var.durable_store_mode == "aws" ? [
     { name = "LORE__PLUGINS__AWS__IMMUTABLE_STORE__S3_BUCKET", value = var.fragment_bucket_name },
     { name = "LORE__PLUGINS__AWS__IMMUTABLE_STORE__DYNAMODB_FRAGMENTS_TABLE", value = var.fragments_table_name },
     # loreserver >= v0.9.0 requires a fragment *state* table and treats the metadata table as a
@@ -82,7 +88,16 @@ locals {
     # ignore the extra key.
     { name = "LORE__PLUGINS__AWS__IMMUTABLE_STORE__DYNAMODB_FRAGMENT_STATE_TABLE", value = var.fragment_metadata_table_name },
     { name = "LORE__PLUGINS__AWS__IMMUTABLE_STORE__DYNAMODB_METADATA_TABLE", value = var.fragment_metadata_table_name },
-  ]
+    ] : concat([
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REMOTE_URL", value = coalesce(var.durable_remote_url, "unset") },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__INITIAL_BACKOFF_MS", value = "100" },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__MAX_BACKOFF_MS", value = "1000" },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__MAX_ATTEMPTS", value = "10" },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__PERIODIC_CLIENT_REFRESH_SECS", value = "180" },
+      ], var.durable_expected_rtt_ms != null ? [
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__EXPECTED_RTT_MS", value = tostring(var.durable_expected_rtt_ms) },
+  ] : []))
+
 
   # When another tier's CA must be trusted, the server starts through sh so the CA can be appended
   # to the image's system bundle; rustls-native-certs reads SSL_CERT_FILE *instead of* the system
@@ -203,7 +218,7 @@ resource "aws_ecs_task_definition" "loreserver" {
         { name = "LORE__SERVER__HTTP__PRESIGNED_URL_HMAC_KEY", valueFrom = local.hmac_key_secret_arn },
       ]
 
-      environment = concat(local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars, local.auth_env_vars, local.auth_audience_env, local.replication_env_vars)
+      environment = concat(local.common_env_vars, local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars, local.auth_env_vars, local.auth_audience_env, local.replication_env_vars)
 
       logConfiguration = {
         logDriver = "awslogs"

@@ -3,7 +3,7 @@
 # =============================================================================
 
 variable "name_prefix" {
-  description = "Prefix for all resource names in this region (e.g. 'lore-dev-west'). Must differ from the write region's prefix."
+  description = "Prefix for all resource names in this region (e.g. 'lore-dev-london'). Must differ from the write region's prefix."
   type        = string
 
   validation {
@@ -37,23 +37,29 @@ variable "write_region" {
   type        = string
 }
 
+variable "write_region_rtt_ms" {
+  description = "Measured round-trip time to the write region in ms, used to size the QUIC congestion window for uploads and cache misses (Lore default 100). Null keeps Lore's default."
+  type        = number
+  default     = null
+}
+
 variable "write_region_vpc_cidr" {
   description = "CIDR of the write region's VPC. Allowed to reach this tier on 41337/41340 so the write tier can replicate to it; this tier is allowed out to it on the same ports."
   type        = string
 }
 
 variable "write_tier_dns_name" {
-  description = "Write tier Cloud Map name (root module output write_tier_dns_name). Must resolve in this VPC: associate the write region's hosted zone (output service_discovery_hosted_zone_id) with this VPC."
+  description = "Write tier Cloud Map name (root module output write_tier_dns_name). Must resolve in this VPC: associate the write region's hosted zone (output service_discovery_hosted_zone_id) with this VPC. Used for uploads, cache misses (41340) and nothing else."
   type        = string
 }
 
 variable "write_tier_ca_certificate_pem" {
-  description = "Write tier CA certificate (root module output ca_certificate_pem) so this tier trusts it over TLS"
+  description = "Write tier CA certificate (root module output ca_certificate_pem) so this cache trusts it over TLS"
   type        = string
 }
 
 variable "mutable_store_table_name" {
-  description = "Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the tier talks to the write region's table directly."
+  description = "Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the cache talks to the write region's table directly."
   type        = string
 }
 
@@ -72,87 +78,6 @@ variable "locks_table_arn" {
   type        = string
 }
 
-variable "immutable_tables" {
-  description = <<-EOT
-    How this region gets its two immutable DynamoDB tables (fragments, fragment-metadata).
-    "global_table" (recommended) expects the write region to create them as Global Table
-    replicas here (fragment_replication.global_tables_region) and takes the write region's
-    table ARNs; names are derived, and the ARNs being unknown until apply orders the two
-    modules correctly. "create" makes this region its own tables: fragments then only become
-    visible here when Lore writes rows for them, so content replicated by S3 alone is invisible.
-  EOT
-  type = object({
-    mode                        = optional(string, "global_table")
-    fragments_table_arn         = optional(string)
-    fragment_metadata_table_arn = optional(string)
-  })
-  default = {}
-
-  validation {
-    condition     = contains(["create", "global_table"], var.immutable_tables.mode)
-    error_message = "immutable_tables.mode must be \"create\" or \"global_table\"."
-  }
-  validation {
-    condition     = var.immutable_tables.mode != "global_table" || (var.immutable_tables.fragments_table_arn != null && var.immutable_tables.fragment_metadata_table_arn != null)
-    error_message = "immutable_tables.mode = \"global_table\" requires both write-region table ARNs."
-  }
-}
-
-# =============================================================================
-# Fragment replication back to the write region
-# =============================================================================
-
-variable "enable_replication" {
-  description = "Replicate this region's commits back to the write region's bucket (S3 Cross-Region Replication). false for one-way replication."
-  type        = bool
-  default     = false
-}
-
-variable "replication_destination_bucket_arn" {
-  description = "Write region's fragments bucket ARN. Required when enable_replication is true."
-  type        = string
-  default     = null
-}
-
-variable "replication_destination_ready" {
-  description = "The write region's fragment_bucket_versioning_id, so the reverse rule waits for its destination to be versioned"
-  type        = string
-  default     = null
-}
-
-variable "replication_time_control" {
-  description = "Enable S3 Replication Time Control on the reverse replication rule"
-  type        = bool
-  default     = false
-}
-
-variable "replication_peers" {
-  description = "Lore servers this tier forwards every put to. Normally the write tier as locality = \"OtherRegion\". Use SameRegion with enable_same_region_write = false to use the write tier as a read-only fallback for content that has not replicated yet."
-  type = list(object({
-    address  = string
-    port     = optional(number, 41340)
-    locality = string
-  }))
-  default = []
-
-  validation {
-    condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
-    error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\"."
-  }
-}
-
-variable "replication_peer_refresh_seconds" {
-  description = "How often replication peers are re-created and their DNS names re-resolved"
-  type        = number
-  default     = 300
-}
-
-variable "enable_same_region_write" {
-  description = "Whether SameRegion peers also receive writes (Lore default true)"
-  type        = bool
-  default     = true
-}
-
 # =============================================================================
 # VPC
 # =============================================================================
@@ -163,7 +88,7 @@ variable "vpc_cidr" {
 }
 
 variable "vpc_peering_routes" {
-  description = "Routes to peered VPCs (the write region) for this tier's private route table. Use this rather than aws_route resources, which the route table's inline routes remove on the next apply."
+  description = "Routes to peered VPCs (the write region) for this cache's private route table. Use this rather than aws_route resources, which the route table's inline routes remove on the next apply."
   type = list(object({
     cidr_block                = string
     vpc_peering_connection_id = string
@@ -184,7 +109,7 @@ variable "enable_vpc_flow_logs" {
 }
 
 variable "allowed_ingress_cidrs" {
-  description = "CIDR blocks of this office's clients allowed to reach the tier on 41337 and 41339"
+  description = "CIDR blocks of this office's clients allowed to reach the cache on 41337 and 41339"
   type        = list(string)
 }
 
@@ -315,26 +240,3 @@ variable "log_retention_days" {
   default = 30
 }
 
-# =============================================================================
-# Safety / storage
-# =============================================================================
-
-variable "enable_force_destroy" {
-  type    = bool
-  default = false
-}
-
-variable "enable_deletion_protection" {
-  type    = bool
-  default = true
-}
-
-variable "intelligent_tiering_archive_days" {
-  type    = number
-  default = 90
-}
-
-variable "intelligent_tiering_deep_archive_days" {
-  type    = number
-  default = 180
-}

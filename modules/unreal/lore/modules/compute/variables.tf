@@ -14,8 +14,9 @@ variable "environment" {
 }
 
 variable "fragment_bucket_arn" {
-  description = "ARN of the S3 fragment bucket"
+  description = "ARN of the S3 fragment bucket. Null when durable_store_mode = \"replicated\" (the node has no bucket of its own)."
   type        = string
+  default     = null
 }
 
 variable "dynamodb_table_arns" {
@@ -326,5 +327,38 @@ variable "replication_peer_refresh_seconds" {
 variable "mutable_store_region" {
   description = "Region of the DynamoDB mutable-store table when mutable_store_mode = \"aws\" and the table lives in another region (a regional tier using the write region's branch pointers). Null uses the task's own region."
   type        = string
+  default     = null
+}
+
+variable "durable_store_mode" {
+  description = <<-EOT
+    Where the NVMe cache's durable tier lives. "aws": this node's own S3 bucket and DynamoDB
+    tables (the write tier). "replicated": another Lore server, reached over QUIC on its
+    replication port (a regional cache in another region whose single source of truth is the
+    write tier). Reads that miss the cache and every upload go to that server.
+  EOT
+  type        = string
+  default     = "aws"
+
+  validation {
+    condition     = contains(["aws", "replicated"], var.durable_store_mode)
+    error_message = "durable_store_mode must be \"aws\" or \"replicated\"."
+  }
+}
+
+variable "durable_remote_url" {
+  description = "Lore server replication URL for durable_store_mode = \"replicated\", e.g. lore://write-tier.lore-dev.internal:41340."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.durable_store_mode != "replicated" || var.durable_remote_url != null
+    error_message = "durable_remote_url is required when durable_store_mode = \"replicated\"."
+  }
+}
+
+variable "durable_expected_rtt_ms" {
+  description = "Round-trip time to the durable_remote_url server, used to size the QUIC congestion window (Lore default 100). Null keeps Lore's default."
+  type        = number
   default     = null
 }

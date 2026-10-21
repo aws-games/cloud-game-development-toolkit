@@ -31,26 +31,25 @@ lore clone lores://<edge_pod_ip>:41337/my-repo
 | [cognito](examples/cognito/) | + Cognito auth, X-Ray tracing, deletion protection |
 | [external-auth](examples/external-auth/) | + External IdP (Okta, Azure AD, etc.) |
 | [minimal](examples/minimal/) | Backend only, no edge pods (dev/test) |
-| [multi-region](examples/multi-region/) | Two offices: a regional tier with its own fragment store in a second region |
+| [multi-region](examples/multi-region/) | Two offices: a regional cache in a second region, kept warm by the write tier |
 
 ## Multi-region
 
 For a studio with offices in two places, run the write tier in one region and a
-[regional tier](modules/regional-tier/) in the other. Each office reads and uploads to its own
-tier at local speed; fragments replicate between the two regions three ways at once: Lore peer
-replication warms the far cache within a second, S3 Cross-Region Replication copies the objects,
-and DynamoDB Global Tables on the two immutable tables copy the index rows.
+[regional cache](modules/regional-cache/) in the other. The write region stays the single source
+of truth: one S3 bucket, one set of DynamoDB tables. The regional cache is a Lore server with an
+NVMe cache and no storage of its own; the write tier pushes every fragment it stores into it, so
+the second office reads new work locally.
 
 One rule: **branch pointers and locks live in exactly one region.** Fragments are immutable and
-content-addressed, so copies never conflict. Advancing a branch pointer is a compare-and-swap,
-which DynamoDB Global Tables cannot preserve (last writer wins), so a second write region would
-silently lose pushes. The regional tier reads and writes branch pointers and locks in the write
-region's DynamoDB tables, so push, lock and `status` pay the inter-region round trip (a push makes
-about a dozen sequential calls); clone, sync, read and commit stay local. Choose the write region
-by where the push-heavy work happens.
+content-addressed, so a cache copy can never be wrong. Advancing a branch pointer is a
+compare-and-swap, which only works with a single copy of the table. From the second office,
+commits upload to the write region, and push, lock and `status` make DynamoDB calls there; reads
+of content in the cache stay local. Choose the write region by where most commits and pushes
+happen.
 
 Inputs involved on the write tier: `replication_ingress_cidrs`, `replication_peers`,
-`trusted_ca_pem`, `fragment_replication`. See [examples/multi-region](examples/multi-region/).
+`trusted_ca_pem`, `vpc_peering_routes`. See [examples/multi-region](examples/multi-region/).
 
 ## Documentation
 

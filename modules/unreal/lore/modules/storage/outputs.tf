@@ -10,62 +10,40 @@ output "fragment_bucket_arn" {
 
 output "fragments_table_name" {
   description = "DynamoDB fragments table name"
-  value       = try(aws_dynamodb_table.fragments[0].name, null)
+  value       = aws_dynamodb_table.fragments.name
 }
 
 output "fragments_table_arn" {
   description = "DynamoDB fragments table ARN"
-  value       = try(aws_dynamodb_table.fragments[0].arn, null)
+  value       = aws_dynamodb_table.fragments.arn
 }
 
 output "fragment_metadata_table_name" {
   description = "DynamoDB fragment metadata table name"
-  value       = try(aws_dynamodb_table.fragment_metadata[0].name, null)
+  value       = aws_dynamodb_table.fragment_metadata.name
 }
 
 output "fragment_metadata_table_arn" {
   description = "DynamoDB fragment metadata table ARN"
-  value       = try(aws_dynamodb_table.fragment_metadata[0].arn, null)
+  value       = aws_dynamodb_table.fragment_metadata.arn
 }
 
 output "mutable_store_table_name" {
   description = "DynamoDB mutable store table name"
-  value       = try(aws_dynamodb_table.mutable_store[0].name, null)
+  value       = aws_dynamodb_table.mutable_store.name
 }
 
 output "mutable_store_table_arn" {
   description = "DynamoDB mutable store table ARN"
-  value       = try(aws_dynamodb_table.mutable_store[0].arn, null)
+  value       = aws_dynamodb_table.mutable_store.arn
 }
 
 output "locks_table_name" {
   description = "DynamoDB locks table name"
-  value       = try(aws_dynamodb_table.locks[0].name, null)
+  value       = aws_dynamodb_table.locks.name
 }
 
 output "locks_table_arn" {
   description = "DynamoDB locks table ARN"
-  value       = try(aws_dynamodb_table.locks[0].arn, null)
-}
-
-output "replication_role_arn" {
-  description = "IAM role used by S3 Cross-Region Replication (null when replication is disabled)"
-  value       = try(aws_iam_role.replication[0].arn, null)
-}
-
-output "replication_summary" {
-  description = "How this store replicates (for tests and the example README)"
-  value = {
-    enabled                         = local.replication_enabled
-    bucket_versioning               = local.versioning_enabled ? "Enabled" : "Disabled"
-    replication_time_control        = local.replication_enabled && var.replication_time_control
-    immutable_table_replica_regions = var.immutable_table_replica_regions
-    immutable_table_streams         = true
-    mutable_table_replica_regions   = length(try(aws_dynamodb_table.mutable_store[0].replica, [])) + length(try(aws_dynamodb_table.locks[0].replica, []))
-  }
-}
-
-output "fragment_bucket_versioning_id" {
-  description = "ID of the bucket versioning resource; known once versioning is applied. Hand it to the other region as replication_destination_ready."
-  value       = try(aws_s3_bucket_versioning.fragments[0].id, null)
+  value       = aws_dynamodb_table.locks.arn
 }

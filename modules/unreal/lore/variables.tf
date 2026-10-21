@@ -54,7 +54,7 @@ variable "vpc_cidr" {
 }
 
 variable "vpc_peering_routes" {
-  description = "Routes to peered VPCs (e.g. a regional tier in another region) for the module-created private route table. Only used when vpc_id is null. Do not add these with separate aws_route resources: the route table's inline routes remove them on the next apply."
+  description = "Routes to peered VPCs (e.g. a regional cache in another region) for the module-created private route table. Only used when vpc_id is null. Do not add these with separate aws_route resources: the route table's inline routes remove them on the next apply."
   type = list(object({
     cidr_block                = string
     vpc_peering_connection_id = string
@@ -286,7 +286,7 @@ variable "intelligent_tiering_deep_archive_days" {
 # =============================================================================
 
 variable "replication_ingress_cidrs" {
-  description = "CIDR blocks of Lore tiers in other VPCs or regions allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication). Needed across inter-region VPC peering, where security-group references do not work. Give the peered VPC's CIDR, never 0.0.0.0/0."
+  description = "CIDR blocks of Lore servers in other VPCs or regions (regional caches) allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication), and that the write tier may push to on the same ports. Needed across inter-region VPC peering, where security-group references do not work. Give the peered VPC's CIDR, never 0.0.0.0/0."
   type        = list(string)
   default     = []
 
@@ -297,7 +297,7 @@ variable "replication_ingress_cidrs" {
 }
 
 variable "replication_peers" {
-  description = "Other Lore servers this write tier replicates fragments to (Lore fixed topology). A tier in another region is locality = \"OtherRegion\": every put is forwarded to it so its region is warm before anyone asks. Address is a DNS name or IP reachable from the write tier's VPC."
+  description = "Other Lore servers this write tier pushes every stored fragment to (Lore topology peers). A regional cache in another region is locality = \"OtherRegion\": each put is forwarded to its NVMe cache so the other office reads new content locally. Address is a DNS name or IP reachable from the write tier's VPC."
   type = list(object({
     address  = string
     port     = optional(number, 41340)
@@ -326,29 +326,9 @@ variable "enable_same_region_write" {
 }
 
 variable "trusted_ca_pem" {
-  description = "CA certificate (PEM) of a regional tier in another region, so this write tier can replicate to it over TLS. Null for single-region deployments."
+  description = "CA certificate (PEM) of a regional cache in another region, so this write tier can push fragments to it over TLS. Null for single-region deployments."
   type        = string
   default     = null
-}
-
-variable "fragment_replication" {
-  description = <<-EOT
-    Replicate fragments to a second region. S3 Cross-Region Replication copies the objects;
-    global_tables_region makes the two immutable DynamoDB tables (fragments,
-    fragment-metadata) Global Tables so the index rows follow. Both are needed for a regional
-    tier to see content durably: Lore's own peer replication only warms the far NVMe cache.
-    Only fragments are ever replicated. The branch-pointer and lock tables stay in this region
-    because their compare-and-swap writes do not survive multi-region replication.
-    destination_ready takes the other region's fragment_bucket_versioning_id so the rule is
-    created after the destination bucket is versioned.
-  EOT
-  type = object({
-    destination_bucket_arn   = string
-    destination_ready        = optional(string)
-    replication_time_control = optional(bool, false)
-    global_tables_region     = optional(string)
-  })
-  default = null
 }
 
 # =============================================================================

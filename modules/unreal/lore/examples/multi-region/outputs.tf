@@ -3,17 +3,14 @@ output "write_tier_dns" {
   value       = module.lore.write_tier_dns_name
 }
 
-output "regional_tier_dns" {
-  description = "Regional tier name (resolves inside both VPCs)"
-  value       = module.regional_tier.tier_dns_name
+output "regional_cache_dns" {
+  description = "Regional cache name (resolves inside both VPCs)"
+  value       = module.regional_cache.cache_dns_name
 }
 
-output "write_fragment_bucket" {
-  value = module.lore.fragment_bucket_name
-}
-
-output "replica_fragment_bucket" {
-  value = module.regional_tier.fragment_bucket_name
+output "fragment_bucket" {
+  description = "The only fragment store (write region)"
+  value       = module.lore.fragment_bucket_name
 }
 
 output "peering_connection_id" {

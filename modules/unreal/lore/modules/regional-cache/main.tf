@@ -1,10 +1,11 @@
 # =============================================================================
-# Regional tier — a Lore server fleet in a second region.
+# Regional cache — a Lore server in a second region with an NVMe cache and no storage of its own.
 #
-# Fragments are durable here (own S3 bucket + own immutable DynamoDB tables) so this office
-# reads and uploads at local speed. Branch pointers are not: the mutable store is forwarded to the
-# write tier, and locks use the write region's DynamoDB table, because Lore's branch advance is a
-# compare-and-swap that only one region may own. See the root README, "Multi-region".
+# The write region stays the single source of truth: its S3 bucket and DynamoDB tables are the
+# only copies. This node's cache sits over the write tier (durable mode "replicated"), and the
+# write tier pushes every fragment it stores into this cache (topology peer, OtherRegion), so
+# the second office reads new content locally. Branch pointers and locks are the write region's
+# DynamoDB tables, used cross-region. See the root README, "Multi-region".
 #
 # Pass `providers = { aws = aws.<region> }` when calling this module.
 # =============================================================================
@@ -24,8 +25,8 @@ locals {
     ? slice(data.aws_availability_zones.available.names, 0, 2)
     : []
   )
-  tags          = merge(var.tags, { ManagedBy = "terraform", LoreRole = "regional-tier" })
-  tier_dns_name = "regional-tier.${var.name_prefix}.internal"
+  tags          = merge(var.tags, { ManagedBy = "terraform", LoreRole = "regional-cache" })
+  tier_dns_name = "regional-cache.${var.name_prefix}.internal"
 }
 
 # =============================================================================
@@ -43,6 +44,7 @@ module "vpc" {
   peering_routes     = var.vpc_peering_routes
 }
 
+# S3 gateway endpoint: ECR image layers are served from S3 in this region.
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = module.vpc.vpc_id
   service_name      = "com.amazonaws.${data.aws_region.current.region}.s3"
@@ -50,54 +52,6 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [module.vpc.private_route_table_id]
 
   tags = merge(local.tags, { Name = "${var.name_prefix}-s3-endpoint" })
-}
-
-resource "aws_vpc_endpoint" "dynamodb" {
-  vpc_id            = module.vpc.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.region}.dynamodb"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = [module.vpc.private_route_table_id]
-
-  tags = merge(local.tags, { Name = "${var.name_prefix}-dynamodb-endpoint" })
-}
-
-# =============================================================================
-# Storage — fragments bucket + immutable tables only. No mutable store, no locks.
-# =============================================================================
-
-module "data" {
-  source = "../storage"
-
-  name_prefix                           = var.name_prefix
-  tags                                  = local.tags
-  enable_force_destroy                  = var.enable_force_destroy
-  enable_deletion_protection            = var.enable_deletion_protection
-  intelligent_tiering_archive_days      = var.intelligent_tiering_archive_days
-  intelligent_tiering_deep_archive_days = var.intelligent_tiering_deep_archive_days
-
-  create_immutable_tables = var.immutable_tables.mode == "create"
-  create_mutable_tables   = false
-
-  # Always versioned: this bucket is the destination of the write region's replication even
-  # when it does not replicate back.
-  enable_versioning                  = true
-  enable_replication                 = var.enable_replication
-  replication_destination_bucket_arn = var.replication_destination_bucket_arn
-  replication_destination_ready      = var.replication_destination_ready
-  replication_time_control           = var.replication_time_control
-}
-
-data "aws_caller_identity" "current" {}
-
-locals {
-  gt = var.immutable_tables.mode == "global_table"
-  # Global Table replicas carry the write region's table names; their ARNs are this region's.
-  gt_fragments_name            = local.gt ? element(split("/", var.immutable_tables.fragments_table_arn), 1) : null
-  gt_fragment_metadata_name    = local.gt ? element(split("/", var.immutable_tables.fragment_metadata_table_arn), 1) : null
-  fragments_table_name         = local.gt ? local.gt_fragments_name : module.data.fragments_table_name
-  fragment_metadata_table_name = local.gt ? local.gt_fragment_metadata_name : module.data.fragment_metadata_table_name
-  fragments_table_arn          = local.gt ? "arn:aws:dynamodb:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:table/${local.gt_fragments_name}" : module.data.fragments_table_arn
-  fragment_metadata_table_arn  = local.gt ? "arn:aws:dynamodb:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:table/${local.gt_fragment_metadata_name}" : module.data.fragment_metadata_table_arn
 }
 
 # =============================================================================
@@ -108,7 +62,7 @@ resource "aws_security_group" "tier" {
   #checkov:skip=CKV2_AWS_5: Attached by the ECS service in modules/compute (network_configuration)
   name_prefix = "${var.name_prefix}-tier-"
   vpc_id      = module.vpc.vpc_id
-  description = "Lore regional tier access"
+  description = "Lore regional cache access"
 
   tags = merge(local.tags, { Name = "${var.name_prefix}-tier-sg" })
 
@@ -255,18 +209,18 @@ resource "aws_vpc_security_group_egress_rule" "peers" {
 }
 
 # =============================================================================
-# Service discovery — so the write tier can address this tier by name
+# Service discovery — so the write tier can push to this cache by name
 # =============================================================================
 
 resource "aws_service_discovery_private_dns_namespace" "tier" {
   name        = "${var.name_prefix}.internal"
-  description = "Lore regional tier service discovery"
+  description = "Lore regional cache service discovery"
   vpc         = module.vpc.vpc_id
   tags        = local.tags
 }
 
 resource "aws_service_discovery_service" "tier" {
-  name = "regional-tier"
+  name = "regional-cache"
 
   dns_config {
     namespace_id = aws_service_discovery_private_dns_namespace.tier.id
@@ -293,16 +247,12 @@ resource "aws_service_discovery_service" "tier" {
 module "compute" {
   source = "../compute"
 
-  name_prefix         = var.name_prefix
-  tags                = local.tags
-  environment         = var.environment
-  fragment_bucket_arn = module.data.fragment_bucket_arn
-  dynamodb_table_arns = [
-    local.fragments_table_arn,
-    local.fragment_metadata_table_arn,
-    var.mutable_store_table_arn,
-    var.locks_table_arn,
-  ]
+  name_prefix = var.name_prefix
+  tags        = local.tags
+  environment = var.environment
+  # No bucket and no immutable tables here: only the write region's branch-pointer and lock
+  # tables, used cross-region.
+  dynamodb_table_arns          = [var.mutable_store_table_arn, var.locks_table_arn]
   locks_table_arn              = var.locks_table_arn
   private_subnet_ids           = module.vpc.private_subnet_ids
   server_security_group_id     = aws_security_group.tier.id
@@ -316,14 +266,19 @@ module "compute" {
   asg_desired_size             = var.asg_desired_size
 
   container_image              = var.container_image
-  fragment_bucket_name         = module.data.fragment_bucket_name
-  fragments_table_name         = local.fragments_table_name
-  fragment_metadata_table_name = local.fragment_metadata_table_name
+  fragment_bucket_name         = null
+  fragments_table_name         = null
+  fragment_metadata_table_name = null
   mutable_store_table_name     = var.mutable_store_table_name
   locks_table_name             = var.locks_table_name
 
-  # What makes this a regional tier rather than a second write tier: branch pointers and locks
-  # are the write region's DynamoDB tables, used cross-region (one round trip per call). Lore's
+  # The cache's durable tier is the write tier. Uploads and cache misses go there; the write
+  # tier pushes every fragment it stores back into this cache (it lists this node as a peer).
+  durable_store_mode      = "replicated"
+  durable_remote_url      = "lore://${var.write_tier_dns_name}:41340"
+  durable_expected_rtt_ms = var.write_region_rtt_ms
+
+  # Branch pointers and locks: the write region's DynamoDB tables, used directly. Lore's
   # `remote` mutable store would forward through the write tier instead, but at v0.10.1 it does
   # not implement list(), so repositories cannot be resolved by name through it.
   mutable_store_mode   = "aws"
@@ -332,10 +287,8 @@ module "compute" {
   lock_store_region    = var.write_region
   trusted_ca_pem       = var.write_tier_ca_certificate_pem
 
-  enable_replication               = true
-  replication_peers                = var.replication_peers
-  replication_peer_refresh_seconds = var.replication_peer_refresh_seconds
-  enable_same_region_write         = var.enable_same_region_write
+  # quic_internal on, so the write tier can push fragments into this cache
+  enable_replication = true
 
   tls_certificate_secret_arn         = var.tls_certificate_secret_arn
   tls_private_key_secret_arn         = var.tls_private_key_secret_arn
