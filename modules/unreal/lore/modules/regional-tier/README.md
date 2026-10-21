@@ -105,10 +105,6 @@ and `lock` most. Every one of those operations from the other office costs one r
 (about 50 ms between US regions, 130–140 ms transatlantic); reads and uploads do not.
 
 <!-- BEGIN_TF_DOCS -->
-<!-- END_TF_DOCS -->
-
-<!-- markdownlint-disable -->
-<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
