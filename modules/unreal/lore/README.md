@@ -44,9 +44,10 @@ and DynamoDB Global Tables on the two immutable tables copy the index rows.
 One rule: **branch pointers and locks live in exactly one region.** Fragments are immutable and
 content-addressed, so copies never conflict. Advancing a branch pointer is a compare-and-swap,
 which DynamoDB Global Tables cannot preserve (last writer wins), so a second write region would
-silently lose pushes. The regional tier forwards push, lock and branch-pointer operations to the
-write region, one round trip each; everything else stays local. Choose the write region by where
-the push-heavy work happens.
+silently lose pushes. The regional tier reads and writes branch pointers and locks in the write
+region's DynamoDB tables, so push, lock and `status` pay the inter-region round trip (a push makes
+about a dozen sequential calls); clone, sync, read and commit stay local. Choose the write region
+by where the push-heavy work happens.
 
 Inputs involved on the write tier: `replication_ingress_cidrs`, `replication_peers`,
 `trusted_ca_pem`, `fragment_replication`. See [examples/multi-region](examples/multi-region/).
@@ -58,6 +59,3 @@ For full Lore documentation including getting started guides, scaling, authentic
 ## Need Help?
 
 Open an issue with your Terraform version, error output, and what you've already tried.
-
-<!-- markdownlint-disable -->
-<!-- markdownlint-enable -->
