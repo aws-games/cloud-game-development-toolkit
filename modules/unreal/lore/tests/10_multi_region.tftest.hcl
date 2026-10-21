@@ -205,7 +205,7 @@ run "fragment_replication_rtc_and_global_tables_opt_in" {
   }
   assert {
     condition     = module.data.replication_summary.immutable_table_streams == true
-    error_message = "Global Tables require streams"
+    error_message = "Global Tables require streams (on unconditionally so replicas can be removed)"
   }
   assert {
     condition     = module.data.replication_summary.mutable_table_replica_regions == 0

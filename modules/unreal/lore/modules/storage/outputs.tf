@@ -60,7 +60,7 @@ output "replication_summary" {
     bucket_versioning               = local.versioning_enabled ? "Enabled" : "Disabled"
     replication_time_control        = local.replication_enabled && var.replication_time_control
     immutable_table_replica_regions = var.immutable_table_replica_regions
-    immutable_table_streams         = length(var.immutable_table_replica_regions) > 0
+    immutable_table_streams         = true
     mutable_table_replica_regions   = length(try(aws_dynamodb_table.mutable_store[0].replica, [])) + length(try(aws_dynamodb_table.locks[0].replica, []))
   }
 }

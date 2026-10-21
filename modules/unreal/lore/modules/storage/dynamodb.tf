@@ -20,9 +20,12 @@ resource "aws_dynamodb_table" "fragments" {
     type = "B"
   }
 
-  # Global Table replicas (optional, immutable rows only). Streams are a Global Tables requirement.
-  stream_enabled   = length(var.immutable_table_replica_regions) > 0 ? true : null
-  stream_view_type = length(var.immutable_table_replica_regions) > 0 ? "NEW_AND_OLD_IMAGES" : null
+  # Global Table replicas (optional, immutable rows only). Streams are a Global Tables
+  # requirement and stay on even without replicas: DynamoDB refuses to disable a Global Table's
+  # stream in the same call that removes its replica, so tying the stream to the replica list
+  # makes Global Tables impossible to turn off. An unread stream costs nothing.
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   dynamic "replica" {
     for_each = toset(var.immutable_table_replica_regions)
@@ -51,9 +54,12 @@ resource "aws_dynamodb_table" "fragment_metadata" {
     type = "B"
   }
 
-  # Global Table replicas (optional, immutable rows only). Streams are a Global Tables requirement.
-  stream_enabled   = length(var.immutable_table_replica_regions) > 0 ? true : null
-  stream_view_type = length(var.immutable_table_replica_regions) > 0 ? "NEW_AND_OLD_IMAGES" : null
+  # Global Table replicas (optional, immutable rows only). Streams are a Global Tables
+  # requirement and stay on even without replicas: DynamoDB refuses to disable a Global Table's
+  # stream in the same call that removes its replica, so tying the stream to the replica list
+  # makes Global Tables impossible to turn off. An unread stream costs nothing.
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   dynamic "replica" {
     for_each = toset(var.immutable_table_replica_regions)
