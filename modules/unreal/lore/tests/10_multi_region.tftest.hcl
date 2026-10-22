@@ -228,3 +228,72 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
     error_message = "The write tier must be able to push into the cache on 41340/udp"
   }
 }
+
+run "regional_cache_can_forward_branch_pointers_to_the_write_tier" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.10.1"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    instance_type                 = "c8gd.large"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_region_rtt_ms           = 55
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    branch_pointer_access         = "write_tier"
+  }
+
+  assert {
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__MUTABLE_STORE__MODE"]) == "remote"
+    error_message = "write_tier must use Lore's remote mutable store"
+  }
+  assert {
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__MUTABLE_STORE__REMOTE__REMOTE_URL"]) == "lores://write-tier.lore-dev.internal:41337"
+    error_message = "The remote mutable store must point at the write tier's client port"
+  }
+  assert {
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__LOCK_STORE__MODE"]) == "aws" && one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_REGION"]) == "us-east-2"
+    error_message = "Locks stay on the write region's DynamoDB table"
+  }
+}
+
+run "regional_cache_rejects_unknown_branch_pointer_access" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.10.1"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    instance_type                 = "c8gd.large"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_region_rtt_ms           = 55
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    branch_pointer_access         = "edge"
+  }
+
+  expect_failures = [var.branch_pointer_access]
+}

@@ -68,13 +68,15 @@ replication peers are re-resolved every `replication_peer_refresh_seconds` (defa
 write tier. After the cache task is replaced it has a new IP; clients may see "Disconnected" for
 up to the Cloud Map TTL (10 s).
 
-## Why not forward branch pointers through the write tier?
+## Branch pointers: DynamoDB or the write tier
 
-Lore has a `remote` mutable store mode that proxies branch-pointer operations through another
-Lore server, which is what the edge pod uses. At v0.10.1 it does not implement `list`, which
-repository-by-name resolution needs, so a server built on it cannot `clone lores://<host>/<name>`.
-Using the write region's DynamoDB tables directly costs one round trip per DynamoDB call rather
-than one per Lore operation.
+`branch_pointer_access` selects how the cache reaches the write region's branch pointers.
+The default, `"dynamodb"`, uses the write region's DynamoDB table directly. `"write_tier"` uses
+Lore's `remote` mutable store (what the edge pod uses) to forward each operation to the write
+tier. Measured from a far-region client with Lore v0.10.1, forwarding was slightly slower
+(small push 0.98 s vs 0.87 s at 55 ms RTT, 2.29 s vs 1.94 s at 136 ms), and
+`lore repository list` fails through it because the remote store does not implement `list`.
+Clone, commit, push and sync work in both modes.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -136,7 +138,7 @@ than one per Lore operation.
 | <a name="input_locks_table_arn"></a> [locks\_table\_arn](#input\_locks\_table\_arn) | Write region's DynamoDB locks table ARN, for this tier's IAM policy | `string` | n/a | yes |
 | <a name="input_locks_table_name"></a> [locks\_table\_name](#input\_locks\_table\_name) | Write region's DynamoDB locks table name (root output). Shared so exclusive checkouts taken in one office are seen in the other. | `string` | n/a | yes |
 | <a name="input_mutable_store_table_arn"></a> [mutable\_store\_table\_arn](#input\_mutable\_store\_table\_arn) | Write region's mutable-store table ARN, for this tier's IAM policy | `string` | n/a | yes |
-| <a name="input_mutable_store_table_name"></a> [mutable\_store\_table\_name](#input\_mutable\_store\_table\_name) | Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the cache talks to the write region's table directly. | `string` | n/a | yes |
+| <a name="input_mutable_store_table_name"></a> [mutable\_store\_table\_name](#input\_mutable\_store\_table\_name) | Write region's DynamoDB mutable-store table (branch pointers), used cross-region when branch\_pointer\_access = "dynamodb". | `string` | n/a | yes |
 | <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for all resource names in this region (e.g. 'lore-dev-london'). Must differ from the write region's prefix. | `string` | n/a | yes |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR for this region's VPC. Must not overlap the write region's VPC (peering). | `string` | n/a | yes |
 | <a name="input_write_region"></a> [write\_region](#input\_write\_region) | AWS region of the write tier (e.g. us-east-2). Used to reach its DynamoDB locks table. | `string` | n/a | yes |
@@ -152,6 +154,7 @@ than one per Lore operation.
 | <a name="input_auth_jwt_issuer"></a> [auth\_jwt\_issuer](#input\_auth\_jwt\_issuer) | n/a | `string` | `null` | no |
 | <a name="input_auth_mode"></a> [auth\_mode](#input\_auth\_mode) | Must match the write region: none, cognito, or external | `string` | `"none"` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Availability zones for the VPC. Null uses the first two in the region. | `list(string)` | `null` | no |
+| <a name="input_branch_pointer_access"></a> [branch\_pointer\_access](#input\_branch\_pointer\_access) | How this cache reaches the write region's branch pointers. "dynamodb" (default): the write<br/>region's DynamoDB table used directly. "write\_tier": Lore's remote mutable store, each<br/>operation forwarded to the write tier over QUIC; measured slightly slower for push and<br/>status, and `lore repository list` fails through it at Lore v0.10.1. Locks always use the<br/>write region's DynamoDB table, since Lore has no remote lock store. | `string` | `"dynamodb"` | no |
 | <a name="input_cache_max_size_bytes"></a> [cache\_max\_size\_bytes](#input\_cache\_max\_size\_bytes) | n/a | `number` | `0` | no |
 | <a name="input_container_memory_reservation"></a> [container\_memory\_reservation](#input\_container\_memory\_reservation) | n/a | `number` | `null` | no |
 | <a name="input_container_user"></a> [container\_user](#input\_container\_user) | User/group for the container process | `string` | `"65534"` | no |

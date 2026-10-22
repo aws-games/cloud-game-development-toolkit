@@ -268,7 +268,7 @@ variable "enable_same_region_write" {
 }
 
 variable "mutable_store_mode" {
-  description = "Lore mutable store backend. \"aws\" uses the DynamoDB tables (the write region). \"remote\" forwards branch pointers and tree state to another Lore server (a regional tier in a second region, whose mutable_store_remote_url points at the write region)."
+  description = "Lore mutable store backend. \"aws\" uses the DynamoDB tables (the write region). \"remote\" forwards branch pointers and tree state to another Lore server (a regional cache whose mutable_store_remote_url points at the write tier)."
   type        = string
   default     = "aws"
 

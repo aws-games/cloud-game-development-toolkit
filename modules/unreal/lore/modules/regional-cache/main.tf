@@ -278,14 +278,14 @@ module "compute" {
   durable_remote_url      = "lore://${var.write_tier_dns_name}:41340"
   durable_expected_rtt_ms = var.write_region_rtt_ms
 
-  # Branch pointers and locks: the write region's DynamoDB tables, used directly. Lore's
-  # `remote` mutable store would forward through the write tier instead, but at v0.10.1 it does
-  # not implement list(), so repositories cannot be resolved by name through it.
-  mutable_store_mode   = "aws"
-  mutable_store_region = var.write_region
-  lock_store_mode      = "aws"
-  lock_store_region    = var.write_region
-  trusted_ca_pem       = var.write_tier_ca_certificate_pem
+  # Branch pointers: the write region's DynamoDB table used directly (default), or forwarded to
+  # the write tier. Locks: the write region's DynamoDB table (Lore has no remote lock store).
+  mutable_store_mode       = var.branch_pointer_access == "write_tier" ? "remote" : "aws"
+  mutable_store_remote_url = "lores://${var.write_tier_dns_name}:41337"
+  mutable_store_region     = var.write_region
+  lock_store_mode          = "aws"
+  lock_store_region        = var.write_region
+  trusted_ca_pem           = var.write_tier_ca_certificate_pem
 
   # quic_internal on, so the write tier can push fragments into this cache
   enable_replication = true

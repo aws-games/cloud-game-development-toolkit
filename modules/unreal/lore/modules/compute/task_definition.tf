@@ -37,8 +37,8 @@ locals {
     ["]", "", "[immutable_store.composite.replica_factory]", "client_message_buffer = 50000", format("enable_same_region_write = %t", var.enable_same_region_write), ""]
   )) : ""
 
-  # Store backends — the write region uses DynamoDB for everything; a regional tier in another
-  # region keeps fragments locally but forwards branch pointers to the write region.
+  # Store backends — the write region uses DynamoDB for everything; a regional cache in another
+  # region uses the write region's tables cross-region, or forwards branch pointers to the write tier.
   mutable_store_env_vars = var.mutable_store_mode == "remote" ? [
     { name = "LORE__MUTABLE_STORE__MODE", value = "remote" },
     { name = "LORE__MUTABLE_STORE__REMOTE__REMOTE_URL", value = var.mutable_store_remote_url },

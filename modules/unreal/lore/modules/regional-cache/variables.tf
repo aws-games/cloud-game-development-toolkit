@@ -58,8 +58,25 @@ variable "write_tier_ca_certificate_pem" {
   type        = string
 }
 
+variable "branch_pointer_access" {
+  description = <<-EOT
+    How this cache reaches the write region's branch pointers. "dynamodb" (default): the write
+    region's DynamoDB table used directly. "write_tier": Lore's remote mutable store, each
+    operation forwarded to the write tier over QUIC; measured slightly slower for push and
+    status, and `lore repository list` fails through it at Lore v0.10.1. Locks always use the
+    write region's DynamoDB table, since Lore has no remote lock store.
+  EOT
+  type        = string
+  default     = "dynamodb"
+
+  validation {
+    condition     = contains(["write_tier", "dynamodb"], var.branch_pointer_access)
+    error_message = "branch_pointer_access must be \"write_tier\" or \"dynamodb\"."
+  }
+}
+
 variable "mutable_store_table_name" {
-  description = "Write region's DynamoDB mutable-store table (branch pointers). Used cross-region: Lore's remote mutable store cannot list repositories (v0.10.1), so the cache talks to the write region's table directly."
+  description = "Write region's DynamoDB mutable-store table (branch pointers), used cross-region when branch_pointer_access = \"dynamodb\"."
   type        = string
 }
 
