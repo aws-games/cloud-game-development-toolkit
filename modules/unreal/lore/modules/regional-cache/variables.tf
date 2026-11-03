@@ -44,8 +44,29 @@ variable "write_region_rtt_ms" {
 }
 
 variable "write_region_vpc_cidr" {
-  description = "CIDR of the write region's VPC. Allowed to reach this tier on 41337/41340 so the write tier can replicate to it; this tier is allowed out to it on the same ports."
+  description = "CIDR of the write region's VPC. Allowed to and from this tier on 41337. Also used for 41340 when write_tier_replication_cidrs is null; set that to the write tier's private subnet CIDRs instead."
   type        = string
+
+  validation {
+    condition     = can(cidrhost(var.write_region_vpc_cidr, 0)) && !contains(["0.0.0.0/0", "::/0"], var.write_region_vpc_cidr)
+    error_message = "write_region_vpc_cidr must be a specific valid CIDR, not 0.0.0.0/0 or ::/0."
+  }
+}
+
+variable "write_tier_replication_cidrs" {
+  description = <<-EOT
+    CIDRs allowed to and from this cache on replication port 41340. Port 41340 has no JWT or
+    client-certificate check, so this list is its only access control. Give the write tier's
+    private subnet CIDRs (root module output private_subnet_cidrs). Null falls back to
+    write_region_vpc_cidr, which is broader than needed.
+  EOT
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition     = var.write_tier_replication_cidrs == null ? true : (length(var.write_tier_replication_cidrs) > 0 && !contains(var.write_tier_replication_cidrs, "0.0.0.0/0") && !contains(var.write_tier_replication_cidrs, "::/0"))
+    error_message = "write_tier_replication_cidrs must be null or a nonempty list of specific CIDRs, never 0.0.0.0/0 or ::/0."
+  }
 }
 
 variable "write_tier_dns_name" {
@@ -65,13 +86,21 @@ variable "branch_pointer_access" {
     operation forwarded to the write tier over QUIC; measured slightly slower for push and
     status, and `lore repository list` fails through it at Lore v0.10.1. Locks always use the
     write region's DynamoDB table, since Lore has no remote lock store.
+    "write_tier" is rejected when auth_mode is not "none": this module does not forward client
+    tokens to the write tier, so an authenticated write tier would refuse the forwarded calls.
   EOT
   type        = string
   default     = "dynamodb"
+  nullable    = false
 
   validation {
     condition     = contains(["write_tier", "dynamodb"], var.branch_pointer_access)
     error_message = "branch_pointer_access must be \"write_tier\" or \"dynamodb\"."
+  }
+
+  validation {
+    condition     = !(var.branch_pointer_access == "write_tier" && var.auth_mode != "none")
+    error_message = "branch_pointer_access = \"write_tier\" is not supported with auth_mode = \"external\": token forwarding to the write tier is not implemented. Use \"dynamodb\"."
   }
 }
 
@@ -126,8 +155,14 @@ variable "enable_vpc_flow_logs" {
 }
 
 variable "allowed_ingress_cidrs" {
-  description = "CIDR blocks of this office's clients allowed to reach the cache on 41337 and 41339"
+  description = "Specific CIDR blocks of this office's clients allowed to reach the cache on 41337 and 41339. Public catch-all ranges are rejected."
   type        = list(string)
+  nullable    = false
+
+  validation {
+    condition     = length(var.allowed_ingress_cidrs) > 0 && !contains(var.allowed_ingress_cidrs, "0.0.0.0/0") && !contains(var.allowed_ingress_cidrs, "::/0")
+    error_message = "allowed_ingress_cidrs must contain at least one specific CIDR and must not include 0.0.0.0/0 or ::/0."
+  }
 }
 
 # =============================================================================
@@ -197,24 +232,54 @@ variable "deployment_maximum_percent" {
 # =============================================================================
 
 variable "auth_mode" {
-  description = "Must match the write region: none, cognito, or external"
+  description = <<-EOT
+    "none" or "external". JWT validation applies to client port 41337 only; port 41340 has no
+    JWT or mTLS check. "external" requires an HTTPS auth_jwk_endpoint, an HTTPS auth_jwt_issuer
+    and a nonempty auth_jwt_audience. If the write region uses Cognito, pass "external" with the
+    root module's auth_jwk_endpoint and auth_jwt_issuer outputs.
+  EOT
   type        = string
   default     = "none"
+  nullable    = false
+
+  validation {
+    condition     = contains(["none", "external"], var.auth_mode)
+    error_message = "regional-cache auth_mode must be \"none\" or \"external\". For a Cognito write region, use \"external\" with the root module's auth_jwk_endpoint and auth_jwt_issuer outputs."
+  }
 }
 
 variable "auth_jwk_endpoint" {
-  type    = string
-  default = null
+  description = "HTTPS JWKS endpoint. Required when auth_mode = \"external\"."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.auth_mode == "none" || (var.auth_jwk_endpoint != null && startswith(coalesce(var.auth_jwk_endpoint, "-"), "https://"))
+    error_message = "auth_jwk_endpoint must be an https:// URL when auth_mode = \"external\"."
+  }
 }
 
 variable "auth_jwt_issuer" {
-  type    = string
-  default = null
+  description = "HTTPS JWT issuer. Required when auth_mode = \"external\"."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.auth_mode == "none" || (var.auth_jwt_issuer != null && startswith(coalesce(var.auth_jwt_issuer, "-"), "https://"))
+    error_message = "auth_jwt_issuer must be an https:// URL when auth_mode = \"external\"."
+  }
 }
 
 variable "auth_jwt_audience" {
-  type    = list(string)
-  default = []
+  description = "JWT audience values accepted. Must contain at least one nonempty value when auth_mode = \"external\"."
+  type        = list(string)
+  default     = []
+  nullable    = false
+
+  validation {
+    condition     = var.auth_mode == "none" || (length(var.auth_jwt_audience) > 0 && alltrue([for a in var.auth_jwt_audience : trimspace(a == null ? "" : a) != ""]))
+    error_message = "auth_jwt_audience must contain at least one nonempty value when auth_mode = \"external\"."
+  }
 }
 
 variable "tls_certificate_secret_arn" {

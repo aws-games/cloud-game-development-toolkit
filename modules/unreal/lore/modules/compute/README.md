@@ -11,7 +11,7 @@ This is an internal sub-module of `terraform-aws-lore`. Do not consume directly 
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
@@ -20,7 +20,7 @@ This is an internal sub-module of `terraform-aws-lore`. Do not consume directly 
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2.0 |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.0 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | ~> 4.0 |
 
@@ -128,7 +128,7 @@ No modules.
 | <a name="input_mutable_store_remote_url"></a> [mutable\_store\_remote\_url](#input\_mutable\_store\_remote\_url) | Lore server URL for the remote mutable store (e.g. lores://write-tier.lore-dev.internal:41337). Required when mutable\_store\_mode = "remote". | `string` | `null` | no |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | ADOT collector image URI. Override to use a private ECR mirror. | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
 | <a name="input_replication_peer_refresh_seconds"></a> [replication\_peer\_refresh\_seconds](#input\_replication\_peer\_refresh\_seconds) | How often replication peers are re-created and their DNS names re-resolved (Lore rotating\_id\_fixed topology). Connections to peers are re-established at each interval. | `number` | `300` | no |
-| <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Peer Lore servers for Lore's fixed topology ([topology.fixed] in the server config).<br/>locality is relative to this server: "SameRegion" peers are read + write replicas tuned for<br/>in-region links; "OtherRegion" peers receive every put over QUIC (BBR) and are how a tier in<br/>another region is kept warm. Rendered into a TOML overlay because Lore cannot take arrays<br/>from environment variables. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Peer Lore servers for Lore's fixed topology ([topology.fixed] in the server config).<br/>locality is relative to this server: "SameRegion" peers are read + write replicas tuned for<br/>in-region links; "OtherRegion" peers are push targets for each put over QUIC (BBR), which can<br/>prefill a tier in another region. A missed push is handled by that tier's durable-store path.<br/>Rendered into a TOML overlay because Lore cannot take arrays from environment variables. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_service_discovery_registry_arn"></a> [service\_discovery\_registry\_arn](#input\_service\_discovery\_registry\_arn) | Cloud Map service ARN for ECS service registration. Null when service discovery is disabled. | `string` | `null` | no |
 | <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated. | `string` | `null` | no |
 | <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert. | `string` | `null` | no |
@@ -147,6 +147,7 @@ No modules.
 | <a name="output_ecs_cluster_name"></a> [ecs\_cluster\_name](#output\_ecs\_cluster\_name) | Name of the ECS cluster |
 | <a name="output_effective_asg_config"></a> [effective\_asg\_config](#output\_effective\_asg\_config) | Resolved ASG sizing after environment-aware defaults |
 | <a name="output_execution_role_arn"></a> [execution\_role\_arn](#output\_execution\_role\_arn) | ARN of the ECS execution IAM role |
+| <a name="output_listener_env_vars"></a> [listener\_env\_vars](#output\_listener\_env\_vars) | Auth and replication-listener environment variables handed to loreserver. For tests and debugging. |
 | <a name="output_service_name"></a> [service\_name](#output\_service\_name) | Name of the ECS service |
 | <a name="output_store_env_vars"></a> [store\_env\_vars](#output\_store\_env\_vars) | Store-wiring environment variables handed to loreserver (immutable, mutable, lock). For tests and debugging. |
 | <a name="output_task_definition_arn"></a> [task\_definition\_arn](#output\_task\_definition\_arn) | ARN of the loreserver task definition |

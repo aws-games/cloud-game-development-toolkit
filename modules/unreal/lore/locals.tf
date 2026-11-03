@@ -22,13 +22,6 @@ check "instance_store_validation" {
   }
 }
 
-check "ingress_cidr_not_open" {
-  assert {
-    condition     = !contains(var.allowed_ingress_cidrs, "0.0.0.0/0")
-    error_message = "It is recommended to use specific CIDRs for your studio network rather than 0.0.0.0/0. See docs/user/security.md for guidance."
-  }
-}
-
 check "tiering_days_ordering" {
   assert {
     condition = (

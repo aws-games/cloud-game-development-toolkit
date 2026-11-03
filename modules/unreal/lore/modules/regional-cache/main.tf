@@ -2,10 +2,10 @@
 # Regional cache — a Lore server in a second region with an NVMe cache and no storage of its own.
 #
 # The write region stays the single source of truth: its S3 bucket and DynamoDB tables are the
-# only copies. This node's cache sits over the write tier (durable mode "replicated"), and the
-# write tier pushes every fragment it stores into this cache (topology peer, OtherRegion), so
-# the second office reads new content locally. Branch pointers and locks are the write region's
-# DynamoDB tables, used cross-region. See the root README, "Multi-region".
+# only copies. This node's cache sits over the write tier (durable mode "replicated"). The
+# write tier attempts to push each stored fragment into this cache (topology peer, OtherRegion);
+# a missed fragment loads from the write tier on the first cache miss. Branch pointers and locks
+# are the write region's DynamoDB tables, used cross-region. See the root README, "Multi-region".
 #
 # Pass `providers = { aws = aws.<region> }` when calling this module.
 # =============================================================================
@@ -20,6 +20,8 @@ data "aws_availability_zones" "available" {
 locals {
   # The write region's CIDR gets its own rules below; drop it from the client list to avoid duplicates.
   client_cidrs = setsubtract(toset(var.allowed_ingress_cidrs), toset([var.write_region_vpc_cidr]))
+  # 41340 has no JWT or client-certificate check: these CIDRs are its only access control.
+  write_tier_replication_cidrs = sort(distinct(coalesce(var.write_tier_replication_cidrs, [var.write_region_vpc_cidr])))
   availability_zones = var.availability_zones != null ? var.availability_zones : (
     length(data.aws_availability_zones.available.names) >= 2
     ? slice(data.aws_availability_zones.available.names, 0, 2)
@@ -27,6 +29,28 @@ locals {
   )
   tags          = merge(var.tags, { ManagedBy = "terraform", LoreRole = "regional-cache" })
   tier_dns_name = "regional-cache.${var.name_prefix}.internal"
+}
+
+# Preserve the first 41340 rule when upgrading from the former single-CIDR resources.
+# Extra private-subnet CIDRs create only additional indexed rules.
+moved {
+  from = aws_vpc_security_group_ingress_rule.write_region_replication_tcp
+  to   = aws_vpc_security_group_ingress_rule.write_region_replication_tcp[0]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.write_region_replication_udp
+  to   = aws_vpc_security_group_ingress_rule.write_region_replication_udp[0]
+}
+
+moved {
+  from = aws_vpc_security_group_egress_rule.write_region_replication_tcp
+  to   = aws_vpc_security_group_egress_rule.write_region_replication_tcp[0]
+}
+
+moved {
+  from = aws_vpc_security_group_egress_rule.write_region_replication_udp
+  to   = aws_vpc_security_group_egress_rule.write_region_replication_udp[0]
 }
 
 # =============================================================================
@@ -120,21 +144,23 @@ resource "aws_vpc_security_group_ingress_rule" "write_region_quic" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "write_region_replication_tcp" {
+  count             = length(local.write_tier_replication_cidrs)
   security_group_id = aws_security_group.tier.id
   from_port         = 41340
   to_port           = 41340
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.write_region_vpc_cidr
-  description       = "Replication from the write region"
+  cidr_ipv4         = local.write_tier_replication_cidrs[count.index]
+  description       = "Replication from the write region (${local.write_tier_replication_cidrs[count.index]})"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "write_region_replication_udp" {
+  count             = length(local.write_tier_replication_cidrs)
   security_group_id = aws_security_group.tier.id
   from_port         = 41340
   to_port           = 41340
   ip_protocol       = "udp"
-  cidr_ipv4         = var.write_region_vpc_cidr
-  description       = "Replication QUIC from the write region"
+  cidr_ipv4         = local.write_tier_replication_cidrs[count.index]
+  description       = "Replication QUIC from the write region (${local.write_tier_replication_cidrs[count.index]})"
 }
 
 # Same-region peers (several tasks in this tier)
@@ -184,21 +210,23 @@ resource "aws_vpc_security_group_egress_rule" "write_region_quic" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "write_region_replication_tcp" {
+  count             = length(local.write_tier_replication_cidrs)
   security_group_id = aws_security_group.tier.id
   from_port         = 41340
   to_port           = 41340
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.write_region_vpc_cidr
-  description       = "Replication to the write tier"
+  cidr_ipv4         = local.write_tier_replication_cidrs[count.index]
+  description       = "Replication to the write tier (${local.write_tier_replication_cidrs[count.index]})"
 }
 
 resource "aws_vpc_security_group_egress_rule" "write_region_replication_udp" {
+  count             = length(local.write_tier_replication_cidrs)
   security_group_id = aws_security_group.tier.id
   from_port         = 41340
   to_port           = 41340
   ip_protocol       = "udp"
-  cidr_ipv4         = var.write_region_vpc_cidr
-  description       = "Replication QUIC to the write tier"
+  cidr_ipv4         = local.write_tier_replication_cidrs[count.index]
+  description       = "Replication QUIC to the write tier (${local.write_tier_replication_cidrs[count.index]})"
 }
 
 resource "aws_vpc_security_group_egress_rule" "peers" {
@@ -233,6 +261,9 @@ resource "aws_service_discovery_service" "tier" {
     routing_policy = "MULTIVALUE"
   }
 
+  # Kept deliberately despite the AWS provider v6 deprecation warning. Existing services were
+  # created with 1 (the only value AWS uses). health_check_custom_config forces replacement, and
+  # a replaced service deregisters every task and breaks name resolution, so do not remove it.
   health_check_custom_config {
     failure_threshold = 1
   }
@@ -272,8 +303,9 @@ module "compute" {
   mutable_store_table_name     = var.mutable_store_table_name
   locks_table_name             = var.locks_table_name
 
-  # The cache's durable tier is the write tier. Uploads and cache misses go there; the write
-  # tier pushes every fragment it stores back into this cache (it lists this node as a peer).
+  # The cache's durable tier is the write tier. Uploads and cache misses go there. The write tier
+  # attempts to push each stored fragment back into this cache because it lists this node as a peer.
+  # A missed push loads through durable_remote_url on the first cache miss.
   durable_store_mode      = "replicated"
   durable_remote_url      = "lore://${var.write_tier_dns_name}:41340"
   durable_expected_rtt_ms = var.write_region_rtt_ms

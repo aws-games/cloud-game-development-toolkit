@@ -73,8 +73,14 @@ variable "availability_zones" {
 # =============================================================================
 
 variable "allowed_ingress_cidrs" {
-  description = "CIDR blocks allowed to access Lore server ports. No default — must be explicitly provided."
+  description = "Specific CIDR blocks allowed to access Lore server ports. Public catch-all ranges are rejected."
   type        = list(string)
+  nullable    = false
+
+  validation {
+    condition     = length(var.allowed_ingress_cidrs) > 0 && !contains(var.allowed_ingress_cidrs, "0.0.0.0/0") && !contains(var.allowed_ingress_cidrs, "::/0")
+    error_message = "allowed_ingress_cidrs must contain at least one specific CIDR and must not include 0.0.0.0/0 or ::/0."
+  }
 }
 
 # =============================================================================
@@ -286,13 +292,13 @@ variable "intelligent_tiering_deep_archive_days" {
 # =============================================================================
 
 variable "replication_ingress_cidrs" {
-  description = "CIDR blocks of Lore servers in other VPCs or regions (regional caches) allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication), and that the write tier may push to on the same ports. Needed across inter-region VPC peering, where security-group references do not work. Give the peered VPC's CIDR, never 0.0.0.0/0."
+  description = "CIDR blocks of Lore servers in other VPCs or regions (regional caches) allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication), and that the write tier may push to on the same ports. Needed across inter-region VPC peering, where security-group references do not work. Port 41340 has no JWT or client-certificate check, so these rules are its only access control: give the peer tier's private subnet CIDRs (regional-cache output private_subnet_cidrs), not its whole VPC, and never 0.0.0.0/0."
   type        = list(string)
   default     = []
 
   validation {
-    condition     = !contains(var.replication_ingress_cidrs, "0.0.0.0/0")
-    error_message = "replication_ingress_cidrs must list specific VPC CIDRs, not 0.0.0.0/0."
+    condition     = !contains(var.replication_ingress_cidrs, "0.0.0.0/0") && !contains(var.replication_ingress_cidrs, "::/0")
+    error_message = "replication_ingress_cidrs must list specific private CIDRs, not 0.0.0.0/0 or ::/0."
   }
 }
 

@@ -336,6 +336,9 @@ resource "aws_service_discovery_service" "write_tier" {
     routing_policy = "MULTIVALUE"
   }
 
+  # Kept deliberately despite the AWS provider v6 deprecation warning. Existing services were
+  # created with 1 (the only value AWS uses). health_check_custom_config forces replacement, and
+  # a replaced service deregisters every task and breaks name resolution, so do not remove it.
   health_check_custom_config {
     failure_threshold = 1
   }

@@ -138,7 +138,7 @@ output "service_discovery_hosted_zone_id" {
 }
 
 output "vpc_cidr" {
-  description = "CIDR of the VPC the write tier runs in (null when an existing VPC is supplied)"
+  description = "CIDR of the VPC the write tier runs in, for peering routes (null when an existing VPC is supplied). Use private_subnet_cidrs for a regional cache's write_tier_replication_cidrs"
   value       = var.vpc_id == null ? var.vpc_cidr : null
 }
 
@@ -167,3 +167,17 @@ output "mutable_store_table_arn" {
   value       = module.data.mutable_store_table_arn
 }
 
+output "private_subnet_cidrs" {
+  description = "CIDRs of the module-created private subnets the write tier runs in (null when an existing VPC is supplied). Give these to a regional cache as write_tier_replication_cidrs: port 41340 is protected only by network rules."
+  value       = var.vpc_id == null ? module.vpc[0].private_subnet_cidrs : null
+}
+
+output "auth_jwk_endpoint" {
+  description = "JWKS endpoint the write tier validates tokens against (Cognito or external; null when auth_mode = none). A regional cache uses it with auth_mode = external."
+  value       = var.auth_mode == "none" ? null : (var.auth_mode == "cognito" ? module.auth[0].jwk_endpoint : var.auth_jwk_endpoint)
+}
+
+output "auth_jwt_issuer" {
+  description = "JWT issuer the write tier accepts (null when auth_mode = none). A regional cache uses it with auth_mode = external."
+  value       = var.auth_mode == "none" ? null : (var.auth_mode == "cognito" ? module.auth[0].issuer : var.auth_jwt_issuer)
+}

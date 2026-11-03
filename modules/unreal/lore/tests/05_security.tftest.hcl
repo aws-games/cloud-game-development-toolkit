@@ -130,3 +130,20 @@ run "otel_disabled_plans_successfully" {
     enable_otel_sidecar   = false
   }
 }
+
+# =============================================================================
+# Public catch-all ingress must fail, even in auth_mode=none
+# =============================================================================
+
+run "open_client_ingress_is_rejected" {
+  command = plan
+
+  variables {
+    project_prefix        = "lore"
+    environment           = "dev"
+    container_image       = "placeholder:latest"
+    allowed_ingress_cidrs = ["0.0.0.0/0"]
+  }
+
+  expect_failures = [var.allowed_ingress_cidrs]
+}

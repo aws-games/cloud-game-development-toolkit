@@ -4,13 +4,18 @@ output "vpc_id" {
 }
 
 output "vpc_cidr" {
-  description = "VPC CIDR, for the write region's replication_ingress_cidrs"
+  description = "VPC CIDR, for peering routes. Use private_subnet_cidrs, not this, for replication_ingress_cidrs"
   value       = var.vpc_cidr
 }
 
 output "private_subnet_ids" {
   description = "Private subnet IDs"
   value       = module.vpc.private_subnet_ids
+}
+
+output "private_subnet_cidrs" {
+  description = "CIDRs of the private subnets the cache runs in. Give these to the write region as replication_ingress_cidrs: port 41340 is protected only by network rules."
+  value       = module.vpc.private_subnet_cidrs
 }
 
 output "public_subnet_ids" {

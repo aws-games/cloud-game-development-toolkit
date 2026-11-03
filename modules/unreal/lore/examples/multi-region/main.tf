@@ -3,9 +3,9 @@
 #
 # The write region runs the normal Lore module and is the single source of truth: one S3
 # bucket, one set of DynamoDB tables. The other region runs a regional cache: a Lore server with
-# an NVMe cache and no storage of its own. The write tier pushes every fragment it stores into
-# that cache, so the second office reads new work locally; its uploads and cache misses go to the
-# write tier. See ../../README.md, "Multi-region".
+# an NVMe cache and no storage of its own. The write tier attempts to push each stored fragment
+# into that cache. A missed push loads from the write tier on the first cache miss. The second
+# office's uploads and cache misses go to the write tier. See ../../README.md, "Multi-region".
 # =============================================================================
 
 provider "aws" {
@@ -44,15 +44,16 @@ module "lore" {
   auth_jwt_issuer            = var.auth_jwt_issuer
   auth_jwt_audience          = var.auth_jwt_audience
 
-  # Let the regional cache's VPC reach the write tier, and the write tier push to it
-  # (security-group references do not cross inter-region peering, so this is by CIDR).
-  replication_ingress_cidrs = [local.replica_vpc_cidr]
+  # Let the regional cache's private subnets reach the write tier, and the write tier push to
+  # them (security-group references do not cross inter-region peering, so this is by CIDR).
+  # Port 41340 has no JWT or client-certificate check: these CIDRs are its only protection.
+  replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs
   vpc_peering_routes = [{
     cidr_block                = local.replica_vpc_cidr
     vpc_peering_connection_id = aws_vpc_peering_connection.regions.id
   }]
 
-  # Push every stored fragment into the other office's cache.
+  # Attempt to prefill the other office's cache after storing each fragment.
   replication_peers = [{
     address  = module.regional_cache.cache_dns_name
     locality = "OtherRegion"
@@ -85,6 +86,7 @@ module "regional_cache" {
   # The write region it belongs to
   write_region                  = var.write_region
   write_region_vpc_cidr         = local.write_vpc_cidr
+  write_tier_replication_cidrs  = module.lore.private_subnet_cidrs
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
   mutable_store_table_name      = module.lore.mutable_store_table_name

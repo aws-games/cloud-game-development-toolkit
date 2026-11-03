@@ -8,8 +8,42 @@ This is an internal sub-module of `terraform-aws-lore`. Do not consume directly 
 
 This sub-module manages each route table's complete inline route set. Before updating an existing
 VPC, inspect the plan for routes added by another AWS service. Do not apply a plan that removes
-GuardDuty Runtime Monitoring routes or any other service-managed route. Migrate those routes to
-an explicit supported design first.
+GuardDuty Runtime Monitoring routes or any other service-managed route. For non-peering routes,
+use the existing-VPC path in step 4 instead.
+
+There is no safe in-place Terraform migration from these inline routes to separate `aws_route`
+resources, and this module does not attempt one. The private route table declares exactly the
+`0.0.0.0/0` NAT route plus `peering_routes`; the public route table declares exactly the
+`0.0.0.0/0` internet gateway route. Gateway VPC endpoint routes (`vpce-`) are not affected.
+
+Prerequisites before every apply against an existing VPC:
+
+1. Save the plan: `terraform plan -out=tfplan`.
+2. List routes the plan would remove. Any output means stop:
+
+   ```bash
+   terraform show -json tfplan | jq -r '
+     .resource_changes[]
+     | select(.type == "aws_route_table"
+         and ((.change.actions | index("update")) or (.change.actions | index("delete"))))
+     | .address as $a
+     | ((.change.before.route // []) - (.change.after.route // []))[]
+     | "\($a) removes \(.cidr_block // .ipv6_cidr_block // .destination_prefix_list_id)"'
+   ```
+
+   Routes whose target is unknown until apply (a new peering connection) also appear; confirm
+   each one is a route you declared.
+3. Compare with the live table (read-only):
+   `aws ec2 describe-route-tables --route-table-ids <id> --query 'RouteTables[0].Routes'`.
+   Every route other than `local`, the `0.0.0.0/0` default, a declared peering route or a
+   `vpce-` gateway endpoint route will be removed by the next apply.
+4. If such a route exists, do not apply. Peering routes can be moved into `peering_routes`
+   (root: `vpc_peering_routes`). For any other route type, the supported path is to run the root
+   module with an existing VPC (`vpc_id`, `private_subnet_ids`, `public_subnet_ids`) whose routes
+   you manage yourself. The regional cache has no existing-VPC input yet.
+
+The mocked tests in `tests/10_multi_region.tftest.hcl` pin the exact declared route sets, so a
+change to them fails CI rather than surfacing first in a plan.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -17,13 +51,13 @@ an explicit supported design first.
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 
 ## Providers
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 
 ## Modules
 
@@ -66,6 +100,7 @@ No modules.
 | ---- | ----------- |
 | <a name="output_nat_gateway_id"></a> [nat\_gateway\_id](#output\_nat\_gateway\_id) | ID of the NAT gateway |
 | <a name="output_private_route_table_id"></a> [private\_route\_table\_id](#output\_private\_route\_table\_id) | ID of the private route table |
+| <a name="output_private_subnet_cidrs"></a> [private\_subnet\_cidrs](#output\_private\_subnet\_cidrs) | CIDR blocks of the private subnets |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | IDs of the private subnets |
 | <a name="output_public_route_table_id"></a> [public\_route\_table\_id](#output\_public\_route\_table\_id) | ID of the public route table |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | IDs of the public subnets |

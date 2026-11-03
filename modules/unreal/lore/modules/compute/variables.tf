@@ -255,9 +255,9 @@ variable "replication_peers" {
   description = <<-EOT
     Peer Lore servers for Lore's fixed topology ([topology.fixed] in the server config).
     locality is relative to this server: "SameRegion" peers are read + write replicas tuned for
-    in-region links; "OtherRegion" peers receive every put over QUIC (BBR) and are how a tier in
-    another region is kept warm. Rendered into a TOML overlay because Lore cannot take arrays
-    from environment variables.
+    in-region links; "OtherRegion" peers are push targets for each put over QUIC (BBR), which can
+    prefill a tier in another region. A missed push is handled by that tier's durable-store path.
+    Rendered into a TOML overlay because Lore cannot take arrays from environment variables.
   EOT
   type = list(object({
     address  = string

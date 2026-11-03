@@ -224,12 +224,12 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
     error_message = "cache_dns_name"
   }
   assert {
-    condition     = aws_vpc_security_group_ingress_rule.write_region_replication_udp.from_port == 41340 && aws_vpc_security_group_ingress_rule.write_region_replication_udp.cidr_ipv4 == "10.10.0.0/16"
+    condition     = aws_vpc_security_group_ingress_rule.write_region_replication_udp[0].from_port == 41340 && aws_vpc_security_group_ingress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16"
     error_message = "The write tier must be able to push into the cache on 41340/udp"
   }
 }
 
-run "regional_cache_can_forward_branch_pointers_to_the_write_tier" {
+run "regional_cache_can_forward_branch_pointers_to_the_write_tier_without_auth" {
   command = plan
 
   module {
@@ -253,10 +253,6 @@ run "regional_cache_can_forward_branch_pointers_to_the_write_tier" {
     locks_table_name              = "lore-dev-locks"
     locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
     branch_pointer_access         = "write_tier"
-    auth_mode                     = "external"
-    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
-    auth_jwt_issuer               = "https://login.example.com"
-    auth_jwt_audience             = ["lore-server"]
   }
 
   assert {
@@ -300,4 +296,515 @@ run "regional_cache_rejects_unknown_branch_pointer_access" {
   }
 
   expect_failures = [var.branch_pointer_access]
+}
+
+# =============================================================================
+# Regional cache auth — only supported modes, fail closed
+# =============================================================================
+
+run "regional_cache_external_auth_sets_jwt_env" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = ["lore-server"]
+  }
+
+  assert {
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__MUTABLE_STORE__MODE"]) == "aws"
+    error_message = "With auth, branch pointers must use the write region's DynamoDB table"
+  }
+  assert {
+    condition = (
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__AUTH__JWK__ENDPOINT"]) == "https://login.example.com/.well-known/jwks.json" &&
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__AUTH__JWT_ISSUER"]) == "https://login.example.com" &&
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__AUTH__JWT_AUDIENCE"]) == "lore-server"
+    )
+    error_message = "External auth must reach loreserver as JWK endpoint, issuer and audience"
+  }
+}
+
+run "regional_cache_rejects_write_tier_branch_pointers_with_auth" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    branch_pointer_access         = "write_tier"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = ["lore-server"]
+  }
+
+  expect_failures = [var.branch_pointer_access]
+}
+
+run "regional_cache_rejects_cognito_auth_mode" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "cognito"
+  }
+
+  expect_failures = [var.auth_mode]
+}
+
+run "regional_cache_external_auth_requires_https_jwk" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "http://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = ["lore-server"]
+  }
+
+  expect_failures = [var.auth_jwk_endpoint]
+}
+
+run "regional_cache_external_auth_requires_jwk_and_issuer" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwt_audience             = ["lore-server"]
+  }
+
+  expect_failures = [var.auth_jwk_endpoint, var.auth_jwt_issuer]
+}
+
+run "regional_cache_external_auth_requires_https_issuer" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "login.example.com"
+    auth_jwt_audience             = ["lore-server"]
+  }
+
+  expect_failures = [var.auth_jwt_issuer]
+}
+
+run "regional_cache_external_auth_requires_audience" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = []
+  }
+
+  expect_failures = [var.auth_jwt_audience]
+}
+
+run "regional_cache_external_auth_rejects_blank_audience" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = [" "]
+  }
+
+  expect_failures = [var.auth_jwt_audience]
+}
+
+# =============================================================================
+# Port 41340 — network-protected only, so its sources are narrowed to tier subnets
+# =============================================================================
+
+run "regional_cache_41340_defaults_to_write_vpc_and_has_no_mtls" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  assert {
+    condition     = length(aws_vpc_security_group_ingress_rule.write_region_replication_tcp) == 1 && aws_vpc_security_group_ingress_rule.write_region_replication_tcp[0].cidr_ipv4 == "10.10.0.0/16" && length(aws_vpc_security_group_egress_rule.write_region_replication_udp) == 1 && aws_vpc_security_group_egress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16"
+    error_message = "Without write_tier_replication_cidrs, 41340 falls back to the write VPC CIDR"
+  }
+  assert {
+    condition     = output.private_subnet_cidrs == ["10.20.2.0/24", "10.20.3.0/24"]
+    error_message = "private_subnet_cidrs must expose the cache's private subnets for the root's replication_ingress_cidrs"
+  }
+  assert {
+    condition     = aws_service_discovery_service.tier.health_check_custom_config[0].failure_threshold == 1
+    error_message = "failure_threshold = 1 must stay for upgrade safety"
+  }
+}
+
+run "regional_cache_41340_narrowed_to_write_tier_subnets" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_replication_cidrs  = ["10.10.2.0/24", "10.10.3.0/24"]
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  assert {
+    condition = (
+      toset([for r in aws_vpc_security_group_ingress_rule.write_region_replication_tcp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
+      toset([for r in aws_vpc_security_group_ingress_rule.write_region_replication_udp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
+      toset([for r in aws_vpc_security_group_egress_rule.write_region_replication_tcp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
+      toset([for r in aws_vpc_security_group_egress_rule.write_region_replication_udp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"])
+    )
+    error_message = "41340 rules must use only the write tier's subnet CIDRs"
+  }
+  assert {
+    condition     = length([for r in aws_vpc_security_group_ingress_rule.write_region_replication_tcp : r if r.cidr_ipv4 == "10.10.0.0/16"]) == 0
+    error_message = "The whole write VPC must not be allowed on 41340 once narrowed"
+  }
+}
+
+run "regional_cache_41340_rejects_open_internet" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_replication_cidrs  = ["0.0.0.0/0"]
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  expect_failures = [var.write_tier_replication_cidrs]
+}
+
+run "replication_port_has_no_client_cert_check" {
+  command = plan
+
+  variables {
+    replication_ingress_cidrs = ["10.20.2.0/24", "10.20.3.0/24"]
+  }
+
+  # Documents the current security property: 41340 is network-protected, not mTLS. If this
+  # changes, update the READMEs that say so.
+  assert {
+    condition     = one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS"]) == "false"
+    error_message = "41340 client-certificate verification changed; update the docs that state there is no mTLS"
+  }
+  assert {
+    condition     = output.private_subnet_cidrs == ["10.0.2.0/24", "10.0.3.0/24"]
+    error_message = "Root must expose its private subnet CIDRs for a regional cache's write_tier_replication_cidrs"
+  }
+  assert {
+    condition     = output.auth_jwk_endpoint == null && output.auth_jwt_issuer == null
+    error_message = "No auth outputs when auth_mode = none"
+  }
+  assert {
+    condition     = aws_service_discovery_service.write_tier.health_check_custom_config[0].failure_threshold == 1
+    error_message = "failure_threshold = 1 must stay for upgrade safety"
+  }
+}
+
+run "root_exposes_external_auth_for_a_regional_cache" {
+  command = plan
+
+  variables {
+    auth_mode         = "external"
+    auth_jwk_endpoint = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer   = "https://login.example.com"
+    auth_jwt_audience = ["lore-server"]
+  }
+
+  assert {
+    condition     = output.auth_jwk_endpoint == "https://login.example.com/.well-known/jwks.json" && output.auth_jwt_issuer == "https://login.example.com"
+    error_message = "Root must expose the effective JWK endpoint and issuer"
+  }
+}
+
+# =============================================================================
+# Route ownership — pin the exact declared route sets (no safe in-place migration exists)
+# =============================================================================
+
+run "route_tables_declare_exactly_the_expected_routes" {
+  command = plan
+
+  module {
+    source = "./modules/vpc"
+  }
+
+  override_resource {
+    target          = aws_nat_gateway.this
+    override_during = plan
+    values          = { id = "nat-0123456789abcdef0" }
+  }
+  override_resource {
+    target          = aws_internet_gateway.this
+    override_during = plan
+    values          = { id = "igw-0123456789abcdef0" }
+  }
+
+  variables {
+    vpc_cidr           = "10.10.0.0/16"
+    name_prefix        = "lore-dev"
+    availability_zones = ["us-east-2a", "us-east-2b"]
+    peering_routes = [{
+      cidr_block                = "10.20.0.0/16"
+      vpc_peering_connection_id = "pcx-0123456789abcdef0"
+    }]
+  }
+
+  assert {
+    condition     = length(aws_route_table.private.route) == 2
+    error_message = "Private route table must declare exactly the NAT default route and the declared peering routes"
+  }
+  assert {
+    condition     = toset([for r in aws_route_table.private.route : r.cidr_block]) == toset(["0.0.0.0/0", "10.20.0.0/16"])
+    error_message = "Private route table destinations changed; review the route ownership note before changing them"
+  }
+  assert {
+    condition     = one([for r in aws_route_table.private.route : r.vpc_peering_connection_id if r.cidr_block == "10.20.0.0/16"]) == "pcx-0123456789abcdef0"
+    error_message = "Peering route must target the declared peering connection"
+  }
+  assert {
+    condition     = length(aws_route_table.public.route) == 1 && one(aws_route_table.public.route).cidr_block == "0.0.0.0/0"
+    error_message = "Public route table must declare exactly the internet gateway default route"
+  }
+  assert {
+    condition     = output.private_subnet_cidrs == ["10.10.2.0/24", "10.10.3.0/24"]
+    error_message = "private_subnet_cidrs must list the private subnets"
+  }
+}
+
+run "route_tables_without_peering_keep_only_defaults" {
+  command = plan
+
+  module {
+    source = "./modules/vpc"
+  }
+
+  override_resource {
+    target          = aws_nat_gateway.this
+    override_during = plan
+    values          = { id = "nat-0123456789abcdef0" }
+  }
+  override_resource {
+    target          = aws_internet_gateway.this
+    override_during = plan
+    values          = { id = "igw-0123456789abcdef0" }
+  }
+
+  variables {
+    vpc_cidr           = "10.10.0.0/16"
+    name_prefix        = "lore-dev"
+    availability_zones = ["us-east-2a", "us-east-2b"]
+  }
+
+  assert {
+    condition     = length(aws_route_table.private.route) == 1 && one(aws_route_table.private.route).cidr_block == "0.0.0.0/0"
+    error_message = "Single-region private route table must declare only the NAT default route"
+  }
+}
+
+run "regional_cache_rejects_open_client_and_write_region_ingress" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["0.0.0.0/0"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "0.0.0.0/0"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  expect_failures = [var.allowed_ingress_cidrs, var.write_region_vpc_cidr]
 }

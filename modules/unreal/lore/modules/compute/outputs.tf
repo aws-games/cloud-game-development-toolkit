@@ -70,3 +70,8 @@ output "store_env_vars" {
   description = "Store-wiring environment variables handed to loreserver (immutable, mutable, lock). For tests and debugging."
   value       = concat(local.common_env_vars, local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars)
 }
+
+output "listener_env_vars" {
+  description = "Auth and replication-listener environment variables handed to loreserver. For tests and debugging."
+  value       = concat(local.auth_env_vars, local.auth_audience_env, local.replication_env_vars)
+}
