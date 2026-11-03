@@ -26,6 +26,10 @@ terraform init
 terraform apply
 ```
 
+For an existing deployment, inspect the route-table diff. Do not apply a plan that removes
+GuardDuty Runtime Monitoring or other service-managed routes; see the VPC sub-module's route
+ownership note.
+
 The `loreserver` image must exist in **both** regions' ECR. Replicate the repository
 (`aws ecr put-replication-configuration`) rather than pulling across regions.
 

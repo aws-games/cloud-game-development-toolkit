@@ -4,6 +4,13 @@ Provisions VPC, public/private subnets, IGW, NAT gateway, and route tables.
 
 This is an internal sub-module of `terraform-aws-lore`. Do not consume directly — use the root module.
 
+## Route ownership
+
+This sub-module manages each route table's complete inline route set. Before updating an existing
+VPC, inspect the plan for routes added by another AWS service. Do not apply a plan that removes
+GuardDuty Runtime Monitoring routes or any other service-managed route. Migrate those routes to
+an explicit supported design first.
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

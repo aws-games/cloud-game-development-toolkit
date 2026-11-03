@@ -233,7 +233,9 @@ resource "aws_service_discovery_service" "tier" {
     routing_policy = "MULTIVALUE"
   }
 
-  health_check_custom_config {}
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 
   tags = local.tags
 }
