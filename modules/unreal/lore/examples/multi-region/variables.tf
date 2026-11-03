@@ -39,3 +39,33 @@ variable "replica_office_cidrs" {
   description = "CIDR blocks of clients in the replica region's office"
   type        = list(string)
 }
+
+variable "auth_jwk_endpoint" {
+  description = "Your IdP's HTTPS JWKS endpoint URL"
+  type        = string
+
+  validation {
+    condition     = startswith(var.auth_jwk_endpoint, "https://")
+    error_message = "auth_jwk_endpoint must use HTTPS."
+  }
+}
+
+variable "auth_jwt_issuer" {
+  description = "HTTPS JWT issuer string from your IdP"
+  type        = string
+
+  validation {
+    condition     = startswith(var.auth_jwt_issuer, "https://")
+    error_message = "auth_jwt_issuer must use HTTPS."
+  }
+}
+
+variable "auth_jwt_audience" {
+  description = "JWT audience values both Lore tiers accept"
+  type        = list(string)
+
+  validation {
+    condition     = length(var.auth_jwt_audience) > 0
+    error_message = "auth_jwt_audience must contain at least one audience."
+  }
+}

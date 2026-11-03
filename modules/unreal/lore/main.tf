@@ -218,7 +218,7 @@ data "aws_region" "current" {}
 resource "aws_vpc_endpoint" "s3" {
   count             = var.vpc_id == null ? 1 : 0
   vpc_id            = local.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
+  service_name      = "com.amazonaws.${data.aws_region.current.region}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [module.vpc[0].private_route_table_id]
 
@@ -228,7 +228,7 @@ resource "aws_vpc_endpoint" "s3" {
 resource "aws_vpc_endpoint" "dynamodb" {
   count             = var.vpc_id == null ? 1 : 0
   vpc_id            = local.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  service_name      = "com.amazonaws.${data.aws_region.current.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [module.vpc[0].private_route_table_id]
 
@@ -336,9 +336,7 @@ resource "aws_service_discovery_service" "write_tier" {
     routing_policy = "MULTIVALUE"
   }
 
-  health_check_custom_config {
-    failure_threshold = 1
-  }
+  health_check_custom_config {}
 
   tags = local.tags
 }

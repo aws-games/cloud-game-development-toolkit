@@ -253,6 +253,10 @@ run "regional_cache_can_forward_branch_pointers_to_the_write_tier" {
     locks_table_name              = "lore-dev-locks"
     locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
     branch_pointer_access         = "write_tier"
+    auth_mode                     = "external"
+    auth_jwk_endpoint             = "https://login.example.com/.well-known/jwks.json"
+    auth_jwt_issuer               = "https://login.example.com"
+    auth_jwt_audience             = ["lore-server"]
   }
 
   assert {

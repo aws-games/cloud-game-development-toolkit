@@ -19,7 +19,8 @@ the second office's cache as soon as it is stored.
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-# set both image URIs (one per region's ECR) and both offices' CIDRs
+# Set both image URIs, both offices' CIDRs, and your IdP values.
+# The example requires HTTPS JWT authentication on both tiers.
 
 terraform init
 terraform apply
@@ -27,6 +28,13 @@ terraform apply
 
 The `loreserver` image must exist in **both** regions' ECR. Replicate the repository
 (`aws ecr put-replication-configuration`) rather than pulling across regions.
+
+## Authentication
+
+Both tiers validate JWTs from one HTTPS identity provider. Set `auth_jwk_endpoint`,
+`auth_jwt_issuer`, and at least one `auth_jwt_audience` value. The example has no unauthenticated
+mode: configure the Lore CLI with a token from that provider before connecting. Keep the office
+CIDRs narrow as a second access boundary.
 
 ## Connect
 

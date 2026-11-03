@@ -39,7 +39,10 @@ module "lore" {
   enable_deletion_protection = false
   enable_force_destroy       = true
   asg_desired_size           = 1
-  auth_mode                  = "none"
+  auth_mode                  = "external"
+  auth_jwk_endpoint          = var.auth_jwk_endpoint
+  auth_jwt_issuer            = var.auth_jwt_issuer
+  auth_jwt_audience          = var.auth_jwt_audience
 
   # Let the regional cache's VPC reach the write tier, and the write tier push to it
   # (security-group references do not cross inter-region peering, so this is by CIDR).
@@ -74,7 +77,10 @@ module "regional_cache" {
   vpc_cidr              = local.replica_vpc_cidr
   instance_type         = "c8gd.large"
   asg_desired_size      = 1
-  auth_mode             = "none"
+  auth_mode             = "external"
+  auth_jwk_endpoint     = var.auth_jwk_endpoint
+  auth_jwt_issuer       = var.auth_jwt_issuer
+  auth_jwt_audience     = var.auth_jwt_audience
 
   # The write region it belongs to
   write_region                  = var.write_region

@@ -125,7 +125,7 @@ locals {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.loreserver.name
-        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-region"        = data.aws_region.current.region
         "awslogs-stream-prefix" = "otel"
       }
     }
@@ -186,7 +186,7 @@ resource "aws_ecs_task_definition" "loreserver" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.loreserver.name
-          "awslogs-region"        = data.aws_region.current.name
+          "awslogs-region"        = data.aws_region.current.region
           "awslogs-stream-prefix" = "init-certs"
         }
       }
@@ -224,7 +224,7 @@ resource "aws_ecs_task_definition" "loreserver" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.loreserver.name
-          "awslogs-region"        = data.aws_region.current.name
+          "awslogs-region"        = data.aws_region.current.region
           "awslogs-stream-prefix" = "loreserver"
         }
       }

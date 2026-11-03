@@ -4,3 +4,6 @@ container_image         = "123456789012.dkr.ecr.us-east-2.amazonaws.com/loreserv
 replica_container_image = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.10.1"
 write_office_cidrs      = ["203.0.113.0/24"]
 replica_office_cidrs    = ["198.51.100.0/24"]
+auth_jwk_endpoint       = "https://login.example.com/.well-known/jwks.json"
+auth_jwt_issuer         = "https://login.example.com"
+auth_jwt_audience       = ["lore-server"]
