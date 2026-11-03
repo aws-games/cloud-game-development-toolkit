@@ -1,0 +1,15 @@
+[Unit]
+Description= Horde Agent Service
+
+[Service]
+ExecStart=dotnet /home/Horde/HordeAgent.dll
+WorkingDirectory=/home/Horde/
+Restart=always
+RestartSec=5
+SyslogIdentifier=horde-agent
+StandardOutput=append:/home/Horde/agent-service.log
+StandardError=append:/home/Horde/agent-service.err
+User=Horde
+
+[Install]
+WantedBy=multi-user.target
