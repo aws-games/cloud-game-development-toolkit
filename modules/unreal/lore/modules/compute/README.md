@@ -134,6 +134,7 @@ No modules.
 | <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert. | `string` | `null` | no |
 | <a name="input_tls_san_dns_names"></a> [tls\_san\_dns\_names](#input\_tls\_san\_dns\_names) | Additional DNS SANs for the self-signed TLS certificate (e.g., custom domain names) | `list(string)` | `[]` | no |
 | <a name="input_trusted_ca_pem"></a> [trusted\_ca\_pem](#input\_trusted\_ca\_pem) | PEM of another Lore tier's CA that this server must trust as a client (remote mutable store, replication reads). Appended to the system CA bundle at container start. Null when every upstream is in this deployment. | `string` | `null` | no |
+| <a name="input_udp_buffer_max_bytes"></a> [udp\_buffer\_max\_bytes](#input\_udp\_buffer\_max\_bytes) | Host net.core.rmem\_max / wmem\_max for Lore's QUIC (UDP) sockets. Lore v0.11.0+ asks Linux to allow at least 524288; the AL2023 default is 212992. | `number` | `4194304` | no |
 
 ## Outputs
 

@@ -54,3 +54,14 @@ ECS_ENABLE_TASK_IAM_ROLE=true
 ECS_ENABLE_TASK_ENI=true
 ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
 EOF
+
+# Socket buffer ceilings for Lore's QUIC (UDP) traffic. Lore v0.11.0+ asks for a larger UDP
+# receive buffer and its release notes say to allow net.core.rmem_max >= 524288 on Linux; the
+# AL2023 default is 212992. These sysctls are host-wide (not per network namespace), so the
+# awsvpc task inherits them. Most visible on long, high-bandwidth paths such as cross-region
+# replication between a write tier and a regional cache.
+cat > /etc/sysctl.d/90-lore-quic.conf <<EOF
+net.core.rmem_max = ${udp_buffer_max_bytes}
+net.core.wmem_max = ${udp_buffer_max_bytes}
+EOF
+sysctl -q -p /etc/sysctl.d/90-lore-quic.conf

@@ -31,9 +31,10 @@ resource "aws_launch_template" "ecs_instance" {
   vpc_security_group_ids = [var.server_security_group_id]
 
   user_data = base64encode(templatefile("${path.module}/templates/user_data.sh", {
-    cluster_name  = aws_ecs_cluster.main.name
-    mount_path    = "/srv/urc"
-    container_uid = var.container_user
+    cluster_name         = aws_ecs_cluster.main.name
+    mount_path           = "/srv/urc"
+    container_uid        = var.container_user
+    udp_buffer_max_bytes = var.udp_buffer_max_bytes
   }))
 
   metadata_options {

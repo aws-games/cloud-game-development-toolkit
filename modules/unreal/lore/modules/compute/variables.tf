@@ -51,6 +51,17 @@ variable "ami_id" {
   default     = null
 }
 
+variable "udp_buffer_max_bytes" {
+  description = "Host net.core.rmem_max / wmem_max for Lore's QUIC (UDP) sockets. Lore v0.11.0+ asks Linux to allow at least 524288; the AL2023 default is 212992."
+  type        = number
+  default     = 4194304
+
+  validation {
+    condition     = var.udp_buffer_max_bytes >= 524288
+    error_message = "udp_buffer_max_bytes must be at least 524288 (Lore's documented minimum)."
+  }
+}
+
 variable "container_user" {
   description = "User/group for the container process (e.g., '65534', '1000:1000'). Must be numeric UID or UID:GID."
   type        = string
