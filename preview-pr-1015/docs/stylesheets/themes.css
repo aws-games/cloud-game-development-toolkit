@@ -1,0 +1,27 @@
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: rgb(35, 47, 63);
+  --md-primary-fg-color--light: rgb(255, 255, 255);
+  --md-primary-fg-color--dark: rgb(35, 47, 63);
+  --md-accent-fg-color: rgb(255, 153, 0);
+  --md-accent-fg-color--light: rgb(255, 153, 0);
+  --md-accent-fg-color--dark: rgb(255, 153, 0);
+  --md-typeset-a-color: var(--md-accent-fg-color);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: rgb(35, 47, 63);
+  --md-primary-fg-color--light: rgb(255, 255, 255);
+  --md-primary-fg-color--dark: rgb(35, 47, 63);
+  --md-accent-fg-color: rgb(255, 153, 0);
+  --md-accent-fg-color--light: rgb(255, 153, 0);
+  --md-accent-fg-color--dark: rgb(255, 153, 0);
+  --md-typeset-a-color: var(--md-accent-fg-color);
+}
+
+[data-md-color-scheme="slate"] .md-button {
+  color: var(--md-accent-fg-color);
+}
+
+[data-md-color-scheme="default"] .md-button {
+  color: var(--md-accent-fg-color);
+}
