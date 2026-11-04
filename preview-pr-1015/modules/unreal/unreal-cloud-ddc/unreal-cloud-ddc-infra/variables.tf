@@ -264,7 +264,7 @@ variable "system_managed_node_min_size" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.36"
+  default     = "1.37"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
   validation {
