@@ -57,7 +57,7 @@ module "eks_blueprints_all_other_addons" {
     wait = true
   }
   enable_aws_cloudwatch_metrics = true
-  enable_cert_manager                 = var.enable_certificate_manager
+  enable_cert_manager           = var.enable_certificate_manager
 
   cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
 
