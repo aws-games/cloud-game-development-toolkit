@@ -131,6 +131,24 @@ existing in-VPC node (no bastion to stand up, no extra cost).
    eks_api_local_port = 9443
    ```
 
+Before a long apply, confirm the tunnel reaches the cluster. A `401` response
+means the API server answered (the request simply carried no token):
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}\n' https://127.0.0.1:9443/version
+```
+
+Both shells must use the **same AWS credentials and Region**, for example by
+exporting the same `AWS_PROFILE` and `AWS_REGION` in each. The credentials must
+also stay valid for the whole apply (often 30 minutes or more). Short-lived keys
+pasted into a shell can expire partway through, which drops the tunnel. Prefer
+a profile that refreshes itself, such as IAM Identity Center (`aws sso login`)
+or a `credential_process` profile.
+
+The tunnel is needed for **every** command that talks to the Kubernetes API,
+including `terraform destroy`. Start it before tearing the sample down, or the
+destroy fails with the same `Kubernetes cluster unreachable` error.
+
 Leave `eks_api_local_port` unset (`null`, the default) for the normal public
 behavior — nothing changes unless you opt in. For a durable production posture,
 prefer running Terraform from inside the VPC (in-VPC CI, Cloud9, or a bastion)
@@ -168,6 +186,16 @@ To close the endpoint on an existing deployment, start the tunnel and run step
 2 directly. Keep `eks_public_access = false` (for example in
 `terraform.tfvars`) on every later apply, or Terraform will reopen the public
 endpoint.
+
+#### Troubleshooting the tunnel
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `dial tcp 127.0.0.1:9443: connect: connection refused` | The tunnel is not running | Start `scripts/eks-api-tunnel.sh 9443` and leave it open |
+| `Connection to destination port failed` in the tunnel shell, `TLS handshake timeout` in Terraform | The jump host cannot reach the private endpoint on 443 | Set `SSM_INSTANCE_ID` to one of the cluster's EKS nodes (tagged `eks:cluster-name`) |
+| `ExpiredToken` or the tunnel exits mid-apply | Credentials expired | Refresh credentials, restart the tunnel, re-run the apply |
+| Error names the cluster's public `*.eks.amazonaws.com` URL | `eks_api_local_port` is not set | Set `eks_api_local_port` to the tunnel port |
+| `no Online SSM-managed instances found` | Nodes are still starting, or the SSM agent cannot reach SSM | Wait for the node groups to be `ACTIVE`, then retry |
 
 ## Postdeployment
 
