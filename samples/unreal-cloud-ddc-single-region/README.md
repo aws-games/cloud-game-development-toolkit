@@ -25,6 +25,178 @@ terraform apply
 
 The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.
 
+### EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+
+The EBS CSI driver needs AWS credentials to manage EBS volumes for the cluster.
+This sample supports two mechanisms, selected by the sample's root
+`ebs_csi_use_pod_identity` variable (default `true`), which is passed through
+to the intra-cluster module:
+
+- **EKS Pod Identity (recommended, the sample default).** Uses the
+  `pods.eks.amazonaws.com` service principal and
+  `eks-auth:AssumeRoleForPodIdentity`. This is AWS's current recommended
+  mechanism, needs no cluster OIDC provider for the driver, and installs the
+  `eks-pod-identity-agent` add-on automatically. It also works in accounts whose
+  AWS Organization applies an SCP/RCP that denies
+  `sts:AssumeRoleWithWebIdentity` (a common central-governance guardrail) —
+  under IRSA that guardrail leaves the `ebs-csi-controller` pods in
+  `CrashLoopBackOff` with `AccessDenied`, and the add-on never becomes `ACTIVE`.
+- **IRSA (legacy).** Set `ebs_csi_use_pod_identity = false` to use the classic
+  IAM Roles for Service Accounts path (`sts:AssumeRoleWithWebIdentity` via the
+  cluster OIDC provider). Appropriate when Pod Identity is unavailable (for
+  example Fargate or Windows node groups).
+
+```hcl
+# terraform.tfvars — override if you need the legacy IRSA path
+ebs_csi_use_pod_identity = false
+```
+
+### EKS API endpoint access
+
+Terraform installs Helm charts and EKS add-ons over the cluster's Kubernetes
+API, so the machine running `terraform apply` must be able to reach the EKS API
+endpoint for the entire apply.
+
+By default this sample auto-detects your current public IP and allows only that
+single `/32` on the cluster's public endpoint. **This only works when your
+egress is a single, stable public IP.** If you are behind a corporate NAT pool
+or VPN, or you run Terraform from CI, your outbound traffic may leave from a
+different IP than the one auto-detected (or the IP may change mid-apply). The
+symptom is `Kubernetes cluster unreachable: ... dial tcp ...:443: i/o timeout`
+partway through the apply, even though the cluster came up.
+
+In that case set `eks_public_access_cidrs` explicitly to your egress CIDR(s):
+
+```hcl
+# terraform.tfvars
+eks_public_access_cidrs = ["203.0.113.10/32", "203.0.113.11/32"]
+```
+
+For production, prefer keeping the public endpoint closed and running Terraform
+from inside the VPC (bastion, VPN, or in-VPC CI) so the API is reached over the
+private endpoint (`eks_cluster_private_access` is already enabled) rather than
+widening public access.
+
+#### Reaching the API over the private endpoint via SSM
+
+If your host cannot reach the public endpoint at all (corporate egress filters
+it, even with the correct `eks_public_access_cidrs`), you can have Terraform
+talk to the cluster's **private** endpoint through an SSM port-forward tunnel.
+
+The tunnel only changes the route Terraform's `kubernetes` and `helm`
+providers take. **It does not close the public endpoint**: with the defaults
+the cluster still has `endpoint_public_access = true`, restricted to
+`eks_public_access_cidrs` (or your auto-detected IP). To close the public
+endpoint as well, set `eks_public_access = false` (see
+[Closing the public endpoint](#closing-the-public-endpoint) below). The cluster already has
+`endpoint_private_access = true` and an in-VPC SSM-managed EC2 node, which the
+tunnel uses as its jump host.
+
+This path keeps TLS validation intact: the providers connect to
+`127.0.0.1:<port>` but set `tls_server_name` to the real cluster hostname, so
+the cluster's CA certificate is still verified. There is no `insecure = true`
+and no `0.0.0.0/0` exposure.
+
+The symptom that calls for this path is the same `Kubernetes cluster
+unreachable: ... i/o timeout` failure partway through `terraform apply` — but
+here it persists *even with the correct `eks_public_access_cidrs`*, because the
+host has no network route to the public endpoint at all. This reuses the
+existing in-VPC node (no bastion to stand up, no extra cost).
+
+1. Start the tunnel in one shell and leave it running for the whole apply. The
+   cluster name, private endpoint, VPC, and SSM instance are all discovered at
+   runtime — no values are hardcoded (the port defaults to `9443`):
+
+   ```bash
+   scripts/eks-api-tunnel.sh 9443
+   ```
+
+   Requires `awscli` v2, the `session-manager-plugin`, and `jq`. If your
+   account has more than one EKS cluster or more than one SSM instance in the
+   cluster VPC, pass the cluster name as the second argument or set
+   `EKS_CLUSTER_NAME` / `SSM_INSTANCE_ID`.
+
+2. In another shell, run Terraform pointing the providers at that local port.
+   Set `eks_api_local_port` to the same port, either via the environment:
+
+   ```bash
+   export TF_VAR_eks_api_local_port=9443
+   terraform apply
+   ```
+
+   or in tfvars:
+
+   ```hcl
+   # terraform.tfvars
+   eks_api_local_port = 9443
+   ```
+
+Before a long apply, confirm the tunnel reaches the cluster. A `401` response
+means the API server answered (the request simply carried no token):
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}\n' https://127.0.0.1:9443/version
+```
+
+Both shells must use the **same AWS credentials and Region**, for example by
+exporting the same `AWS_PROFILE` and `AWS_REGION` in each. The credentials must
+also stay valid for the whole apply (often 30 minutes or more). Short-lived keys
+pasted into a shell can expire partway through, which drops the tunnel. Prefer
+a profile that refreshes itself, such as IAM Identity Center (`aws sso login`)
+or a `credential_process` profile.
+
+The tunnel is needed for **every** command that talks to the Kubernetes API,
+including `terraform destroy`. Start it before tearing the sample down, or the
+destroy fails with the same `Kubernetes cluster unreachable` error.
+
+Leave `eks_api_local_port` unset (`null`, the default) for the normal public
+behavior — nothing changes unless you opt in. For a durable production posture,
+prefer running Terraform from inside the VPC (in-VPC CI, Cloud9, or a bastion)
+so the private endpoint is used natively and the public endpoint can be closed
+entirely.
+
+#### Closing the public endpoint
+
+Set `eks_public_access = false` to disable the EKS public endpoint
+(`endpoint_public_access = false`). `eks_public_access_cidrs` is then ignored.
+Terraform must reach the cluster over the private endpoint for every apply
+after that, either from inside the VPC or through the SSM tunnel.
+
+The tunnel needs the cluster and its in-VPC SSM node to exist first, so a
+fresh deployment from outside the VPC is a two-step apply:
+
+1. Create the network and cluster. This step does not use the Kubernetes API,
+   so it works with the public endpoint already closed:
+
+   ```bash
+   terraform apply \
+     -var 'eks_public_access=false' \
+     -target=module.unreal_cloud_ddc_vpc \
+     -target=module.unreal_cloud_ddc_infra
+   ```
+
+2. Start the tunnel (`scripts/eks-api-tunnel.sh 9443`) and run the full apply
+   through it:
+
+   ```bash
+   terraform apply -var 'eks_public_access=false' -var 'eks_api_local_port=9443'
+   ```
+
+To close the endpoint on an existing deployment, start the tunnel and run step
+2 directly. Keep `eks_public_access = false` (for example in
+`terraform.tfvars`) on every later apply, or Terraform will reopen the public
+endpoint.
+
+#### Troubleshooting the tunnel
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `dial tcp 127.0.0.1:9443: connect: connection refused` | The tunnel is not running | Start `scripts/eks-api-tunnel.sh 9443` and leave it open |
+| `Connection to destination port failed` in the tunnel shell, `TLS handshake timeout` in Terraform | The jump host cannot reach the private endpoint on 443 | Set `SSM_INSTANCE_ID` to one of the cluster's EKS nodes (tagged `eks:cluster-name`) |
+| `ExpiredToken` or the tunnel exits mid-apply | Credentials expired | Refresh credentials, restart the tunnel, re-run the apply |
+| Error names the cluster's public `*.eks.amazonaws.com` URL | `eks_api_local_port` is not set | Set `eks_api_local_port` to the tunnel port |
+| `no Online SSM-managed instances found` | Nodes are still starting, or the SSM agent cannot reach SSM | Wait for the node groups to be `ACTIVE`, then retry |
+
 ## Postdeployment
 
 The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.
