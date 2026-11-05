@@ -46,3 +46,26 @@ variable "eks_api_local_port" {
     error_message = "eks_api_local_port must be null or a port between 1024 and 65535."
   }
 }
+
+variable "eks_public_access" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Whether the EKS cluster's public API endpoint is enabled. Defaults to true
+    so a first apply from a laptop works without extra setup. Set to false to
+    close the public endpoint entirely; Terraform must then reach the cluster
+    over the private endpoint (from inside the VPC, or via the SSM tunnel with
+    eks_api_local_port). eks_public_access_cidrs is ignored when this is false.
+  EOT
+}
+
+variable "ebs_csi_use_pod_identity" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Use EKS Pod Identity (true, the default) instead of IRSA (false) for the EBS
+    CSI driver. Pod Identity is the AWS-recommended mechanism and also works in
+    accounts whose Organization SCP/RCP denies sts:AssumeRoleWithWebIdentity.
+    Set to false for the legacy IRSA path (for example Fargate or Windows nodes).
+  EOT
+}

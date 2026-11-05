@@ -3818,8 +3818,9 @@
 <p>The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.</p>
 <h3 id="ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity">EBS CSI driver identity mode (IRSA vs EKS Pod Identity)<a class="headerlink" href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" title="Permanent link">&para;</a></h3>
 <p>The EBS CSI driver needs AWS credentials to manage EBS volumes for the cluster.
-This sample supports two mechanisms, selected by the <code>ebs_csi_use_pod_identity</code>
-variable on the intra-cluster module:</p>
+This sample supports two mechanisms, selected by the sample's root
+<code>ebs_csi_use_pod_identity</code> variable (default <code>true</code>), which is passed through
+to the intra-cluster module:</p>
 <ul>
 <li><strong>EKS Pod Identity (recommended, the sample default).</strong> Uses the
   <code>pods.eks.amazonaws.com</code> service principal and
@@ -3857,11 +3858,16 @@ partway through the apply, even though the cluster came up.</p>
 from inside the VPC (bastion, VPN, or in-VPC CI) so the API is reached over the
 private endpoint (<code>eks_cluster_private_access</code> is already enabled) rather than
 widening public access.</p>
-<h4 id="reaching-the-api-over-the-private-endpoint-via-ssm-no-public-access">Reaching the API over the private endpoint via SSM (no public access)<a class="headerlink" href="#reaching-the-api-over-the-private-endpoint-via-ssm-no-public-access" title="Permanent link">&para;</a></h4>
+<h4 id="reaching-the-api-over-the-private-endpoint-via-ssm">Reaching the API over the private endpoint via SSM<a class="headerlink" href="#reaching-the-api-over-the-private-endpoint-via-ssm" title="Permanent link">&para;</a></h4>
 <p>If your host cannot reach the public endpoint at all (corporate egress filters
 it, even with the correct <code>eks_public_access_cidrs</code>), you can have Terraform
-talk to the cluster's <strong>private</strong> endpoint through an SSM port-forward tunnel
-instead of opening any public access. The cluster already has
+talk to the cluster's <strong>private</strong> endpoint through an SSM port-forward tunnel.</p>
+<p>The tunnel only changes the route Terraform's <code>kubernetes</code> and <code>helm</code>
+providers take. <strong>It does not close the public endpoint</strong>: with the defaults
+the cluster still has <code>endpoint_public_access = true</code>, restricted to
+<code>eks_public_access_cidrs</code> (or your auto-detected IP). To close the public
+endpoint as well, set <code>eks_public_access = false</code> (see
+<a href="#closing-the-public-endpoint">Closing the public endpoint</a> below). The cluster already has
 <code>endpoint_private_access = true</code> and an in-VPC SSM-managed EC2 node, which the
 tunnel uses as its jump host.</p>
 <p>This path keeps TLS validation intact: the providers connect to
@@ -3895,11 +3901,87 @@ terraform<span class="w"> </span>apply
 <div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars</span>
 <span class="na">eks_api_local_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9443</span>
 </code></pre></div>
+<p>Before a long apply, confirm the tunnel reaches the cluster. A <code>401</code> response
+means the API server answered (the request simply carried no token):</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sk<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>https://127.0.0.1:9443/version
+</code></pre></div>
+<p>Both shells must use the <strong>same AWS credentials and Region</strong>, for example by
+exporting the same <code>AWS_PROFILE</code> and <code>AWS_REGION</code> in each. The credentials must
+also stay valid for the whole apply (often 30 minutes or more). Short-lived keys
+pasted into a shell can expire partway through, which drops the tunnel. Prefer
+a profile that refreshes itself, such as IAM Identity Center (<code>aws sso login</code>)
+or a <code>credential_process</code> profile.</p>
+<p>The tunnel is needed for <strong>every</strong> command that talks to the Kubernetes API,
+including <code>terraform destroy</code>. Start it before tearing the sample down, or the
+destroy fails with the same <code>Kubernetes cluster unreachable</code> error.</p>
 <p>Leave <code>eks_api_local_port</code> unset (<code>null</code>, the default) for the normal public
 behavior — nothing changes unless you opt in. For a durable production posture,
 prefer running Terraform from inside the VPC (in-VPC CI, Cloud9, or a bastion)
 so the private endpoint is used natively and the public endpoint can be closed
 entirely.</p>
+<h4 id="closing-the-public-endpoint">Closing the public endpoint<a class="headerlink" href="#closing-the-public-endpoint" title="Permanent link">&para;</a></h4>
+<p>Set <code>eks_public_access = false</code> to disable the EKS public endpoint
+(<code>endpoint_public_access = false</code>). <code>eks_public_access_cidrs</code> is then ignored.
+Terraform must reach the cluster over the private endpoint for every apply
+after that, either from inside the VPC or through the SSM tunnel.</p>
+<p>The tunnel needs the cluster and its in-VPC SSM node to exist first, so a
+fresh deployment from outside the VPC is a two-step apply:</p>
+<ol>
+<li>Create the network and cluster. This step does not use the Kubernetes API,
+   so it works with the public endpoint already closed:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra
+</code></pre></div>
+<ol>
+<li>Start the tunnel (<code>scripts/eks-api-tunnel.sh 9443</code>) and run the full apply
+   through it:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span><span class="w"> </span>-var<span class="w"> </span><span class="s1">'eks_api_local_port=9443'</span>
+</code></pre></div>
+<p>To close the endpoint on an existing deployment, start the tunnel and run step
+2 directly. Keep <code>eks_public_access = false</code> (for example in
+<code>terraform.tfvars</code>) on every later apply, or Terraform will reopen the public
+endpoint.</p>
+<h4 id="troubleshooting-the-tunnel">Troubleshooting the tunnel<a class="headerlink" href="#troubleshooting-the-tunnel" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dial tcp 127.0.0.1:9443: connect: connection refused</code></td>
+<td>The tunnel is not running</td>
+<td>Start <code>scripts/eks-api-tunnel.sh 9443</code> and leave it open</td>
+</tr>
+<tr>
+<td><code>Connection to destination port failed</code> in the tunnel shell, <code>TLS handshake timeout</code> in Terraform</td>
+<td>The jump host cannot reach the private endpoint on 443</td>
+<td>Set <code>SSM_INSTANCE_ID</code> to one of the cluster's EKS nodes (tagged <code>eks:cluster-name</code>)</td>
+</tr>
+<tr>
+<td><code>ExpiredToken</code> or the tunnel exits mid-apply</td>
+<td>Credentials expired</td>
+<td>Refresh credentials, restart the tunnel, re-run the apply</td>
+</tr>
+<tr>
+<td>Error names the cluster's public <code>*.eks.amazonaws.com</code> URL</td>
+<td><code>eks_api_local_port</code> is not set</td>
+<td>Set <code>eks_api_local_port</code> to the tunnel port</td>
+</tr>
+<tr>
+<td><code>no Online SSM-managed instances found</code></td>
+<td>Nodes are still starting, or the SSM agent cannot reach SSM</td>
+<td>Wait for the node groups to be <code>ACTIVE</code>, then retry</td>
+</tr>
+</tbody>
+</table>
 <h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
 <p>The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.</p>
 <p>The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager. The ARN of this secret is provided as a Terraform output (<code>"unreal_cloud_ddc_bearer_token_arn"</code>) on the console following deployment. To fetch the bearer token you can use the aws CLI:</p>
@@ -4429,7 +4511,7 @@ entirely.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-09-24
+    2026-11-05
   </span>
 
     

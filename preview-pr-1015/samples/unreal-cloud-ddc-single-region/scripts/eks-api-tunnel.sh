@@ -107,12 +107,27 @@ if [[ -z "${INSTANCE_ID}" ]]; then
     --output text | tr '\t' '\n' | sed '/^$/d')
   (( ${#SSM_INSTANCES[@]} > 0 )) || err "no Online SSM-managed instances found in ${REGION}"
 
+  # Prefer this cluster's own nodes: their security groups are allowed to reach
+  # the private API endpoint. Other in-VPC hosts (ScyllaDB, monitoring) are not,
+  # and a tunnel through them fails with "Connection to destination port failed".
   CANDIDATES=()
+  OTHERS=()
   for id in "${SSM_INSTANCES[@]}"; do
-    vpc="$(aws ec2 describe-instances --region "${REGION}" --instance-ids "${id}" \
-      --query 'Reservations[0].Instances[0].VpcId' --output text 2>/dev/null || true)"
-    [[ "${vpc}" == "${VPC_ID}" ]] && CANDIDATES+=("${id}")
+    read -r vpc owner < <(aws ec2 describe-instances --region "${REGION}" --instance-ids "${id}" \
+      --query 'Reservations[0].Instances[0].[VpcId, Tags[?Key==`eks:cluster-name`]|[0].Value]' \
+      --output text 2>/dev/null || true)
+    [[ "${vpc}" == "${VPC_ID}" ]] || continue
+    if [[ "${owner}" == "${CLUSTER_NAME}" ]]; then
+      CANDIDATES+=("${id}")
+    else
+      OTHERS+=("${id}")
+    fi
   done
+  if (( ${#CANDIDATES[@]} == 0 && ${#OTHERS[@]} > 0 )); then
+    echo "no SSM-online nodes of ${CLUSTER_NAME}; falling back to other in-VPC hosts," >&2
+    echo "which must be allowed to reach the API endpoint on 443" >&2
+    CANDIDATES=("${OTHERS[@]}")
+  fi
 
   if (( ${#CANDIDATES[@]} == 0 )); then
     err "no Online SSM instances in cluster VPC ${VPC_ID}; set SSM_INSTANCE_ID explicitly"

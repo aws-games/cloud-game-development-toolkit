@@ -69,7 +69,7 @@ variable "scylla_subnets" {
 
 variable "scylla_ami_name" {
   type        = string
-  default     = "ScyllaDB 6.0.1"
+  default     = "ScyllaDB 2026.3.1"
   description = "Name of the Scylla AMI to be used to get the AMI ID"
   nullable    = false
 }

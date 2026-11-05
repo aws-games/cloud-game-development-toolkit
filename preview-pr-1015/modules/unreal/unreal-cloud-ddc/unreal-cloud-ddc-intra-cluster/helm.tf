@@ -50,8 +50,14 @@ module "eks_blueprints_all_other_addons" {
   oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
 
   enable_aws_load_balancer_controller = true
-  enable_aws_cloudwatch_metrics       = true
-  enable_cert_manager                 = var.enable_certificate_manager
+  # Wait for the controller pods to be Ready. Its mutating webhook intercepts
+  # every Service, so installing the DDC chart before the webhook has endpoints
+  # fails with "no endpoints available for service aws-load-balancer-webhook-service".
+  aws_load_balancer_controller = {
+    wait = true
+  }
+  enable_aws_cloudwatch_metrics = true
+  enable_cert_manager           = var.enable_certificate_manager
 
   cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
 
@@ -93,7 +99,7 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
 resource "helm_release" "unreal_cloud_ddc" {
   name         = "unreal-cloud-ddc"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com/github/epicgames"
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
