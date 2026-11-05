@@ -18,24 +18,35 @@ locals {
     "dynamodb:DescribeTable",
     "dynamodb:TransactWriteItems",
   ]
+  dynamodb_interface_endpoint_index_actions = ["dynamodb:Query"]
+  dynamodb_interface_endpoint_account_condition = {
+    StringEquals = {
+      "aws:PrincipalAccount" = split(":", module.data.locks_table_arn)[4]
+    }
+  }
   dynamodb_interface_endpoint_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Sid       = "LoreRegionalCacheTablesOnly"
-      Effect    = "Allow"
-      Principal = "*"
-      Action    = local.dynamodb_interface_endpoint_actions
-      Resource = [
-        module.data.mutable_store_table_arn,
-        module.data.locks_table_arn,
-        "${module.data.locks_table_arn}/index/*",
-      ]
-      Condition = {
-        StringEquals = {
-          "aws:PrincipalAccount" = split(":", module.data.locks_table_arn)[4]
-        }
-      }
-    }]
+    Statement = [
+      {
+        Sid       = "LoreRegionalCacheTablesOnly"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = local.dynamodb_interface_endpoint_actions
+        Resource = [
+          module.data.mutable_store_table_arn,
+          module.data.locks_table_arn,
+        ]
+        Condition = local.dynamodb_interface_endpoint_account_condition
+      },
+      {
+        Sid       = "LoreRegionalCacheLockIndexQueryOnly"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = local.dynamodb_interface_endpoint_index_actions
+        Resource  = ["${module.data.locks_table_arn}/index/*"]
+        Condition = local.dynamodb_interface_endpoint_account_condition
+      },
+    ]
   })
 }
 

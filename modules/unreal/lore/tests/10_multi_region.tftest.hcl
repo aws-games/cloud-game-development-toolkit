@@ -861,6 +861,11 @@ run "dynamodb_interface_endpoint_scoped_to_cache_cidrs" {
     condition     = length(local.dynamodb_interface_endpoint_actions) == 7 && !contains(local.dynamodb_interface_endpoint_actions, "dynamodb:*")
     error_message = "The endpoint policy action list must stay limited to Lore's seven DynamoDB calls"
   }
+
+  assert {
+    condition     = toset(local.dynamodb_interface_endpoint_index_actions) == toset(["dynamodb:Query"])
+    error_message = "The lock index endpoint policy must allow Query only"
+  }
 }
 
 run "dynamodb_interface_endpoint_rejects_open_internet" {
@@ -913,6 +918,33 @@ run "regional_cache_rejects_dynamodb_endpoint_in_another_region" {
     write_tier_dns_name           = "write-tier.lore-dev.internal"
     write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
     dynamodb_endpoint_url         = "https://vpce-0123456789abcdef0-abc123.dynamodb.us-west-2.vpce.amazonaws.com"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  expect_failures = [var.dynamodb_endpoint_url]
+}
+
+run "regional_cache_rejects_non_aws_dynamodb_endpoint_host" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    dynamodb_endpoint_url         = "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com.attacker.example"
     mutable_store_table_name      = "lore-dev-mutable-typed-store"
     mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
     locks_table_name              = "lore-dev-locks"

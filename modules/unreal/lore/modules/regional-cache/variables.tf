@@ -86,7 +86,7 @@ variable "dynamodb_endpoint_url" {
 
   validation {
     condition = var.dynamodb_endpoint_url == null ? true : can(regex(
-      "^https://vpce-[a-z0-9-]+\\.dynamodb\\.${var.write_region}\\.vpce\\.[a-z0-9.-]+$",
+      "^https://vpce-[a-z0-9-]+\\.dynamodb\\.${var.write_region}\\.vpce\\.amazonaws\\.com(\\.cn)?$",
       var.dynamodb_endpoint_url
     ))
     error_message = "dynamodb_endpoint_url must be null or an endpoint-specific HTTPS DynamoDB URL in write_region."
