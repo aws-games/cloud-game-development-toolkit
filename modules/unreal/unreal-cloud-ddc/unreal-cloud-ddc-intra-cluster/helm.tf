@@ -50,7 +50,13 @@ module "eks_blueprints_all_other_addons" {
   oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
 
   enable_aws_load_balancer_controller = true
-  enable_aws_cloudwatch_metrics       = true
+  # Wait for the controller pods to be Ready. Its mutating webhook intercepts
+  # every Service, so installing the DDC chart before the webhook has endpoints
+  # fails with "no endpoints available for service aws-load-balancer-webhook-service".
+  aws_load_balancer_controller = {
+    wait = true
+  }
+  enable_aws_cloudwatch_metrics = true
   enable_cert_manager                 = var.enable_certificate_manager
 
   cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
