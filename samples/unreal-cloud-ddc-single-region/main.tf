@@ -107,7 +107,8 @@ module "unreal_cloud_ddc_infra" {
   scylla_db_storage    = 100
 
   monitoring_application_load_balancer_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
-  alb_certificate_arn                          = aws_acm_certificate.scylla_monitoring.arn
+  # Use the validation's ARN so the HTTPS listener waits for the cert to be ISSUED.
+  alb_certificate_arn = aws_acm_certificate_validation.scylla_monitoring.certificate_arn
 
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
