@@ -28,8 +28,9 @@ The deployment can take close to 30 minutes. Creating the EKS Node Groups and EK
 ### EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
 
 The EBS CSI driver needs AWS credentials to manage EBS volumes for the cluster.
-This sample supports two mechanisms, selected by the `ebs_csi_use_pod_identity`
-variable on the intra-cluster module:
+This sample supports two mechanisms, selected by the sample's root
+`ebs_csi_use_pod_identity` variable (default `true`), which is passed through
+to the intra-cluster module:
 
 - **EKS Pod Identity (recommended, the sample default).** Uses the
   `pods.eks.amazonaws.com` service principal and
@@ -76,12 +77,18 @@ from inside the VPC (bastion, VPN, or in-VPC CI) so the API is reached over the
 private endpoint (`eks_cluster_private_access` is already enabled) rather than
 widening public access.
 
-#### Reaching the API over the private endpoint via SSM (no public access)
+#### Reaching the API over the private endpoint via SSM
 
 If your host cannot reach the public endpoint at all (corporate egress filters
 it, even with the correct `eks_public_access_cidrs`), you can have Terraform
-talk to the cluster's **private** endpoint through an SSM port-forward tunnel
-instead of opening any public access. The cluster already has
+talk to the cluster's **private** endpoint through an SSM port-forward tunnel.
+
+The tunnel only changes the route Terraform's `kubernetes` and `helm`
+providers take. **It does not close the public endpoint**: with the defaults
+the cluster still has `endpoint_public_access = true`, restricted to
+`eks_public_access_cidrs` (or your auto-detected IP). To close the public
+endpoint as well, set `eks_public_access = false` (see
+[Closing the public endpoint](#closing-the-public-endpoint) below). The cluster already has
 `endpoint_private_access = true` and an in-VPC SSM-managed EC2 node, which the
 tunnel uses as its jump host.
 
@@ -129,6 +136,38 @@ behavior — nothing changes unless you opt in. For a durable production posture
 prefer running Terraform from inside the VPC (in-VPC CI, Cloud9, or a bastion)
 so the private endpoint is used natively and the public endpoint can be closed
 entirely.
+
+#### Closing the public endpoint
+
+Set `eks_public_access = false` to disable the EKS public endpoint
+(`endpoint_public_access = false`). `eks_public_access_cidrs` is then ignored.
+Terraform must reach the cluster over the private endpoint for every apply
+after that, either from inside the VPC or through the SSM tunnel.
+
+The tunnel needs the cluster and its in-VPC SSM node to exist first, so a
+fresh deployment from outside the VPC is a two-step apply:
+
+1. Create the network and cluster. This step does not use the Kubernetes API,
+   so it works with the public endpoint already closed:
+
+   ```bash
+   terraform apply \
+     -var 'eks_public_access=false' \
+     -target=module.unreal_cloud_ddc_vpc \
+     -target=module.unreal_cloud_ddc_infra
+   ```
+
+2. Start the tunnel (`scripts/eks-api-tunnel.sh 9443`) and run the full apply
+   through it:
+
+   ```bash
+   terraform apply -var 'eks_public_access=false' -var 'eks_api_local_port=9443'
+   ```
+
+To close the endpoint on an existing deployment, start the tunnel and run step
+2 directly. Keep `eks_public_access = false` (for example in
+`terraform.tfvars`) on every later apply, or Terraform will reopen the public
+endpoint.
 
 ## Postdeployment
 
