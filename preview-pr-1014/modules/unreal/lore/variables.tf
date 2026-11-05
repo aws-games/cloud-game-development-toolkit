@@ -302,8 +302,36 @@ variable "replication_ingress_cidrs" {
   }
 }
 
+variable "dynamodb_endpoint_client_cidrs" {
+  description = "Private subnet CIDRs of regional caches allowed to use a DynamoDB interface endpoint in the write VPC over VPC peering. Null disables the interface endpoint. Use each cache's private_subnet_cidrs output. Existing VPCs must route these CIDRs over peering."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.dynamodb_endpoint_client_cidrs == null ? true : (
+      length(var.dynamodb_endpoint_client_cidrs) > 0 &&
+      alltrue([
+        for cidr in var.dynamodb_endpoint_client_cidrs :
+        can(cidrhost(cidr, 0)) && !contains(["0.0.0.0/0", "::/0"], cidr)
+      ])
+    )
+    error_message = "dynamodb_endpoint_client_cidrs must be null or a nonempty list of specific valid CIDRs."
+  }
+}
+
+variable "dynamodb_endpoint_subnet_ids" {
+  description = "Subnets for the DynamoDB interface endpoint, one per Availability Zone. Null uses private_subnet_ids. Existing-VPC callers must not pass two subnets from one Availability Zone."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition     = var.dynamodb_endpoint_subnet_ids == null ? true : length(var.dynamodb_endpoint_subnet_ids) > 0
+    error_message = "dynamodb_endpoint_subnet_ids must be null or a nonempty list."
+  }
+}
+
 variable "replication_peers" {
-  description = "Other Lore servers this write tier pushes every stored fragment to (Lore topology peers). A regional cache in another region is locality = \"OtherRegion\": each put is forwarded to its NVMe cache so the other office reads new content locally. Address is a DNS name or IP reachable from the write tier's VPC."
+  description = "Other Lore servers this write tier attempts to push each stored fragment to (Lore topology peers). A regional cache in another region is locality = \"OtherRegion\": each put is offered to its NVMe cache so the other office can read new content locally. A missed push loads through the durable path. Address is a DNS name or IP reachable from the write tier's VPC."
   type = list(object({
     address  = string
     port     = optional(number, 41340)

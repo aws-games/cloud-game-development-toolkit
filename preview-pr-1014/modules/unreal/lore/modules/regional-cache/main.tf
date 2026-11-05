@@ -188,7 +188,7 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   to_port           = 443
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
-  description       = "HTTPS to AWS services including the write region DynamoDB via NAT"
+  description       = "HTTPS to AWS services; routes select the write VPC endpoint or NAT"
 }
 
 resource "aws_vpc_security_group_egress_rule" "write_region_grpc" {
@@ -317,6 +317,7 @@ module "compute" {
   mutable_store_region     = var.write_region
   lock_store_mode          = "aws"
   lock_store_region        = var.write_region
+  dynamodb_endpoint_url    = var.dynamodb_endpoint_url
   trusted_ca_pem           = var.write_tier_ca_certificate_pem
 
   # quic_internal on, so the write tier can push fragments into this cache

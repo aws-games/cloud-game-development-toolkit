@@ -3553,7 +3553,7 @@ source of truth.</p>
 <tr>
 <td>Branch pointers and locks</td>
 <td>DynamoDB</td>
-<td><strong>the write region's DynamoDB tables</strong>, used cross-region</td>
+<td><strong>the write region's DynamoDB tables</strong>, through its interface endpoint over VPC peering when <code>dynamodb_endpoint_url</code> is set</td>
 </tr>
 </tbody>
 </table>
@@ -3578,13 +3578,16 @@ branch pointers and locks in the write region.</p>
 <span class="w">  </span><span class="na">write_tier_replication_cidrs</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.private_subnet_cidrs</span><span class="c1">  # 41340 access, see below</span>
 <span class="w">  </span><span class="na">write_tier_dns_name</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.write_tier_dns_name</span>
 <span class="w">  </span><span class="na">write_tier_ca_certificate_pem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.ca_certificate_pem</span>
+<span class="w">  </span><span class="na">dynamodb_endpoint_url</span><span class="w">          </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.dynamodb_interface_endpoint_url</span>
 <span class="w">  </span><span class="na">mutable_store_table_name</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.mutable_store_table_name</span>
 <span class="w">  </span><span class="na">mutable_store_table_arn</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.mutable_store_table_arn</span>
 <span class="w">  </span><span class="na">locks_table_name</span><span class="w">              </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.locks_table_name</span>
 <span class="w">  </span><span class="na">locks_table_arn</span><span class="w">               </span><span class="o">=</span><span class="w"> </span><span class="nv">module.lore.locks_table_arn</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>The root module needs the mirror of this: <code>replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs</code>,
+<p>The root module needs the mirror of this:
+<code>replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs</code>,
+<code>dynamodb_endpoint_client_cidrs = module.regional_cache.private_subnet_cidrs</code>,
 <code>replication_peers = [{ address = module.regional_cache.cache_dns_name, locality = "OtherRegion" }]</code>
 and <code>trusted_ca_pem = module.regional_cache.ca_certificate_pem</code>. The two VPCs must be peered, with
 routes passed as <code>vpc_peering_routes</code> on both sides, and each side's Cloud Map hosted zone
@@ -3627,6 +3630,17 @@ host that can reach port 41340 can read and write fragments. Keep its sources na
   <code>private_subnet_cidrs</code>), not its VPC CIDR.</li>
 <li>Never put office, VPN or public ranges on 41340.</li>
 </ul>
+<p>DynamoDB access:</p>
+<ul>
+<li>Set <code>dynamodb_endpoint_url</code> to the root module's <code>dynamodb_interface_endpoint_url</code> output. The
+  compute task gives it to Lore's mutable-store and lock-store DynamoDB clients through their
+  native <code>dynamodb_endpoint_url</code> settings.</li>
+<li>The root endpoint has private DNS off and an endpoint-specific TLS name. Its security group
+  admits HTTPS only from this cache's private subnet CIDRs, and its policy names only the mutable
+  store, lock table and lock index.</li>
+<li>Null keeps the legacy public regional endpoint through this VPC's NAT. The published example
+  does not use that fallback.</li>
+</ul>
 <p>Authentication:</p>
 <ul>
 <li><code>auth_mode</code> accepts <code>"none"</code> or <code>"external"</code>. For a Cognito write region use <code>"external"</code> with
@@ -3656,7 +3670,7 @@ host that can reach port 41340 can read and write fragments. Keep its sources na
 <td>The cache's DNS name did not exist when the write tier started. With a plain fixed topology the peer was lost until restart; the module now re-resolves peers every <code>replication_peer_refresh_seconds</code> (default 300 s)</td>
 </tr>
 <tr>
-<td>Write-tier ECS task stopped for about 10 minutes, while S3 and DynamoDB stayed healthy (v0.12.0)</td>
+<td>Write-tier ECS task stopped for about 10 minutes, while S3 and DynamoDB stayed healthy (v0.12.0; legacy NAT/public DynamoDB path)</td>
 <td>London <code>status</code>, <code>sync</code>, history, lock status and a cached 2.5 GB clone worked. Two London content-write commands did not finish within the 120 s harness limit</td>
 </tr>
 <tr>
@@ -3676,8 +3690,9 @@ host that can reach port 41340 can read and write fragments. Keep its sources na
 <p>Not measured; expected from the design, and to be verified before production use:</p>
 <ul>
 <li><strong>Peering link down, write Region healthy:</strong> fragment uploads, cache misses and peer pushes over
-  ports 41337/41340 fail. With <code>branch_pointer_access = "dynamodb"</code>, pointer and lock calls should
-  still reach the write Region's public DynamoDB endpoint through this VPC's NAT gateway.</li>
+  ports 41337/41340 fail. With <code>dynamodb_endpoint_url</code> set, branch-pointer and lock calls fail too
+  because endpoint ENIs sit in the write VPC. The null fallback can still use the public DynamoDB
+  endpoint through NAT, but the published example does not use that path.</li>
 <li><strong>Whole write Region lost:</strong> normal clone, sync, status, commit, push and lock operations cannot
   finish. Cached fragment bytes may remain on NVMe, but branch pointers and cache misses are
   unavailable. There is no automatic failover.</li>
@@ -3694,8 +3709,9 @@ every read local. 80 % of the instance store is used by default (94 GB on a c8gd
 <h2 id="choosing-the-write-region">Choosing the write region<a class="headerlink" href="#choosing-the-write-region" title="Permanent link">&para;</a></h2>
 <p>Put the write tier near the office that commits and pushes the most. From the other office,
 commits upload to the write region, and <code>push</code>, <code>lore lock</code> and the branch-pointer part of
-<code>status</code> each make DynamoDB calls in the write region. Reads of content that is in the cache
-never leave the region.</p>
+<code>status</code> each make DynamoDB calls in the write region. With <code>dynamodb_endpoint_url</code>, those calls
+reach private endpoint ENIs over VPC peering. Reads of content that is in the cache never leave
+the region.</p>
 <h2 id="first-apply-and-restarts">First apply and restarts<a class="headerlink" href="#first-apply-and-restarts" title="Permanent link">&para;</a></h2>
 <p>Both sides need the other's DNS record to exist, which it does not when both boot at once;
 replication peers are re-resolved every <code>replication_peer_refresh_seconds</code> (default 300) on the
@@ -3703,13 +3719,17 @@ write tier. After the cache task is replaced it has a new IP; clients may see "D
 up to the Cloud Map TTL (10 s).</p>
 <h2 id="branch-pointers-dynamodb-or-the-write-tier">Branch pointers: DynamoDB or the write tier<a class="headerlink" href="#branch-pointers-dynamodb-or-the-write-tier" title="Permanent link">&para;</a></h2>
 <p><code>branch_pointer_access</code> selects how the cache reaches the write region's branch pointers.
-The default, <code>"dynamodb"</code>, uses the write region's DynamoDB table directly. <code>"write_tier"</code> uses
-Lore's <code>remote</code> mutable store (what the edge pod uses) to forward each operation to the write
-tier. Measured from a far-region client with Lore v0.10.1, forwarding was slightly slower
+The default, <code>"dynamodb"</code>, uses the write region's DynamoDB table directly. When
+<code>dynamodb_endpoint_url</code> is set, the AWS SDK reaches that table through the write VPC's interface
+endpoint over peering. <code>"write_tier"</code> uses Lore's <code>remote</code> mutable store (what the edge pod uses)
+to forward each operation to the write tier. Measured from a far-region client with Lore v0.10.1, forwarding was slightly slower
 (small push 0.98 s vs 0.87 s at 55 ms RTT, 2.29 s vs 1.94 s at 136 ms), and
 <code>lore repository list</code> fails through it because the remote store does not implement <code>list</code>.
 Clone, commit, push and sync worked in both modes without authentication. <code>"write_tier"</code> is
 rejected when <code>auth_mode = "external"</code> until token forwarding is implemented.</p>
+<p>To disable a live interface endpoint, first set this module's <code>dynamodb_endpoint_url</code> to null and
+deploy the replacement cache task. In a second apply, set the root module's
+<code>dynamodb_endpoint_client_cidrs</code> to null. This keeps old tasks from using a deleted endpoint.</p>
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -4083,6 +4103,13 @@ rejected when <code>auth_mode = "external"</code> until token forwarding is impl
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_dynamodb_endpoint_url"></a> <a href="#input_dynamodb_endpoint_url">dynamodb_endpoint_url</a></td>
+<td>Write Region DynamoDB interface endpoint URL (root output dynamodb_interface_endpoint_url). Sets Lore's native endpoint URL for branch-pointer and lock clients, so calls cross VPC peering instead of the cache VPC's NAT. Null keeps the public regional endpoint.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_enable_otel_sidecar"></a> <a href="#input_enable_otel_sidecar">enable_otel_sidecar</a></td>
 <td>n/a</td>
 <td><code>bool</code></td>
@@ -4262,7 +4289,7 @@ rejected when <code>auth_mode = "external"</code> until token forwarding is impl
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-11-03
+    2026-11-05
   </span>
 
     

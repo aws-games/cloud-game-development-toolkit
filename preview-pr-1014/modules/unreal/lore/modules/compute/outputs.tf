@@ -67,7 +67,7 @@ output "topology_toml" {
 }
 
 output "store_env_vars" {
-  description = "Store-wiring environment variables handed to loreserver (immutable, mutable, lock). For tests and debugging."
+  description = "Store-wiring environment variables handed to loreserver (immutable, mutable, lock, DynamoDB endpoint). For tests and debugging."
   value       = concat(local.common_env_vars, local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars)
 }
 

@@ -3369,6 +3369,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#private-dynamodb-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Private DynamoDB path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#connect" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3452,7 +3463,7 @@ runs a regional cache. The write tier tries to prefill it, and cache misses load
 <tbody>
 <tr>
 <td><code>write_region</code> (default us-east-2)</td>
-<td>Lore write tier (c8gd.large), the S3 fragments bucket and all four DynamoDB tables, Cloud Map</td>
+<td>Lore write tier (c8gd.large), S3 fragments, four DynamoDB tables, Cloud Map, and a two-AZ DynamoDB interface endpoint</td>
 </tr>
 <tr>
 <td><code>replica_region</code> (default us-west-2)</td>
@@ -3460,7 +3471,7 @@ runs a regional cache. The write tier tries to prefill it, and cache misses load
 </tr>
 <tr>
 <td>both</td>
-<td>VPC peering with routes; each side's private DNS zone associated with the other VPC</td>
+<td>VPC peering with routes; private DNS zones shared for Lore; branch-pointer and lock calls use the write VPC's endpoint ENIs over peering</td>
 </tr>
 </tbody>
 </table>
@@ -3491,6 +3502,17 @@ connecting. Keep the office CIDRs narrow as a second access boundary.</p>
 <p>Replication port 41340 is <strong>not</strong> JWT-protected and has no mTLS. Only security-group rules
 protect it, so the example limits it to each tier's private subnet CIDRs
 (<code>private_subnet_cidrs</code> outputs), not the whole VPCs. Do not widen those rules.</p>
+<h2 id="private-dynamodb-path">Private DynamoDB path<a class="headerlink" href="#private-dynamodb-path" title="Permanent link">&para;</a></h2>
+<p>The write region creates a DynamoDB interface endpoint in both private subnets. Private DNS is
+off, so the write tier keeps its free same-Region gateway endpoint. The regional cache receives
+the endpoint-specific HTTPS URL through Lore's native mutable-store and lock-store
+<code>dynamodb_endpoint_url</code> settings. Its branch-pointer and lock calls then cross VPC peering to
+private endpoint ENIs instead of leaving through NAT.</p>
+<p>The endpoint security group admits port 443 only from the cache's private subnet CIDRs. Its
+endpoint policy permits Lore's seven DynamoDB actions only on the mutable-store table, lock table
+and lock index. IAM still decides what the cache task role may do.</p>
+<p>Interface endpoints add hourly, data-processing and inter-Region transfer charges. The cache VPC
+still has NAT for image pulls, SSM, logs and the external JWT provider.</p>
 <h2 id="connect">Connect<a class="headerlink" href="#connect" title="Permanent link">&para;</a></h2>
 <p>Each office connects to the server in its own region:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># write-region office</span>
@@ -3523,7 +3545,7 @@ Direct Connect, or from instances in the VPC.</p>
 </tr>
 <tr>
 <td>push, <code>lore lock</code>, branch-pointer reads in <code>status</code></td>
-<td>yes: the write region's DynamoDB tables</td>
+<td>yes: HTTPS over VPC peering to the write VPC's DynamoDB interface endpoint</td>
 </tr>
 </tbody>
 </table>
@@ -3532,17 +3554,20 @@ Direct Connect, or from instances in the VPC.</p>
 (Cloud Map TTL). A cache booting with the write tier was not yet resolvable when the write tier
 started, so the module now re-resolves peers every <code>replication_peer_refresh_seconds</code> (default
 300 s). With Lore v0.12.0, the write-tier ECS task was stopped for about 10 minutes while S3 and
-DynamoDB stayed healthy. London <code>status</code>, <code>sync</code>, history, lock status and a cached 2.5 GB clone
-worked. Two London content-write commands did not finish within the 120 s harness limit.</p>
-<p>Not measured; expected from the design:</p>
+DynamoDB stayed healthy. In that measured deployment, DynamoDB used London's NAT path. London
+<code>status</code>, <code>sync</code>, history, lock status and a cached 2.5 GB clone worked. Two London content-write
+commands did not finish within the 120 s harness limit.</p>
+<p>Not measured; expected from the current interface-endpoint design:</p>
 <ul>
-<li>If only the peering link fails, fragment uploads, cache misses and peer pushes fail. With the
-  default DynamoDB mode, pointer and lock calls should still reach DynamoDB through NAT.</li>
+<li>If the peering link fails, fragment uploads, cache misses and peer pushes fail. Branch-pointer
+  and lock calls fail too because the DynamoDB endpoint ENIs are in the write VPC.</li>
 <li>If the whole write Region fails, normal clone, sync, status, commit, push and lock operations
   cannot finish. Cached bytes may remain, but branch pointers and cache misses are unavailable.</li>
 </ul>
 <p>There is no automatic Region failover. See the
 <a href="../../modules/regional-cache/index.html#failure-behavior">regional cache failure table</a>.</p>
+<p>To remove the interface endpoint from a live deployment, use two applies. First clear the cache's
+<code>dynamodb_endpoint_url</code> and deploy its new task. Then remove the root module's endpoint CIDRs.</p>
 <h2 id="tear-down">Tear down<a class="headerlink" href="#tear-down" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>destroy
 </code></pre></div>
@@ -3568,7 +3593,7 @@ those settings to production.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-11-03
+    2026-11-05
   </span>
 
     

@@ -3489,11 +3489,20 @@ content-addressed, so a cache copy can never be wrong. An MRSC Global Table pres
 compare-and-swap across 40 tested races, but added cross-region latency. Lore's transactional
 lock calls cannot use MRSC Global Tables. MREC Global Tables allowed acknowledged concurrent
 pushes to vanish in the same test sweep. This example therefore keeps both tables in the write
-region. From the second office, commits upload to the write region, and push, lock and <code>status</code>
-make DynamoDB calls there; reads of cached content stay local. Choose the write region by where
-most commits and pushes happen.</p>
+region. The public multi-region example creates a DynamoDB interface endpoint in the write VPC.
+The cache sets Lore's mutable-store and lock-store DynamoDB endpoint URLs, so branch-pointer
+and lock calls use private endpoint ENIs over VPC peering instead of the cache VPC's NAT. Private
+DNS stays off: the write tier keeps using its free same-Region DynamoDB gateway endpoint. Reads of
+cached content stay local. Choose the write region by where most commits and pushes happen.</p>
 <p>Inputs involved on the write tier: <code>replication_ingress_cidrs</code>, <code>replication_peers</code>,
-<code>trusted_ca_pem</code>, <code>vpc_peering_routes</code>. See <a href="examples/multi-region/">examples/multi-region</a>.</p>
+<code>dynamodb_endpoint_client_cidrs</code>, <code>dynamodb_endpoint_subnet_ids</code>, <code>trusted_ca_pem</code>,
+<code>vpc_peering_routes</code>. Pass <code>dynamodb_interface_endpoint_url</code> to the regional cache as
+<code>dynamodb_endpoint_url</code>. See <a href="examples/multi-region/">examples/multi-region</a>.</p>
+<p>The interface endpoint is optional for compatibility. Null <code>dynamodb_endpoint_client_cidrs</code>
+disables it, and a cache without <code>dynamodb_endpoint_url</code> uses DynamoDB's public regional endpoint.
+For an existing VPC, give one <code>dynamodb_endpoint_subnet_ids</code> value per Availability Zone and
+manage both peering directions yourself. To disable a live endpoint safely, first clear the cache
+URL and deploy the replacement task. Remove the endpoint CIDRs in a second apply.</p>
 <p><strong>The published multi-region example requires external JWT authentication on client port
 41337.</strong> Port 41340 is network-protected, not JWT-protected. JWT validation (<code>auth_mode</code>) applies
 to the client port only. The replication port checks neither JWTs nor client certificates (there
@@ -3528,7 +3537,7 @@ its full route set, and a plan that removes a route you did not declare must not
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-11-03
+    2026-11-05
   </span>
 
     

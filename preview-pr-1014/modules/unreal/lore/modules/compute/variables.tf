@@ -341,6 +341,17 @@ variable "mutable_store_region" {
   default     = null
 }
 
+variable "dynamodb_endpoint_url" {
+  description = "Optional endpoint-specific HTTPS URL for DynamoDB. Sets Lore's native DynamoDB endpoint URL for mutable-store and lock-store clients."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.dynamodb_endpoint_url == null ? true : startswith(var.dynamodb_endpoint_url, "https://")
+    error_message = "dynamodb_endpoint_url must be null or an https:// URL."
+  }
+}
+
 variable "durable_store_mode" {
   description = <<-EOT
     Where the NVMe cache's durable tier lives. "aws": this node's own S3 bucket and DynamoDB
