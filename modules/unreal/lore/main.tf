@@ -3,6 +3,7 @@
 # =============================================================================
 
 data "aws_availability_zones" "available" {
+  #checkov:skip=CKV_AWS_394: Dynamic lookup is the default; pin with var.availability_zones
   state = "available"
 }
 
@@ -27,6 +28,7 @@ module "vpc" {
   availability_zones = local.availability_zones
   tags               = local.tags
   enable_flow_logs   = var.enable_vpc_flow_logs
+  peering_routes     = var.vpc_peering_routes
 }
 
 locals {
@@ -55,6 +57,7 @@ module "data" {
 # =============================================================================
 
 resource "aws_security_group" "server" {
+  #checkov:skip=CKV2_AWS_5: Attached by the ECS service in modules/compute (network_configuration)
   name_prefix = "${local.name_prefix}-server-"
   vpc_id      = local.vpc_id
   description = "Lore server access"
@@ -112,6 +115,48 @@ resource "aws_vpc_security_group_ingress_rule" "replication_quic" {
   description                  = "Replication QUIC from peer Lore servers"
 }
 
+# Tiers in peered VPCs (other regions) cannot be referenced by security group; they are allowed by CIDR.
+# 41337 is skipped for CIDRs already allowed as clients (AWS rejects duplicate rules).
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_grpc" {
+  for_each          = setsubtract(toset(var.replication_ingress_cidrs), toset(var.allowed_ingress_cidrs))
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "gRPC/QUIC from a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_quic" {
+  for_each          = setsubtract(toset(var.replication_ingress_cidrs), toset(var.allowed_ingress_cidrs))
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "QUIC (remote mutable store, lores://) from a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_tcp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "Replication gRPC from a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "replication_cidr_udp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "Replication QUIC from a peered Lore tier in ${each.value}"
+}
+
 resource "aws_vpc_security_group_egress_rule" "https" {
   security_group_id = aws_security_group.server.id
   from_port         = 443
@@ -119,6 +164,46 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
   description       = "HTTPS to AWS services via NAT"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_grpc" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "gRPC/QUIC to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_quic" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41337
+  to_port           = 41337
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "QUIC to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_tcp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "tcp"
+  cidr_ipv4         = each.value
+  description       = "Replication to a peered Lore tier in ${each.value}"
+}
+
+resource "aws_vpc_security_group_egress_rule" "replication_cidr_udp" {
+  for_each          = toset(var.replication_ingress_cidrs)
+  security_group_id = aws_security_group.server.id
+  from_port         = 41340
+  to_port           = 41340
+  ip_protocol       = "udp"
+  cidr_ipv4         = each.value
+  description       = "Replication QUIC to a peered Lore tier in ${each.value}"
 }
 
 resource "aws_vpc_security_group_egress_rule" "replication_egress" {
@@ -133,7 +218,7 @@ data "aws_region" "current" {}
 resource "aws_vpc_endpoint" "s3" {
   count             = var.vpc_id == null ? 1 : 0
   vpc_id            = local.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
+  service_name      = "com.amazonaws.${data.aws_region.current.region}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [module.vpc[0].private_route_table_id]
 
@@ -143,7 +228,7 @@ resource "aws_vpc_endpoint" "s3" {
 resource "aws_vpc_endpoint" "dynamodb" {
   count             = var.vpc_id == null ? 1 : 0
   vpc_id            = local.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  service_name      = "com.amazonaws.${data.aws_region.current.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [module.vpc[0].private_route_table_id]
 
@@ -218,6 +303,12 @@ module "compute" {
   enable_xray_smoke_test             = var.enable_xray_smoke_test
   enable_replication                 = true
   service_discovery_registry_arn     = aws_service_discovery_service.write_tier.arn
+
+  # Multi-region: peers in other regions receive every put
+  replication_peers                = var.replication_peers
+  replication_peer_refresh_seconds = var.replication_peer_refresh_seconds
+  enable_same_region_write         = var.enable_same_region_write
+  trusted_ca_pem                   = var.trusted_ca_pem
 }
 
 # =============================================================================
@@ -245,6 +336,9 @@ resource "aws_service_discovery_service" "write_tier" {
     routing_policy = "MULTIVALUE"
   }
 
+  # Kept deliberately despite the AWS provider v6 deprecation warning. Existing services were
+  # created with 1 (the only value AWS uses). health_check_custom_config forces replacement, and
+  # a replaced service deregisters every task and breaks name resolution, so do not remove it.
   health_check_custom_config {
     failure_threshold = 1
   }

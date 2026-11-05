@@ -60,3 +60,18 @@ output "cache_max_size_bytes" {
   description = "Auto-calculated NVMe cache size in bytes (80% of instance store)"
   value       = local.cache_max_size
 }
+
+output "topology_toml" {
+  description = "Rendered Lore topology overlay (empty when no replication peers)"
+  value       = local.topology_toml
+}
+
+output "store_env_vars" {
+  description = "Store-wiring environment variables handed to loreserver (immutable, mutable, lock, DynamoDB endpoint). For tests and debugging."
+  value       = concat(local.common_env_vars, local.immutable_store_env_vars, local.mutable_store_env_vars, local.lock_store_env_vars)
+}
+
+output "listener_env_vars" {
+  description = "Auth and replication-listener environment variables handed to loreserver. For tests and debugging."
+  value       = concat(local.auth_env_vars, local.auth_audience_env, local.replication_env_vars)
+}

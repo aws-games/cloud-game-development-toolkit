@@ -15,9 +15,9 @@ variable "subnet_id" {
 }
 
 variable "server_security_group_id" {
-  description = "Security group ID of the write tier (edge pod is granted ingress)"
+  description = "Security group of the Lore tier this pod forwards to, when it is in the same VPC: the pod is granted ingress to it. Null when the tier is reached across inter-region peering; allow the pod's CIDR on the tier instead (root module replication_ingress_cidrs)."
   type        = string
-  nullable    = false
+  default     = null
 }
 
 variable "container_image" {
@@ -74,4 +74,16 @@ variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "replication_expected_rtt_ms" {
+  description = "Expected round-trip time to the tier in milliseconds, used to size the QUIC congestion window (Lore default 100). Set to the measured RTT for a pod in another region; leave null in-region."
+  type        = number
+  default     = null
+}
+
+variable "replication_max_bandwidth_bytes_per_second" {
+  description = "Cap on the pod-to-tier replication link in bytes per second. Null leaves Lore's default."
+  type        = number
+  default     = null
 }

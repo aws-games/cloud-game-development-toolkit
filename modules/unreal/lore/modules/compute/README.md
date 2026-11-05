@@ -8,19 +8,19 @@ This is an internal sub-module of `terraform-aws-lore`. Do not consume directly 
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.0 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_archive"></a> [archive](#provider\_archive) | ~> 2.0 |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.0 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | ~> 4.0 |
 
@@ -31,7 +31,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_autoscaling_group.ecs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) | resource |
 | [aws_cloudwatch_log_group.loreserver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_ecs_capacity_provider.ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_capacity_provider) | resource |
@@ -82,11 +82,10 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_container_image"></a> [container\_image](#input\_container\_image) | Loreserver container image URI | `string` | n/a | yes |
 | <a name="input_dynamodb_table_arns"></a> [dynamodb\_table\_arns](#input\_dynamodb\_table\_arns) | List of DynamoDB table ARNs for IAM policy | `list(string)` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod) — used for ASG defaults | `string` | n/a | yes |
-| <a name="input_fragment_bucket_arn"></a> [fragment\_bucket\_arn](#input\_fragment\_bucket\_arn) | ARN of the S3 fragment bucket | `string` | n/a | yes |
 | <a name="input_fragment_bucket_name"></a> [fragment\_bucket\_name](#input\_fragment\_bucket\_name) | S3 fragment bucket name (for LORE\_\_* env vars) | `string` | n/a | yes |
 | <a name="input_fragment_metadata_table_name"></a> [fragment\_metadata\_table\_name](#input\_fragment\_metadata\_table\_name) | DynamoDB fragment metadata table name | `string` | n/a | yes |
 | <a name="input_fragments_table_name"></a> [fragments\_table\_name](#input\_fragments\_table\_name) | DynamoDB fragments table name | `string` | n/a | yes |
@@ -111,23 +110,37 @@ No modules.
 | <a name="input_container_user"></a> [container\_user](#input\_container\_user) | User/group for the container process (e.g., '65534', '1000:1000'). Must be numeric UID or UID:GID. | `string` | `"65534"` | no |
 | <a name="input_deployment_maximum_percent"></a> [deployment\_maximum\_percent](#input\_deployment\_maximum\_percent) | Upper limit on running tasks during deployment (% of desired\_count). | `number` | `200` | no |
 | <a name="input_deployment_minimum_healthy_percent"></a> [deployment\_minimum\_healthy\_percent](#input\_deployment\_minimum\_healthy\_percent) | Lower limit on running tasks during deployment (% of desired\_count). Default 66 allows single-task services to deploy without ENI deadlock. | `number` | `66` | no |
+| <a name="input_durable_expected_rtt_ms"></a> [durable\_expected\_rtt\_ms](#input\_durable\_expected\_rtt\_ms) | Round-trip time to the durable\_remote\_url server, used to size the QUIC congestion window (Lore default 100). Null keeps Lore's default. | `number` | `null` | no |
+| <a name="input_durable_remote_url"></a> [durable\_remote\_url](#input\_durable\_remote\_url) | Lore server replication URL for durable\_store\_mode = "replicated", e.g. lore://write-tier.lore-dev.internal:41340. | `string` | `null` | no |
+| <a name="input_durable_store_mode"></a> [durable\_store\_mode](#input\_durable\_store\_mode) | Where the NVMe cache's durable tier lives. "aws": this node's own S3 bucket and DynamoDB<br/>tables (the write tier). "replicated": another Lore server, reached over QUIC on its<br/>replication port (a regional cache in another region whose single source of truth is the<br/>write tier). Reads that miss the cache and every upload go to that server. | `string` | `"aws"` | no |
+| <a name="input_dynamodb_endpoint_url"></a> [dynamodb\_endpoint\_url](#input\_dynamodb\_endpoint\_url) | Optional endpoint-specific HTTPS URL for DynamoDB. Sets Lore's native DynamoDB endpoint URL for mutable-store and lock-store clients. | `string` | `null` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Deploy ADOT sidecar for OpenTelemetry collection (CloudWatch + X-Ray) | `bool` | `true` | no |
 | <a name="input_enable_replication"></a> [enable\_replication](#input\_enable\_replication) | Enable the QUIC internal replication endpoint (port 41340). Required for multi-server cache topologies. | `bool` | `false` | no |
+| <a name="input_enable_same_region_write"></a> [enable\_same\_region\_write](#input\_enable\_same\_region\_write) | Whether SameRegion peers also receive writes (Lore default true). Set false to use a SameRegion peer as a read-only replica, e.g. the other region's tier as a fallback for content that has not replicated yet. | `bool` | `true` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | Deploy X-Ray pipeline smoke test Lambda (validates trace delivery + IAM) | `bool` | `true` | no |
+| <a name="input_fragment_bucket_arn"></a> [fragment\_bucket\_arn](#input\_fragment\_bucket\_arn) | ARN of the S3 fragment bucket. Null when durable\_store\_mode = "replicated" (the node has no bucket of its own). | `string` | `null` | no |
 | <a name="input_hmac_key_secret_arn"></a> [hmac\_key\_secret\_arn](#input\_hmac\_key\_secret\_arn) | Secrets Manager ARN for HMAC signing key. If null, a random 32-byte key is generated. | `string` | `null` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | EC2 instance type for ECS instances. Unknown types fall back to 28 GiB memory reservation and 937 GB cache size. | `string` | `"i4i.xlarge"` | no |
+| <a name="input_lock_store_mode"></a> [lock\_store\_mode](#input\_lock\_store\_mode) | Lore lock store backend: "aws" (DynamoDB locks table, the write region), "local" (in-process, advisory only), or "none". | `string` | `"aws"` | no |
+| <a name="input_lock_store_region"></a> [lock\_store\_region](#input\_lock\_store\_region) | Region of the DynamoDB locks table when lock\_store\_mode = "aws" and the table lives in another region (a regional tier sharing the write region's locks so that exclusive checkouts are seen by both offices). Null uses the task's own region. | `string` | `null` | no |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | CloudWatch log group retention in days. Valid values: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653. | `number` | `30` | no |
+| <a name="input_mutable_store_mode"></a> [mutable\_store\_mode](#input\_mutable\_store\_mode) | Lore mutable store backend. "aws" uses the DynamoDB tables (the write region). "remote" forwards branch pointers and tree state to another Lore server (a regional cache whose mutable\_store\_remote\_url points at the write tier). | `string` | `"aws"` | no |
+| <a name="input_mutable_store_region"></a> [mutable\_store\_region](#input\_mutable\_store\_region) | Region of the DynamoDB mutable-store table when mutable\_store\_mode = "aws" and the table lives in another region (a regional tier using the write region's branch pointers). Null uses the task's own region. | `string` | `null` | no |
+| <a name="input_mutable_store_remote_url"></a> [mutable\_store\_remote\_url](#input\_mutable\_store\_remote\_url) | Lore server URL for the remote mutable store (e.g. lores://write-tier.lore-dev.internal:41337). Required when mutable\_store\_mode = "remote". | `string` | `null` | no |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | ADOT collector image URI. Override to use a private ECR mirror. | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
-| <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | List of peer addresses for fixed topology replication. Each entry is a host:port string (e.g., '10.0.1.50:41340'). | `list(string)` | `[]` | no |
+| <a name="input_replication_peer_refresh_seconds"></a> [replication\_peer\_refresh\_seconds](#input\_replication\_peer\_refresh\_seconds) | How often replication peers are re-created and their DNS names re-resolved (Lore rotating\_id\_fixed topology). Connections to peers are re-established at each interval. | `number` | `300` | no |
+| <a name="input_replication_peers"></a> [replication\_peers](#input\_replication\_peers) | Peer Lore servers for Lore's fixed topology ([topology.fixed] in the server config).<br/>locality is relative to this server: "SameRegion" peers are read + write replicas tuned for<br/>in-region links; "OtherRegion" peers are push targets for each put over QUIC (BBR), which can<br/>prefill a tier in another region. A missed push is handled by that tier's durable-store path.<br/>Rendered into a TOML overlay because Lore cannot take arrays from environment variables. | <pre>list(object({<br/>    address  = string<br/>    port     = optional(number, 41340)<br/>    locality = string<br/>  }))</pre> | `[]` | no |
 | <a name="input_service_discovery_registry_arn"></a> [service\_discovery\_registry\_arn](#input\_service\_discovery\_registry\_arn) | Cloud Map service ARN for ECS service registration. Null when service discovery is disabled. | `string` | `null` | no |
 | <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated. | `string` | `null` | no |
 | <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert. | `string` | `null` | no |
 | <a name="input_tls_san_dns_names"></a> [tls\_san\_dns\_names](#input\_tls\_san\_dns\_names) | Additional DNS SANs for the self-signed TLS certificate (e.g., custom domain names) | `list(string)` | `[]` | no |
+| <a name="input_trusted_ca_pem"></a> [trusted\_ca\_pem](#input\_trusted\_ca\_pem) | PEM of another Lore tier's CA that this server must trust as a client (remote mutable store, replication reads). Appended to the system CA bundle at container start. Null when every upstream is in this deployment. | `string` | `null` | no |
+| <a name="input_udp_buffer_max_bytes"></a> [udp\_buffer\_max\_bytes](#input\_udp\_buffer\_max\_bytes) | Host net.core.rmem\_max / wmem\_max for Lore's QUIC (UDP) sockets. Lore v0.11.0+ asks Linux to allow at least 524288; the AL2023 default is 212992. | `number` | `4194304` | no |
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_cache_max_size_bytes"></a> [cache\_max\_size\_bytes](#output\_cache\_max\_size\_bytes) | Auto-calculated NVMe cache size in bytes (80% of instance store) |
 | <a name="output_capacity_provider_name"></a> [capacity\_provider\_name](#output\_capacity\_provider\_name) | Name of the EC2 capacity provider |
 | <a name="output_cpu_architecture"></a> [cpu\_architecture](#output\_cpu\_architecture) | CPU architecture for ECS tasks (ARM64 or X86\_64) |
@@ -135,8 +148,12 @@ No modules.
 | <a name="output_ecs_cluster_name"></a> [ecs\_cluster\_name](#output\_ecs\_cluster\_name) | Name of the ECS cluster |
 | <a name="output_effective_asg_config"></a> [effective\_asg\_config](#output\_effective\_asg\_config) | Resolved ASG sizing after environment-aware defaults |
 | <a name="output_execution_role_arn"></a> [execution\_role\_arn](#output\_execution\_role\_arn) | ARN of the ECS execution IAM role |
+| <a name="output_listener_env_vars"></a> [listener\_env\_vars](#output\_listener\_env\_vars) | Auth and replication-listener environment variables handed to loreserver. For tests and debugging. |
 | <a name="output_service_name"></a> [service\_name](#output\_service\_name) | Name of the ECS service |
+| <a name="output_store_env_vars"></a> [store\_env\_vars](#output\_store\_env\_vars) | Store-wiring environment variables handed to loreserver (immutable, mutable, lock, DynamoDB endpoint). For tests and debugging. |
 | <a name="output_task_definition_arn"></a> [task\_definition\_arn](#output\_task\_definition\_arn) | ARN of the loreserver task definition |
 | <a name="output_task_role_arn"></a> [task\_role\_arn](#output\_task\_role\_arn) | ARN of the ECS task IAM role |
 | <a name="output_tls_ca_cert_pem"></a> [tls\_ca\_cert\_pem](#output\_tls\_ca\_cert\_pem) | CA certificate PEM for client trust configuration. Null when using external certs. |
+| <a name="output_topology_toml"></a> [topology\_toml](#output\_topology\_toml) | Rendered Lore topology overlay (empty when no replication peers) |
 <!-- END_TF_DOCS -->
+<!-- markdownlint-enable -->

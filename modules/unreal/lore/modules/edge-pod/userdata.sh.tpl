@@ -72,4 +72,5 @@ docker run -d --name edge-pod \
   -e LORE__MUTABLE_STORE__MODE=remote \
   -e "LORE__MUTABLE_STORE__REMOTE__REMOTE_URL=lores://${write_tier_dns}:41337" \
   -e LORE__LOCK_STORE__MODE=local \
+  ${extra_env} \
   ${container_image}

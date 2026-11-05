@@ -53,6 +53,15 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "vpc_peering_routes" {
+  description = "Routes to peered VPCs (e.g. a regional cache in another region) for the module-created private route table. Only used when vpc_id is null. Do not add these with separate aws_route resources: the route table's inline routes remove them on the next apply."
+  type = list(object({
+    cidr_block                = string
+    vpc_peering_connection_id = string
+  }))
+  default = []
+}
+
 variable "availability_zones" {
   description = "List of availability zones (only used when vpc_id is null). If null, uses first 2 AZs in the current region."
   type        = list(string)
@@ -64,8 +73,14 @@ variable "availability_zones" {
 # =============================================================================
 
 variable "allowed_ingress_cidrs" {
-  description = "CIDR blocks allowed to access Lore server ports. No default — must be explicitly provided."
+  description = "Specific CIDR blocks allowed to access Lore server ports. Public catch-all ranges are rejected."
   type        = list(string)
+  nullable    = false
+
+  validation {
+    condition     = length(var.allowed_ingress_cidrs) > 0 && !contains(var.allowed_ingress_cidrs, "0.0.0.0/0") && !contains(var.allowed_ingress_cidrs, "::/0")
+    error_message = "allowed_ingress_cidrs must contain at least one specific CIDR and must not include 0.0.0.0/0 or ::/0."
+  }
 }
 
 # =============================================================================
@@ -270,6 +285,84 @@ variable "intelligent_tiering_deep_archive_days" {
     condition     = var.intelligent_tiering_deep_archive_days == 0 || var.intelligent_tiering_archive_days == 0 || var.intelligent_tiering_deep_archive_days > var.intelligent_tiering_archive_days
     error_message = "intelligent_tiering_deep_archive_days must be greater than intelligent_tiering_archive_days when both are enabled."
   }
+}
+
+# =============================================================================
+# Multi-region
+# =============================================================================
+
+variable "replication_ingress_cidrs" {
+  description = "CIDR blocks of Lore servers in other VPCs or regions (regional caches) allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication), and that the write tier may push to on the same ports. Needed across inter-region VPC peering, where security-group references do not work. Port 41340 has no JWT or client-certificate check, so these rules are its only access control: give the peer tier's private subnet CIDRs (regional-cache output private_subnet_cidrs), not its whole VPC, and never 0.0.0.0/0."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = !contains(var.replication_ingress_cidrs, "0.0.0.0/0") && !contains(var.replication_ingress_cidrs, "::/0")
+    error_message = "replication_ingress_cidrs must list specific private CIDRs, not 0.0.0.0/0 or ::/0."
+  }
+}
+
+variable "dynamodb_endpoint_client_cidrs" {
+  description = "Private subnet CIDRs of regional caches allowed to use a DynamoDB interface endpoint in the write VPC over VPC peering. Null disables the interface endpoint. Use each cache's private_subnet_cidrs output. Existing VPCs must route these CIDRs over peering."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.dynamodb_endpoint_client_cidrs == null ? true : (
+      length(var.dynamodb_endpoint_client_cidrs) > 0 &&
+      alltrue([
+        for cidr in var.dynamodb_endpoint_client_cidrs :
+        can(cidrhost(cidr, 0)) && !contains(["0.0.0.0/0", "::/0"], cidr)
+      ])
+    )
+    error_message = "dynamodb_endpoint_client_cidrs must be null or a nonempty list of specific valid CIDRs."
+  }
+}
+
+variable "dynamodb_endpoint_subnet_ids" {
+  description = "Subnets for the DynamoDB interface endpoint, one per Availability Zone. Null uses private_subnet_ids. Existing-VPC callers must not pass two subnets from one Availability Zone."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition     = var.dynamodb_endpoint_subnet_ids == null ? true : length(var.dynamodb_endpoint_subnet_ids) > 0
+    error_message = "dynamodb_endpoint_subnet_ids must be null or a nonempty list."
+  }
+}
+
+variable "replication_peers" {
+  description = "Other Lore servers this write tier attempts to push each stored fragment to (Lore topology peers). A regional cache in another region is locality = \"OtherRegion\": each put is offered to its NVMe cache so the other office can read new content locally. A missed push loads through the durable path. Address is a DNS name or IP reachable from the write tier's VPC."
+  type = list(object({
+    address  = string
+    port     = optional(number, 41340)
+    locality = string
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
+    error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\"."
+  }
+}
+
+variable "replication_peer_refresh_seconds" {
+  description = "How often replication peers are re-created and their DNS names re-resolved. Lets a peer tier that was not up yet, or that has moved to a new task IP, be picked up without a restart."
+  type        = number
+  default     = 300
+  nullable    = false
+}
+
+variable "enable_same_region_write" {
+  description = "Whether SameRegion replication peers also receive writes (Lore default). false turns them into read-only replicas."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "trusted_ca_pem" {
+  description = "CA certificate (PEM) of a regional cache in another region, so this write tier can push fragments to it over TLS. Null for single-region deployments."
+  type        = string
+  default     = null
 }
 
 # =============================================================================
