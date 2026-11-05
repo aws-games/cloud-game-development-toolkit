@@ -79,6 +79,20 @@ variable "write_tier_ca_certificate_pem" {
   type        = string
 }
 
+variable "dynamodb_endpoint_url" {
+  description = "Write Region DynamoDB interface endpoint URL (root output dynamodb_interface_endpoint_url). Sets Lore's native endpoint URL for branch-pointer and lock clients, so calls cross VPC peering instead of the cache VPC's NAT. Null keeps the public regional endpoint."
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.dynamodb_endpoint_url == null ? true : can(regex(
+      "^https://vpce-[a-z0-9-]+\\.dynamodb\\.${var.write_region}\\.vpce\\.[a-z0-9.-]+$",
+      var.dynamodb_endpoint_url
+    ))
+    error_message = "dynamodb_endpoint_url must be null or an endpoint-specific HTTPS DynamoDB URL in write_region."
+  }
+}
+
 variable "branch_pointer_access" {
   description = <<-EOT
     How this cache reaches the write region's branch pointers. "dynamodb" (default): the write

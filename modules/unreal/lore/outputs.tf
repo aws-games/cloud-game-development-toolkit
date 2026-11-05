@@ -181,3 +181,16 @@ output "auth_jwt_issuer" {
   description = "JWT issuer the write tier accepts (null when auth_mode = none). A regional cache uses it with auth_mode = external."
   value       = var.auth_mode == "none" ? null : (var.auth_mode == "cognito" ? module.auth[0].issuer : var.auth_jwt_issuer)
 }
+
+output "dynamodb_interface_endpoint_url" {
+  description = "Endpoint-specific HTTPS URL for the write VPC's DynamoDB interface endpoint. Pass it to regional-cache dynamodb_endpoint_url. Null when disabled."
+  value       = local.dynamodb_interface_endpoint_enabled ? "https://${local.dynamodb_interface_endpoint_regional_dns_name}" : null
+
+  # A cache task must not receive this URL before the endpoint admits its private subnet.
+  depends_on = [aws_vpc_security_group_ingress_rule.dynamodb_interface_endpoint_https]
+}
+
+output "dynamodb_interface_endpoint_id" {
+  description = "DynamoDB interface endpoint ID for flow and CloudTrail checks. Null when disabled."
+  value       = try(aws_vpc_endpoint.dynamodb_interface[0].id, null)
+}

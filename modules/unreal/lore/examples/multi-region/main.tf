@@ -5,7 +5,9 @@
 # bucket, one set of DynamoDB tables. The other region runs a regional cache: a Lore server with
 # an NVMe cache and no storage of its own. The write tier attempts to push each stored fragment
 # into that cache. A missed push loads from the write tier on the first cache miss. The second
-# office's uploads and cache misses go to the write tier. See ../../README.md, "Multi-region".
+# office's uploads and cache misses go to the write tier. Its branch-pointer and lock calls use a
+# DynamoDB interface endpoint in the write VPC over inter-region peering. See ../../README.md,
+# "Multi-region".
 # =============================================================================
 
 provider "aws" {
@@ -47,7 +49,8 @@ module "lore" {
   # Let the regional cache's private subnets reach the write tier, and the write tier push to
   # them (security-group references do not cross inter-region peering, so this is by CIDR).
   # Port 41340 has no JWT or client-certificate check: these CIDRs are its only protection.
-  replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs
+  replication_ingress_cidrs      = module.regional_cache.private_subnet_cidrs
+  dynamodb_endpoint_client_cidrs = module.regional_cache.private_subnet_cidrs
   vpc_peering_routes = [{
     cidr_block                = local.replica_vpc_cidr
     vpc_peering_connection_id = aws_vpc_peering_connection.regions.id
@@ -89,6 +92,7 @@ module "regional_cache" {
   write_tier_replication_cidrs  = module.lore.private_subnet_cidrs
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
+  dynamodb_endpoint_url         = module.lore.dynamodb_interface_endpoint_url
   mutable_store_table_name      = module.lore.mutable_store_table_name
   mutable_store_table_arn       = module.lore.mutable_store_table_arn
   locks_table_name              = module.lore.locks_table_name

@@ -15,6 +15,9 @@ mock_provider "aws" {
   mock_data "aws_ssm_parameter" {
     defaults = { value = "ami-12345678" }
   }
+  mock_resource "aws_dynamodb_table" {
+    defaults = { arn = "arn:aws:dynamodb:us-east-2:123456789012:table/mock" }
+  }
   mock_data "aws_dynamodb_table" {
     defaults = { arn = "arn:aws:dynamodb:us-west-2:123456789012:table/mock" }
   }
@@ -60,6 +63,10 @@ run "single_region_has_no_cross_region_resources" {
   assert {
     condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE_CONFIG_PATH"]) == "/etc/lore/overlay"
     error_message = "Server must read the overlay directory where the topology file is written"
+  }
+  assert {
+    condition     = length(aws_vpc_endpoint.dynamodb_interface) == 0 && output.dynamodb_interface_endpoint_url == null
+    error_message = "Single-region defaults must not add a billed DynamoDB interface endpoint"
   }
 }
 
@@ -193,6 +200,7 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
     write_region_rtt_ms           = 55
     write_tier_dns_name           = "write-tier.lore-dev.internal"
     write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    dynamodb_endpoint_url         = "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com"
     mutable_store_table_name      = "lore-dev-mutable-typed-store"
     mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
     locks_table_name              = "lore-dev-locks"
@@ -218,6 +226,13 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
   assert {
     condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_REGION"]) == "us-east-2" && one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_REGION"]) == "us-east-2"
     error_message = "Branch pointers and locks must be the write region's tables"
+  }
+  assert {
+    condition = (
+      one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_ENDPOINT_URL"]) == "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com" &&
+      one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_ENDPOINT_URL"]) == "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com"
+    )
+    error_message = "The cache must send branch-pointer and lock clients through the write VPC interface endpoint"
   }
   assert {
     condition     = output.cache_dns_name == "regional-cache.lore-dev-london.internal"
@@ -807,4 +822,133 @@ run "regional_cache_rejects_open_client_and_write_region_ingress" {
   }
 
   expect_failures = [var.allowed_ingress_cidrs, var.write_region_vpc_cidr]
+}
+
+# =============================================================================
+# DynamoDB interface endpoint — private branch-pointer and lock path over VPC peering
+# =============================================================================
+
+run "dynamodb_interface_endpoint_scoped_to_cache_cidrs" {
+  command = plan
+
+  variables {
+    dynamodb_endpoint_client_cidrs = ["10.20.2.0/24", "10.20.3.0/24"]
+  }
+
+  assert {
+    condition     = length(aws_vpc_endpoint.dynamodb_interface) == 1
+    error_message = "The write VPC must create one DynamoDB interface endpoint"
+  }
+
+  assert {
+    condition = (
+      aws_vpc_endpoint.dynamodb_interface[0].vpc_endpoint_type == "Interface" &&
+      aws_vpc_endpoint.dynamodb_interface[0].private_dns_enabled == false &&
+      aws_vpc_endpoint.dynamodb_interface[0].ip_address_type == "ipv4"
+    )
+    error_message = "The DynamoDB endpoint must use private IPv4 ENIs without private DNS"
+  }
+
+  assert {
+    condition = (
+      toset([for rule in aws_vpc_security_group_ingress_rule.dynamodb_interface_endpoint_https : rule.cidr_ipv4]) == toset(["10.20.2.0/24", "10.20.3.0/24"]) &&
+      alltrue([for rule in aws_vpc_security_group_ingress_rule.dynamodb_interface_endpoint_https : rule.from_port == 443 && rule.to_port == 443 && rule.ip_protocol == "tcp"])
+    )
+    error_message = "Only the cache private subnets may reach the endpoint on HTTPS"
+  }
+
+  assert {
+    condition     = length(local.dynamodb_interface_endpoint_actions) == 7 && !contains(local.dynamodb_interface_endpoint_actions, "dynamodb:*")
+    error_message = "The endpoint policy action list must stay limited to Lore's seven DynamoDB calls"
+  }
+}
+
+run "dynamodb_interface_endpoint_rejects_open_internet" {
+  command = plan
+
+  variables {
+    dynamodb_endpoint_client_cidrs = ["0.0.0.0/0"]
+  }
+
+  expect_failures = [var.dynamodb_endpoint_client_cidrs]
+}
+
+run "dynamodb_interface_endpoint_supports_existing_vpc" {
+  command = plan
+
+  variables {
+    vpc_id                         = "vpc-0123456789abcdef0"
+    private_subnet_ids             = ["subnet-private-a", "subnet-private-b"]
+    public_subnet_ids              = ["subnet-public-a", "subnet-public-b"]
+    dynamodb_endpoint_client_cidrs = ["10.20.2.0/24", "10.20.3.0/24"]
+    dynamodb_endpoint_subnet_ids   = ["subnet-endpoint-a", "subnet-endpoint-b"]
+  }
+
+  assert {
+    condition     = length(aws_vpc_endpoint.s3) == 0 && length(aws_vpc_endpoint.dynamodb) == 0
+    error_message = "Existing VPCs must not gain module-managed gateway endpoints"
+  }
+
+  assert {
+    condition     = toset(aws_vpc_endpoint.dynamodb_interface[0].subnet_ids) == toset(["subnet-endpoint-a", "subnet-endpoint-b"])
+    error_message = "Existing VPC callers must be able to select one endpoint subnet per Availability Zone"
+  }
+}
+
+run "regional_cache_rejects_dynamodb_endpoint_in_another_region" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    dynamodb_endpoint_url         = "https://vpce-0123456789abcdef0-abc123.dynamodb.us-west-2.vpce.amazonaws.com"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+  }
+
+  expect_failures = [var.dynamodb_endpoint_url]
+}
+
+run "dynamodb_interface_endpoint_exports_regional_dns" {
+  command = plan
+
+  variables {
+    dynamodb_endpoint_client_cidrs = ["10.20.2.0/24"]
+  }
+
+  override_resource {
+    target          = aws_vpc_endpoint.dynamodb_interface
+    override_during = plan
+    values = {
+      id = "vpce-0123456789abcdef0"
+      dns_entry = [
+        {
+          dns_name       = "vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com"
+          hosted_zone_id = "Z0123456789"
+        },
+        {
+          dns_name       = "vpce-0123456789abcdef0-abc123-us-east-2a.dynamodb.us-east-2.vpce.amazonaws.com"
+          hosted_zone_id = "Z0123456789"
+        },
+      ]
+    }
+  }
+
+  assert {
+    condition     = output.dynamodb_interface_endpoint_url == "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com"
+    error_message = "The output must choose the regional endpoint DNS entry, not a zonal entry"
+  }
 }

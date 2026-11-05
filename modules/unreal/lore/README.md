@@ -55,12 +55,22 @@ content-addressed, so a cache copy can never be wrong. An MRSC Global Table pres
 compare-and-swap across 40 tested races, but added cross-region latency. Lore's transactional
 lock calls cannot use MRSC Global Tables. MREC Global Tables allowed acknowledged concurrent
 pushes to vanish in the same test sweep. This example therefore keeps both tables in the write
-region. From the second office, commits upload to the write region, and push, lock and `status`
-make DynamoDB calls there; reads of cached content stay local. Choose the write region by where
-most commits and pushes happen.
+region. The public multi-region example creates a DynamoDB interface endpoint in the write VPC.
+The cache sets Lore's mutable-store and lock-store DynamoDB endpoint URLs, so branch-pointer
+and lock calls use private endpoint ENIs over VPC peering instead of the cache VPC's NAT. Private
+DNS stays off: the write tier keeps using its free same-Region DynamoDB gateway endpoint. Reads of
+cached content stay local. Choose the write region by where most commits and pushes happen.
 
 Inputs involved on the write tier: `replication_ingress_cidrs`, `replication_peers`,
-`trusted_ca_pem`, `vpc_peering_routes`. See [examples/multi-region](examples/multi-region/).
+`dynamodb_endpoint_client_cidrs`, `dynamodb_endpoint_subnet_ids`, `trusted_ca_pem`,
+`vpc_peering_routes`. Pass `dynamodb_interface_endpoint_url` to the regional cache as
+`dynamodb_endpoint_url`. See [examples/multi-region](examples/multi-region/).
+
+The interface endpoint is optional for compatibility. Null `dynamodb_endpoint_client_cidrs`
+disables it, and a cache without `dynamodb_endpoint_url` uses DynamoDB's public regional endpoint.
+For an existing VPC, give one `dynamodb_endpoint_subnet_ids` value per Availability Zone and
+manage both peering directions yourself. To disable a live endpoint safely, first clear the cache
+URL and deploy the replacement task. Remove the endpoint CIDRs in a second apply.
 
 **The published multi-region example requires external JWT authentication on client port
 41337.** Port 41340 is network-protected, not JWT-protected. JWT validation (`auth_mode`) applies

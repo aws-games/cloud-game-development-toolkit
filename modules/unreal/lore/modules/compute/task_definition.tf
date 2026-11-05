@@ -47,6 +47,8 @@ locals {
       { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_TABLE", value = var.mutable_store_table_name },
       ], var.mutable_store_region != null ? [
       { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_REGION", value = var.mutable_store_region },
+      ] : [], var.dynamodb_endpoint_url != null ? [
+      { name = "LORE__PLUGINS__AWS__MUTABLE_STORE__DYNAMODB_ENDPOINT_URL", value = var.dynamodb_endpoint_url },
   ] : [])
 
   lock_store_env_vars = var.lock_store_mode == "aws" ? concat([
@@ -54,6 +56,8 @@ locals {
     { name = "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_TABLE", value = var.locks_table_name },
     ], var.lock_store_region != null ? [
     { name = "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_REGION", value = var.lock_store_region },
+    ] : [], var.dynamodb_endpoint_url != null ? [
+    { name = "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_ENDPOINT_URL", value = var.dynamodb_endpoint_url },
     ] : []) : [
     { name = "LORE__LOCK_STORE__MODE", value = var.lock_store_mode },
   ]

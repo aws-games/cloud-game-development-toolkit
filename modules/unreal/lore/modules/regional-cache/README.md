@@ -18,7 +18,7 @@ source of truth.
 | New content arriving | stored, then an immediate push to every replication peer is attempted | receives successful pushes; a missed fragment loads from the write tier on the first cache miss |
 | Uploads (commit) from this office | — | forwarded to the write tier; the commit returns once it is stored there |
 | Cache miss | S3 | the write tier, over QUIC (41340) |
-| Branch pointers and locks | DynamoDB | **the write region's DynamoDB tables**, used cross-region |
+| Branch pointers and locks | DynamoDB | **the write region's DynamoDB tables**, through its interface endpoint over VPC peering when `dynamodb_endpoint_url` is set |
 
 Fragments are immutable and content-addressed, so a cache cannot hold a wrong version. An MRSC
 Global Table preserved compare-and-swap across 40 tested races, but added cross-region latency.
@@ -44,6 +44,7 @@ module "regional_cache" {
   write_tier_replication_cidrs  = module.lore.private_subnet_cidrs  # 41340 access, see below
   write_tier_dns_name           = module.lore.write_tier_dns_name
   write_tier_ca_certificate_pem = module.lore.ca_certificate_pem
+  dynamodb_endpoint_url          = module.lore.dynamodb_interface_endpoint_url
   mutable_store_table_name      = module.lore.mutable_store_table_name
   mutable_store_table_arn       = module.lore.mutable_store_table_arn
   locks_table_name              = module.lore.locks_table_name
@@ -51,7 +52,9 @@ module "regional_cache" {
 }
 ```
 
-The root module needs the mirror of this: `replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs`,
+The root module needs the mirror of this:
+`replication_ingress_cidrs = module.regional_cache.private_subnet_cidrs`,
+`dynamodb_endpoint_client_cidrs = module.regional_cache.private_subnet_cidrs`,
 `replication_peers = [{ address = module.regional_cache.cache_dns_name, locality = "OtherRegion" }]`
 and `trusted_ca_pem = module.regional_cache.ca_certificate_pem`. The two VPCs must be peered, with
 routes passed as `vpc_peering_routes` on both sides, and each side's Cloud Map hosted zone
@@ -76,6 +79,17 @@ host that can reach port 41340 can read and write fragments. Keep its sources na
   `private_subnet_cidrs`), not its VPC CIDR.
 - Never put office, VPN or public ranges on 41340.
 
+DynamoDB access:
+
+- Set `dynamodb_endpoint_url` to the root module's `dynamodb_interface_endpoint_url` output. The
+  compute task gives it to Lore's mutable-store and lock-store DynamoDB clients through their
+  native `dynamodb_endpoint_url` settings.
+- The root endpoint has private DNS off and an endpoint-specific TLS name. Its security group
+  admits HTTPS only from this cache's private subnet CIDRs, and its policy names only the mutable
+  store, lock table and lock index.
+- Null keeps the legacy public regional endpoint through this VPC's NAT. The published example
+  does not use that fallback.
+
 Authentication:
 
 - `auth_mode` accepts `"none"` or `"external"`. For a Cognito write region use `"external"` with
@@ -94,7 +108,7 @@ Measured in test deployments (Lore v0.10.1 unless noted):
 |---|---|
 | Cache task replaced | New task IP; clients saw "Disconnected" for up to the Cloud Map TTL (10 s) |
 | Both tiers boot together | The cache's DNS name did not exist when the write tier started. With a plain fixed topology the peer was lost until restart; the module now re-resolves peers every `replication_peer_refresh_seconds` (default 300 s) |
-| Write-tier ECS task stopped for about 10 minutes, while S3 and DynamoDB stayed healthy (v0.12.0) | London `status`, `sync`, history, lock status and a cached 2.5 GB clone worked. Two London content-write commands did not finish within the 120 s harness limit |
+| Write-tier ECS task stopped for about 10 minutes, while S3 and DynamoDB stayed healthy (v0.12.0; legacy NAT/public DynamoDB path) | London `status`, `sync`, history, lock status and a cached 2.5 GB clone worked. Two London content-write commands did not finish within the 120 s harness limit |
 | `branch_pointer_access = "write_tier"` | `lore repository list` fails (`RemoteMutableStore::list` is not implemented); push 0.98 s vs 0.87 s at 55 ms RTT, 2.29 s vs 1.94 s at 136 ms |
 | MRSC Global Table for branch pointers (locks stayed single-Region) | Compare-and-swap held across 40 race rounds, but each office paid cross-Region latency. Lore lock calls use `TransactWriteItems`, which MRSC Global Tables reject |
 | Earlier design, storage-layer replication (removed) | ~22 s window where far reads failed and content was logged as lost; the reason this module has no storage of its own |
@@ -102,8 +116,9 @@ Measured in test deployments (Lore v0.10.1 unless noted):
 Not measured; expected from the design, and to be verified before production use:
 
 - **Peering link down, write Region healthy:** fragment uploads, cache misses and peer pushes over
-  ports 41337/41340 fail. With `branch_pointer_access = "dynamodb"`, pointer and lock calls should
-  still reach the write Region's public DynamoDB endpoint through this VPC's NAT gateway.
+  ports 41337/41340 fail. With `dynamodb_endpoint_url` set, branch-pointer and lock calls fail too
+  because endpoint ENIs sit in the write VPC. The null fallback can still use the public DynamoDB
+  endpoint through NAT, but the published example does not use that path.
 - **Whole write Region lost:** normal clone, sync, status, commit, push and lock operations cannot
   finish. Cached fragment bytes may remain on NVMe, but branch pointers and cache misses are
   unavailable. There is no automatic failover.
@@ -123,8 +138,9 @@ every read local. 80 % of the instance store is used by default (94 GB on a c8gd
 
 Put the write tier near the office that commits and pushes the most. From the other office,
 commits upload to the write region, and `push`, `lore lock` and the branch-pointer part of
-`status` each make DynamoDB calls in the write region. Reads of content that is in the cache
-never leave the region.
+`status` each make DynamoDB calls in the write region. With `dynamodb_endpoint_url`, those calls
+reach private endpoint ENIs over VPC peering. Reads of content that is in the cache never leave
+the region.
 
 ## First apply and restarts
 
@@ -136,13 +152,18 @@ up to the Cloud Map TTL (10 s).
 ## Branch pointers: DynamoDB or the write tier
 
 `branch_pointer_access` selects how the cache reaches the write region's branch pointers.
-The default, `"dynamodb"`, uses the write region's DynamoDB table directly. `"write_tier"` uses
-Lore's `remote` mutable store (what the edge pod uses) to forward each operation to the write
-tier. Measured from a far-region client with Lore v0.10.1, forwarding was slightly slower
+The default, `"dynamodb"`, uses the write region's DynamoDB table directly. When
+`dynamodb_endpoint_url` is set, the AWS SDK reaches that table through the write VPC's interface
+endpoint over peering. `"write_tier"` uses Lore's `remote` mutable store (what the edge pod uses)
+to forward each operation to the write tier. Measured from a far-region client with Lore v0.10.1, forwarding was slightly slower
 (small push 0.98 s vs 0.87 s at 55 ms RTT, 2.29 s vs 1.94 s at 136 ms), and
 `lore repository list` fails through it because the remote store does not implement `list`.
 Clone, commit, push and sync worked in both modes without authentication. `"write_tier"` is
 rejected when `auth_mode = "external"` until token forwarding is implemented.
+
+To disable a live interface endpoint, first set this module's `dynamodb_endpoint_url` to null and
+deploy the replacement cache task. In a second apply, set the root module's
+`dynamodb_endpoint_client_cidrs` to null. This keeps old tasks from using a deleted endpoint.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -226,6 +247,7 @@ rejected when `auth_mode = "external"` until token forwarding is implemented.
 | <a name="input_container_user"></a> [container\_user](#input\_container\_user) | User/group for the container process | `string` | `"65534"` | no |
 | <a name="input_deployment_maximum_percent"></a> [deployment\_maximum\_percent](#input\_deployment\_maximum\_percent) | n/a | `number` | `200` | no |
 | <a name="input_deployment_minimum_healthy_percent"></a> [deployment\_minimum\_healthy\_percent](#input\_deployment\_minimum\_healthy\_percent) | n/a | `number` | `66` | no |
+| <a name="input_dynamodb_endpoint_url"></a> [dynamodb\_endpoint\_url](#input\_dynamodb\_endpoint\_url) | Write Region DynamoDB interface endpoint URL (root output dynamodb\_interface\_endpoint\_url). Sets Lore's native endpoint URL for branch-pointer and lock clients, so calls cross VPC peering instead of the cache VPC's NAT. Null keeps the public regional endpoint. | `string` | `null` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | n/a | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable VPC flow logs to CloudWatch | `bool` | `false` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | n/a | `bool` | `false` | no |

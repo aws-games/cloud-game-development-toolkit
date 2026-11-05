@@ -113,6 +113,7 @@ No modules.
 | <a name="input_durable_expected_rtt_ms"></a> [durable\_expected\_rtt\_ms](#input\_durable\_expected\_rtt\_ms) | Round-trip time to the durable\_remote\_url server, used to size the QUIC congestion window (Lore default 100). Null keeps Lore's default. | `number` | `null` | no |
 | <a name="input_durable_remote_url"></a> [durable\_remote\_url](#input\_durable\_remote\_url) | Lore server replication URL for durable\_store\_mode = "replicated", e.g. lore://write-tier.lore-dev.internal:41340. | `string` | `null` | no |
 | <a name="input_durable_store_mode"></a> [durable\_store\_mode](#input\_durable\_store\_mode) | Where the NVMe cache's durable tier lives. "aws": this node's own S3 bucket and DynamoDB<br/>tables (the write tier). "replicated": another Lore server, reached over QUIC on its<br/>replication port (a regional cache in another region whose single source of truth is the<br/>write tier). Reads that miss the cache and every upload go to that server. | `string` | `"aws"` | no |
+| <a name="input_dynamodb_endpoint_url"></a> [dynamodb\_endpoint\_url](#input\_dynamodb\_endpoint\_url) | Optional endpoint-specific HTTPS URL for DynamoDB. Sets Lore's native DynamoDB endpoint URL for mutable-store and lock-store clients. | `string` | `null` | no |
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | Deploy ADOT sidecar for OpenTelemetry collection (CloudWatch + X-Ray) | `bool` | `true` | no |
 | <a name="input_enable_replication"></a> [enable\_replication](#input\_enable\_replication) | Enable the QUIC internal replication endpoint (port 41340). Required for multi-server cache topologies. | `bool` | `false` | no |
 | <a name="input_enable_same_region_write"></a> [enable\_same\_region\_write](#input\_enable\_same\_region\_write) | Whether SameRegion peers also receive writes (Lore default true). Set false to use a SameRegion peer as a read-only replica, e.g. the other region's tier as a fallback for content that has not replicated yet. | `bool` | `true` | no |
@@ -149,7 +150,7 @@ No modules.
 | <a name="output_execution_role_arn"></a> [execution\_role\_arn](#output\_execution\_role\_arn) | ARN of the ECS execution IAM role |
 | <a name="output_listener_env_vars"></a> [listener\_env\_vars](#output\_listener\_env\_vars) | Auth and replication-listener environment variables handed to loreserver. For tests and debugging. |
 | <a name="output_service_name"></a> [service\_name](#output\_service\_name) | Name of the ECS service |
-| <a name="output_store_env_vars"></a> [store\_env\_vars](#output\_store\_env\_vars) | Store-wiring environment variables handed to loreserver (immutable, mutable, lock). For tests and debugging. |
+| <a name="output_store_env_vars"></a> [store\_env\_vars](#output\_store\_env\_vars) | Store-wiring environment variables handed to loreserver (immutable, mutable, lock, DynamoDB endpoint). For tests and debugging. |
 | <a name="output_task_definition_arn"></a> [task\_definition\_arn](#output\_task\_definition\_arn) | ARN of the loreserver task definition |
 | <a name="output_task_role_arn"></a> [task\_role\_arn](#output\_task\_role\_arn) | ARN of the ECS task IAM role |
 | <a name="output_tls_ca_cert_pem"></a> [tls\_ca\_cert\_pem](#output\_tls\_ca\_cert\_pem) | CA certificate PEM for client trust configuration. Null when using external certs. |
