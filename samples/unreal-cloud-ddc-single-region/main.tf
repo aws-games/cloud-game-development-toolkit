@@ -84,17 +84,22 @@ module "unreal_cloud_ddc_infra" {
   depends_on = [module.unreal_cloud_ddc_vpc]
   source     = "../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra"
   name       = "unreal-cloud-ddc"
-  region     = data.aws_region.current.name
+  region     = data.aws_region.current.region
   vpc_id     = module.unreal_cloud_ddc_vpc.vpc_id
 
-  eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = ["${chomp(data.http.public_ip.response_body)}/32"]
+  eks_node_group_subnets = module.unreal_cloud_ddc_vpc.private_subnet_ids
+  # If eks_public_access_cidrs is set, use it verbatim. Otherwise fall back to
+  # auto-detecting the caller's single public IP. The auto-detect path only
+  # works reliably for single, stable public IPs; NAT pools, VPNs and CI
+  # runners should set eks_public_access_cidrs explicitly (see README).
+  # When the public endpoint is disabled, no public CIDRs are sent at all.
+  eks_cluster_public_endpoint_access_cidr = var.eks_public_access ? (length(var.eks_public_access_cidrs) > 0 ? var.eks_public_access_cidrs : ["${chomp(data.http.public_ip.response_body)}/32"]) : null
   eks_cluster_private_access              = true
-  eks_cluster_public_access               = true
+  eks_cluster_public_access               = var.eks_public_access
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group.id]
 
   scylla_subnets       = module.unreal_cloud_ddc_vpc.private_subnet_ids
-  scylla_ami_name      = "ScyllaDB 6.2.1"
+  scylla_ami_name      = "ScyllaDB 2026.3.1"
   scylla_architecture  = "x86_64"
   scylla_instance_type = "i4i.xlarge"
 
@@ -102,7 +107,8 @@ module "unreal_cloud_ddc_infra" {
   scylla_db_storage    = 100
 
   monitoring_application_load_balancer_subnets = module.unreal_cloud_ddc_vpc.public_subnet_ids
-  alb_certificate_arn                          = aws_acm_certificate.scylla_monitoring.arn
+  # Use the validation's ARN so the HTTPS listener waits for the cert to be ISSUED.
+  alb_certificate_arn = aws_acm_certificate_validation.scylla_monitoring.certificate_arn
 
   nvme_managed_node_instance_type = "i3en.xlarge"
   nvme_managed_node_desired_size  = 2
@@ -125,14 +131,17 @@ module "unreal_cloud_ddc_intra_cluster" {
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn
 
+  # EKS Pod Identity (default) or IRSA for the EBS CSI driver. See README.
+  ebs_csi_use_pod_identity = var.ebs_csi_use_pod_identity
+
   s3_bucket_id = module.unreal_cloud_ddc_infra.s3_bucket_id
 
   unreal_cloud_ddc_helm_values = [
     templatefile("${path.module}/assets/unreal_cloud_ddc_single_region.yaml", {
       scylla_ips         = "${module.unreal_cloud_ddc_infra.scylla_ips[0]},${module.unreal_cloud_ddc_infra.scylla_ips[1]}"
       bucket_name        = module.unreal_cloud_ddc_infra.s3_bucket_id
-      region             = substr(data.aws_region.current.name, length(data.aws_region.current.name) - 1, 1) == "1" ? substr(data.aws_region.current.name, 0, length(data.aws_region.current.name) - 2) : data.aws_region.current.name
-      aws_region         = data.aws_region.current.name
+      region             = substr(data.aws_region.current.region, length(data.aws_region.current.region) - 1, 1) == "1" ? substr(data.aws_region.current.region, 0, length(data.aws_region.current.region) - 2) : data.aws_region.current.region
+      aws_region         = data.aws_region.current.region
       security_group_ids = aws_security_group.unreal_ddc_load_balancer_access_security_group.id
       token              = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token.secret_string
     })

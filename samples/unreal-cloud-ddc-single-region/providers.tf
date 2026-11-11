@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.89.0"
+      version = ">= 6.0.0"
     }
 
     random = {
@@ -32,7 +32,8 @@ terraform {
 }
 
 provider "kubernetes" {
-  host                   = module.unreal_cloud_ddc_infra.cluster_endpoint
+  host                   = local.eks_provider_host
+  tls_server_name        = local.eks_tls_server_name
   cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
@@ -43,7 +44,8 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = module.unreal_cloud_ddc_infra.cluster_endpoint
+    host                   = local.eks_provider_host
+    tls_server_name        = local.eks_tls_server_name
     cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra.cluster_certificate_authority_data)
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
@@ -52,7 +54,7 @@ provider "helm" {
     }
   }
   registry {
-    url      = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+    url      = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com"
     username = data.aws_ecr_authorization_token.token.user_name
     password = data.aws_ecr_authorization_token.token.password
   }
