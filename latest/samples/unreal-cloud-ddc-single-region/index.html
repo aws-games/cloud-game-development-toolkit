@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
     
     
       
@@ -33,10 +33,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
   
@@ -3263,6 +3263,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eks-api-endpoint-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EKS API endpoint access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3580,6 +3608,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eks-api-endpoint-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EKS API endpoint access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3760,6 +3816,172 @@
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply
 </code></pre></div>
 <p>The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.</p>
+<h3 id="ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity">EBS CSI driver identity mode (IRSA vs EKS Pod Identity)<a class="headerlink" href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" title="Permanent link">&para;</a></h3>
+<p>The EBS CSI driver needs AWS credentials to manage EBS volumes for the cluster.
+This sample supports two mechanisms, selected by the sample's root
+<code>ebs_csi_use_pod_identity</code> variable (default <code>true</code>), which is passed through
+to the intra-cluster module:</p>
+<ul>
+<li><strong>EKS Pod Identity (recommended, the sample default).</strong> Uses the
+  <code>pods.eks.amazonaws.com</code> service principal and
+  <code>eks-auth:AssumeRoleForPodIdentity</code>. This is AWS's current recommended
+  mechanism, needs no cluster OIDC provider for the driver, and installs the
+  <code>eks-pod-identity-agent</code> add-on automatically. It also works in accounts whose
+  AWS Organization applies an SCP/RCP that denies
+  <code>sts:AssumeRoleWithWebIdentity</code> (a common central-governance guardrail) —
+  under IRSA that guardrail leaves the <code>ebs-csi-controller</code> pods in
+  <code>CrashLoopBackOff</code> with <code>AccessDenied</code>, and the add-on never becomes <code>ACTIVE</code>.</li>
+<li><strong>IRSA (legacy).</strong> Set <code>ebs_csi_use_pod_identity = false</code> to use the classic
+  IAM Roles for Service Accounts path (<code>sts:AssumeRoleWithWebIdentity</code> via the
+  cluster OIDC provider). Appropriate when Pod Identity is unavailable (for
+  example Fargate or Windows node groups).</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars — override if you need the legacy IRSA path</span>
+<span class="na">ebs_csi_use_pod_identity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+</code></pre></div>
+<h3 id="eks-api-endpoint-access">EKS API endpoint access<a class="headerlink" href="#eks-api-endpoint-access" title="Permanent link">&para;</a></h3>
+<p>Terraform installs Helm charts and EKS add-ons over the cluster's Kubernetes
+API, so the machine running <code>terraform apply</code> must be able to reach the EKS API
+endpoint for the entire apply.</p>
+<p>By default this sample auto-detects your current public IP and allows only that
+single <code>/32</code> on the cluster's public endpoint. <strong>This only works when your
+egress is a single, stable public IP.</strong> If you are behind a corporate NAT pool
+or VPN, or you run Terraform from CI, your outbound traffic may leave from a
+different IP than the one auto-detected (or the IP may change mid-apply). The
+symptom is <code>Kubernetes cluster unreachable: ... dial tcp ...:443: i/o timeout</code>
+partway through the apply, even though the cluster came up.</p>
+<p>In that case set <code>eks_public_access_cidrs</code> explicitly to your egress CIDR(s):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars</span>
+<span class="na">eks_public_access_cidrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"203.0.113.10/32", "203.0.113.11/32"</span><span class="p">]</span>
+</code></pre></div>
+<p>For production, prefer keeping the public endpoint closed and running Terraform
+from inside the VPC (bastion, VPN, or in-VPC CI) so the API is reached over the
+private endpoint (<code>eks_cluster_private_access</code> is already enabled) rather than
+widening public access.</p>
+<h4 id="reaching-the-api-over-the-private-endpoint-via-ssm">Reaching the API over the private endpoint via SSM<a class="headerlink" href="#reaching-the-api-over-the-private-endpoint-via-ssm" title="Permanent link">&para;</a></h4>
+<p>If your host cannot reach the public endpoint at all (corporate egress filters
+it, even with the correct <code>eks_public_access_cidrs</code>), you can have Terraform
+talk to the cluster's <strong>private</strong> endpoint through an SSM port-forward tunnel.</p>
+<p>The tunnel only changes the route Terraform's <code>kubernetes</code> and <code>helm</code>
+providers take. <strong>It does not close the public endpoint</strong>: with the defaults
+the cluster still has <code>endpoint_public_access = true</code>, restricted to
+<code>eks_public_access_cidrs</code> (or your auto-detected IP). To close the public
+endpoint as well, set <code>eks_public_access = false</code> (see
+<a href="#closing-the-public-endpoint">Closing the public endpoint</a> below). The cluster already has
+<code>endpoint_private_access = true</code> and an in-VPC SSM-managed EC2 node, which the
+tunnel uses as its jump host.</p>
+<p>This path keeps TLS validation intact: the providers connect to
+<code>127.0.0.1:&lt;port&gt;</code> but set <code>tls_server_name</code> to the real cluster hostname, so
+the cluster's CA certificate is still verified. There is no <code>insecure = true</code>
+and no <code>0.0.0.0/0</code> exposure.</p>
+<p>The symptom that calls for this path is the same <code>Kubernetes cluster
+unreachable: ... i/o timeout</code> failure partway through <code>terraform apply</code> — but
+here it persists <em>even with the correct <code>eks_public_access_cidrs</code></em>, because the
+host has no network route to the public endpoint at all. This reuses the
+existing in-VPC node (no bastion to stand up, no extra cost).</p>
+<ol>
+<li>Start the tunnel in one shell and leave it running for the whole apply. The
+   cluster name, private endpoint, VPC, and SSM instance are all discovered at
+   runtime — no values are hardcoded (the port defaults to <code>9443</code>):</li>
+</ol>
+<div class="highlight"><pre><span></span><code>scripts/eks-api-tunnel.sh<span class="w"> </span><span class="m">9443</span>
+</code></pre></div>
+<p>Requires <code>awscli</code> v2, the <code>session-manager-plugin</code>, and <code>jq</code>. If your
+   account has more than one EKS cluster or more than one SSM instance in the
+   cluster VPC, pass the cluster name as the second argument or set
+   <code>EKS_CLUSTER_NAME</code> / <code>SSM_INSTANCE_ID</code>.</p>
+<ol>
+<li>In another shell, run Terraform pointing the providers at that local port.
+   Set <code>eks_api_local_port</code> to the same port, either via the environment:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">TF_VAR_eks_api_local_port</span><span class="o">=</span><span class="m">9443</span>
+terraform<span class="w"> </span>apply
+</code></pre></div>
+<p>or in tfvars:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars</span>
+<span class="na">eks_api_local_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9443</span>
+</code></pre></div>
+<p>Before a long apply, confirm the tunnel reaches the cluster. A <code>401</code> response
+means the API server answered (the request simply carried no token):</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-sk<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>https://127.0.0.1:9443/version
+</code></pre></div>
+<p>Both shells must use the <strong>same AWS credentials and Region</strong>, for example by
+exporting the same <code>AWS_PROFILE</code> and <code>AWS_REGION</code> in each. The credentials must
+also stay valid for the whole apply (often 30 minutes or more). Short-lived keys
+pasted into a shell can expire partway through, which drops the tunnel. Prefer
+a profile that refreshes itself, such as IAM Identity Center (<code>aws sso login</code>)
+or a <code>credential_process</code> profile.</p>
+<p>The tunnel is needed for <strong>every</strong> command that talks to the Kubernetes API,
+including <code>terraform destroy</code>. Start it before tearing the sample down, or the
+destroy fails with the same <code>Kubernetes cluster unreachable</code> error.</p>
+<p>Leave <code>eks_api_local_port</code> unset (<code>null</code>, the default) for the normal public
+behavior — nothing changes unless you opt in. For a durable production posture,
+prefer running Terraform from inside the VPC (in-VPC CI, Cloud9, or a bastion)
+so the private endpoint is used natively and the public endpoint can be closed
+entirely.</p>
+<h4 id="closing-the-public-endpoint">Closing the public endpoint<a class="headerlink" href="#closing-the-public-endpoint" title="Permanent link">&para;</a></h4>
+<p>Set <code>eks_public_access = false</code> to disable the EKS public endpoint
+(<code>endpoint_public_access = false</code>). <code>eks_public_access_cidrs</code> is then ignored.
+Terraform must reach the cluster over the private endpoint for every apply
+after that, either from inside the VPC or through the SSM tunnel.</p>
+<p>The tunnel needs the cluster and its in-VPC SSM node to exist first, so a
+fresh deployment from outside the VPC is a two-step apply:</p>
+<ol>
+<li>Create the network and cluster. This step does not use the Kubernetes API,
+   so it works with the public endpoint already closed:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra
+</code></pre></div>
+<ol>
+<li>Start the tunnel (<code>scripts/eks-api-tunnel.sh 9443</code>) and run the full apply
+   through it:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span><span class="w"> </span>-var<span class="w"> </span><span class="s1">'eks_api_local_port=9443'</span>
+</code></pre></div>
+<p>To close the endpoint on an existing deployment, start the tunnel and run step
+2 directly. Keep <code>eks_public_access = false</code> (for example in
+<code>terraform.tfvars</code>) on every later apply, or Terraform will reopen the public
+endpoint.</p>
+<h4 id="troubleshooting-the-tunnel">Troubleshooting the tunnel<a class="headerlink" href="#troubleshooting-the-tunnel" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dial tcp 127.0.0.1:9443: connect: connection refused</code></td>
+<td>The tunnel is not running</td>
+<td>Start <code>scripts/eks-api-tunnel.sh 9443</code> and leave it open</td>
+</tr>
+<tr>
+<td><code>Connection to destination port failed</code> in the tunnel shell, <code>TLS handshake timeout</code> in Terraform</td>
+<td>The jump host cannot reach the private endpoint on 443</td>
+<td>Set <code>SSM_INSTANCE_ID</code> to one of the cluster's EKS nodes (tagged <code>eks:cluster-name</code>)</td>
+</tr>
+<tr>
+<td><code>ExpiredToken</code> or the tunnel exits mid-apply</td>
+<td>Credentials expired</td>
+<td>Refresh credentials, restart the tunnel, re-run the apply</td>
+</tr>
+<tr>
+<td>Error names the cluster's public <code>*.eks.amazonaws.com</code> URL</td>
+<td><code>eks_api_local_port</code> is not set</td>
+<td>Set <code>eks_api_local_port</code> to the tunnel port</td>
+</tr>
+<tr>
+<td><code>no Online SSM-managed instances found</code></td>
+<td>Nodes are still starting, or the SSM agent cannot reach SSM</td>
+<td>Wait for the node groups to be <code>ACTIVE</code>, then retry</td>
+</tr>
+</tbody>
+</table>
 <h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
 <p>The sample deploys a Route53 dns record that you can use to access your Unreal DDC cluster. This record points to an NLB which may take more time to become fully available when the deployment is complete. You can view the provisioning status of this NLB on the EC2 load balncing screen.</p>
 <p>The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager. The ARN of this secret is provided as a Terraform output (<code>"unreal_cloud_ddc_bearer_token_arn"</code>) on the console following deployment. To fetch the bearer token you can use the aws CLI:</p>
@@ -4289,7 +4511,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2025-12-17
+    2026-11-11
   </span>
 
     
@@ -4429,10 +4651,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
         <script src="../../js/open_in_new_tab.js"></script>
       
