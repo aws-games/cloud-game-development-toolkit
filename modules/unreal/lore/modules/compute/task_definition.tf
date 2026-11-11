@@ -11,13 +11,15 @@ locals {
     { name = "LORE__SERVER__AUTH__JWT_AUDIENCE", value = join(",", var.auth_jwt_audience) }
   ] : []
 
-  # Replication env vars — conditional on enable_replication
+  # Internal replication listener — port 41340 has no JWT layer, so every active listener
+  # requires mutual TLS. Lore refuses startup if any certificate path is absent.
   replication_env_vars = var.enable_replication ? [
     { name = "LORE__SERVER__QUIC_INTERNAL__ENABLED", value = "true" },
     { name = "LORE__SERVER__QUIC_INTERNAL__PORT", value = "41340" },
-    { name = "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_FILE", value = "/certs/fullchain.crt" },
+    { name = "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_FILE", value = "/certs/server.crt" },
     { name = "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__PKEY_FILE", value = "/certs/server.key" },
-    { name = "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS", value = "false" },
+    { name = "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_CHAIN", value = "/etc/lore/overlay/replication-ca-bundle.pem" },
+    { name = "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS", value = "true" },
   ] : []
 
   # Topology overlay — Lore reads peer lists only from a TOML file layer, never from LORE__ env
@@ -34,7 +36,7 @@ locals {
     # The replica factory block is what makes the composite store act on the peer list; without
     # it Lore logs the peers and ignores them. client_message_buffer matches Lore's
     # DEFAULT_CLIENT_MESSAGE_LIMIT (replication_store_service.rs).
-    ["]", "", "[immutable_store.composite.replica_factory]", "client_message_buffer = 50000", format("enable_same_region_write = %t", var.enable_same_region_write), ""]
+    ["]", "", "[immutable_store.composite.replica_factory]", "client_message_buffer = 50000", format("enable_same_region_write = %t", var.enable_same_region_write), "", "[immutable_store.composite.replica_factory.tls]", "server_sni = \"loreserver.internal\"", "", "[immutable_store.composite.replica_factory.tls.client_certs]", "cert_file = \"/certs/replication-client.crt\"", "pkey_file = \"/certs/replication-client.key\"", "cert_chain = \"/etc/lore/overlay/replication-ca-bundle.pem\"", ""]
   )) : ""
 
   # Store backends — the write region uses DynamoDB for everything; a regional cache in another
@@ -71,6 +73,7 @@ locals {
     { name = "LORE__SERVER__GRPC__CERTIFICATE__CERT_FILE", value = "/certs/fullchain.crt" },
     { name = "LORE__SERVER__GRPC__CERTIFICATE__PKEY_FILE", value = "/certs/server.key" },
     { name = "LORE__SERVER__GRPC__VERIFY_CLIENT_CERTS", value = "false" },
+    { name = "LORE__SERVER__GRPC_INTERNAL__ENABLED", value = "false" },
   ]
 
   # NVMe cache over a durable tier: this node's own S3 + DynamoDB (write tier), or another Lore
@@ -94,6 +97,9 @@ locals {
     { name = "LORE__PLUGINS__AWS__IMMUTABLE_STORE__DYNAMODB_METADATA_TABLE", value = var.fragment_metadata_table_name },
     ] : concat([
       { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REMOTE_URL", value = coalesce(var.durable_remote_url, "unset") },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__CERT_FILE", value = "/certs/replication-client.crt" },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__PKEY_FILE", value = "/certs/replication-client.key" },
+      { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__CERT_CHAIN", value = "/etc/lore/overlay/replication-ca-bundle.pem" },
       { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__INITIAL_BACKOFF_MS", value = "100" },
       { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__MAX_BACKOFF_MS", value = "1000" },
       { name = "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REGENERATE_RETRY__MAX_ATTEMPTS", value = "10" },
@@ -103,12 +109,12 @@ locals {
   ] : []))
 
 
-  # When another tier's CA must be trusted, the server starts through sh so the CA can be appended
-  # to the image's system bundle; rustls-native-certs reads SSL_CERT_FILE *instead of* the system
-  # bundle, so the file must carry both or AWS SDK calls would stop verifying.
-  trusted_ca_entrypoint = var.trusted_ca_pem != null ? {
+  # The remote mutable-store client reads the native/system trust store rather than its replicated
+  # client's custom CA. Only that mode appends peer CAs globally; replication-only CAs remain scoped
+  # to the port 41340 rustls configurations.
+  trusted_ca_entrypoint = var.trusted_ca_pem != null && var.mutable_store_mode == "remote" ? {
     entryPoint = ["sh", "-c"]
-    command    = ["cat /etc/ssl/certs/ca-certificates.crt /etc/lore/overlay/upstream-ca.pem > /tmp/ca-bundle.pem && export SSL_CERT_FILE=/tmp/ca-bundle.pem && exec loreserver"]
+    command    = ["cat /etc/ssl/certs/ca-certificates.crt /etc/lore/overlay/peer-ca.pem > /tmp/ca-bundle.pem && export SSL_CERT_FILE=/tmp/ca-bundle.pem && exec loreserver"]
   } : {}
 
   # ADOT sidecar container definition
@@ -143,6 +149,17 @@ resource "aws_ecs_task_definition" "loreserver" {
   task_role_arn            = aws_iam_role.task.arn
   execution_role_arn       = aws_iam_role.execution.arn
 
+  # Generated secret versions must exist before a revision carrying their certificate hash starts.
+  # Custom secret owners update values first, then bump tls_material_version.
+  depends_on = [
+    aws_secretsmanager_secret_version.tls_cert,
+    aws_secretsmanager_secret_version.tls_ca,
+    aws_secretsmanager_secret_version.tls_key,
+    aws_secretsmanager_secret_version.tls_client_cert,
+    aws_secretsmanager_secret_version.tls_client_key,
+    aws_secretsmanager_secret_version.hmac_key,
+  ]
+
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = local.is_arm64 ? "ARM64" : "X86_64"
@@ -164,22 +181,43 @@ resource "aws_ecs_task_definition" "loreserver" {
   container_definitions = jsonencode(concat(
     # Init container — writes TLS certs to shared volume
     [{
-      name              = "init-certs"
-      image             = "public.ecr.aws/docker/library/busybox:stable"
-      essential         = false
-      command           = ["sh", "-c", "echo \"$TLS_CERT\" > /certs/server.crt && echo \"$TLS_KEY\" > /certs/server.key && echo \"$TLS_CA\" > /certs/ca.crt && cat /certs/server.crt /certs/ca.crt > /certs/fullchain.crt && chown 65534:65534 /certs/server.key && chmod 600 /certs/server.key && chmod 644 /certs/server.crt /certs/ca.crt /certs/fullchain.crt && printf '%s\\n' \"$LORE_TOPOLOGY_TOML\" > /etc/lore/overlay/local.toml && printf '%s\\n' \"$LORE_UPSTREAM_CA_PEM\" > /etc/lore/overlay/upstream-ca.pem && chmod 644 /etc/lore/overlay/local.toml /etc/lore/overlay/upstream-ca.pem"]
+      name      = "init-certs"
+      image     = "public.ecr.aws/docker/library/busybox:stable"
+      essential = false
+      command = ["sh", "-c", join(" && ", [
+        "umask 077",
+        "printf '%s\\n' \"$TLS_CERT\" > /certs/server.crt",
+        "printf '%s\\n' \"$TLS_KEY\" > /certs/server.key",
+        "printf '%s\\n' \"$TLS_CA\" > /certs/ca.crt",
+        "cat /certs/server.crt /certs/ca.crt > /certs/fullchain.crt",
+        "printf '%s\\n' \"$LORE_TOPOLOGY_TOML\" > /etc/lore/overlay/local.toml",
+        "printf '%s\\n' \"$LORE_PEER_CA_PEM\" > /etc/lore/overlay/peer-ca.pem",
+        "cat /certs/ca.crt /etc/lore/overlay/peer-ca.pem > /etc/lore/overlay/replication-ca-bundle.pem",
+        "if [ -n \"$${TLS_CLIENT_CERT:-}\" ]; then printf '%s\\n' \"$TLS_CLIENT_CERT\" > /certs/replication-client.crt; fi",
+        "if [ -n \"$${TLS_CLIENT_KEY:-}\" ]; then printf '%s\\n' \"$TLS_CLIENT_KEY\" > /certs/replication-client.key; fi",
+        "chown 65534:65534 /certs/server.key",
+        "if [ -f /certs/replication-client.key ]; then chown 65534:65534 /certs/replication-client.key; fi",
+        "chmod 600 /certs/server.key",
+        "if [ -f /certs/replication-client.key ]; then chmod 600 /certs/replication-client.key; fi",
+        "chmod 644 /certs/server.crt /certs/ca.crt /certs/fullchain.crt /etc/lore/overlay/local.toml /etc/lore/overlay/peer-ca.pem /etc/lore/overlay/replication-ca-bundle.pem",
+        "if [ -f /certs/replication-client.crt ]; then chmod 644 /certs/replication-client.crt; fi",
+      ])]
       memoryReservation = 32
 
       environment = [
         { name = "LORE_TOPOLOGY_TOML", value = local.topology_toml },
-        { name = "LORE_UPSTREAM_CA_PEM", value = var.trusted_ca_pem != null ? var.trusted_ca_pem : "" },
+        { name = "LORE_PEER_CA_PEM", value = var.trusted_ca_pem != null ? var.trusted_ca_pem : "" },
+        { name = "TLS_MATERIAL_REVISION", value = local.tls_material_revision },
       ]
 
-      secrets = [
+      secrets = concat([
         { name = "TLS_CERT", valueFrom = local.tls_cert_secret_arn },
         { name = "TLS_KEY", valueFrom = local.tls_key_secret_arn },
         { name = "TLS_CA", valueFrom = local.tls_ca_secret_arn },
-      ]
+        ], local.replication_client_enabled ? [
+        { name = "TLS_CLIENT_CERT", valueFrom = local.tls_client_cert_secret_arn },
+        { name = "TLS_CLIENT_KEY", valueFrom = local.tls_client_key_secret_arn },
+      ] : [])
 
       mountPoints = [
         { sourceVolume = "certs", containerPath = "/certs", readOnly = false },
@@ -209,7 +247,7 @@ resource "aws_ecs_task_definition" "loreserver" {
         { containerPort = 41337, protocol = "tcp" },
         { containerPort = 41339, protocol = "tcp" },
         ], var.enable_replication ? [
-        { containerPort = 41340, protocol = "tcp" },
+        { containerPort = 41340, protocol = "udp" },
       ] : [])
 
       mountPoints = [

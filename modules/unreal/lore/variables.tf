@@ -209,15 +209,85 @@ variable "auth_jwt_audience" {
 # =============================================================================
 
 variable "tls_certificate_secret_arn" {
-  description = "Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated."
+  description = "Secrets Manager ARN for the server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires the server certificate, key, and CA secret ARNs together."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_certificate_secret_arn == null &&
+      var.tls_private_key_secret_arn == null &&
+      var.tls_ca_certificate_secret_arn == null
+      ) || (
+      var.tls_certificate_secret_arn != null &&
+      var.tls_private_key_secret_arn != null &&
+      var.tls_ca_certificate_secret_arn != null
+    )
+    error_message = "Set tls_certificate_secret_arn, tls_private_key_secret_arn, and tls_ca_certificate_secret_arn together, or leave all three null."
+  }
+}
+
+variable "tls_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the server TLS private key."
   type        = string
   default     = null
 }
 
-variable "tls_private_key_secret_arn" {
-  description = "Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert."
+variable "tls_ca_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom server and replication-client certificates. Do not use a shared enterprise CA."
   type        = string
   default     = null
+}
+
+variable "tls_client_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated replication-client certificate. Required with its key when custom TLS protects an enabled port 41340 listener."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+      ) || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Set tls_client_certificate_secret_arn and tls_client_private_key_secret_arn together, or leave both null."
+  }
+
+  validation {
+    condition = var.tls_certificate_secret_arn != null || (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+    )
+    error_message = "Do not combine generated server TLS with custom replication-client secrets. Leave all TLS ARNs null for one generated PKI, or supply the complete custom set."
+  }
+
+  validation {
+    condition = length(var.replication_peers) == 0 || var.tls_certificate_secret_arn == null || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Custom TLS with outgoing replication peers requires dedicated replication-client certificate and private-key secret ARNs."
+  }
+}
+
+variable "tls_client_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the dedicated replication-client private key."
+  type        = string
+  default     = null
+}
+
+variable "tls_material_version" {
+  description = "Rollout token for custom TLS secrets. Change it whenever certificate, key, or CA contents rotate under unchanged secret ARNs. Generated TLS updates the task definition automatically."
+  type        = string
+  default     = "1"
+  nullable    = false
+
+  validation {
+    condition     = trimspace(var.tls_material_version) != ""
+    error_message = "tls_material_version must not be empty."
+  }
 }
 
 variable "tls_san_dns_names" {
@@ -288,11 +358,18 @@ variable "intelligent_tiering_deep_archive_days" {
 }
 
 # =============================================================================
-# Multi-region
+# Multi-region and internal replication
 # =============================================================================
 
+variable "enable_internal_replication" {
+  description = "Enable the fail-closed mTLS QUIC listener on UDP port 41340 for same-VPC edge pods. Add every edge pod's dedicated CA output to trusted_ca_pem. Cross-region replication inputs enable the listener automatically. Leave false when no edge pod or peer uses the write tier."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
 variable "replication_ingress_cidrs" {
-  description = "CIDR blocks of Lore servers in other VPCs or regions (regional caches) allowed to reach the write tier on 41337 (gRPC/QUIC) and 41340 (replication), and that the write tier may push to on the same ports. Needed across inter-region VPC peering, where security-group references do not work. Port 41340 has no JWT or client-certificate check, so these rules are its only access control: give the peer tier's private subnet CIDRs (regional-cache output private_subnet_cidrs), not its whole VPC, and never 0.0.0.0/0."
+  description = "Private subnet CIDRs of Lore tiers in peered VPCs. They may reach client port 41337 and the mTLS-only QUIC replication listener on UDP 41340. Security groups remain defense in depth: use each peer tier's private subnet CIDRs and never office or public ranges. A nonempty list also requires trusted_ca_pem."
   type        = list(string)
   default     = []
 
@@ -360,9 +437,30 @@ variable "enable_same_region_write" {
 }
 
 variable "trusted_ca_pem" {
-  description = "CA certificate (PEM) of a regional cache in another region, so this write tier can push fragments to it over TLS. Null for single-region deployments."
+  description = "PEM bundle of dedicated Lore peer or edge-client CAs trusted on port 41340. Required for explicit edge-pod support, replication_ingress_cidrs, and OtherRegion peers. A certificate chaining to any listed CA receives blanket internal-storage access, so never use a shared enterprise CA or include private keys."
   type        = string
   default     = null
+
+  validation {
+    condition = !(
+      var.enable_internal_replication ||
+      length(var.replication_ingress_cidrs) > 0 ||
+      anytrue([for peer in var.replication_peers : peer.locality == "OtherRegion"])
+      ) || (
+      var.trusted_ca_pem != null &&
+      length(try(regexall("-----BEGIN CERTIFICATE-----", var.trusted_ca_pem), [])) > 0 &&
+      !try(strcontains(var.trusted_ca_pem, "PRIVATE KEY"), true)
+    )
+    error_message = "trusted_ca_pem must contain dedicated Lore peer or edge-client CA certificates, with no private key, when edge or cross-Region replication is configured."
+  }
+
+  validation {
+    condition = var.trusted_ca_pem == null ? true : (
+      length(regexall("-----BEGIN CERTIFICATE-----", var.trusted_ca_pem)) > 0 &&
+      !strcontains(var.trusted_ca_pem, "PRIVATE KEY")
+    )
+    error_message = "trusted_ca_pem must contain one or more PEM certificates and no private key."
+  }
 }
 
 # =============================================================================

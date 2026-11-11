@@ -1,6 +1,7 @@
 # Cognito Auth Example
 
 Default topology (write tier + 2 edge pods) with Cognito authentication and X-Ray observability.
+It inherits the default example's mutual TLS protection for edge-to-write-tier replication.
 
 ## What it adds over default
 

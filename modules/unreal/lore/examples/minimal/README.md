@@ -8,6 +8,7 @@ For production deployments, use the [default](../default/) example.
 
 - Single ECS task on i4i.xlarge (NVMe-backed)
 - No auth, no edge pods, no observability
+- No internal replication listener or port 41340 security-group rule
 - Deletion protection disabled, force destroy enabled
 
 ## Usage

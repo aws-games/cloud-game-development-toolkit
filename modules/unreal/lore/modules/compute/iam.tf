@@ -135,6 +135,8 @@ data "aws_iam_policy_document" "execution_secrets" {
       local.tls_key_secret_arn,
       local.hmac_key_secret_arn,
       local.tls_ca_secret_arn,
+      local.tls_client_cert_secret_arn,
+      local.tls_client_key_secret_arn,
     ])
   }
 }

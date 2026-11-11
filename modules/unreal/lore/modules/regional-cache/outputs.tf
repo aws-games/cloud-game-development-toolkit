@@ -14,7 +14,7 @@ output "private_subnet_ids" {
 }
 
 output "private_subnet_cidrs" {
-  description = "CIDRs of the private subnets the cache runs in. Give these to the write region as replication_ingress_cidrs: port 41340 is protected only by network rules."
+  description = "CIDRs of the private subnets the cache runs in. Give these to the write region as replication_ingress_cidrs; mTLS authenticates port 41340 peers and these CIDRs provide network defense in depth."
   value       = module.vpc.private_subnet_cidrs
 }
 
@@ -44,7 +44,7 @@ output "service_discovery_hosted_zone_id" {
 }
 
 output "ca_certificate_pem" {
-  description = "This cache's CA certificate. Give it to the write region as trusted_ca_pem so it can push fragments here over TLS."
+  description = "Generated CA certificate for this cache's server and replication-client identities. Give it to the write region as trusted_ca_pem for mutual authentication. Null when custom TLS secrets are used."
   value       = module.compute.tls_ca_cert_pem
 }
 
@@ -58,3 +58,8 @@ output "task_role_arn" {
   value       = module.compute.task_role_arn
 }
 
+
+output "execution_role_arn" {
+  description = "ECS task execution role ARN. Attach scoped kms:Decrypt permission here when custom TLS secrets use a customer-managed KMS key."
+  value       = module.compute.execution_role_arn
+}

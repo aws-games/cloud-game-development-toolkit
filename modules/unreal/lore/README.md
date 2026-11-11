@@ -61,10 +61,12 @@ and lock calls use private endpoint ENIs over VPC peering instead of the cache V
 DNS stays off: the write tier keeps using its free same-Region DynamoDB gateway endpoint. Reads of
 cached content stay local. Choose the write region by where most commits and pushes happen.
 
-Inputs involved on the write tier: `replication_ingress_cidrs`, `replication_peers`,
-`dynamodb_endpoint_client_cidrs`, `dynamodb_endpoint_subnet_ids`, `trusted_ca_pem`,
-`vpc_peering_routes`. Pass `dynamodb_interface_endpoint_url` to the regional cache as
-`dynamodb_endpoint_url`. See [examples/multi-region](examples/multi-region/).
+Inputs involved on the write tier: `enable_internal_replication` (same-VPC edge pods),
+`replication_ingress_cidrs`, `replication_peers`, `dynamodb_endpoint_client_cidrs`,
+`dynamodb_endpoint_subnet_ids`, `trusted_ca_pem`, and `vpc_peering_routes`. Cross-region
+replication inputs enable the internal listener automatically. Pass
+`dynamodb_interface_endpoint_url` to the regional cache as `dynamodb_endpoint_url`. See
+[examples/multi-region](examples/multi-region/).
 
 The interface endpoint is optional for compatibility. Null `dynamodb_endpoint_client_cidrs`
 disables it, and a cache without `dynamodb_endpoint_url` uses DynamoDB's public regional endpoint.
@@ -73,12 +75,50 @@ manage both peering directions yourself. To disable a live endpoint safely, firs
 URL and deploy the replacement task. Remove the endpoint CIDRs in a second apply.
 
 **The published multi-region example requires external JWT authentication on client port
-41337.** Port 41340 is network-protected, not JWT-protected. JWT validation (`auth_mode`) applies
-to the client port only. The replication port checks neither JWTs nor client certificates (there
-is no mTLS), so anything that can reach it can read and write fragments. Its security-group
-rules are its only access control: set `replication_ingress_cidrs` to the regional cache's private
-subnet CIDRs (regional-cache output `private_subnet_cidrs`), not the whole peered VPC, and never
-to office or public ranges.
+41337.** JWT validation (`auth_mode`) applies to the client port only. Internal replication port
+41340 has no JWT layer because it uses mutual TLS instead. Every active 41340 listener requires a
+client certificate, and every client uses a `lores://` URL so it validates the server certificate.
+The module generates separate `serverAuth` and `clientAuth` identities for each tier. Each edge pod
+generates its own dedicated client CA and identity; the write tier trusts those CA outputs without
+sharing its private key with client-facing nodes. It combines its local CA with `trusted_ca_pem` so
+regional tiers and approved edge pods authenticate one another. A plan with explicit edge support,
+cross-VPC ingress, or an `OtherRegion` peer fails when the required trust bundle is absent.
+
+Security groups remain defense in depth. Set `replication_ingress_cidrs` to the regional cache's
+private subnet CIDRs (regional-cache output `private_subnet_cidrs`), not the whole peered VPC, and
+never to office or public ranges. Only UDP 41340 is opened; the unused internal gRPC/TCP listener
+stays disabled. By itself, a single-region root module neither starts port 41340 nor adds its
+same-tier rule unless `enable_internal_replication = true`. An edge module can add its own
+security-group reference, but without that root flag no process listens and replication fails
+closed. Add every edge pod's `replication_client_ca_certificate_pem` output to `trusted_ca_pem`.
+
+For custom TLS, provide all server certificate, server key and CA-chain secret ARNs. If this tier
+connects to replication peers, also provide a dedicated client certificate and key. The server
+certificate must carry `serverAuth` and SANs for every Cloud Map name peers use, plus
+`loreserver.internal` for IP-addressed peers. The client certificate must carry `clientAuth`.
+Certificate secrets should contain the leaf; CA inputs must contain the complete issuer chain and
+trust anchors Lore needs. Use CAs dedicated to Lore replication. Port 41340 grants blanket storage
+access to any certificate chaining to a configured CA, so do not trust a shared enterprise CA.
+Missing custom material fails Terraform validation rather than starting an unauthenticated listener.
+`ca_certificate_pem` is null for custom TLS, so pass the public CA PEM directly to edge pods and
+peer-tier trust inputs. Secrets encrypted with a customer-managed KMS key also need a scoped
+`kms:Decrypt` grant on the root `execution_role_arn`; the generated secrets use the Secrets Manager
+service key. Terraform-generated CA and leaf private keys remain in Terraform state. Store state in
+an encrypted, access-controlled backend, keep local state owner-only, and rotate the PKI after any
+state disclosure. Generated certificates become renewable 30 days before expiry and their
+certificate hash forces a new ECS task definition. When custom secret contents rotate under the
+same ARNs, change `tls_material_version` to force that rollout. CA changes alter peer trust; stage
+those rotations with an overlap plan rather than allowing both sides to update in an arbitrary
+order.
+
+**Upgrade an existing unauthenticated 41340 deployment in stages.** With the new configuration
+loaded, use reviewed Terraform targets to provision client identities and replace regional caches
+or edge pods while the old write-tier listener still accepts connections. Inspect the target graph
+and make sure it does not include the write-tier ECS service. Deploy the mTLS write-tier listener
+only after every client presents a certificate. Edge userdata changes force EC2 replacement because
+cloud-init runs only once; each replaced edge loses its ephemeral NVMe cache and refills on demand.
+The root module's new `enable_internal_replication` and edge trust wiring are breaking inputs for
+existing edge deployments. Do not apply an unreviewed combined plan.
 
 Before applying any change to an existing VPC created by this module, read the
 [route ownership note](modules/vpc/README.md#route-ownership): the private route table manages

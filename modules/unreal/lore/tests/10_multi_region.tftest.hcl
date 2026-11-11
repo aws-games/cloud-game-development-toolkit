@@ -41,8 +41,24 @@ run "single_region_has_no_cross_region_resources" {
   command = plan
 
   assert {
-    condition     = length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 0 && length(aws_vpc_security_group_egress_rule.replication_cidr_udp) == 0
-    error_message = "No CIDR replication rules without replication_ingress_cidrs"
+    condition = (
+      length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 0 &&
+      length(aws_vpc_security_group_egress_rule.replication_cidr_udp) == 0 &&
+      length(aws_vpc_security_group_ingress_rule.replication_quic) == 0 &&
+      length(aws_vpc_security_group_egress_rule.replication_egress) == 0
+    )
+    error_message = "A single-region root with no edge pods or peers must not expose port 41340"
+  }
+  assert {
+    condition     = length([for e in module.compute.listener_env_vars : e if startswith(e.name, "LORE__SERVER__QUIC_INTERNAL")]) == 0
+    error_message = "The internal QUIC listener must stay disabled by default"
+  }
+  assert {
+    condition = (
+      module.compute.replication_client_certificate_secret_arn == null &&
+      module.compute.replication_client_private_key_secret_arn == null
+    )
+    error_message = "A tier with no outgoing replication client must not create unused client-identity secrets"
   }
   assert {
     condition     = module.compute.topology_toml == ""
@@ -74,24 +90,33 @@ run "single_region_has_no_cross_region_resources" {
 # CIDR ingress/egress for tiers across inter-region peering
 # =============================================================================
 
-run "replication_cidrs_open_four_rules_each_way" {
+run "replication_cidrs_open_only_required_udp_replication_rules" {
   command = plan
 
   variables {
     replication_ingress_cidrs = ["10.20.0.0/16", "10.30.0.0/16"]
+    trusted_ca_pem            = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
   }
 
   assert {
-    condition     = length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_quic) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_tcp) == 2 && length(aws_vpc_security_group_ingress_rule.replication_cidr_udp) == 2
-    error_message = "One ingress rule per CIDR for 41337/tcp, 41337/udp, 41340/tcp and 41340/udp"
+    condition = (
+      length(aws_vpc_security_group_ingress_rule.replication_cidr_grpc) == 2 &&
+      length(aws_vpc_security_group_ingress_rule.replication_cidr_quic) == 2 &&
+      length(aws_vpc_security_group_ingress_rule.replication_cidr_udp) == 2
+    )
+    error_message = "One ingress rule per CIDR for 41337/tcp, 41337/udp, and mTLS replication on 41340/udp"
   }
   assert {
-    condition     = length(aws_vpc_security_group_egress_rule.replication_cidr_grpc) == 2 && length(aws_vpc_security_group_egress_rule.replication_cidr_tcp) == 2 && length(aws_vpc_security_group_egress_rule.replication_cidr_udp) == 2
-    error_message = "Matching egress rules so the write tier can replicate to the peer"
+    condition = (
+      length(aws_vpc_security_group_egress_rule.replication_cidr_grpc) == 2 &&
+      length(aws_vpc_security_group_egress_rule.replication_cidr_quic) == 2 &&
+      length(aws_vpc_security_group_egress_rule.replication_cidr_udp) == 2
+    )
+    error_message = "Matching egress rules must allow only the required client and QUIC replication protocols"
   }
   assert {
     condition     = aws_vpc_security_group_ingress_rule.replication_cidr_udp["10.20.0.0/16"].from_port == 41340 && aws_vpc_security_group_ingress_rule.replication_cidr_udp["10.20.0.0/16"].ip_protocol == "udp"
-    error_message = "Replication QUIC rule must be 41340/udp"
+    error_message = "Replication must use 41340/udp only"
   }
 }
 
@@ -100,6 +125,7 @@ run "replication_cidrs_reject_open_internet" {
 
   variables {
     replication_ingress_cidrs = ["0.0.0.0/0"]
+    trusted_ca_pem            = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
   }
 
   expect_failures = [var.replication_ingress_cidrs]
@@ -118,6 +144,7 @@ run "replication_peers_render_fixed_topology_overlay" {
       { address = "10.10.1.50", port = 41341, locality = "SameRegion" },
     ]
     enable_same_region_write = false
+    trusted_ca_pem           = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
   }
 
   assert {
@@ -135,6 +162,24 @@ run "replication_peers_render_fixed_topology_overlay" {
   assert {
     condition     = strcontains(module.compute.topology_toml, "[immutable_store.composite.replica_factory]") && strcontains(module.compute.topology_toml, "enable_same_region_write = false")
     error_message = "Replica factory block is what makes Lore act on the peers; enable_same_region_write must pass through"
+  }
+  assert {
+    condition = (
+      strcontains(module.compute.topology_toml, "[immutable_store.composite.replica_factory.tls]") &&
+      strcontains(module.compute.topology_toml, "server_sni = \"loreserver.internal\"") &&
+      strcontains(module.compute.topology_toml, "[immutable_store.composite.replica_factory.tls.client_certs]") &&
+      strcontains(module.compute.topology_toml, "cert_file = \"/certs/replication-client.crt\"") &&
+      strcontains(module.compute.topology_toml, "cert_chain = \"/etc/lore/overlay/replication-ca-bundle.pem\"")
+    )
+    error_message = "Every topology peer must use a client certificate and validated server certificate"
+  }
+  assert {
+    condition     = toset(module.compute.replication_client_allowed_uses) == toset(["digital_signature", "key_encipherment", "client_auth"])
+    error_message = "The generated replication identity must be a clientAuth certificate, not a server identity"
+  }
+  assert {
+    condition     = !module.compute.peer_ca_added_to_system_trust
+    error_message = "Topology peer CAs must remain scoped to replication TLS when the mutable store is local"
   }
   assert {
     condition     = !strcontains(module.compute.topology_toml, "locality = \"same_region\"")
@@ -212,8 +257,16 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
     error_message = "The cache's durable tier must be the write tier (replicated)"
   }
   assert {
-    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REMOTE_URL"]) == "lore://write-tier.lore-dev.internal:41340"
-    error_message = "Durable remote must be the write tier's replication endpoint"
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__REMOTE_URL"]) == "lores://write-tier.lore-dev.internal:41340"
+    error_message = "Durable remote must validate the write tier's certificate over secure QUIC"
+  }
+  assert {
+    condition = (
+      one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__CERT_FILE"]) == "/certs/replication-client.crt" &&
+      one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__PKEY_FILE"]) == "/certs/replication-client.key" &&
+      one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__CERTS__CERT_CHAIN"]) == "/etc/lore/overlay/replication-ca-bundle.pem"
+    )
+    error_message = "The durable replicated client must present its dedicated mTLS identity"
   }
   assert {
     condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__EXPECTED_RTT_MS"]) == "55"
@@ -237,6 +290,10 @@ run "regional_cache_has_no_storage_and_points_at_the_write_region" {
   assert {
     condition     = output.cache_dns_name == "regional-cache.lore-dev-london.internal"
     error_message = "cache_dns_name"
+  }
+  assert {
+    condition     = !module.compute.peer_ca_added_to_system_trust
+    error_message = "Replication-only peer CAs must not broaden the process-wide system trust store"
   }
   assert {
     condition     = aws_vpc_security_group_ingress_rule.write_region_replication_udp[0].from_port == 41340 && aws_vpc_security_group_ingress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16"
@@ -281,6 +338,10 @@ run "regional_cache_can_forward_branch_pointers_to_the_write_tier_without_auth" 
   assert {
     condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__LOCK_STORE__MODE"]) == "aws" && one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__PLUGINS__AWS__LOCK_STORE__DYNAMODB_REGION"]) == "us-east-2"
     error_message = "Locks stay on the write region's DynamoDB table"
+  }
+  assert {
+    condition     = module.compute.peer_ca_added_to_system_trust
+    error_message = "The secure remote mutable-store client must receive the write-tier CA through SSL_CERT_FILE"
   }
 }
 
@@ -565,10 +626,10 @@ run "regional_cache_external_auth_rejects_blank_audience" {
 }
 
 # =============================================================================
-# Port 41340 — network-protected only, so its sources are narrowed to tier subnets
+# Port 41340 — fail-closed mTLS plus subnet-scoped network defense in depth
 # =============================================================================
 
-run "regional_cache_41340_defaults_to_write_vpc_and_has_no_mtls" {
+run "regional_cache_41340_requires_mtls_and_defaults_to_write_vpc" {
   command = plan
 
   module {
@@ -592,8 +653,20 @@ run "regional_cache_41340_defaults_to_write_vpc_and_has_no_mtls" {
   }
 
   assert {
-    condition     = length(aws_vpc_security_group_ingress_rule.write_region_replication_tcp) == 1 && aws_vpc_security_group_ingress_rule.write_region_replication_tcp[0].cidr_ipv4 == "10.10.0.0/16" && length(aws_vpc_security_group_egress_rule.write_region_replication_udp) == 1 && aws_vpc_security_group_egress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16"
-    error_message = "Without write_tier_replication_cidrs, 41340 falls back to the write VPC CIDR"
+    condition = (
+      length(aws_vpc_security_group_ingress_rule.write_region_replication_udp) == 1 &&
+      aws_vpc_security_group_ingress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16" &&
+      length(aws_vpc_security_group_egress_rule.write_region_replication_udp) == 1 &&
+      aws_vpc_security_group_egress_rule.write_region_replication_udp[0].cidr_ipv4 == "10.10.0.0/16"
+    )
+    error_message = "Without write_tier_replication_cidrs, 41340/udp falls back to the write VPC CIDR"
+  }
+  assert {
+    condition = (
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS"]) == "true" &&
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_CHAIN"]) == "/etc/lore/overlay/replication-ca-bundle.pem"
+    )
+    error_message = "The regional cache's internal QUIC listener must fail closed with mTLS"
   }
   assert {
     condition     = output.private_subnet_cidrs == ["10.20.2.0/24", "10.20.3.0/24"]
@@ -631,15 +704,13 @@ run "regional_cache_41340_narrowed_to_write_tier_subnets" {
 
   assert {
     condition = (
-      toset([for r in aws_vpc_security_group_ingress_rule.write_region_replication_tcp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
       toset([for r in aws_vpc_security_group_ingress_rule.write_region_replication_udp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
-      toset([for r in aws_vpc_security_group_egress_rule.write_region_replication_tcp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"]) &&
       toset([for r in aws_vpc_security_group_egress_rule.write_region_replication_udp : r.cidr_ipv4]) == toset(["10.10.2.0/24", "10.10.3.0/24"])
     )
-    error_message = "41340 rules must use only the write tier's subnet CIDRs"
+    error_message = "41340/udp rules must use only the write tier's subnet CIDRs"
   }
   assert {
-    condition     = length([for r in aws_vpc_security_group_ingress_rule.write_region_replication_tcp : r if r.cidr_ipv4 == "10.10.0.0/16"]) == 0
+    condition     = length([for r in aws_vpc_security_group_ingress_rule.write_region_replication_udp : r if r.cidr_ipv4 == "10.10.0.0/16"]) == 0
     error_message = "The whole write VPC must not be allowed on 41340 once narrowed"
   }
 }
@@ -671,18 +742,29 @@ run "regional_cache_41340_rejects_open_internet" {
   expect_failures = [var.write_tier_replication_cidrs]
 }
 
-run "replication_port_has_no_client_cert_check" {
+run "replication_port_requires_client_certificates" {
   command = plan
 
   variables {
     replication_ingress_cidrs = ["10.20.2.0/24", "10.20.3.0/24"]
+    trusted_ca_pem            = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
   }
 
-  # Documents the current security property: 41340 is network-protected, not mTLS. If this
-  # changes, update the READMEs that say so.
   assert {
-    condition     = one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS"]) == "false"
-    error_message = "41340 client-certificate verification changed; update the docs that state there is no mTLS"
+    condition = (
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__VERIFY_CLIENT_CERTS"]) == "true" &&
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_FILE"]) == "/certs/server.crt" &&
+      one([for e in module.compute.listener_env_vars : e.value if e.name == "LORE__SERVER__QUIC_INTERNAL__CERTIFICATE__CERT_CHAIN"]) == "/etc/lore/overlay/replication-ca-bundle.pem"
+    )
+    error_message = "Every active 41340 listener must require a client certificate and configured trust bundle"
+  }
+  assert {
+    condition     = length(aws_vpc_security_group_ingress_rule.replication_quic) == 1 && aws_vpc_security_group_ingress_rule.replication_quic[0].ip_protocol == "udp"
+    error_message = "The same-VPC replication rule must expose only QUIC over UDP"
+  }
+  assert {
+    condition     = one([for e in module.compute.store_env_vars : e.value if e.name == "LORE__SERVER__GRPC_INTERNAL__ENABLED"]) == "false"
+    error_message = "The unused internal gRPC/TCP listener must remain explicitly disabled"
   }
   assert {
     condition     = output.private_subnet_cidrs == ["10.0.2.0/24", "10.0.3.0/24"]
@@ -696,6 +778,17 @@ run "replication_port_has_no_client_cert_check" {
     condition     = aws_service_discovery_service.write_tier.health_check_custom_config[0].failure_threshold == 1
     error_message = "failure_threshold = 1 must stay for upgrade safety"
   }
+}
+
+run "cross_region_replication_requires_peer_ca" {
+  command = plan
+
+  variables {
+    replication_ingress_cidrs = ["10.20.2.0/24"]
+    trusted_ca_pem            = null
+  }
+
+  expect_failures = [var.trusted_ca_pem]
 }
 
 run "root_exposes_external_auth_for_a_regional_cache" {
@@ -983,4 +1076,31 @@ run "dynamodb_interface_endpoint_exports_regional_dns" {
     condition     = output.dynamodb_interface_endpoint_url == "https://vpce-0123456789abcdef0-abc123.dynamodb.us-east-2.vpce.amazonaws.com"
     error_message = "The output must choose the regional endpoint DNS entry, not a zonal entry"
   }
+}
+
+run "regional_cache_custom_mtls_requires_all_five_secrets" {
+  command = plan
+
+  module {
+    source = "./modules/regional-cache"
+  }
+
+  variables {
+    name_prefix                   = "lore-dev-london"
+    environment                   = "dev"
+    container_image               = "123456789012.dkr.ecr.us-west-2.amazonaws.com/loreserver:v0.12.0"
+    allowed_ingress_cidrs         = ["10.20.0.0/16"]
+    vpc_cidr                      = "10.20.0.0/16"
+    write_region                  = "us-east-2"
+    write_region_vpc_cidr         = "10.10.0.0/16"
+    write_tier_dns_name           = "write-tier.lore-dev.internal"
+    write_tier_ca_certificate_pem = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----"
+    mutable_store_table_name      = "lore-dev-mutable-typed-store"
+    mutable_store_table_arn       = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-mutable-typed-store"
+    locks_table_name              = "lore-dev-locks"
+    locks_table_arn               = "arn:aws:dynamodb:us-east-2:123456789012:table/lore-dev-locks"
+    tls_certificate_secret_arn    = "arn:aws:secretsmanager:us-west-2:123456789012:secret:server-cert"
+  }
+
+  expect_failures = [var.tls_certificate_secret_arn]
 }

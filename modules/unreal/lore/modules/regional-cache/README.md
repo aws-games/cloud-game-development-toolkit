@@ -58,26 +58,49 @@ The root module needs the mirror of this:
 `replication_peers = [{ address = module.regional_cache.cache_dns_name, locality = "OtherRegion" }]`
 and `trusted_ca_pem = module.regional_cache.ca_certificate_pem`. The two VPCs must be peered, with
 routes passed as `vpc_peering_routes` on both sides, and each side's Cloud Map hosted zone
-associated with the other VPC. `examples/multi-region` wires all of it.
+associated with the other VPC. `examples/multi-region` wires all of it. The CA outputs contain
+generated CAs and are null with custom TLS; custom-certificate deployments pass their CA bundles
+directly instead.
 
 ## Access control
 
 | Port | Who reaches it | Protected by |
 |---|---|---|
 | 41337 (gRPC/QUIC, clients) | this office's clients; the write tier | security group; external JWT validation when configured. The published example requires it |
-| 41339 (HTTP) | this office's clients | security group only |
-| 41340 (replication, QUIC) | the write tier; other cache tasks | **security group only** |
+| 41339 (HTTP) | this office's clients | security group; HMAC on presigned URLs |
+| 41340/UDP (internal QUIC replication) | the write tier; other cache tasks | **mutual TLS and security group** |
 
-Port 41340 is network-protected, not JWT-protected. Lore's internal replication listener checks
-no JWT. The compute configuration disables client-certificate checks on this listener, so there
-is no mTLS either. TLS encrypts traffic and lets each tier verify the server it calls, but any
-host that can reach port 41340 can read and write fragments. Keep its sources narrow:
+Port 41340 has no JWT layer because it uses mutual TLS. Every active listener verifies client
+certificates, and every replicated-store or topology client uses `lores://` so it validates the
+server certificate. Generated deployments use separate `serverAuth` and `clientAuth`
+certificates per tier. `write_tier_ca_certificate_pem` trusts the write tier; the root module's
+`trusted_ca_pem` trusts this cache. Lore refuses to start the internal listener without its
+certificate triple, and Terraform rejects cross-region wiring without peer CA material.
+
+Keep the security-group path narrow as defense in depth:
 
 - `write_tier_replication_cidrs`: the write tier's private subnet CIDRs (root output
   `private_subnet_cidrs`). Null falls back to the whole `write_region_vpc_cidr`.
 - On the root module, `replication_ingress_cidrs`: this cache's private subnet CIDRs (output
   `private_subnet_cidrs`), not its VPC CIDR.
-- Never put office, VPN or public ranges on 41340.
+- Never put office, VPN or public ranges on 41340. The module opens UDP only; internal gRPC/TCP
+  stays disabled.
+
+For custom TLS, supply all five certificate inputs: server certificate, server key, a dedicated
+Lore CA bundle with the complete issuer chain and trust anchors, dedicated replication-client
+certificate, and client key. The server certificate needs `serverAuth` plus SANs for the cache's
+Cloud Map name and `loreserver.internal` for IP-addressed peers; the client certificate needs
+`clientAuth`. Any client certificate chaining to a configured CA receives blanket internal-storage
+access, so do not use a shared enterprise CA. If custom secrets use a customer-managed KMS key,
+attach a scoped `kms:Decrypt` grant to this module's `execution_role_arn` output; generated secrets
+use the Secrets Manager service key. Generated certificates become renewable 30 days before expiry
+and automatically change the ECS task definition. For custom secrets, change
+`tls_material_version` whenever their contents rotate.
+
+When upgrading an existing deployment that did not use mTLS, deploy this regional cache first. Its
+new client can still connect to and validate the old server-only TLS listener, while old write-tier
+pushes to the new cache may fail temporarily. Deploy the write tier second so both directions then
+require mTLS. Use targeted, reviewed applies when route-table drift is present.
 
 DynamoDB access:
 
@@ -169,7 +192,7 @@ deploy the replacement cache task. In a second apply, set the root module's
 ## Requirements
 
 | Name | Version |
-| ---- | ------- |
+|------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive) | ~> 2.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
@@ -179,20 +202,20 @@ deploy the replacement cache task. In a second apply, set the root module's
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.0 |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.71.0 |
 
 ## Modules
 
 | Name | Source | Version |
-| ---- | ------ | ------- |
+|------|--------|---------|
 | <a name="module_compute"></a> [compute](#module\_compute) | ../compute | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../vpc | n/a |
 
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
+|------|------|
 | [aws_security_group.tier](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_service_discovery_private_dns_namespace.tier](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_private_dns_namespace) | resource |
 | [aws_service_discovery_service.tier](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_service) | resource |
@@ -201,16 +224,13 @@ deploy the replacement cache task. In a second apply, set the root module's
 | [aws_vpc_security_group_egress_rule.peers](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.write_region_replication_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.write_region_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.client_http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.client_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.client_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.peer_replication](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.peer_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_grpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_quic](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_vpc_security_group_ingress_rule.write_region_replication_tcp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.write_region_replication_udp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
@@ -218,20 +238,8 @@ deploy the replacement cache task. In a second apply, set the root module's
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
+|------|-------------|------|---------|:--------:|
 | <a name="input_allowed_ingress_cidrs"></a> [allowed\_ingress\_cidrs](#input\_allowed\_ingress\_cidrs) | Specific CIDR blocks of this office's clients allowed to reach the cache on 41337 and 41339. Public catch-all ranges are rejected. | `list(string)` | n/a | yes |
-| <a name="input_container_image"></a> [container\_image](#input\_container\_image) | loreserver image URI in THIS region's ECR (pull locally; replicate the repository) | `string` | n/a | yes |
-| <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod), passed to the compute submodule for sizing defaults | `string` | n/a | yes |
-| <a name="input_locks_table_arn"></a> [locks\_table\_arn](#input\_locks\_table\_arn) | Write region's DynamoDB locks table ARN, for this tier's IAM policy | `string` | n/a | yes |
-| <a name="input_locks_table_name"></a> [locks\_table\_name](#input\_locks\_table\_name) | Write region's DynamoDB locks table name (root output). Shared so exclusive checkouts taken in one office are seen in the other. | `string` | n/a | yes |
-| <a name="input_mutable_store_table_arn"></a> [mutable\_store\_table\_arn](#input\_mutable\_store\_table\_arn) | Write region's mutable-store table ARN, for this tier's IAM policy | `string` | n/a | yes |
-| <a name="input_mutable_store_table_name"></a> [mutable\_store\_table\_name](#input\_mutable\_store\_table\_name) | Write region's DynamoDB mutable-store table (branch pointers), used cross-region when branch\_pointer\_access = "dynamodb". | `string` | n/a | yes |
-| <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for all resource names in this region (e.g. 'lore-dev-london'). Must differ from the write region's prefix. | `string` | n/a | yes |
-| <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR for this region's VPC. Must not overlap the write region's VPC (peering). | `string` | n/a | yes |
-| <a name="input_write_region"></a> [write\_region](#input\_write\_region) | AWS region of the write tier (e.g. us-east-2). Used to reach its DynamoDB locks table. | `string` | n/a | yes |
-| <a name="input_write_region_vpc_cidr"></a> [write\_region\_vpc\_cidr](#input\_write\_region\_vpc\_cidr) | CIDR of the write region's VPC. Allowed to and from this tier on 41337. Also used for 41340 when write\_tier\_replication\_cidrs is null; set that to the write tier's private subnet CIDRs instead. | `string` | n/a | yes |
-| <a name="input_write_tier_ca_certificate_pem"></a> [write\_tier\_ca\_certificate\_pem](#input\_write\_tier\_ca\_certificate\_pem) | Write tier CA certificate (root module output ca\_certificate\_pem) so this cache trusts it over TLS | `string` | n/a | yes |
-| <a name="input_write_tier_dns_name"></a> [write\_tier\_dns\_name](#input\_write\_tier\_dns\_name) | Write tier Cloud Map name (root module output write\_tier\_dns\_name). Must resolve in this VPC: associate the write region's hosted zone (output service\_discovery\_hosted\_zone\_id) with this VPC. Used for uploads, cache misses (41340) and nothing else. | `string` | n/a | yes |
 | <a name="input_ami_id"></a> [ami\_id](#input\_ami\_id) | AMI ID override. Null uses the latest ECS-optimized AL2023. | `string` | `null` | no |
 | <a name="input_asg_desired_size"></a> [asg\_desired\_size](#input\_asg\_desired\_size) | n/a | `number` | `null` | no |
 | <a name="input_asg_max_size"></a> [asg\_max\_size](#input\_asg\_max\_size) | n/a | `number` | `null` | no |
@@ -239,10 +247,11 @@ deploy the replacement cache task. In a second apply, set the root module's
 | <a name="input_auth_jwk_endpoint"></a> [auth\_jwk\_endpoint](#input\_auth\_jwk\_endpoint) | HTTPS JWKS endpoint. Required when auth\_mode = "external". | `string` | `null` | no |
 | <a name="input_auth_jwt_audience"></a> [auth\_jwt\_audience](#input\_auth\_jwt\_audience) | JWT audience values accepted. Must contain at least one nonempty value when auth\_mode = "external". | `list(string)` | `[]` | no |
 | <a name="input_auth_jwt_issuer"></a> [auth\_jwt\_issuer](#input\_auth\_jwt\_issuer) | HTTPS JWT issuer. Required when auth\_mode = "external". | `string` | `null` | no |
-| <a name="input_auth_mode"></a> [auth\_mode](#input\_auth\_mode) | "none" or "external". JWT validation applies to client port 41337 only; port 41340 has no<br/>JWT or mTLS check. "external" requires an HTTPS auth\_jwk\_endpoint, an HTTPS auth\_jwt\_issuer<br/>and a nonempty auth\_jwt\_audience. If the write region uses Cognito, pass "external" with the<br/>root module's auth\_jwk\_endpoint and auth\_jwt\_issuer outputs. | `string` | `"none"` | no |
+| <a name="input_auth_mode"></a> [auth\_mode](#input\_auth\_mode) | "none" or "external". JWT validation applies to client port 41337. Internal replication<br/>port 41340 does not use JWT; it always requires mutual TLS. "external" requires an HTTPS<br/>auth\_jwk\_endpoint, an HTTPS auth\_jwt\_issuer and a nonempty auth\_jwt\_audience. If the write<br/>region uses Cognito, pass "external" with the root module's auth outputs. | `string` | `"none"` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Availability zones for the VPC. Null uses the first two in the region. | `list(string)` | `null` | no |
 | <a name="input_branch_pointer_access"></a> [branch\_pointer\_access](#input\_branch\_pointer\_access) | How this cache reaches the write region's branch pointers. "dynamodb" (default): the write<br/>region's DynamoDB table used directly. "write\_tier": Lore's remote mutable store, each<br/>operation forwarded to the write tier over QUIC; measured slightly slower for push and<br/>status, and `lore repository list` fails through it at Lore v0.10.1. Locks always use the<br/>write region's DynamoDB table, since Lore has no remote lock store.<br/>"write\_tier" is rejected when auth\_mode is not "none": this module does not forward client<br/>tokens to the write tier, so an authenticated write tier would refuse the forwarded calls. | `string` | `"dynamodb"` | no |
 | <a name="input_cache_max_size_bytes"></a> [cache\_max\_size\_bytes](#input\_cache\_max\_size\_bytes) | n/a | `number` | `0` | no |
+| <a name="input_container_image"></a> [container\_image](#input\_container\_image) | loreserver image URI in THIS region's ECR (pull locally; replicate the repository) | `string` | n/a | yes |
 | <a name="input_container_memory_reservation"></a> [container\_memory\_reservation](#input\_container\_memory\_reservation) | n/a | `number` | `null` | no |
 | <a name="input_container_user"></a> [container\_user](#input\_container\_user) | User/group for the container process | `string` | `"65534"` | no |
 | <a name="input_deployment_maximum_percent"></a> [deployment\_maximum\_percent](#input\_deployment\_maximum\_percent) | n/a | `number` | `200` | no |
@@ -251,28 +260,44 @@ deploy the replacement cache task. In a second apply, set the root module's
 | <a name="input_enable_otel_sidecar"></a> [enable\_otel\_sidecar](#input\_enable\_otel\_sidecar) | n/a | `bool` | `true` | no |
 | <a name="input_enable_vpc_flow_logs"></a> [enable\_vpc\_flow\_logs](#input\_enable\_vpc\_flow\_logs) | Enable VPC flow logs to CloudWatch | `bool` | `false` | no |
 | <a name="input_enable_xray_smoke_test"></a> [enable\_xray\_smoke\_test](#input\_enable\_xray\_smoke\_test) | n/a | `bool` | `false` | no |
+| <a name="input_environment"></a> [environment](#input\_environment) | Environment name (dev, staging, prod), passed to the compute submodule for sizing defaults | `string` | n/a | yes |
 | <a name="input_hmac_key_secret_arn"></a> [hmac\_key\_secret\_arn](#input\_hmac\_key\_secret\_arn) | n/a | `string` | `null` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | EC2 instance type with NVMe instance store | `string` | `"c8gd.large"` | no |
+| <a name="input_locks_table_arn"></a> [locks\_table\_arn](#input\_locks\_table\_arn) | Write region's DynamoDB locks table ARN, for this tier's IAM policy | `string` | n/a | yes |
+| <a name="input_locks_table_name"></a> [locks\_table\_name](#input\_locks\_table\_name) | Write region's DynamoDB locks table name (root output). Shared so exclusive checkouts taken in one office are seen in the other. | `string` | n/a | yes |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | n/a | `number` | `30` | no |
+| <a name="input_mutable_store_table_arn"></a> [mutable\_store\_table\_arn](#input\_mutable\_store\_table\_arn) | Write region's mutable-store table ARN, for this tier's IAM policy | `string` | n/a | yes |
+| <a name="input_mutable_store_table_name"></a> [mutable\_store\_table\_name](#input\_mutable\_store\_table\_name) | Write region's DynamoDB mutable-store table (branch pointers), used cross-region when branch\_pointer\_access = "dynamodb". | `string` | n/a | yes |
+| <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for all resource names in this region (e.g. 'lore-dev-london'). Must differ from the write region's prefix. | `string` | n/a | yes |
 | <a name="input_otel_collector_image"></a> [otel\_collector\_image](#input\_otel\_collector\_image) | n/a | `string` | `"public.ecr.aws/aws-observability/aws-otel-collector:latest"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags applied to every resource | `map(string)` | `{}` | no |
-| <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | n/a | `string` | `null` | no |
-| <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | n/a | `string` | `null` | no |
+| <a name="input_tls_ca_certificate_secret_arn"></a> [tls\_ca\_certificate\_secret\_arn](#input\_tls\_ca\_certificate\_secret\_arn) | Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom cache server and replication-client certificates. Do not use a shared enterprise CA. | `string` | `null` | no |
+| <a name="input_tls_certificate_secret_arn"></a> [tls\_certificate\_secret\_arn](#input\_tls\_certificate\_secret\_arn) | Secrets Manager ARN for the cache server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires all five server, CA, and replication-client secret ARNs. | `string` | `null` | no |
+| <a name="input_tls_client_certificate_secret_arn"></a> [tls\_client\_certificate\_secret\_arn](#input\_tls\_client\_certificate\_secret\_arn) | Secrets Manager ARN for the cache's dedicated port 41340 mTLS client certificate. | `string` | `null` | no |
+| <a name="input_tls_client_private_key_secret_arn"></a> [tls\_client\_private\_key\_secret\_arn](#input\_tls\_client\_private\_key\_secret\_arn) | Secrets Manager ARN for the cache's dedicated port 41340 mTLS client private key. | `string` | `null` | no |
+| <a name="input_tls_material_version"></a> [tls\_material\_version](#input\_tls\_material\_version) | Rollout token for custom TLS secrets. Change it whenever certificate, key, or CA contents rotate under unchanged secret ARNs. Generated TLS updates the task definition automatically. | `string` | `"1"` | no |
+| <a name="input_tls_private_key_secret_arn"></a> [tls\_private\_key\_secret\_arn](#input\_tls\_private\_key\_secret\_arn) | Secrets Manager ARN for the cache server TLS private key. | `string` | `null` | no |
 | <a name="input_tls_san_dns_names"></a> [tls\_san\_dns\_names](#input\_tls\_san\_dns\_names) | n/a | `list(string)` | `[]` | no |
+| <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR for this region's VPC. Must not overlap the write region's VPC (peering). | `string` | n/a | yes |
 | <a name="input_vpc_peering_routes"></a> [vpc\_peering\_routes](#input\_vpc\_peering\_routes) | Routes to peered VPCs (the write region) for this cache's private route table. Use this rather than aws\_route resources, which the route table's inline routes remove on the next apply. | <pre>list(object({<br/>    cidr_block                = string<br/>    vpc_peering_connection_id = string<br/>  }))</pre> | `[]` | no |
+| <a name="input_write_region"></a> [write\_region](#input\_write\_region) | AWS region of the write tier (e.g. us-east-2). Used to reach its DynamoDB locks table. | `string` | n/a | yes |
 | <a name="input_write_region_rtt_ms"></a> [write\_region\_rtt\_ms](#input\_write\_region\_rtt\_ms) | Measured round-trip time to the write region in ms, used to size the QUIC congestion window for uploads and cache misses (Lore default 100). Null keeps Lore's default. | `number` | `null` | no |
-| <a name="input_write_tier_replication_cidrs"></a> [write\_tier\_replication\_cidrs](#input\_write\_tier\_replication\_cidrs) | CIDRs allowed to and from this cache on replication port 41340. Port 41340 has no JWT or<br/>client-certificate check, so this list is its only access control. Give the write tier's<br/>private subnet CIDRs (root module output private\_subnet\_cidrs). Null falls back to<br/>write\_region\_vpc\_cidr, which is broader than needed. | `list(string)` | `null` | no |
+| <a name="input_write_region_vpc_cidr"></a> [write\_region\_vpc\_cidr](#input\_write\_region\_vpc\_cidr) | CIDR of the write region's VPC. Allowed to and from this tier on 41337. Also used for 41340 when write\_tier\_replication\_cidrs is null; set that to the write tier's private subnet CIDRs instead. | `string` | n/a | yes |
+| <a name="input_write_tier_ca_certificate_pem"></a> [write\_tier\_ca\_certificate\_pem](#input\_write\_tier\_ca\_certificate\_pem) | PEM bundle of the write tier's dedicated Lore CA chain. It validates the 41340 server certificate and authenticates write-tier replication clients. Any accepted clientAuth certificate gets blanket storage access; do not use a shared enterprise CA or include a private key. | `string` | n/a | yes |
+| <a name="input_write_tier_dns_name"></a> [write\_tier\_dns\_name](#input\_write\_tier\_dns\_name) | Write tier Cloud Map name (root module output write\_tier\_dns\_name). Must resolve in this VPC: associate the write region's hosted zone (output service\_discovery\_hosted\_zone\_id) with this VPC. Used for uploads, cache misses (41340) and nothing else. | `string` | n/a | yes |
+| <a name="input_write_tier_replication_cidrs"></a> [write\_tier\_replication\_cidrs](#input\_write\_tier\_replication\_cidrs) | Private CIDRs allowed to and from this cache on mTLS replication port 41340/UDP. Give the<br/>write tier's private subnet CIDRs (root output private\_subnet\_cidrs). Null falls back to<br/>write\_region\_vpc\_cidr, which is broader than needed. mTLS authenticates each peer; these<br/>CIDR rules remain network defense in depth. | `list(string)` | `null` | no |
 
 ## Outputs
 
 | Name | Description |
-| ---- | ----------- |
-| <a name="output_ca_certificate_pem"></a> [ca\_certificate\_pem](#output\_ca\_certificate\_pem) | This cache's CA certificate. Give it to the write region as trusted\_ca\_pem so it can push fragments here over TLS. |
+|------|-------------|
+| <a name="output_ca_certificate_pem"></a> [ca\_certificate\_pem](#output\_ca\_certificate\_pem) | Generated CA certificate for this cache's server and replication-client identities. Give it to the write region as trusted\_ca\_pem for mutual authentication. Null when custom TLS secrets are used. |
 | <a name="output_cache_dns_name"></a> [cache\_dns\_name](#output\_cache\_dns\_name) | Cloud Map DNS name of this cache. Give it to the write region as a replication peer (OtherRegion) and to this office's clients. |
 | <a name="output_cache_security_group_id"></a> [cache\_security\_group\_id](#output\_cache\_security\_group\_id) | Security group of the cache tasks |
 | <a name="output_ecs_cluster_name"></a> [ecs\_cluster\_name](#output\_ecs\_cluster\_name) | ECS cluster name |
+| <a name="output_execution_role_arn"></a> [execution\_role\_arn](#output\_execution\_role\_arn) | ECS task execution role ARN. Attach scoped kms:Decrypt permission here when custom TLS secrets use a customer-managed KMS key. |
 | <a name="output_private_route_table_id"></a> [private\_route\_table\_id](#output\_private\_route\_table\_id) | Private route table, for the peering route to the write region |
-| <a name="output_private_subnet_cidrs"></a> [private\_subnet\_cidrs](#output\_private\_subnet\_cidrs) | CIDRs of the private subnets the cache runs in. Give these to the write region as replication\_ingress\_cidrs: port 41340 is protected only by network rules. |
+| <a name="output_private_subnet_cidrs"></a> [private\_subnet\_cidrs](#output\_private\_subnet\_cidrs) | CIDRs of the private subnets the cache runs in. Give these to the write region as replication\_ingress\_cidrs; mTLS authenticates port 41340 peers and these CIDRs provide network defense in depth. |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | Private subnet IDs |
 | <a name="output_public_subnet_ids"></a> [public\_subnet\_ids](#output\_public\_subnet\_ids) | Public subnet IDs |
 | <a name="output_service_discovery_hosted_zone_id"></a> [service\_discovery\_hosted\_zone\_id](#output\_service\_discovery\_hosted\_zone\_id) | Route 53 private hosted zone behind this tier's Cloud Map namespace. Associate it with the write region's VPC so the write tier can resolve cache\_dns\_name. |

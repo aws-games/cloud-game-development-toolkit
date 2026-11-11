@@ -11,11 +11,21 @@ locals {
   ecr_registry    = split("/", var.container_image)[0]
   hmac_key        = var.hmac_key != null ? var.hmac_key : random_id.hmac[0].hex
 
-  # Cross-region tuning for the replicated store client (BBR is already Lore's default there)
-  replication_tuning_env = join(" ", compact([
-    var.replication_expected_rtt_ms != null ? "-e LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__EXPECTED_RTT_MS=${var.replication_expected_rtt_ms}" : "",
-    var.replication_max_bandwidth_bytes_per_second != null ? "-e LORE__IMMUTABLE_STORE__COMPOSITE__DURABLE__REPLICATED__MAX_BANDWIDTH_BYTES_PER_SECOND=${var.replication_max_bandwidth_bytes_per_second}" : "",
-  ]))
+  generate_replication_client_identity = var.replication_client_certificate_secret_arn == null
+  replication_client_certificate_secret_arn = local.generate_replication_client_identity ? (
+    aws_secretsmanager_secret.replication_client_cert[0].arn
+  ) : var.replication_client_certificate_secret_arn
+  replication_client_private_key_secret_arn = local.generate_replication_client_identity ? (
+    aws_secretsmanager_secret.replication_client_key[0].arn
+  ) : var.replication_client_private_key_secret_arn
+  replication_client_ca_certificate_pem = local.generate_replication_client_identity ? (
+    tls_self_signed_cert.replication_client_ca[0].cert_pem
+  ) : var.replication_client_ca_certificate_pem
+  replication_client_material_revision = local.generate_replication_client_identity ? sha256(join("", [
+    tls_locally_signed_cert.replication_client[0].cert_pem,
+    tls_self_signed_cert.replication_client_ca[0].cert_pem,
+  ])) : var.replication_client_material_version
+
 }
 
 # =============================================================================
@@ -28,31 +38,86 @@ resource "random_id" "hmac" {
 }
 
 # =============================================================================
-# TLS — Self-signed cert (CA:FALSE, IP SAN)
+# Public server TLS is generated at boot with the instance IP as its SAN.
+# The Terraform state therefore holds no unused edge-server private key.
 # =============================================================================
 
-resource "tls_private_key" "edge" {
+# =============================================================================
+# Replication mTLS — one revocable client identity per edge pod
+# =============================================================================
+
+resource "tls_private_key" "replication_client_ca" {
+  count       = local.generate_replication_client_identity ? 1 : 0
   algorithm   = "ECDSA"
   ecdsa_curve = "P256"
 }
 
-resource "tls_self_signed_cert" "edge" {
-  private_key_pem = tls_private_key.edge.private_key_pem
+resource "tls_self_signed_cert" "replication_client_ca" {
+  count                 = local.generate_replication_client_identity ? 1 : 0
+  private_key_pem       = tls_private_key.replication_client_ca[0].private_key_pem
+  validity_period_hours = 8760
+  early_renewal_hours   = 720
+  is_ca_certificate     = true
 
-  subject {
-    common_name = "${var.name_prefix}-edge-pod"
-  }
+  subject { common_name = "${var.name_prefix} replication client CA" }
 
-  validity_period_hours = 8760 # 1 year
+  allowed_uses = ["digital_signature", "cert_signing", "crl_signing"]
+}
 
-  allowed_uses = [
-    "digital_signature",
-    "key_encipherment",
-    "server_auth",
-  ]
+resource "tls_private_key" "replication_client" {
+  count       = local.generate_replication_client_identity ? 1 : 0
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P256"
+}
 
-  # IP SAN added after instance creation via userdata (openssl regeneration)
-  # This cert is a fallback — userdata generates the real cert with IP SAN
+resource "tls_cert_request" "replication_client" {
+  count           = local.generate_replication_client_identity ? 1 : 0
+  private_key_pem = tls_private_key.replication_client[0].private_key_pem
+
+  subject { common_name = "${var.name_prefix} replication client" }
+}
+
+resource "tls_locally_signed_cert" "replication_client" {
+  count              = local.generate_replication_client_identity ? 1 : 0
+  cert_request_pem   = tls_cert_request.replication_client[0].cert_request_pem
+  ca_private_key_pem = tls_private_key.replication_client_ca[0].private_key_pem
+  ca_cert_pem        = tls_self_signed_cert.replication_client_ca[0].cert_pem
+
+  validity_period_hours = 8760
+  early_renewal_hours   = 720
+
+  allowed_uses = ["digital_signature", "key_encipherment", "client_auth"]
+}
+
+resource "aws_secretsmanager_secret" "replication_client_cert" {
+  #checkov:skip=CKV_AWS_149: Uses the account's managed Secrets Manager key by default
+  #checkov:skip=CKV2_AWS_57: Certificate rotation requires coordinated write-tier trust rotation
+  count       = local.generate_replication_client_identity ? 1 : 0
+  name_prefix = "${var.name_prefix}-replication-client-cert-"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "replication_client_cert" {
+  count     = local.generate_replication_client_identity ? 1 : 0
+  secret_id = aws_secretsmanager_secret.replication_client_cert[0].id
+  secret_string = join("\n", [
+    tls_locally_signed_cert.replication_client[0].cert_pem,
+    tls_self_signed_cert.replication_client_ca[0].cert_pem,
+  ])
+}
+
+resource "aws_secretsmanager_secret" "replication_client_key" {
+  #checkov:skip=CKV_AWS_149: Uses the account's managed Secrets Manager key by default
+  #checkov:skip=CKV2_AWS_57: Client-key rotation requires coordinated write-tier trust rotation
+  count       = local.generate_replication_client_identity ? 1 : 0
+  name_prefix = "${var.name_prefix}-replication-client-key-"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "replication_client_key" {
+  count         = local.generate_replication_client_identity ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.replication_client_key[0].id
+  secret_string = tls_private_key.replication_client[0].private_key_pem
 }
 
 # =============================================================================
@@ -111,21 +176,31 @@ resource "aws_vpc_security_group_egress_rule" "all" {
   ip_protocol       = "-1"
 }
 
-# Allow edge pod to reach write tier's security group on replication + gRPC ports
+# Allow the edge pod to reach only the write tier ports it uses.
 resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge" {
   count                        = var.server_security_group_id != null ? 1 : 0
   security_group_id            = var.server_security_group_id
-  description                  = "Edge pod replication + gRPC"
+  description                  = "Public gRPC from edge pod"
   referenced_security_group_id = aws_security_group.edge.id
   from_port                    = 41337
-  to_port                      = 41340
+  to_port                      = 41337
   ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge_quic" {
+  count                        = var.server_security_group_id != null ? 1 : 0
+  security_group_id            = var.server_security_group_id
+  description                  = "Public QUIC from edge pod"
+  referenced_security_group_id = aws_security_group.edge.id
+  from_port                    = 41337
+  to_port                      = 41337
+  ip_protocol                  = "udp"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "write_tier_from_edge_udp" {
   count                        = var.server_security_group_id != null ? 1 : 0
   security_group_id            = var.server_security_group_id
-  description                  = "Edge pod QUIC replication (UDP)"
+  description                  = "mTLS replication QUIC from edge pod"
   referenced_security_group_id = aws_security_group.edge.id
   from_port                    = 41340
   to_port                      = 41340
@@ -175,6 +250,23 @@ resource "aws_iam_role_policy" "ecr" {
   policy = data.aws_iam_policy_document.ecr.json
 }
 
+data "aws_iam_policy_document" "replication_client_secrets" {
+  statement {
+    sid     = "ReadReplicationClientIdentity"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      local.replication_client_certificate_secret_arn,
+      local.replication_client_private_key_secret_arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "replication_client_secrets" {
+  name_prefix = "replication-client-secrets-"
+  role        = aws_iam_role.edge.id
+  policy      = data.aws_iam_policy_document.replication_client_secrets.json
+}
+
 resource "aws_iam_instance_profile" "edge" {
   name_prefix = "${var.name_prefix}-edge-"
   role        = aws_iam_role.edge.name
@@ -195,14 +287,28 @@ resource "aws_instance" "edge" {
   vpc_security_group_ids = [aws_security_group.edge.id]
 
   user_data_base64 = base64encode(templatefile("${path.module}/userdata.sh.tpl", {
-    ecr_region      = local.ecr_region
-    ecr_registry    = local.ecr_registry
-    ca_cert_pem     = var.ca_certificate_pem
-    container_image = var.container_image
-    write_tier_dns  = var.write_tier_dns
-    hmac_key        = local.hmac_key
-    extra_env       = local.replication_tuning_env
+    ecr_region                                 = local.ecr_region
+    ecr_registry                               = local.ecr_registry
+    ca_cert_pem_base64                         = base64encode(var.ca_certificate_pem)
+    replication_client_certificate_secret_arn  = local.replication_client_certificate_secret_arn
+    replication_client_private_key_secret_arn  = local.replication_client_private_key_secret_arn
+    replication_client_material_revision       = local.replication_client_material_revision
+    container_image                            = var.container_image
+    write_tier_dns                             = var.write_tier_dns
+    hmac_key                                   = local.hmac_key
+    replication_expected_rtt_ms                = var.replication_expected_rtt_ms != null ? tostring(var.replication_expected_rtt_ms) : ""
+    replication_max_bandwidth_bytes_per_second = var.replication_max_bandwidth_bytes_per_second != null ? tostring(var.replication_max_bandwidth_bytes_per_second) : ""
   }))
+  # cloud-init runs this bootstrap once. Replacing on change prevents a running pod from keeping
+  # obsolete replication credentials or an insecure transport configuration.
+  user_data_replace_on_change = true
+
+  # Ensure generated values and permission propagation precede cloud-init's fail-closed fetch.
+  depends_on = [
+    aws_secretsmanager_secret_version.replication_client_cert,
+    aws_secretsmanager_secret_version.replication_client_key,
+    aws_iam_role_policy.replication_client_secrets,
+  ]
 
   metadata_options {
     http_endpoint = "enabled"

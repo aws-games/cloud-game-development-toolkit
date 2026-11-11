@@ -34,7 +34,9 @@ terraform apply
 For an existing deployment, inspect the route-table diff. Do not apply a plan that removes
 GuardDuty Runtime Monitoring or other service-managed routes; there is no safe in-place
 migration. Follow the [route ownership](../../modules/vpc/README.md#route-ownership)
-prerequisites first.
+prerequisites first. If the existing tasks use unauthenticated port 41340, deploy the regional
+cache's mTLS-capable task first and the write-tier task second. Do not let a combined apply update
+the write-tier listener before its peer has a client certificate.
 
 The `loreserver` image (`v0.12.0` in `terraform.tfvars.example`) must exist in **both** regions'
 ECR. Replicate the repository (`aws ecr put-replication-configuration`) rather than pulling
@@ -48,9 +50,13 @@ Both tiers validate JWTs from one HTTPS identity provider on client port 41337. 
 has no unauthenticated mode: configure the Lore CLI with a token from that provider before
 connecting. Keep the office CIDRs narrow as a second access boundary.
 
-Replication port 41340 is **not** JWT-protected and has no mTLS. Only security-group rules
-protect it, so the example limits it to each tier's private subnet CIDRs
-(`private_subnet_cidrs` outputs), not the whole VPCs. Do not widen those rules.
+Replication port 41340 has no JWT layer; it is protected by fail-closed mutual TLS. Both tiers
+present dedicated client certificates, validate the peer's server certificate, and connect with
+`lores://`. Terraform combines each tier's local CA with the peer CA. Missing peer trust material
+fails planning, and Lore refuses to start an internal listener without its certificate triple.
+Security-group rules restrict the additional network path to each tier's private subnet CIDRs
+(`private_subnet_cidrs` outputs), not the whole VPCs. Only UDP 41340 is allowed; the unused TCP
+listener stays disabled. Do not widen those rules.
 
 ## Private DynamoDB path
 
