@@ -1,6 +1,7 @@
 # External Auth Example
 
-Default topology (write tier + 2 edge pods) with an external IdP (Okta, Azure AD, etc.).
+Default topology (write tier + 2 edge pods) with an external IdP (Okta, Azure AD, etc.). It
+inherits the default example's mutual TLS protection for edge-to-write-tier replication.
 
 ## What it adds over default
 

@@ -53,6 +53,15 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "vpc_peering_routes" {
+  description = "Routes to peered VPCs (e.g. a regional cache in another region) for the module-created private route table. Only used when vpc_id is null. Do not add these with separate aws_route resources: the route table's inline routes remove them on the next apply."
+  type = list(object({
+    cidr_block                = string
+    vpc_peering_connection_id = string
+  }))
+  default = []
+}
+
 variable "availability_zones" {
   description = "List of availability zones (only used when vpc_id is null). If null, uses first 2 AZs in the current region."
   type        = list(string)
@@ -64,8 +73,14 @@ variable "availability_zones" {
 # =============================================================================
 
 variable "allowed_ingress_cidrs" {
-  description = "CIDR blocks allowed to access Lore server ports. No default — must be explicitly provided."
+  description = "Specific CIDR blocks allowed to access Lore server ports. Public catch-all ranges are rejected."
   type        = list(string)
+  nullable    = false
+
+  validation {
+    condition     = length(var.allowed_ingress_cidrs) > 0 && !contains(var.allowed_ingress_cidrs, "0.0.0.0/0") && !contains(var.allowed_ingress_cidrs, "::/0")
+    error_message = "allowed_ingress_cidrs must contain at least one specific CIDR and must not include 0.0.0.0/0 or ::/0."
+  }
 }
 
 # =============================================================================
@@ -194,15 +209,85 @@ variable "auth_jwt_audience" {
 # =============================================================================
 
 variable "tls_certificate_secret_arn" {
-  description = "Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated."
+  description = "Secrets Manager ARN for the server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires the server certificate, key, and CA secret ARNs together."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_certificate_secret_arn == null &&
+      var.tls_private_key_secret_arn == null &&
+      var.tls_ca_certificate_secret_arn == null
+      ) || (
+      var.tls_certificate_secret_arn != null &&
+      var.tls_private_key_secret_arn != null &&
+      var.tls_ca_certificate_secret_arn != null
+    )
+    error_message = "Set tls_certificate_secret_arn, tls_private_key_secret_arn, and tls_ca_certificate_secret_arn together, or leave all three null."
+  }
+}
+
+variable "tls_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the server TLS private key."
   type        = string
   default     = null
 }
 
-variable "tls_private_key_secret_arn" {
-  description = "Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert."
+variable "tls_ca_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom server and replication-client certificates. Do not use a shared enterprise CA."
   type        = string
   default     = null
+}
+
+variable "tls_client_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated replication-client certificate. Required with its key when custom TLS protects an enabled port 41340 listener."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+      ) || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Set tls_client_certificate_secret_arn and tls_client_private_key_secret_arn together, or leave both null."
+  }
+
+  validation {
+    condition = var.tls_certificate_secret_arn != null || (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+    )
+    error_message = "Do not combine generated server TLS with custom replication-client secrets. Leave all TLS ARNs null for one generated PKI, or supply the complete custom set."
+  }
+
+  validation {
+    condition = length(var.replication_peers) == 0 || var.tls_certificate_secret_arn == null || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Custom TLS with outgoing replication peers requires dedicated replication-client certificate and private-key secret ARNs."
+  }
+}
+
+variable "tls_client_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the dedicated replication-client private key."
+  type        = string
+  default     = null
+}
+
+variable "tls_material_version" {
+  description = "Rollout token for custom TLS secrets. Change it whenever certificate, key, or CA contents rotate under unchanged secret ARNs. Generated TLS updates the task definition automatically."
+  type        = string
+  default     = "1"
+  nullable    = false
+
+  validation {
+    condition     = trimspace(var.tls_material_version) != ""
+    error_message = "tls_material_version must not be empty."
+  }
 }
 
 variable "tls_san_dns_names" {
@@ -269,6 +354,112 @@ variable "intelligent_tiering_deep_archive_days" {
   validation {
     condition     = var.intelligent_tiering_deep_archive_days == 0 || var.intelligent_tiering_archive_days == 0 || var.intelligent_tiering_deep_archive_days > var.intelligent_tiering_archive_days
     error_message = "intelligent_tiering_deep_archive_days must be greater than intelligent_tiering_archive_days when both are enabled."
+  }
+}
+
+# =============================================================================
+# Multi-region and internal replication
+# =============================================================================
+
+variable "enable_internal_replication" {
+  description = "Enable the fail-closed mTLS QUIC listener on UDP port 41340 for same-VPC edge pods. Add every edge pod's dedicated CA output to trusted_ca_pem. Cross-region replication inputs enable the listener automatically. Leave false when no edge pod or peer uses the write tier."
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "replication_ingress_cidrs" {
+  description = "Private subnet CIDRs of Lore tiers in peered VPCs. They may reach client port 41337 and the mTLS-only QUIC replication listener on UDP 41340. Security groups remain defense in depth: use each peer tier's private subnet CIDRs and never office or public ranges. A nonempty list also requires trusted_ca_pem."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = !contains(var.replication_ingress_cidrs, "0.0.0.0/0") && !contains(var.replication_ingress_cidrs, "::/0")
+    error_message = "replication_ingress_cidrs must list specific private CIDRs, not 0.0.0.0/0 or ::/0."
+  }
+}
+
+variable "dynamodb_endpoint_client_cidrs" {
+  description = "Private subnet CIDRs of regional caches allowed to use a DynamoDB interface endpoint in the write VPC over VPC peering. Null disables the interface endpoint. Use each cache's private_subnet_cidrs output. Existing VPCs must route these CIDRs over peering."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition = var.dynamodb_endpoint_client_cidrs == null ? true : (
+      length(var.dynamodb_endpoint_client_cidrs) > 0 &&
+      alltrue([
+        for cidr in var.dynamodb_endpoint_client_cidrs :
+        can(cidrhost(cidr, 0)) && !contains(["0.0.0.0/0", "::/0"], cidr)
+      ])
+    )
+    error_message = "dynamodb_endpoint_client_cidrs must be null or a nonempty list of specific valid CIDRs."
+  }
+}
+
+variable "dynamodb_endpoint_subnet_ids" {
+  description = "Subnets for the DynamoDB interface endpoint, one per Availability Zone. Null uses private_subnet_ids. Existing-VPC callers must not pass two subnets from one Availability Zone."
+  type        = list(string)
+  default     = null
+
+  validation {
+    condition     = var.dynamodb_endpoint_subnet_ids == null ? true : length(var.dynamodb_endpoint_subnet_ids) > 0
+    error_message = "dynamodb_endpoint_subnet_ids must be null or a nonempty list."
+  }
+}
+
+variable "replication_peers" {
+  description = "Other Lore servers this write tier attempts to push each stored fragment to (Lore topology peers). A regional cache in another region is locality = \"OtherRegion\": each put is offered to its NVMe cache so the other office can read new content locally. A missed push loads through the durable path. Address is a DNS name or IP reachable from the write tier's VPC."
+  type = list(object({
+    address  = string
+    port     = optional(number, 41340)
+    locality = string
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
+    error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\"."
+  }
+}
+
+variable "replication_peer_refresh_seconds" {
+  description = "How often replication peers are re-created and their DNS names re-resolved. Lets a peer tier that was not up yet, or that has moved to a new task IP, be picked up without a restart."
+  type        = number
+  default     = 300
+  nullable    = false
+}
+
+variable "enable_same_region_write" {
+  description = "Whether SameRegion replication peers also receive writes (Lore default). false turns them into read-only replicas."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "trusted_ca_pem" {
+  description = "PEM bundle of dedicated Lore peer or edge-client CAs trusted on port 41340. Required for explicit edge-pod support, replication_ingress_cidrs, and OtherRegion peers. A certificate chaining to any listed CA receives blanket internal-storage access, so never use a shared enterprise CA or include private keys."
+  type        = string
+  default     = null
+
+  validation {
+    condition = !(
+      var.enable_internal_replication ||
+      length(var.replication_ingress_cidrs) > 0 ||
+      anytrue([for peer in var.replication_peers : peer.locality == "OtherRegion"])
+      ) || (
+      var.trusted_ca_pem != null &&
+      length(try(regexall("-----BEGIN CERTIFICATE-----", var.trusted_ca_pem), [])) > 0 &&
+      !try(strcontains(var.trusted_ca_pem, "PRIVATE KEY"), true)
+    )
+    error_message = "trusted_ca_pem must contain dedicated Lore peer or edge-client CA certificates, with no private key, when edge or cross-Region replication is configured."
+  }
+
+  validation {
+    condition = var.trusted_ca_pem == null ? true : (
+      length(regexall("-----BEGIN CERTIFICATE-----", var.trusted_ca_pem)) > 0 &&
+      !strcontains(var.trusted_ca_pem, "PRIVATE KEY")
+    )
+    error_message = "trusted_ca_pem must contain one or more PEM certificates and no private key."
   }
 }
 

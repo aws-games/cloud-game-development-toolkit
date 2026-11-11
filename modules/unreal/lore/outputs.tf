@@ -3,7 +3,7 @@
 # =============================================================================
 
 output "ca_certificate_pem" {
-  description = "CA certificate PEM — add to client SSL_CERT_FILE bundle for TLS trust"
+  description = "Generated CA certificate PEM for TLS trust. Null when custom certificates are supplied."
   value       = module.compute.tls_ca_cert_pem
 }
 
@@ -121,4 +121,76 @@ output "effective_config" {
     enable_otel_sidecar        = var.enable_otel_sidecar
     enable_deletion_protection = var.enable_deletion_protection
   }
+}
+
+# =============================================================================
+# Multi-region — what a tier in another region needs
+# =============================================================================
+
+output "write_tier_dns_name" {
+  description = "Cloud Map DNS name of the write tier, for a regional cache's durable remote and replication peers"
+  value       = "write-tier.${local.name_prefix}.internal"
+}
+
+output "service_discovery_hosted_zone_id" {
+  description = "Route 53 private hosted zone behind the Cloud Map namespace. Associate it with a peered VPC (aws_route53_zone_association) so the write tier name resolves there."
+  value       = aws_service_discovery_private_dns_namespace.lore.hosted_zone
+}
+
+output "vpc_cidr" {
+  description = "CIDR of the VPC the write tier runs in, for peering routes (null when an existing VPC is supplied). Use private_subnet_cidrs for a regional cache's write_tier_replication_cidrs"
+  value       = var.vpc_id == null ? var.vpc_cidr : null
+}
+
+output "private_route_table_id" {
+  description = "Private route table of the module-created VPC, for peering routes (null when an existing VPC is supplied)"
+  value       = var.vpc_id == null ? module.vpc[0].private_route_table_id : null
+}
+
+output "locks_table_name" {
+  description = "DynamoDB locks table name. A regional cache uses this table so exclusive checkouts are shared across offices."
+  value       = module.data.locks_table_name
+}
+
+output "locks_table_arn" {
+  description = "DynamoDB locks table ARN, for a regional cache's IAM policy"
+  value       = module.data.locks_table_arn
+}
+
+output "mutable_store_table_name" {
+  description = "DynamoDB mutable-store table (branch pointers). A regional cache uses this table cross-region."
+  value       = module.data.mutable_store_table_name
+}
+
+output "mutable_store_table_arn" {
+  description = "DynamoDB mutable-store table ARN, for a regional cache's IAM policy"
+  value       = module.data.mutable_store_table_arn
+}
+
+output "private_subnet_cidrs" {
+  description = "CIDRs of the module-created private subnets the write tier runs in (null when an existing VPC is supplied). Give these to a regional cache as write_tier_replication_cidrs; mTLS authenticates port 41340 peers and these CIDRs provide network defense in depth."
+  value       = var.vpc_id == null ? module.vpc[0].private_subnet_cidrs : null
+}
+
+output "auth_jwk_endpoint" {
+  description = "JWKS endpoint the write tier validates tokens against (Cognito or external; null when auth_mode = none). A regional cache uses it with auth_mode = external."
+  value       = var.auth_mode == "none" ? null : (var.auth_mode == "cognito" ? module.auth[0].jwk_endpoint : var.auth_jwk_endpoint)
+}
+
+output "auth_jwt_issuer" {
+  description = "JWT issuer the write tier accepts (null when auth_mode = none). A regional cache uses it with auth_mode = external."
+  value       = var.auth_mode == "none" ? null : (var.auth_mode == "cognito" ? module.auth[0].issuer : var.auth_jwt_issuer)
+}
+
+output "dynamodb_interface_endpoint_url" {
+  description = "Endpoint-specific HTTPS URL for the write VPC's DynamoDB interface endpoint. Pass it to regional-cache dynamodb_endpoint_url. Null when disabled."
+  value       = local.dynamodb_interface_endpoint_enabled ? "https://${local.dynamodb_interface_endpoint_regional_dns_name}" : null
+
+  # A cache task must not receive this URL before the endpoint admits its private subnet.
+  depends_on = [aws_vpc_security_group_ingress_rule.dynamodb_interface_endpoint_https]
+}
+
+output "dynamodb_interface_endpoint_id" {
+  description = "DynamoDB interface endpoint ID for flow and CloudTrail checks. Null when disabled."
+  value       = try(aws_vpc_endpoint.dynamodb_interface[0].id, null)
 }

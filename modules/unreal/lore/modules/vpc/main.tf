@@ -64,11 +64,22 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table" "private" {
+  #checkov:skip=CKV2_AWS_44: 0.0.0.0/0 targets the NAT gateway; peering routes are scoped to the peer VPC CIDR only
   vpc_id = aws_vpc.this.id
 
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.this.id
+  }
+
+  # Inline, like the default route: a route table with inline routes removes any route it does
+  # not declare, so peering routes must be declared here rather than as aws_route resources.
+  dynamic "route" {
+    for_each = var.peering_routes
+    content {
+      cidr_block                = route.value.cidr_block
+      vpc_peering_connection_id = route.value.vpc_peering_connection_id
+    }
   }
 
   tags = merge(var.tags, { Name = "${var.name_prefix}-private-rt" })
@@ -91,6 +102,8 @@ resource "aws_route_table_association" "private" {
 # =============================================================================
 
 resource "aws_cloudwatch_log_group" "flow_logs" {
+  #checkov:skip=CKV_AWS_158: KMS encryption optional — flow logs are opt-in diagnostics
+  #checkov:skip=CKV_AWS_338: 30-day retention is deliberate for opt-in flow logs
   count             = var.enable_flow_logs ? 1 : 0
   name              = "/vpc/${var.name_prefix}-flow-logs"
   retention_in_days = 30
