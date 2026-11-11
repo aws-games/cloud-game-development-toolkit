@@ -69,7 +69,7 @@ variable "scylla_subnets" {
 
 variable "scylla_ami_name" {
   type        = string
-  default     = "ScyllaDB 6.0.1"
+  default     = "ScyllaDB 2026.3.1"
   description = "Name of the Scylla AMI to be used to get the AMI ID"
   nullable    = false
 }
@@ -264,12 +264,15 @@ variable "system_managed_node_min_size" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.31"
+  default     = "1.37"
   description = "Kubernetes version to be used by the EKS cluster."
   nullable    = false
   validation {
-    condition     = contains(["1.24", "1.25", "1.26", "1.27", "1.28", "1.29", "1.30", "1.31"], var.kubernetes_version)
-    error_message = "Version number must be supported version in AWS Kubernetes"
+    # Accept EKS Kubernetes versions "1.24" and newer (1.24-1.29, 1.30-1.99)
+    # without requiring a code change for each new EKS release. AWS still
+    # rejects any version it does not actually support at apply time.
+    condition     = can(regex("^1\\.(2[4-9]|[3-9][0-9])$", var.kubernetes_version))
+    error_message = "Version number must be a supported AWS EKS Kubernetes version (1.24 or newer)."
   }
 }
 

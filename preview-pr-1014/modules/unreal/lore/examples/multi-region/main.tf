@@ -46,9 +46,8 @@ module "lore" {
   auth_jwt_issuer            = var.auth_jwt_issuer
   auth_jwt_audience          = var.auth_jwt_audience
 
-  # Let the regional cache's private subnets reach the write tier, and the write tier push to
-  # them (security-group references do not cross inter-region peering, so this is by CIDR).
-  # Port 41340 has no JWT or client-certificate check: these CIDRs are its only protection.
+  # Restrict the private network path even though port 41340 also requires peer certificates.
+  # Security-group references do not cross inter-region peering, so this path is scoped by CIDR.
   replication_ingress_cidrs      = module.regional_cache.private_subnet_cidrs
   dynamodb_endpoint_client_cidrs = module.regional_cache.private_subnet_cidrs
   vpc_peering_routes = [{

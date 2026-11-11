@@ -55,10 +55,10 @@ variable "write_region_vpc_cidr" {
 
 variable "write_tier_replication_cidrs" {
   description = <<-EOT
-    CIDRs allowed to and from this cache on replication port 41340. Port 41340 has no JWT or
-    client-certificate check, so this list is its only access control. Give the write tier's
-    private subnet CIDRs (root module output private_subnet_cidrs). Null falls back to
-    write_region_vpc_cidr, which is broader than needed.
+    Private CIDRs allowed to and from this cache on mTLS replication port 41340/UDP. Give the
+    write tier's private subnet CIDRs (root output private_subnet_cidrs). Null falls back to
+    write_region_vpc_cidr, which is broader than needed. mTLS authenticates each peer; these
+    CIDR rules remain network defense in depth.
   EOT
   type        = list(string)
   default     = null
@@ -75,8 +75,17 @@ variable "write_tier_dns_name" {
 }
 
 variable "write_tier_ca_certificate_pem" {
-  description = "Write tier CA certificate (root module output ca_certificate_pem) so this cache trusts it over TLS"
+  description = "PEM bundle of the write tier's dedicated Lore CA chain. It validates the 41340 server certificate and authenticates write-tier replication clients. Any accepted clientAuth certificate gets blanket storage access; do not use a shared enterprise CA or include a private key."
   type        = string
+  nullable    = false
+
+  validation {
+    condition = (
+      length(try(regexall("-----BEGIN CERTIFICATE-----", var.write_tier_ca_certificate_pem), [])) > 0 &&
+      !try(strcontains(var.write_tier_ca_certificate_pem, "PRIVATE KEY"), true)
+    )
+    error_message = "write_tier_ca_certificate_pem must contain one or more PEM certificates and no private key."
+  }
 }
 
 variable "dynamodb_endpoint_url" {
@@ -247,10 +256,10 @@ variable "deployment_maximum_percent" {
 
 variable "auth_mode" {
   description = <<-EOT
-    "none" or "external". JWT validation applies to client port 41337 only; port 41340 has no
-    JWT or mTLS check. "external" requires an HTTPS auth_jwk_endpoint, an HTTPS auth_jwt_issuer
-    and a nonempty auth_jwt_audience. If the write region uses Cognito, pass "external" with the
-    root module's auth_jwk_endpoint and auth_jwt_issuer outputs.
+    "none" or "external". JWT validation applies to client port 41337. Internal replication
+    port 41340 does not use JWT; it always requires mutual TLS. "external" requires an HTTPS
+    auth_jwk_endpoint, an HTTPS auth_jwt_issuer and a nonempty auth_jwt_audience. If the write
+    region uses Cognito, pass "external" with the root module's auth outputs.
   EOT
   type        = string
   default     = "none"
@@ -297,13 +306,62 @@ variable "auth_jwt_audience" {
 }
 
 variable "tls_certificate_secret_arn" {
-  type    = string
-  default = null
+  description = "Secrets Manager ARN for the cache server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires all five server, CA, and replication-client secret ARNs."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_certificate_secret_arn == null &&
+      var.tls_private_key_secret_arn == null &&
+      var.tls_ca_certificate_secret_arn == null &&
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+      ) || (
+      var.tls_certificate_secret_arn != null &&
+      var.tls_private_key_secret_arn != null &&
+      var.tls_ca_certificate_secret_arn != null &&
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Set all five custom TLS server, CA, and replication-client secret ARNs, or leave all five null for generated identities."
+  }
 }
 
 variable "tls_private_key_secret_arn" {
-  type    = string
-  default = null
+  description = "Secrets Manager ARN for the cache server TLS private key."
+  type        = string
+  default     = null
+}
+
+variable "tls_ca_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom cache server and replication-client certificates. Do not use a shared enterprise CA."
+  type        = string
+  default     = null
+}
+
+variable "tls_client_certificate_secret_arn" {
+  description = "Secrets Manager ARN for the cache's dedicated port 41340 mTLS client certificate."
+  type        = string
+  default     = null
+}
+
+variable "tls_client_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the cache's dedicated port 41340 mTLS client private key."
+  type        = string
+  default     = null
+}
+
+variable "tls_material_version" {
+  description = "Rollout token for custom TLS secrets. Change it whenever certificate, key, or CA contents rotate under unchanged secret ARNs. Generated TLS updates the task definition automatically."
+  type        = string
+  default     = "1"
+  nullable    = false
+
+  validation {
+    condition     = trimspace(var.tls_material_version) != ""
+    error_message = "tls_material_version must not be empty."
+  }
 }
 
 variable "tls_san_dns_names" {

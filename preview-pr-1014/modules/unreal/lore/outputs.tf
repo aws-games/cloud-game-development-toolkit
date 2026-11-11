@@ -3,7 +3,7 @@
 # =============================================================================
 
 output "ca_certificate_pem" {
-  description = "CA certificate PEM — add to client SSL_CERT_FILE bundle for TLS trust"
+  description = "Generated CA certificate PEM for TLS trust. Null when custom certificates are supplied."
   value       = module.compute.tls_ca_cert_pem
 }
 
@@ -168,7 +168,7 @@ output "mutable_store_table_arn" {
 }
 
 output "private_subnet_cidrs" {
-  description = "CIDRs of the module-created private subnets the write tier runs in (null when an existing VPC is supplied). Give these to a regional cache as write_tier_replication_cidrs: port 41340 is protected only by network rules."
+  description = "CIDRs of the module-created private subnets the write tier runs in (null when an existing VPC is supplied). Give these to a regional cache as write_tier_replication_cidrs; mTLS authenticates port 41340 peers and these CIDRs provide network defense in depth."
   value       = var.vpc_id == null ? module.vpc[0].private_subnet_cidrs : null
 }
 

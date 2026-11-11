@@ -130,15 +130,88 @@ variable "locks_table_name" {
 # =============================================================================
 
 variable "tls_certificate_secret_arn" {
-  description = "Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated."
+  description = "Secrets Manager ARN for the server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires certificate, private-key, and CA secret ARNs together."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_certificate_secret_arn == null &&
+      var.tls_private_key_secret_arn == null &&
+      var.tls_ca_certificate_secret_arn == null
+      ) || (
+      var.tls_certificate_secret_arn != null &&
+      var.tls_private_key_secret_arn != null &&
+      var.tls_ca_certificate_secret_arn != null
+    )
+    error_message = "Set tls_certificate_secret_arn, tls_private_key_secret_arn, and tls_ca_certificate_secret_arn together, or leave all three null."
+  }
+}
+
+variable "tls_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the server TLS private key. Custom TLS requires the matching certificate and CA secret ARNs."
   type        = string
   default     = null
 }
 
-variable "tls_private_key_secret_arn" {
-  description = "Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert."
+variable "tls_ca_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom server and replication-client certificates. Required with custom TLS; do not use a shared enterprise CA."
   type        = string
   default     = null
+}
+
+variable "tls_client_certificate_secret_arn" {
+  description = "Secrets Manager ARN for a dedicated replication-client certificate. Required with its key when custom TLS protects an enabled port 41340 listener. Null uses a generated client certificate for generated TLS."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+      ) || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "Set tls_client_certificate_secret_arn and tls_client_private_key_secret_arn together, or leave both null."
+  }
+
+  validation {
+    condition = var.tls_certificate_secret_arn != null || (
+      var.tls_client_certificate_secret_arn == null &&
+      var.tls_client_private_key_secret_arn == null
+    )
+    error_message = "Do not combine generated server TLS with custom replication-client secrets. Leave all TLS ARNs null for one generated PKI, or supply the complete custom set."
+  }
+
+  validation {
+    condition = !(
+      var.durable_store_mode == "replicated" ||
+      length(var.replication_peers) > 0
+      ) || var.tls_certificate_secret_arn == null || (
+      var.tls_client_certificate_secret_arn != null &&
+      var.tls_client_private_key_secret_arn != null
+    )
+    error_message = "An outgoing replication client with custom TLS requires dedicated client certificate and private-key secret ARNs."
+  }
+}
+
+variable "tls_client_private_key_secret_arn" {
+  description = "Secrets Manager ARN for the dedicated replication-client private key. Required with its certificate for custom replication TLS."
+  type        = string
+  default     = null
+}
+
+variable "tls_material_version" {
+  description = "Rollout token for custom TLS secrets. Change it whenever a certificate, key, or CA value rotates under an unchanged secret ARN so ECS registers and deploys a new task definition. Generated TLS derives this token automatically."
+  type        = string
+  default     = "1"
+  nullable    = false
+
+  validation {
+    condition     = trimspace(var.tls_material_version) != ""
+    error_message = "tls_material_version must not be empty."
+  }
 }
 
 variable "tls_san_dns_names" {
@@ -246,7 +319,7 @@ variable "enable_xray_smoke_test" {
 }
 
 variable "enable_replication" {
-  description = "Enable the QUIC internal replication endpoint (port 41340). Required for multi-server cache topologies."
+  description = "Enable the fail-closed mTLS QUIC internal replication endpoint on UDP port 41340. Required for edge pods and multi-server cache topologies."
   type        = bool
   default     = false
 }
@@ -269,6 +342,11 @@ variable "replication_peers" {
   validation {
     condition     = alltrue([for p in var.replication_peers : contains(["SameRegion", "OtherRegion"], p.locality)])
     error_message = "replication_peers[*].locality must be \"SameRegion\" or \"OtherRegion\" (Lore's exact variant names)."
+  }
+
+  validation {
+    condition     = var.enable_replication || length(var.replication_peers) == 0
+    error_message = "enable_replication must be true when replication_peers is nonempty so the mTLS identity files are provisioned."
   }
 }
 
@@ -324,9 +402,17 @@ variable "lock_store_region" {
 }
 
 variable "trusted_ca_pem" {
-  description = "PEM of another Lore tier's CA that this server must trust as a client (remote mutable store, replication reads). Appended to the system CA bundle at container start. Null when every upstream is in this deployment."
+  description = "PEM bundle of dedicated Lore CAs for other tiers this server must trust. Any clientAuth certificate chaining to this bundle receives blanket port 41340 storage access, so do not use a shared enterprise CA. Combined with this tier's CA for mTLS and, when needed, with the system store for secure upstream calls."
   type        = string
   default     = null
+
+  validation {
+    condition = var.trusted_ca_pem == null ? true : (
+      length(regexall("-----BEGIN CERTIFICATE-----", var.trusted_ca_pem)) > 0 &&
+      !strcontains(var.trusted_ca_pem, "PRIVATE KEY")
+    )
+    error_message = "trusted_ca_pem must contain one or more PEM certificates and no private key."
+  }
 }
 
 variable "replication_peer_refresh_seconds" {
@@ -369,13 +455,13 @@ variable "durable_store_mode" {
 }
 
 variable "durable_remote_url" {
-  description = "Lore server replication URL for durable_store_mode = \"replicated\", e.g. lore://write-tier.lore-dev.internal:41340."
+  description = "Secure Lore replication URL for durable_store_mode = \"replicated\", e.g. lores://write-tier.lore-dev.internal:41340. The lores scheme is required so the server certificate is validated."
   type        = string
   default     = null
 
   validation {
-    condition     = var.durable_store_mode != "replicated" || var.durable_remote_url != null
-    error_message = "durable_remote_url is required when durable_store_mode = \"replicated\"."
+    condition     = var.durable_store_mode != "replicated" || (var.durable_remote_url != null && startswith(coalesce(var.durable_remote_url, "-"), "lores://"))
+    error_message = "durable_remote_url must be a lores:// URL when durable_store_mode = \"replicated\"."
   }
 }
 

@@ -7,6 +7,9 @@ config:
     KeyspaceReplicationStrategy:
         class : "NetworkTopologyStrategy"
         ${region} : 2
+    LocalKeyspaceReplicationStrategy:
+        class : "NetworkTopologyStrategy"
+        ${region} : 1
     LocalDatacenterName: ${region}
     LocalKeyspaceSuffix: "ddc"
   # if you have a locally attached filesystem for caching (we recommend you do) then this configures it

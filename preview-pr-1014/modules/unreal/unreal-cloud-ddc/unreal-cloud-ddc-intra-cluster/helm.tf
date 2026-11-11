@@ -1,10 +1,6 @@
-module "eks_blueprints_all_other_addons" {
-  #checkov:skip=CKV_TF_1:Upstream commit hash not being checked. This will be broken out in the future.
-  #checkov:skip=CKV_AWS_356:Upstream requirement for Load Balancer Controller
-  #checkov:skip=CKV_AWS_111:Upstream requirement for Load Balancer Controller
-  source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
-
-  eks_addons = {
+locals {
+  # Addons always managed by the blueprints module.
+  eks_base_addons = {
     coredns = {
       most_recent = true
     }
@@ -14,11 +10,38 @@ module "eks_blueprints_all_other_addons" {
     vpc-cni = {
       most_recent = true
     }
-    aws-ebs-csi-driver = {
-      most_recent              = true
-      service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
-    }
   }
+
+  # When Pod Identity is enabled, the EBS CSI driver is managed natively (see
+  # aws_eks_addon.ebs_csi) so it is removed from the blueprints map, and the
+  # eks-pod-identity-agent addon is installed so the association can resolve.
+  # When disabled, keep the legacy IRSA-based EBS CSI driver in the blueprints
+  # map with its service account role ARN.
+  eks_addons = var.ebs_csi_use_pod_identity ? merge(
+    local.eks_base_addons,
+    {
+      eks-pod-identity-agent = {
+        most_recent = true
+      }
+    }
+    ) : merge(
+    local.eks_base_addons,
+    {
+      aws-ebs-csi-driver = {
+        most_recent              = true
+        service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
+      }
+    }
+  )
+}
+
+module "eks_blueprints_all_other_addons" {
+  #checkov:skip=CKV_TF_1:Upstream commit hash not being checked. This will be broken out in the future.
+  #checkov:skip=CKV_AWS_356:Upstream requirement for Load Balancer Controller
+  #checkov:skip=CKV_AWS_111:Upstream requirement for Load Balancer Controller
+  source = "git::https://github.com/aws-ia/terraform-aws-eks-blueprints-addons.git?ref=a9963f4a0e168f73adb033be594ac35868696a91"
+
+  eks_addons = local.eks_addons
 
 
   cluster_name      = data.aws_eks_cluster.unreal_cloud_ddc_cluster.name
@@ -27,8 +50,14 @@ module "eks_blueprints_all_other_addons" {
   oidc_provider_arn = data.aws_iam_openid_connect_provider.oidc_provider.arn
 
   enable_aws_load_balancer_controller = true
-  enable_aws_cloudwatch_metrics       = true
-  enable_cert_manager                 = var.enable_certificate_manager
+  # Wait for the controller pods to be Ready. Its mutating webhook intercepts
+  # every Service, so installing the DDC chart before the webhook has endpoints
+  # fails with "no endpoints available for service aws-load-balancer-webhook-service".
+  aws_load_balancer_controller = {
+    wait = true
+  }
+  enable_aws_cloudwatch_metrics = true
+  enable_cert_manager           = var.enable_certificate_manager
 
   cert_manager_route53_hosted_zone_arns = var.certificate_manager_hosted_zone_arn
 
@@ -70,7 +99,7 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
 resource "helm_release" "unreal_cloud_ddc" {
   name         = "unreal-cloud-ddc"
   chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/github/epicgames"
+  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.region}.amazonaws.com/github/epicgames"
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
     
     
       
@@ -3424,6 +3424,12 @@
 <h1 id="compute-sub-module">Compute Sub-Module<a class="headerlink" href="#compute-sub-module" title="Permanent link">&para;</a></h1>
 <p>Provisions ECS cluster, ASG, task definition, service, IAM roles, Cognito (optional), TLS certs, and secrets.</p>
 <p>This is an internal sub-module of <code>terraform-aws-lore</code>. Do not consume directly — use the root module.</p>
+<p>When enabled, internal QUIC on UDP 41340 is fail-closed mTLS. The sub-module generates separate
+server and replication-client identities, writes a local-plus-peer CA bundle, forces secure Lore
+client settings, and configures Lore to verify client certificates. Generated certificates become
+renewable 30 days before expiry and their hash forces a new task definition. Custom TLS must supply
+the server certificate, server key, issuing CA chain, client certificate, and client key; bump
+<code>tls_material_version</code> whenever those secret values rotate. The internal listener stays disabled when no edge pod or replication topology needs it.</p>
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <table>
@@ -3467,19 +3473,19 @@
 <tbody>
 <tr>
 <td><a name="provider_archive"></a> <a href="#provider_archive">archive</a></td>
-<td>~&gt; 2.0</td>
+<td>2.8.1</td>
 </tr>
 <tr>
 <td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>&gt;= 6.0</td>
+<td>6.71.0</td>
 </tr>
 <tr>
 <td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>~&gt; 3.0</td>
+<td>3.9.1</td>
 </tr>
 <tr>
 <td><a name="provider_tls"></a> <a href="#provider_tls">tls</a></td>
-<td>~&gt; 4.0</td>
+<td>4.4.2</td>
 </tr>
 </tbody>
 </table>
@@ -3595,6 +3601,14 @@
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret">aws_secretsmanager_secret.tls_client_cert</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret">aws_secretsmanager_secret.tls_client_key</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret">aws_secretsmanager_secret.tls_key</a></td>
 <td>resource</td>
 </tr>
@@ -3611,6 +3625,14 @@
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version">aws_secretsmanager_secret_version.tls_client_cert</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version">aws_secretsmanager_secret_version.tls_client_key</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version">aws_secretsmanager_secret_version.tls_key</a></td>
 <td>resource</td>
 </tr>
@@ -3619,7 +3641,15 @@
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/cert_request">tls_cert_request.replication_client</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/cert_request">tls_cert_request.server</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/locally_signed_cert">tls_locally_signed_cert.replication_client</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3628,6 +3658,10 @@
 </tr>
 <tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key">tls_private_key.ca</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key">tls_private_key.replication_client</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -3693,104 +3727,6 @@
 </thead>
 <tbody>
 <tr>
-<td><a name="input_container_image"></a> <a href="#input_container_image">container_image</a></td>
-<td>Loreserver container image URI</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_dynamodb_table_arns"></a> <a href="#input_dynamodb_table_arns">dynamodb_table_arns</a></td>
-<td>List of DynamoDB table ARNs for IAM policy</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_environment"></a> <a href="#input_environment">environment</a></td>
-<td>Environment name (dev, staging, prod) — used for ASG defaults</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_fragment_bucket_name"></a> <a href="#input_fragment_bucket_name">fragment_bucket_name</a></td>
-<td>S3 fragment bucket name (for LORE__* env vars)</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_fragment_metadata_table_name"></a> <a href="#input_fragment_metadata_table_name">fragment_metadata_table_name</a></td>
-<td>DynamoDB fragment metadata table name</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_fragments_table_name"></a> <a href="#input_fragments_table_name">fragments_table_name</a></td>
-<td>DynamoDB fragments table name</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_locks_table_arn"></a> <a href="#input_locks_table_arn">locks_table_arn</a></td>
-<td>ARN of the locks DynamoDB table (for GSI access)</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_locks_table_name"></a> <a href="#input_locks_table_name">locks_table_name</a></td>
-<td>DynamoDB locks table name</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_mutable_store_table_name"></a> <a href="#input_mutable_store_table_name">mutable_store_table_name</a></td>
-<td>DynamoDB mutable store table name</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_name_prefix"></a> <a href="#input_name_prefix">name_prefix</a></td>
-<td>Prefix for all resource names</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_private_subnet_ids"></a> <a href="#input_private_subnet_ids">private_subnet_ids</a></td>
-<td>Private subnet IDs for ASG instances</td>
-<td><code>list(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_server_security_group_id"></a> <a href="#input_server_security_group_id">server_security_group_id</a></td>
-<td>Security group ID for Lore server instances</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
-<td>Tags to apply to all resources</td>
-<td><code>map(string)</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
-<td><a name="input_write_tier_dns_name"></a> <a href="#input_write_tier_dns_name">write_tier_dns_name</a></td>
-<td>Cloud Map DNS name (included in self-signed cert SAN)</td>
-<td><code>string</code></td>
-<td>n/a</td>
-<td style="text-align: center;">yes</td>
-</tr>
-<tr>
 <td><a name="input_ami_id"></a> <a href="#input_ami_id">ami_id</a></td>
 <td>AMI ID override. If null, uses latest ECS-optimized AL2023.</td>
 <td><code>string</code></td>
@@ -3854,6 +3790,13 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_container_image"></a> <a href="#input_container_image">container_image</a></td>
+<td>Loreserver container image URI</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_container_memory_reservation"></a> <a href="#input_container_memory_reservation">container_memory_reservation</a></td>
 <td>Soft memory reservation (MiB) for the loreserver container. If null, auto-sizes based on instance type.</td>
 <td><code>number</code></td>
@@ -3890,7 +3833,7 @@
 </tr>
 <tr>
 <td><a name="input_durable_remote_url"></a> <a href="#input_durable_remote_url">durable_remote_url</a></td>
-<td>Lore server replication URL for durable_store_mode = "replicated", e.g. lore://write-tier.lore-dev.internal:41340.</td>
+<td>Secure Lore replication URL for durable_store_mode = "replicated", e.g. lores://write-tier.lore-dev.internal:41340. The lores scheme is required so the server certificate is validated.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -3910,6 +3853,13 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_dynamodb_table_arns"></a> <a href="#input_dynamodb_table_arns">dynamodb_table_arns</a></td>
+<td>List of DynamoDB table ARNs for IAM policy</td>
+<td><code>list(string)</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_enable_otel_sidecar"></a> <a href="#input_enable_otel_sidecar">enable_otel_sidecar</a></td>
 <td>Deploy ADOT sidecar for OpenTelemetry collection (CloudWatch + X-Ray)</td>
 <td><code>bool</code></td>
@@ -3918,7 +3868,7 @@
 </tr>
 <tr>
 <td><a name="input_enable_replication"></a> <a href="#input_enable_replication">enable_replication</a></td>
-<td>Enable the QUIC internal replication endpoint (port 41340). Required for multi-server cache topologies.</td>
+<td>Enable the fail-closed mTLS QUIC internal replication endpoint on UDP port 41340. Required for edge pods and multi-server cache topologies.</td>
 <td><code>bool</code></td>
 <td><code>false</code></td>
 <td style="text-align: center;">no</td>
@@ -3938,11 +3888,39 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_environment"></a> <a href="#input_environment">environment</a></td>
+<td>Environment name (dev, staging, prod) — used for ASG defaults</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_fragment_bucket_arn"></a> <a href="#input_fragment_bucket_arn">fragment_bucket_arn</a></td>
 <td>ARN of the S3 fragment bucket. Null when durable_store_mode = "replicated" (the node has no bucket of its own).</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_fragment_bucket_name"></a> <a href="#input_fragment_bucket_name">fragment_bucket_name</a></td>
+<td>S3 fragment bucket name (for LORE__* env vars)</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_fragment_metadata_table_name"></a> <a href="#input_fragment_metadata_table_name">fragment_metadata_table_name</a></td>
+<td>DynamoDB fragment metadata table name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_fragments_table_name"></a> <a href="#input_fragments_table_name">fragments_table_name</a></td>
+<td>DynamoDB fragments table name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
 <td><a name="input_hmac_key_secret_arn"></a> <a href="#input_hmac_key_secret_arn">hmac_key_secret_arn</a></td>
@@ -3973,6 +3951,20 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_locks_table_arn"></a> <a href="#input_locks_table_arn">locks_table_arn</a></td>
+<td>ARN of the locks DynamoDB table (for GSI access)</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_locks_table_name"></a> <a href="#input_locks_table_name">locks_table_name</a></td>
+<td>DynamoDB locks table name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_log_retention_days"></a> <a href="#input_log_retention_days">log_retention_days</a></td>
 <td>CloudWatch log group retention in days. Valid values: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653.</td>
 <td><code>number</code></td>
@@ -4001,11 +3993,32 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_mutable_store_table_name"></a> <a href="#input_mutable_store_table_name">mutable_store_table_name</a></td>
+<td>DynamoDB mutable store table name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_name_prefix"></a> <a href="#input_name_prefix">name_prefix</a></td>
+<td>Prefix for all resource names</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_otel_collector_image"></a> <a href="#input_otel_collector_image">otel_collector_image</a></td>
 <td>ADOT collector image URI. Override to use a private ECR mirror.</td>
 <td><code>string</code></td>
 <td><code>"public.ecr.aws/aws-observability/aws-otel-collector:latest"</code></td>
 <td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_private_subnet_ids"></a> <a href="#input_private_subnet_ids">private_subnet_ids</a></td>
+<td>Private subnet IDs for ASG instances</td>
+<td><code>list(string)</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
 <td><a name="input_replication_peer_refresh_seconds"></a> <a href="#input_replication_peer_refresh_seconds">replication_peer_refresh_seconds</a></td>
@@ -4022,6 +4035,13 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_server_security_group_id"></a> <a href="#input_server_security_group_id">server_security_group_id</a></td>
+<td>Security group ID for Lore server instances</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
 <td><a name="input_service_discovery_registry_arn"></a> <a href="#input_service_discovery_registry_arn">service_discovery_registry_arn</a></td>
 <td>Cloud Map service ARN for ECS service registration. Null when service discovery is disabled.</td>
 <td><code>string</code></td>
@@ -4029,15 +4049,50 @@
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_tls_certificate_secret_arn"></a> <a href="#input_tls_certificate_secret_arn">tls_certificate_secret_arn</a></td>
-<td>Secrets Manager ARN for server TLS certificate. If null, a self-signed cert is generated.</td>
+<td><a name="input_tags"></a> <a href="#input_tags">tags</a></td>
+<td>Tags to apply to all resources</td>
+<td><code>map(string)</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_tls_ca_certificate_secret_arn"></a> <a href="#input_tls_ca_certificate_secret_arn">tls_ca_certificate_secret_arn</a></td>
+<td>Secrets Manager ARN for a dedicated Lore CA bundle containing the complete issuer chain and trust anchors for the custom server and replication-client certificates. Required with custom TLS; do not use a shared enterprise CA.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_tls_certificate_secret_arn"></a> <a href="#input_tls_certificate_secret_arn">tls_certificate_secret_arn</a></td>
+<td>Secrets Manager ARN for the server TLS leaf certificate. Null generates a private CA and server certificate. Custom TLS requires certificate, private-key, and CA secret ARNs together.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_tls_client_certificate_secret_arn"></a> <a href="#input_tls_client_certificate_secret_arn">tls_client_certificate_secret_arn</a></td>
+<td>Secrets Manager ARN for a dedicated replication-client certificate. Required with its key when custom TLS protects an enabled port 41340 listener. Null uses a generated client certificate for generated TLS.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_tls_client_private_key_secret_arn"></a> <a href="#input_tls_client_private_key_secret_arn">tls_client_private_key_secret_arn</a></td>
+<td>Secrets Manager ARN for the dedicated replication-client private key. Required with its certificate for custom replication TLS.</td>
+<td><code>string</code></td>
+<td><code>null</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_tls_material_version"></a> <a href="#input_tls_material_version">tls_material_version</a></td>
+<td>Rollout token for custom TLS secrets. Change it whenever a certificate, key, or CA value rotates under an unchanged secret ARN so ECS registers and deploys a new task definition. Generated TLS derives this token automatically.</td>
+<td><code>string</code></td>
+<td><code>"1"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_tls_private_key_secret_arn"></a> <a href="#input_tls_private_key_secret_arn">tls_private_key_secret_arn</a></td>
-<td>Secrets Manager ARN for server TLS private key. If null, generated with self-signed cert.</td>
+<td>Secrets Manager ARN for the server TLS private key. Custom TLS requires the matching certificate and CA secret ARNs.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -4051,7 +4106,7 @@
 </tr>
 <tr>
 <td><a name="input_trusted_ca_pem"></a> <a href="#input_trusted_ca_pem">trusted_ca_pem</a></td>
-<td>PEM of another Lore tier's CA that this server must trust as a client (remote mutable store, replication reads). Appended to the system CA bundle at container start. Null when every upstream is in this deployment.</td>
+<td>PEM bundle of dedicated Lore CAs for other tiers this server must trust. Any clientAuth certificate chaining to this bundle receives blanket port 41340 storage access, so do not use a shared enterprise CA. Combined with this tier's CA for mTLS and, when needed, with the system store for secure upstream calls.</td>
 <td><code>string</code></td>
 <td><code>null</code></td>
 <td style="text-align: center;">no</td>
@@ -4062,6 +4117,13 @@
 <td><code>number</code></td>
 <td><code>4194304</code></td>
 <td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_write_tier_dns_name"></a> <a href="#input_write_tier_dns_name">write_tier_dns_name</a></td>
+<td>Cloud Map DNS name (included in self-signed cert SAN)</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 </tbody>
 </table>
@@ -4107,6 +4169,22 @@
 <td>Auth and replication-listener environment variables handed to loreserver. For tests and debugging.</td>
 </tr>
 <tr>
+<td><a name="output_peer_ca_added_to_system_trust"></a> <a href="#output_peer_ca_added_to_system_trust">peer_ca_added_to_system_trust</a></td>
+<td>Whether peer CAs are appended to SSL_CERT_FILE for the remote mutable-store client. Replication-only CAs stay scoped to port 41340.</td>
+</tr>
+<tr>
+<td><a name="output_replication_client_allowed_uses"></a> <a href="#output_replication_client_allowed_uses">replication_client_allowed_uses</a></td>
+<td>Extended key usages on the generated replication-client certificate. Empty with custom TLS or no outgoing replication client; exposed for tests.</td>
+</tr>
+<tr>
+<td><a name="output_replication_client_certificate_secret_arn"></a> <a href="#output_replication_client_certificate_secret_arn">replication_client_certificate_secret_arn</a></td>
+<td>Secrets Manager ARN holding this tier's dedicated mTLS client certificate. Null when the tier has no outgoing replication client.</td>
+</tr>
+<tr>
+<td><a name="output_replication_client_private_key_secret_arn"></a> <a href="#output_replication_client_private_key_secret_arn">replication_client_private_key_secret_arn</a></td>
+<td>Secrets Manager ARN holding this tier's dedicated mTLS client private key. Null when the tier has no outgoing replication client.</td>
+</tr>
+<tr>
 <td><a name="output_service_name"></a> <a href="#output_service_name">service_name</a></td>
 <td>Name of the ECS service</td>
 </tr>
@@ -4124,7 +4202,15 @@
 </tr>
 <tr>
 <td><a name="output_tls_ca_cert_pem"></a> <a href="#output_tls_ca_cert_pem">tls_ca_cert_pem</a></td>
-<td>CA certificate PEM for client trust configuration. Null when using external certs.</td>
+<td>Generated CA certificate PEM for client trust configuration. Null when using external certificates.</td>
+</tr>
+<tr>
+<td><a name="output_tls_ca_secret_arn"></a> <a href="#output_tls_ca_secret_arn">tls_ca_secret_arn</a></td>
+<td>Secrets Manager ARN holding the CA certificate bundle used by this tier.</td>
+</tr>
+<tr>
+<td><a name="output_tls_material_revision"></a> <a href="#output_tls_material_revision">tls_material_revision</a></td>
+<td>Non-secret rollout token embedded in the ECS task definition. Generated TLS derives it from certificates; custom TLS uses tls_material_version.</td>
 </tr>
 <tr>
 <td><a name="output_topology_toml"></a> <a href="#output_topology_toml">topology_toml</a></td>
@@ -4154,7 +4240,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-11-05
+    2026-11-11
   </span>
 
     
@@ -4259,7 +4345,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../../../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
         <script src="../../../../../js/open_in_new_tab.js"></script>
       

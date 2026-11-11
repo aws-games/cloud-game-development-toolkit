@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../docs/media/logos/favicon.ico">
-      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1">
     
     
       
@@ -3494,22 +3494,59 @@ The cache sets Lore's mutable-store and lock-store DynamoDB endpoint URLs, so br
 and lock calls use private endpoint ENIs over VPC peering instead of the cache VPC's NAT. Private
 DNS stays off: the write tier keeps using its free same-Region DynamoDB gateway endpoint. Reads of
 cached content stay local. Choose the write region by where most commits and pushes happen.</p>
-<p>Inputs involved on the write tier: <code>replication_ingress_cidrs</code>, <code>replication_peers</code>,
-<code>dynamodb_endpoint_client_cidrs</code>, <code>dynamodb_endpoint_subnet_ids</code>, <code>trusted_ca_pem</code>,
-<code>vpc_peering_routes</code>. Pass <code>dynamodb_interface_endpoint_url</code> to the regional cache as
-<code>dynamodb_endpoint_url</code>. See <a href="examples/multi-region/">examples/multi-region</a>.</p>
+<p>Inputs involved on the write tier: <code>enable_internal_replication</code> (same-VPC edge pods),
+<code>replication_ingress_cidrs</code>, <code>replication_peers</code>, <code>dynamodb_endpoint_client_cidrs</code>,
+<code>dynamodb_endpoint_subnet_ids</code>, <code>trusted_ca_pem</code>, and <code>vpc_peering_routes</code>. Cross-region
+replication inputs enable the internal listener automatically. Pass
+<code>dynamodb_interface_endpoint_url</code> to the regional cache as <code>dynamodb_endpoint_url</code>. See
+<a href="examples/multi-region/">examples/multi-region</a>.</p>
 <p>The interface endpoint is optional for compatibility. Null <code>dynamodb_endpoint_client_cidrs</code>
 disables it, and a cache without <code>dynamodb_endpoint_url</code> uses DynamoDB's public regional endpoint.
 For an existing VPC, give one <code>dynamodb_endpoint_subnet_ids</code> value per Availability Zone and
 manage both peering directions yourself. To disable a live endpoint safely, first clear the cache
 URL and deploy the replacement task. Remove the endpoint CIDRs in a second apply.</p>
 <p><strong>The published multi-region example requires external JWT authentication on client port
-41337.</strong> Port 41340 is network-protected, not JWT-protected. JWT validation (<code>auth_mode</code>) applies
-to the client port only. The replication port checks neither JWTs nor client certificates (there
-is no mTLS), so anything that can reach it can read and write fragments. Its security-group
-rules are its only access control: set <code>replication_ingress_cidrs</code> to the regional cache's private
-subnet CIDRs (regional-cache output <code>private_subnet_cidrs</code>), not the whole peered VPC, and never
-to office or public ranges.</p>
+41337.</strong> JWT validation (<code>auth_mode</code>) applies to the client port only. Internal replication port
+41340 has no JWT layer because it uses mutual TLS instead. Every active 41340 listener requires a
+client certificate, and every client uses a <code>lores://</code> URL so it validates the server certificate.
+The module generates separate <code>serverAuth</code> and <code>clientAuth</code> identities for each tier. Each edge pod
+generates its own dedicated client CA and identity; the write tier trusts those CA outputs without
+sharing its private key with client-facing nodes. It combines its local CA with <code>trusted_ca_pem</code> so
+regional tiers and approved edge pods authenticate one another. A plan with explicit edge support,
+cross-VPC ingress, or an <code>OtherRegion</code> peer fails when the required trust bundle is absent.</p>
+<p>Security groups remain defense in depth. Set <code>replication_ingress_cidrs</code> to the regional cache's
+private subnet CIDRs (regional-cache output <code>private_subnet_cidrs</code>), not the whole peered VPC, and
+never to office or public ranges. Only UDP 41340 is opened; the unused internal gRPC/TCP listener
+stays disabled. By itself, a single-region root module neither starts port 41340 nor adds its
+same-tier rule unless <code>enable_internal_replication = true</code>. An edge module can add its own
+security-group reference, but without that root flag no process listens and replication fails
+closed. Add every edge pod's <code>replication_client_ca_certificate_pem</code> output to <code>trusted_ca_pem</code>.</p>
+<p>For custom TLS, provide all server certificate, server key and CA-chain secret ARNs. If this tier
+connects to replication peers, also provide a dedicated client certificate and key. The server
+certificate must carry <code>serverAuth</code> and SANs for every Cloud Map name peers use, plus
+<code>loreserver.internal</code> for IP-addressed peers. The client certificate must carry <code>clientAuth</code>.
+Certificate secrets should contain the leaf; CA inputs must contain the complete issuer chain and
+trust anchors Lore needs. Use CAs dedicated to Lore replication. Port 41340 grants blanket storage
+access to any certificate chaining to a configured CA, so do not trust a shared enterprise CA.
+Missing custom material fails Terraform validation rather than starting an unauthenticated listener.
+<code>ca_certificate_pem</code> is null for custom TLS, so pass the public CA PEM directly to edge pods and
+peer-tier trust inputs. Secrets encrypted with a customer-managed KMS key also need a scoped
+<code>kms:Decrypt</code> grant on the root <code>execution_role_arn</code>; the generated secrets use the Secrets Manager
+service key. Terraform-generated CA and leaf private keys remain in Terraform state. Store state in
+an encrypted, access-controlled backend, keep local state owner-only, and rotate the PKI after any
+state disclosure. Generated certificates become renewable 30 days before expiry and their
+certificate hash forces a new ECS task definition. When custom secret contents rotate under the
+same ARNs, change <code>tls_material_version</code> to force that rollout. CA changes alter peer trust; stage
+those rotations with an overlap plan rather than allowing both sides to update in an arbitrary
+order.</p>
+<p><strong>Upgrade an existing unauthenticated 41340 deployment in stages.</strong> With the new configuration
+loaded, use reviewed Terraform targets to provision client identities and replace regional caches
+or edge pods while the old write-tier listener still accepts connections. Inspect the target graph
+and make sure it does not include the write-tier ECS service. Deploy the mTLS write-tier listener
+only after every client presents a certificate. Edge userdata changes force EC2 replacement because
+cloud-init runs only once; each replaced edge loses its ephemeral NVMe cache and refills on demand.
+The root module's new <code>enable_internal_replication</code> and edge trust wiring are breaking inputs for
+existing edge deployments. Do not apply an unreviewed combined plan.</p>
 <p>Before applying any change to an existing VPC created by this module, read the
 <a href="modules/vpc/index.html#route-ownership">route ownership note</a>: the private route table manages
 its full route set, and a plan that removes a route you did not declare must not be applied.</p>
@@ -3537,7 +3574,7 @@ its full route set, and a plan that removes a route you did not declare must not
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    2026-11-05
+    2026-11-11
   </span>
 
     
@@ -3642,7 +3679,7 @@ its full route set, and a plan that removes a route you did not declare must not
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.annotate", "content.code.copy", "content.tabs.link", "search.suggest", "search.highlight", "search.share", "navigation.sections", "navigation.indexes", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.collapse", "navigation.instant", "navigation.footer", "toc.follow", "toc.sticky", {"emoji_index": "twemoji"}], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
      
-      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
         <script src="../../../js/open_in_new_tab.js"></script>
       
