@@ -1,0 +1,128 @@
+{
+    "schemaVersion": "2.2",
+    "description": "This is a custom Command document for executing Ansible playbooks against a machine.",
+    "parameters": {
+        "SourceInfo": {
+            "description": "(Optional) Specify the information required to access the resource from the specified source type. If source type is GitHub, then you can specify any of the following: 'owner', 'repository', 'path', 'getOptions', 'tokenInfo'. Example GitHub parameters: {\"owner\":\"awslabs\",\"repository\":\"amazon-ssm\",\"path\":\"Compliance/InSpec/PortCheck\",\"getOptions\":\"branch:master\"}. If source type is S3, then you can specify 'path'. Important: If you specify S3, then the IAM instance profile on your managed instances must be configured with read access to Amazon S3.",
+            "type": "StringMap",
+            "displayType": "textarea",
+            "default": {}
+        },
+        "InstallDependencies": {
+            "type": "String",
+            "description": "(Required) If set to True, Systems Manager installs Ansible and its dependencies, including Python, from the PyPI repo. If set to False, then verify that Ansible and its dependencies are installed on the target instances. If they aren’t, the SSM document fails to run.",
+            "allowedValues": [
+                "True",
+                "False"
+            ],
+            "default": "True"
+        },
+        "PlaybookFile": {
+            "type": "String",
+            "description": "(Optional) The Playbook file to run (including relative path). If the main Playbook file is located in the ./automation directory, then specify automation/playbook.yml.",
+            "default": "hello-world-playbook.yml",
+            "allowedPattern": "[(a-z_A-Z0-9\\-\\.)\/]+(.yml|.yaml)$"
+        },
+        "ExtraVariables": {
+            "type": "String",
+            "description": "(Optional) Additional variables to pass to Ansible at runtime. Enter key/value pairs separated by a space. For example: color=red flavor=cherry",
+            "default": "SSM=True",
+            "displayType": "textarea",
+            "allowedPattern": "^$|^\\w+\\=(([^\\s|:();&]+)|('[^|:();&]+'))(\\s+\\w+\\=(([^\\s|:();&]+)|('[^|:();&]+')))*$"
+        },
+        "Check": {
+            "type": "String",
+            "description": "(Optional) Use this parameter to run a check of the Ansible execution. The system doesn’t make any changes to your systems. Instead, any module that supports check mode reports the changes it would make rather than making them. Modules that don’t support check mode take no action and don’t report changes that would be made.",
+            "allowedValues": [
+                "True",
+                "False"
+            ],
+            "default": "False"
+        },
+        "Verbose": {
+            "type": "String",
+            "description": "(Optional) Set the verbosity level for logging Playbook executions. Specify -v for low verbosity, -vv or –vvv for medium verbosity, and -vvvv for debug level.",
+            "allowedValues": [
+                "-v",
+                "-vv",
+                "-vvv",
+                "-vvvv"
+            ],
+            "default": "-v"
+        },
+        "TimeoutSeconds": {
+            "type": "String",
+            "description": "(Optional) The time in seconds for a command to be completed before it is considered to have failed.",
+            "default": "3600"
+        }
+    },
+    "mainSteps": [
+        {
+            "action": "aws:downloadContent",
+            "name": "downloadContent",
+            "inputs": {
+                "SourceType": "S3",
+                "SourceInfo": "{{ SourceInfo }}"
+            }
+        },
+        {
+            "action": "aws:runShellScript",
+            "name": "runShellScript",
+            "inputs": {
+                "timeoutSeconds": "{{ TimeoutSeconds }}",
+                "runCommand": [
+                    "#!/bin/bash",
+                    "if  [[ \"{{InstallDependencies}}\" == True ]] ; then",
+                    "   echo \"Installing and or updating required tools: Ansible, wget unzip ....\" >&2",
+                    "   if [ -f  \"/etc/system-release\" ] ; then",
+                    "     if cat /etc/system-release|grep -i 'Amazon Linux release 2' ; then ",
+                    "       sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
+                    "       sudo yum install -y ansible",
+                    "       sudo yum -y install unzip",
+                    "     elif cat /etc/system-release|grep -i 'Amazon Linux AMI' ; then ",
+                    "       sudo pip install ansible --upgrade",
+                    "       sudo yum -y install unzip",
+                    "     elif cat /etc/system-release|grep -i 'Red Hat Enterprise Linux' ; then ",
+                    "       sudo yum -y install python3-pip",
+                    "       sudo pip3 install ansible",
+                    "       sudo yum -y install unzip",
+                    "     else",
+                    "       echo \"There was a problem installing or updating the required tools for the document. You can review the log files to help you correct the problem.\" >&2",
+                    "       exit 1",
+                    "     fi",
+                    "   elif cat /etc/issue|grep -i Ubuntu ; then ",
+                    "     UBUNTU_VERSION=$(cat /etc/issue | grep -i ubuntu | awk '{print $2}' |  awk -F'.' '{print $1}')",
+                    "     sudo apt-get update",
+                    "     if [ $(($UBUNTU_VERSION > 18)) == 1 ]; then",
+                    "       sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-pip -y",
+                    "       sudo apt-get install ansible -y --upgrade",
+                    "     else",
+                    "       sudo DEBIAN_FRONTEND=noninteractive apt-get install python-pip -y",
+                    "       sudo apt-get install ansible -y --upgrade",
+                    "     fi",
+                    "     sudo DEBIAN_FRONTEND=noninteractive apt-get install unzip -y",
+                    "   else",
+                    "     echo \"There was a problem installing or updating the required tools for the document. You can review the log files to help you correct the problem.\" >&2",
+                    "     exit 1",
+                    "   fi",
+                    "fi",
+                    "echo \"Running Ansible in `pwd`\"",
+                    "#this section locates files and unzips them",
+                    "for zip in $(find -iname '*.zip'); do",
+                    "  unzip -o $zip",
+                    "done",
+                    "PlaybookFile=\"{{PlaybookFile}}\"",
+                    "if [ ! -f  \"${PlaybookFile}\" ] ; then",
+                    "   echo \"The specified Playbook file doesn't exist in the downloaded bundle. Please review the relative path and file name.\" >&2",
+                    "   exit 2",
+                    "fi",
+                    "if  [[ \"{{Check}}\" == True ]] ; then",
+                    "   ansible-playbook -i \"localhost,\" --check -c local -e \"{{ExtraVariables}}\" \"{{Verbose}}\" \"${PlaybookFile}\"",
+                    "else",
+                    "   ansible-playbook -i \"localhost,\" -c local -e \"{{ExtraVariables}}\" \"{{Verbose}}\" \"${PlaybookFile}\"",
+                    "fi"
+                ]
+            }
+        }
+    ]
+}
