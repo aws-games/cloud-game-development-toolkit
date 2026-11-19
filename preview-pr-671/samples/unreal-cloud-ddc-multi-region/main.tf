@@ -230,9 +230,9 @@ module "unreal_cloud_ddc_infra_region_1" {
   region = var.regions[0]
 
   eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc_region_1.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = ["${chomp(data.http.public_ip.response_body)}/32"]
+  eks_cluster_public_endpoint_access_cidr = var.eks_public_access ? local.eks_public_access_cidrs : null
   eks_cluster_private_access              = true
-  eks_cluster_public_access               = true
+  eks_cluster_public_access               = var.eks_public_access
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id]
 
   is_primary_region         = true
@@ -248,7 +248,8 @@ module "unreal_cloud_ddc_infra_region_1" {
   scylla_db_storage    = 100
 
   monitoring_application_load_balancer_subnets = module.unreal_cloud_ddc_vpc_region_1.public_subnet_ids
-  alb_certificate_arn                          = aws_acm_certificate.scylla_monitoring_region_1.arn
+  # Use the validation's ARN so the HTTPS listener waits for the cert to be ISSUED.
+  alb_certificate_arn = aws_acm_certificate_validation.scylla_monitoring_region_1.certificate_arn
 
   nvme_managed_node_instance_type = local.nvme_managed_node_instance_type
   nvme_managed_node_desired_size  = 2
@@ -286,6 +287,8 @@ module "unreal_cloud_ddc_intra_cluster_region_1" {
   ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_1
   s3_bucket_id                        = module.unreal_cloud_ddc_infra_region_1.s3_bucket_id
 
+  # EKS Pod Identity (default) or IRSA for the EBS CSI driver. See README.
+  ebs_csi_use_pod_identity = var.ebs_csi_use_pod_identity
 
   unreal_cloud_ddc_helm_base_infra_chart  = "${path.module}/assets/unreal_cloud_ddc_multi_region_base.yaml"
   unreal_cloud_ddc_helm_replication_chart = "${path.module}/assets/unreal_cloud_ddc_multi_region.yaml"
@@ -319,9 +322,9 @@ module "unreal_cloud_ddc_infra_region_2" {
   region = var.regions[1]
 
   eks_node_group_subnets                  = module.unreal_cloud_ddc_vpc_region_2.private_subnet_ids
-  eks_cluster_public_endpoint_access_cidr = ["${chomp(data.http.public_ip.response_body)}/32"]
+  eks_cluster_public_endpoint_access_cidr = var.eks_public_access ? local.eks_public_access_cidrs : null
   eks_cluster_private_access              = true
-  eks_cluster_public_access               = true
+  eks_cluster_public_access               = var.eks_public_access
   existing_security_groups                = [aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id]
 
   is_primary_region                = false
@@ -415,6 +418,9 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
   cluster_oidc_provider_arn           = module.unreal_cloud_ddc_infra_region_2.oidc_provider_arn
   ghcr_credentials_secret_manager_arn = var.github_credential_arn_region_2
   s3_bucket_id                        = module.unreal_cloud_ddc_infra_region_2.s3_bucket_id
+
+  # EKS Pod Identity (default) or IRSA for the EBS CSI driver. See README.
+  ebs_csi_use_pod_identity = var.ebs_csi_use_pod_identity
 
   unreal_cloud_ddc_helm_base_infra_chart  = "${path.module}/assets/unreal_cloud_ddc_multi_region_base.yaml"
   unreal_cloud_ddc_helm_replication_chart = "${path.module}/assets/unreal_cloud_ddc_multi_region.yaml"

@@ -56,8 +56,8 @@ locals {
   scylla_architecture  = "x86_64"
   scylla_instance_type = "i4i.xlarge"
   # Backward compatible flat list
-  scylla_ips           = concat(module.unreal_cloud_ddc_infra_region_1.scylla_ips, module.unreal_cloud_ddc_infra_region_2.scylla_ips)
-  
+  scylla_ips = concat(module.unreal_cloud_ddc_infra_region_1.scylla_ips, module.unreal_cloud_ddc_infra_region_2.scylla_ips)
+
   # New map structure for monitoring
   scylla_ips_by_region = {
     (var.regions[0]) = module.unreal_cloud_ddc_infra_region_1.scylla_ips
@@ -68,4 +68,16 @@ locals {
     Environment = "cgd"
     Application = "unreal-cloud-ddc"
   }
+}
+
+locals {
+  eks_endpoint_host_region_1   = replace(module.unreal_cloud_ddc_infra_region_1.cluster_endpoint, "https://", "")
+  eks_endpoint_host_region_2   = replace(module.unreal_cloud_ddc_infra_region_2.cluster_endpoint, "https://", "")
+  eks_provider_host_region_1   = var.eks_api_local_port_region_1 == null ? module.unreal_cloud_ddc_infra_region_1.cluster_endpoint : "https://127.0.0.1:${var.eks_api_local_port_region_1}"
+  eks_provider_host_region_2   = var.eks_api_local_port_region_2 == null ? module.unreal_cloud_ddc_infra_region_2.cluster_endpoint : "https://127.0.0.1:${var.eks_api_local_port_region_2}"
+  eks_tls_server_name_region_1 = var.eks_api_local_port_region_1 == null ? null : local.eks_endpoint_host_region_1
+  eks_tls_server_name_region_2 = var.eks_api_local_port_region_2 == null ? null : local.eks_endpoint_host_region_2
+
+  # Explicit CIDRs win; otherwise fall back to the auto-detected /32.
+  eks_public_access_cidrs = length(var.eks_public_access_cidrs) > 0 ? var.eks_public_access_cidrs : ["${chomp(data.http.public_ip.response_body)}/32"]
 }

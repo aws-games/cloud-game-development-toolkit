@@ -3359,6 +3359,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reaching-the-eks-api-without-a-public-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reaching the EKS API Without a Public Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#expected-deployment-timeline" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3646,6 +3668,44 @@
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply
 </code></pre></div>
 <p>The deployment can take close to 30 minutes. Creating the EKS Node Groups and EKS Cluster take around 20 minutes to fully deploy.</p>
+<h3 id="ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity">EBS CSI driver identity mode (IRSA vs EKS Pod Identity)<a class="headerlink" href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" title="Permanent link">&para;</a></h3>
+<p>The EBS CSI driver in each region needs AWS credentials to manage EBS volumes. The root <code>ebs_csi_use_pod_identity</code> variable (default <code>true</code>) is passed to both intra-cluster modules:</p>
+<ul>
+<li><strong>EKS Pod Identity (recommended, the default).</strong> Uses <code>eks-auth:AssumeRoleForPodIdentity</code> and installs the <code>eks-pod-identity-agent</code> add-on automatically. It also works in accounts whose AWS Organization SCP/RCP denies <code>sts:AssumeRoleWithWebIdentity</code>. Under IRSA that guardrail leaves the <code>ebs-csi-controller</code> pods in <code>CrashLoopBackOff</code> with <code>AccessDenied</code>, and the add-on never becomes <code>ACTIVE</code>, so <code>terraform apply</code> times out.</li>
+<li><strong>IRSA (legacy).</strong> Set <code>ebs_csi_use_pod_identity = false</code> for the classic IAM Roles for Service Accounts path, for example on Fargate or Windows node groups.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars, override only if you need the legacy IRSA path</span>
+<span class="na">ebs_csi_use_pod_identity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+</code></pre></div>
+<h3 id="reaching-the-eks-api-without-a-public-endpoint">Reaching the EKS API Without a Public Endpoint<a class="headerlink" href="#reaching-the-eks-api-without-a-public-endpoint" title="Permanent link">&para;</a></h3>
+<p>By default each cluster's public API endpoint is open to your auto-detected public IP (<code>/32</code>). If your egress IP is not stable (NAT pool, VPN, CI), either set <code>eks_public_access_cidrs</code> to your egress CIDR(s), or close the public endpoints and reach each cluster's private endpoint through an SSM port-forward tunnel. Each region needs its own tunnel and its own local port.</p>
+<ol>
+<li>Deploy the VPCs and infra first so the clusters and their in-VPC SSM nodes exist:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc_region_1<span class="w"> </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc_region_2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra_region_1<span class="w"> </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra_region_2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span>
+</code></pre></div>
+<ol>
+<li>Start one tunnel per region, each in its own shell, and leave both running for the whole apply (requires <code>awscli</code> v2, <code>session-manager-plugin</code> and <code>jq</code>):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>us-west-2<span class="w"> </span>scripts/eks-api-tunnel.sh<span class="w"> </span><span class="m">9443</span>
+<span class="nv">AWS_REGION</span><span class="o">=</span>us-east-2<span class="w"> </span>scripts/eks-api-tunnel.sh<span class="w"> </span><span class="m">9444</span>
+</code></pre></div>
+<p>Use your own <code>regions</code> values. If a region has more than one EKS cluster or SSM instance in the cluster VPC, pass the cluster name as the second argument or set <code>EKS_CLUSTER_NAME</code> / <code>SSM_INSTANCE_ID</code>.</p>
+<ol>
+<li>Point the Kubernetes and Helm providers at the tunnels and run the full apply:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars</span>
+<span class="na">eks_public_access</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+<span class="na">eks_api_local_port_region_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9443</span>
+<span class="na">eks_api_local_port_region_2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9444</span>
+
+<span class="c1"># Do not open the DDC NLB / Grafana ALB to your IP. Test DDC from inside the cluster instead.</span>
+<span class="na">allow_my_ip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+</code></pre></div>
+<p>TLS is still validated against the real cluster hostname, so there is no <code>insecure</code> setting and no <code>0.0.0.0/0</code> exposure. The tunnels are needed for every Terraform command that talks to the Kubernetes API, including <code>terraform destroy</code>. Leave both port variables unset (<code>null</code>) to connect to the public endpoints directly.</p>
 <h3 id="expected-deployment-timeline">Expected Deployment Timeline<a class="headerlink" href="#expected-deployment-timeline" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Infrastructure (EKS, VPC, ScyllaDB)</strong>: ~20-25 minutes</li>
