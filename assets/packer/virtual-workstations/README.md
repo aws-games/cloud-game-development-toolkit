@@ -181,6 +181,94 @@ module "vdi" {
 }
 ```
 
+## Layering another build on top of these AMIs
+
+These templates produce **final, distributable AMIs**: the last provisioners run
+Sysprep to generalize the image. If you want to build *on top* of one — adding a
+licensed engine install, studio tooling, or a game project in a second Packer build
+that sets `source_ami` to this template's output — set `generalize = false`:
+
+```bash
+packer build -var "generalize=false" windows-server-2025-ue-gamedev.pkr.hcl
+```
+
+Your downstream build is then responsible for generalizing the final image.
+
+Layering needs three things. The template handles the first two for you; the third is
+yours:
+
+| # | Where | What | Who |
+|---|---|---|---|
+| 1 | this build | do not Sysprep | `-var "generalize=false"` |
+| 2 | this build, **last** provisioner | `ec2launch reset` | done by the template when `generalize = false` |
+| 3 | **downstream** build, **first** provisioner | `windows-restart` | **you** |
+
+Without 2 the downstream build hangs forever waiting for a password. Without 3 it is
+worse: the downstream build **appears to succeed** while its provisioners do nothing.
+
+### 1 + 2 — this build
+
+Nothing to write. Passing `generalize = false` swaps the Sysprep tail for an
+`ec2launch reset` provisioner, which must be — and is — last, because an inline reset
+shuts the agent down immediately and anything after it would be silently skipped.
+
+**Why the reset is required.** `setAdminAccount` — the task that generates the
+Administrator password and encrypts it to the launch keypair — has frequency
+*once*. This build's own first boot already ran it and recorded success in
+`C:\ProgramData\Amazon\EC2Launch\state\state.json`, with a marker at `.run-once`.
+Both are captured into the AMI. EC2Launch on a downstream instance reads that state
+and skips the task:
+
+```text
+Warning: Skipping task preReady-setAdminAccount-0
+```
+
+so `ec2:GetPasswordData` returns an empty string forever and Packer hangs at
+`Waiting for auto-generated password` until it times out. Note this state comes from
+the instance simply *booting* — the stock AWS Windows AMI is already sysprepped — so
+skipping Sysprep here does not prevent it, and it is not something this template
+causes. `ec2launch reset` deletes that state, and the downstream instance then
+behaves like a genuine first boot.
+
+**Why `generalize = false` is still needed alongside it.** Sysprep's specialize phase
+re-scrambles the Administrator password (via
+`EC2Launch.exe internal randomize-password`) without encrypting it to a keypair, and
+it removes the WinRM listener the downstream build connects through — undoing the
+reset. This is deliberate on AWS's part: it is documented as a security measure to
+stop an instance being reachable after Sysprep if `setAdminAccount` was not
+configured. It is not something to work around, which is why the reset has to happen
+*instead of* Sysprep rather than after it.
+
+### 3 — the downstream build
+
+```hcl
+build {
+  sources = ["source.amazon-ebs.my-layer"]
+
+  # MUST be first. The intermediate AMI was captured with the EC2Launch agent shut
+  # down by `ec2launch reset`, so this instance has never completed a normal boot
+  # cycle and the provisioner environment is not fully initialized. Without this
+  # reboot, provisioners silently produce no output and can lose their
+  # environment_vars mid-run -- and Packer still reports the build as SUCCESSFUL.
+  provisioner "windows-restart" {
+    restart_timeout = "20m"
+    check_registry  = true
+  }
+
+  # ... your provisioners ...
+}
+```
+
+This one is easy to miss because the failure mode is a *passing* build: Packer reports
+success and publishes an AMI that is missing everything the skipped provisioners were
+supposed to install.
+
+### Handling the intermediate image
+
+An un-generalized image retains the build instance's SID and hostname, so treat it as
+a private intermediate artifact — do not publish or share it, and delete it once the
+downstream AMI is built.
+
 ## Troubleshooting
 
 **"Script not found" errors:**
