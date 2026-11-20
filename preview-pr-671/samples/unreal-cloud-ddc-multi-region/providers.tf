@@ -38,33 +38,26 @@ provider "awscc" {
   region = var.regions[0]
 }
 
-provider "awscc" {
-  alias  = "region-2"
-  region = var.regions[1]
-}
-
 provider "kubernetes" {
   alias                  = "region-1"
-  host                   = local.eks_provider_host_region_1
-  tls_server_name        = local.eks_tls_server_name_region_1
+  host                   = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
   cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_1.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
+    args        = ["eks", "get-token", "--region", var.regions[0], "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
   }
 }
 
 provider "helm" {
   alias = "region-1"
   kubernetes {
-    host                   = local.eks_provider_host_region_1
-    tls_server_name        = local.eks_tls_server_name_region_1
+    host                   = module.unreal_cloud_ddc_infra_region_1.cluster_endpoint
     cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_1.cluster_certificate_authority_data)
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
+      args        = ["eks", "get-token", "--region", var.regions[0], "--cluster-name", module.unreal_cloud_ddc_infra_region_1.cluster_name, "--output", "json"]
     }
   }
   registry {
@@ -76,26 +69,24 @@ provider "helm" {
 
 provider "kubernetes" {
   alias                  = "region-2"
-  host                   = local.eks_provider_host_region_2
-  tls_server_name        = local.eks_tls_server_name_region_2
+  host                   = module.unreal_cloud_ddc_infra_region_2.cluster_endpoint
   cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_2.cluster_certificate_authority_data)
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
+    args        = ["eks", "get-token", "--region", var.regions[1], "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
   }
 }
 
 provider "helm" {
   alias = "region-2"
   kubernetes {
-    host                   = local.eks_provider_host_region_2
-    tls_server_name        = local.eks_tls_server_name_region_2
+    host                   = module.unreal_cloud_ddc_infra_region_2.cluster_endpoint
     cluster_ca_certificate = base64decode(module.unreal_cloud_ddc_infra_region_2.cluster_certificate_authority_data)
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
+      args        = ["eks", "get-token", "--region", var.regions[1], "--cluster-name", module.unreal_cloud_ddc_infra_region_2.cluster_name, "--output", "json"]
     }
   }
   registry {
@@ -113,4 +104,10 @@ provider "aws" {
 provider "aws" {
   alias  = "region-2"
   region = var.regions[1]
+}
+
+# Default provider for root resources that set no provider (Route53, the SSM
+# document and association, caller identity). Pinned to region 1.
+provider "aws" {
+  region = var.regions[0]
 }

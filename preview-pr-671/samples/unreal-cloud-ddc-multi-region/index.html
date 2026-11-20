@@ -15,6 +15,10 @@
         <link rel="canonical" href="https://aws-games.github.io/cloud-game-development-toolkit/preview-pr-671/samples/unreal-cloud-ddc-multi-region/index.html">
       
       
+        <link rel="prev" href="../unreal-cloud-ddc-single-region/index.html">
+      
+      
+        <link rel="next" href="../../docs/changelog.html">
       
       
         
@@ -340,10 +344,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../index.html" class="md-tabs__link">
           
   
@@ -3009,6 +3015,8 @@
       
   
   
+    
+  
   
   
     
@@ -3026,20 +3034,25 @@
       
         
       
+        
+      
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <div class="md-nav__link md-nav__container">
@@ -3061,13 +3074,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3187,6 +3200,438 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Multi Region
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="index.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Multi Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Replication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#names-and-dns-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names and DNS records
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-credentials-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub credentials secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-set-your-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Set your variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-make-sure-terraform-can-reach-the-eks-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Make sure Terraform can reach the EKS API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using the deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoints-and-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints and outputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calling-the-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling the API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scylladb-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScyllaDB monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebs-csi-driver-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EBS CSI driver identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scylladb-datacenter-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScyllaDB datacenter names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#connect-kubectl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connect kubectl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Providers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3336,33 +3781,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#predeployment-set-up-github-content-repository-credentials" class="md-nav__link">
+  <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Predeployment - Set Up Github Content Repository Credentials
+        Architecture
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deployment">
+    <nav class="md-nav" aria-label="Architecture">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#replication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Replication
       
     </span>
   </a>
@@ -3370,43 +3804,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#1-set-your-variables" class="md-nav__link">
+  <a href="#network-access" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Set your variables
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-deploy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Deploy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-verify" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Verify
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-cross-region-replication-is-wired" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How cross-region replication is wired
+        Network access
       
     </span>
   </a>
@@ -3424,44 +3825,28 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        EBS CSI driver identity mode (IRSA vs EKS Pod Identity)
+        Prerequisites
       
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#reaching-the-eks-api-without-a-public-endpoint" class="md-nav__link">
+  <a href="#github-credentials-secret" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reaching the EKS API Without a Public Endpoint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#expected-deployment-timeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Expected Deployment Timeline
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scylladb-datacenter-naming-important-note" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ScyllaDB Datacenter Naming Important Note
+        GitHub credentials secret
       
     </span>
   </a>
@@ -3474,13 +3859,163 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#postdeployment" class="md-nav__link">
+  <a href="#deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Postdeployment
+        Deployment
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-set-your-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Set your variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-make-sure-terraform-can-reach-the-eks-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Make sure Terraform can reach the EKS API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-the-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using the deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using the deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoints-and-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints and outputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calling-the-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling the API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scylladb-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScyllaDB monitoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ebs-csi-driver-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EBS CSI driver identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scylladb-datacenter-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScyllaDB datacenter names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3497,10 +4032,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#quick-health-checks" class="md-nav__link">
+  <a href="#connect-kubectl" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Health Checks
+        Connect kubectl
       
     </span>
   </a>
@@ -3508,43 +4043,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#common-issues-and-solutions" class="md-nav__link">
+  <a href="#common-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Issues and Solutions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#monitoring-during-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Monitoring During Deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#performance-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Testing
+        Common issues
       
     </span>
   </a>
@@ -3654,23 +4156,187 @@
 
 
 <h1 id="unreal-cloud-ddc-multi-region">Unreal Cloud DDC Multi Region<a class="headerlink" href="#unreal-cloud-ddc-multi-region" title="Permanent link">&para;</a></h1>
-<p>The Unreal Cloud DDC Multi Region is a comprehensive solution that leverages several AWS services to create a robust and efficient data caching system. It uses a well-designed Virtual Private Cloud (VPC) to ensure network isolation and security. The solution employs an Amazon Elastic Kubernetes Service (EKS) Cluster with Node Groups to manage and orchestrate containerized applications.</p>
-<p>At the heart of the system is an instance of ScyllaDB, a high-performance NoSQL database, running on specially optimized Amazon EC2 instances. The Unreal Cloud Derived Data Cache Container is managed by Helm, a package manager for Kubernetes, and uses Amazon S3 for durable storage.</p>
-<h3 id="predeployment-set-up-github-content-repository-credentials">Predeployment - Set Up Github Content Repository Credentials<a class="headerlink" href="#predeployment-set-up-github-content-repository-credentials" title="Permanent link">&para;</a></h3>
-<p>The <a href="../modules/unreal/unreal-cloud-ddc-intra-cluster">Unreal Cloud DDC Inter Cluster module</a> utilizes a pull through cache to access the <a href="https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc">Unreal Cloud DDC image</a>. This requires a secret in <a href="https://aws.amazon.com/secrets-manager/">Secrets Manager</a> in each region. The secret needs to be prefixed with <code>ecr-pullthroughcache/</code>. Additionally, the secret is required to be in the following format:
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="s2">"GITHUB-USER-NAME-PLACEHOLDER"</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">"accessToken"</span><span class="p">:</span><span class="s2">"GITHUB-ACCESS-TOKEN-PLACEHOLDER"</span>
-<span class="p">}</span>
-</code></pre></div></p>
-<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<p>This sample deploys <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/using-derived-data-cache-in-unreal-engine">Unreal Cloud DDC</a> (Derived Data Cache) to two AWS Regions. Each Region has its own DDC endpoint for nearby clients, and the two Regions replicate cache data to each other.</p>
+<p>It uses three modules from this repository:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Deployed</th>
+<th>What it creates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./vpc"><code>vpc</code></a> (sample-local)</td>
+<td>once per Region</td>
+<td>VPC, public and private subnets, NAT gateway, S3 gateway endpoint</td>
+</tr>
+<tr>
+<td><a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-infra/index.html"><code>unreal-cloud-ddc-infra</code></a></td>
+<td>once per Region</td>
+<td>EKS cluster and node groups, ScyllaDB nodes, S3 bucket. Region 1 also gets the ScyllaDB monitoring stack and its ALB.</td>
+</tr>
+<tr>
+<td><a href="../../modules/unreal/unreal-cloud-ddc/unreal-cloud-ddc-intra-cluster/index.html"><code>unreal-cloud-ddc-intra-cluster</code></a></td>
+<td>once per Region</td>
+<td>EKS add-ons, AWS Load Balancer Controller, ECR pull-through cache, and the Unreal Cloud DDC Helm release</td>
+</tr>
+</tbody>
+</table>
+<p>The sample itself adds the cross-Region pieces: VPC peering, security group rules, Route53 records, ACM certificates, a shared bearer token, and an SSM document that sets the ScyllaDB keyspace replication.</p>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>                 clients
+                    |
+        &lt;name_prefix&gt;.&lt;zone&gt;  (Route53 latency record)
+           /                         \
+  Region 1 (regions[0])          Region 2 (regions[1])
+  DDC NLB  :443 / :8443 (TLS)    DDC NLB  :443 / :8443 (TLS)
+  EKS: DDC pods + worker         EKS: DDC pods + worker
+  ScyllaDB x3 (seed)  &lt;--peering--&gt;  ScyllaDB x3
+  S3 bucket                      S3 bucket
+  Grafana ALB (monitoring)
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Per Region</th>
+<th>Default size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EKS NVMe node group (DDC pods)</td>
+<td>2 nodes</td>
+<td><code>i3en.xlarge</code></td>
+</tr>
+<tr>
+<td>EKS worker node group (replication worker)</td>
+<td>1 node</td>
+<td><code>c6i.large</code></td>
+</tr>
+<tr>
+<td>EKS system node group</td>
+<td>1 node</td>
+<td><code>m7i.large</code></td>
+</tr>
+<tr>
+<td>ScyllaDB nodes</td>
+<td>3</td>
+<td><code>i4i.xlarge</code>, AMI <code>ScyllaDB 2026.3.1</code></td>
+</tr>
+<tr>
+<td>ScyllaDB monitoring</td>
+<td>Region 1 only</td>
+<td>Prometheus, Alertmanager, Grafana</td>
+</tr>
+</tbody>
+</table>
+<h3 id="replication">Replication<a class="headerlink" href="#replication" title="Permanent link">&para;</a></h3>
+<p>Each Region's DDC worker replicates from the other Region's regional endpoint. The endpoint names are built from variables, so they are known at plan time. Both Regions install in a single <code>terraform apply</code>, with replication already on.</p>
+<div class="highlight"><pre><span></span><code>region 1 worker -&gt; https://&lt;name_prefix&gt;-&lt;region 2&gt;.&lt;zone&gt; -&gt; Route53 alias -&gt; region 2 DDC NLB
+region 2 worker -&gt; https://&lt;name_prefix&gt;-&lt;region 1&gt;.&lt;zone&gt; -&gt; Route53 alias -&gt; region 1 DDC NLB
+</code></pre></div>
+<p>A worker may log connection errors for the first few minutes, until the other Region's NLB and DNS record exist.</p>
+<p>ScyllaDB runs as one cluster with one datacenter per Region, joined over VPC peering. After both Regions are up, an SSM document on the region 1 seed node sets the replication factor of each Region's local keyspace.</p>
+<h3 id="network-access">Network access<a class="headerlink" href="#network-access" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Allowed from</th>
+<th>Ports</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clients to DDC NLBs and Grafana ALB</td>
+<td><code>allowed_client_cidrs</code>, plus your detected IP when <code>allow_my_ip = true</code></td>
+<td>443, 8443</td>
+</tr>
+<tr>
+<td>Worker to the other Region's DDC NLB</td>
+<td>the other Region's NAT gateway IP (<code>/32</code>)</td>
+<td>443, 8443</td>
+</tr>
+<tr>
+<td>ScyllaDB between VPCs</td>
+<td>the other VPC's CIDR</td>
+<td>7000, 7001, 9042, 9142, 19042, 19142</td>
+</tr>
+<tr>
+<td>Region 1 monitoring to region 2 ScyllaDB</td>
+<td>region 1 VPC CIDR</td>
+<td>9100, 9180</td>
+</tr>
+<tr>
+<td>Terraform to EKS API</td>
+<td><code>eks_public_access_cidrs</code> (default: your detected IP)</td>
+<td>443</td>
+</tr>
+</tbody>
+</table>
+<p>All DDC traffic uses TLS. Each NLB terminates TLS with an ACM certificate for <code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code> and <code>&lt;name_prefix&gt;.&lt;zone&gt;</code>. Port 443 serves HTTP/1.1 and port 8443 serves HTTP/2. There is no plain-HTTP listener.</p>
+<h3 id="names-and-dns-records">Names and DNS records<a class="headerlink" href="#names-and-dns-records" title="Permanent link">&para;</a></h3>
+<p><code>name_prefix</code> (default <code>cgd-ddc-mr</code>, at most 11 characters) prefixes every name that must be unique per account and Region, or per hosted zone. This lets the sample run next to the single Region sample in the same account.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DDC client endpoint (latency-routed to the closer Region)</td>
+<td><code>&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
+</tr>
+<tr>
+<td>DDC regional endpoint, also the replication target</td>
+<td><code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code></td>
+</tr>
+<tr>
+<td>ScyllaDB monitoring (Grafana)</td>
+<td><code>monitoring.&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
+</tr>
+<tr>
+<td>DDC Network Load Balancer, per Region</td>
+<td><code>&lt;name_prefix&gt;-unreal-cloud-ddc</code></td>
+</tr>
+<tr>
+<td>Monitoring ALB and target group</td>
+<td><code>&lt;name_prefix&gt;-monitoring-alb</code>, <code>&lt;name_prefix&gt;-scylla-monitoring-tg</code></td>
+</tr>
+<tr>
+<td>EKS clusters</td>
+<td><code>cgd-unreal-cloud-ddc-cluster-&lt;region&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>&lt;zone&gt;</code> is <code>route53_public_hosted_zone_name</code>.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Terraform <code>&gt;= 1.10.3</code> and AWS CLI v2, with credentials for the target account</li>
-<li>A Route53 <strong>public</strong> hosted zone in the account, for the DDC and monitoring DNS records</li>
-<li>One GitHub credentials secret per region, as described in <a href="#predeployment---set-up-github-content-repository-credentials">Predeployment</a></li>
-<li>For the private-endpoint path only: <code>session-manager-plugin</code> and <code>jq</code></li>
+<li>Terraform <code>&gt;= 1.10.3</code>, AWS CLI v2, <code>kubectl</code>, and <code>curl</code></li>
+<li>AWS credentials for the target account that stay valid for the whole apply (about 30 minutes)</li>
+<li>A Route53 <strong>public</strong> hosted zone in the account</li>
+<li>A GitHub account with access to the <a href="https://github.com/orgs/EpicGames/packages/container/package/unreal-cloud-ddc">Unreal Cloud DDC image</a>. See <a href="https://www.unrealengine.com/en-US/ue-on-github">Epic's instructions</a> for linking your Epic and GitHub accounts.</li>
+<li>One Secrets Manager secret <strong>in each Region</strong> with your GitHub credentials, as described below</li>
 </ul>
+<h3 id="github-credentials-secret">GitHub credentials secret<a class="headerlink" href="#github-credentials-secret" title="Permanent link">&para;</a></h3>
+<p>The intra-cluster module pulls the DDC image through an ECR pull-through cache, which reads GitHub credentials from Secrets Manager. Create one secret in each Region. The name must start with <code>ecr-pullthroughcache/</code>, and the value must use this format:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GITHUB-USER-NAME-PLACEHOLDER"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"accessToken"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GITHUB-ACCESS-TOKEN-PLACEHOLDER"</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span>r<span class="w"> </span><span class="k">in</span><span class="w"> </span>us-west-2<span class="w"> </span>us-east-2<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span>--region<span class="w"> </span><span class="s2">"</span><span class="nv">$r</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span>ecr-pullthroughcache/github-unreal-cloud-ddc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--secret-string<span class="w"> </span>file://github-credentials.json
+<span class="k">done</span>
+</code></pre></div>
+<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
 <h3 id="1-set-your-variables">1. Set your variables<a class="headerlink" href="#1-set-your-variables" title="Permanent link">&para;</a></h3>
 <p>Create <code>terraform.tfvars</code> in this directory:</p>
 <div class="highlight"><pre><span></span><code><span class="na">regions</span><span class="w">                         </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"us-west-2", "us-east-2"</span><span class="p">]</span>
@@ -3678,7 +4344,7 @@
 <span class="na">github_credential_arn_region_2</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:us-east-2:&lt;account&gt;:secret:ecr-pullthroughcache/&lt;name&gt;"</span>
 <span class="na">route53_public_hosted_zone_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"example.com"</span>
 </code></pre></div>
-<p>Each GitHub secret must be in the region it is used for. Optional variables:</p>
+<p>Each secret ARN must be in the Region it is used for. Optional variables:</p>
 <table>
 <thead>
 <tr>
@@ -3699,317 +4365,222 @@
 <td>Allow your detected public IP to reach the DDC and monitoring load balancers</td>
 </tr>
 <tr>
+<td><code>allowed_client_cidrs</code></td>
+<td><code>[]</code></td>
+<td>More CIDRs allowed to reach the DDC and monitoring load balancers</td>
+</tr>
+<tr>
 <td><code>eks_public_access</code></td>
 <td><code>true</code></td>
-<td>Keep the EKS public API endpoints open. See <a href="#reaching-the-eks-api-without-a-public-endpoint">Reaching the EKS API Without a Public Endpoint</a>.</td>
+<td>Keep the EKS public API endpoints open</td>
 </tr>
 <tr>
 <td><code>eks_public_access_cidrs</code></td>
-<td>auto-detected <code>/32</code></td>
-<td>CIDRs allowed on the EKS public endpoints</td>
+<td>detected IP <code>/32</code></td>
+<td>CIDRs allowed on the EKS public API endpoints</td>
 </tr>
 <tr>
 <td><code>ebs_csi_use_pod_identity</code></td>
 <td><code>true</code></td>
-<td>EKS Pod Identity (or IRSA) for the EBS CSI driver</td>
+<td>Use EKS Pod Identity (or IRSA when <code>false</code>) for the EBS CSI driver</td>
 </tr>
 </tbody>
 </table>
-<h3 id="2-deploy">2. Deploy<a class="headerlink" href="#2-deploy" title="Permanent link">&para;</a></h3>
-<p>With the EKS public endpoints open (the default), deploy both regions, with replication enabled, in one command:</p>
+<h3 id="2-make-sure-terraform-can-reach-the-eks-api">2. Make sure Terraform can reach the EKS API<a class="headerlink" href="#2-make-sure-terraform-can-reach-the-eks-api" title="Permanent link">&para;</a></h3>
+<p>Terraform installs Helm charts and add-ons through each cluster's public API endpoint, so the host running Terraform must match <code>eks_public_access_cidrs</code>. The default is the single IP that <code>checkip.amazonaws.com</code> reports, which works for a host with one stable public IP.</p>
+<p>If your host's egress comes from several IPs (NAT pool, VPN, CI), list all of them:</p>
+<div class="highlight"><pre><span></span><code><span class="na">eks_public_access_cidrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"&lt;YOUR-IP-ADDRESS&gt;"</span><span class="p">]</span>
+<span class="na">allowed_client_cidrs</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"&lt;YOUR-IP-ADDRESS&gt;"</span><span class="p">]</span>
+</code></pre></div>
+<p><code>checkip.amazonaws.com</code> may not show the IP your host uses to reach AWS. If the apply fails with <code>Kubernetes cluster unreachable ... i/o timeout</code>, read the <code>sourceIPAddress</code> of your recent EKS calls in CloudTrail and add that range.</p>
+<p>With <code>eks_public_access = false</code> the API endpoints are private, and Terraform must run from inside the VPCs (for example a bastion or an in-VPC CI runner).</p>
+<h3 id="3-deploy">3. Deploy<a class="headerlink" href="#3-deploy" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>init
 terraform<span class="w"> </span>apply
 </code></pre></div>
-<p>The deployment takes about 30 minutes. Creating the EKS clusters and node groups takes about 20 of those.</p>
-<p>To keep the EKS public endpoints closed, follow <a href="#reaching-the-eks-api-without-a-public-endpoint">Reaching the EKS API Without a Public Endpoint</a> instead.</p>
-<h3 id="3-verify">3. Verify<a class="headerlink" href="#3-verify" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>output<span class="w"> </span>unreal_ddc_url
-curl<span class="w"> </span>-i<span class="w"> </span>http://&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;/health/live<span class="w">    </span><span class="c1"># expect 200 and "Healthy", for each region</span>
-</code></pre></div>
-<p>Then follow <a href="#postdeployment">Postdeployment</a> to write and read a test object.</p>
-<h3 id="how-cross-region-replication-is-wired">How cross-region replication is wired<a class="headerlink" href="#how-cross-region-replication-is-wired" title="Permanent link">&para;</a></h3>
-<p>Each region's DDC replicator needs a URL for the other region. The sample gives every region a stable DNS name that is known at plan time, so both regions install in a single <code>terraform apply</code> with replication already enabled:</p>
-<div class="highlight"><pre><span></span><code>region 1 replicator -&gt; http://&lt;name_prefix&gt;-&lt;region 2&gt;.&lt;zone&gt; -&gt; Route53 alias -&gt; region 2 DDC NLB
-region 2 replicator -&gt; http://&lt;name_prefix&gt;-&lt;region 1&gt;.&lt;zone&gt; -&gt; Route53 alias -&gt; region 1 DDC NLB
-</code></pre></div>
-<p>There is one Helm release per region. A replicator may log connection errors for the first few minutes, until the peer region's NLB and DNS record exist.</p>
-<p>The DDC NLBs are internet-facing, so replication traffic reaches the peer region from its NAT gateway public IP. The sample allows each region's NAT gateway IP (<code>/32</code>) on ports 80 and 8080 of the peer's load balancer security group.</p>
-<h3 id="names-and-dns-records">Names and DNS records<a class="headerlink" href="#names-and-dns-records" title="Permanent link">&para;</a></h3>
-<p><code>name_prefix</code> (default <code>cgd-ddc-mr</code>, at most 11 characters) prefixes every name that must be unique per account and region or per hosted zone. This lets the multi-region sample run next to the single-region sample in the same account.</p>
+<p>The apply takes about 30 minutes:</p>
 <table>
 <thead>
 <tr>
-<th>Resource</th>
-<th>Name</th>
+<th>Phase</th>
+<th>Time</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>DDC client endpoint (latency-routed across both regions)</td>
-<td><code>&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
+<td>VPCs, EKS clusters and node groups, ScyllaDB</td>
+<td>20-25 minutes</td>
 </tr>
 <tr>
-<td>DDC regional endpoint, also the replication peer</td>
-<td><code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code></td>
-</tr>
-<tr>
-<td>ScyllaDB monitoring (Grafana)</td>
-<td><code>monitoring.&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
-</tr>
-<tr>
-<td>DDC Network Load Balancer (per region)</td>
-<td><code>&lt;name_prefix&gt;-unreal-cloud-ddc</code></td>
-</tr>
-<tr>
-<td>Monitoring ALB / target group</td>
-<td><code>&lt;name_prefix&gt;-monitoring-alb</code> / <code>&lt;name_prefix&gt;-scylla-monitoring-tg</code></td>
+<td>EKS add-ons, Helm releases, load balancers, DNS, certificates</td>
+<td>5-10 minutes</td>
 </tr>
 </tbody>
 </table>
-<p><code>&lt;zone&gt;</code> is <code>route53_public_hosted_zone_name</code>. The <code>unreal_ddc_url</code> output is the client endpoint.</p>
-<h3 id="ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity">EBS CSI driver identity mode (IRSA vs EKS Pod Identity)<a class="headerlink" href="#ebs-csi-driver-identity-mode-irsa-vs-eks-pod-identity" title="Permanent link">&para;</a></h3>
-<p>The EBS CSI driver in each region needs AWS credentials to manage EBS volumes. The root <code>ebs_csi_use_pod_identity</code> variable (default <code>true</code>) is passed to both intra-cluster modules:</p>
-<ul>
-<li><strong>EKS Pod Identity (recommended, the default).</strong> Uses <code>eks-auth:AssumeRoleForPodIdentity</code> and installs the <code>eks-pod-identity-agent</code> add-on automatically. It also works in accounts whose AWS Organization SCP/RCP denies <code>sts:AssumeRoleWithWebIdentity</code>. Under IRSA that guardrail leaves the <code>ebs-csi-controller</code> pods in <code>CrashLoopBackOff</code> with <code>AccessDenied</code>, and the add-on never becomes <code>ACTIVE</code>, so <code>terraform apply</code> times out.</li>
-<li><strong>IRSA (legacy).</strong> Set <code>ebs_csi_use_pod_identity = false</code> for the classic IAM Roles for Service Accounts path, for example on Fargate or Windows node groups.</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars, override only if you need the legacy IRSA path</span>
-<span class="na">ebs_csi_use_pod_identity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
+<h3 id="4-verify">4. Verify<a class="headerlink" href="#4-verify" title="Permanent link">&para;</a></h3>
+<p>Each Region's health endpoint should return <code>200</code> and <code>Healthy</code>:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-i<span class="w"> </span>https://&lt;name_prefix&gt;-us-west-2.&lt;zone&gt;/health/live
+curl<span class="w"> </span>-i<span class="w"> </span>https://&lt;name_prefix&gt;-us-east-2.&lt;zone&gt;/health/live
 </code></pre></div>
-<h3 id="reaching-the-eks-api-without-a-public-endpoint">Reaching the EKS API Without a Public Endpoint<a class="headerlink" href="#reaching-the-eks-api-without-a-public-endpoint" title="Permanent link">&para;</a></h3>
-<p>By default each cluster's public API endpoint is open to your auto-detected public IP (<code>/32</code>). If your egress IP is not stable (NAT pool, VPN, CI), either set <code>eks_public_access_cidrs</code> to your egress CIDR(s), or close the public endpoints and reach each cluster's private endpoint through an SSM port-forward tunnel. Each region needs its own tunnel and its own local port.</p>
-<ol>
-<li>Deploy the VPCs and infra first so the clusters and their in-VPC SSM nodes exist:</li>
-</ol>
-<div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>apply<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc_region_1<span class="w"> </span>-target<span class="o">=</span>module.unreal_cloud_ddc_vpc_region_2<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra_region_1<span class="w"> </span>-target<span class="o">=</span>module.unreal_cloud_ddc_infra_region_2<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-var<span class="w"> </span><span class="s1">'eks_public_access=false'</span>
+<p>Then write a test blob to a Region and read it back:</p>
+<div class="highlight"><pre><span></span><code>assets/sanity_check.sh<span class="w"> </span>&lt;name_prefix&gt;-us-west-2.&lt;zone&gt;
 </code></pre></div>
-<ol>
-<li>Start one tunnel per region, each in its own shell, and leave both running for the whole apply (requires <code>awscli</code> v2, <code>session-manager-plugin</code> and <code>jq</code>):</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>us-west-2<span class="w"> </span>scripts/eks-api-tunnel.sh<span class="w"> </span><span class="m">9443</span>
-<span class="nv">AWS_REGION</span><span class="o">=</span>us-east-2<span class="w"> </span>scripts/eks-api-tunnel.sh<span class="w"> </span><span class="m">9444</span>
-</code></pre></div>
-<p>Use your own <code>regions</code> values. If a region has more than one EKS cluster or SSM instance in the cluster VPC, pass the cluster name as the second argument or set <code>EKS_CLUSTER_NAME</code> / <code>SSM_INSTANCE_ID</code>.</p>
-<ol>
-<li>Point the Kubernetes and Helm providers at the tunnels and run the full apply:</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars</span>
-<span class="na">eks_public_access</span><span class="w">           </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
-<span class="na">eks_api_local_port_region_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9443</span>
-<span class="na">eks_api_local_port_region_2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">9444</span>
+<p>The script reads the bearer token from Secrets Manager, does a <code>PUT</code> and a <code>GET</code>, compares the bytes, and exits non-zero on any failure. Run it with no argument to test the latency-routed client endpoint.</p>
+<h2 id="using-the-deployment">Using the deployment<a class="headerlink" href="#using-the-deployment" title="Permanent link">&para;</a></h2>
+<h3 id="endpoints-and-outputs">Endpoints and outputs<a class="headerlink" href="#endpoints-and-outputs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unreal_ddc_url</code></td>
+<td>Client endpoint, <code>&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
+</tr>
+<tr>
+<td><code>monitoring_url</code></td>
+<td>Grafana, <code>monitoring.&lt;name_prefix&gt;.&lt;zone&gt;</code></td>
+</tr>
+<tr>
+<td><code>unreal_cloud_ddc_bearer_token_arn</code></td>
+<td>Secrets Manager ARN of the bearer token (replicated to region 2)</td>
+</tr>
+<tr>
+<td><code>scylla_ips</code>, <code>scylla_ips_by_region</code></td>
+<td>Private IPs of the ScyllaDB nodes</td>
+</tr>
+</tbody>
+</table>
+<p>Point Unreal Engine clients at <code>https://&lt;name_prefix&gt;.&lt;zone&gt;</code>. Route53 sends each client to the closer Region.</p>
+<h3 id="calling-the-api">Calling the API<a class="headerlink" href="#calling-the-api" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>unreal_cloud_ddc_bearer_token_arn<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>
 
-<span class="c1"># Do not open the DDC NLB / Grafana ALB to your IP. Test DDC from inside the cluster instead.</span>
-<span class="na">allow_my_ip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
-</code></pre></div>
-<p>TLS is still validated against the real cluster hostname, so there is no <code>insecure</code> setting and no <code>0.0.0.0/0</code> exposure. The tunnels are needed for every Terraform command that talks to the Kubernetes API, including <code>terraform destroy</code>. Leave both port variables unset (<code>null</code>) to connect to the public endpoints directly.</p>
-<h3 id="expected-deployment-timeline">Expected Deployment Timeline<a class="headerlink" href="#expected-deployment-timeline" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Infrastructure (EKS, VPC, ScyllaDB)</strong>: ~20-25 minutes</li>
-<li><strong>Helm Charts and Application Deployment</strong>: ~5-10 minutes</li>
-<li><strong>Total</strong>: ~30 minutes</li>
-</ul>
-<h3 id="scylladb-datacenter-naming-important-note">ScyllaDB Datacenter Naming Important Note<a class="headerlink" href="#scylladb-datacenter-naming-important-note" title="Permanent link">&para;</a></h3>
-<p>⚠️ <strong>Critical</strong>: Due to a ScyllaDB parsing issue with strings containing <code>-1</code>, this sample removes the <code>-1</code> suffix from datacenter names to prevent configuration errors. Other suffixes remain unchanged. <strong>Examples:</strong>
-- <code>us-east-1</code> → <code>us-east</code> (datacenter name)
-- <code>us-east-2</code> → <code>us-east-2</code> (datacenter name)
-- <code>us-west-1</code> → <code>us-west</code> (datacenter name)
-- <code>us-west-2</code> → <code>us-west-2</code> (datacenter name)
-- <code>eu-west-1</code> → <code>eu-west</code> (datacenter name)
-- <code>ap-southeast-1</code> → <code>ap-southeast</code> (datacenter name)</p>
-<p><strong>You can use any AWS regions</strong> - this sample automatically handles the conversion in the Helm configuration and SSM documents. When you see datacenter names like <code>us-east</code>, this represents the <code>us-east-1</code> region.</p>
-<h2 id="postdeployment">Postdeployment<a class="headerlink" href="#postdeployment" title="Permanent link">&para;</a></h2>
-<p>The sample deploys Route53 records you can use to access your Unreal DDC clusters (see <a href="#names-and-dns-records">Names and DNS records</a>). <code>&lt;unreal_ddc_url&gt;</code> below is the latency-routed client endpoint from the <code>unreal_ddc_url</code> output. Each record points to an NLB, which may take a few more minutes to become fully available after the deployment completes. You can view the provisioning status of the NLBs on the EC2 Load Balancing screen.</p>
-<p><strong>Client access.</strong> With <code>allow_my_ip = true</code>, each region's load balancer security group allows the single public IP detected at apply time (<code>/32</code>), on ports 80, 443 and 8080. Two things can make a test request time out even though DDC is healthy:</p>
-<ul>
-<li><strong>Your egress IP changes.</strong> Behind a NAT pool or VPN, requests can leave from an IP other than the one detected at apply time. Find your IPs by running <code>curl checkip.amazonaws.com</code> a few times.</li>
-<li><strong>Latency routing picks the other region.</strong> <code>&lt;unreal_ddc_url&gt;</code> sends you to the closer region, which may not allow your IP.</li>
-</ul>
-<p>To test one region directly, use its regional name, for example:</p>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-i<span class="w"> </span>http://&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;/health/live
-</code></pre></div>
-<p>The Unreal Cloud DDC module creates a Service Account and valid bearer token for testing. This bearer token is stored in AWS Secrets Manager and is replicated to your second AWS region. The ARN of this secret is provided as a Terraform output (<code>"unreal_cloud_ddc_bearer_token_arn"</code>) on the console following deployment. To fetch the bearer token you can use the aws CLI:
-<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>&lt;<span class="s2">"unreal_cloud_ddc_bearer_token_arn"</span>&gt;
-</code></pre></div></p>
-<p>To validate you can put an object you can run:
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>--data<span class="w"> </span><span class="s1">'test'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'content-type: application/octet-stream'</span><span class="w"> </span>-H<span class="w"> </span><span class="s1">'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA'</span><span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Authorization: ServiceAccount &lt;secret-manager-token&gt;'</span>
-</code></pre></div>
-After running this you should get a response that looks as the following:
-<div class="highlight"><pre><span></span><code>HTTP/1.1 200 OK
-Server: nginx
-Date: Wed, 29 Jan 2025 19:15:05 GMT
-Content-Type: application/json; charset=utf-8
-Transfer-Encoding: chunked
-Connection: keep-alive
-Server-Timing: blob.put.FileSystemStore;dur=0.1451;desc="PUT to store: 'FileSystemStore'",blob.put.AmazonS3Store;dur=267.0449;desc="PUT to store: 'AmazonS3Store'",blob.get-metadata.FileSystemStore;dur=0.0406;desc="Blob GET Metadata from: 'FileSystemStore'",ref.finalize;dur=7.1407;desc="Finalizing the ref",ref.put;dur=25.2064;desc="Inserting ref"
-
-{"needs":[]}%
-</code></pre></div></p>
-<p>You can then access the same chunk with the following command:
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json<span class="w"> </span>-i<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token-multi-region&gt;'</span>
-</code></pre></div></p>
-<p>The response should look like the following:
-<div class="highlight"><pre><span></span><code>HTTP/1.1 200 OK
-Server: nginx
-Date: Wed, 29 Jan 2025 19:16:46 GMT
-Content-Type: application/json
-Content-Length: 66
-Connection: keep-alive
-X-Jupiter-IoHash: 7D873DCC262F62FBAA871FE61B2B52D715A1171E
-X-Jupiter-LastAccess: 01/29/2025 19:16:46
-Server-Timing: ref.get;dur=0.0299;desc="Fetching Ref from DB"
-
-{"RawHash":"4878ca0425c739fa427f7eda20fe845f6b2e46ba","RawSize":4}%
-</code></pre></div>
-For a more comprehensive test of your deployment, we recommend using the <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks">bench marking tools</a>. To do so we used a x2idn.32xlarge as it matched Epic's benchmarking instance to test their configuration.</p>
-<p>With the benchmarking tools we ran the following command after compiling the docker image:
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>jupiter_benchmark<span class="w"> </span>--seed<span class="w"> </span>--seed-remote<span class="w"> </span>--host<span class="w"> </span>http://&lt;unreal_ddc_url&gt;<span class="w"> </span>--namespace<span class="w"> </span>ddc<span class="w"> </span><span class="se">\</span>
---header<span class="o">=</span><span class="s2">"Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token-multi-region&gt;"</span><span class="w"> </span>all
-</code></pre></div>
-Just a note here, you will have to specify the namespace to be DDC as the token only has access to that namespace.</p>
-<p><strong>It is recommended that if you are using this in a production capacity you change the authentication mode from Service Account to Bearer and use an IDP to authenticate and TLS termination.</strong></p>
-<p>This sample also deploys a ScyllaDB monitoring stack, enabling real-time insights into the status and performance of your ScyllaDB nodes. The monitoring stack includes Prometheus for metrics collection, Alertmanager for handling alerts, and Grafana for visualization. You can access the Grafana dashboard by using the <code>"monitoring_url"</code> provided in the sample outputs. To learn more about the ScyllaDB monitoring stack, refer to the <a href="https://monitoring.docs.scylladb.com/branch-4.10/intro.html">ScyllaDB Monitoring Stack Documentation</a>.</p>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="quick-health-checks">Quick Health Checks<a class="headerlink" href="#quick-health-checks" title="Permanent link">&para;</a></h3>
-<p><strong>Execute these commands from your local machine</strong> with AWS CLI and kubectl configured.</p>
-<h4 id="0-configure-kubectl-for-eks-required-first">0. Configure kubectl for EKS (Required First)<a class="headerlink" href="#0-configure-kubectl-for-eks-required-first" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine with AWS CLI access</span>
-<span class="c1"># Update kubeconfig to connect to your EKS cluster</span>
-aws<span class="w"> </span>eks<span class="w"> </span>update-kubeconfig<span class="w"> </span>--region<span class="w"> </span>&lt;your-region&gt;<span class="w"> </span>--name<span class="w"> </span>&lt;cluster-name&gt;
-
-<span class="c1"># Example for us-east-1:</span>
-<span class="c1"># aws eks update-kubeconfig --region us-east-1 --name unreal-cloud-ddc-cluster</span>
-</code></pre></div>
-<h4 id="1-check-pod-status">1. Check Pod Status<a class="headerlink" href="#1-check-pod-status" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine</span>
-<span class="c1"># View all pods in the unreal-cloud-ddc namespace</span>
-kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-
-<span class="c1"># Expected: All pods should be in "Running" status</span>
-<span class="c1"># If pods are in CrashLoopBackOff or Error state, proceed to log analysis</span>
-</code></pre></div>
-<h4 id="2-check-pod-logs">2. Check Pod Logs<a class="headerlink" href="#2-check-pod-logs" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine</span>
-<span class="c1"># Check logs for application pods</span>
-kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc<span class="w"> </span>--tail<span class="o">=</span><span class="m">50</span>
-
-<span class="c1"># Check logs for worker pods</span>
-kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc-worker<span class="w"> </span>--tail<span class="o">=</span><span class="m">50</span>
-</code></pre></div>
-<h4 id="3-verify-scylladb-datacenter-configuration">3. Verify ScyllaDB Datacenter Configuration<a class="headerlink" href="#3-verify-scylladb-datacenter-configuration" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine</span>
-<span class="c1"># Get a pod name</span>
-<span class="nv">POD_NAME</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.items[0].metadata.name}'</span><span class="k">)</span>
-
-<span class="c1"># Check ScyllaDB datacenters from within the application pod</span>
-kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span><span class="nv">$POD_NAME</span><span class="w"> </span>--<span class="w"> </span>cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"</span>
-
-<span class="c1"># Expected output should show converted datacenter names (e.g., 'us-east' instead of 'us-east-1')</span>
-</code></pre></div>
-<h4 id="4-check-application-configuration">4. Check Application Configuration<a class="headerlink" href="#4-check-application-configuration" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine</span>
-<span class="c1"># View the ConfigMap to verify datacenter names in application config</span>
-kubectl<span class="w"> </span>get<span class="w"> </span>configmap<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-A<span class="w"> </span><span class="m">10</span><span class="w"> </span>-B<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="s2">"KeyspaceReplicationStrategy"</span>
-
-<span class="c1"># Verify the datacenter names match what ScyllaDB reports</span>
-</code></pre></div>
-<h4 id="5-direct-scylladb-access-alternative-method">5. Direct ScyllaDB Access (Alternative Method)<a class="headerlink" href="#5-direct-scylladb-access-alternative-method" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on one of the ScyllaDB EC2 instances (if needed for deeper troubleshooting)</span>
-<span class="c1"># SSH to ScyllaDB instance first, then:</span>
-cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"</span>
-cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"DESCRIBE KEYSPACE jupiter;"</span>
-</code></pre></div>
-<h3 id="common-issues-and-solutions">Common Issues and Solutions<a class="headerlink" href="#common-issues-and-solutions" title="Permanent link">&para;</a></h3>
-<h4 id="issue-pods-in-crashloopbackoff-with-scylladb-connection-errors">Issue: Pods in CrashLoopBackOff with ScyllaDB Connection Errors<a class="headerlink" href="#issue-pods-in-crashloopbackoff-with-scylladb-connection-errors" title="Permanent link">&para;</a></h4>
-<p><strong>Symptoms:</strong>
-- Pods show CrashLoopBackOff status
-- Logs contain "Unrecognized strategy option {us-east-1}" or similar datacenter name errors
-- HTTP 502 errors on health checks</p>
-<p><strong>Root Cause:</strong> Datacenter name mismatch between application configuration and actual ScyllaDB datacenters</p>
-<p><strong>Solution:</strong>
-1. Verify ScyllaDB datacenter names using the commands above
-2. Check if region conversion logic is working correctly in <code>main.tf</code>
-3. Ensure Helm configuration uses <code>replace(var.regions[X], "-1", "")</code> for datacenter names</p>
-<h4 id="issue-terraform-apply-timeout-on-the-ddc-helm-release">Issue: Terraform Apply Timeout on the DDC Helm Release<a class="headerlink" href="#issue-terraform-apply-timeout-on-the-ddc-helm-release" title="Permanent link">&para;</a></h4>
-<p><strong>Symptoms:</strong>
-- <code>terraform apply</code> waits on <code>helm_release.unreal_cloud_ddc_initialization</code> and fails after 15 minutes (<code>unreal_cloud_ddc_helm_timeout</code> on the intra-cluster module, default <code>900</code> seconds)</p>
-<p><strong>Root Cause:</strong> Helm waits until the pods are ready and the Service has a load balancer address. A timeout usually means the pods can't start, or the NLB can't be created.</p>
-<p><strong>Solution:</strong>
-1. Check pod status and logs using the commands above
-2. Check the Service events: <code>kubectl -n unreal-cloud-ddc get events --field-selector involvedObject.kind=Service</code>. <code>DuplicateLoadBalancerName</code> means another deployment in the same account and region already uses <code>&lt;name_prefix&gt;-unreal-cloud-ddc</code>. Set a different <code>name_prefix</code>.
-3. Verify ScyllaDB connectivity and datacenter configuration</p>
-<h4 id="issue-ssm-document-execution-failures">Issue: SSM Document Execution Failures<a class="headerlink" href="#issue-ssm-document-execution-failures" title="Permanent link">&para;</a></h4>
-<p><strong>Symptoms:</strong>
-- SSM association shows failed status
-- ScyllaDB keyspace replication not configured correctly</p>
-<p><strong>Root Cause:</strong> SSM document using incorrect datacenter names in CQL commands</p>
-<p><strong>Solution:</strong>
-1. Check SSM document content for correct datacenter names
-2. Verify SSM association targets the correct ScyllaDB instance
-3. Manually run CQL commands to verify datacenter names</p>
-<h3 id="monitoring-during-deployment">Monitoring During Deployment<a class="headerlink" href="#monitoring-during-deployment" title="Permanent link">&para;</a></h3>
-<h4 id="watch-pod-deployment-progress">Watch Pod Deployment Progress<a class="headerlink" href="#watch-pod-deployment-progress" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine during terraform apply</span>
-<span class="c1"># Monitor pods in real-time</span>
-watch<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-</code></pre></div>
-<h4 id="check-helm-release-status">Check Helm Release Status<a class="headerlink" href="#check-helm-release-status" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine with Helm installed</span>
-<span class="c1"># List Helm releases</span>
-helm<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-
-<span class="c1"># Get detailed status of a specific release</span>
-helm<span class="w"> </span>status<span class="w"> </span>unreal-cloud-ddc-initialize<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-</code></pre></div>
-<h4 id="monitor-load-balancer-provisioning">Monitor Load Balancer Provisioning<a class="headerlink" href="#monitor-load-balancer-provisioning" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run on your local machine</span>
-<span class="c1"># Check service status</span>
-kubectl<span class="w"> </span>get<span class="w"> </span>svc<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-
-<span class="c1"># Get load balancer details</span>
-kubectl<span class="w"> </span>describe<span class="w"> </span>svc<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-</code></pre></div>
-<h3 id="performance-validation">Performance Validation<a class="headerlink" href="#performance-validation" title="Permanent link">&para;</a></h3>
-<p>After successful deployment, validate performance using the <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks">benchmarking tools</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Run comprehensive benchmark</span>
-docker<span class="w"> </span>run<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>jupiter_benchmark<span class="w"> </span>--seed<span class="w"> </span>--seed-remote<span class="w"> </span>--host<span class="w"> </span>http://&lt;unreal_ddc_url&gt;<span class="w"> </span>--namespace<span class="w"> </span>ddc<span class="w"> </span><span class="se">\</span>
---header<span class="o">=</span><span class="s2">"Authorization: ServiceAccount &lt;unreal-cloud-ddc-bearer-token-multi-region&gt;"</span><span class="w"> </span>all
-</code></pre></div>
-<h3 id="api-testing">API Testing<a class="headerlink" href="#api-testing" title="Permanent link">&para;</a></h3>
-<h4 id="get-bearer-token">Get Bearer Token<a class="headerlink" href="#get-bearer-token" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Get the bearer token from Secrets Manager</span>
-<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>unreal-cloud-ddc-bearer-token-multi-region<span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>
-<span class="nb">echo</span><span class="w"> </span><span class="nv">$TOKEN</span>
-</code></pre></div>
-<h4 id="test-api-endpoints">Test API Endpoints<a class="headerlink" href="#test-api-endpoints" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="c1"># Test PUT operation (upload data)</span>
-curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa<span class="w"> </span><span class="se">\</span>
+<span class="c1"># Put a 4-byte blob ("test")</span>
+curl<span class="w"> </span>-i<span class="w"> </span>https://&lt;name_prefix&gt;.&lt;zone&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-X<span class="w"> </span>PUT<span class="w"> </span>--data<span class="w"> </span><span class="s1">'test'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s1">'content-type: application/octet-stream'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s1">'X-Jupiter-IoHash: 4878CA0425C739FA427F7EDA20FE845F6B2E46BA'</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-i
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span>
+<span class="c1"># Expect: HTTP/1.1 200 OK and {"needs":[]}</span>
 
-<span class="c1"># Expected response: HTTP/1.1 200 OK with {"needs":[]}</span>
-
-<span class="c1"># Test GET operation (retrieve data)</span>
-curl<span class="w"> </span>http://&lt;unreal_ddc_url&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-i
-
-<span class="c1"># Expected response: HTTP/1.1 200 OK with JSON containing RawHash and RawSize</span>
+<span class="c1"># Read it back</span>
+curl<span class="w"> </span>-i<span class="w"> </span>https://&lt;name_prefix&gt;.&lt;zone&gt;/api/v1/refs/ddc/default/00000000000000000000000000000000000000aa.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span>
+<span class="c1"># Expect: HTTP/1.1 200 OK and {"RawHash":"4878ca04...","RawSize":4}</span>
 </code></pre></div>
-<p><strong>Note</strong>: Replace <code>&lt;unreal_ddc_url&gt;</code> with the <code>unreal_ddc_url</code> Terraform output, or a regional name such as <code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code> to test one region. For single-region deployments, use secret name <code>unreal-cloud-ddc-bearer-token</code> instead.</p>
+<p>The bearer token only has access to the <code>ddc</code> namespace.</p>
+<p>For load testing, use Epic's <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Benchmarks">benchmarking tools</a>. We used an <code>x2idn.32xlarge</code>, which matches Epic's benchmarking instance:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>jupiter_benchmark<span class="w"> </span>--seed<span class="w"> </span>--seed-remote<span class="w"> </span>--host<span class="w"> </span>https://&lt;name_prefix&gt;.&lt;zone&gt;<span class="w"> </span>--namespace<span class="w"> </span>ddc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--header<span class="o">=</span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>all
+</code></pre></div>
+<h3 id="scylladb-monitoring">ScyllaDB monitoring<a class="headerlink" href="#scylladb-monitoring" title="Permanent link">&para;</a></h3>
+<p>Region 1 runs the <a href="https://monitoring.docs.scylladb.com/">ScyllaDB Monitoring Stack</a> (Prometheus, Alertmanager and Grafana), which scrapes the ScyllaDB nodes in both Regions. Open <code>https://</code> followed by the <code>monitoring_url</code> output. The Overview dashboard has one section per Region (datacenter).</p>
+<h3 id="production-considerations">Production considerations<a class="headerlink" href="#production-considerations" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The bearer token is a shared service account for testing. For production, switch DDC to bearer authentication with your identity provider.</li>
+<li>Keep <code>allowed_client_cidrs</code> and <code>eks_public_access_cidrs</code> as narrow as possible, or close the EKS public endpoints and run Terraform from inside the VPCs.</li>
+</ul>
+<h2 id="configuration-notes">Configuration notes<a class="headerlink" href="#configuration-notes" title="Permanent link">&para;</a></h2>
+<h3 id="ebs-csi-driver-identity">EBS CSI driver identity<a class="headerlink" href="#ebs-csi-driver-identity" title="Permanent link">&para;</a></h3>
+<p>The EBS CSI driver in each Region needs AWS credentials to manage EBS volumes. <code>ebs_csi_use_pod_identity</code> selects how it gets them:</p>
+<ul>
+<li><strong>EKS Pod Identity (default, <code>true</code>).</strong> Uses <code>eks-auth:AssumeRoleForPodIdentity</code> and installs the <code>eks-pod-identity-agent</code> add-on. It also works in accounts whose AWS Organizations SCP or RCP denies <code>sts:AssumeRoleWithWebIdentity</code>.</li>
+<li><strong>IRSA (<code>false</code>).</strong> Uses IAM Roles for Service Accounts through the cluster OIDC provider. Use it where Pod Identity is not available, for example Fargate or Windows nodes.</li>
+</ul>
+<h3 id="scylladb-datacenter-names">ScyllaDB datacenter names<a class="headerlink" href="#scylladb-datacenter-names" title="Permanent link">&para;</a></h3>
+<p>ScyllaDB fails to parse datacenter names that end in <code>-1</code>, so the sample removes that suffix. Other suffixes are kept, and any Regions work.</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th>Datacenter name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>us-east-1</code></td>
+<td><code>us-east</code></td>
+</tr>
+<tr>
+<td><code>us-east-2</code></td>
+<td><code>us-east-2</code></td>
+</tr>
+<tr>
+<td><code>us-west-2</code></td>
+<td><code>us-west-2</code></td>
+</tr>
+<tr>
+<td><code>eu-west-1</code></td>
+<td><code>eu-west</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="connect-kubectl">Connect kubectl<a class="headerlink" href="#connect-kubectl" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>eks<span class="w"> </span>update-kubeconfig<span class="w"> </span>--region<span class="w"> </span>us-west-2<span class="w"> </span>--name<span class="w"> </span>cgd-unreal-cloud-ddc-cluster-us-west-2
+kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w">                 </span><span class="c1"># all pods should be Running</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>svc<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w">                  </span><span class="c1"># EXTERNAL-IP is the NLB hostname</span>
+kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc<span class="w"> </span>--tail<span class="o">=</span><span class="m">50</span>
+helm<span class="w"> </span>status<span class="w"> </span>unreal-cloud-ddc-initialize<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
+</code></pre></div>
+<p>Repeat for region 2 with its Region and cluster name.</p>
+<h3 id="common-issues">Common issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Kubernetes cluster unreachable ... i/o timeout</code></td>
+<td>Your host's real egress IP is not in <code>eks_public_access_cidrs</code></td>
+<td>See <a href="#2-make-sure-terraform-can-reach-the-eks-api">step 2</a></td>
+</tr>
+<tr>
+<td><code>curl</code> to the DDC endpoint times out</td>
+<td>Your IP is not in <code>allowed_client_cidrs</code>, or latency routing sent you to the other Region</td>
+<td>Add your IP range, or call <code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code> directly</td>
+</tr>
+<tr>
+<td>Helm release times out after 15 minutes</td>
+<td>Pods can't start, or the NLB can't be created</td>
+<td>Check pods and Service events. <code>DuplicateLoadBalancerName</code> means another deployment in the account and Region uses the same <code>name_prefix</code>.</td>
+</tr>
+<tr>
+<td>Pods in <code>CrashLoopBackOff</code> with <code>Unrecognized strategy option {us-east-1}</code></td>
+<td>Datacenter name mismatch</td>
+<td>See <a href="#scylladb-datacenter-names">ScyllaDB datacenter names</a></td>
+</tr>
+<tr>
+<td>EBS CSI add-on stuck in <code>CREATING</code></td>
+<td>IRSA blocked by an SCP or RCP</td>
+<td>Use <code>ebs_csi_use_pod_identity = true</code></td>
+</tr>
+<tr>
+<td>SSM association failed</td>
+<td>Keyspace replication not set</td>
+<td>Check the <code>update_keyspaces_document</code> run output in SSM, then re-run the association</td>
+</tr>
+</tbody>
+</table>
+<p>To check ScyllaDB datacenters from a ScyllaDB node (connect with SSM Session Manager):</p>
+<div class="highlight"><pre><span></span><code>cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT data_center FROM system.local; SELECT data_center FROM system.peers;"</span>
+cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"DESCRIBE KEYSPACE jupiter;"</span>
+</code></pre></div>
 <h2 id="deletion">Deletion<a class="headerlink" href="#deletion" title="Permanent link">&para;</a></h2>
-<p>For the cleanest deletion, it is best to first do a targeted destroy for the <code>module.unreal_cloud_ddc_intra_cluster_region_1</code> and <code>module.unreal_cloud_ddc_intra_cluster_region_2</code>.
+<p>Destroy the Kubernetes resources first, so the AWS Load Balancer Controller removes the NLBs it created:</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>destroy<span class="w"> </span>-target<span class="w"> </span>module.unreal_cloud_ddc_intra_cluster_region_1<span class="w"> </span>-target<span class="w"> </span>module.unreal_cloud_ddc_intra_cluster_region_2
 </code></pre></div>
-Note: If the previous command fails the first time with an error for context deadline exceeded, run the command again.</p>
-<p>Once the resources are successfully destroyed, you can do a full destroy.
+<p>If this fails with <code>context deadline exceeded</code>, run it again. Then destroy everything else:</p>
 <div class="highlight"><pre><span></span><code>terraform<span class="w"> </span>destroy
-</code></pre></div></p>
+</code></pre></div>
+<p>Terraform must still reach the EKS API during the first command, so keep your IP in <code>eks_public_access_cidrs</code>. If a VPC or internet gateway can't be deleted with <code>DependencyViolation</code>, delete any leftover <code>&lt;name_prefix&gt;-unreal-cloud-ddc</code> NLB and <code>k8s-*</code> target groups in that VPC, then run <code>terraform destroy</code> again.</p>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
@@ -4066,6 +4637,10 @@ Note: If the previous command fails the first time with an error for context dea
 <tbody>
 <tr>
 <td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>&gt;=6.73.0</td>
+</tr>
+<tr>
+<td><a name="provider_aws.region-1"></a> <a href="#provider_aws.region-1">aws.region-1</a></td>
 <td>&gt;=6.73.0</td>
 </tr>
 <tr>
@@ -4134,7 +4709,23 @@ Note: If the previous command fails the first time with an error for context dea
 <td>resource</td>
 </tr>
 <tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate">aws_acm_certificate.unreal_cloud_ddc_region_1</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate">aws_acm_certificate.unreal_cloud_ddc_region_2</a></td>
+<td>resource</td>
+</tr>
+<tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.scylla_monitoring_region_1</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.unreal_cloud_ddc_region_1</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.unreal_cloud_ddc_region_2</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -4151,6 +4742,10 @@ Note: If the previous command fails the first time with an error for context dea
 </tr>
 <tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record">aws_route53_record.scylla_monitoring_region_1</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record">aws_route53_record.unreal_cloud_ddc_cert_validation</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -4234,19 +4829,19 @@ Note: If the previous command fails the first time with an error for context dea
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_1_nat_to_lb_region_2_80</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_1_nat_to_lb_region_2_443</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_1_nat_to_lb_region_2_8080</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_1_nat_to_lb_region_2_8443</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_2_nat_to_lb_region_1_80</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_2_nat_to_lb_region_1_443</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_2_nat_to_lb_region_1_8080</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_cloud_ddc_region_2_nat_to_lb_region_1_8443</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -4255,14 +4850,6 @@ Note: If the previous command fails the first time with an error for context dea
 </tr>
 <tr>
 <td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http2_ingress_rule_region_2</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http_ingress_rule_region_1</a></td>
-<td>resource</td>
-</tr>
-<tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule">aws_vpc_security_group_ingress_rule.unreal_ddc_load_balancer_http_ingress_rule_region_2</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -4364,6 +4951,13 @@ Note: If the previous command fails the first time with an error for context dea
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
+<td><a name="input_allowed_client_cidrs"></a> <a href="#input_allowed_client_cidrs">allowed_client_cidrs</a></td>
+<td>CIDR blocks allowed to reach the DDC NLBs and the monitoring ALB on ports 80, 443 and 8080 in both regions. Added to your auto-detected IP when allow_my_ip is true. Set this when your egress comes from several IPs (NAT pool, VPN), for example ["203.0.113.10/32", "203.0.113.11/32"].</td>
+<td><code>list(string)</code></td>
+<td><code>[]</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
 <td><a name="input_ebs_csi_use_pod_identity"></a> <a href="#input_ebs_csi_use_pod_identity">ebs_csi_use_pod_identity</a></td>
 <td>Use EKS Pod Identity (true, the default) instead of IRSA (false) for the EBS<br/>CSI driver in both regions. Pod Identity is the AWS-recommended mechanism and<br/>also works in accounts whose Organization SCP/RCP denies<br/>sts:AssumeRoleWithWebIdentity. Set to false for the legacy IRSA path (for<br/>example Fargate or Windows nodes).</td>
 <td><code>bool</code></td>
@@ -4371,29 +4965,15 @@ Note: If the previous command fails the first time with an error for context dea
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td><a name="input_eks_api_local_port_region_1"></a> <a href="#input_eks_api_local_port_region_1">eks_api_local_port_region_1</a></td>
-<td>Localhost port that an SSM port-forward forwards to the region 1 EKS API<br/>server. Leave null (default) to connect directly to the public endpoint.<br/>Start the tunnel first with:<br/>  AWS_REGION=<regions[0]> scripts/eks-api-tunnel.sh <port><br/>TLS is still validated against the real cluster hostname (tls_server_name).</td>
-<td><code>number</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
-<td><a name="input_eks_api_local_port_region_2"></a> <a href="#input_eks_api_local_port_region_2">eks_api_local_port_region_2</a></td>
-<td>Localhost port that an SSM port-forward forwards to the region 2 EKS API<br/>server. Leave null (default) to connect directly to the public endpoint.<br/>Use a different port than eks_api_local_port_region_1. Start the tunnel<br/>first with:<br/>  AWS_REGION=<regions[1]> scripts/eks-api-tunnel.sh <port></td>
-<td><code>number</code></td>
-<td><code>null</code></td>
-<td style="text-align: center;">no</td>
-</tr>
-<tr>
 <td><a name="input_eks_public_access"></a> <a href="#input_eks_public_access">eks_public_access</a></td>
-<td>Whether the public API endpoint of both EKS clusters is enabled. Defaults to<br/>true so a first apply from a laptop works without extra setup. Set to false<br/>to close the public endpoints entirely; Terraform must then reach each<br/>cluster over its private endpoint (from inside the VPC, or via an SSM tunnel<br/>per region with eks_api_local_port_region_1 / eks_api_local_port_region_2).<br/>eks_public_access_cidrs is ignored when this is false.</td>
+<td>Whether the public API endpoint of both EKS clusters is enabled. Defaults to<br/>true so a first apply from a laptop works without extra setup. Set to false<br/>to close the public endpoints entirely; Terraform must then run from inside<br/>the VPCs (for example from a bastion or in-VPC CI runner).<br/>eks_public_access_cidrs is ignored when this is false.</td>
 <td><code>bool</code></td>
 <td><code>true</code></td>
 <td style="text-align: center;">no</td>
 </tr>
 <tr>
 <td><a name="input_eks_public_access_cidrs"></a> <a href="#input_eks_public_access_cidrs">eks_public_access_cidrs</a></td>
-<td>CIDR blocks allowed to reach the EKS public API endpoints. When left empty,<br/>the sample auto-detects the caller's public IP (via checkip) and uses that<br/>/32. That only works reliably when your egress is a single, stable public<br/>IP. Behind a NAT pool, corporate VPN or CI, set this explicitly to your<br/>egress CIDR(s), or close the public endpoints and use the SSM tunnels.</td>
+<td>CIDR blocks allowed to reach the EKS public API endpoints. When left empty,<br/>the sample auto-detects the caller's public IP (via checkip) and uses that<br/>/32. That only works reliably when your egress is a single, stable public<br/>IP. Behind a NAT pool, corporate VPN or CI, set this explicitly to your<br/>egress CIDR(s).</td>
 <td><code>list(string)</code></td>
 <td><code>[]</code></td>
 <td style="text-align: center;">no</td>
@@ -4424,8 +5004,8 @@ Note: If the previous command fails the first time with an error for context dea
 </thead>
 <tbody>
 <tr>
-<td><a name="output_monitoring_url_region_1"></a> <a href="#output_monitoring_url_region_1">monitoring_url_region_1</a></td>
-<td>n/a</td>
+<td><a name="output_monitoring_url"></a> <a href="#output_monitoring_url">monitoring_url</a></td>
+<td>Route53 DNS name of the ScyllaDB monitoring stack (Grafana), served over HTTPS from region 1.</td>
 </tr>
 <tr>
 <td><a name="output_scylla_ips"></a> <a href="#output_scylla_ips">scylla_ips</a></td>
@@ -4441,7 +5021,7 @@ Note: If the previous command fails the first time with an error for context dea
 </tr>
 <tr>
 <td><a name="output_unreal_ddc_url"></a> <a href="#output_unreal_ddc_url">unreal_ddc_url</a></td>
-<td>n/a</td>
+<td>Latency-routed DDC client endpoint (Route53 record name).</td>
 </tr>
 </tbody>
 </table>
@@ -4500,6 +5080,44 @@ Note: If the previous command fails the first time with an error for context dea
       
         <footer class="md-footer">
   
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../unreal-cloud-ddc-single-region/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Unreal Cloud DDC Single Region">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Unreal Cloud DDC Single Region
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../docs/changelog.html" class="md-footer__link md-footer__link--next" aria-label="Next: Changelog">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Changelog
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
     
   
   <div class="md-footer-meta md-typeset">

@@ -113,6 +113,10 @@ service:
     service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
     service.beta.kubernetes.io/aws-load-balancer-security-groups: ${security_group_ids}
     service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    # TLS terminates at the NLB, so bearer tokens never cross the internet in clear text.
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${certificate_arn}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8443"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "HTTP"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "80"
     service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health/live"
@@ -122,12 +126,12 @@ service:
 
 
   type: LoadBalancer
-  portName: http
-  port: 80
+  portName: https
+  port: 443
   targetPort: nginx-http
   extraPort:
     - name: http2
-      port: 8080
+      port: 8443
       targetPort: nginx-h2
 
 worker:
@@ -141,7 +145,7 @@ worker:
         Replicators:
           - ReplicatorName: ddc-${aws_region}-to-${aws_replication_region}-replicator
             Namespace: ddc-${aws_region}-to-${aws_replication_region}
-            ConnectionString: "http://${ddc_replication_region_url}"
+            ConnectionString: "https://${ddc_replication_region_url}"
 
     Scylla: *scylla-connection-info
     S3: *s3-connection-info

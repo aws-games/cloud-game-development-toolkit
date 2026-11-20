@@ -3061,6 +3061,8 @@
       
         
       
+        
+      
     
     
     
@@ -3214,6 +3216,34 @@
     
   
     Unreal Cloud DDC Single Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../samples/unreal-cloud-ddc-multi-region/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Multi Region
   
 
     
@@ -3591,42 +3621,54 @@
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <h3 id="network-infrastructure-requirements">Network Infrastructure Requirements<a class="headerlink" href="#network-infrastructure-requirements" title="Permanent link">&para;</a></h3>
 <p>The Cloud DDC Module requires a properly configured Virtual Private Cloud (VPC) with specific networking components:</p>
-<p><strong>Required VPC Configuration:</strong>
-- <strong>2 public subnets</strong> - For load balancers and NAT gateways
-- <strong>2 private subnets</strong> - For EKS nodes and ScyllaDB instances
-- <strong>Coverage across 2 Availability Zones</strong> - For high availability
-- <strong>S3 VPC endpoint</strong> - For efficient S3 access without internet routing
-- <strong>Internet Gateway</strong> - For outbound internet access
-- <strong>NAT Gateways</strong> - For private subnet internet access</p>
-<p><strong>Security Considerations:</strong>
-- Private subnets are <strong>strongly recommended</strong> for all compute resources
-- Public subnets should only contain load balancers and NAT gateways
-- VPC endpoints reduce data transfer costs and improve security</p>
-<p><strong>Single vs Multi-Region Networking:</strong>
-- <strong>Single Region</strong>: Standard VPC with local subnets
-- <strong>Multi-Region</strong>: Requires inter-region connectivity for ScyllaDB cluster communication
-  - <strong>Options</strong>: VPC Peering, Transit Gateway, AWS Direct Connect, or Site-to-Site VPN
-  - <strong>Considerations</strong>: Latency, bandwidth, and cost vary by connectivity method</p>
+<p><strong>Required VPC Configuration:</strong></p>
+<ul>
+<li><strong>2 public subnets</strong> - For load balancers and NAT gateways</li>
+<li><strong>2 private subnets</strong> - For EKS nodes and ScyllaDB instances</li>
+<li><strong>Coverage across 2 Availability Zones</strong> - For high availability</li>
+<li><strong>S3 VPC endpoint</strong> - For efficient S3 access without internet routing</li>
+<li><strong>Internet Gateway</strong> - For outbound internet access</li>
+<li><strong>NAT Gateways</strong> - For private subnet internet access</li>
+</ul>
+<p><strong>Security Considerations:</strong></p>
+<ul>
+<li>Private subnets are <strong>strongly recommended</strong> for all compute resources</li>
+<li>Public subnets should only contain load balancers and NAT gateways</li>
+<li>VPC endpoints reduce data transfer costs and improve security</li>
+</ul>
+<p><strong>Single vs Multi-Region Networking:</strong></p>
+<ul>
+<li><strong>Single Region</strong>: Standard VPC with local subnets</li>
+<li><strong>Multi-Region</strong>: Requires inter-region connectivity for ScyllaDB cluster communication</li>
+<li><strong>Options</strong>: VPC Peering, Transit Gateway, AWS Direct Connect, or Site-to-Site VPN</li>
+<li><strong>Considerations</strong>: Latency, bandwidth, and cost vary by connectivity method</li>
+</ul>
 <h3 id="authentication-security">Authentication &amp; Security<a class="headerlink" href="#authentication-security" title="Permanent link">&para;</a></h3>
 <p><strong>Bearer Token Authentication:</strong>
-The module automatically generates a secure bearer token stored in AWS Secrets Manager. This token:
-- Authenticates all API requests to the DDC service
-- Prevents unauthorized access to cached game assets
-- Is replicated across regions in multi-region deployments
-- Should be rotated regularly in production environments</p>
+The module automatically generates a secure bearer token stored in AWS Secrets Manager. This token:</p>
+<ul>
+<li>Authenticates all API requests to the DDC service</li>
+<li>Prevents unauthorized access to cached game assets</li>
+<li>Is replicated across regions in multi-region deployments</li>
+<li>Should be rotated regularly in production environments</li>
+</ul>
 <p><strong>GitHub Container Registry Access:</strong>
-Access to Epic's Unreal Cloud DDC container images requires:
-1. <strong>GitHub account linked to Epic account</strong> - <a href="https://www.unrealengine.com/en-US/ue-on-github">Instructions here</a>
-2. <strong>GitHub Personal Access Token</strong> with specific permissions:
-   - <code>read:packages</code> - Required to pull container images from GitHub Container Registry
-   - <code>repo</code> - Required to access the private Unreal Engine repository
-3. <strong>Manual secret creation</strong> - Required due to ECR pull-through cache naming requirements</p>
+Access to Epic's Unreal Cloud DDC container images requires:</p>
+<ol>
+<li><strong>GitHub account linked to Epic account</strong> - <a href="https://www.unrealengine.com/en-US/ue-on-github">Instructions here</a></li>
+<li><strong>GitHub Personal Access Token</strong> with specific permissions:</li>
+<li><code>read:packages</code> - Required to pull container images from GitHub Container Registry</li>
+<li><code>repo</code> - Required to access the private Unreal Engine repository</li>
+<li><strong>Manual secret creation</strong> - Required due to ECR pull-through cache naming requirements</li>
+</ol>
 <p>⚠️ <strong>Permission Requirements</strong>: Both <code>read:packages</code> and <code>repo</code> permissions are mandatory for accessing Unreal Engine container images.</p>
-<p><strong>Security Best Practices:</strong>
-- Use OIDC authentication instead of bearer tokens in production
-- Enable VPC Flow Logs for network monitoring
-- Implement least-privilege IAM policies
-- Enable CloudTrail for API auditing</p>
+<p><strong>Security Best Practices:</strong></p>
+<ul>
+<li>Use OIDC authentication instead of bearer tokens in production</li>
+<li>Enable VPC Flow Logs for network monitoring</li>
+<li>Implement least-privilege IAM policies</li>
+<li>Enable CloudTrail for API auditing</li>
+</ul>
 <p><br/></p>
 <!-- ## Examples
 
@@ -3645,20 +3687,26 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 <p>The <code>scylla_subnets</code> variable determines the deployment topology of your ScyllaDB instances. Each specified subnet receives a dedicated ScyllaDB instance, with multiple subnet configurations automatically establishing a distributed cluster architecture. Configurations of two or more subnets enable high availability and data resilience through native ScyllaDB clustering at the cost of increased infrastructure complexity and proportionally higher operational expenses.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
-<p><strong>ScyllaDB Cluster Formation Issues:</strong>
-- <strong>Symptom</strong>: Nodes not joining cluster
-- <strong>Cause</strong>: Security group rules blocking cluster communication
-- <strong>Solution</strong>: Verify ports 7000, 7001, 9042 are open between ScyllaDB security groups</p>
-<p><strong>EKS Node Group Launch Failures:</strong>
-- <strong>Symptom</strong>: Node groups stuck in CREATE_FAILED state
-- <strong>Cause</strong>: Insufficient subnet capacity or incorrect instance types
-- <strong>Solution</strong>: Check subnet available IPs and verify instance type availability in AZ</p>
-<p><strong>Monitoring Stack Access Issues:</strong>
-- <strong>Symptom</strong>: Cannot access Grafana dashboard
-- <strong>Cause</strong>: Security group or certificate configuration
-- <strong>Solution</strong>: Verify ALB security group allows inbound HTTPS and certificate is valid</p>
+<p><strong>ScyllaDB Cluster Formation Issues:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: Nodes not joining cluster</li>
+<li><strong>Cause</strong>: Security group rules blocking cluster communication</li>
+<li><strong>Solution</strong>: Verify ports 7000, 7001, 9042 are open between ScyllaDB security groups</li>
+</ul>
+<p><strong>EKS Node Group Launch Failures:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: Node groups stuck in CREATE_FAILED state</li>
+<li><strong>Cause</strong>: Insufficient subnet capacity or incorrect instance types</li>
+<li><strong>Solution</strong>: Check subnet available IPs and verify instance type availability in AZ</li>
+</ul>
+<p><strong>Monitoring Stack Access Issues:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: Cannot access Grafana dashboard</li>
+<li><strong>Cause</strong>: Security group or certificate configuration</li>
+<li><strong>Solution</strong>: Verify ALB security group allows inbound HTTPS and certificate is valid</li>
+</ul>
 <h3 id="validation-commands">Validation Commands<a class="headerlink" href="#validation-commands" title="Permanent link">&para;</a></h3>
-<p><strong>Check ScyllaDB Cluster Status:</strong>
+<p><strong>Check ScyllaDB Cluster Status:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># SSH to ScyllaDB instance via Session Manager</span>
 aws<span class="w"> </span>ssm<span class="w"> </span>start-session<span class="w"> </span>--target<span class="w"> </span>i-1234567890abcdef0
 
@@ -3667,8 +3715,8 @@ nodetool<span class="w"> </span>status
 
 <span class="c1"># Verify datacenter configuration</span>
 cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"</span>
-</code></pre></div></p>
-<p><strong>Verify EKS Cluster Health:</strong>
+</code></pre></div>
+<p><strong>Verify EKS Cluster Health:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Update kubeconfig</span>
 aws<span class="w"> </span>eks<span class="w"> </span>update-kubeconfig<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--name<span class="w"> </span>unreal-cloud-ddc-cluster
 
@@ -3677,14 +3725,14 @@ kubectl<span class="w"> </span>get<span class="w"> </span>nodes
 
 <span class="c1"># Verify system pods</span>
 kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>kube-system
-</code></pre></div></p>
-<p><strong>Monitor Resource Usage:</strong>
+</code></pre></div>
+<p><strong>Monitor Resource Usage:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check EKS cluster logs</span>
 aws<span class="w"> </span>logs<span class="w"> </span>describe-log-groups<span class="w"> </span>--log-group-name-prefix<span class="w"> </span><span class="s2">"/aws/eks/unreal-cloud-ddc"</span>
 
 <span class="c1"># Monitor ScyllaDB metrics</span>
 curl<span class="w"> </span>http://scylla-ip:9180/metrics
-</code></pre></div></p>
+</code></pre></div>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>

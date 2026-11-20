@@ -55,22 +55,11 @@ resource "aws_security_group" "unreal_ddc_load_balancer_access_security_group_re
 
   tags = local.tags
 }
-resource "aws_vpc_security_group_ingress_rule" "unreal_ddc_load_balancer_http_ingress_rule_region_1" {
-  for_each          = toset(local.client_access_cidrs)
-  region            = var.regions[0]
-  from_port         = 80
-  to_port           = 80
-  ip_protocol       = "tcp"
-  cidr_ipv4         = each.value
-  security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
-  description       = "Allow client access to the Unreal Cloud DDC and monitoring load balancers"
-}
-
 resource "aws_vpc_security_group_ingress_rule" "unreal_ddc_load_balancer_http2_ingress_rule_region_1" {
   for_each          = toset(local.client_access_cidrs)
   region            = var.regions[0]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "tcp"
   cidr_ipv4         = each.value
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
@@ -122,22 +111,11 @@ resource "aws_security_group" "unreal_ddc_load_balancer_access_security_group_re
 }
 
 
-resource "aws_vpc_security_group_ingress_rule" "unreal_ddc_load_balancer_http_ingress_rule_region_2" {
-  for_each          = toset(local.client_access_cidrs)
-  region            = var.regions[1]
-  from_port         = 80
-  to_port           = 80
-  ip_protocol       = "tcp"
-  cidr_ipv4         = each.value
-  security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
-  description       = "Allow client access to the Unreal Cloud DDC and monitoring load balancers"
-}
-
 resource "aws_vpc_security_group_ingress_rule" "unreal_ddc_load_balancer_http2_ingress_rule_region_2" {
   for_each          = toset(local.client_access_cidrs)
   region            = var.regions[1]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "tcp"
   cidr_ipv4         = each.value
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
@@ -266,12 +244,14 @@ module "unreal_cloud_ddc_infra_region_1" {
 
 # Security groups for cross region communication
 
+# Only the ScyllaDB ports the peer region needs: inter-node traffic and CQL.
 resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_1_to_2" {
-  description       = "Allow communication between scyllaDB nodes across VPCs"
+  for_each          = local.scylla_cross_region_ports
+  description       = "ScyllaDB from peer VPC: ${each.value}"
   region            = var.regions[0]
-  from_port         = 0
-  to_port           = 65535
-  ip_protocol       = "TCP"
+  from_port         = each.key
+  to_port           = each.key
+  ip_protocol       = "tcp"
   cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = module.unreal_cloud_ddc_infra_region_1.scylla_security_group
 }
@@ -309,6 +289,7 @@ module "unreal_cloud_ddc_intra_cluster_region_1" {
     aws_replication_region = var.regions[1]
     ddc_region             = replace(var.regions[0], "-", "_")
     security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
+    certificate_arn        = aws_acm_certificate_validation.unreal_cloud_ddc_region_1.certificate_arn
     token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_1.secret_string
   }
 
@@ -361,12 +342,14 @@ module "unreal_cloud_ddc_infra_region_2" {
 }
 
 # cross region communication for scylla
+# Region 2 also lets the region 1 monitoring stack scrape its nodes.
 resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_2_to_1" {
-  description       = "Allow communication between scyllaDB nodes across VPCs"
+  for_each          = merge(local.scylla_cross_region_ports, local.scylla_monitoring_ports)
+  description       = "ScyllaDB from peer VPC: ${each.value}"
   region            = var.regions[1]
-  from_port         = 0
-  to_port           = 65535
-  ip_protocol       = "TCP"
+  from_port         = each.key
+  to_port           = each.key
+  ip_protocol       = "tcp"
   cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = module.unreal_cloud_ddc_infra_region_2.scylla_security_group
 }
@@ -376,8 +359,8 @@ resource "aws_vpc_security_group_ingress_rule" "scylla_db_region_2_to_1" {
 resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2" {
   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
   region            = var.regions[0]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "TCP"
   cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
@@ -386,8 +369,8 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
 resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_1_to_lb_region_2_http" {
   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
   region            = var.regions[0]
-  from_port         = 80
-  to_port           = 80
+  from_port         = 443
+  to_port           = 443
   ip_protocol       = "TCP"
   cidr_ipv4         = local.vpc_cidr_block_region_2
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
@@ -397,8 +380,8 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
 resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_2_to_lb_region_1" {
   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
   region            = var.regions[1]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "TCP"
   cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
@@ -407,8 +390,8 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
 resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_2_to_lb_region_1_http" {
   description       = "Allow communication between unreal cloud ddc clusters via load balancers"
   region            = var.regions[1]
-  from_port         = 80
-  to_port           = 80
+  from_port         = 443
+  to_port           = 443
   ip_protocol       = "TCP"
   cidr_ipv4         = local.vpc_cidr_block_region_1
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
@@ -416,11 +399,11 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_cluster_region_
 
 # The DDC NLBs are internet-facing, so cross-region replication arrives from the
 # peer VPC's NAT gateway public IP, not its VPC CIDR.
-resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to_lb_region_1_80" {
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to_lb_region_1_443" {
   description       = "Allow Unreal Cloud DDC replication from the peer region NAT gateway"
   region            = var.regions[0]
-  from_port         = 80
-  to_port           = 80
+  from_port         = 443
+  to_port           = 443
   ip_protocol       = "TCP"
   cidr_ipv4         = "${module.unreal_cloud_ddc_vpc_region_2.nat_gateway_public_ip}/32"
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
@@ -428,11 +411,11 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to
 
 # The DDC NLBs are internet-facing, so cross-region replication arrives from the
 # peer VPC's NAT gateway public IP, not its VPC CIDR.
-resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to_lb_region_1_8080" {
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to_lb_region_1_8443" {
   description       = "Allow Unreal Cloud DDC replication from the peer region NAT gateway"
   region            = var.regions[0]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "TCP"
   cidr_ipv4         = "${module.unreal_cloud_ddc_vpc_region_2.nat_gateway_public_ip}/32"
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_1.id
@@ -440,11 +423,11 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_2_nat_to
 
 # The DDC NLBs are internet-facing, so cross-region replication arrives from the
 # peer VPC's NAT gateway public IP, not its VPC CIDR.
-resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_1_nat_to_lb_region_2_80" {
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_1_nat_to_lb_region_2_443" {
   description       = "Allow Unreal Cloud DDC replication from the peer region NAT gateway"
   region            = var.regions[1]
-  from_port         = 80
-  to_port           = 80
+  from_port         = 443
+  to_port           = 443
   ip_protocol       = "TCP"
   cidr_ipv4         = "${module.unreal_cloud_ddc_vpc_region_1.nat_gateway_public_ip}/32"
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
@@ -452,11 +435,11 @@ resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_1_nat_to
 
 # The DDC NLBs are internet-facing, so cross-region replication arrives from the
 # peer VPC's NAT gateway public IP, not its VPC CIDR.
-resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_1_nat_to_lb_region_2_8080" {
+resource "aws_vpc_security_group_ingress_rule" "unreal_cloud_ddc_region_1_nat_to_lb_region_2_8443" {
   description       = "Allow Unreal Cloud DDC replication from the peer region NAT gateway"
   region            = var.regions[1]
-  from_port         = 8080
-  to_port           = 8080
+  from_port         = 8443
+  to_port           = 8443
   ip_protocol       = "TCP"
   cidr_ipv4         = "${module.unreal_cloud_ddc_vpc_region_1.nat_gateway_public_ip}/32"
   security_group_id = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
@@ -496,6 +479,7 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
     aws_replication_region = var.regions[0]
     ddc_region             = replace(var.regions[1], "-", "_")
     security_group_ids     = aws_security_group.unreal_ddc_load_balancer_access_security_group_region_2.id
+    certificate_arn        = aws_acm_certificate_validation.unreal_cloud_ddc_region_2.certificate_arn
     token                  = data.aws_secretsmanager_secret_version.unreal_cloud_ddc_token_region_2.secret_string
   }
 
@@ -511,6 +495,7 @@ module "unreal_cloud_ddc_intra_cluster_region_2" {
 # We need this because in order to ensure the local replication strategy is correct
 # Note we have to alter the table 3 times due to a limitation where only one DC's RF can be changed at a time and not by more than 1
 resource "aws_ssm_document" "unreal_cloud_ddc_scylla_update_document" {
+  provider = aws.region-1
   depends_on = [
     module.unreal_cloud_ddc_intra_cluster_region_1,
     module.unreal_cloud_ddc_intra_cluster_region_2
@@ -543,6 +528,7 @@ DOC
 }
 
 resource "aws_ssm_association" "unreal_cloud_ddc_scylla_db_association" {
+  provider = aws.region-1
   depends_on = [
     aws_ssm_document.unreal_cloud_ddc_scylla_update_document,
     module.unreal_cloud_ddc_intra_cluster_region_1,
@@ -554,5 +540,3 @@ resource "aws_ssm_association" "unreal_cloud_ddc_scylla_db_association" {
     values = [module.unreal_cloud_ddc_infra_region_1.scylla_seed_instance_id]
   }
 }
-
-

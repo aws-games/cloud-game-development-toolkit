@@ -3061,6 +3061,8 @@
       
         
       
+        
+      
     
     
     
@@ -3214,6 +3216,34 @@
     
   
     Unreal Cloud DDC Single Region
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../samples/unreal-cloud-ddc-multi-region/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unreal Cloud DDC Multi Region
   
 
     
@@ -3679,22 +3709,26 @@
 <h2 id="authentication-security">Authentication &amp; Security<a class="headerlink" href="#authentication-security" title="Permanent link">&para;</a></h2>
 <h3 id="bearer-token-authentication">Bearer Token Authentication<a class="headerlink" href="#bearer-token-authentication" title="Permanent link">&para;</a></h3>
 <p>The Unreal Cloud DDC uses bearer tokens to authenticate API requests and prevent unauthorized access to cached game assets.</p>
-<p><strong>How Bearer Tokens Work:</strong>
-- Auto-generated 64-character secure token stored in AWS Secrets Manager
-- Required in the <code>Authorization: ServiceAccount &lt;token&gt;</code> header for all API calls
-- Validates client access to read/write cached data
-- Replicated across regions in multi-region deployments</p>
-<p><strong>Token Usage Example:</strong>
+<p><strong>How Bearer Tokens Work:</strong></p>
+<ul>
+<li>Auto-generated 64-character secure token stored in AWS Secrets Manager</li>
+<li>Required in the <code>Authorization: ServiceAccount &lt;token&gt;</code> header for all API calls</li>
+<li>Validates client access to read/write cached data</li>
+<li>Replicated across regions in multi-region deployments</li>
+</ul>
+<p><strong>Token Usage Example:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get token from Secrets Manager</span>
 <span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>unreal-cloud-ddc-bearer-token<span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>
 
 <span class="c1"># Use in API calls</span>
 curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://ddc-url/api/v1/refs/ddc/default/...
-</code></pre></div></p>
-<p><strong>Production Recommendations:</strong>
-- Use OIDC authentication instead of bearer tokens for enhanced security
-- Rotate tokens regularly
-- Store tokens securely and never commit to version control</p>
+</code></pre></div>
+<p><strong>Production Recommendations:</strong></p>
+<ul>
+<li>Use OIDC authentication instead of bearer tokens for enhanced security</li>
+<li>Rotate tokens regularly</li>
+<li>Store tokens securely and never commit to version control</li>
+</ul>
 <h3 id="github-container-registry-access">GitHub Container Registry Access<a class="headerlink" href="#github-container-registry-access" title="Permanent link">&para;</a></h3>
 <p><strong>Why Manual Setup is Required:</strong>
 Access to Epic's Unreal Cloud DDC container images requires specific ECR pull-through cache configuration that cannot be automated due to AWS naming requirements.</p>
@@ -3719,21 +3753,25 @@ Access to Epic's Unreal Cloud DDC container images requires specific ECR pull-th
 </ol>
 <p>⚠️ <strong>Critical</strong>: Both permissions are mandatory. Missing either will cause container pull failures.</p>
 <ol>
-<li><strong>Create AWS Secret (Required Format)</strong>
-   <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
+<li><strong>Create AWS Secret (Required Format)</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--name<span class="w"> </span><span class="s2">"ecr-pullthroughcache/github-credentials"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--secret-string<span class="w"> </span><span class="s1">'{"username":"YOUR-GITHUB-USERNAME","access-token":"YOUR-GITHUB-TOKEN"}'</span>
-</code></pre></div></li>
-</ol>
-<p><strong>Critical Requirements:</strong>
-- Secret name <strong>must</strong> be prefixed with <code>ecr-pullthroughcache/</code>
-- JSON fields <strong>must</strong> be named <code>username</code> and <code>access-token</code>
-- These naming requirements are enforced by AWS ECR pull-through cache</p>
-<ol>
-<li><strong>Pass Secret ARN to Module</strong>
-   <div class="highlight"><pre><span></span><code><span class="na">ghcr_credentials_secret_manager_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:region:account:secret:ecr-pullthroughcache/github-credentials-XXXXXX"</span>
-</code></pre></div></li>
-</ol>
+</code></pre></div>
+<p><strong>Critical Requirements:</strong></p>
+<ul>
+<li>Secret name <strong>must</strong> be prefixed with <code>ecr-pullthroughcache/</code></li>
+<li>JSON fields <strong>must</strong> be named <code>username</code> and <code>access-token</code></li>
+<li>
+<p>These naming requirements are enforced by AWS ECR pull-through cache</p>
+</li>
+<li>
+<p><strong>Pass Secret ARN to Module</strong></p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="na">ghcr_credentials_secret_manager_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"arn:aws:secretsmanager:region:account:secret:ecr-pullthroughcache/github-credentials-XXXXXX"</span>
+</code></pre></div>
 <h2 id="networking-architecture">Networking Architecture<a class="headerlink" href="#networking-architecture" title="Permanent link">&para;</a></h2>
 <h3 id="single-region-deployment">Single Region Deployment<a class="headerlink" href="#single-region-deployment" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3752,15 +3790,21 @@ Access to Epic's Unreal Cloud DDC container images requires specific ECR pull-th
 <li><strong>Security Groups</strong>: Cross-region rules for ScyllaDB cluster ports (7000, 9042, etc.)</li>
 </ul>
 <h3 id="security-group-configuration">Security Group Configuration<a class="headerlink" href="#security-group-configuration" title="Permanent link">&para;</a></h3>
-<p><strong>EKS Cluster Security Groups:</strong>
-- Inbound: HTTPS (443) from load balancer
-- Outbound: All traffic for container registry and S3 access</p>
-<p><strong>ScyllaDB Security Groups:</strong>
-- Inbound: Cluster communication ports (7000, 7001, 9042, 9100, 9142, 9160, 9180, 10000)
-- Cross-region: Same ports from peer VPC CIDR blocks</p>
-<p><strong>Load Balancer Security Groups:</strong>
-- Inbound: HTTP (80), HTTPS (443) from allowed CIDR blocks
-- Outbound: To EKS cluster on application ports</p>
+<p><strong>EKS Cluster Security Groups:</strong></p>
+<ul>
+<li>Inbound: HTTPS (443) from load balancer</li>
+<li>Outbound: All traffic for container registry and S3 access</li>
+</ul>
+<p><strong>ScyllaDB Security Groups:</strong></p>
+<ul>
+<li>Inbound: Cluster communication ports (7000, 7001, 9042, 9100, 9142, 9160, 9180, 10000)</li>
+<li>Cross-region: Same ports from peer VPC CIDR blocks</li>
+</ul>
+<p><strong>Load Balancer Security Groups:</strong></p>
+<ul>
+<li>Inbound: HTTP (80), HTTPS (443) from allowed CIDR blocks</li>
+<li>Outbound: To EKS cluster on application ports</li>
+</ul>
 <h2 id="customizing-your-deployment">Customizing Your Deployment<a class="headerlink" href="#customizing-your-deployment" title="Permanent link">&para;</a></h2>
 <h3 id="oidc-authentication-production-recommended">OIDC Authentication (Production Recommended)<a class="headerlink" href="#oidc-authentication-production-recommended" title="Permanent link">&para;</a></h3>
 <p><strong>OIDC vs Bearer Token Comparison:</strong></p>
@@ -3809,47 +3853,53 @@ Access to Epic's Unreal Cloud DDC container images requires specific ECR pull-th
 <p>Note the client ID and client secret</p>
 </li>
 <li>
-<p><strong>Create AWS Secret</strong>
-   <div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--name<span class="w"> </span><span class="s2">"external-idp-oidc-credentials"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--secret-string<span class="w"> </span><span class="s1">'{"client_secret":"YOUR-CLIENT-SECRET","client_id":"YOUR-CLIENT-ID"}'</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Configure Module Variable</strong>
-   <div class="highlight"><pre><span></span><code><span class="na">oidc_credentials_secret_manager_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"aws!arn:aws:secretsmanager:region:account:secret:external-idp-oidc-credentials-XXXXXX|client_secret"</span>
-</code></pre></div></p>
+<p><strong>Create AWS Secret</strong></p>
 </li>
 </ol>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>secretsmanager<span class="w"> </span>create-secret<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span><span class="s2">"external-idp-oidc-credentials"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--secret-string<span class="w"> </span><span class="s1">'{"client_secret":"YOUR-CLIENT-SECRET","client_id":"YOUR-CLIENT-ID"}'</span>
+</code></pre></div>
+<ol>
+<li><strong>Configure Module Variable</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="na">oidc_credentials_secret_manager_arn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"aws!arn:aws:secretsmanager:region:account:secret:external-idp-oidc-credentials-XXXXXX|client_secret"</span>
+</code></pre></div>
 <p><strong>Format Requirements:</strong>
    - Prefix: <code>aws!</code>
    - Suffix: <code>|&lt;json-field&gt;</code> (e.g., <code>|client_secret</code>)</p>
 <p><strong>Bearer Token Alternative (Development Only):</strong>
-For development environments, you can use the auto-generated bearer token:
+For development environments, you can use the auto-generated bearer token:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">unreal_cloud_ddc_helm_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="na">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">data.aws_secretsmanager_secret_version.ddc_token.secret_string</span>
 <span class="c1">  # Other configuration...</span>
 <span class="p">}</span>
-</code></pre></div></p>
+</code></pre></div>
 <p>⚠️ <strong>Security Warning</strong>: Bearer tokens should never be used in production environments due to their static nature and security limitations.</p>
 <h3 id="chart-values-helm-configurations">Chart Values (Helm Configurations)<a class="headerlink" href="#chart-values-helm-configurations" title="Permanent link">&para;</a></h3>
-<p>The <code>unreal_cloud_ddc_helm_values</code> variable provides an open-ended way to configure the Unreal Cloud DDC deployment through the use of YAML files. We generally recommend you to use a template file. An example of a template file configuration can be found in the <code>unreal-cloud-ddc-single-region</code> sample located <a href="/samples/unreal-cloud-ddc-single-region/assets/unreal_cloud_ddc_single_region.yaml">here</a>. You can also find additional example templates provided by Epic <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Helm/UnrealCloudDDC">here</a>.</p>
+<p>The <code>unreal_cloud_ddc_helm_values</code> variable provides an open-ended way to configure the Unreal Cloud DDC deployment through the use of YAML files. We generally recommend you to use a template file. An example of a template file configuration can be found in the <code>unreal-cloud-ddc-single-region</code> sample located <a href="../../../../samples/unreal-cloud-ddc-single-region/assets/unreal_cloud_ddc_single_region.yaml">here</a>. You can also find additional example templates provided by Epic <a href="https://github.com/EpicGames/UnrealEngine/tree/release/Engine/Source/Programs/UnrealCloudDDC/Helm/UnrealCloudDDC">here</a>.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-deployment-issues">Common Deployment Issues<a class="headerlink" href="#common-deployment-issues" title="Permanent link">&para;</a></h3>
-<p><strong>Helm Chart Deployment Failures:</strong>
-- <strong>Symptom</strong>: Helm release stuck in pending or failed state
-- <strong>Cause</strong>: Missing GitHub credentials or incorrect secret format
-- <strong>Solution</strong>: Verify ECR pull-through cache secret exists and has correct format</p>
-<p><strong>Pod CrashLoopBackOff:</strong>
-- <strong>Symptom</strong>: DDC pods continuously restarting
-- <strong>Cause</strong>: ScyllaDB connection issues or authentication failures
-- <strong>Solution</strong>: Check ScyllaDB connectivity and bearer token configuration</p>
-<p><strong>Authentication Errors:</strong>
-- <strong>Symptom</strong>: HTTP 401 responses from DDC API
-- <strong>Cause</strong>: Invalid or missing bearer token
-- <strong>Solution</strong>: Verify token in Secrets Manager and Helm configuration</p>
+<p><strong>Helm Chart Deployment Failures:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: Helm release stuck in pending or failed state</li>
+<li><strong>Cause</strong>: Missing GitHub credentials or incorrect secret format</li>
+<li><strong>Solution</strong>: Verify ECR pull-through cache secret exists and has correct format</li>
+</ul>
+<p><strong>Pod CrashLoopBackOff:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: DDC pods continuously restarting</li>
+<li><strong>Cause</strong>: ScyllaDB connection issues or authentication failures</li>
+<li><strong>Solution</strong>: Check ScyllaDB connectivity and bearer token configuration</li>
+</ul>
+<p><strong>Authentication Errors:</strong></p>
+<ul>
+<li><strong>Symptom</strong>: HTTP 401 responses from DDC API</li>
+<li><strong>Cause</strong>: Invalid or missing bearer token</li>
+<li><strong>Solution</strong>: Verify token in Secrets Manager and Helm configuration</li>
+</ul>
 <h3 id="validation-commands">Validation Commands<a class="headerlink" href="#validation-commands" title="Permanent link">&para;</a></h3>
-<p><strong>Check Pod Status:</strong>
+<p><strong>Check Pod Status:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Configure kubectl</span>
 aws<span class="w"> </span>eks<span class="w"> </span>update-kubeconfig<span class="w"> </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span>--name<span class="w"> </span>&lt;cluster-name&gt;
 
@@ -3858,35 +3908,39 @@ kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> <
 
 <span class="c1"># View pod logs</span>
 kubectl<span class="w"> </span>logs<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc<span class="w"> </span>--tail<span class="o">=</span><span class="m">50</span>
-</code></pre></div></p>
-<p><strong>Test API Connectivity:</strong>
+</code></pre></div>
+<p><strong>Test API Connectivity:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get bearer token</span>
 <span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span>--secret-id<span class="w"> </span>unreal-cloud-ddc-bearer-token<span class="w"> </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span>
 
 <span class="c1"># Test API endpoint</span>
 curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: ServiceAccount </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span>http://&lt;load-balancer-url&gt;/api/v1/refs/ddc/default/test
-</code></pre></div></p>
-<p><strong>Verify ScyllaDB Configuration:</strong>
+</code></pre></div>
+<p><strong>Verify ScyllaDB Configuration:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check from within DDC pod</span>
 <span class="nv">POD_NAME</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>unreal-cloud-ddc<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.items[0].metadata.name}'</span><span class="k">)</span>
 kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc<span class="w"> </span><span class="nv">$POD_NAME</span><span class="w"> </span>--<span class="w"> </span>cqlsh<span class="w"> </span>-e<span class="w"> </span><span class="s2">"SELECT data_center FROM system.local;"</span>
-</code></pre></div></p>
-<p><strong>Monitor Helm Releases:</strong>
+</code></pre></div>
+<p><strong>Monitor Helm Releases:</strong></p>
 <div class="highlight"><pre><span></span><code><span class="c1"># List releases</span>
 helm<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
 
 <span class="c1"># Check release status</span>
 helm<span class="w"> </span>status<span class="w"> </span>unreal-cloud-ddc-initialize<span class="w"> </span>-n<span class="w"> </span>unreal-cloud-ddc
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="performance-optimization">Performance Optimization<a class="headerlink" href="#performance-optimization" title="Permanent link">&para;</a></h3>
-<p><strong>Load Balancer Configuration:</strong>
-- Use Network Load Balancer for better performance
-- Enable cross-zone load balancing
-- Configure appropriate health check settings</p>
-<p><strong>Resource Allocation:</strong>
-- NVME nodes: Use for high-performance caching
-- Worker nodes: Scale based on replication workload
-- System nodes: Ensure adequate resources for Kubernetes system components</p>
+<p><strong>Load Balancer Configuration:</strong></p>
+<ul>
+<li>Use Network Load Balancer for better performance</li>
+<li>Enable cross-zone load balancing</li>
+<li>Configure appropriate health check settings</li>
+</ul>
+<p><strong>Resource Allocation:</strong></p>
+<ul>
+<li>NVME nodes: Use for high-performance caching</li>
+<li>Worker nodes: Scale based on replication workload</li>
+<li>System nodes: Ensure adequate resources for Kubernetes system components</li>
+</ul>
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>

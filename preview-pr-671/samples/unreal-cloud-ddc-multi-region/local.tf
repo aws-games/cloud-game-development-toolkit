@@ -71,13 +71,6 @@ locals {
 }
 
 locals {
-  eks_endpoint_host_region_1   = replace(module.unreal_cloud_ddc_infra_region_1.cluster_endpoint, "https://", "")
-  eks_endpoint_host_region_2   = replace(module.unreal_cloud_ddc_infra_region_2.cluster_endpoint, "https://", "")
-  eks_provider_host_region_1   = var.eks_api_local_port_region_1 == null ? module.unreal_cloud_ddc_infra_region_1.cluster_endpoint : "https://127.0.0.1:${var.eks_api_local_port_region_1}"
-  eks_provider_host_region_2   = var.eks_api_local_port_region_2 == null ? module.unreal_cloud_ddc_infra_region_2.cluster_endpoint : "https://127.0.0.1:${var.eks_api_local_port_region_2}"
-  eks_tls_server_name_region_1 = var.eks_api_local_port_region_1 == null ? null : local.eks_endpoint_host_region_1
-  eks_tls_server_name_region_2 = var.eks_api_local_port_region_2 == null ? null : local.eks_endpoint_host_region_2
-
   # Explicit CIDRs win; otherwise fall back to the auto-detected /32.
   eks_public_access_cidrs = length(var.eks_public_access_cidrs) > 0 ? var.eks_public_access_cidrs : ["${chomp(data.http.public_ip.response_body)}/32"]
 }
@@ -97,4 +90,20 @@ locals {
     var.allowed_client_cidrs,
     var.allow_my_ip ? ["${chomp(data.http.public_ip.response_body)}/32"] : []
   ))
+}
+
+locals {
+  # ScyllaDB ports opened between the two VPCs (see ScyllaDB networking docs).
+  scylla_cross_region_ports = {
+    "7000"  = "inter-node RPC"
+    "7001"  = "inter-node RPC (TLS)"
+    "9042"  = "CQL"
+    "9142"  = "CQL (TLS)"
+    "19042" = "shard-aware CQL"
+    "19142" = "shard-aware CQL (TLS)"
+  }
+  scylla_monitoring_ports = {
+    "9100" = "node_exporter"
+    "9180" = "Prometheus API"
+  }
 }

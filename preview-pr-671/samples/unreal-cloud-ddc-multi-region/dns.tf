@@ -125,3 +125,76 @@ resource "aws_acm_certificate_validation" "scylla_monitoring_region_1" {
   certificate_arn         = aws_acm_certificate.scylla_monitoring_region_1.arn
   validation_record_fqdns = [for record in aws_route53_record.scylla_monitoring_cert_region_1 : record.fqdn]
 }
+
+##########################################
+# TLS certificates for the DDC NLBs
+##########################################
+
+# One certificate per region, for its regional name and the shared client name.
+resource "aws_acm_certificate" "unreal_cloud_ddc_region_1" {
+  region                    = var.regions[0]
+  domain_name               = local.ddc_region_hostnames[0]
+  subject_alternative_names = [local.ddc_dns_name]
+  validation_method         = "DNS"
+  tags                      = local.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_acm_certificate" "unreal_cloud_ddc_region_2" {
+  region                    = var.regions[1]
+  domain_name               = local.ddc_region_hostnames[1]
+  subject_alternative_names = [local.ddc_dns_name]
+  validation_method         = "DNS"
+  tags                      = local.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Both certificates share the client name, and ACM gives a domain the same
+# validation record in every region, so the records are de-duplicated by domain
+# (keys must be known at plan time).
+resource "aws_route53_record" "unreal_cloud_ddc_cert_validation" {
+  for_each = toset(concat(local.ddc_region_hostnames, [local.ddc_dns_name]))
+
+  allow_overwrite = true
+  zone_id         = data.aws_route53_zone.root.id
+  name            = local.ddc_cert_validation[each.key][0].resource_record_name
+  type            = local.ddc_cert_validation[each.key][0].resource_record_type
+  records         = [local.ddc_cert_validation[each.key][0].resource_record_value]
+  ttl             = 60
+}
+
+resource "aws_acm_certificate_validation" "unreal_cloud_ddc_region_1" {
+  region                  = var.regions[0]
+  certificate_arn         = aws_acm_certificate.unreal_cloud_ddc_region_1.arn
+  validation_record_fqdns = [for dvo in aws_acm_certificate.unreal_cloud_ddc_region_1.domain_validation_options : dvo.resource_record_name]
+  depends_on              = [aws_route53_record.unreal_cloud_ddc_cert_validation]
+  timeouts {
+    create = "15m"
+  }
+}
+
+resource "aws_acm_certificate_validation" "unreal_cloud_ddc_region_2" {
+  region                  = var.regions[1]
+  certificate_arn         = aws_acm_certificate.unreal_cloud_ddc_region_2.arn
+  validation_record_fqdns = [for dvo in aws_acm_certificate.unreal_cloud_ddc_region_2.domain_validation_options : dvo.resource_record_name]
+  depends_on              = [aws_route53_record.unreal_cloud_ddc_cert_validation]
+  timeouts {
+    create = "15m"
+  }
+}
+
+locals {
+  # Validation record per domain, from whichever certificate covers it.
+  ddc_cert_validation = {
+    for dvo in concat(
+      tolist(aws_acm_certificate.unreal_cloud_ddc_region_1.domain_validation_options),
+      tolist(aws_acm_certificate.unreal_cloud_ddc_region_2.domain_validation_options)
+    ) : dvo.domain_name => dvo...
+  }
+}
