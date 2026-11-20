@@ -86,6 +86,10 @@ locals {
       value = tostring(var.enable_new_agents_by_default)
     },
     {
+      name  = "Horde__ServerUrl"
+      value = "https://${var.fully_qualified_domain_name}"
+    },
+    {
       name  = "ASPNETCORE_ENVIRONMENT"
       value = var.environment
     },
