@@ -4324,7 +4324,17 @@ region 2 worker -&gt; https://&lt;name_prefix&gt;-&lt;region 1&gt;.&lt;zone&gt; 
 <li>One Secrets Manager secret <strong>in each Region</strong> with your GitHub credentials, as described below</li>
 </ul>
 <h3 id="github-credentials-secret">GitHub credentials secret<a class="headerlink" href="#github-credentials-secret" title="Permanent link">&para;</a></h3>
-<p>The intra-cluster module pulls the DDC image through an ECR pull-through cache, which reads GitHub credentials from Secrets Manager. Create one secret in each Region. The name must start with <code>ecr-pullthroughcache/</code>, and the value must use this format:</p>
+<p>The intra-cluster module pulls the DDC image through an ECR pull-through cache, which reads GitHub credentials from Secrets Manager.</p>
+<blockquote>
+<p>[!IMPORTANT]
+The GitHub token must be able to pull the Unreal Cloud DDC image from <code>ghcr.io/epicgames</code>. It needs at least:</p>
+<ul>
+<li>A <strong>personal access token (classic)</strong> with the <code>read:packages</code> scope. GitHub Packages does not accept fine-grained tokens.</li>
+<li>A GitHub account that is a member of the <code>EpicGames</code> organization, which you get by <a href="https://www.unrealengine.com/en-US/ue-on-github">linking your Epic Games and GitHub accounts</a>.</li>
+</ul>
+<p>Without both, the pull-through cache can't reach the image, so ECR never creates the <code>github/epicgames/unreal-cloud-ddc</code> repository. The DDC pods then stay in <code>ImagePullBackOff</code>, and <code>terraform apply</code> times out on the DDC Helm release.</p>
+</blockquote>
+<p>Create one secret in each Region. The name must start with <code>ecr-pullthroughcache/</code>, and the value must use this format:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"username"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GITHUB-USER-NAME-PLACEHOLDER"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"accessToken"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GITHUB-ACCESS-TOKEN-PLACEHOLDER"</span>
@@ -4546,6 +4556,11 @@ helm<span class="w"> </span>status<span class="w"> </span>unreal-cloud-ddc-initi
 <td><code>curl</code> to the DDC endpoint times out</td>
 <td>Your IP is not in <code>allowed_client_cidrs</code>, or latency routing sent you to the other Region</td>
 <td>Add your IP range, or call <code>&lt;name_prefix&gt;-&lt;region&gt;.&lt;zone&gt;</code> directly</td>
+</tr>
+<tr>
+<td>DDC pods in <code>ImagePullBackOff</code></td>
+<td>The GitHub token can't pull from <code>ghcr.io/epicgames</code></td>
+<td>See <a href="#github-credentials-secret">GitHub credentials secret</a></td>
 </tr>
 <tr>
 <td>Helm release times out after 15 minutes</td>
