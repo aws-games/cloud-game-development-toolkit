@@ -51,6 +51,11 @@ variable "region" {
   default     = "us-west-2"
 }
 
+variable "is_primary_region" {
+  description = "The AWS region that will be the primary region for your Unreal DDC deployment"
+  type        = bool
+  default     = true
+}
 variable "existing_security_groups" {
   description = "List of existing security groups to add to the monitoring and Unreal DDC load balancers"
   type        = list(string)
@@ -61,6 +66,11 @@ variable "existing_security_groups" {
 # ScyllaDB Configuration
 ########################################
 
+variable "scylla_replication_factor" {
+  type        = number
+  description = "How many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created."
+
+}
 variable "scylla_subnets" {
   type        = list(string)
   default     = []
@@ -72,6 +82,18 @@ variable "scylla_ami_name" {
   default     = "ScyllaDB 2026.3.1"
   description = "Name of the Scylla AMI to be used to get the AMI ID"
   nullable    = false
+}
+
+variable "existing_scylla_ips" {
+  type        = list(string)
+  default     = []
+  description = "List of existing ScyllaDB IPs to be used for the ScyllaDB instance"
+}
+
+variable "scylla_ips_by_region" {
+  type        = map(list(string))
+  default     = {}
+  description = "Map of ScyllaDB IPs organized by region for monitoring dashboard separation"
 }
 
 variable "scylla_instance_type" {
@@ -133,6 +155,12 @@ variable "scylla_monitoring_instance_storage" {
   default     = 20
   description = "Size of gp3 ebs volumes in GB attached to Scylla monitoring instance"
   nullable    = false
+}
+
+variable "existing_scylla_seed" {
+  type        = string
+  description = "The IP address of the seed instance of the ScyllaDB cluster"
+  default     = null
 }
 
 ########################################
@@ -395,4 +423,15 @@ variable "scylla_monitoring_lb_access_logs_prefix" {
   type        = string
   description = "Prefix to use for the access logs for the Scylla monitoring load balancer."
   default     = null
+}
+
+variable "load_balancer_name_prefix" {
+  type        = string
+  description = "Prefix for the fixed-name monitoring ALB and target group. Defaults to project_prefix. Set it when two deployments share an account and region; the target group name (<prefix>-scylla-monitoring-tg) must stay within 32 characters."
+  default     = null
+
+  validation {
+    condition     = var.load_balancer_name_prefix == null ? true : length(var.load_balancer_name_prefix) <= 11
+    error_message = "load_balancer_name_prefix must be at most 11 characters so <prefix>-scylla-monitoring-tg fits the 32 character target group limit."
+  }
 }

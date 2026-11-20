@@ -8,11 +8,13 @@ resource "aws_s3_bucket" "unreal_ddc_s3_bucket" {
   #checkov:skip=CKV_AWS_144:This bucket hosts ephemeral recreatable assets
   #checkov:skip=CKV_AWS_18:Logging bucket cna be configured by customer
   #checkov:skip=CKV_AWS_145:Causes issue with helm chart interacting with objects
+  region        = var.region
   bucket_prefix = "${local.name_prefix}-s3-bucket"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "unreal_ddc_s3_acls" {
+  region = var.region
   bucket = aws_s3_bucket.unreal_ddc_s3_bucket.id
 
   block_public_acls       = true
@@ -32,6 +34,7 @@ resource "random_string" "scylla_monitoring_lb_access_logs_bucket_suffix" {
 }
 resource "aws_s3_bucket" "scylla_monitoring_lb_access_logs_bucket" {
   count         = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  region        = var.region
   bucket        = "${local.name_prefix}-alb-access-logs-${random_string.scylla_monitoring_lb_access_logs_bucket_suffix[0].result}"
   force_destroy = var.debug
 
@@ -47,12 +50,14 @@ resource "aws_s3_bucket" "scylla_monitoring_lb_access_logs_bucket" {
 }
 resource "aws_s3_bucket_policy" "alb_access_logs_bucket_policy" {
   count  = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  region = var.region
   bucket = var.scylla_monitoring_lb_access_logs_bucket == null ? aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket[0].id : var.scylla_monitoring_lb_access_logs_bucket
   policy = data.aws_iam_policy_document.access_logs_bucket_alb_write[0].json
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_configuration" {
-  count = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  count  = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  region = var.region
   depends_on = [
     aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket[0]
   ]
@@ -74,7 +79,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_bucket_lifecycle_c
 }
 
 resource "aws_s3_bucket_public_access_block" "access_logs_bucket_public_block" {
-  count = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  count  = var.enable_scylla_monitoring_lb_access_logs && var.scylla_monitoring_lb_access_logs_bucket == null ? 1 : 0
+  region = var.region
   depends_on = [
     aws_s3_bucket.scylla_monitoring_lb_access_logs_bucket[0]
   ]

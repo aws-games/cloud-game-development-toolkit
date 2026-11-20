@@ -26,6 +26,7 @@ The Unreal Cloud Derived Data Cache (DDC) infrastructure module implements Epic'
     - Enables cross-region asset availability
     - Serves as a persistent backup layer
 
+
 ## Deployment Architecture
 
 <br/>
@@ -38,14 +39,57 @@ The Unreal Cloud Derived Data Cache (DDC) infrastructure module implements Epic'
 
 ### Network Infrastructure Requirements
 
-At a minimum, the Cloud DDC Module requires a Virtual Private Cloud (VPC) with a specific subnet configuration. The suggested configuration includes:
+The Cloud DDC Module requires a properly configured Virtual Private Cloud (VPC) with specific networking components:
 
-- 2 public subnets
-- 2 private subnets
-- Coverage across 2 Availability Zones
-- An S3 interface endpoint
+**Required VPC Configuration:**
 
-This architecture ensures high availability and secure communication patterns for your DDC infrastructure.
+- **2 public subnets** - For load balancers and NAT gateways
+- **2 private subnets** - For EKS nodes and ScyllaDB instances
+- **Coverage across 2 Availability Zones** - For high availability
+- **S3 VPC endpoint** - For efficient S3 access without internet routing
+- **Internet Gateway** - For outbound internet access
+- **NAT Gateways** - For private subnet internet access
+
+**Security Considerations:**
+
+- Private subnets are **strongly recommended** for all compute resources
+- Public subnets should only contain load balancers and NAT gateways
+- VPC endpoints reduce data transfer costs and improve security
+
+**Single vs Multi-Region Networking:**
+
+- **Single Region**: Standard VPC with local subnets
+- **Multi-Region**: Requires inter-region connectivity for ScyllaDB cluster communication
+  - **Options**: VPC Peering, Transit Gateway, AWS Direct Connect, or Site-to-Site VPN
+  - **Considerations**: Latency, bandwidth, and cost vary by connectivity method
+
+### Authentication & Security
+
+**Bearer Token Authentication:**
+The module automatically generates a secure bearer token stored in AWS Secrets Manager. This token:
+
+- Authenticates all API requests to the DDC service
+- Prevents unauthorized access to cached game assets
+- Is replicated across regions in multi-region deployments
+- Should be rotated regularly in production environments
+
+**GitHub Container Registry Access:**
+Access to Epic's Unreal Cloud DDC container images requires:
+
+1. **GitHub account linked to Epic account** - [Instructions here](https://www.unrealengine.com/en-US/ue-on-github)
+2. **GitHub Personal Access Token** with specific permissions:
+   - `read:packages` - Required to pull container images from GitHub Container Registry
+   - `repo` - Required to access the private Unreal Engine repository
+3. **Manual secret creation** - Required due to ECR pull-through cache naming requirements
+
+⚠️ **Permission Requirements**: Both `read:packages` and `repo` permissions are mandatory for accessing Unreal Engine container images.
+
+**Security Best Practices:**
+
+- Use OIDC authentication instead of bearer tokens in production
+- Enable VPC Flow Logs for network monitoring
+- Implement least-privilege IAM policies
+- Enable CloudTrail for API auditing
 
 <br/>
 
@@ -55,6 +99,7 @@ For example configurations, please see the [examples](https://github.com/aws-gam
 
 <!-- TODO -->
 <!-- ## Deployment Instructions -->
+
 
 #### Configuring Node Groups and ScyllaDB Deployment
 
@@ -66,11 +111,72 @@ EKS Node Group Configuration: `eks_node_group_subnets`
 
 The `eks_node_group_subnets` variable defines the subnet distribution for your EKS node groups. Each specified subnet serves as a potential target for node placement, providing granular control over the geographical distribution of your EKS infrastructure. Adding more subnets to this configuration increases deployment flexibility and enables broader availability zone coverage for your workloads at the cost of increased network complexity and potential inter-AZ data transfer charges.
 
+
 <br/>
 
 ScyllaDB Instance Distribution: `scylla_subnets`
 
 The `scylla_subnets` variable determines the deployment topology of your ScyllaDB instances. Each specified subnet receives a dedicated ScyllaDB instance, with multiple subnet configurations automatically establishing a distributed cluster architecture. Configurations of two or more subnets enable high availability and data resilience through native ScyllaDB clustering at the cost of increased infrastructure complexity and proportionally higher operational expenses.
+
+## Troubleshooting
+
+### Common Issues
+
+**ScyllaDB Cluster Formation Issues:**
+
+- **Symptom**: Nodes not joining cluster
+- **Cause**: Security group rules blocking cluster communication
+- **Solution**: Verify ports 7000, 7001, 9042 are open between ScyllaDB security groups
+
+**EKS Node Group Launch Failures:**
+
+- **Symptom**: Node groups stuck in CREATE_FAILED state
+- **Cause**: Insufficient subnet capacity or incorrect instance types
+- **Solution**: Check subnet available IPs and verify instance type availability in AZ
+
+**Monitoring Stack Access Issues:**
+
+- **Symptom**: Cannot access Grafana dashboard
+- **Cause**: Security group or certificate configuration
+- **Solution**: Verify ALB security group allows inbound HTTPS and certificate is valid
+
+### Validation Commands
+
+**Check ScyllaDB Cluster Status:**
+
+```bash
+# SSH to ScyllaDB instance via Session Manager
+aws ssm start-session --target i-1234567890abcdef0
+
+# Check cluster status
+nodetool status
+
+# Verify datacenter configuration
+cqlsh -e "SELECT data_center FROM system.local UNION SELECT data_center FROM system.peers;"
+```
+
+**Verify EKS Cluster Health:**
+
+```bash
+# Update kubeconfig
+aws eks update-kubeconfig --region us-east-1 --name unreal-cloud-ddc-cluster
+
+# Check node status
+kubectl get nodes
+
+# Verify system pods
+kubectl get pods -n kube-system
+```
+
+**Monitor Resource Usage:**
+
+```bash
+# Check EKS cluster logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/eks/unreal-cloud-ddc"
+
+# Monitor ScyllaDB metrics
+curl http://scylla-ip:9180/metrics
+```
 
 <!-- markdownlint-disable -->
 <!-- BEGIN_TF_DOCS -->
@@ -79,7 +185,7 @@ The `scylla_subnets` variable determines the deployment topology of your ScyllaD
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.73.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | ~> 3.7 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
@@ -87,7 +193,7 @@ The `scylla_subnets` variable determines the deployment topology of your ScyllaD
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >=6.73.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | ~> 3.7 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | ~> 4.0 |
 
@@ -169,13 +275,14 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_scylla_replication_factor"></a> [scylla\_replication\_factor](#input\_scylla\_replication\_factor) | How many copies of your data are stored across the cluster. This will reflect how many scylla worker nodes are created. | `number` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | String for VPC ID | `string` | n/a | yes |
 | <a name="input_alb_certificate_arn"></a> [alb\_certificate\_arn](#input\_alb\_certificate\_arn) | The ARN of the certificate to use on the ALB | `string` | `null` | no |
 | <a name="input_create_application_load_balancer"></a> [create\_application\_load\_balancer](#input\_create\_application\_load\_balancer) | Whether to create an application load balancer for the Scylla monitoring dashboard. | `bool` | `true` | no |
 | <a name="input_create_scylla_monitoring_stack"></a> [create\_scylla\_monitoring\_stack](#input\_create\_scylla\_monitoring\_stack) | Whether to create the Scylla monitoring stack | `bool` | `true` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | Enable debug mode | `bool` | `false` | no |
 | <a name="input_eks_cluster_cloudwatch_log_group_prefix"></a> [eks\_cluster\_cloudwatch\_log\_group\_prefix](#input\_eks\_cluster\_cloudwatch\_log\_group\_prefix) | Prefix to be used for the EKS cluster CloudWatch log group. | `string` | `"/aws/eks/unreal-cloud-ddc/cluster"` | no |
-| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br>  "api",<br>  "audit",<br>  "authenticator",<br>  "controllerManager",<br>  "scheduler"<br>]</pre> | no |
+| <a name="input_eks_cluster_logging_types"></a> [eks\_cluster\_logging\_types](#input\_eks\_cluster\_logging\_types) | List of EKS cluster log types to be enabled. | `list(string)` | <pre>[<br/>  "api",<br/>  "audit",<br/>  "authenticator",<br/>  "controllerManager",<br/>  "scheduler"<br/>]</pre> | no |
 | <a name="input_eks_cluster_private_access"></a> [eks\_cluster\_private\_access](#input\_eks\_cluster\_private\_access) | Allows private access of the EKS Control Plane from subnets attached to EKS Cluster | `bool` | `true` | no |
 | <a name="input_eks_cluster_public_access"></a> [eks\_cluster\_public\_access](#input\_eks\_cluster\_public\_access) | Allows public access of EKS Control Plane should be used with | `bool` | `false` | no |
 | <a name="input_eks_cluster_public_endpoint_access_cidr"></a> [eks\_cluster\_public\_endpoint\_access\_cidr](#input\_eks\_cluster\_public\_endpoint\_access\_cidr) | List of the CIDR Ranges you want to grant public access to the EKS Cluster's public endpoint. | `list(string)` | `[]` | no |
@@ -183,16 +290,20 @@ No modules.
 | <a name="input_enable_scylla_monitoring_lb_access_logs"></a> [enable\_scylla\_monitoring\_lb\_access\_logs](#input\_enable\_scylla\_monitoring\_lb\_access\_logs) | Whether to enable access logs for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_enable_scylla_monitoring_lb_deletion_protection"></a> [enable\_scylla\_monitoring\_lb\_deletion\_protection](#input\_enable\_scylla\_monitoring\_lb\_deletion\_protection) | Whether to enable deletion protection for the Scylla monitoring load balancer. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | The current environment (e.g. dev, prod, etc.) | `string` | `"dev"` | no |
+| <a name="input_existing_scylla_ips"></a> [existing\_scylla\_ips](#input\_existing\_scylla\_ips) | List of existing ScyllaDB IPs to be used for the ScyllaDB instance | `list(string)` | `[]` | no |
+| <a name="input_existing_scylla_seed"></a> [existing\_scylla\_seed](#input\_existing\_scylla\_seed) | The IP address of the seed instance of the ScyllaDB cluster | `string` | `null` | no |
 | <a name="input_existing_security_groups"></a> [existing\_security\_groups](#input\_existing\_security\_groups) | List of existing security groups to add to the monitoring and Unreal DDC load balancers | `list(string)` | `[]` | no |
 | <a name="input_internal_facing_application_load_balancer"></a> [internal\_facing\_application\_load\_balancer](#input\_internal\_facing\_application\_load\_balancer) | Whether the application load balancer should be internal-facing. | `bool` | `false` | no |
+| <a name="input_is_primary_region"></a> [is\_primary\_region](#input\_is\_primary\_region) | The AWS region that will be the primary region for your Unreal DDC deployment | `bool` | `true` | no |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | Kubernetes version to be used by the EKS cluster. | `string` | `"1.37"` | no |
+| <a name="input_load_balancer_name_prefix"></a> [load\_balancer\_name\_prefix](#input\_load\_balancer\_name\_prefix) | Prefix for the fixed-name monitoring ALB and target group. Defaults to project\_prefix. Set it when two deployments share an account and region; the target group name (<prefix>-scylla-monitoring-tg) must stay within 32 characters. | `string` | `null` | no |
 | <a name="input_monitoring_application_load_balancer_subnets"></a> [monitoring\_application\_load\_balancer\_subnets](#input\_monitoring\_application\_load\_balancer\_subnets) | The subnets in which the ALB will be deployed | `list(string)` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Unreal Cloud DDC Workload Name | `string` | `"unreal-cloud-ddc"` | no |
 | <a name="input_nvme_managed_node_desired_size"></a> [nvme\_managed\_node\_desired\_size](#input\_nvme\_managed\_node\_desired\_size) | Desired number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_instance_type"></a> [nvme\_managed\_node\_instance\_type](#input\_nvme\_managed\_node\_instance\_type) | Nvme managed node group instance type | `string` | `"i3en.large"` | no |
 | <a name="input_nvme_managed_node_max_size"></a> [nvme\_managed\_node\_max\_size](#input\_nvme\_managed\_node\_max\_size) | Max number of nvme managed node group instances | `number` | `2` | no |
 | <a name="input_nvme_managed_node_min_size"></a> [nvme\_managed\_node\_min\_size](#input\_nvme\_managed\_node\_min\_size) | Min number of nvme managed node group instances | `number` | `1` | no |
-| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br>  "unreal-cloud-ddc/node-type": "nvme"<br>}</pre> | no |
+| <a name="input_nvme_node_group_label"></a> [nvme\_node\_group\_label](#input\_nvme\_node\_group\_label) | Label applied to nvme node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "nvme"<br/>}</pre> | no |
 | <a name="input_project_prefix"></a> [project\_prefix](#input\_project\_prefix) | The project prefix for this workload. This is appended to the beginning of most resource names. | `string` | `"cgd"` | no |
 | <a name="input_region"></a> [region](#input\_region) | The AWS region to deploy to | `string` | `"us-west-2"` | no |
 | <a name="input_scylla_ami_name"></a> [scylla\_ami\_name](#input\_scylla\_ami\_name) | Name of the Scylla AMI to be used to get the AMI ID | `string` | `"ScyllaDB 2026.3.1"` | no |
@@ -200,6 +311,7 @@ No modules.
 | <a name="input_scylla_db_storage"></a> [scylla\_db\_storage](#input\_scylla\_db\_storage) | Size of gp3 ebs volumes attached to Scylla DBs | `number` | `100` | no |
 | <a name="input_scylla_db_throughput"></a> [scylla\_db\_throughput](#input\_scylla\_db\_throughput) | Throughput of gp3 ebs volumes attached to Scylla DBs | `number` | `200` | no |
 | <a name="input_scylla_instance_type"></a> [scylla\_instance\_type](#input\_scylla\_instance\_type) | The type and size of the Scylla instance. | `string` | `"i4i.2xlarge"` | no |
+| <a name="input_scylla_ips_by_region"></a> [scylla\_ips\_by\_region](#input\_scylla\_ips\_by\_region) | Map of ScyllaDB IPs organized by region for monitoring dashboard separation | `map(list(string))` | `{}` | no |
 | <a name="input_scylla_monitoring_instance_storage"></a> [scylla\_monitoring\_instance\_storage](#input\_scylla\_monitoring\_instance\_storage) | Size of gp3 ebs volumes in GB attached to Scylla monitoring instance | `number` | `20` | no |
 | <a name="input_scylla_monitoring_instance_type"></a> [scylla\_monitoring\_instance\_type](#input\_scylla\_monitoring\_instance\_type) | The type and size of the Scylla monitoring instance. | `string` | `"t3.xlarge"` | no |
 | <a name="input_scylla_monitoring_lb_access_logs_bucket"></a> [scylla\_monitoring\_lb\_access\_logs\_bucket](#input\_scylla\_monitoring\_lb\_access\_logs\_bucket) | Name of the S3 bucket to store the access logs for the Scylla monitoring load balancer. | `string` | `null` | no |
@@ -209,13 +321,13 @@ No modules.
 | <a name="input_system_managed_node_instance_type"></a> [system\_managed\_node\_instance\_type](#input\_system\_managed\_node\_instance\_type) | Monitoring managed node group instance type. | `string` | `"m5.large"` | no |
 | <a name="input_system_managed_node_max_size"></a> [system\_managed\_node\_max\_size](#input\_system\_managed\_node\_max\_size) | Max number of system managed node group instances. | `number` | `2` | no |
 | <a name="input_system_managed_node_min_size"></a> [system\_managed\_node\_min\_size](#input\_system\_managed\_node\_min\_size) | Min number of system managed node group instances. | `number` | `1` | no |
-| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br>  "pool": "system-pool"<br>}</pre> | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br>  "IaC": "Terraform",<br>  "ModuleBy": "CGD-Toolkit",<br>  "ModuleName": "Unreal DDC"<br>}</pre> | no |
+| <a name="input_system_node_group_label"></a> [system\_node\_group\_label](#input\_system\_node\_group\_label) | Label applied to system node group | `map(string)` | <pre>{<br/>  "pool": "system-pool"<br/>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to resources. | `map(any)` | <pre>{<br/>  "IaC": "Terraform",<br/>  "ModuleBy": "CGD-Toolkit",<br/>  "ModuleName": "Unreal DDC"<br/>}</pre> | no |
 | <a name="input_worker_managed_node_desired_size"></a> [worker\_managed\_node\_desired\_size](#input\_worker\_managed\_node\_desired\_size) | Desired number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_instance_type"></a> [worker\_managed\_node\_instance\_type](#input\_worker\_managed\_node\_instance\_type) | Worker managed node group instance type. | `string` | `"c5.large"` | no |
 | <a name="input_worker_managed_node_max_size"></a> [worker\_managed\_node\_max\_size](#input\_worker\_managed\_node\_max\_size) | Max number of worker managed node group instances. | `number` | `1` | no |
 | <a name="input_worker_managed_node_min_size"></a> [worker\_managed\_node\_min\_size](#input\_worker\_managed\_node\_min\_size) | Min number of worker managed node group instances. | `number` | `0` | no |
-| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br>  "unreal-cloud-ddc/node-type": "worker"<br>}</pre> | no |
+| <a name="input_worker_node_group_label"></a> [worker\_node\_group\_label](#input\_worker\_node\_group\_label) | Label applied to worker node group. These will need to be matched in values for taints and tolerations for the worker pod definition. | `map(string)` | <pre>{<br/>  "unreal-cloud-ddc/node-type": "worker"<br/>}</pre> | no |
 
 ## Outputs
 
@@ -225,6 +337,7 @@ No modules.
 | <a name="output_cluster_certificate_authority_data"></a> [cluster\_certificate\_authority\_data](#output\_cluster\_certificate\_authority\_data) | Public key for the EKS Cluster |
 | <a name="output_cluster_endpoint"></a> [cluster\_endpoint](#output\_cluster\_endpoint) | EKS Cluster Endpoint |
 | <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Name of the EKS Cluster |
+| <a name="output_cluster_version"></a> [cluster\_version](#output\_cluster\_version) | EKS Cluster Version |
 | <a name="output_external_alb_dns_name"></a> [external\_alb\_dns\_name](#output\_external\_alb\_dns\_name) | DNS endpoint of Application Load Balancer (ALB) |
 | <a name="output_external_alb_zone_id"></a> [external\_alb\_zone\_id](#output\_external\_alb\_zone\_id) | Zone ID for internet facing load balancer |
 | <a name="output_nvme_node_group_label"></a> [nvme\_node\_group\_label](#output\_nvme\_node\_group\_label) | Label for the NVME node group |
@@ -232,6 +345,9 @@ No modules.
 | <a name="output_peer_security_group_id"></a> [peer\_security\_group\_id](#output\_peer\_security\_group\_id) | ID of the Peer Security Group |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Bucket to be used for the Unreal Cloud DDC assets |
 | <a name="output_scylla_ips"></a> [scylla\_ips](#output\_scylla\_ips) | IPs of the Scylla EC2 instances |
+| <a name="output_scylla_security_group"></a> [scylla\_security\_group](#output\_scylla\_security\_group) | ScyllaDB security group id |
+| <a name="output_scylla_seed"></a> [scylla\_seed](#output\_scylla\_seed) | IP of the Scylla Seed |
+| <a name="output_scylla_seed_instance_id"></a> [scylla\_seed\_instance\_id](#output\_scylla\_seed\_instance\_id) | Instance ID of scylla seed node |
 | <a name="output_system_node_group_label"></a> [system\_node\_group\_label](#output\_system\_node\_group\_label) | Label for the System node group |
 | <a name="output_worker_node_group_label"></a> [worker\_node\_group\_label](#output\_worker\_node\_group\_label) | Label for the Worker node group |
 <!-- END_TF_DOCS -->
