@@ -1,7 +1,7 @@
 variable "github_credential_arn" {
   type        = string
   sensitive   = true
-  description = "Github Credential ARN"
+  description = "ARN of the secret in AWS Secrets Manager corresponding to your GitHub credentials (username and accessToken). This is used to allow access to the Unreal Cloud DDC repository in GitHub"
 }
 
 variable "allow_my_ip" {
@@ -68,4 +68,9 @@ variable "ebs_csi_use_pod_identity" {
     accounts whose Organization SCP/RCP denies sts:AssumeRoleWithWebIdentity.
     Set to false for the legacy IRSA path (for example Fargate or Windows nodes).
   EOT
+}
+
+variable "route53_public_hosted_zone_name" {
+  type        = string
+  description = "The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created."
 }

@@ -87,3 +87,6 @@ id_ed25519.pub
 CLAUDE.md
 .claude/
 scratch/
+
+# Local working notes
+modules/unreal/unreal-cloud-ddc/TODO.md

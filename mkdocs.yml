@@ -155,6 +155,7 @@ nav:
       - Unreal Horde Build Pipeline: samples/unreal-horde-build-pipeline/README.md
       - Unity Build Pipeline: samples/unity-build-pipeline/README.md
       - Unreal Cloud DDC Single Region: samples/unreal-cloud-ddc-single-region/README.md
+      - Unreal Cloud DDC Multi Region: samples/unreal-cloud-ddc-multi-region/README.md
   - Changelog: docs/changelog.md
   - Security: docs/security.md
   - Contributing: docs/contributing.md

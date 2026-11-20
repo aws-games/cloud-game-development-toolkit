@@ -11,7 +11,7 @@ The [Unreal Cloud DDC Intra Cluster module](../../modules/unreal/unreal-cloud-dd
 ```json
 {
   "username":"GITHUB-USER-NAME-PLACEHOLDER",
-  "access-token":"GITHUB-ACCESS-TOKEN-PLACEHOLDER"
+  "accessToken":"GITHUB-ACCESS-TOKEN-PLACEHOLDER"
 }
 ```
 
@@ -49,6 +49,13 @@ to the intra-cluster module:
 ```hcl
 # terraform.tfvars — override if you need the legacy IRSA path
 ebs_csi_use_pod_identity = false
+```
+
+**Switching an existing deployment from IRSA to Pod Identity.** Clusters first deployed with an older version of this sample may have an EBS CSI add-on created with `preserve = true`. Deleting that add-on leaves `ebs-csi-controller-sa` with its `eks.amazonaws.com/role-arn` annotation. The AWS SDK prefers IRSA over Pod Identity, so the controller keeps failing with `AccessDenied` and the new add-on stays `CREATING`. If that happens, remove the annotation and restart the controller:
+
+```bash
+kubectl -n kube-system annotate sa ebs-csi-controller-sa eks.amazonaws.com/role-arn-
+kubectl -n kube-system rollout restart deployment ebs-csi-controller
 ```
 
 ### EKS API endpoint access
@@ -271,20 +278,21 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.89.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.73.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.26.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0, < 3.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.89.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.26.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.73.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.49.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
 
@@ -321,12 +329,18 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
-| <a name="input_route53_public_hosted_zone_name"></a> [route53\_public\_hosted\_zone\_name](#input\_route53\_public\_hosted\_zone\_name) | The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created. | `string` | n/a | yes |
 | <a name="input_allow_my_ip"></a> [allow\_my\_ip](#input\_allow\_my\_ip) | Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers | `bool` | `true` | no |
+| <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | ARN of the secret in AWS Secrets Manager corresponding to your GitHub credentials (username and accessToken). This is used to allow access to the Unreal Cloud DDC repository in GitHub | `string` | n/a | yes |
+| <a name="input_route53_public_hosted_zone_name"></a> [route53\_public\_hosted\_zone\_name](#input\_route53\_public\_hosted\_zone\_name) | The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created. | `string` | n/a | yes |
 
 ## Outputs
 
+| Name | Description |
+|------|-------------|
+| <a name="output_monitoring_url"></a> [monitoring\_url](#output\_monitoring\_url) | n/a |
+| <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
+| <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
+<!-- END_TF_DOCS -->
 | Name | Description |
 |------|-------------|
 | <a name="output_monitoring_url"></a> [monitoring\_url](#output\_monitoring\_url) | n/a |
@@ -339,20 +353,21 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.89.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.73.0 |
 | <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 1.26.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.9.0, < 3.0.0 |
 | <a name="requirement_http"></a> [http](#requirement\_http) | >= 3.4.5 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >= 2.24.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >=3.2.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.7.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.89.0 |
-| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | >= 1.26.0 |
-| <a name="provider_http"></a> [http](#provider\_http) | >= 3.4.5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.73.0 |
+| <a name="provider_awscc"></a> [awscc](#provider\_awscc) | 1.49.0 |
+| <a name="provider_http"></a> [http](#provider\_http) | 3.5.0 |
 
 ## Modules
 
@@ -389,9 +404,9 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_allow_my_ip"></a> [allow\_my\_ip](#input\_allow\_my\_ip) | Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers | `bool` | `true` | no |
 | <a name="input_github_credential_arn"></a> [github\_credential\_arn](#input\_github\_credential\_arn) | Github Credential ARN | `string` | n/a | yes |
 | <a name="input_route53_public_hosted_zone_name"></a> [route53\_public\_hosted\_zone\_name](#input\_route53\_public\_hosted\_zone\_name) | The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created. | `string` | n/a | yes |
+| <a name="input_allow_my_ip"></a> [allow\_my\_ip](#input\_allow\_my\_ip) | Automatically add your IP to the security groups allowing access to the Unreal DDC and SycllaDB Monitoring load balancers | `bool` | `true` | no |
 
 ## Outputs
 
@@ -401,4 +416,3 @@ This sample also deploys a ScyllaDB monitoring stack, enabling real-time insight
 | <a name="output_unreal_cloud_ddc_bearer_token_arn"></a> [unreal\_cloud\_ddc\_bearer\_token\_arn](#output\_unreal\_cloud\_ddc\_bearer\_token\_arn) | n/a |
 | <a name="output_unreal_ddc_url"></a> [unreal\_ddc\_url](#output\_unreal\_ddc\_url) | n/a |
 <!-- END_TF_DOCS -->
-<!-- markdownlint-enable -->
