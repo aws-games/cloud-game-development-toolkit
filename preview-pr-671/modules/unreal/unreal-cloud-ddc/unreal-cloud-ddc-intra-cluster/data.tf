@@ -16,6 +16,6 @@ data "aws_iam_openid_connect_provider" "oidc_provider" {
 
 data "aws_lb" "unreal_cloud_ddc_load_balancer" {
   depends_on = [helm_release.unreal_cloud_ddc_initialization]
-  name       = "cgd-unreal-cloud-ddc"
+  name       = var.unreal_cloud_ddc_load_balancer_name
   region     = var.region
 }

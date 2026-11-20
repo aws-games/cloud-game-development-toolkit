@@ -5,6 +5,10 @@ locals {
   })
 
   name_prefix = "${var.project_prefix}-${var.name}"
+
+  # Fixed-name load balancer resources (ALB, target group) are unique per account
+  # and region, so two deployments there need different prefixes.
+  load_balancer_name_prefix = coalesce(var.load_balancer_name_prefix, var.project_prefix)
   sg_rules_all = [
     { port : 7000, description : "ScyllaDB Inter-node communication (RPC)", protocol : "tcp" },
     { port : 7001, description : "ScyllaDB SSL inter-node communication (RPC)", protocol : "tcp" },
@@ -141,6 +145,10 @@ EOF
 
 # Set proper permissions
 sudo chmod 644 prometheus/scylla_servers.yml
+
+# Upstream bug: the Overview "Nodes" table query F (gossip live count) has no dc
+# filter, so every DC section lists the nodes of all DCs. Scope it to $dc.
+sudo sed -i 's|scylla_gossip_live{cluster=\\"$cluster\\"})by (instance)|scylla_gossip_live{cluster=\\"$cluster\\", dc=~\\"$dc\\"})by (instance)|' grafana/types.json grafana/build/*/scylla-overview.*.json
 
 cd /home/ec2-user/scylla-monitoring-4.9.4
 sudo ./start-all.sh -l -d /home/ec2-user/prometheus/data -a /home/ec2-user/prometheus/alertmanager

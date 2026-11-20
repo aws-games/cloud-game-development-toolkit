@@ -81,3 +81,20 @@ locals {
   # Explicit CIDRs win; otherwise fall back to the auto-detected /32.
   eks_public_access_cidrs = length(var.eks_public_access_cidrs) > 0 ? var.eks_public_access_cidrs : ["${chomp(data.http.public_ip.response_body)}/32"]
 }
+
+locals {
+  # Client-facing latency name, and one stable name per region. Each region's
+  # replicator is pointed at the other region's name at plan time, which breaks
+  # the old wait-for-the-peer-load-balancer cycle.
+  ddc_dns_name         = "${var.name_prefix}.${data.aws_route53_zone.root.name}"
+  ddc_region_hostnames = [for r in var.regions : "${var.name_prefix}-${r}.${data.aws_route53_zone.root.name}"]
+}
+
+locals {
+  # Who may reach the DDC NLBs and monitoring ALB: explicit CIDRs plus, when
+  # allow_my_ip is true, the single IP detected at apply time.
+  client_access_cidrs = distinct(concat(
+    var.allowed_client_cidrs,
+    var.allow_my_ip ? ["${chomp(data.http.public_ip.response_body)}/32"] : []
+  ))
+}

@@ -103,3 +103,23 @@ variable "ebs_csi_use_pod_identity" {
     example Fargate or Windows nodes).
   EOT
 }
+
+variable "name_prefix" {
+  type        = string
+  default     = "cgd-ddc-mr"
+  description = "Prefix for names that must be unique per account and region or per hosted zone: the DDC NLBs, the monitoring ALB and target group, and the DNS names (<prefix>.<zone>, <prefix>-<region>.<zone>, monitoring.<prefix>.<zone>). Lets this sample run next to the single region sample. At most 11 characters."
+  validation {
+    condition     = can(regex("^[a-z0-9-]{1,11}$", var.name_prefix))
+    error_message = "name_prefix must be 1-11 lowercase letters, digits or hyphens."
+  }
+}
+
+variable "allowed_client_cidrs" {
+  type        = list(string)
+  default     = []
+  description = "CIDR blocks allowed to reach the DDC NLBs and the monitoring ALB on ports 80, 443 and 8080 in both regions. Added to your auto-detected IP when allow_my_ip is true. Set this when your egress comes from several IPs (NAT pool, VPN), for example [\"203.0.113.10/32\", \"203.0.113.11/32\"]."
+  validation {
+    condition     = alltrue([for c in var.allowed_client_cidrs : can(cidrhost(c, 0))])
+    error_message = "Each entry in allowed_client_cidrs must be a valid CIDR block (e.g. \"203.0.113.4/32\")."
+  }
+}

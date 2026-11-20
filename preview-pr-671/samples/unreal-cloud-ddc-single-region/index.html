@@ -3839,6 +3839,10 @@ to the intra-cluster module:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># terraform.tfvars — override if you need the legacy IRSA path</span>
 <span class="na">ebs_csi_use_pod_identity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">false</span>
 </code></pre></div>
+<p><strong>Switching an existing deployment from IRSA to Pod Identity.</strong> Clusters first deployed with an older version of this sample may have an EBS CSI add-on created with <code>preserve = true</code>. Deleting that add-on leaves <code>ebs-csi-controller-sa</code> with its <code>eks.amazonaws.com/role-arn</code> annotation. The AWS SDK prefers IRSA over Pod Identity, so the controller keeps failing with <code>AccessDenied</code> and the new add-on stays <code>CREATING</code>. If that happens, remove the annotation and restart the controller:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>annotate<span class="w"> </span>sa<span class="w"> </span>ebs-csi-controller-sa<span class="w"> </span>eks.amazonaws.com/role-arn-
+kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deployment<span class="w"> </span>ebs-csi-controller
+</code></pre></div>
 <h3 id="eks-api-endpoint-access">EKS API endpoint access<a class="headerlink" href="#eks-api-endpoint-access" title="Permanent link">&para;</a></h3>
 <p>Terraform installs Helm charts and EKS add-ons over the cluster's Kubernetes
 API, so the machine running <code>terraform apply</code> must be able to reach the EKS API

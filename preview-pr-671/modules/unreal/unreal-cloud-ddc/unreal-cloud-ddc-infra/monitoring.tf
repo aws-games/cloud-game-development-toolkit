@@ -41,7 +41,7 @@ resource "aws_instance" "scylla_monitoring" {
 resource "aws_lb" "scylla_monitoring_alb" {
   count                            = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   region                           = var.region
-  name                             = "${var.project_prefix}-monitoring-alb"
+  name                             = "${local.load_balancer_name_prefix}-monitoring-alb"
   load_balancer_type               = "application"
   subnets                          = var.monitoring_application_load_balancer_subnets
   security_groups                  = concat([aws_security_group.scylla_monitoring_lb_sg[count.index].id], var.existing_security_groups)
@@ -71,7 +71,7 @@ resource "aws_lb_target_group" "scylla_monitoring_alb_target_group" {
   #checkov:skip=CKV_AWS_378: TLS termination at ALB
   count       = var.create_scylla_monitoring_stack && var.create_application_load_balancer ? 1 : 0
   region      = var.region
-  name        = "${var.project_prefix}-scylla-monitoring-tg"
+  name        = "${local.load_balancer_name_prefix}-scylla-monitoring-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id

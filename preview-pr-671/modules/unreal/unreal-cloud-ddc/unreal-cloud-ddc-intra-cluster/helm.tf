@@ -30,6 +30,12 @@ locals {
       aws-ebs-csi-driver = {
         most_recent              = true
         service_account_role_arn = aws_iam_role.ebs_csi_iam_role.arn
+        # Remove the add-on's Kubernetes objects when it is deleted. With the
+        # blueprints default (preserve = true), switching to Pod Identity leaves
+        # ebs-csi-controller-sa with its eks.amazonaws.com/role-arn annotation.
+        # The AWS SDK prefers IRSA over Pod Identity, so the controller keeps
+        # calling sts:AssumeRoleWithWebIdentity and the new add-on never goes ACTIVE.
+        preserve = false
       }
     }
   )
@@ -96,9 +102,19 @@ resource "aws_ecr_pull_through_cache_rule" "unreal_cloud_ddc_ecr_pull_through_ca
   credential_arn        = var.ghcr_credentials_secret_manager_arn
 }
 locals {
-  unreal_cloud_ddc_base_values                          = [templatefile(var.unreal_cloud_ddc_helm_base_infra_chart, var.unreal_cloud_ddc_helm_config)]
-  unreal_cloud_ddc_multi_region_with_replication_values = var.is_multi_region_deployment ? [templatefile(var.unreal_cloud_ddc_helm_replication_chart, merge(var.unreal_cloud_ddc_helm_config, { "ddc_replication_region_url" : data.aws_lb.unreal_cloud_ddc_load_balancer.dns_name }))] : null
+  # Multi-region deployments render the replication chart with the PEER region's
+  # stable hostname, which is known at plan time. That removes the old
+  # install -> kubectl delete -> reinstall sequence, which existed only to wait
+  # for a load balancer DNS name that does not exist until a release creates it.
+  unreal_cloud_ddc_chart = var.is_multi_region_deployment ? var.unreal_cloud_ddc_helm_replication_chart : var.unreal_cloud_ddc_helm_base_infra_chart
+  unreal_cloud_ddc_template_vars = merge(
+    var.unreal_cloud_ddc_helm_config,
+    { load_balancer_name = var.unreal_cloud_ddc_load_balancer_name },
+    var.is_multi_region_deployment ? { ddc_replication_region_url = var.unreal_cloud_ddc_replication_peer_hostname } : {}
+  )
+  unreal_cloud_ddc_values = [templatefile(local.unreal_cloud_ddc_chart, local.unreal_cloud_ddc_template_vars)]
 }
+
 resource "helm_release" "unreal_cloud_ddc_initialization" {
   name         = "unreal-cloud-ddc-initialize"
   chart        = "unreal-cloud-ddc"
@@ -106,40 +122,11 @@ resource "helm_release" "unreal_cloud_ddc_initialization" {
   namespace    = var.unreal_cloud_ddc_namespace
   version      = "${var.unreal_cloud_ddc_version}+helm"
   reset_values = true
-  timeout      = 2700
+  timeout      = var.unreal_cloud_ddc_helm_timeout
   depends_on = [
     kubernetes_service_account.unreal_cloud_ddc_service_account,
     kubernetes_namespace.unreal_cloud_ddc,
     aws_ecr_pull_through_cache_rule.unreal_cloud_ddc_ecr_pull_through_cache_rule
   ]
-  values = local.unreal_cloud_ddc_base_values
+  values = local.unreal_cloud_ddc_values
 }
-
-resource "null_resource" "delete_init_deployment" {
-  count = var.is_multi_region_deployment ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --region ${var.region} --name ${data.aws_eks_cluster.unreal_cloud_ddc_cluster.name} && kubectl delete deployment -l app.kubernetes.io/instance=unreal-cloud-ddc-initialize -n ${var.unreal_cloud_ddc_namespace} || true"
-  }
-
-  depends_on = [helm_release.unreal_cloud_ddc_initialization]
-}
-
-resource "helm_release" "unreal_cloud_ddc_with_replication" {
-  count        = var.is_multi_region_deployment && var.unreal_cloud_ddc_helm_replication_chart != null ? 1 : 0
-  name         = "unreal-cloud-ddc-replicate"
-  chart        = "unreal-cloud-ddc"
-  repository   = "oci://${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/github/epicgames"
-  namespace    = var.unreal_cloud_ddc_namespace
-  version      = "${var.unreal_cloud_ddc_version}+helm"
-  reset_values = true
-  timeout      = 600
-  depends_on = [
-    null_resource.delete_init_deployment
-  ]
-  values = local.unreal_cloud_ddc_multi_region_with_replication_values
-}
-
-
-
-
