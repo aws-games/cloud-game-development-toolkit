@@ -61,11 +61,11 @@ resource "aws_ecs_task_definition" "unreal_horde_task_definition" {
       ]
       healthCheck = {
         command = [
-          "CMD-SHELL", "apt update && apt install curl -y && curl http://localhost:${var.container_api_port}/health/ok || exit 1",
+          "CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/${var.container_api_port} && printf \"GET /health/ok HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && read -r l <&3 && [[ $l == *\" 200 \"* ]]'",
         ]
-        interval    = 5
+        interval    = 15
         retries     = 3
-        startPeriod = 10
+        startPeriod = 60
         timeout     = 5
       }
       environment = concat([
