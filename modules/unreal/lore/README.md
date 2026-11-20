@@ -10,6 +10,28 @@ Terraform module for deploying Lore — version control for large binary game as
 
 You provide: a container image and a list of allowed client CIDRs.
 
+## Prerequisites
+
+### IAM Permissions
+
+The IAM principal running `terraform apply` needs permissions for
+EC2/VPC, ECS, Auto Scaling, IAM, S3, DynamoDB, Secrets Manager,
+CloudWatch Logs, and Service Discovery. Cognito and Lambda are only
+required if using `auth_mode = "cognito"` or X-Ray smoke tests.
+
+For dev/test, `AdministratorAccess` covers everything. For production,
+use the scoped policy at
+[deployment-permissions.json](deployment-permissions.json).
+
+The `VpcNetworking` statement can be omitted if you provide your own
+VPC via the `vpc_id` and subnet variables.
+
+### Other Requirements
+
+- Terraform >= 1.9
+- A Lore container image accessible to ECS (public registry or ECR)
+- Client CIDRs for security group ingress rules
+
 ## Quick Start
 
 ```bash
