@@ -65,11 +65,16 @@
     "aliases": []
   },
   {
-    "version": "v1.1.8",
-    "title": "v1.1.8",
+    "version": "v1.1.9",
+    "title": "v1.1.9",
     "aliases": [
       "stable"
     ]
+  },
+  {
+    "version": "v1.1.8",
+    "title": "v1.1.8",
+    "aliases": []
   },
   {
     "version": "v1.1.5",

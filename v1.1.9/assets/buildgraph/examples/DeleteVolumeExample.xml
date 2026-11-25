@@ -1,0 +1,39 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../Schema.xsd" >
+
+	<!-- Example usage of DeleteVolume and DeleteSnapshot tasks -->
+	<!-- This deletes a cloned volume first, then its source snapshot -->
+
+	<!-- Parameters that can be set from Horde -->
+	<Option Name="CloneVolumeName" Description="Name of the cloned volume to delete" />
+	<Option Name="SourceVolumeName" Description="Name of the source volume containing the snapshot" />
+	<Option Name="SnapshotName" Description="Name of the snapshot to delete (that was used to create the clone)" />
+	<Option Name="SvmName" DefaultValue="fsx" Description="Storage Virtual Machine name" />
+	<Option Name="FsxAdminIp" Description="FSx ONTAP management IP address" />
+	<Option Name="OntapUser" DefaultValue="fsxadmin" Description="ONTAP username" />
+	<Option Name="OntapPasswordSecretName" Description="AWS Secrets Manager secret name for ONTAP password" />
+	<Option Name="AwsRegion" DefaultValue="us-east-1" Description="AWS region for the secret" />
+
+	<Agent Name="CleanupAgent" Type="AnyAgent">
+		<Node Name="Delete Clone and Snapshot">
+			<!-- Step 1: Delete the cloned volume first -->
+			<DeleteVolume 
+				VolumeName="$(CloneVolumeName)" 
+				SvmName="$(SvmName)" 
+				FsxAdminIp="$(FsxAdminIp)" 
+				OntapUser="$(OntapUser)" 
+				OntapPasswordSecretName="$(OntapPasswordSecretName)" 
+				AwsRegion="$(AwsRegion)" />
+			
+			<!-- Step 2: Delete the snapshot that was used to create the clone -->
+			<DeleteSnapshot 
+				VolumeName="$(SourceVolumeName)" 
+				SnapshotName="$(SnapshotName)" 
+				FsxAdminIp="$(FsxAdminIp)" 
+				OntapUser="$(OntapUser)" 
+				OntapPasswordSecretName="$(OntapPasswordSecretName)" 
+				AwsRegion="$(AwsRegion)" />
+		</Node>
+	</Agent>
+
+</BuildGraph>
