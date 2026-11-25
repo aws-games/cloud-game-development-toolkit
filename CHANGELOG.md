@@ -2,15 +2,23 @@
 ## [Unreleased]
 
 
+<a name="v1.1.9"></a>
+## [v1.1.9] - 2026-11-24
+### Bug Fixes
+- **jenkins:** move image to pinned JDK 21 build to remediate CVE-2026-114938 ([#1018](https://github.com/aws-games/cloud-game-development-toolkit/issues/1018))
+- **unreal-cloud-ddc:** Updates to unreal cloud ddc module to update EKS versioning, Scylla AMI, and Terraform versioning
+
+
+<a name="latest"></a>
+## [latest] - 2026-09-21
+
 <a name="v1.1.8"></a>
 ## [v1.1.8] - 2026-09-21
 ### Bug Fixes
 - **docs:** exclude id.unity.com from lychee link check (307 redirect) ([#1005](https://github.com/aws-games/cloud-game-development-toolkit/issues/1005))
 
-
-<a name="latest"></a>
-## [latest] - 2026-09-21
 ### Chore
+- regenerate changelog for v1.1.8 [skip ci]
 - regenerate changelog for v1.1.8 [skip ci]
 
 ### Docs
@@ -579,9 +587,10 @@
 - **packer:** switch AMI from Rocky Linux to Amazon Linux 2023 and up… ([#141](https://github.com/aws-games/cloud-game-development-toolkit/issues/141))
 
 
-[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.8...HEAD
-[v1.1.8]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.1.8
-[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.7...latest
+[Unreleased]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.9...HEAD
+[v1.1.9]: https://github.com/aws-games/cloud-game-development-toolkit/compare/latest...v1.1.9
+[latest]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.8...latest
+[v1.1.8]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.7...v1.1.8
 [v1.1.7]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.6...v1.1.7
 [v1.1.6]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.5...v1.1.6
 [v1.1.5]: https://github.com/aws-games/cloud-game-development-toolkit/compare/v1.1.4...v1.1.5
