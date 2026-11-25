@@ -56,6 +56,9 @@ backend.tf
 # Ignore site files related to docs
 site/
 
+# Generated Lore Lambda test package
+modules/unreal/lore/modules/compute/lambda/.build/
+
 # Ignore lychee link checker cache
 .lycheecache
 

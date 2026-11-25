@@ -13,6 +13,11 @@ output "private_subnet_ids" {
   value       = aws_subnet.private[*].id
 }
 
+output "private_subnet_cidrs" {
+  description = "CIDR blocks of the private subnets"
+  value       = aws_subnet.private[*].cidr_block
+}
+
 output "public_route_table_id" {
   description = "ID of the public route table"
   value       = aws_route_table.public.id

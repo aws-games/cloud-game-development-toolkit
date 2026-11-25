@@ -37,3 +37,12 @@ variable "enable_flow_logs" {
   type        = bool
   default     = false
 }
+
+variable "peering_routes" {
+  description = "Routes to peered VPCs added to the private route table. The route table manages its routes inline, so routes created elsewhere with aws_route are removed on the next apply; pass them here instead."
+  type = list(object({
+    cidr_block                = string
+    vpc_peering_connection_id = string
+  }))
+  default = []
+}

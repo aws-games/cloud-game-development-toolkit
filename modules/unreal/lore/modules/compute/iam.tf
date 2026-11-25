@@ -19,22 +19,25 @@ resource "aws_iam_role" "task" {
 }
 
 data "aws_iam_policy_document" "task_permissions" {
-  statement {
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
-      "s3:ListBucket",
-      "s3:HeadObject",
-      "s3:HeadBucket",
-      "s3:ListObjectVersions",
-      "s3:AbortMultipartUpload",
-      "s3:ListMultipartUploadParts",
-    ]
-    resources = [
-      var.fragment_bucket_arn,
-      "${var.fragment_bucket_arn}/*",
-    ]
+  dynamic "statement" {
+    for_each = var.fragment_bucket_arn != null ? [var.fragment_bucket_arn] : []
+    content {
+      actions = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket",
+        "s3:HeadObject",
+        "s3:HeadBucket",
+        "s3:ListObjectVersions",
+        "s3:AbortMultipartUpload",
+        "s3:ListMultipartUploadParts",
+      ]
+      resources = [
+        statement.value,
+        "${statement.value}/*",
+      ]
+    }
   }
 
   statement {
@@ -132,6 +135,8 @@ data "aws_iam_policy_document" "execution_secrets" {
       local.tls_key_secret_arn,
       local.hmac_key_secret_arn,
       local.tls_ca_secret_arn,
+      local.tls_client_cert_secret_arn,
+      local.tls_client_key_secret_arn,
     ])
   }
 }

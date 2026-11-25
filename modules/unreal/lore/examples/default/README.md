@@ -8,6 +8,7 @@ Write tier + 2 edge pods with Cloud Map service discovery. No auth.
 - Edge pod 1: EC2 with NVMe cache in AZ-a
 - Edge pod 2: EC2 with NVMe cache in AZ-b
 - Cloud Map private DNS for edge pod → write tier discovery
+- Edge-to-write-tier replication on UDP 41340 with mutual TLS and dedicated client certificates
 
 ## Usage
 

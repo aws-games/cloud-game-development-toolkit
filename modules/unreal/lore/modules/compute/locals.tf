@@ -1,6 +1,9 @@
 locals {
   # Instance memory lookup (MiB). Covers common ECS instance types.
-  # Reserve ~90% of instance memory for the container (OS + ECS agent + sidecars use the rest).
+  # Reserve ~75-90% of instance memory for the container (OS + ECS agent + sidecars use the rest).
+  # An instance type missing from this map falls back to 28 GiB, which on a small instance is
+  # unplaceable: ECS leaves the task in PROVISIONING with no event. Set
+  # container_memory_reservation explicitly for types not listed here.
   instance_memory_map = {
     "t3.medium"     = 3072
     "t3.large"      = 6144
@@ -9,12 +12,25 @@ locals {
     "m5.large"      = 6144
     "m5.xlarge"     = 13312
     "m5.2xlarge"    = 28672
+    "c7gd.medium"   = 1024
+    "c7gd.large"    = 3072
+    "c7gd.xlarge"   = 6144
+    "c7gd.2xlarge"  = 13312
+    "c8gd.medium"   = 1024
+    "c8gd.large"    = 3072
     "c8gd.xlarge"   = 6144
     "c8gd.2xlarge"  = 13312
     "c8gd.4xlarge"  = 28672
     "c8gd.8xlarge"  = 59392
     "c8gd.12xlarge" = 88064
     "c8gd.16xlarge" = 118784
+    "c9gd.medium"   = 1024
+    "c9gd.large"    = 3072
+    "c9gd.xlarge"   = 6144
+    "c9gd.2xlarge"  = 13312
+    "m8gd.large"    = 6144
+    "m8gd.xlarge"   = 13312
+    "m8gd.2xlarge"  = 28672
     "i3en.large"    = 13312
     "i3en.xlarge"   = 28672
     "i4i.large"     = 13312
@@ -37,12 +53,25 @@ locals {
     "m5.large"      = 0             # No instance store
     "m5.xlarge"     = 0             # No instance store
     "m5.2xlarge"    = 0             # No instance store
+    "c7gd.medium"   = 59000000000   # 59 GB (1× NVMe)
+    "c7gd.large"    = 118000000000  # 118 GB (1× NVMe)
+    "c7gd.xlarge"   = 237000000000  # 237 GB (1× NVMe)
+    "c7gd.2xlarge"  = 474000000000  # 474 GB (1× NVMe)
+    "c8gd.medium"   = 59000000000   # 59 GB (1× NVMe)
+    "c8gd.large"    = 118000000000  # 118 GB (1× NVMe)
     "c8gd.xlarge"   = 237000000000  # 237 GB (1× NVMe)
     "c8gd.2xlarge"  = 474000000000  # 474 GB (1× NVMe)
     "c8gd.4xlarge"  = 950000000000  # 950 GB (1× NVMe)
     "c8gd.8xlarge"  = 1900000000000 # 1.9 TB (1× NVMe)
     "c8gd.12xlarge" = 2850000000000 # 2.85 TB (3× NVMe)
     "c8gd.16xlarge" = 3800000000000 # 3.8 TB (2× NVMe)
+    "c9gd.medium"   = 59000000000   # 59 GB (1× NVMe)
+    "c9gd.large"    = 118000000000  # 118 GB (1× NVMe)
+    "c9gd.xlarge"   = 237000000000  # 237 GB (1× NVMe)
+    "c9gd.2xlarge"  = 474000000000  # 474 GB (1× NVMe)
+    "m8gd.large"    = 118000000000  # 118 GB (1× NVMe)
+    "m8gd.xlarge"   = 237000000000  # 237 GB (1× NVMe)
+    "m8gd.2xlarge"  = 474000000000  # 474 GB (1× NVMe)
     "i3en.large"    = 1250000000000 # 1.25 TB (1× NVMe)
     "i3en.xlarge"   = 2500000000000 # 2.5 TB (1× NVMe)
     "i3en.2xlarge"  = 5000000000000 # 5 TB (2× NVMe)

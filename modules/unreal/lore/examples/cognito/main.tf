@@ -22,8 +22,13 @@ module "lore" {
   allowed_ingress_cidrs = var.allowed_ingress_cidrs
   instance_type         = "c8gd.8xlarge"
 
-  auth_mode           = "cognito"
-  enable_otel_sidecar = true
+  auth_mode                   = "cognito"
+  enable_otel_sidecar         = true
+  enable_internal_replication = true
+  trusted_ca_pem = join("\n", [
+    module.edge_1.replication_client_ca_certificate_pem,
+    module.edge_2.replication_client_ca_certificate_pem,
+  ])
 
   enable_deletion_protection = var.enable_deletion_protection
   enable_force_destroy       = var.enable_force_destroy

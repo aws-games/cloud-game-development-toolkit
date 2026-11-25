@@ -15,7 +15,12 @@ module "lore" {
   allowed_ingress_cidrs = var.allowed_ingress_cidrs
   instance_type         = "c8gd.8xlarge"
 
-  enable_otel_sidecar = true
+  enable_otel_sidecar         = true
+  enable_internal_replication = true
+  trusted_ca_pem = join("\n", [
+    module.edge_1.replication_client_ca_certificate_pem,
+    module.edge_2.replication_client_ca_certificate_pem,
+  ])
 
   auth_mode         = "external"
   auth_jwk_endpoint = var.auth_jwk_endpoint

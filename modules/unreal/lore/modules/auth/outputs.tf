@@ -16,15 +16,15 @@ output "client_secret" {
 
 output "token_endpoint" {
   description = "OAuth2 token endpoint"
-  value       = "https://${aws_cognito_user_pool_domain.lore.domain}.auth.${data.aws_region.current.name}.amazoncognito.com/oauth2/token"
+  value       = "https://${aws_cognito_user_pool_domain.lore.domain}.auth.${data.aws_region.current.region}.amazoncognito.com/oauth2/token"
 }
 
 output "jwk_endpoint" {
   description = "JWK endpoint for JWT validation"
-  value       = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.lore.id}/.well-known/jwks.json"
+  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.lore.id}/.well-known/jwks.json"
 }
 
 output "issuer" {
   description = "JWT issuer URL"
-  value       = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.lore.id}"
+  value       = "https://cognito-idp.${data.aws_region.current.region}.amazonaws.com/${aws_cognito_user_pool.lore.id}"
 }

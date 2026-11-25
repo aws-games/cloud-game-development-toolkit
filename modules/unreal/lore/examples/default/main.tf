@@ -15,10 +15,15 @@ module "lore" {
   allowed_ingress_cidrs = var.allowed_ingress_cidrs
   instance_type         = "c8gd.8xlarge"
 
-  enable_deletion_protection = false
-  enable_force_destroy       = true
-  asg_desired_size           = 1
-  auth_mode                  = "none"
+  enable_deletion_protection  = false
+  enable_force_destroy        = true
+  asg_desired_size            = 1
+  auth_mode                   = "none"
+  enable_internal_replication = true
+  trusted_ca_pem = join("\n", [
+    module.edge_1.replication_client_ca_certificate_pem,
+    module.edge_2.replication_client_ca_certificate_pem,
+  ])
 }
 
 # =============================================================================
