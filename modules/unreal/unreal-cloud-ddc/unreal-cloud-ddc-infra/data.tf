@@ -9,10 +9,12 @@ data "aws_ami" "scylla_ami" {
     name   = "architecture"
     values = [var.scylla_architecture]
   }
+  region = var.region
 }
 
 # Get the latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
+  region      = var.region
   most_recent = true
   owners      = ["amazon"]
 

@@ -1,8 +1,3 @@
-variable "route53_public_hosted_zone_name" {
-  type        = string
-  description = "The root domain name for the Hosted Zone where the ScyllaDB monitoring record should be created."
-}
-
 ##########################################
 # Route53 Hosted Zone for Root
 ##########################################
